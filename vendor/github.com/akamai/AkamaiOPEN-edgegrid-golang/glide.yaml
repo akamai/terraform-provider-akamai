@@ -1,0 +1,29 @@
+package: github.com/akamai/AkamaiOPEN-edgegrid-golang
+import:
+- package: github.com/sirupsen/logrus
+  version: 3ec0642a7fb6488f65b06f9040adc67e3990296a
+- package: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  subpackages:
+  - spew
+- package: github.com/go-ini/ini
+  version: ^1.11.0
+- package: github.com/pmezard/go-difflib
+  version: ^1.0.0
+  subpackages:
+  - difflib
+- package: github.com/stretchr/testify
+  version: 59fc8e570cd707a33a93842b00a9aae4b5cd38b2
+  subpackages:
+  - assert
+- package: github.com/tuvistavie/securerandom
+  version: 15512123a948d62f6361bd84818e11f2ad84059a
+- package: golang.org/x/sys
+  version: 9d4e42a20653790449273b3c85e67d6d8bae6e2e
+  subpackages:
+  - unix
+- package: gopkg.in/mattes/go-expand-tilde.v1
+  version: cb884138e64c9a8bf5c7d6106d74b0fca082df0c
+- package: github.com/xeipuuv/gojsonschema
+- package: github.com/h2non/gock
+  version: ^1.0.4

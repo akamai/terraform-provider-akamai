@@ -1,0 +1,34 @@
+hash: 5e895ec5b8f6b7d60c2c3ed6471ac9503c246b60fc941321cbae4accfb0aa8d9
+updated: 2018-02-05T20:31:25.842449032-08:00
+imports:
+- name: github.com/akamai/AkamaiOPEN-edgegrid-golang
+  version: 54cbe5a6eba6fce9f55efd0395884d34864cf89c
+  subpackages:
+  - client-v1
+  - configdns-v1
+  - edgegrid
+  - jsonhooks-v1
+  - papi-v1
+- name: github.com/go-ini/ini
+  version: 32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib
+- name: github.com/sirupsen/logrus
+  version: 3ec0642a7fb6488f65b06f9040adc67e3990296a
+- name: github.com/stretchr/testify
+  version: 59fc8e570cd707a33a93842b00a9aae4b5cd38b2
+  subpackages:
+  - assert
+- name: github.com/tuvistavie/securerandom
+  version: 15512123a948d62f6361bd84818e11f2ad84059a
+- name: github.com/xeipuuv/gojsonpointer
+  version: 4e3ac2762d5f479393488629ee9370b50873b3a6
+- name: github.com/xeipuuv/gojsonreference
+  version: bd5ef7bd5415a7ac448318e64f11a24cd21e594b
+- name: github.com/xeipuuv/gojsonschema
+  version: 70e59348c29403c606624cd201e79769d6657db8
+- name: gopkg.in/mattes/go-expand-tilde.v1
+  version: cb884138e64c9a8bf5c7d6106d74b0fca082df0c
+testImports: []
