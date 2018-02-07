@@ -379,8 +379,10 @@ func (activation *Activation) Cancel(property *Property) error {
 		Config,
 		"DELETE",
 		fmt.Sprintf(
-			"/papi/v1/properties/%s/activations",
+			"/papi/v1/properties/%s/activations?contractId=%s&groupId=%s",
 			property.PropertyID,
+			property.Contract.ContractID,
+			property.Group.GroupID,
 		),
 		nil,
 	)

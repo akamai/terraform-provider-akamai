@@ -1,8 +1,8 @@
 hash: 5e895ec5b8f6b7d60c2c3ed6471ac9503c246b60fc941321cbae4accfb0aa8d9
-updated: 2018-02-05T20:31:25.842449032-08:00
+updated: 2018-02-07T12:21:09.843679147-08:00
 imports:
 - name: github.com/akamai/AkamaiOPEN-edgegrid-golang
-  version: 54cbe5a6eba6fce9f55efd0395884d34864cf89c
+  version: eb56fb2d2049270756660663cf79f49cc8cfd295
   subpackages:
   - client-v1
   - configdns-v1
