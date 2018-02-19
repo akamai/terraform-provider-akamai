@@ -52,7 +52,7 @@ resource "akamai_fastdns_zone" "test_zone" {
 }
 ```
 
-An more complete example configuration can be found [here](https://github.com/akamai/terraform-provider-akamai/blob/master/examples/dns/dns.tf).
+An more complete example configuration can be found [here](https://github.com/akamai/terraform-provider-akamai/blob/master/examples/akamai_fastdns_zone/add-records/dns.tf).
 
 ### akamai_property
 
@@ -109,7 +109,7 @@ resource "akamai_property" "dshafik_sandbox" {
 }
 ```
 
-A more complete example configuration can be found [here](https://github.com/akamai/terraform-provider-akamai/blob/master/examples/create-property/create-property.tf)
+A more complete example configuration can be found [here](https://github.com/akamai/terraform-provider-akamai/blob/master/examples/akamai_property/create-property/create-property.tf)
 
 Building The Provider
 ---------------------
