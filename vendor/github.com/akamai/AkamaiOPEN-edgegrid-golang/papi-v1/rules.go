@@ -207,10 +207,7 @@ type Rule struct {
 		IsSecure bool `json:"is_secure,omitempty"`
 	} `json:"options,omitempty"`
 
-	CustomOverride struct {
-		Name       string `json:"name"`
-		OverrideID string `json:"overrideId"`
-	} `json:"customOverride,omitempty"`
+	CustomOverride *CustomOverride `json:"customOverride,omitempty"`
 }
 
 // NewRule creates a new Rule
