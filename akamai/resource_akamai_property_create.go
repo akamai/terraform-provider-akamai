@@ -57,6 +57,10 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 			return errors.New("A contract_id must be specified to create a new property")
 		}
 
+		if product == nil {
+			return errors.New("A product_id must be specified to create a new property")
+		}
+
 		property, e = createProperty(contract, group, product, cloneFrom, d)
 		if e != nil {
 			return e
