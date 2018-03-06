@@ -4,7 +4,7 @@ Akamai Provider for Terraform
 Maintainers
 -----------
 
-This provider plugin is maintained by the Akamai Developer team at [Akamai](https://developer.hashicorp.com/).
+This provider plugin is maintained by the Akamai Developer team at [Akamai](https://developer.akamai.com/).
 
 Requirements
 ------------
