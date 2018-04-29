@@ -4,7 +4,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-var akps_option *schema.Schema = &schema.Schema{
+var akpsOption *schema.Schema = &schema.Schema{
 	Type:     schema.TypeSet,
 	Optional: true,
 	Elem: &schema.Resource{
@@ -26,7 +26,7 @@ var akps_option *schema.Schema = &schema.Schema{
 	},
 }
 
-var akps_criteria *schema.Schema = &schema.Schema{
+var akpsCriteria *schema.Schema = &schema.Schema{
 	Type:     schema.TypeSet,
 	Optional: true,
 	Elem: &schema.Resource{
@@ -35,12 +35,12 @@ var akps_criteria *schema.Schema = &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"option": akps_option,
+			"option": akpsOption,
 		},
 	},
 }
 
-var akps_behavior *schema.Schema = &schema.Schema{
+var akpsBehavior *schema.Schema = &schema.Schema{
 	Type:     schema.TypeSet,
 	Optional: true,
 	Elem: &schema.Resource{
@@ -49,7 +49,7 @@ var akps_behavior *schema.Schema = &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"option": akps_option,
+			"option": akpsOption,
 		},
 	},
 }
@@ -201,7 +201,7 @@ var akamaiPropertySchema map[string]*schema.Schema = map[string]*schema.Schema{
 					Optional: true,
 					Default:  "all",
 				},
-				"behavior": akps_behavior,
+				"behavior": akpsBehavior,
 				"rule": &schema.Schema{
 					Type:     schema.TypeSet,
 					Optional: true,
@@ -220,8 +220,8 @@ var akamaiPropertySchema map[string]*schema.Schema = map[string]*schema.Schema{
 								Optional: true,
 								Default:  "all",
 							},
-							"criteria": akps_criteria,
-							"behavior": akps_behavior,
+							"criteria": akpsCriteria,
+							"behavior": akpsBehavior,
 							"rule": &schema.Schema{
 								Type:     schema.TypeSet,
 								Optional: true,
@@ -240,8 +240,8 @@ var akamaiPropertySchema map[string]*schema.Schema = map[string]*schema.Schema{
 											Optional: true,
 											Default:  "all",
 										},
-										"criteria": akps_criteria,
-										"behavior": akps_behavior,
+										"criteria": akpsCriteria,
+										"behavior": akpsBehavior,
 										"rule": &schema.Schema{
 											Type:     schema.TypeSet,
 											Optional: true,
@@ -260,8 +260,8 @@ var akamaiPropertySchema map[string]*schema.Schema = map[string]*schema.Schema{
 														Optional: true,
 														Default:  "all",
 													},
-													"criteria": akps_criteria,
-													"behavior": akps_behavior,
+													"criteria": akpsCriteria,
+													"behavior": akpsBehavior,
 													"rule": &schema.Schema{
 														Type:     schema.TypeSet,
 														Optional: true,
@@ -280,8 +280,8 @@ var akamaiPropertySchema map[string]*schema.Schema = map[string]*schema.Schema{
 																	Optional: true,
 																	Default:  "all",
 																},
-																"criteria": akps_criteria,
-																"behavior": akps_behavior,
+																"criteria": akpsCriteria,
+																"behavior": akpsBehavior,
 															},
 														},
 													},
