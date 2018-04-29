@@ -10,9 +10,11 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
+// Config contains the Akamai provider configuration (unused).
 type Config struct {
 }
 
+// Provider returns the Akamai terraform.Resource provider.
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
