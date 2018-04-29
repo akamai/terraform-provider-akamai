@@ -4,7 +4,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-var akpsOption *schema.Schema = &schema.Schema{
+var akpsOption = &schema.Schema{
 	Type:     schema.TypeSet,
 	Optional: true,
 	Elem: &schema.Resource{
@@ -26,7 +26,7 @@ var akpsOption *schema.Schema = &schema.Schema{
 	},
 }
 
-var akpsCriteria *schema.Schema = &schema.Schema{
+var akpsCriteria = &schema.Schema{
 	Type:     schema.TypeSet,
 	Optional: true,
 	Elem: &schema.Resource{
@@ -40,7 +40,7 @@ var akpsCriteria *schema.Schema = &schema.Schema{
 	},
 }
 
-var akpsBehavior *schema.Schema = &schema.Schema{
+var akpsBehavior = &schema.Schema{
 	Type:     schema.TypeSet,
 	Optional: true,
 	Elem: &schema.Resource{
@@ -54,7 +54,7 @@ var akpsBehavior *schema.Schema = &schema.Schema{
 	},
 }
 
-var akamaiPropertySchema map[string]*schema.Schema = map[string]*schema.Schema{
+var akamaiPropertySchema = map[string]*schema.Schema{
 	"account_id": &schema.Schema{
 		Type:     schema.TypeString,
 		Required: true,

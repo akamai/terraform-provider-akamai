@@ -427,7 +427,7 @@ func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[strin
 		return nil, err
 	}
 
-	var ehn map[string]string = make(map[string]string)
+	var ehn = make(map[string]string)
 	for _, hostname := range hostnames.Hostnames.Items {
 		ehn[strings.Replace(hostname.CnameFrom, ".", "-", -1)] = hostname.CnameTo
 	}
