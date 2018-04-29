@@ -55,7 +55,7 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 		if e != nil {
 			return e
 		}
-		log.Println("[DEBUG] DEACTIVATION SAVED - ID %s STATUS %s", deactivation.ActivationID, deactivation.Status)
+		log.Printf("[DEBUG] DEACTIVATION SAVED - ID %s STATUS %s\n", deactivation.ActivationID, deactivation.Status)
 
 		go deactivation.PollStatus(property)
 
