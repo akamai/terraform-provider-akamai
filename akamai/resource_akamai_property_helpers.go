@@ -174,7 +174,7 @@ func createCpCode(contract *papi.Contract, group *papi.Group, product *papi.Prod
 			}
 			log.Println("[DEBUG] CPCode created")
 		} else {
-			return nil, errors.New("A product_id must be specified to create a new cp_code")
+			return nil, errors.New("product_id must be specified to create a new cp_code")
 		}
 	}
 	log.Println("[DEBUG] CPCode set up")
@@ -391,7 +391,7 @@ func createEdgehostname(edgeHostnames *papi.EdgeHostnames, product *papi.Product
 		select {
 		case <-newEdgeHostname.StatusChange:
 		case <-time.After(time.Minute * 20):
-			return nil, fmt.Errorf("No Edge Hostname found and a timeout occurred trying to create \"%s.%s\"", newEdgeHostname.DomainPrefix, newEdgeHostname.DomainSuffix)
+			return nil, fmt.Errorf("no edge hostname found and a timeout occurred trying to create \"%s.%s\"", newEdgeHostname.DomainPrefix, newEdgeHostname.DomainSuffix)
 		}
 	}
 

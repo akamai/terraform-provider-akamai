@@ -14,15 +14,15 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] DELETING")
 	contractID, ok := d.GetOk("contract_id")
 	if !ok {
-		return errors.New("No contract ID")
+		return errors.New("missing contract ID")
 	}
 	groupID, ok := d.GetOk("group_id")
 	if !ok {
-		return errors.New("No group ID")
+		return errors.New("missing group ID")
 	}
 	network, ok := d.GetOk("network")
 	if !ok {
-		return errors.New("No network")
+		return errors.New("missing network")
 	}
 	propertyID := d.Id()
 

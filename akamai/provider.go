@@ -51,7 +51,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	if dnsConfig == nil && papiConfig == nil {
-		return nil, fmt.Errorf("At least one edgerc section must be defined")
+		return nil, fmt.Errorf("at least one edgerc section must be defined")
 	}
 
 	return &Config{}, nil

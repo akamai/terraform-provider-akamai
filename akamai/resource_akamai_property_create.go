@@ -50,15 +50,15 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	var property *papi.Property
 	if property = findProperty(d); property == nil {
 		if group == nil {
-			return errors.New("A group_id must be specified to create a new property")
+			return errors.New("group_id must be specified to create a new property")
 		}
 
 		if contract == nil {
-			return errors.New("A contract_id must be specified to create a new property")
+			return errors.New("contract_id must be specified to create a new property")
 		}
 
 		if product == nil {
-			return errors.New("A product_id must be specified to create a new property")
+			return errors.New("product_id must be specified to create a new property")
 		}
 
 		property, e = createProperty(contract, group, product, cloneFrom, d)
