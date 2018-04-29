@@ -8,25 +8,25 @@ import (
 )
 
 func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceId := d.Id()
-	propertyId := resourceId
+	resourceID := d.Id()
+	propertyID := resourceID
 
-	if !strings.HasPrefix(resourceId, "prp_") {
+	if !strings.HasPrefix(resourceID, "prp_") {
 		for _, searchKey := range []papi.SearchKey{papi.SearchByPropertyName, papi.SearchByHostname, papi.SearchByEdgeHostname} {
-			results, err := papi.Search(searchKey, resourceId)
+			results, err := papi.Search(searchKey, resourceID)
 			if err != nil {
 				continue
 			}
 
 			if results != nil && len(results.Versions.Items) > 0 {
-				propertyId = results.Versions.Items[0].PropertyID
+				propertyID = results.Versions.Items[0].PropertyID
 				break
 			}
 		}
 	}
 
 	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyId
+	property.PropertyID = propertyID
 	e := property.GetProperty()
 	if e != nil {
 		return nil, e
