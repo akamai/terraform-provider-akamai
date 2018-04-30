@@ -35,11 +35,21 @@ errcheck:
 lint:
 	@sh -c "'$(CURDIR)/scripts/golint.sh'"
 
-vendor-status:
-	@govendor status
-
 test-compile:
 	go test -c ./akamai $(TESTARGS)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck lint vendor-status test-compile
+dep:
+	@which dep > /dev/null; if [ $$? -ne 0 ]; then \
+		echo "==> Installing dep..."; \
+		go get -u github.com/golang/dep/cmd/dep; \
+	fi
 
+dep-install: dep
+	@echo "==> Installing vendor dependencies..."
+	@dep ensure -vendor-only
+
+dep-update: dep
+	@echo "==> Updating vendor dependencies..."
+	@dep ensure -update
+
+.PHONY: build test testacc vet fmt fmtcheck errcheck lint test-compile
