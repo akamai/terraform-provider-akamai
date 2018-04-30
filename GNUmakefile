@@ -32,11 +32,14 @@ fmtcheck:
 errcheck:
 	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
 
+lint:
+	@sh -c "'$(CURDIR)/scripts/golint.sh'"
+
 vendor-status:
 	@govendor status
 
 test-compile:
 	go test -c ./akamai $(TESTARGS)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-status test-compile
+.PHONY: build test testacc vet fmt fmtcheck errcheck lint vendor-status test-compile
 

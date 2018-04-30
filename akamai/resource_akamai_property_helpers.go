@@ -15,16 +15,16 @@ import (
 
 func getProperty(d *schema.ResourceData) (*papi.Property, error) {
 	log.Println("[DEBUG] Fetching property")
-	propertyId := d.Id()
+	propertyID := d.Id()
 	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyId
+	property.PropertyID = propertyID
 	e := property.GetProperty()
 	return property, e
 }
 
 func getGroup(d *schema.ResourceData) (*papi.Group, error) {
 	log.Println("[DEBUG] Fetching groups")
-	groupId, ok := d.GetOk("group_id")
+	groupID, ok := d.GetOk("group_id")
 
 	if !ok {
 		return nil, nil
@@ -36,7 +36,7 @@ func getGroup(d *schema.ResourceData) (*papi.Group, error) {
 		return nil, e
 	}
 
-	group, e := groups.FindGroup(groupId.(string))
+	group, e := groups.FindGroup(groupID.(string))
 	if e != nil {
 		return nil, e
 	}
@@ -47,7 +47,7 @@ func getGroup(d *schema.ResourceData) (*papi.Group, error) {
 
 func getContract(d *schema.ResourceData) (*papi.Contract, error) {
 	log.Println("[DEBUG] Fetching contract")
-	contractId, ok := d.GetOk("contract_id")
+	contractID, ok := d.GetOk("contract_id")
 	if !ok {
 		return nil, nil
 	}
@@ -58,7 +58,7 @@ func getContract(d *schema.ResourceData) (*papi.Contract, error) {
 		return nil, e
 	}
 
-	contract, e := contracts.FindContract(contractId.(string))
+	contract, e := contracts.FindContract(contractID.(string))
 	if e != nil {
 		return nil, e
 	}
@@ -73,7 +73,7 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product,
 	}
 
 	log.Println("[DEBUG] Fetching product")
-	productId, ok := d.GetOk("product_id")
+	productID, ok := d.GetOk("product_id")
 	if !ok {
 		return nil, nil
 	}
@@ -84,7 +84,7 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product,
 		return nil, e
 	}
 
-	product, e := products.FindProduct(productId.(string))
+	product, e := products.FindProduct(productID.(string))
 	if e != nil {
 		return nil, e
 	}
@@ -105,10 +105,10 @@ func getCloneFrom(d *schema.ResourceData) (*papi.ClonePropertyFrom, error) {
 	set := cF.(*schema.Set)
 	cloneFrom := set.List()[0].(map[string]interface{})
 
-	propertyId := cloneFrom["property_id"].(string)
+	propertyID := cloneFrom["property_id"].(string)
 
 	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyId
+	property.PropertyID = propertyID
 	err := property.GetProperty()
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func getCloneFrom(d *schema.ResourceData) (*papi.ClonePropertyFrom, error) {
 	}
 
 	clone := papi.NewClonePropertyFrom()
-	clone.PropertyID = propertyId
+	clone.PropertyID = propertyID
 	clone.Version = version
 
 	if cloneFrom["etag"].(string) != "" {
@@ -174,7 +174,7 @@ func createCpCode(contract *papi.Contract, group *papi.Group, product *papi.Prod
 			}
 			log.Println("[DEBUG] CPCode created")
 		} else {
-			return nil, errors.New("A product_id must be specified to create a new cp_code")
+			return nil, errors.New("product_id must be specified to create a new cp_code")
 		}
 	}
 	log.Println("[DEBUG] CPCode set up")
@@ -391,7 +391,7 @@ func createEdgehostname(edgeHostnames *papi.EdgeHostnames, product *papi.Product
 		select {
 		case <-newEdgeHostname.StatusChange:
 		case <-time.After(time.Minute * 20):
-			return nil, fmt.Errorf("No Edge Hostname found and a timeout occurred trying to create \"%s.%s\"", newEdgeHostname.DomainPrefix, newEdgeHostname.DomainSuffix)
+			return nil, fmt.Errorf("no edge hostname found and a timeout occurred trying to create \"%s.%s\"", newEdgeHostname.DomainPrefix, newEdgeHostname.DomainSuffix)
 		}
 	}
 
@@ -427,7 +427,7 @@ func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[strin
 		return nil, err
 	}
 
-	var ehn map[string]string = make(map[string]string)
+	var ehn = make(map[string]string)
 	for _, hostname := range hostnames.Hostnames.Items {
 		ehn[strings.Replace(hostname.CnameFrom, ".", "-", -1)] = hostname.CnameTo
 	}

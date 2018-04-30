@@ -10,9 +10,11 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
+// Config contains the Akamai provider configuration (unused).
 type Config struct {
 }
 
+// Provider returns the Akamai terraform.Resource provider.
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
@@ -51,7 +53,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	if dnsConfig == nil && papiConfig == nil {
-		return nil, fmt.Errorf("At least one edgerc section must be defined")
+		return nil, fmt.Errorf("at least one edgerc section must be defined")
 	}
 
 	return &Config{}, nil
@@ -61,14 +63,14 @@ func getConfigDNSV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	edgerc := d.Get("edgerc").(string)
 	section := d.Get("fastdns_section").(string)
 
-	fastDnsConfig, err := edgegrid.Init(edgerc, section)
+	fastDNSConfig, err := edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
 
-	dns.Init(fastDnsConfig)
+	dns.Init(fastDNSConfig)
 
-	return &fastDnsConfig, nil
+	return &fastDNSConfig, nil
 }
 
 func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
