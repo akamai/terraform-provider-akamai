@@ -133,7 +133,7 @@ func testAccCheckAkamaiFastDNSZoneDestroy(s *terraform.State) error {
 			// These never get deleted
 			// len(zone.Zone.Ns) > 0 ||
 			// len(zone.Zone.Soa) > 0 ||
-			return fmt.Errorf("zone was not deleted %s", zone)
+			return fmt.Errorf("zone was not deleted %s", hostname)
 		}
 	}
 	return nil

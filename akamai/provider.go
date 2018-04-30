@@ -63,7 +63,7 @@ func getConfigDNSV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	edgerc := d.Get("edgerc").(string)
 	section := d.Get("fastdns_section").(string)
 
-	fastDNSConfig, err := edgegrid.InitEdgeRc(edgerc, section)
+	fastDNSConfig, err := edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	edgerc := d.Get("edgerc").(string)
 	section := d.Get("papi_section").(string)
 
-	papiConfig, err := edgegrid.InitEdgeRc(edgerc, section)
+	papiConfig, err := edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
