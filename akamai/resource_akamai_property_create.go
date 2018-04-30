@@ -186,6 +186,9 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 	} else {
 		ruleFormats := papi.NewRuleFormats()
 		property.RuleFormat, err = ruleFormats.GetLatest()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = property.Save()

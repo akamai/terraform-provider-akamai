@@ -157,7 +157,11 @@ func createCpCode(contract *papi.Contract, group *papi.Group, product *papi.Prod
 	}
 	if err := cpCode.GetCpCode(); err != nil {
 		cpCode.CpcodeID = ""
-		cpCodes.GetCpCodes()
+		err := cpCodes.GetCpCodes()
+		if err != nil {
+			return nil, err
+		}
+
 		cpCode, err := cpCodes.FindCpCode(d.Get("cp_code").(string))
 		if err != nil {
 			return nil, err
@@ -281,7 +285,10 @@ func createHostnames(property *papi.Property, product *papi.Product, d *schema.R
 
 	log.Println("[DEBUG] Figuring out hostnames")
 	edgeHostnames := papi.NewEdgeHostnames()
-	edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "")
+	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "")
+	if err != nil {
+		return nil, err
+	}
 
 	hostnameEdgeHostnameMap := map[string]*papi.EdgeHostname{}
 	defaultEdgeHostname := edgeHostnames.EdgeHostnames.Items[0]
@@ -383,7 +390,10 @@ func createEdgehostname(edgeHostnames *papi.EdgeHostnames, product *papi.Product
 	}
 
 	newEdgeHostname.EdgeHostnameDomain = hostname
-	newEdgeHostname.Save("")
+	err := newEdgeHostname.Save("")
+	if err != nil {
+		return nil, err
+	}
 
 	go newEdgeHostname.PollStatus("")
 
@@ -676,7 +686,5 @@ func ensureEditableVersion(property *papi.Property) error {
 		}
 	}
 
-	property.GetProperty()
-
-	return nil
+	return property.GetProperty()
 }

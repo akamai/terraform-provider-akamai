@@ -741,7 +741,10 @@ func resourceFastDNSZoneCreate(d *schema.ResourceData, meta interface{}) error {
 
 	// Transform the record data from the terraform config to a local type
 	log.Printf("[DEBUG] [Akamai FastDNS] Adding records to zone")
-	unmarshalResourceData(d, zone)
+	e = unmarshalResourceData(d, zone)
+	if e != nil {
+		return e
+	}
 
 	// Save the zone to the API
 	log.Printf("[DEBUG] [Akamai FastDNS] Saving zone")
@@ -789,7 +792,7 @@ func mergeConfigs(recordType string, records []interface{}, s *schema.Resource, 
 }
 
 // Unmarshal the config data from the terraform config file to our local types so it can be saved
-func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
+func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) error {
 	s := resourceFastDNSZone()
 
 	_, ok := d.GetOk("a")
@@ -804,7 +807,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedARecords.List() {
 				record := dns.NewARecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -821,7 +827,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedAaaaRecords.List() {
 				record := dns.NewAaaaRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -838,7 +847,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedAfsdbRecords.List() {
 				record := dns.NewAfsdbRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -855,7 +867,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedCnameRecords.List() {
 				record := dns.NewCnameRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -872,7 +887,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedDnskeyRecords.List() {
 				record := dns.NewDnskeyRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -889,7 +907,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedDsRecords.List() {
 				record := dns.NewDsRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -906,7 +927,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedHinfoRecords.List() {
 				record := dns.NewHinfoRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -923,7 +947,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedLocRecords.List() {
 				record := dns.NewLocRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -940,7 +967,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedMxRecords.List() {
 				record := dns.NewMxRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -957,7 +987,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedNaptrRecords.List() {
 				record := dns.NewNaptrRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -974,7 +1007,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedNsRecords.List() {
 				record := dns.NewNsRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -991,7 +1027,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedNsec3Records.List() {
 				record := dns.NewNsec3Record()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1008,7 +1047,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedNsec3paramRecords.List() {
 				record := dns.NewNsec3paramRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1025,7 +1067,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedPtrRecords.List() {
 				record := dns.NewPtrRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1042,7 +1087,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedRpRecords.List() {
 				record := dns.NewRpRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1059,7 +1107,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedRrsigRecords.List() {
 				record := dns.NewRrsigRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1074,7 +1125,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedSoaRecords.List() {
 				record := dns.NewSoaRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1091,7 +1145,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedSpfRecords.List() {
 				record := dns.NewSpfRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1108,7 +1165,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedSrvRecords.List() {
 				record := dns.NewSrvRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1125,7 +1185,10 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedSshfpRecords.List() {
 				record := dns.NewSshfpRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1142,10 +1205,15 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 			for _, val := range mergedTxtRecords.List() {
 				record := dns.NewTxtRecord()
 				assignFields(record, val.(map[string]interface{}))
-				zone.AddRecord(record)
+				err := zone.AddRecord(record)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
+
+	return nil
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
