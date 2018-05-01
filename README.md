@@ -1,5 +1,6 @@
 Akamai Provider for Terraform
 ==================
+[![Build Status](https://travis-ci.org/akamai/terraform-provider-akamai.svg?branch=master)](https://travis-ci.org/akamai/terraform-provider-akamai)
 
 Maintainers
 -----------

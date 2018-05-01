@@ -1,24 +1,14 @@
-dist: trusty
-sudo: false
 language: go
+go_import_path: github.com/terraform-providers/terraform-provider-akamai
 go:
-- 1.8.1
+- 1.8.x
+- 1.9.x
+- 1.10.x
 
 install:
-# This script is used by the Travis build to install a cookie for
-# go.googlesource.com so rate limits are higher when using `go get` to fetch
-# packages that live there.
-# See: https://github.com/golang/go/issues/12933
-- bash scripts/gogetcookie.sh
+- make dep-install
 
 script:
+- make build
+- make check
 - make test
-- make vet
-
-branches:
-  only:
-  - master
-matrix:
-  fast_finish: true
-  allow_failures:
-  - go: tip
