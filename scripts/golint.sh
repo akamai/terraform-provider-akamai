@@ -7,7 +7,7 @@ if ! which golint > /dev/null; then
     go get -u github.com/golang/lint/golint
 fi
 
-lint_files=$(golint -set_exit_status $(go list ./... | grep -v ^/vendor/))
+lint_files=$(golint -set_exit_status $(go list ./... | grep -v /vendor/))
 
 if [[ -n ${lint_files} ]]; then
     echo 'Linting errors found in the following places:'
