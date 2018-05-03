@@ -32,7 +32,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	var cpCode *papi.CpCode
 	if d.HasChange("cp_code") {
-		cpCode, e = createCpCode(property.Contract, property.Group, product, d)
+		cpCode, e = getCPCode(d, property.Contract, property.Group)
 		if e != nil {
 			return e
 		}

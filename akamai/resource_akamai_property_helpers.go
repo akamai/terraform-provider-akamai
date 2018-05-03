@@ -2,7 +2,6 @@ package akamai
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -65,6 +64,28 @@ func getContract(d *schema.ResourceData) (*papi.Contract, error) {
 
 	log.Printf("[DEBUG] Contract found: %s\n", contract.ContractID)
 	return contract, nil
+}
+
+func getCPCode(d *schema.ResourceData, contract *papi.Contract, group *papi.Group) (*papi.CpCode, error) {
+	if contract == nil || group == nil {
+		return nil, nil
+	}
+
+	cpCodeID, ok := d.GetOk("cp_code")
+	if !ok {
+		return nil, nil
+	}
+
+	log.Println("[DEBUG] Fetching CP code")
+	cpCode := papi.NewCpCodes(contract, group).NewCpCode()
+	cpCode.CpcodeID = cpCodeID.(string)
+	err := cpCode.GetCpCode()
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("[DEBUG] CP code found: %s\n", cpCode.CpcodeID)
+	return cpCode, nil
 }
 
 func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product, error) {
@@ -139,51 +160,6 @@ func getCloneFrom(d *schema.ResourceData) (*papi.ClonePropertyFrom, error) {
 	log.Println("[DEBUG] Clone from complete")
 
 	return clone, nil
-}
-
-func createCpCode(contract *papi.Contract, group *papi.Group, product *papi.Product, d *schema.ResourceData) (*papi.CpCode, error) {
-	log.Println("[DEBUG] Setting up CPCode")
-
-	cpCodeValue, ok := d.GetOk("cp_code")
-	if !ok {
-		return nil, nil
-	}
-
-	cpCodes := papi.NewCpCodes(contract, group)
-	cpCode := papi.NewCpCode(cpCodes)
-	cpCode.CpcodeID = cpCodeValue.(string)
-	if !strings.HasPrefix(cpCode.CpcodeID, "cpc_") {
-		cpCode.CpcodeID = "cpc_" + cpCode.CpcodeID
-	}
-	if err := cpCode.GetCpCode(); err != nil {
-		cpCode.CpcodeID = ""
-		err := cpCodes.GetCpCodes()
-		if err != nil {
-			return nil, err
-		}
-
-		cpCode, err := cpCodes.FindCpCode(d.Get("cp_code").(string))
-		if err != nil {
-			return nil, err
-		}
-
-		if cpCode == nil && product != nil {
-			log.Println("[DEBUG] CPCode not found, creating a new one")
-			cpCode = papi.NewCpCode(cpCodes)
-			cpCode.ProductID = product.ProductID
-			cpCode.CpcodeName = d.Get("cp_code").(string)
-			err := cpCode.Save()
-			if err != nil {
-				return nil, err
-			}
-			log.Println("[DEBUG] CPCode created")
-		} else {
-			return nil, errors.New("product_id must be specified to create a new cp_code")
-		}
-	}
-	log.Println("[DEBUG] CPCode set up")
-
-	return cpCode, nil
 }
 
 func createOrigin(d *schema.ResourceData) (*papi.OptionValue, error) {
