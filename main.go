@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/akamai/terraform-provider-akamai/akamai"
 	"github.com/hashicorp/terraform/plugin"
-	"github.com/terraform-providers/terraform-provider-akamai/akamai"
 )
 
 func main() {
