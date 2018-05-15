@@ -1,22 +1,22 @@
-TEST?=$$(go list ./... |grep -v 'vendor')
-GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
+TEST?=$$(go list ./... | grep -v /vendor/)
+GOFMT_FILES?=$$(find . -name '*.go' | grep -v /vendor/)
 
 default: build
 
 build: fmtcheck
 	go install
 
+check: errcheck fmtcheck lint vet
+
 test: fmtcheck
-	go test -i $(TEST) || exit 1
-	echo $(TEST) | \
-		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
+	go test $(TEST) -v $(TESTARGS) -timeout 60s
 
 testacc: fmtcheck
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
 
 vet:
 	@echo "go vet ."
-	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -eq 1 ]; then \
+	@go vet $$(go list ./... | grep -v /vendor/); if [ $$? -eq 1 ]; then \
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
 		echo "and fix them if necessary before submitting the code for review."; \
@@ -35,11 +35,21 @@ errcheck:
 lint:
 	@sh -c "'$(CURDIR)/scripts/golint.sh'"
 
-vendor-status:
-	@govendor status
-
 test-compile:
 	go test -c ./akamai $(TESTARGS)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck lint vendor-status test-compile
+dep:
+	@which dep > /dev/null; if [ $$? -ne 0 ]; then \
+		echo "==> Installing dep..."; \
+		go get -u github.com/golang/dep/cmd/dep; \
+	fi
 
+dep-install: dep
+	@echo "==> Installing vendor dependencies..."
+	@dep ensure -vendor-only
+
+dep-update: dep
+	@echo "==> Updating vendor dependencies..."
+	@dep ensure -update
+
+.PHONY: build test testacc vet fmt fmtcheck errcheck lint test-compile

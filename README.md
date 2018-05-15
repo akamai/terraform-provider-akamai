@@ -1,5 +1,6 @@
 Akamai Provider for Terraform
 ==================
+[![Build Status](https://travis-ci.org/akamai/terraform-provider-akamai.svg?branch=master)](https://travis-ci.org/akamai/terraform-provider-akamai)
 
 Maintainers
 -----------
@@ -10,7 +11,7 @@ Requirements
 ------------
 
 -	[Terraform](https://www.terraform.io/downloads.html) 0.11.x
--	[Go](https://golang.org/doc/install) 1.8 (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.9.x
 
 ## Provider Configuration
 
@@ -129,17 +130,16 @@ A more complete example configuration can be found [here](https://github.com/aka
 Building The Provider
 ---------------------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-akamai
-
 ```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-akamai
+$ mkdir -p $GOPATH/src/github.com/akamai
+$ cd $GOPATH/src/github.com/akamai
+$ git clone git@github.com:akamai/terraform-provider-akamai
 ```
 
 Enter the provider directory and build the provider
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-akamai
+$ cd $GOPATH/src/github.com/akamai/terraform-provider-akamai
 $ make build
 ```
 
