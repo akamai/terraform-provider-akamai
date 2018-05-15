@@ -26,7 +26,22 @@ provider "akamai" {
 
 ## Resources
 
-The Akamai provider adds two resources, `akamai_fastdns_zone` and `akamai_property`.
+The Akamai provider adds three resources, `akamai_cp_code`, `akamai_fastdns_zone` and `akamai_property`.
+
+### akamai_cp_code
+
+This resource is used to configure Akamai Content Provider Codes.
+
+```hcl
+resource "akamai_cp_code" "example" {
+  contract_id = "ctr_XXX"
+  group_id    = "grp_XXX"
+  name        = "example-XXX"
+  product_id  = "prd_XXX"
+}
+```
+
+A more complete example configuration can be found [here](https://github.com/akamai/terraform-provider-akamai/blob/master/examples/akamai_cp_code/cp-code-example.tf).
 
 ### akamai_fastdns_zone
 

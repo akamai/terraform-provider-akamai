@@ -37,6 +37,11 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 		return e
 	}
 
+	cpCode, e := getCPCode(d, contract, group)
+	if e != nil {
+		return e
+	}
+
 	product, e := getProduct(d, contract)
 	if e != nil {
 		return e
@@ -83,11 +88,6 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("product_id")
 	d.SetPartial("clone_from")
 	d.SetPartial("network")
-
-	cpCode, e := createCpCode(property.Contract, property.Group, product, d)
-	if e != nil {
-		return e
-	}
 	d.SetPartial("cp_code")
 
 	rules, e := property.GetRules()

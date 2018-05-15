@@ -34,6 +34,7 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
+			"akamai_cp_code":      resourceCPCode(),
 			"akamai_fastdns_zone": resourceFastDNSZone(),
 			"akamai_property":     resourceProperty(),
 		},
