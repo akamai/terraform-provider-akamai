@@ -68,8 +68,8 @@
     "service/s3",
     "service/sts"
   ]
-  revision = "2e04cd1d1af06ff041e6036745e8b100e2e5f426"
-  version = "v1.13.46"
+  revision = "ee7b4b1162937cba700de23bd90acb742982e626"
+  version = "v1.13.50"
 
 [[projects]]
   branch = "master"
@@ -86,7 +86,8 @@
 [[projects]]
   name = "github.com/blang/semver"
   packages = ["."]
-  revision = "4a1e882c79dcf4ec00d2e29fac74b9c8938d5052"
+  revision = "2ee87856327ba09384cabd113bc6b5d174e9ec0f"
+  version = "v3.5.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -95,10 +96,16 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/fatih/color"
+  packages = ["."]
+  revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
+  version = "v1.7.0"
+
+[[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "5e9692864e22d02ac79e2fa499cffb00520b4fea"
-  version = "v1.34.0"
+  revision = "6529cf7c58879c08d927016dde4477f18a0634cb"
+  version = "v1.36.0"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -125,32 +132,37 @@
   revision = "7554cd9344cec97297fa6649b055a8c98c2a1e55"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-cleanhttp"
   packages = ["."]
-  revision = "06c9ea3a335b7443026f8124b22619524420291b"
+  revision = "d5fe4b57a186c716b0e00b8c301cbd9b4182694d"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-getter"
   packages = [
     ".",
     "helper/url"
   ]
-  revision = "90bb99a48d86cf1d327cee9968f7428f90ba13c1"
+  revision = "3f60ec5cfbb2a39731571b9ddae54b303bb0a969"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-hclog"
   packages = ["."]
-  revision = "b4e5765d1e5f00a0550911084f45f8214b5b83b9"
+  revision = "69ff559dc25f3b435631604f573a5fa1efdb6433"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-multierror"
   packages = ["."]
-  revision = "d30f09973e19c1dfcd120b2d9c4f168e68d6b5d5"
+  revision = "b7773ae218740a7be65057fc60b366a49b538a44"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-plugin"
   packages = ["."]
-  revision = "e53f54cbf51efde642d4711313e829a1ff0c236d"
+  revision = "e8d22c780116115ae5624720c9af0c97afe4f551"
 
 [[projects]]
   branch = "master"
@@ -159,16 +171,19 @@
   revision = "b1a1dbde6fdc11e3ae79efd9039009e22d4ae240"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-uuid"
   packages = ["."]
-  revision = "36289988d83ca270bc07c234c36f364b0dd9c9a7"
+  revision = "27454136f0364f2d44b1276c552d69105cf8c498"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
-  revision = "4fe82ae3040f80a03d04d2cccb5606a626b8e1ee"
+  revision = "23480c0665776210b5fbbac6eaaee40e3e6a96b7"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
@@ -181,9 +196,10 @@
     "json/scanner",
     "json/token"
   ]
-  revision = "a4b07c25de5ff55ad3b8936cea69a79a3d95a855"
+  revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/hcl2"
   packages = [
     "gohcl",
@@ -193,7 +209,7 @@
     "hcldec",
     "hclparse"
   ]
-  revision = "5f8ed954abd873b2c09616ba0aa607892bbca7e9"
+  revision = "9db880accff19d9bd953958df738ef0c02b4a311"
 
 [[projects]]
   branch = "master"
@@ -256,15 +272,22 @@
   revision = "0b12d6b5"
 
 [[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
   revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
   version = "v0.0.3"
 
 [[projects]]
+  branch = "master"
   name = "github.com/mitchellh/cli"
   packages = ["."]
-  revision = "33edc47170b5df54d2588696d590c5e20ee583fe"
+  revision = "c48282d14eba4b0817ddef3f832ff8d13851aefd"
 
 [[projects]]
   branch = "master"
@@ -291,14 +314,16 @@
   revision = "ad45545899c7b13c020ea92b2072220eefad42b8"
 
 [[projects]]
+  branch = "master"
   name = "github.com/mitchellh/hashstructure"
   packages = ["."]
-  revision = "6b17d669fac5e2f71c16658d781ec3fdd3802b69"
+  revision = "2bca23e0e452137f789efbc8610126fd8b94f73b"
 
 [[projects]]
+  branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "53818660ed4955e899c0bcafa97299a388bd7c8e"
+  revision = "bb74f1db0675b241733089d5a1faa5dd8b0ef57b"
 
 [[projects]]
   branch = "master"
@@ -359,6 +384,7 @@
   revision = "2c8e4be869c17540b336bab0ea18b8d73e6a28b7"
 
 [[projects]]
+  branch = "master"
   name = "github.com/zclconf/go-cty"
   packages = [
     "cty",
@@ -369,9 +395,10 @@
     "cty/json",
     "cty/set"
   ]
-  revision = "49fa5e03c418f95f78684c91e155af06aa901a32"
+  revision = "d006e4534bc4fbc512383aa98d04d641ea951ba5"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
@@ -385,7 +412,7 @@
     "openpgp/s2k",
     "ssh/terminal"
   ]
-  revision = "453249f01cfeb54c3d549ddb75ff152ca243f9d8"
+  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
 
 [[projects]]
   branch = "master"
@@ -401,13 +428,16 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "f73e4c9ed3b7ebdd5f699a16a880c2b1994e50dd"
+  revision = "2491c5de3490fced2f6cff376127c667efeed857"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
-  revision = "7dfd1290c7917b7ba22824b9d24954ab3002fe24"
+  packages = [
+    "unix",
+    "windows"
+  ]
+  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -434,7 +464,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "86e600f69ee4704c6efbf6a2a40a5c10700e76c2"
+  revision = "7bb2a897381c9c5ab2aeb8614f758d7766af68ff"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -472,6 +502,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d61c9a3639b3f9a2e36dd640ff018039123e5ac87ad4639c56bb588a748473c2"
+  inputs-digest = "23e3dcaa35b5dd23f19426af9cdac811ee88aa45a5f7d16cdd7c7eb3e1de3b15"
   solver-name = "gps-cdcl"
   solver-version = 1
