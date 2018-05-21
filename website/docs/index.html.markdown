@@ -8,10 +8,10 @@ description: |-
 
 # Akamai Provider
 
-The Akamai provider is used to interact with the Akamai Platform for Content
-Delivery, Security, and Performance.
+The Akamai provider is used to interact with the Akamai platform for content
+delivery, security, and performance.
 
-To use this Provider you must create API credentials valid for each service you want to
+To use this provider you must create API credentials valid for each service you want to
 use. Learn more [here](https://developer.akamai.com/introduction/Prov_Creds.html).
 
 Use the navigation to the left to read about the available resources.
