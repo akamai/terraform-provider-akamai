@@ -8,7 +8,7 @@ description: |-
 
 # akamai_fastdns_zone
 
-The `akamai_fastdns_zone` resource represents an Akamai Fast DNS zone configuration, allowing you to update, and create records within that Zone.
+The `akamai_fastdns_zone` resource represents an Akamai Fast DNS zone configuration, allowing you to update, and create records within that zone.
 
 ## Example Usage
 
@@ -50,14 +50,14 @@ The following arguments are supported:
 * `afsdb` — (Optional) An AFSDB record
   * `subtype` — (Required)
   * `target` — (Required) Record target
-* `cname` — (Optional) An CNAME record
+* `cname` — (Optional) A CNAME record
   * `target` — (Required) Record target
-* `dnskey` — (Optional) An DNSKEY record
+* `dnskey` — (Optional) A DNSKEY record
   * `algorithm` — (Required)
   * `flags` — (Required)
   * `key` — (Required)
   * `protocol` — (Required)
-* `ds` — (Optional) An DS record
+* `ds` — (Optional) A DS record
   * `algorithm` — (Required)
   * `digest` — (Required)
   * `digest-type` — (Required)
@@ -91,7 +91,7 @@ The following arguments are supported:
   * `flags` — (Required)
   * `iterations` — (Required)
   * `salt` — (Required)
-* `ptr` — (Optional) An PTR record
+* `ptr` — (Optional) A PTR record
   * `target` — (Required) Record target
 * `rp` — (Optional) An RP record
   * `mailbox` — (Required)
@@ -125,7 +125,7 @@ The following arguments are supported:
   * `algorithm` — (Required)
   * `fingerprint` — (Required)
   * `fingerprint-type` — (Required)
-* `txt` — (Optional) An TXT record
+* `txt` — (Optional) A TXT record
   * `target` — (Required) Record target
   
 A full description of each option is available [here](https://developer.akamai.com/api/luna/config-dns/data.html).
