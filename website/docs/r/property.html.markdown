@@ -9,7 +9,7 @@ description: |-
 # akamai_property
 
 The `akamai_property` resource represents an Akamai property configuration, allowing you to create,
-update, and activate properties on the Akamai Platform. 
+update, and activate properties on the Akamai platform. 
 
 ## Example Usage
 
@@ -84,60 +84,60 @@ Each `option` block comprises of a `key` and a corresponding `value` (single val
 
 The following arguments are supported:
 
-* `account_id` — (Required) The account ID
-* `contract_id` — (Optional) The contract ID
-* `group_id` — (Optional) The group ID
-* `product_id` — (Optional) The product ID
+* `account_id` — (Required) The account ID.
+* `contract_id` — (Optional) The contract ID.
+* `group_id` — (Optional) The group ID.
+* `product_id` — (Optional) The product ID.
 * `network` — (Optional) Akamai network to activate on. Allowed values `staging` (default) or `production`.
 * `activate` — (Optional, boolean) Whether to activate the property on the `network`. Default: `true`. 
-* `cp_code` — (Required) The CP Code to use (or create)
-* `name` — (Required) The property name
+* `cp_code` — (Required) The CP Code to use (or create).
+* `name` — (Required) The property name.
 * `version` — 
-* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/luna/papi/overview.html#versioning))
-* `ipv6` —  (Optional) Whether the property should use IPv6 to origin
-* `hostname` — (Required) One or more public hostnames
-* `contact` — (Required) One or more email addresses to inform about activation changes
-* `edge_hostname` — (Optional) One or more edge hostnames (must be <= to the number of public hostnames))
-* `clone_from` — (Optional) A property to clone
-  * `property_id` — (Required) The ID of the property to clone
-  * `version` — (Optional) The version of the property configuration to clone from (default: latest)
-  * `etag` — (Optional) An etag for the property configuration that validates it has not changed (useful when cloning from latest)
-  * `copy_hostnames` — (Optional, boolean) Whether to copy the hostnames configuration from the original property (if you copy hostnames and activate the property, it will **replace** the original configuration on the network)
-* `origin` — (Optional) The property origin (an origin _must_ be specified to activate a property, but may be defined in your `rules` block)
-  * `is_secure` — (Required) Whether the property configuration should be deployed to the the secure (TLS) Akamai network
-  * `hostname` — (Required) The origin hostname
-  * `port` — (Optional) The origin port to connect to (default: `80`)
-  * `forward_hostname` — (Optional) The value for the `Hostname` header sent to origin. (default: `ORIGIN_HOSTNAME`)
-  * `cache_key_hostname` — (Optional) The hostname uses for the cache key. (default: `ORIGIN_HOSTNAME`)
-  * `compress` — (Optional, boolean) Whether origin supports gzip compression (default: `false`)
-  * `enable_true_client_ip` — (Optional, boolean) Whether the `X-True-Client-IP` header should be sent to origin (default: `false`) 
-* `rules` — (Optional) A nested block of property rules, criteria, and behaviors
-  * `behavior` — (Optional) One or more behaviors to apply by default (use one `behavior` block for each behavior)
-  * `rule` — (Optional) Child rules
+* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/luna/papi/overview.html#versioning)).
+* `ipv6` —  (Optional) Whether the property should use IPv6 to origin.
+* `hostname` — (Required) One or more public hostnames.
+* `contact` — (Required) One or more email addresses to inform about activation changes.
+* `edge_hostname` — (Optional) One or more edge hostnames (must be <= to the number of public hostnames)
+* `clone_from` — (Optional) A property to clone.
+  * `property_id` — (Required) The ID of the property to clone.
+  * `version` — (Optional) The version of the property configuration to clone from (default: latest).
+  * `etag` — (Optional) An etag for the property configuration that validates it has not changed (useful when cloning from latest).
+  * `copy_hostnames` — (Optional, boolean) Whether to copy the hostnames configuration from the original property (if you copy hostnames and activate the property, it will **replace** the original configuration on the network).
+* `origin` — (Optional) The property origin (an origin _must_ be specified to activate a property, but may be defined in your `rules` block).
+  * `is_secure` — (Required) Whether the property configuration should be deployed to the the secure (TLS) Akamai network.
+  * `hostname` — (Required) The origin hostname.
+  * `port` — (Optional) The origin port to connect to (default: `80`).
+  * `forward_hostname` — (Optional) The value for the `Hostname` header sent to origin. (default: `ORIGIN_HOSTNAME`).
+  * `cache_key_hostname` — (Optional) The hostname uses for the cache key. (default: `ORIGIN_HOSTNAME`).
+  * `compress` — (Optional, boolean) Whether origin supports gzip compression (default: `false`).
+  * `enable_true_client_ip` — (Optional, boolean) Whether the `X-True-Client-IP` header should be sent to origin (default: `false`). 
+* `rules` — (Optional) A nested block of property rules, criteria, and behaviors.
+  * `behavior` — (Optional) One or more behaviors to apply by default (use one `behavior` block for each behavior).
+  * `rule` — (Optional) Child rules.
   
   
 The `rule` block supports:
 
-* `criteria` — (Optional) One or more criteria to match requests on
-* `behavior` — (Optional) One or more behaviors to apply to requests that match
-* `rule` — (Optional) Child rules (may be nested five levels deep)
+* `criteria` — (Optional) One or more criteria to match requests on.
+* `behavior` — (Optional) One or more behaviors to apply to requests that match.
+* `rule` — (Optional) Child rules (may be nested five levels deep).
 
 The `criteria` block supports:
 
-* `name` — (Required) The name of the criteria
-* `option` — (Optional) One or more options for the criteria
+* `name` — (Required) The name of the criteria.
+* `option` — (Optional) One or more options for the criteria.
   
   
 The `behavior` block supports:
 
-* `name` — (Required) The name of the behavior
-* `option` — (Optional) One or more options for the behavior
+* `name` — (Required) The name of the behavior.
+* `option` — (Optional) One or more options for the behavior.
   
 The `option` block supports:
 
-* `key` — (Required) The option name
-* `value` — (Optional) A single value for the option
-* `values` — (Optional) An array of values for the option
+* `key` — (Required) The option name.
+* `value` — (Optional) A single value for the option.
+* `values` — (Optional) An array of values for the option.
 
 One of `value` or `values` is required.
 
