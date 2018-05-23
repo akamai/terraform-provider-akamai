@@ -125,6 +125,7 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	"clone_from": &schema.Schema{
 		Type:     schema.TypeSet,
 		Optional: true,
+		ForceNew: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"property_id": {
