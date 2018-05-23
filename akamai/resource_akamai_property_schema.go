@@ -62,14 +62,17 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	"contract_id": &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
+		ForceNew: true,
 	},
 	"group_id": &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
+		ForceNew: true,
 	},
 	"product_id": &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
+		ForceNew: true,
 	},
 
 	"network": &schema.Schema{
