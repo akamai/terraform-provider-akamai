@@ -97,6 +97,14 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Type:     schema.TypeInt,
 		Computed: true,
 	},
+	"staging_version": &schema.Schema{
+		Type:     schema.TypeInt,
+		Computed: true,
+	},
+	"production_version": &schema.Schema{
+		Type:     schema.TypeInt,
+		Computed: true,
+	},
 	"rule_format": &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
