@@ -57,7 +57,7 @@ var akpsBehavior = &schema.Schema{
 var akamaiPropertySchema = map[string]*schema.Schema{
 	"account_id": &schema.Schema{
 		Type:     schema.TypeString,
-		Required: true,
+		Computed: true,
 	},
 	"contract_id": &schema.Schema{
 		Type:     schema.TypeString,

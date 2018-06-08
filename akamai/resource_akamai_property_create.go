@@ -76,13 +76,13 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+	d.Set("account_id", property.AccountID)
 	d.Set("version", property.LatestVersion)
 
 	// The API now has data, so save the partial state
 	d.SetId(property.PropertyID)
 	d.SetPartial("name")
 	d.SetPartial("rule_format")
-	d.SetPartial("account_id")
 	d.SetPartial("contract_id")
 	d.SetPartial("group_id")
 	d.SetPartial("product_id")
