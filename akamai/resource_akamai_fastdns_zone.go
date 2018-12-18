@@ -274,7 +274,7 @@ func resourceFastDNSZone() *schema.Resource {
 							Required: true,
 						},
 						"priority": {
-							Type:     schema.TypeString,
+							Type:     schema.TypeInt,
 							Required: true,
 						},
 					},
