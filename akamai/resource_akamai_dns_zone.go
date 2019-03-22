@@ -13,15 +13,15 @@ import (
 
 var dnsWriteLock sync.Mutex
 
-func resourceFastDNSZone() *schema.Resource {
+func resourceDNSZone() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceFastDNSZoneCreate,
-		Read:   resourceFastDNSZoneRead,
-		Update: resourceFastDNSZoneCreate,
-		Delete: resourceFastDNSZoneDelete,
-		Exists: resourceFastDNSZoneExists,
+		Create: resourceDNSZoneCreate,
+		Read:   resourceDNSZoneRead,
+		Update: resourceDNSZoneCreate,
+		Delete: resourceDNSZoneDelete,
+		Exists: resourceDNSZoneExists,
 		Importer: &schema.ResourceImporter{
-			State: resourceFastDNSZoneImport,
+			State: resourceDNSZoneImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"hostname": {
@@ -712,7 +712,7 @@ func resourceFastDNSZone() *schema.Resource {
 }
 
 // Create a new DNS Record
-func resourceFastDNSZoneCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	// only allow one record to be created at a time
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
@@ -722,7 +722,7 @@ func resourceFastDNSZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	hostname := d.Get("hostname").(string)
 
 	// First try to get the zone from the API
-	log.Printf("[INFO] [Akamai FastDNS] Searching for zone [%s]", hostname)
+	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
 	zone, e := dns.GetZone(hostname)
 
 	if e != nil {
@@ -730,8 +730,8 @@ func resourceFastDNSZoneCreate(d *schema.ResourceData, meta interface{}) error {
 		if dns.IsConfigDNSError(e) && e.(dns.ConfigDNSError).NotFound() == true {
 			// if the zone is not found/404 we will create a new
 			// blank zone for the records to be added to and continue
-			log.Printf("[DEBUG] [Akamai FastDNS] [ERROR] %s", e.Error())
-			log.Printf("[DEBUG] [Akamai FastDNS] Creating new zone")
+			log.Printf("[DEBUG] [Akamai DNS] [ERROR] %s", e.Error())
+			log.Printf("[DEBUG] [Akamai DNS] Creating new zone")
 			zone = dns.NewZone(hostname)
 			e = nil
 		} else {
@@ -740,14 +740,14 @@ func resourceFastDNSZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Transform the record data from the terraform config to a local type
-	log.Printf("[DEBUG] [Akamai FastDNS] Adding records to zone")
+	log.Printf("[DEBUG] [Akamai DNS] Adding records to zone")
 	e = unmarshalResourceData(d, zone)
 	if e != nil {
 		return e
 	}
 
 	// Save the zone to the API
-	log.Printf("[DEBUG] [Akamai FastDNS] Saving zone")
+	log.Printf("[DEBUG] [Akamai DNS] Saving zone")
 	e = zone.Save()
 	if e != nil {
 		return e
@@ -767,7 +767,7 @@ func assignFields(record dns.DNSRecord, d map[string]interface{}) {
 		if ok {
 			e := record.SetField(field, val)
 			if e != nil {
-				log.Printf("[WARN] [Akamai FastDNS] Couldn't add field to record: %s", e.Error())
+				log.Printf("[WARN] [Akamai DNS] Couldn't add field to record: %s", e.Error())
 			}
 		}
 	}
@@ -793,7 +793,7 @@ func mergeConfigs(recordType string, records []interface{}, s *schema.Resource, 
 
 // Unmarshal the config data from the terraform config file to our local types so it can be saved
 func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) error {
-	s := resourceFastDNSZone()
+	s := resourceDNSZone()
 
 	_, ok := d.GetOk("a")
 	if ok {
@@ -1218,15 +1218,15 @@ func unmarshalResourceData(d *schema.ResourceData, zone *dns.Zone) error {
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceFastDNSZoneRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSZoneRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceFastDNSZoneImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDNSZoneImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	hostname := d.Id()
 
 	// find the zone first
-	log.Printf("[INFO] [Akamai FastDNS] Searching for zone [%s]", hostname)
+	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
 	zone, err := dns.GetZone(hostname)
 	if err != nil {
 		return nil, err
@@ -1369,14 +1369,14 @@ func marshalResourceData(d *schema.ResourceData, zone *dns.Zone) {
 	d.Set("txt", txt)
 }
 
-func resourceFastDNSZoneDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSZoneDelete(d *schema.ResourceData, meta interface{}) error {
 	dnsWriteLock.Lock()
 	defer dnsWriteLock.Unlock()
 
 	hostname := d.Get("hostname").(string)
 
 	// find the zone first
-	log.Printf("[INFO] [Akamai FastDNS] Searching for zone [%s]", hostname)
+	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
 	zone, err := dns.GetZone(hostname)
 	if err != nil {
 		return err
@@ -1394,11 +1394,11 @@ func resourceFastDNSZoneDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceFastDNSZoneExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceDNSZoneExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	hostname := d.Get("hostname").(string)
 
 	// try to get the zone from the API
-	log.Printf("[INFO] [Akamai FastDNS] Searching for zone [%s]", hostname)
+	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
 	zone, err := dns.GetZone(hostname)
 	return zone != nil, err
 }

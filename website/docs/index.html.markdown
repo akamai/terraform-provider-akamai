@@ -23,7 +23,7 @@ Use the navigation to the left to read about the available resources.
 provider "akamai" {
   edgerc = "/path/to/.edgerc"
   papi_section = "papi"
-  fastdns_section = "dns"
+  dns_section = "dns"
 }
 
 # Create a Property
@@ -38,14 +38,14 @@ resource "akamai_property" "example_property" {
 
 The Akamai provider uses the standard Akamai Edgegrid authentication configuration,
 providing a path to an `.edgerc` INI file, with one or more credential sections for each
-service. You can read more about the .edgerc file [here](https://developer.akamai.com/introduction/Conf_Client.html#edgercformat). 
+service. You can read more about the .edgerc file [here](https://developer.akamai.com/introduction/Conf_Client.html#edgercformat).
 
-You can also specify credential values using environment variables. Environment variables take precedence over the `.edgerc` file. 
+You can also specify credential values using environment variables. Environment variables take precedence over the `.edgerc` file.
 
 ### Using an .edgerc file
 
 To use an `.edgerc` file, you should configure the provider to specify a path. By
-default it will look in the current users home directory. 
+default it will look in the current users home directory.
 
 Usage:
 
@@ -62,7 +62,7 @@ default the `default` section is used.
 provider "akamai" {
   edgerc = "/path/to/.edgerc"
   papi_section = "papi"
-  fastdns_section = "dns"
+  dns_section = "dns"
 }
 ```
 
@@ -94,5 +94,4 @@ The following arguments are supported in the `provider` block:
 
 * `edgerc` - (Optional) The location of the `.edgerc` file containing credentials. Default: `$HOME/.edgerc`
 * `papi_section` — (Optional) The credential section to use for the Property Manager API (PAPI). Default: `default`.
-* `fastdns_section` — (Optional) The credential section to use for the Config DNS API. Default: `default`.
-
+* `dns_section` — (Optional) The credential section to use for the Config DNS API. Default: `default`.

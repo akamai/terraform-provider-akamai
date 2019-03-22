@@ -21,13 +21,13 @@ The configuration for this provider requires the location of an .edgerc credenti
 provider "akamai" {
   edgerc = "~/.edgerc"
   papi_section = "papi"
-  fastdns_section = "dns"
+  dns_section = "dns"
 }
 ```
 
 ## Resources
 
-The Akamai provider adds three resources, `akamai_cp_code`, `akamai_fastdns_zone` and `akamai_property`.
+The Akamai provider adds three resources, `akamai_cp_code`, `akamai_dns_zone` and `akamai_property`.
 
 ### akamai_cp_code
 
@@ -44,12 +44,12 @@ resource "akamai_cp_code" "example" {
 
 A more complete example configuration can be found [here](https://github.com/akamai/terraform-provider-akamai/blob/master/examples/akamai_cp_code/cp-code-example.tf).
 
-### akamai_fastdns_zone
+### akamai_dns_zone
 
-This resource is used to configure DNS records hosted by Akamai's FastDNS. 
+This resource is used to configure DNS records hosted by Akamai's DNS.
 
 ```hcl
-resource "akamai_fastdns_zone" "test_zone" {
+resource "akamai_dns_zone" "test_zone" {
   hostname = "example.com"
 
   a {
@@ -68,7 +68,7 @@ resource "akamai_fastdns_zone" "test_zone" {
 }
 ```
 
-An more complete example configuration can be found [here](https://github.com/akamai/terraform-provider-akamai/blob/master/examples/akamai_fastdns_zone/add-records/dns.tf).
+An more complete example configuration can be found [here](https://github.com/akamai/terraform-provider-akamai/blob/master/examples/akamai_dns_zone/add-records/dns.tf).
 
 ### akamai_property
 

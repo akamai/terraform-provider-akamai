@@ -1,21 +1,21 @@
 ---
 layout: "akamai"
-page_title: "Akamai: fastdns_zone"
-sidebar_current: "docs-akamai-resource-fastdns-zone"
+page_title: "Akamai: dns_zone"
+sidebar_current: "docs-akamai-resource-dns-zone"
 description: |-
-  Create and update Akamai Fast DNS Zone records
+  Create and update Akamai  DNS Zone records
 ---
 
-# akamai_fastdns_zone
+# akamai_dns_zone
 
-The `akamai_fastdns_zone` resource represents an Akamai Fast DNS zone configuration, allowing you to update, and create records within that zone.
+The `akamai_dns_zone` resource represents an Akamai  DNS zone configuration, allowing you to update, and create records within that zone.
 
 ## Example Usage
 
 Basic usage:
 
 ```hcl
-resource "akamai_fastdns_zone" "example_net" {
+resource "akamai_dns_zone" "example_net" {
   hostname = "example.net"
 
   a {
@@ -24,7 +24,7 @@ resource "akamai_fastdns_zone" "example_net" {
     active = true
     target = "192.0.2.3"
   }
-  
+
   cname {
     name = "www"
     ttl = 600
@@ -127,5 +127,5 @@ The following arguments are supported:
   * `fingerprint-type` — (Required)
 * `txt` — (Optional) A TXT record
   * `target` — (Required) Record target
-  
+
 A full description of each option is available [here](https://developer.akamai.com/api/luna/config-dns/data.html).

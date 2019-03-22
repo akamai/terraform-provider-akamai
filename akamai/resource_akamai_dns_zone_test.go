@@ -11,13 +11,13 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v1"
 )
 
-var testAccAkamaiFastDNSZoneConfig = fmt.Sprintf(`
+var testAccAkamaiDNSZoneConfig = fmt.Sprintf(`
 provider "akamai" {
   edgerc = "~/.edgerc"
-  fastdns_section = "dns"
+  dns_section = "dns"
 }
 
-resource "akamai_fastdns_zone" "tf_acc_test_zone" {
+resource "akamai_dns_zone" "tf_acc_test_zone" {
   hostname = "akamaideveloper.net"
   soa {
     ttl = 900
@@ -49,13 +49,13 @@ resource "akamai_fastdns_zone" "tf_acc_test_zone" {
 }
 `)
 
-var testAccAkamaiFastDNSZoneConfigWithCounter = fmt.Sprintf(`
+var testAccAkamaiDNSZoneConfigWithCounter = fmt.Sprintf(`
 provider "akamai" {
   edgerc = "~/.edgerc"
-  fastdns_section = "dns"
+  dns_section = "dns"
 }
 
-resource "akamai_fastdns_zone" "tf_acc_test_zone_counter" {
+resource "akamai_dns_zone" "tf_acc_test_zone_counter" {
   count = "3"
   hostname = "akamaideveloper.net"
 
@@ -68,41 +68,41 @@ resource "akamai_fastdns_zone" "tf_acc_test_zone_counter" {
 }
 `)
 
-func TestAccAkamaiFastDNSZone_basic(t *testing.T) {
+func TestAccAkamaiDNSZone_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiFastDNSZoneDestroy,
+		CheckDestroy: testAccCheckAkamaiDNSZoneDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiFastDNSZoneConfig,
+				Config: testAccAkamaiDNSZoneConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiFastDNSZoneExists,
+					testAccCheckAkamaiDNSZoneExists,
 				),
 			},
 		},
 	})
 }
 
-func TestAccAkamaiFastDNSZone_counter(t *testing.T) {
+func TestAccAkamaiDNSZone_counter(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiFastDNSZoneDestroy,
+		CheckDestroy: testAccCheckAkamaiDNSZoneDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiFastDNSZoneConfigWithCounter,
+				Config: testAccAkamaiDNSZoneConfigWithCounter,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiFastDNSZoneExists,
+					testAccCheckAkamaiDNSZoneExists,
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckAkamaiFastDNSZoneDestroy(s *terraform.State) error {
+func testAccCheckAkamaiDNSZoneDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_fastdns_zone" {
+		if rs.Type != "akamai_dns_zone" {
 			continue
 		}
 
@@ -139,9 +139,9 @@ func testAccCheckAkamaiFastDNSZoneDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckAkamaiFastDNSZoneExists(s *terraform.State) error {
+func testAccCheckAkamaiDNSZoneExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_fastdns_zone" {
+		if rs.Type != "akamai_dns_zone" {
 			continue
 		}
 

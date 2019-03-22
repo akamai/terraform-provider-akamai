@@ -2,8 +2,8 @@ package akamai
 
 import (
 	"fmt"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -22,7 +22,12 @@ func Provider() terraform.ResourceProvider {
 				Optional: true,
 				Type:     schema.TypeString,
 			},
-			"fastdns_section": &schema.Schema{
+			"dns_section": &schema.Schema{
+				Optional: true,
+				Type:     schema.TypeString,
+				Default:  "default",
+			},
+			"dnsv2_section": &schema.Schema{
 				Optional: true,
 				Type:     schema.TypeString,
 				Default:  "default",
@@ -33,10 +38,17 @@ func Provider() terraform.ResourceProvider {
 				Default:  "default",
 			},
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"akamai_dns_record_set":  dataSourceDnsRecordSet(),
+			"akamai_authorities_set": dataSourceAuthoritiesSet(),
+		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cp_code":      resourceCPCode(),
-			"akamai_fastdns_zone": resourceFastDNSZone(),
-			"akamai_property":     resourceProperty(),
+			"akamai_cp_code":       resourceCPCode(),
+			"akamai_dns_zone":      resourceDNSZone(),
+			"akamai_dnsv2_zone":    resourceDNSv2Zone(),
+			"akamai_dnsv2_record":  resourceDNSv2Record(),
+			"akamai_property":      resourceProperty(),
+			"akamai_property_rule": resourcePropertyRule(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
@@ -47,13 +59,16 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	dnsv2Config, err := getConfigDNSV2Service(d)
+	if err != nil {
+		return nil, err
+	}
 	papiConfig, err := getPAPIV1Service(d)
 	if err != nil {
 		return nil, err
 	}
 
-	if dnsConfig == nil && papiConfig == nil {
+	if dnsConfig == nil && dnsv2Config == nil && papiConfig == nil {
 		return nil, fmt.Errorf("at least one edgerc section must be defined")
 	}
 
@@ -62,16 +77,29 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
 func getConfigDNSV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	edgerc := d.Get("edgerc").(string)
-	section := d.Get("fastdns_section").(string)
+	section := d.Get("dns_section").(string)
 
-	fastDNSConfig, err := edgegrid.Init(edgerc, section)
+	DNSConfig, err := edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
 
-	dns.Init(fastDNSConfig)
+	dns.Init(DNSConfig)
 
-	return &fastDNSConfig, nil
+	return &DNSConfig, nil
+}
+
+func getConfigDNSV2Service(d *schema.ResourceData) (*edgegrid.Config, error) {
+	edgerc := d.Get("edgerc").(string)
+	section := d.Get("dnsv2_section").(string)
+	DNSv2Config, err := edgegrid.Init(edgerc, section)
+	if err != nil {
+		return nil, err
+	}
+
+	dnsv2.Init(DNSv2Config)
+
+	return &DNSv2Config, nil
 }
 
 func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
