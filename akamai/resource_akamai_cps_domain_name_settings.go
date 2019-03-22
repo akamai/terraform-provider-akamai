@@ -1,7 +1,7 @@
 package akamai
 
 import (
-	cps "github.com/akava-io/AkamaiOPEN-edgegrid-golang/cps-v2"
+	cps "github.com/akamai/AkamaiOPEN-edgegrid-golang/cps-v2"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
