@@ -37,6 +37,11 @@ func Provider() terraform.ResourceProvider {
 				Type:     schema.TypeString,
 				Default:  "default",
 			},
+			"cps_section": &schema.Schema{
+				Optional: true,
+				Type:     schema.TypeString,
+				Default:  "default",
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_dns_record_set":  dataSourceDnsRecordSet(),
@@ -48,6 +53,7 @@ func Provider() terraform.ResourceProvider {
 			"akamai_dnsv2_zone":    resourceDNSv2Zone(),
 			"akamai_dnsv2_record":  resourceDNSv2Record(),
 			"akamai_property":      resourceProperty(),
+      "akamai_cps_enrollment": resourceEnrollment(),
 			"akamai_property_rule": resourcePropertyRule(),
 		},
 		ConfigureFunc: providerConfigure,
@@ -68,7 +74,12 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return nil, err
 	}
 
-	if dnsConfig == nil && dnsv2Config == nil && papiConfig == nil {
+	cpsConfig, err := getCPSV2Service(d)
+	if err != nil {
+		return nil, err
+	}
+
+	if dnsConfig == nil && dnsv2Config == nil && papiConfig == nil && cpsConfig == nil {
 		return nil, fmt.Errorf("at least one edgerc section must be defined")
 	}
 

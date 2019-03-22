@@ -48,6 +48,7 @@ A more complete example configuration can be found [here](https://github.com/aka
 
 This resource is used to configure DNS records hosted by Akamai's DNS.
 
+
 ```hcl
 resource "akamai_dns_zone" "test_zone" {
   hostname = "example.com"
