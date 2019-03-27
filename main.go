@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/akava-io/terraform-provider-akamai/akamai"
+	"github.com/akamai/terraform-provider-akamai/akamai"
 	"github.com/hashicorp/terraform/plugin"
 )
 
