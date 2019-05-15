@@ -24,17 +24,17 @@ func resourceCPCode() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"contract_id": &schema.Schema{
+			"contract": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"group_id": &schema.Schema{
+			"group": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"product_id": &schema.Schema{
+			"product": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -47,7 +47,7 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Creating CP Code")
 
 	cpCode := resourceCPCodePAPINewCPCodes(d, meta).NewCpCode()
-	cpCode.ProductID = d.Get("product_id").(string)
+	cpCode.ProductID = d.Get("product").(string)
 	cpCode.CpcodeName = d.Get("name").(string)
 	err := cpCode.Save()
 	if err != nil {
@@ -92,7 +92,7 @@ func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", cpCode.CpcodeName)
-	d.Set("product_id", cpCode.ProductIDs[0])
+	d.Set("product", cpCode.ProductIDs[0])
 
 	log.Printf("[DEBUG] Read CP Code: %+v", cpCode)
 	return nil
@@ -108,10 +108,10 @@ func resourceCPCodeUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceCPCodePAPINewCPCodes(d *schema.ResourceData, meta interface{}) *papi.CpCodes {
 	contract := &papi.Contract{
-		ContractID: d.Get("contract_id").(string),
+		ContractID: d.Get("contract").(string),
 	}
 	group := &papi.Group{
-		GroupID: d.Get("group_id").(string),
+		GroupID: d.Get("group").(string),
 	}
 	return papi.NewCpCodes(contract, group)
 }

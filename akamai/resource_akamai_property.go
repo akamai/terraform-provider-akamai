@@ -9,8 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/tidwall/gjson"
 )
 
 func resourceProperty() *schema.Resource {
@@ -79,24 +81,28 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("account_id", property.AccountID)
+	d.Set("account", property.AccountID)
 	d.Set("version", property.LatestVersion)
 
 	// The API now has data, so save the partial state
 	d.SetId(property.PropertyID)
 	d.SetPartial("name")
 	d.SetPartial("rule_format")
-	d.SetPartial("contract_id")
-	d.SetPartial("group_id")
-	d.SetPartial("product_id")
+	d.SetPartial("contract")
+	d.SetPartial("group")
+	d.SetPartial("product")
 	d.SetPartial("clone_from")
 	d.SetPartial("network")
 	d.SetPartial("cp_code")
+	/*
+		rules, e := property.GetRules()
+		if e != nil {
+			return e
+		}*/
 
-	rules, e := property.GetRules()
-	if e != nil {
-		return e
-	}
+	rules := papi.NewRules()
+	rules.PropertyID = d.Id()
+	rules.PropertyVersion = property.LatestVersion
 
 	origin, e := createOrigin(d)
 	if e != nil {
@@ -105,9 +111,22 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 
 	updateStandardBehaviors(rules, cpCode, origin)
 	fixupPerformanceBehaviors(rules)
+	//fixupAdaptiveImageCompression(rules)
 
 	// get rules from the TF config
-	unmarshalRules(d, rules)
+	/*rulecheck, ok := d.GetOk("rules")
+	if ok {
+		unmarshalRules(d, rules)
+	}
+	log.Printf("[DEBUG] Check for rules %s\n", rulecheck)
+	*/
+
+	rulecheck, ok := d.GetOk("rules")
+	if ok {
+		log.Printf("[DEBUG] Unmarshal Rules from JSON")
+		unmarshalRulesFromJSON(d, rules)
+	}
+	log.Printf("[DEBUG] Check for rules Json CREATE %s\n", rulecheck)
 
 	e = rules.Save()
 	if e != nil {
@@ -122,14 +141,14 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetPartial("default")
 	d.SetPartial("origin")
-	d.SetPartial("rule")
+	//d.SetPartial("rule")
 
 	hostnameEdgeHostnameMap, err := createHostnames(property, product, d)
 	if err != nil {
 		return err
 	}
 
-	edgeHostnames, err := setEdgeHostnames(property, hostnameEdgeHostnameMap)
+	edgeHostnames, err := setEdgeHostnames(property, hostnameEdgeHostnameMap, d)
 	if err != nil {
 		return err
 	}
@@ -205,11 +224,11 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 
 func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] DELETING")
-	contractID, ok := d.GetOk("contract_id")
+	contractID, ok := d.GetOk("contract")
 	if !ok {
 		return errors.New("missing contract ID")
 	}
-	groupID, ok := d.GetOk("group_id")
+	groupID, ok := d.GetOk("group")
 	if !ok {
 		return errors.New("missing group ID")
 	}
@@ -305,9 +324,9 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 		return nil, e
 	}
 
-	d.Set("account_id", property.AccountID)
-	d.Set("contract_id", property.ContractID)
-	d.Set("group_id", property.GroupID)
+	d.Set("account", property.AccountID)
+	d.Set("contract", property.ContractID)
+	d.Set("group", property.GroupID)
 	//d.Set("clone_from", property.CloneFrom.PropertyID)
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
@@ -338,15 +357,16 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	// Cannot set clone_from. Not provided on GET requests.
 	// d.Set("clone_from", nil)
 
-	// Cannot set product_id. Not provided on GET requests.
-	// d.Set("product_id", property.ProductID)
+	// Cannot set product. Not provided on GET requests.
+	// d.Set("product", property.ProductID)
 
-	d.Set("account_id", property.AccountID)
-	d.Set("contract_id", property.ContractID)
-	d.Set("group_id", property.GroupID)
+	d.Set("account", property.AccountID)
+	d.Set("contract", property.ContractID)
+	d.Set("group", property.GroupID)
 	d.Set("name", property.PropertyName)
 	d.Set("note", property.Note)
 	d.Set("rule_format", property.RuleFormat)
+	log.Printf("[DEBUG] Property RuleFormat from API : %s\n", property.RuleFormat)
 	d.Set("version", property.LatestVersion)
 	if property.StagingVersion > 0 {
 		d.Set("staging_version", property.StagingVersion)
@@ -409,21 +429,21 @@ var akpsBehavior = &schema.Schema{
 }
 
 var akamaiPropertySchema = map[string]*schema.Schema{
-	"account_id": &schema.Schema{
+	"account": &schema.Schema{
 		Type:     schema.TypeString,
 		Computed: true,
 	},
-	"contract_id": &schema.Schema{
+	"contract": &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 		ForceNew: true,
 	},
-	"group_id": &schema.Schema{
+	"group": &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 		ForceNew: true,
 	},
-	"product_id": &schema.Schema{
+	"product": &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 		ForceNew: true,
@@ -470,12 +490,12 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	"ipv6": &schema.Schema{
 		Type:     schema.TypeBool,
 		Optional: true,
-	},
-	"hostname": &schema.Schema{
-		Type:     schema.TypeSet,
-		Required: true,
-		Elem:     &schema.Schema{Type: schema.TypeString},
-	},
+	}, /*
+		"hostname": &schema.Schema{
+			Type:     schema.TypeSet,
+			Required: true,
+			Elem:     &schema.Schema{Type: schema.TypeString},
+		},*/
 	"contact": &schema.Schema{
 		Type:     schema.TypeSet,
 		Required: true,
@@ -486,14 +506,18 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Optional: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
-
+	"edge_hostname_map": &schema.Schema{
+		Type:     schema.TypeMap,
+		Optional: true,
+		Elem:     &schema.Schema{Type: schema.TypeString},
+	},
 	"clone_from": &schema.Schema{
 		Type:     schema.TypeSet,
 		Optional: true,
 		ForceNew: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"property_id": {
+				"property": {
 					Type:     schema.TypeString,
 					Required: true,
 				},
@@ -556,141 +580,13 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 			},
 		},
 	},
-
-	// rules tree can go max 5 levels deep
-	"rules": &schema.Schema{
-		Type:     schema.TypeSet,
+	"rules": {
+		Type:     schema.TypeString,
 		Optional: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"criteria_match": {
-					Type:     schema.TypeString,
-					Optional: true,
-					Default:  "all",
-				},
-				"behavior": akpsBehavior,
-				"rule": &schema.Schema{
-					Type:     schema.TypeSet,
-					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							"name": {
-								Type:     schema.TypeString,
-								Required: true,
-							},
-							"comment": {
-								Type:     schema.TypeString,
-								Optional: true,
-							},
-							"criteria_match": {
-								Type:     schema.TypeString,
-								Optional: true,
-								Default:  "all",
-							},
-							"criteria": akpsCriteria,
-							"behavior": akpsBehavior,
-							"rule": &schema.Schema{
-								Type:     schema.TypeSet,
-								Optional: true,
-								Elem: &schema.Resource{
-									Schema: map[string]*schema.Schema{
-										"name": {
-											Type:     schema.TypeString,
-											Required: true,
-										},
-										"comment": {
-											Type:     schema.TypeString,
-											Optional: true,
-										},
-										"criteria_match": {
-											Type:     schema.TypeString,
-											Optional: true,
-											Default:  "all",
-										},
-										"criteria": akpsCriteria,
-										"behavior": akpsBehavior,
-										"rule": &schema.Schema{
-											Type:     schema.TypeSet,
-											Optional: true,
-											Elem: &schema.Resource{
-												Schema: map[string]*schema.Schema{
-													"name": {
-														Type:     schema.TypeString,
-														Required: true,
-													},
-													"comment": {
-														Type:     schema.TypeString,
-														Optional: true,
-													},
-													"criteria_match": {
-														Type:     schema.TypeString,
-														Optional: true,
-														Default:  "all",
-													},
-													"criteria": akpsCriteria,
-													"behavior": akpsBehavior,
-													"rule": &schema.Schema{
-														Type:     schema.TypeSet,
-														Optional: true,
-														Elem: &schema.Resource{
-															Schema: map[string]*schema.Schema{
-																"name": {
-																	Type:     schema.TypeString,
-																	Required: true,
-																},
-																"comment": {
-																	Type:     schema.TypeString,
-																	Optional: true,
-																},
-																"criteria_match": {
-																	Type:     schema.TypeString,
-																	Optional: true,
-																	Default:  "all",
-																},
-																"criteria": akpsCriteria,
-																"behavior": akpsBehavior,
-															},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				"variable": &schema.Schema{
-					Type:     schema.TypeSet,
-					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							"name": {
-								Type:     schema.TypeString,
-								Required: true,
-							},
-							"description": {
-								Type:     schema.TypeString,
-								Optional: true,
-							},
-							"hidden": {
-								Type:     schema.TypeBool,
-								Required: true,
-							},
-							"sensitive": {
-								Type:     schema.TypeBool,
-								Required: true,
-							},
-							"value": {
-								Type:     schema.TypeString,
-								Optional: true,
-							},
-						},
-					},
-				},
-			},
-		},
+	},
+	"variables": {
+		Type:     schema.TypeString,
+		Optional: true,
 	},
 }
 
@@ -729,10 +625,25 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 			return e
 		}
 	}
+	/*
+	     rules := papi.NewRules()
+	   	rules.PropertyID = d.Id()
+	   	rules.PropertyVersion = property.LatestVersion
+	*/
 
 	rules, e := property.GetRules()
 	if e != nil {
 		return e
+	}
+
+	if ruleFormat, ok := d.GetOk("rule_format"); ok {
+		rules.RuleFormat = ruleFormat.(string)
+	} else {
+		ruleFormats := papi.NewRuleFormats()
+		rules.RuleFormat, err = ruleFormats.GetLatest()
+		if err != nil {
+			return err
+		}
 	}
 
 	origin, e := createOrigin(d)
@@ -741,9 +652,30 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	updateStandardBehaviors(rules, cpCode, origin)
+	//fixupAdaptiveImageCompression(rules)
+	// get rules from the TF config
+	//unmarshalRules(d, rules)
 
 	// get rules from the TF config
-	unmarshalRules(d, rules)
+	/*rulecheck, ok := d.GetOk("rules")
+	if ok {
+		log.Printf("[DEBUG] Unmarshal HCL rules %s\n", rulecheck)
+		unmarshalRules(d, rules)
+	}
+	log.Printf("[DEBUG] Check for rules %s\n", rulecheck)
+	*/
+	rulecheck, ok := d.GetOk("rules")
+	if ok {
+		log.Printf("[DEBUG] Unmarshal Rules from JSON")
+		unmarshalRulesFromJSON(d, rules)
+	}
+	log.Printf("[DEBUG] Check for rules Json Before Unmarshal UPDATE %s\n", rulecheck)
+
+	jsonBody, err := jsonhooks.Marshal(rules)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] Check rules after unmarshal from Json %s\n", string(jsonBody))
 
 	e = rules.Save()
 	if e != nil {
@@ -758,19 +690,20 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetPartial("default")
 	d.SetPartial("origin")
-	d.SetPartial("rule")
+	//d.SetPartial("rule")
 
-	if d.HasChange("hostname") || d.HasChange("ipv6") {
+	//if d.HasChange("hostname") ||
+	if d.HasChange("ipv6") || d.HasChange("edge_hostname_map") {
 		hostnameEdgeHostnameMap, err := createHostnames(property, product, d)
 		if err != nil {
 			return err
 		}
 
-		edgeHostnames, err := setEdgeHostnames(property, hostnameEdgeHostnameMap)
+		edgeHostnames, err := setEdgeHostnames(property, hostnameEdgeHostnameMap, d)
 		if err != nil {
 			return err
 		}
-		d.SetPartial("hostname")
+		//d.SetPartial("hostname")
 		d.SetPartial("ipv6")
 		d.Set("edge_hostname", edgeHostnames)
 	}
@@ -820,7 +753,7 @@ func getProperty(d *schema.ResourceData) (*papi.Property, error) {
 
 func getGroup(d *schema.ResourceData) (*papi.Group, error) {
 	log.Println("[DEBUG] Fetching groups")
-	groupID, ok := d.GetOk("group_id")
+	groupID, ok := d.GetOk("group")
 
 	if !ok {
 		return nil, nil
@@ -843,7 +776,7 @@ func getGroup(d *schema.ResourceData) (*papi.Group, error) {
 
 func getContract(d *schema.ResourceData) (*papi.Contract, error) {
 	log.Println("[DEBUG] Fetching contract")
-	contractID, ok := d.GetOk("contract_id")
+	contractID, ok := d.GetOk("contract")
 	if !ok {
 		return nil, nil
 	}
@@ -891,7 +824,7 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product,
 	}
 
 	log.Println("[DEBUG] Fetching product")
-	productID, ok := d.GetOk("product_id")
+	productID, ok := d.GetOk("product")
 	if !ok {
 		return nil, nil
 	}
@@ -923,7 +856,7 @@ func getCloneFrom(d *schema.ResourceData) (*papi.ClonePropertyFrom, error) {
 	set := cF.(*schema.Set)
 	cloneFrom := set.List()[0].(map[string]interface{})
 
-	propertyID := cloneFrom["property_id"].(string)
+	propertyID := cloneFrom["property"].(string)
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
@@ -1019,6 +952,23 @@ func fixupPerformanceBehaviors(rules *papi.Rules) {
 	})
 }
 
+func fixupAdaptiveImageCompression(rules *papi.Rules) {
+	log.Println("[DEBUG] Start Fixing Up adaptiveImageCompression Behavior")
+	behavior, err := rules.FindBehavior("/Performance/JPEG Images/adaptiveImageCompression")
+	log.Println("[DEBUG] Start Fixing Up adaptiveImageCompression Behavior ", behavior, err)
+	if err != nil || behavior == nil { //} || (behavior != nil && behavior.Options["compressMobile"] != "") {
+		log.Println("[DEBUG] Fixing Up adaptiveImageCompression Behavior Leave early")
+		return
+	}
+	//behavior.Name = "SKIP"
+	log.Println("[DEBUG] Fixing Up adaptiveImageCompression Behavior")
+	behavior.MergeOptions(papi.OptionValue{
+		"excellentConnectionOption": "Adapt Images",
+		"goodConnectionOption":      "Adapt Images",
+	})
+	log.Println("[DEBUG] Start Fixing Up adaptiveImageCompression Behavior  ", behavior)
+}
+
 func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *papi.OptionValue) {
 	if cpCode != nil {
 		b := papi.NewBehavior()
@@ -1053,7 +1003,48 @@ func createHostnames(property *papi.Property, product *papi.Product, d *schema.R
 		}
 	}
 
-	hostnames := d.Get("hostname").(*schema.Set).List()
+	log.Println("[DEBUG] Check for Edge Host Map for hostnames")
+	edgeHostnameMapTest, ok := d.GetOk("edge_hostname_map")
+	var hostname string
+	var hostCount int
+
+	if ok {
+
+		log.Println("[DEBUG] Check for Edge Host Map for hostnames ", edgeHostnameMapTest)
+
+		for key, value := range edgeHostnameMapTest.(map[string]interface{}) {
+
+			log.Println("[DEBUG] EdgeHostnameMap ", key, value)
+			if strings.Contains(value.(string), "ehn_") {
+			}
+			log.Println("[DEBUG] EdgeHostnameMap ", key, value)
+			hostCount = hostCount + 1
+		}
+
+	}
+
+	if hostCount == 0 {
+		hostCount = 1
+	}
+
+	hostnames := make([]string, 0, hostCount)
+
+	if ok {
+		for key, value := range edgeHostnameMapTest.(map[string]interface{}) {
+			log.Println("[DEBUG] EdgeHostnameMap ", key, value)
+			//log.Println("[DEBUG] EdgeHostnameMap " + eHn["edge_hostname_map.ehn_3564957-edgeHostnameDomain"].Value)
+			//edgeHostname = eHn.EdgeHostnameDomain
+			//edgeHostname = eHn.EdgeHostnameDomain
+
+			if strings.Contains(key, "cnamefrom") {
+				hostname = value.(string)
+				log.Println("[DEBUG] Figuring out edgehostname ", hostname)
+				hostnames = append(hostnames, hostname)
+			}
+		}
+	}
+
+	//	hostnames := d.Get("hostname").(*schema.Set).List()
 	ipv6 := d.Get("ipv6").(bool)
 
 	log.Println("[DEBUG] Figuring out hostnames")
@@ -1084,8 +1075,8 @@ func createHostnames(property *papi.Property, product *papi.Product, d *schema.R
 		}
 
 		for _, hostname := range hostnames {
-			if _, ok := hostnameEdgeHostnameMap[hostname.(string)]; !ok {
-				hostnameEdgeHostnameMap[hostname.(string)] = defaultEdgeHostname
+			if _, ok := hostnameEdgeHostnameMap[hostname]; !ok {
+				hostnameEdgeHostnameMap[hostname] = defaultEdgeHostname
 				return hostnameEdgeHostnameMap, nil
 			}
 		}
@@ -1105,8 +1096,8 @@ func createHostnames(property *papi.Property, product *papi.Product, d *schema.R
 		// Search for existing hostname, map 1:1
 		var overrideDefault bool
 		for _, hostname := range hostnames {
-			if edgeHostname, ok := edgeHostnamesMap[hostname.(string)+".edgesuite.net"]; ok {
-				hostnameEdgeHostnameMap[hostname.(string)] = edgeHostname
+			if edgeHostname, ok := edgeHostnamesMap[hostname+".edgesuite.net"]; ok {
+				hostnameEdgeHostnameMap[hostname] = edgeHostname
 				// Override the default with the first one found
 				if !overrideDefault {
 					defaultEdgeHostname = edgeHostname
@@ -1114,7 +1105,15 @@ func createHostnames(property *papi.Property, product *papi.Product, d *schema.R
 				}
 				continue
 			}
-
+			if edgeHostname, ok := edgeHostnamesMap[hostname+".edgekey.net"]; ok {
+				hostnameEdgeHostnameMap[hostname] = edgeHostname
+				// Override the default with the first one found
+				if !overrideDefault {
+					defaultEdgeHostname = edgeHostname
+					overrideDefault = true
+				}
+				continue
+			}
 			/* Support for secure properties
 			if (property is secure) {
 				if edgeHostname, ok := edgeHostnamesMap[hostname.(string)+".edgekey.net"]; ok {
@@ -1128,8 +1127,8 @@ func createHostnames(property *papi.Property, product *papi.Product, d *schema.R
 		if len(hostnameEdgeHostnameMap) < len(hostnames) {
 			log.Printf("[DEBUG] Hostnames being set to default: %d of %d\n", len(hostnameEdgeHostnameMap), len(hostnames))
 			for _, hostname := range hostnames {
-				if _, ok := hostnameEdgeHostnameMap[hostname.(string)]; !ok {
-					hostnameEdgeHostnameMap[hostname.(string)] = defaultEdgeHostname
+				if _, ok := hostnameEdgeHostnameMap[hostname]; !ok {
+					hostnameEdgeHostnameMap[hostname] = defaultEdgeHostname
 				}
 			}
 		}
@@ -1139,13 +1138,13 @@ func createHostnames(property *papi.Property, product *papi.Product, d *schema.R
 	// mapping example.com -> example.com.edgegrid.net
 	if len(edgeHostnames.EdgeHostnames.Items) == 0 {
 		log.Println("[DEBUG] No Edge Hostnames found, creating new one")
-		newEdgeHostname, err := createEdgehostname(edgeHostnames, product, hostnames[0].(string), ipv6)
+		newEdgeHostname, err := createEdgehostname(edgeHostnames, product, hostnames[0], ipv6)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, hostname := range hostnames {
-			hostnameEdgeHostnameMap[hostname.(string)] = newEdgeHostname
+			hostnameEdgeHostnameMap[hostname] = newEdgeHostname
 		}
 
 		log.Printf("[DEBUG] Edgehostname created: %s\n", newEdgeHostname.EdgeHostnameDomain)
@@ -1181,7 +1180,7 @@ func createEdgehostname(edgeHostnames *papi.EdgeHostnames, product *papi.Product
 	return newEdgeHostname, nil
 }
 
-func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[string]*papi.EdgeHostname) (map[string]string, error) {
+func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[string]*papi.EdgeHostname, d *schema.ResourceData) (map[string]string, error) {
 	if hostnameEdgeHostnameMap != nil {
 		log.Println("[DEBUG] Setting Edge Hostnames")
 		propertyHostnames, err := property.GetHostnames(nil)
@@ -1191,13 +1190,65 @@ func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[strin
 
 		propertyHostnames.Hostnames.Items = []*papi.Hostname{}
 		for from, to := range hostnameEdgeHostnameMap {
-			hostname := propertyHostnames.NewHostname()
-			hostname.CnameType = papi.CnameTypeEdgeHostname
-			hostname.CnameFrom = from
-			hostname.CnameTo = to.EdgeHostnameDomain
-			hostname.EdgeHostnameID = to.EdgeHostnameID
+			//hostname := propertyHostnames.NewHostname()
+
+			log.Println("[DEBUG] Check for Edge Host Map for replacing hostname")
+			edgeHostnameMapTest, ok := d.GetOk("edge_hostname_map")
+			if ok {
+
+				log.Println("[DEBUG] Check for Edge Host Map for hostnames ", edgeHostnameMapTest)
+				mapString := make(map[string]string)
+				var edgeHostList []string
+
+				for key, value := range edgeHostnameMapTest.(map[string]interface{}) {
+					log.Println("[DEBUG] EdgeHostnameMap ", key, value)
+					strKey := fmt.Sprintf("%v", key)
+					strValue := fmt.Sprintf("%v", value)
+					mapString[strKey] = strValue
+					if strings.Contains(strValue, "ehn_") {
+						edgeHostList = append(edgeHostList, strValue)
+						//mapString["ehn_Key"] = strValue
+						log.Println("[DEBUG] EdgeHostnameMap set EHN_KEY ", key, value)
+					}
+				}
+
+				//for key, value := range edgeHostnameMapTest.(map[string]interface{}) {
+				for _, value := range edgeHostList {
+					hostname := propertyHostnames.NewHostname()
+					//log.Println("[DEBUG] EdgeHostnameMap " + eHn.EdgeHostnameDomain)
+					log.Println("[DEBUG] edgeHostList ", value)
+					//log.Println("[DEBUG] EdgeHostnameMap " + eHn["edge_hostname_map.ehn_3564957-edgeHostnameDomain"].Value)
+					//strKey := fmt.Sprintf("%v", key)
+					strValue := fmt.Sprintf("%v", value)
+					//mapString[strKey] = strValue
+					if strings.Contains(strValue, "ehn_") {
+						mapString["ehn_Key"] = strValue
+						log.Println("[DEBUG] edgeHostList set EHN_KEY ", value)
+					}
+
+					log.Println("[DEBUG] Check for Edge Host Map for cnamefrom ", mapString[value+"-cnamefrom"])
+					log.Println("[DEBUG] Check for Edge Host Map for cnameto ", mapString[value+"-cnameto"])
+					hostname.CnameType = papi.CnameTypeEdgeHostname
+					hostname.CnameFrom = mapString[value+"-cnamefrom"]
+					hostname.CnameTo = mapString[value+"-cnameto"]
+					//hostname.EdgeHostnameID = value //to.EdgeHostnameID
+					hostname.CertEnrollmentId = mapString[value+"-certenrollmentid"]
+					//propertyHostnames.Hostnames.Items = append(propertyHostnames.Hostnames.Items, hostname)
+
+				}
+
+			} else {
+				log.Println("[DEBUG] Nor Edge Host Map for cnamefrom use existing ")
+				hostname := propertyHostnames.NewHostname()
+				hostname.CnameType = papi.CnameTypeEdgeHostname
+				hostname.CnameFrom = from
+				hostname.CnameTo = to.EdgeHostnameDomain
+				hostname.EdgeHostnameID = to.EdgeHostnameID
+			}
 		}
-		log.Println("[DEBUG] Saving edge hostnames")
+
+		log.Println("[DEBUG] Saving edge hostnames", propertyHostnames)
+
 		err = propertyHostnames.Save()
 		log.Println("[DEBUG] Edge hostnames saved")
 		if err != nil {
@@ -1216,6 +1267,162 @@ func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[strin
 	}
 
 	return ehn, nil
+}
+
+func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
+	// Default Rules
+	rules, ok := d.GetOk("rules")
+	if ok {
+
+		log.Println("[DEBUG] RulesJson")
+		rulesJSON := gjson.Get(rules.(string), "rules")
+		//log.Println("[DEBUG] RulesJson " + rulesJson.String())
+		//for _, r := range rules.(*schema.Set).List() {
+		//for _, r := range rulesJson.Array() {
+		rulesJSON.ForEach(func(key, value gjson.Result) bool {
+			log.Println("[DEBUG] unmarshalRulesFromJson KEY RULES KEY = " + key.String() + " VAL " + value.String())
+			//ruleTree, ok := r.(map[string]interface{})
+			if key.String() == "behaviors" {
+				behavior := gjson.Parse(value.String())
+				log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR " + behavior.String())
+				//if ok {
+				//behavior, ok := ruleTree["behavior"]
+				//if ok {
+				if gjson.Get(behavior.String(), "#.name").Exists() {
+					//for _, b := range behavior.(*schema.Set).List() {
+					behavior.ForEach(func(key, value gjson.Result) bool {
+						log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR LOOP KEY =" + key.String() + " VAL " + value.String())
+						//bb, ok := b.(map[string]interface{})
+						bb, ok := value.Value().(map[string]interface{})
+						if ok {
+							log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR MAP  ", bb)
+							for k, v := range bb {
+								log.Println("k:", k, "v:", v)
+							}
+							//						if bb.gjson.Parse(value.String()).Get("#.name").Exists() {
+							//bb := gjson.Parse(value.String()).Get("#.name")
+							//log.Println("[DEBUG] KEY BEHAVIOR BB %v", bb)
+							//if ok {
+							beh := papi.NewBehavior()
+							//beh.Name = bb["name"].(string)
+							beh.Name = bb["name"].(string)
+							boptions, ok := bb["options"]
+							log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR BOPTIONS ", boptions)
+							if ok {
+								//beh.Options = extractOptions(boptions.(*schema.Set))
+								beh.Options = boptions.(map[string]interface{})
+								log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR EXTRACT BOPTIONS ", beh.Options)
+							}
+							propertyRules.Rule.MergeBehavior(beh)
+						}
+
+						return true // keep iterating
+					}) // behavior list loop
+
+				}
+
+				//criteria, ok := ruleTree["criteria"]
+				//if ok {
+				if key.String() == "criteria" {
+					criteria := gjson.Parse(value.String())
+					//for _, c := range criteria.(*schema.Set).List() {
+					criteria.ForEach(func(key, value gjson.Result) bool {
+						log.Println("[DEBUG] unmarshalRulesFromJson KEY CRITERIA " + key.String() + " VAL " + value.String())
+						//	cc, ok := c.(map[string]interface{})
+						cc, ok := value.Value().(map[string]interface{})
+						if ok {
+							log.Println("[DEBUG] unmarshalRulesFromJson CRITERIA MAP  ", cc)
+							newCriteria := papi.NewCriteria()
+							newCriteria.Name = cc["name"].(string)
+
+							coptions, ok := cc["option"]
+							if ok {
+								println("OPTIONS ", coptions)
+								//newCriteria.Options = extractOptions(coptions.(*schema.Set))
+								newCriteria.Options = coptions.(map[string]interface{})
+							}
+							propertyRules.Rule.MergeCriteria(newCriteria)
+						}
+						return true
+					})
+				} // if ok criteria
+			} /// if ok behaviors
+
+			//childRules, ok := ruleTree["rule"]
+			//if ok {
+			if key.String() == "children" {
+				childRules := gjson.Parse(value.String())
+				println("CHILD RULES " + childRules.String())
+				//for _, rule := range extractRulesJson(childRules.(*schema.Set)) {
+				for _, rule := range extractRulesJSON(d, childRules) {
+					propertyRules.Rule.MergeChildRule(rule)
+				}
+			}
+
+			if key.String() == "variables" {
+
+				log.Println("unmarshalRulesFromJson VARS from JSON ", value.String())
+				variables := gjson.Parse(value.String())
+				//result := gjson.Get(variables.String(), "variables") //gjson.GetMany(variables.String(),"variables.#.name","variables.#.description","variables.#.value","variables.#.hidden","variables.#.sensitive" )
+				//log.Println("unmarshalRulesFromJson VARS from JSON VARIABLES ", result)
+
+				variables.ForEach(func(key, value gjson.Result) bool {
+					log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
+					variableMap, ok := value.Value().(map[string]interface{})
+					log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
+					log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
+					if ok {
+						newVariable := papi.NewVariable()
+						newVariable.Name = variableMap["name"].(string)
+						newVariable.Description = variableMap["description"].(string)
+						newVariable.Value = variableMap["value"].(string)
+						newVariable.Hidden = variableMap["hidden"].(bool)
+						newVariable.Sensitive = variableMap["sensitive"].(bool)
+						propertyRules.Rule.AddVariable(newVariable)
+					}
+					//log.Println("VARS from JSON VARIABLES RULES BEFORE APPEND", rules)
+					//rules = append(rules, rule)
+					//log.Println("VARS from JSON VARIABLES RULES AFTER APPEND", rules)
+					return true
+				}) //variables
+
+			}
+
+			return true // keep iterating
+		}) // for loop rules
+
+		// ADD vars from variables resource
+		jsonvars, ok := d.GetOk("variables")
+		if ok {
+			//rule := papi.NewRule()
+			log.Println("unmarshalRulesFromJson VARS from JSON ", jsonvars)
+			variables := gjson.Parse(jsonvars.(string))
+			result := gjson.Get(variables.String(), "variables") //gjson.GetMany(variables.String(),"variables.#.name","variables.#.description","variables.#.value","variables.#.hidden","variables.#.sensitive" )
+			log.Println("unmarshalRulesFromJson VARS from JSON VARIABLES ", result)
+
+			result.ForEach(func(key, value gjson.Result) bool {
+				log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
+				variableMap, ok := value.Value().(map[string]interface{})
+				log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
+				log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
+				if ok {
+					newVariable := papi.NewVariable()
+					newVariable.Name = variableMap["name"].(string)
+					newVariable.Description = variableMap["description"].(string)
+					newVariable.Value = variableMap["value"].(string)
+					newVariable.Hidden = variableMap["hidden"].(bool)
+					newVariable.Sensitive = variableMap["sensitive"].(bool)
+					propertyRules.Rule.AddVariable(newVariable)
+				}
+				//log.Println("VARS from JSON VARIABLES RULES BEFORE APPEND", rules)
+				//rules = append(rules, rule)
+				//log.Println("VARS from JSON VARIABLES RULES AFTER APPEND", rules)
+				return true
+			}) //variables
+		}
+
+	}
+
 }
 
 func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) {
@@ -1265,6 +1472,35 @@ func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) {
 				}
 			}
 		}
+
+		// ADD vars from variables resource
+		jsonvars, ok := d.GetOk("variables")
+		if ok {
+			//rule := papi.NewRule()
+			log.Println("VARS from JSON ", jsonvars)
+			variables := gjson.Parse(jsonvars.(string))
+			result := gjson.Get(variables.String(), "variables") //gjson.GetMany(variables.String(),"variables.#.name","variables.#.description","variables.#.value","variables.#.hidden","variables.#.sensitive" )
+			//log.Println("VARS from JSON VARIABLES ", result)
+
+			result.ForEach(func(key, value gjson.Result) bool {
+				//log.Println("VARS from JSON LOOP ", value)
+				variableMap, ok := value.Value().(map[string]interface{})
+				log.Println("VARS from JSON LOOP NAME ", variableMap["name"].(string))
+				log.Println("VARS from JSON LOOP DESC ", variableMap["description"].(string))
+				if ok {
+					newVariable := papi.NewVariable()
+					newVariable.Name = variableMap["name"].(string)
+					newVariable.Description = variableMap["description"].(string)
+					newVariable.Value = variableMap["value"].(string)
+					newVariable.Hidden = variableMap["hidden"].(bool)
+					newVariable.Sensitive = variableMap["sensitive"].(bool)
+					propertyRules.Rule.AddVariable(newVariable)
+				}
+
+				return true
+			}) //variables
+		}
+
 	}
 }
 
@@ -1311,6 +1547,128 @@ func numberify(v string) interface{} {
 	}
 
 	return v
+}
+
+func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule {
+	var rules []*papi.Rule
+	//for _, v := range drules.List() {
+	drules.ForEach(func(key, value gjson.Result) bool {
+		//log.Println("[DEBUG] OUTER LOOP KEY CHILD RULE KEY=" + key.String() + " VAL= " + value.String())
+		rule := papi.NewRule()
+		//vv, ok := v.(map[string]interface{})
+		vv, ok := value.Value().(map[string]interface{})
+		if ok {
+			//log.Println("[DEBUG] TOP KEY CHILD RULE MAP KEY " , key.String() ,vv)
+			//log.Println("[DEBUG] TOP KEY CHILD RULE MAP KEY " , key.String() ,vv["name"])
+			//log.Println("[DEBUG] TOP KEY CHILD RULE MAP KEY " , key.String() ,vv["comments"])
+			//rule.Name = vv["name"].(string)
+			rule.Name, _ = vv["name"].(string)
+			//rule.Comments = vv["comment"].(string)
+			rule.Comments, _ = vv["comments"].(string)
+
+			//log.Println("[DEBUG] BEHAVIORS SEARCH KEY CHILD RULE " ,vv["behaviors"])
+
+			ruledetail := gjson.Parse(value.String())
+			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
+
+			//for _, behavior := range behaviors.(*schema.Set).List() {
+			//for _, behavior := range behaviors.(map[string]interface{})  {
+			ruledetail.ForEach(func(key, value gjson.Result) bool {
+
+				if key.String() == "behaviors" {
+					log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE ", key.String())
+
+					//			_, ok := vv["behaviors"]
+					//			if ok {
+					behaviors := gjson.Parse(value.String())
+					log.Println("[DEBUG] BEHAVIORS NAME ", behaviors)
+					//for _, behavior := range behaviors.(*schema.Set).List() {
+					//for _, behavior := range behaviors.(map[string]interface{})  {
+					behaviors.ForEach(func(key, value gjson.Result) bool {
+						log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE LOOP KEY = " + key.String() + " VAL " + value.String())
+						//behaviorMap, ok := behavior.(map[string]interface{})
+						behaviorMap, ok := value.Value().(map[string]interface{})
+						if ok {
+							newBehavior := papi.NewBehavior()
+							newBehavior.Name = behaviorMap["name"].(string)
+							behaviorOptions, ok := behaviorMap["options"]
+							if ok {
+								//newBehavior.Options = extractOptions(behaviorOptions.(*schema.Set))
+								newBehavior.Options = behaviorOptions.(map[string]interface{})
+							}
+							rule.MergeBehavior(newBehavior)
+						}
+						return true
+					}) //behaviors
+				}
+
+				//criterias, ok := vv["criteria"]
+				//if ok {
+				if key.String() == "criteria" {
+					log.Println("[DEBUG] CRITERIA KEY CHILD RULE ", key.String())
+					criterias := gjson.Parse(value.String())
+					//for _, criteria := range criterias.(*schema.Set).List() {
+					criterias.ForEach(func(key, value gjson.Result) bool {
+						//criteriaMap, ok := criteria.(map[string]interface{})
+						criteriaMap, ok := value.Value().(map[string]interface{})
+						if ok {
+							newCriteria := papi.NewCriteria()
+							newCriteria.Name = criteriaMap["name"].(string)
+							criteriaOptions, ok := criteriaMap["options"]
+							if ok {
+								//newCriteria.Options = extractOptions(criteriaOptions.(*schema.Set))
+								newCriteria.Options = criteriaOptions.(map[string]interface{})
+							}
+							rule.MergeCriteria(newCriteria)
+						}
+						return true
+					}) //criteria
+				}
+
+				//variables, ok := vv["variable"]
+				//if ok {
+				if key.String() == "variables" {
+					log.Println("[DEBUG] VARIABLES KEY CHILD RULE ", key.String())
+					variables := gjson.Parse(value.String())
+					//for _, variable := range variables.(*schema.Set).List() {
+					variables.ForEach(func(key, value gjson.Result) bool {
+						//variableMap, ok := variable.(map[string]interface{})
+						variableMap, ok := value.Value().(map[string]interface{})
+						if ok {
+							newVariable := papi.NewVariable()
+							newVariable.Name = variableMap["name"].(string)
+							newVariable.Description = variableMap["description"].(string)
+							newVariable.Value = variableMap["value"].(string)
+							newVariable.Hidden = variableMap["hidden"].(bool)
+							newVariable.Sensitive = variableMap["sensitive"].(bool)
+							rule.AddVariable(newVariable)
+						}
+						return true
+					}) //variables
+				}
+
+				//childRules, ok := vv["rule"]
+				//if ok && childRules.(*schema.Set).Len() > 0 {
+				if key.String() == "children" {
+					childRules := gjson.Parse(value.String())
+					println("CHILD RULES " + childRules.String())
+					//for _, newRule := range extractRulesJson(childRules.(*schema.Set)) {
+					for _, newRule := range extractRulesJSON(d, childRules) {
+						rule.MergeChildRule(newRule)
+					}
+				} //len > 0
+
+				return true
+			}) //Loop Detail
+
+		}
+		rules = append(rules, rule)
+
+		return true
+	})
+
+	//log.Println("JSON AFTER APPEND", rules)
+	return rules
 }
 
 func extractRules(drules *schema.Set) []*papi.Rule {
@@ -1407,18 +1765,22 @@ func findProperty(d *schema.ResourceData) *papi.Property {
 	if err != nil {
 		return nil
 	}
+	/*
+		if results == nil || len(results.Versions.Items) == 0 {
+			for _, hostname := range d.Get("hostname").(*schema.Set).List() {
+				results, err = papi.Search(papi.SearchByHostname, hostname.(string))
+				if err == nil && (results == nil || len(results.Versions.Items) != 0) {
+					break
+				}
+			}
 
-	if results == nil || len(results.Versions.Items) == 0 {
-		for _, hostname := range d.Get("hostname").(*schema.Set).List() {
-			results, err = papi.Search(papi.SearchByHostname, hostname.(string))
-			if err == nil && (results == nil || len(results.Versions.Items) != 0) {
-				break
+			if err != nil || (results == nil || len(results.Versions.Items) == 0) {
+				return nil
 			}
 		}
-
-		if err != nil || (results == nil || len(results.Versions.Items) == 0) {
-			return nil
-		}
+	*/
+	if err != nil || results == nil {
+		return nil
 	}
 
 	property := &papi.Property{

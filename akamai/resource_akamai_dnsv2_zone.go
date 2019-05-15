@@ -3,10 +3,11 @@ package akamai
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"sync"
+
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 /*
@@ -36,7 +37,7 @@ POST
 }
 
 */
-var dnsWriteLockv2 sync.Mutex
+var dnsWriteLock sync.Mutex
 
 func resourceDNSv2Zone() *schema.Resource {
 	return &schema.Resource{

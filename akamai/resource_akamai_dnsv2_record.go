@@ -1,24 +1,27 @@
 package akamai
 
 import (
-	"bytes"
-	"crypto/sha1"
-	"encoding/base32"
+	//"bytes"
+
+	//"encoding/base32"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/schema"
 	"log"
+	"net"
+	"sort"
 	"strconv"
+	"strings"
+
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceDNSv2Record() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceDNSRecordCreate,
 		Read:   resourceDNSRecordRead,
-		Update: resourceDNSRecordCreate,
+		Update: resourceDNSRecordUpdate,
 		Delete: resourceDNSRecordDelete,
 		Exists: resourceDNSRecordExists,
 		Importer: &schema.ResourceImporter{
@@ -298,6 +301,11 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 				Required: false,
 			},
+			"priority_increment": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Required: false,
+			},
 			//"txt": {
 		},
 	}
@@ -305,6 +313,93 @@ func resourceDNSv2Record() *schema.Resource {
 
 // Create a new DNS Record
 func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
+	// only allow one record to be created at a time
+	// this prevents lost data if you are using a counter/dynamic variables
+	// in your config.tf which might overwrite each other
+	var zone string
+	var host string
+	var recordtype string
+
+	_, ok := d.GetOk("zone")
+	if ok {
+		zone = d.Get("zone").(string)
+	}
+	_, ok = d.GetOk("name")
+	if ok {
+		host = d.Get("name").(string)
+	}
+	_, ok = d.GetOk("recordtype")
+	if ok {
+		recordtype = d.Get("recordtype").(string)
+	}
+	/*_, ok = d.GetOk("target")
+	if ok {
+		target := d.Get("target").(*schema.Set).List()
+	}
+	*/
+	validationresult := validateRecord(d)
+	log.Printf("[DEBUG] [Akamai DNSv2] Validation result recordcreate %s", validationresult)
+	if validationresult != "VALID" {
+		return fmt.Errorf("Parameter Validation failure %s, %s  %s %s", zone, host, recordtype, validationresult)
+	}
+
+	recordcreate := bindRecord(d)
+	extractString := strings.Join(recordcreate.Target, " ")
+	sha1hash := getSHAString(extractString)
+
+	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for recordcreate [%s]", sha1hash)
+	// First try to get the zone from the API
+	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records [%s]", zone)
+
+	rdata, e := dnsv2.GetRdata(zone, host, recordtype)
+	if e != nil {
+		return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e)
+	}
+
+	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records LEN %d", len(rdata))
+	if len(rdata) > 0 {
+		extractString := strings.Join(rdata, " ")
+		sha1hashtest := getSHAString(extractString)
+		//sha1_hash_test := getSHA(rdata)
+		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordread [%s]", sha1hashtest)
+	}
+	// If there's no existing record we'll create a blank one
+	if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
+		// if the record is not found/404 we will create a new
+		log.Printf("[DEBUG] [Akamai DNSv2] [ERROR] %s", e.Error())
+		log.Printf("[DEBUG] [Akamai DNSv2] Creating new record")
+		// Save the zone to the API
+		e = recordcreate.Save(zone)
+		//e = nil
+		if e != nil {
+			return e
+		}
+	} else {
+		log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
+		if len(rdata) > 0 {
+			e = recordcreate.Update(zone)
+			if e != nil {
+				return e
+			}
+		} else {
+			log.Printf("[DEBUG] [Akamai DNSv2] Saving record")
+			e = recordcreate.Save(zone)
+			if e != nil {
+				return e
+			}
+		}
+		//return e
+	}
+	//}
+
+	// Give terraform the ID
+	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
+
+	return nil
+}
+
+// Create a new DNS Record
+func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	// only allow one record to be created at a time
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
@@ -335,19 +430,15 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	vaidationresult := validateRecord(d)
-	log.Printf("[DEBUG] [Akamai DNSv2] Validation result recordcreate %s", vaidationresult)
+	log.Printf("[DEBUG] [Akamai DNSv2] Validation result recordupdate %s", vaidationresult)
 	if vaidationresult != "VALID" {
-		return errors.New(fmt.Sprintf("Parameter Validation failure %s, %s  %s %s", zone, host, recordtype, vaidationresult))
+		return fmt.Errorf("Parameter Validation failure %s, %s  %s %s", zone, host, recordtype, vaidationresult)
 	}
 	recordcreate := bindRecord(d)
-	sha1_hash := getSHA(recordcreate.Target)
-	/*
-		  h := sha1.New()
-			bodyBytes := new(bytes.Buffer)
-			json.NewEncoder(bodyBytes).Encode(recordcreate.Target)
-			h.Write(bodyBytes.Bytes())
-			sha1_hash := hex.EncodeToString(h.Sum(nil))*/
-	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for recordcreate [%s]", sha1_hash)
+	extractString := strings.Join(recordcreate.Target, " ")
+	sha1hash := getSHAString(extractString)
+
+	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for recordupdate [%s]", sha1hash)
 	// First try to get the zone from the API
 	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records [%s]", zone)
 
@@ -357,68 +448,36 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records LEN %d", len(rdata))
-	if len(rdata) == 0 {
-		sha1_hash_test := getSHA(rdata)
-		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordread [%s]", sha1_hash_test)
+	if len(rdata) > 0 {
+		sort.Strings(rdata)
+		extractString := strings.Join(recordcreate.Target, " ")
+		sha1hashtest := getSHAString(extractString)
+		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordread [%s]", sha1hashtest)
 		// If there's no existing record we'll create a blank one
 		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
 			// if the record is not found/404 we will create a new
 			log.Printf("[DEBUG] [Akamai DNSv2] [ERROR] %s", e.Error())
 			log.Printf("[DEBUG] [Akamai DNSv2] Creating new record")
 			// Save the zone to the API
-
-			e = nil
-		} else {
-			log.Printf("[DEBUG] [Akamai DNSv2] Saving record")
+			log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
 			e = recordcreate.Save(zone)
+			//e = nil
+		} else {
+			log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
+			e = recordcreate.Update(zone)
 			if e != nil {
 				return e
 			}
 			//return e
 		}
+		d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 	}
 
 	// Give terraform the ID
-	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1_hash))
+	//	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1_hash))
 
 	return nil
 }
-
-/*
-// Helper function for unmarshalResourceData() below
-func assignFields(record dns.DNSRecord, d map[string]interface{}) {
-	f := record.GetAllowedFields()
-	for _, field := range f {
-		val, ok := d[field]
-		if ok {
-			e := record.SetField(field, val)
-			if e != nil {
-				log.Printf("[WARN] [Akamai DNS] Couldn't add field to record: %s", e.Error())
-			}
-		}
-	}
-}
-*/
-
-// Sometimes records exist in the API but not in tf config
-// In that case we will merge our records from the config with the API records
-// But those API records don't ever get saved in the tf config
-// This is on purpose because the Akamai API will inject several
-// Default records to a given zone and we don't want those to show up
-// In diffs or in acceptance tests
-/*
-func mergeConfigs(recordType string, records []interface{}, s *schema.Resource, d *schema.ResourceData) *schema.Set {
-	recordsInStateFile, recordsInConfigFile := d.GetChange(recordType)
-	recordsInAPI := schema.NewSet(
-		schema.HashResource(s.Schema[recordType].Elem.(*schema.Resource)),
-		records,
-	)
-	recordsInAPIButNotInStateFile := recordsInAPI.Difference(recordsInStateFile.(*schema.Set))
-	mergedRecordsToBeSaved := recordsInConfigFile.(*schema.Set).Union(recordsInAPIButNotInStateFile)
-
-	return mergedRecordsToBeSaved
-}
-*/
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
@@ -431,16 +490,6 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 
 	// find the zone first
 	log.Printf("[INFO] [Akamai DNS] Searching for zone Records [%s]", hostname)
-	//zone, err := dnsv2.GetZone(hostname)
-	//if err != nil {
-	//		return nil, err
-	//	}
-
-	// assign each of the record sets to the resource data
-	//marshalResourceData(d, zone)
-
-	// Give terraform the ID
-	//d.SetId(fmt.Sprintf("%s-%s-%s", zone.Token, zone.Zone.Name, hostname))
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -459,13 +508,19 @@ func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	for _, recContent := range target {
 		records = append(records, recContent.(string))
 	}
-
+	sort.Strings(records)
+	log.Printf("[INFO] [Akamai DNS] Delete zone Records %v", records)
 	recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 
 	recordcreate.Delete(zone)
 
-	d.SetId("")
-
+	targets, e := dnsv2.GetRdata(zone, host, recordtype)
+	if len(targets) > 0 {
+		log.Printf("[INFO] [Akamai DNS] Delete zone Records record still exists %v %s", targets, e)
+		return nil
+	} else {
+		d.SetId("")
+	}
 	return nil
 }
 
@@ -496,9 +551,9 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 	}
 
 	log.Printf("[DEBUG] [Akamai DNSv2] record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
-
-	sha1_hash := getSHA(recordcreate.Target)
-	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for Existing SHA test %s", sha1_hash)
+	extractString := strings.Join(recordcreate.Target, " ")
+	sha1hash := getSHAString(extractString)
+	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for Existing SHA test %s %s", extractString, sha1hash)
 
 	// try to get the zone from the API
 	log.Printf("[INFO] [Akamai DNSv2] Searching for zone records %s %s %s", zone, host, recordtype)
@@ -512,36 +567,69 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 		fmt.Println(err)
 	}
 
-	log.Printf("[DEBUG] [Akamai DNSv2] record data read JSON [%s]", string(b1))
+	log.Printf("[DEBUG] [Akamai DNSv2] record data read JSON %s", string(b1))
 
 	if len(targets) > 0 {
-		sha1_hash_test := getSHA(targets)
+		sort.Strings(targets)
+		extractStringTest := strings.Join(targets, " ")
+		sha1hashtest := getSHAString(extractStringTest)
 
-		if sha1_hash_test == sha1_hash {
-			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1_hash_test, sha1_hash, zone, host, recordtype)
+		if sha1hashtest == sha1hash {
+			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
 			return true, nil
 		} else {
-			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1_hash_test, sha1_hash, zone, host, recordtype)
+			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
 			return false, nil
 		}
 	} else {
 		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists msimatch no target retunred  [%s] [%s] [%s] ", zone, host, recordtype)
 		return false, nil
 	}
-	//	zone, err := dns.GetZone(hostname)
-	//	return zone != nil, err
-	//return false, nil
 }
 
-func getSHA(rdata []string) string {
-	h := sha1.New()
-	bodyBytes := new(bytes.Buffer)
-	json.NewEncoder(bodyBytes).Encode(rdata)
-	h.Write(bodyBytes.Bytes())
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
 
-	sha1_hash_test := hex.EncodeToString(h.Sum(nil))
-	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from Rdata %s %s", rdata, sha1_hash_test)
-	return sha1_hash_test
+// Encode IPV6 as a full string
+func FullIPv6(ip net.IP) string {
+
+	dst := make([]byte, hex.EncodedLen(len(ip)))
+	_ = hex.Encode(dst, ip)
+	return string(dst[0:4]) + ":" +
+		string(dst[4:8]) + ":" +
+		string(dst[8:12]) + ":" +
+		string(dst[12:16]) + ":" +
+		string(dst[16:20]) + ":" +
+		string(dst[20:24]) + ":" +
+		string(dst[24:28]) + ":" +
+		string(dst[28:])
+}
+
+func padvalue(str string) string {
+	vstr := strings.Replace(str, "m", "", -1)
+	log.Printf("[DEBUG] [Akamai DNSv2]  %s", vstr)
+	vfloat, err := strconv.ParseFloat(vstr, 32)
+	if err != nil {
+		log.Printf("[DEBUG] [Akamai DNSv2] Error parse %s", vstr)
+	}
+	vresult := fmt.Sprintf("%.2f", vfloat)
+	log.Printf("[DEBUG] [Akamai DNSv2] Padded v_result %s", vresult)
+	return vresult
+}
+
+// Used to pad coordinates to x.xxm format
+func padCoordinates(str string) string {
+
+	s := strings.Split(str, " ")
+	latD, latM, latS, latDir, longD, longM, longS, longDir, altitude, size, horizPrecision, vertPrecision := s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]
+	return latD + " " + latM + " " + latS + " " + latDir + " " + longD + " " + longM + " " + longS + " " + longDir + " " + padvalue(altitude) + "m " + padvalue(size) + "m " + padvalue(horizPrecision) + "m " + padvalue(vertPrecision) + "m"
+
 }
 
 func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
@@ -562,14 +650,39 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 	target := d.Get("target").(*schema.Set).List()
 	records := make([]string, 0, len(target))
 
+	simplerecordtarget := map[string]bool{"AAAA": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "SRV": true}
+
 	for _, recContent := range target {
-		records = append(records, recContent.(string))
+		if simplerecordtarget[recordtype] {
+
+			if recordtype == "AAAA" {
+				addr := net.ParseIP(recContent.(string))
+				result := FullIPv6(addr)
+				log.Printf("[DEBUG] [Akamai DNSv2] IPV6 full %s", result)
+				records = append(records, result)
+			} else if recordtype == "LOC" {
+				log.Printf("[DEBUG] [Akamai DNSv2] LOC code format %s", recContent.(string))
+				str := padCoordinates(recContent.(string))
+				records = append(records, str)
+			} else {
+				checktarget := recContent.(string)[len(recContent.(string))-1:]
+				if checktarget == "." {
+					records = append(records, recContent.(string))
+				} else {
+					records = append(records, recContent.(string)+".")
+				}
+			}
+		} else {
+			records = append(records, recContent.(string))
+		}
 	}
 
 	emptyrecordcreate := dnsv2.RecordBody{}
 
 	simplerecord := map[string]bool{"A": true, "AAAA": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "TXT": true}
 	if simplerecord[recordtype] {
+		sort.Strings(records)
+
 		recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 		return recordcreate
 	} else {
@@ -578,8 +691,14 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records := make([]string, 0, len(target))
 			subtype := d.Get("subtype").(int)
 			for _, recContent := range target {
-				records = append(records, strconv.Itoa(subtype)+" "+recContent.(string))
+				checktarget := recContent.(string)[len(recContent.(string))-1:]
+				if checktarget == "." {
+					records = append(records, strconv.Itoa(subtype)+" "+recContent.(string))
+				} else {
+					records = append(records, strconv.Itoa(subtype)+" "+recContent.(string)+".")
+				}
 			}
+			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -599,12 +718,12 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 		if recordtype == "DS" {
 
 			records := make([]string, 0, len(target))
-			digest_type := d.Get("digest_type").(int)
+			digestType := d.Get("digest_type").(int)
 			keytag := d.Get("keytag").(int)
 			algorithm := d.Get("algorithm").(int)
 			digest := d.Get("digest").(string)
 			//for _, recContent := range target {
-			records = append(records, strconv.Itoa(keytag)+" "+strconv.Itoa(digest_type)+" "+strconv.Itoa(algorithm)+" "+digest)
+			records = append(records, strconv.Itoa(keytag)+" "+strconv.Itoa(digestType)+" "+strconv.Itoa(algorithm)+" "+digest)
 			//}
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
@@ -627,16 +746,51 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			for _, recContent := range target {
 				records = append(records, recContent.(string))
 			}
+			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
 		if recordtype == "MX" {
+
+			zone := d.Get("zone").(string)
+
+			rdata, e := dnsv2.GetRdata(zone, host, recordtype)
+			if e != nil {
+				log.Printf("[DEBUG] [Akamai DNSv2] Searching for existing MX records no prexisting targets found LEN %d", len(rdata))
+			}
+			log.Printf("[DEBUG] [Akamai DNSv2] Searching for existing MX records to append to target LEN %d", len(rdata))
+
+			records := make([]string, 0, len(target)+len(rdata))
 			priority := d.Get("priority").(int)
-			records := make([]string, 0, len(target))
+
+			increment := d.Get("priority_increment").(int)
 
 			for _, recContent := range target {
 				records = append(records, strconv.Itoa(priority)+" "+recContent.(string))
+				if increment > 0 {
+					priority = priority + increment
+				}
 			}
+			log.Printf("[DEBUG] [Akamai DNSv2] Appended new target to taget array LEN %d %v", len(records), records)
+
+			if len(rdata) > 0 {
+				log.Printf("[DEBUG] [Akamai DNSv2] rdata Exists MX records to append to target LEN %d", len(rdata))
+				for _, r := range rdata {
+					if !(contains(records, r)) {
+						records = append(records, r)
+					}
+				}
+				log.Printf("[DEBUG] [Akamai DNSv2] Existing MX records to append to target before schema data LEN %d %v", len(rdata), records)
+
+			}
+			sort.Strings(records)
+			//priority := d.Get("priority").(int)
+			/*records := make([]string, 0, len(target))
+
+			for _, recContent := range target {
+				//records = append(records, strconv.Itoa(priority)+" "+recContent.(string))
+				records = append(records, recContent.(string))
+			}*/
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -649,6 +803,10 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			regexp := d.Get("regexp").(string)
 			replacement := d.Get("replacement").(string)
 			service := d.Get("service").(string)
+			checktarget := service[len(service)-1:]
+			if !(checktarget == ".") {
+				service = service + "."
+			}
 			//for _, recContent := range target {
 			records = append(records, strconv.Itoa(order)+" "+strconv.Itoa(preference)+" "+flagsnaptr+" "+regexp+" "+replacement+" "+service)
 			//}
@@ -661,11 +819,11 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			flags := d.Get("flags").(int)
 			algorithm := d.Get("algorithm").(int)
 			iterations := d.Get("iterations").(int)
-			next_hashed_owner_name := d.Get("next_hashed_owner_name").(string)
+			nextHashedOwnerName := d.Get("next_hashed_owner_name").(string)
 			salt := d.Get("salt").(string)
-			type_bitmaps := d.Get("type_bitmaps").(string)
+			typeBitmaps := d.Get("type_bitmaps").(string)
 			//for _, recContent := range target {
-			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(iterations)+" "+salt+" "+next_hashed_owner_name+" "+type_bitmaps)
+			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(iterations)+" "+salt+" "+nextHashedOwnerName+" "+typeBitmaps)
 			//}
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
@@ -677,8 +835,8 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			algorithm := d.Get("algorithm").(int)
 			iterations := d.Get("iterations").(int)
 			salt := d.Get("salt").(string)
-			saltbyte := []byte(salt)
-			saltbase32 := base32.StdEncoding.EncodeToString(saltbyte)
+			//saltbyte := []byte(salt)
+			saltbase32 := salt //base32.StdEncoding.EncodeToString(saltbyte)
 
 			//for _, recContent := range target {
 			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(iterations)+" "+saltbase32)
@@ -690,8 +848,15 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 
 			records := make([]string, 0, len(target))
 			mailbox := d.Get("mailbox").(string)
+			checkmailbox := mailbox[len(mailbox)-1:]
+			if !(checkmailbox == ".") {
+				mailbox = mailbox + "."
+			}
 			txt := d.Get("txt").(string)
-
+			checktxt := txt[len(txt)-1:]
+			if !(checktxt == ".") {
+				txt = txt + "."
+			}
 			//for _, recContent := range target {
 			records = append(records, mailbox+" "+txt)
 			//}
@@ -703,15 +868,15 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records := make([]string, 0, len(target))
 			expiration := d.Get("expiration").(string)
 			inception := d.Get("inception").(string)
-			original_ttl := d.Get("original_ttl").(int)
+			originalTTL := d.Get("original_ttl").(int)
 			algorithm := d.Get("algorithm").(int)
 			labels := d.Get("labels").(int)
 			keytag := d.Get("keytag").(int)
 			signature := d.Get("signature").(string)
 			signer := d.Get("signer").(string)
-			type_covered := d.Get("type_covered").(string)
+			typeCovered := d.Get("type_covered").(string)
 			//for _, recContent := range target {
-			records = append(records, type_covered+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(labels)+" "+strconv.Itoa(original_ttl)+" "+expiration+" "+inception+" "+signature+" "+signer+" "+strconv.Itoa(keytag))
+			records = append(records, typeCovered+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(labels)+" "+strconv.Itoa(originalTTL)+" "+expiration+" "+inception+" "+signature+" "+signer+" "+strconv.Itoa(keytag))
 			//}
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
@@ -724,8 +889,15 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			port := d.Get("port").(int)
 
 			for _, recContent := range target {
-				records = append(records, strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+strconv.Itoa(priority)+" "+recContent.(string))
+				checktarget := recContent.(string)[len(recContent.(string))-1:]
+				if checktarget == "." {
+					records = append(records, strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+strconv.Itoa(priority)+" "+recContent.(string))
+				} else {
+					records = append(records, strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+strconv.Itoa(priority)+" "+recContent.(string)+".")
+				}
+				//records = append(records, strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+strconv.Itoa(priority)+" "+recContent.(string))
 			}
+			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -733,11 +905,11 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 
 			records := make([]string, 0, len(target))
 			algorithm := d.Get("algorithm").(int)
-			fingerprint_type := d.Get("fingerprint_type").(int)
+			fingerprintType := d.Get("fingerprint_type").(int)
 			fingerprint := d.Get("fingerprint").(string)
 
 			//for _, recContent := range target {
-			records = append(records, strconv.Itoa(algorithm)+" "+strconv.Itoa(fingerprint_type)+" "+fingerprint)
+			records = append(records, strconv.Itoa(algorithm)+" "+strconv.Itoa(fingerprintType)+" "+fingerprint)
 			//+recContent.(string))
 			//}
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
@@ -827,12 +999,12 @@ func validateRecord(d *schema.ResourceData) string {
 			return "VALID"
 		}
 		if recordtype == "DS" {
-			digest_type := d.Get("digest_type").(int)
+			digestType := d.Get("digest_type").(int)
 			keytag := d.Get("keytag").(int)
 			algorithm := d.Get("algorithm").(int)
 			digest := d.Get("digest").(string)
 			//for _, recContent := range target {
-			if digest_type == 0 {
+			if digestType == 0 {
 				return "digest_type"
 			}
 			if keytag == 0 {
@@ -942,9 +1114,9 @@ func validateRecord(d *schema.ResourceData) string {
 			flags := d.Get("flags").(int)
 			algorithm := d.Get("algorithm").(int)
 			iterations := d.Get("iterations").(int)
-			next_hashed_owner_name := d.Get("next_hashed_owner_name").(string)
+			nextHashedOwnerName := d.Get("next_hashed_owner_name").(string)
 			salt := d.Get("salt").(string)
-			type_bitmaps := d.Get("type_bitmaps").(string)
+			typeBitmaps := d.Get("type_bitmaps").(string)
 			//for _, recContent := range target {
 
 			if host == "null" {
@@ -966,13 +1138,13 @@ func validateRecord(d *schema.ResourceData) string {
 			if iterations == 0 {
 				return "iterations"
 			}
-			if next_hashed_owner_name == "null" {
+			if nextHashedOwnerName == "null" {
 				return "next_hashed_owner_name"
 			}
 			if salt == "null" {
 				return "salt"
 			}
-			if type_bitmaps == "null" {
+			if typeBitmaps == "null" {
 				return "type_bitmaps"
 			}
 			return "VALID"
@@ -983,8 +1155,8 @@ func validateRecord(d *schema.ResourceData) string {
 			algorithm := d.Get("algorithm").(int)
 			iterations := d.Get("iterations").(int)
 			salt := d.Get("salt").(string)
-			saltbyte := []byte(salt)
-			saltbase32 := base32.StdEncoding.EncodeToString(saltbyte)
+			//saltbyte := []byte(salt)
+			saltbase32 := salt //base32.StdEncoding.EncodeToString(saltbyte)
 
 			if host == "null" {
 				return "host"
@@ -1007,9 +1179,9 @@ func validateRecord(d *schema.ResourceData) string {
 			if salt == "null" {
 				return "salt"
 			}
-			if saltbyte == nil {
-				return "saltbyte"
-			}
+			//if saltbyte == nil {
+			//				return "saltbyte"
+			//}
 			if saltbase32 == "null" {
 				return "saltbase32"
 			}
@@ -1041,13 +1213,13 @@ func validateRecord(d *schema.ResourceData) string {
 
 			expiration := d.Get("expiration").(string)
 			inception := d.Get("inception").(string)
-			original_ttl := d.Get("original_ttl").(int)
+			originalTTL := d.Get("original_ttl").(int)
 			algorithm := d.Get("algorithm").(int)
 			labels := d.Get("labels").(int)
 			keytag := d.Get("keytag").(int)
 			signature := d.Get("signature").(string)
 			signer := d.Get("signer").(string)
-			type_covered := d.Get("type_covered").(string)
+			typeCovered := d.Get("type_covered").(string)
 			if host == "null" {
 				return "host"
 			}
@@ -1063,7 +1235,7 @@ func validateRecord(d *schema.ResourceData) string {
 			if inception == "null" {
 				return "inception"
 			}
-			if original_ttl == 0 {
+			if originalTTL == 0 {
 				return "original_ttl"
 			}
 			if algorithm == 0 {
@@ -1081,7 +1253,7 @@ func validateRecord(d *schema.ResourceData) string {
 			if signer == "null" {
 				return "signer"
 			}
-			if type_covered == "null" {
+			if typeCovered == "null" {
 				return "type_covered"
 			}
 			return "VALID"
@@ -1123,7 +1295,7 @@ func validateRecord(d *schema.ResourceData) string {
 		if recordtype == "SSHFP" {
 
 			algorithm := d.Get("algorithm").(int)
-			fingerprint_type := d.Get("fingerprint_type").(int)
+			fingerprintType := d.Get("fingerprint_type").(int)
 			fingerprint := d.Get("fingerprint").(string)
 
 			if host == "null" {
@@ -1138,7 +1310,7 @@ func validateRecord(d *schema.ResourceData) string {
 			if algorithm == 0 {
 				return "algorithm"
 			}
-			if fingerprint_type == 0 {
+			if fingerprintType == 0 {
 				return "fingerprint_type"
 			}
 			if fingerprint == "null" {

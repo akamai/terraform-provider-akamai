@@ -1,6 +1,9 @@
 package akamai
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
+
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -48,4 +51,14 @@ func readNullableString(d interface{}) *string {
 	}
 
 	return &str
+}
+
+func getSHAString(rdata string) string {
+
+	h := sha1.New()
+	h.Write([]byte(rdata))
+
+	sha1hashtest := hex.EncodeToString(h.Sum(nil))
+
+	return sha1hashtest
 }

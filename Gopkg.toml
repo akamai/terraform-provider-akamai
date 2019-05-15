@@ -27,11 +27,13 @@
 
 [[constraint]]
   name = "github.com/akamai/AkamaiOPEN-edgegrid-golang"
-  version = "0.6.2"
+  branch = "AT-9"
+  #version = "0.6.2"
+  source = "github.com/akava-io/AkamaiOPEN-edgegrid-golang"
 
 [[constraint]]
   name = "github.com/hashicorp/terraform"
-  version = "0.11.0"
+  version = "0.12-dev"
 
 [prune]
   go-tests = true

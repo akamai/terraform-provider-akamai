@@ -2,17 +2,18 @@ package akamai
 
 import (
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"sort"
+
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func dataSourceAuthoritiesSet() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceAuthoritiesSetRead,
 		Schema: map[string]*schema.Schema{
-			"contractid": {
+			"contract": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -26,7 +27,7 @@ func dataSourceAuthoritiesSet() *schema.Resource {
 }
 
 func dataSourceAuthoritiesSetRead(d *schema.ResourceData, meta interface{}) error {
-	contractid := d.Get("contractid").(string)
+	contractid := d.Get("contract").(string)
 
 	log.Printf("[DEBUG] [Akamai DNSv2] Start Searching for authority records %s ", contractid)
 

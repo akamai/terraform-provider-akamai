@@ -2,8 +2,9 @@ package akamai
 
 import (
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v1"
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -44,17 +45,24 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_dns_record_set":  dataSourceDnsRecordSet(),
+			"akamai_dns_record_set":  dataSourceDNSRecordSet(),
 			"akamai_authorities_set": dataSourceAuthoritiesSet(),
+			"akamai_group":           dataSourcePropertyGroups(),
+			"akamai_contract":        dataSourcePropertyContract(),
+			"akamai_cp_codes":        dataSourceCPCode(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cp_code":       resourceCPCode(),
-			"akamai_dns_zone":      resourceDNSZone(),
-			"akamai_dnsv2_zone":    resourceDNSv2Zone(),
-			"akamai_dnsv2_record":  resourceDNSv2Record(),
-			"akamai_property":      resourceProperty(),
-      "akamai_cps_enrollment": resourceEnrollment(),
-			"akamai_property_rule": resourcePropertyRule(),
+			"akamai_cp_code":            resourceCPCode(),
+			"akamai_dnsv2_zone":         resourceDNSv2Zone(),
+			"akamai_dnsv2_record":       resourceDNSv2Record(),
+			"akamai_property":           resourceProperty(),
+			"akamai_cps_enrollment":     resourceEnrollment(),
+			"akamai_property_rules":     resourcePropertyRules(),
+			"akamai_property_variable":  resourcePropertyVariable(),
+			"akamai_property_variables": resourcePropertyVariables(),
+			//"akamai_property_simple":      resourcePropertySimple(),
+			"akamai_secure_edge_hostname": resourceSecureEdgeHostName(),
+			"akamai_property_activation":  resourcePropertyActivation(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

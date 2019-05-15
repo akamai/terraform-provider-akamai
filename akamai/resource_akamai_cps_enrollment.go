@@ -3,8 +3,8 @@ package akamai
 import (
 	"log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	cps "github.com/akamai/AkamaiOPEN-edgegrid-golang/cps-v2"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 

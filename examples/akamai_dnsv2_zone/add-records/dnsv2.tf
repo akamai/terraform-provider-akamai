@@ -7,17 +7,17 @@ locals {
   zone = "akavaiodeveloper.net"
 }
 
-
+/*
 resource "akamai_dnsv2_record" "a_record" {
     zone = "${local.zone}"
     name = "akavaiodeveloper.net"
     recordtype =  "A"
     active = true
-    ttl = 300 
-    target = ["10.0.0.2","10.0.0.3","10.0.0.4"]
+    ttl = 300
+    target = ["10.0.0.2","10.0.0.3"]
 }
 
-/*
+
 resource "akamai_dnsv2_record" "aaaa_record" {
     zone = "${local.zone}"
     name = "ipv6record.akavaiodeveloper.net"
@@ -26,7 +26,7 @@ resource "akamai_dnsv2_record" "aaaa_record" {
     ttl =  3600
     target = ["2001:0db8::ff00:0042:8329"]
 }
-*/
+
 
 resource "akamai_dnsv2_record" "afsdb_record" {
     zone = "${local.zone}"
@@ -35,7 +35,7 @@ resource "akamai_dnsv2_record" "afsdb_record" {
     active = true
     ttl =  3600
     subtype = 4
-    target = ["example.com."]
+    target = ["example.com"]
 }
 
 
@@ -58,10 +58,11 @@ resource "akamai_dnsv2_record" "dnskey_record" {
     ttl =  7200
     algorithm = 3
     flags = 257
-    key = "Av//0/goGKPtaa28nQvPoUwVQ ... i/0hC+1CrmQkuuKtQt98WObuv7q8iQ=="
+    key = "Av//0/goGKPtaa28nQvPoUwVP++/i/0hC+1CrmQkuuKtQt98WObuv7q8iQ=="
     protocol = 7
-    //target = ["dnskey.akavaiodeveloper.net]
 }
+
+
 
 resource "akamai_dnsv2_record" "ds_record" {
     zone = "${local.zone}"
@@ -73,8 +74,10 @@ resource "akamai_dnsv2_record" "ds_record" {
     keytag = 30336
     digest = "909FF0B4DD66F91F56524C4F968D13083BE42380"
     digest_type = 1
-    target = ["dnskey.akavaiodeveloper.net."]
+    target = ["dnskey.akavaiodeveloper.net"]
 }
+
+
 
 resource "akamai_dnsv2_record" "hinfo_record" {
     zone = "${local.zone}"
@@ -84,8 +87,10 @@ resource "akamai_dnsv2_record" "hinfo_record" {
     ttl =  7200
     hardware = "INTEL-386"
     software = "Unix"
-    target = ["hinfo.akavaiodeveloper.net."]
+    target = ["hinfo.akavaiodeveloper.net"]
 }
+
+
 
 resource "akamai_dnsv2_record" "loc_record" {
     zone = "${local.zone}"
@@ -94,11 +99,25 @@ resource "akamai_dnsv2_record" "loc_record" {
     active = true
     ttl =  7200
     target = ["51 30 12.748 N 0 7 39.611 W 0.00m 0.00m 0.00m 0.00m"]
+    #target = ["51 30 12.748 N 0 7 39.611 W 1.00m 0.00m 1.23m 1.10m"]
 }
+
+
+resource "akamai_dnsv2_record" "mx_record" {
+    zone = "${local.zone}"
+    name = "akavaiodeveloper.net"
+    recordtype =  "MX"
+    active = true
+    ttl =  300
+    target = ["smtp-0.akavaiodeveloper.net.","smtp-1.akavaiodeveloper.net.","smtp-3.akavaiodeveloper.net."]
+    priority = 10
+}
+
+*/
 
 /*
 resource "akamai_dnsv2_record" "mx_record" {
-    count = 3
+    count = 6
     zone = "${local.zone}"
     name = "akavaiodeveloper.net"
     recordtype =  "MX"
@@ -109,6 +128,7 @@ resource "akamai_dnsv2_record" "mx_record" {
 }
 */
 
+/*
 resource "akamai_dnsv2_record" "naptr_record" {
     zone = "${local.zone}"
     name = "naptrrecord.akavaiodeveloper.net"
@@ -121,8 +141,9 @@ resource "akamai_dnsv2_record" "naptr_record" {
     regexp = "!^.*$!sip:customer-service@example.com!"
     replacement = "."
     service = "SIP+D2U"
-    target = ["naptr.akavaiodeveloper.net."]
+    target = ["naptr.akavaiodeveloper.net"]
 }
+
 
 resource "akamai_dnsv2_record" "ns_record" {
     zone = "${local.zone}"
@@ -130,9 +151,13 @@ resource "akamai_dnsv2_record" "ns_record" {
     recordtype =  "NS"
     active = true
     ttl =  300
-    target = ["use4.akam.net."]
+    target = ["use4.akam.net"]
 }
+*/
 
+/*TODO figure out next_hashed_owner_name issuec 
+*/
+/*
 resource "akamai_dnsv2_record" "nsec3_record" {
     zone = "${local.zone}"
     name = "qdeo8lqu4l81uo67oolpo9h0nv9l13dh.akavaiodeveloper.net"
@@ -142,10 +167,11 @@ resource "akamai_dnsv2_record" "nsec3_record" {
     flags = 0
     algorithm = 1
     iterations = 1
-    next_hashed_owner_name = "R2NUSMGFSEUHT195P59KOU2AI30JR96"
+    next_hashed_owner_name = "R2NUSMGFSEUHT195P59KOU2AI30JR90"
+    #next_hashed_owner_name = "R2NUSMGFSEUHT195P59KOU2AI30JR96" FAILS
     salt = "EBD1E0942543A01B"
     type_bitmaps = "CNAME RRSIG"
-    target = ["naptr.akavaiodeveloper.net."]
+    target = ["naptr.akavaiodeveloper.net"]
 }
 
 resource "akamai_dnsv2_record" "nsec3param_record" {
@@ -162,13 +188,14 @@ resource "akamai_dnsv2_record" "nsec3param_record" {
     target = ["qnsec3param.akavaiodeveloper.net."]
 }
 
+
 resource "akamai_dnsv2_record" "ptr_record" {
     zone = "${local.zone}"
     name = "ptr.akavaiodeveloper.net"
     recordtype =  "PTR"
     active = true
     ttl =  300
-    target = ["ptr.akavaiodeveloper.net."]
+    target = ["ptr.akavaiodeveloper.net"]
 }
 
 
@@ -178,12 +205,13 @@ resource "akamai_dnsv2_record" "rp_record" {
     recordtype =  "RP"
     active = true
     ttl =  7200
-    mailbox = "admin.example.com."
+    mailbox = "admin.example.com"
     txt = "txt.example.com"
-    target = ["txt.akavaiodeveloper.net."]
+    target = ["txt.akavaiodeveloper.net"]
 }
+*/
 
-/*
+/*TODO */
 resource "akamai_dnsv2_record" "rrsig_record" {
     zone = "${local.zone}"
     name = "rrsig.akavaiodeveloper.net"
@@ -201,7 +229,8 @@ resource "akamai_dnsv2_record" "rrsig_record" {
     type_covered = "A"
     target = ["dnskey.akavaiodeveloper.net"]
 }
-*/
+
+/*
 
 resource "akamai_dnsv2_record" "spf_record" {
     zone = "${local.zone}"
@@ -212,6 +241,7 @@ resource "akamai_dnsv2_record" "spf_record" {
     target = ["v=spf"]
 }
 
+
 resource "akamai_dnsv2_record" "srv_record" {
     zone = "${local.zone}"
     name = "srv.akavaiodeveloper.net"
@@ -221,8 +251,9 @@ resource "akamai_dnsv2_record" "srv_record" {
     priority = 10
     weight  = 0
     port = 522
-    target = ["target.akavaiodeveloper.net."]
+    target = ["target.akavaiodeveloper.net"]
 }
+
 
 resource "akamai_dnsv2_record" "sshfp_record" {
     zone = "${local.zone}"
@@ -233,17 +264,18 @@ resource "akamai_dnsv2_record" "sshfp_record" {
     algorithm = 2
     fingerprint_type  = 1
     fingerprint = "123456789ABCDEF67890123456789ABCDEF67890"
-    target = ["sshfp.akavaiodeveloper.net."]
+    target = ["sshfp.akavaiodeveloper.net"]
 }
 
 
+ 
 resource "akamai_dnsv2_record" "txt_record" {
     zone = "${local.zone}"
     name = "text.akavaiodeveloper.net"
     recordtype =  "TXT"
     active = true
     ttl =  7200
-    target = ["Hello world"]
+    target = ["Hello world this is text"]
 }
 
 
@@ -263,6 +295,19 @@ data "akamai_dns_record_set" "mx" {
   record_type = "MX"
 }
 
+
 output "mx_addrs" {
   value = "${join(",", data.akamai_dns_record_set.mx.rdata)}"
 }
+
+data "akamai_dns_record_set" "mxi" {
+  zone = "akavaiodeveloper.net"
+  host = "akavaiodeveloper.net"
+  record_type = "MX"
+}
+
+
+output "mx_addrsi" {
+  value = "${join(",", data.akamai_dns_record_set.mxi.rdata)}"
+}
+*/

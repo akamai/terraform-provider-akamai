@@ -2,15 +2,16 @@ package akamai
 
 import (
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"sort"
+
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func dataSourceDnsRecordSet() *schema.Resource {
+func dataSourceDNSRecordSet() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceDnsRecordSetRead,
+		Read: dataSourceDNSRecordSetRead,
 		Schema: map[string]*schema.Schema{
 			"zone": {
 				Type:     schema.TypeString,
@@ -33,14 +34,14 @@ func dataSourceDnsRecordSet() *schema.Resource {
 	}
 }
 
-func dataSourceDnsRecordSetRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceDNSRecordSetRead(d *schema.ResourceData, meta interface{}) error {
 	zone := d.Get("zone").(string)
 	host := d.Get("host").(string)
-	record_type := d.Get("record_type").(string)
+	recordtype := d.Get("record_type").(string)
 
-	log.Printf("[DEBUG] [Akamai DNSv2] Start Searching for records %s %s %s ", zone, host, record_type)
+	log.Printf("[DEBUG] [Akamai DNSv2] Start Searching for records %s %s %s ", zone, host, recordtype)
 
-	rdata, err := dnsv2.GetRdata(zone, host, record_type)
+	rdata, err := dnsv2.GetRdata(zone, host, recordtype)
 	if err != nil {
 		return fmt.Errorf("error looking up A records for %q: %s", host, err)
 	}
