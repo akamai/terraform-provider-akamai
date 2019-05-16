@@ -158,32 +158,32 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	if edgeHostnameOk {
 		d.Set("edge_hostname", edgeHostnames)
 	}
+	/*
+		if d.Get("activate").(bool) {
+			activation, err := activateProperty(property, d)
+			if err != nil {
+				return err
+			}
+			d.SetPartial("contact")
 
-	if d.Get("activate").(bool) {
-		activation, err := activateProperty(property, d)
-		if err != nil {
-			return err
-		}
-		d.SetPartial("contact")
+			go activation.PollStatus(property)
 
-		go activation.PollStatus(property)
-
-	polling:
-		for activation.Status != papi.StatusActive {
-			select {
-			case statusChanged := <-activation.StatusChange:
-				log.Printf("[DEBUG] Property Status: %s\n", activation.Status)
-				if statusChanged == false {
+		polling:
+			for activation.Status != papi.StatusActive {
+				select {
+				case statusChanged := <-activation.StatusChange:
+					log.Printf("[DEBUG] Property Status: %s\n", activation.Status)
+					if statusChanged == false {
+						break polling
+					}
+					continue polling
+				case <-time.After(time.Minute * 90):
+					log.Println("[DEBUG] Activation Timeout (90 minutes)")
 					break polling
 				}
-				continue polling
-			case <-time.After(time.Minute * 90):
-				log.Println("[DEBUG] Activation Timeout (90 minutes)")
-				break polling
 			}
 		}
-	}
-
+	*/
 	d.Partial(false)
 	log.Println("[DEBUG] Done")
 	return nil
@@ -710,7 +710,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	// an existing activation on this property will be automatically deactivated upon
 	// creation of this new activation
-	if d.Get("activate").(bool) {
+	/*if d.Get("activate").(bool) {
 		activation, err := activateProperty(property, d)
 		if err != nil {
 			return err
@@ -734,7 +734,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 	}
-
+	*/
 	d.Partial(false)
 
 	log.Println("[DEBUG] Done")

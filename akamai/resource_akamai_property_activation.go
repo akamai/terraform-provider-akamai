@@ -174,11 +174,12 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
-	/*e = property.Delete()
+
+	e = property.Delete()
 	if e != nil {
 		return e
 	}
-	*/
+	
 	d.SetId("")
 
 	log.Println("[DEBUG] Done")
