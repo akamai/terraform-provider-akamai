@@ -11,44 +11,6 @@ func resourceCPSNetworkConfiguration() *schema.Resource {
 	}
 }
 
-func unmarshalCPSNetworkConfiguration(d map[string]interface{}) *cps.NetworkConfiguration {
-	networkConfiguration := &cps.NetworkConfiguration{
-		Geography: d["geography"].(string),
-		// NetworkType:   cps.NetworkType(d["network_type"].(string)),
-		SecureNetwork: cps.TLSType(d["secure_network"].(string)),
-		DomainNameSettings: unmarshalCPSDomainNameSettings(
-			getSingleSchemaSetItem(d["dns_name_settings"]),
-		),
-	}
-
-	if disallowedTLS, ok := unmarshalSetString(d["disallowed_tls_version"]); ok {
-		networkConfiguration.DisallowedTLSVersions = &disallowedTLS
-	}
-
-	if mustHaveCiphers, ok := d["must_have_ciphers"].(string); ok {
-		networkConfiguration.MustHaveCiphers = cps.AkamaiCipher(mustHaveCiphers)
-	}
-
-	if ocspString := readNullableString(d["ocsp_stapling"]); ocspString != nil {
-		ocspStapling := cps.OCSPSetting(*ocspString)
-		networkConfiguration.OCSPStapling = &ocspStapling
-	}
-
-	if preferredCiphers, ok := d["preferred_ciphers"].(string); ok {
-		networkConfiguration.PreferredCiphers = cps.AkamaiCipher(preferredCiphers)
-	}
-
-	if quicEnabled, ok := d["quic_enabled"].(bool); ok {
-		networkConfiguration.QUICEnabled = quicEnabled
-	}
-
-	if sniOnly, ok := d["sni_only"].(bool); ok {
-		networkConfiguration.SNIOnly = sniOnly
-	}
-
-	return networkConfiguration
-}
-
 var cpsNetworkConfigurationSchema = map[string]*schema.Schema{
 	"disallowed_tls_version": &schema.Schema{
 		Type:     schema.TypeSet,
@@ -98,4 +60,42 @@ var cpsNetworkConfigurationSchema = map[string]*schema.Schema{
 		Required: true,
 		ForceNew: true,
 	},
+}
+
+func unmarshalCPSNetworkConfiguration(d map[string]interface{}) *cps.NetworkConfiguration {
+	networkConfiguration := &cps.NetworkConfiguration{
+		Geography: d["geography"].(string),
+		// NetworkType:   cps.NetworkType(d["network_type"].(string)),
+		SecureNetwork: cps.TLSType(d["secure_network"].(string)),
+		DomainNameSettings: unmarshalCPSDomainNameSettings(
+			getSingleSchemaSetItem(d["dns_name_settings"]),
+		),
+	}
+
+	if disallowedTLS, ok := unmarshalSetString(d["disallowed_tls_version"]); ok {
+		networkConfiguration.DisallowedTLSVersions = &disallowedTLS
+	}
+
+	if mustHaveCiphers, ok := d["must_have_ciphers"].(string); ok {
+		networkConfiguration.MustHaveCiphers = cps.AkamaiCipher(mustHaveCiphers)
+	}
+
+	if ocspString := readNullableString(d["ocsp_stapling"]); ocspString != nil {
+		ocspStapling := cps.OCSPSetting(*ocspString)
+		networkConfiguration.OCSPStapling = &ocspStapling
+	}
+
+	if preferredCiphers, ok := d["preferred_ciphers"].(string); ok {
+		networkConfiguration.PreferredCiphers = cps.AkamaiCipher(preferredCiphers)
+	}
+
+	if quicEnabled, ok := d["quic_enabled"].(bool); ok {
+		networkConfiguration.QUICEnabled = quicEnabled
+	}
+
+	if sniOnly, ok := d["sni_only"].(bool); ok {
+		networkConfiguration.SNIOnly = sniOnly
+	}
+
+	return networkConfiguration
 }

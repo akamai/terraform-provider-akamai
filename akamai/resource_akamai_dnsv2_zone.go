@@ -5,38 +5,10 @@ import (
 	"fmt"
 	"log"
 	"sync"
-
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-/*
-GET
-{
-  "contractId": "1-2ABCDE",
-  "zone": "example.com",
-  "type": "primary",
-  "aliasCount": 1,
-  "signAndServe": true,
-  "signAndServeAlgorithm": "RSA_SHA256",
-  "versionId": "ae02357c-693d-4ac4-b33d-8352d9b7c786",
-  "lastModifiedDate": "2017-01-03T12:00:00Z",
-  "lastModifiedBy": "user28",
-  "lastActivationDate": "2017-01-03T12:00:00Z",
-  "activationState": "PENDING"
-}
-POST
-{
-  "zone": "river.com",
-  "type": "secondary",
-  "masters": [
-    "1.2.3.4",
-    "1.2.3.5"
-  ],
-  "comment": "Adding bodies of water"
-}
-
-*/
 var dnsWriteLock sync.Mutex
 
 func resourceDNSv2Zone() *schema.Resource {
@@ -130,13 +102,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 			if e != nil {
 				return e
 			}
-			/*
-			         cl, e := dnsv2.GetChangeList(hostname)
-			   			if e != nil {
-			   				return e
-			   			}
-			         log.Printf("[DEBUG] [Akamai DNSv2] Searching for changeList [%v]", cl)
-			*/
+			
 			e = zonecreate.SubmitChangelist()
 			if e != nil {
 				return e
@@ -158,7 +124,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	// Give terraform the ID
 	d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
 	return resourceDNSv2ZoneRead(d, meta)
-	//return nil
+	
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
@@ -250,7 +216,6 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	// Give terraform the ID
 	d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
 	return resourceDNSv2ZoneRead(d, meta)
-	//return nil
 }
 
 func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

@@ -11,15 +11,15 @@ func resourceCPSThirdParty() *schema.Resource {
 	}
 }
 
-func unmarshalCPSThirdParty(d map[string]interface{}) *cps.ThirdParty {
-	return &cps.ThirdParty{
-		ExcludeSANS: d["exclude_sans"].(bool),
-	}
-}
-
 var cpsThirdParty = map[string]*schema.Schema{
 	"exclude_sans": &schema.Schema{
 		Type:     schema.TypeBool,
 		Required: true,
 	},
+}
+
+func unmarshalCPSThirdParty(d map[string]interface{}) *cps.ThirdParty {
+	return &cps.ThirdParty{
+		ExcludeSANS: d["exclude_sans"].(bool),
+	}
 }

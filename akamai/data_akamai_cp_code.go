@@ -1,10 +1,8 @@
 package akamai
 
 import (
-	//"fmt"
 	"fmt"
 	"log"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -38,9 +36,6 @@ func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 
 	cpCode, err := datasourceCPCodePAPINewCPCodes(d, meta).FindCpCode(cpCodeName)
 
-	/*cpCode.CpcodeID = d.Id()
-	err = cpCode.GetCpCode()
-	*/
 	if err != nil {
 		return err
 	}

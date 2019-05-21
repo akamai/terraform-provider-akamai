@@ -11,19 +11,6 @@ func resourceCPSOrganization() *schema.Resource {
 	}
 }
 
-func unmarshalCPSOrganization(d map[string]interface{}) *cps.Organization {
-	return &cps.Organization{
-		Name:           readNullableString(d["name"]),
-		Phone:          readNullableString(d["phone"]),
-		AddressLineOne: readNullableString(d["address_line_one"]),
-		AddressLineTwo: readNullableString(d["address_line_two"]),
-		City:           readNullableString(d["city"]),
-		Region:         readNullableString(d["region"]),
-		PostalCode:     readNullableString(d["postal_code"]),
-		Country:        readNullableString(d["country"]),
-	}
-}
-
 var cpsOrganizationSchema = map[string]*schema.Schema{
 	"name": &schema.Schema{
 		Type:     schema.TypeString,
@@ -57,4 +44,17 @@ var cpsOrganizationSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	},
+}
+
+func unmarshalCPSOrganization(d map[string]interface{}) *cps.Organization {
+	return &cps.Organization{
+		Name:           readNullableString(d["name"]),
+		Phone:          readNullableString(d["phone"]),
+		AddressLineOne: readNullableString(d["address_line_one"]),
+		AddressLineTwo: readNullableString(d["address_line_two"]),
+		City:           readNullableString(d["city"]),
+		Region:         readNullableString(d["region"]),
+		PostalCode:     readNullableString(d["postal_code"]),
+		Country:        readNullableString(d["country"]),
+	}
 }

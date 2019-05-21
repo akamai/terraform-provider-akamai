@@ -3,7 +3,6 @@ package akamai
 import (
 	"errors"
 	"log"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 )

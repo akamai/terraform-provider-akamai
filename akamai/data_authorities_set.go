@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"sort"
-
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
 )

@@ -11,23 +11,6 @@ func resourceCPSCSR() *schema.Resource {
 	}
 }
 
-func unmarshalCPSCSR(d map[string]interface{}) *cps.CSR {
-	csr := &cps.CSR{
-		CommonName:         d["cn"].(string),
-		City:               readNullableString(d["l"]),
-		State:              readNullableString(d["st"]),
-		CountryCode:        readNullableString(d["c"]),
-		Organization:       readNullableString(d["o"]),
-		OrganizationalUnit: readNullableString(d["ou"]),
-	}
-
-	if sans, ok := unmarshalSetString(d["sans"]); ok {
-		csr.AlternativeNames = &sans
-	}
-
-	return csr
-}
-
 var cpsCSRSchema = map[string]*schema.Schema{
 	"cn": &schema.Schema{
 		Type:     schema.TypeString,
@@ -58,4 +41,21 @@ var cpsCSRSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	},
+}
+
+func unmarshalCPSCSR(d map[string]interface{}) *cps.CSR {
+	csr := &cps.CSR{
+		CommonName:         d["cn"].(string),
+		City:               readNullableString(d["l"]),
+		State:              readNullableString(d["st"]),
+		CountryCode:        readNullableString(d["c"]),
+		Organization:       readNullableString(d["o"]),
+		OrganizationalUnit: readNullableString(d["ou"]),
+	}
+
+	if sans, ok := unmarshalSetString(d["sans"]); ok {
+		csr.AlternativeNames = &sans
+	}
+
+	return csr
 }

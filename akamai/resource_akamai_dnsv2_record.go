@@ -1,9 +1,6 @@
 package akamai
 
 import (
-	//"bytes"
-
-	//"encoding/base32"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -12,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -54,125 +50,102 @@ func resourceDNSv2Record() *schema.Resource {
 			"target": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{Type: schema.TypeString},
-				//	Required: false,
 				Optional: true,
-				//ForceNew: true,
 				Set: schema.HashString,
 			},
 			//	"afsdb":
 			"subtype": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			//	"cname":
 			//	"dnskey":
 			"flags": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"protocol": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"algorithm": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"key": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			//	"ds":
 			"keytag": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"digest_type": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"digest": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			//"hinfo":
 			"hardware": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"software": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			//	 "loc":
 			//		"mx":
 			"priority": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			//	"naptr":
 			"order": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"preference": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"flagsnaptr": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"service": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"regexp": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"replacement": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			//"ns":
 			//"nsec3":
 			"iterations": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"salt": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"next_hashed_owner_name": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"type_bitmaps": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			//"nsec3param":
 			//	"ptr":
@@ -180,131 +153,62 @@ func resourceDNSv2Record() *schema.Resource {
 			"mailbox": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"txt": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			//	"rrsig":
 			"type_covered": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"original_ttl": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"expiration": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"inception": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"signer": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"signature": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"labels": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
-			/*"soa":
-				Type:     schema.TypeSet,
-				Optional: true,
-				Set: func(v interface{}) int {
-					var buf bytes.Buffer
-					m := v.(map[string]interface{})
-					buf.WriteString(fmt.Sprintf(
-						"%s-%s-%s-%s-%s-%s-%s",
-						m["ttl"],
-						m["originserver"],
-						m["contact"],
-						m["refresh"],
-						m["retry"],
-						m["expire"],
-						m["minimum"],
-					))
-					return hashcode.String(buf.String())
-				},
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"ttl": {
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
-						"originserver": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"contact": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"serial": {
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
-						"refresh": {
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
-						"retry": {
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
-						"expire": {
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
-						"minimum": {
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
-					},
-				},
-			},*/
 			//"spf":
 			//	"srv":
 			"weight": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"port": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			//"sshfp": {
 			"fingerprint_type": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			"fingerprint": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Required: false,
 			},
 			"priority_increment": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Required: false,
 			},
 			//"txt": {
 		},
@@ -332,11 +236,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	if ok {
 		recordtype = d.Get("recordtype").(string)
 	}
-	/*_, ok = d.GetOk("target")
-	if ok {
-		target := d.Get("target").(*schema.Set).List()
-	}
-	*/
+	
 	validationresult := validateRecord(d)
 	log.Printf("[DEBUG] [Akamai DNSv2] Validation result recordcreate %s", validationresult)
 	if validationresult != "VALID" {
@@ -360,7 +260,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	if len(rdata) > 0 {
 		extractString := strings.Join(rdata, " ")
 		sha1hashtest := getSHAString(extractString)
-		//sha1_hash_test := getSHA(rdata)
+		
 		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordread [%s]", sha1hashtest)
 	}
 	// If there's no existing record we'll create a blank one
@@ -370,7 +270,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] [Akamai DNSv2] Creating new record")
 		// Save the zone to the API
 		e = recordcreate.Save(zone)
-		//e = nil
+		
 		if e != nil {
 			return e
 		}
@@ -388,9 +288,9 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 				return e
 			}
 		}
-		//return e
+		
 	}
-	//}
+	
 
 	// Give terraform the ID
 	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
@@ -461,20 +361,20 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 			// Save the zone to the API
 			log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
 			e = recordcreate.Save(zone)
-			//e = nil
+			
 		} else {
 			log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
 			e = recordcreate.Update(zone)
 			if e != nil {
 				return e
 			}
-			//return e
+			
 		}
 		d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 	}
 
 	// Give terraform the ID
-	//	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1_hash))
+	
 
 	return nil
 }
@@ -500,7 +400,7 @@ func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	host := d.Get("name").(string)
 	recordtype := d.Get("recordtype").(string)
 	ttl := d.Get("ttl").(int)
-	//target :=  d.Get("target").(string)
+	
 
 	target := d.Get("target").(*schema.Set).List()
 
@@ -709,9 +609,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			protocol := d.Get("protocol").(int)
 			algorithm := d.Get("algorithm").(int)
 			key := d.Get("key").(string)
-			//for _, recContent := range target {
+			
 			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(protocol)+" "+strconv.Itoa(algorithm)+" "+key)
-			//}
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -722,9 +622,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			keytag := d.Get("keytag").(int)
 			algorithm := d.Get("algorithm").(int)
 			digest := d.Get("digest").(string)
-			//for _, recContent := range target {
+			
 			records = append(records, strconv.Itoa(keytag)+" "+strconv.Itoa(digestType)+" "+strconv.Itoa(algorithm)+" "+digest)
-			//}
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -733,9 +633,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records := make([]string, 0, len(target))
 			hardware := d.Get("hardware").(string)
 			software := d.Get("software").(string)
-			//for _, recContent := range target {
+			
 			records = append(records, hardware+" "+software)
-			//}
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -784,13 +684,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 
 			}
 			sort.Strings(records)
-			//priority := d.Get("priority").(int)
-			/*records := make([]string, 0, len(target))
-
-			for _, recContent := range target {
-				//records = append(records, strconv.Itoa(priority)+" "+recContent.(string))
-				records = append(records, recContent.(string))
-			}*/
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -807,9 +701,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			if !(checktarget == ".") {
 				service = service + "."
 			}
-			//for _, recContent := range target {
+			
 			records = append(records, strconv.Itoa(order)+" "+strconv.Itoa(preference)+" "+flagsnaptr+" "+regexp+" "+replacement+" "+service)
-			//}
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -822,9 +716,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			nextHashedOwnerName := d.Get("next_hashed_owner_name").(string)
 			salt := d.Get("salt").(string)
 			typeBitmaps := d.Get("type_bitmaps").(string)
-			//for _, recContent := range target {
+			
 			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(iterations)+" "+salt+" "+nextHashedOwnerName+" "+typeBitmaps)
-			//}
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -835,12 +729,12 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			algorithm := d.Get("algorithm").(int)
 			iterations := d.Get("iterations").(int)
 			salt := d.Get("salt").(string)
-			//saltbyte := []byte(salt)
-			saltbase32 := salt //base32.StdEncoding.EncodeToString(saltbyte)
+			
+			saltbase32 := salt 
 
-			//for _, recContent := range target {
+			
 			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(iterations)+" "+saltbase32)
-			//}
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -857,9 +751,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			if !(checktxt == ".") {
 				txt = txt + "."
 			}
-			//for _, recContent := range target {
+			
 			records = append(records, mailbox+" "+txt)
-			//}
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -875,9 +769,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			signature := d.Get("signature").(string)
 			signer := d.Get("signer").(string)
 			typeCovered := d.Get("type_covered").(string)
-			//for _, recContent := range target {
+			
 			records = append(records, typeCovered+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(labels)+" "+strconv.Itoa(originalTTL)+" "+expiration+" "+inception+" "+signature+" "+signer+" "+strconv.Itoa(keytag))
-			//}
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -895,7 +789,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 				} else {
 					records = append(records, strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+strconv.Itoa(priority)+" "+recContent.(string)+".")
 				}
-				//records = append(records, strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+strconv.Itoa(priority)+" "+recContent.(string))
+				
 			}
 			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
@@ -908,10 +802,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			fingerprintType := d.Get("fingerprint_type").(int)
 			fingerprint := d.Get("fingerprint").(string)
 
-			//for _, recContent := range target {
+			
 			records = append(records, strconv.Itoa(algorithm)+" "+strconv.Itoa(fingerprintType)+" "+fingerprint)
-			//+recContent.(string))
-			//}
+			
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -941,7 +834,7 @@ func validateRecord(d *schema.ResourceData) string {
 		records = append(records, recContent.(string))
 	}
 
-	//emptyrecordcreate := dnsv2.RecordBody{}
+	
 
 	simplerecord := map[string]bool{"A": true, "AAAA": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "TXT": true}
 	if simplerecord[recordtype] {
@@ -1003,7 +896,7 @@ func validateRecord(d *schema.ResourceData) string {
 			keytag := d.Get("keytag").(int)
 			algorithm := d.Get("algorithm").(int)
 			digest := d.Get("digest").(string)
-			//for _, recContent := range target {
+			
 			if digestType == 0 {
 				return "digest_type"
 			}
@@ -1117,7 +1010,7 @@ func validateRecord(d *schema.ResourceData) string {
 			nextHashedOwnerName := d.Get("next_hashed_owner_name").(string)
 			salt := d.Get("salt").(string)
 			typeBitmaps := d.Get("type_bitmaps").(string)
-			//for _, recContent := range target {
+			
 
 			if host == "null" {
 				return "host"
@@ -1155,8 +1048,8 @@ func validateRecord(d *schema.ResourceData) string {
 			algorithm := d.Get("algorithm").(int)
 			iterations := d.Get("iterations").(int)
 			salt := d.Get("salt").(string)
-			//saltbyte := []byte(salt)
-			saltbase32 := salt //base32.StdEncoding.EncodeToString(saltbyte)
+			
+			saltbase32 := salt
 
 			if host == "null" {
 				return "host"
@@ -1179,9 +1072,7 @@ func validateRecord(d *schema.ResourceData) string {
 			if salt == "null" {
 				return "salt"
 			}
-			//if saltbyte == nil {
-			//				return "saltbyte"
-			//}
+			
 			if saltbase32 == "null" {
 				return "saltbase32"
 			}
@@ -1321,22 +1212,3 @@ func validateRecord(d *schema.ResourceData) string {
 	}
 	return "INVALID"
 }
-
-/*
-type error interface {
-	Error() string
-
-}
-
-type errorString struct {
-	s string
-}
-
-func (e *errorString) Error () string {
-	return e.s
-}
-
-func New(text string) error {
-    return &errorString{text}
-}
-*/

@@ -1,13 +1,9 @@
 package akamai
 
 import (
-	//"errors"
 	"fmt"
 	"log"
-
 	"strings"
-	//"time"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -26,8 +22,37 @@ func resourcePropertyVariable() *schema.Resource {
 	}
 }
 
+var akamaiPropertyVariableSchema = map[string]*schema.Schema{
+	"name": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"fqname": {
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"hidden": {
+		Type:     schema.TypeBool,
+		Required: true,
+	},
+	"sensitive": {
+		Type:     schema.TypeBool,
+		Required: true,
+	},
+	"value": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"description": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	
+}
+
+
 func resourcePropertyVariableCreate(d *schema.ResourceData, meta interface{}) error {
-	//d.Partial(true)
+	
 
 	var name string
 	var value string
@@ -69,7 +94,7 @@ func resourcePropertyVariableCreate(d *schema.ResourceData, meta interface{}) er
 	d.Set("fqname", fqname)
 	d.SetId(fmt.Sprintf("%s-%s-%s-%s", name, value, description, fqname))
 
-	//d.Partial(false)
+	
 	log.Println("[DEBUG] Done")
 	return nil
 }
@@ -145,7 +170,7 @@ func resourcePropertyVariableImport(d *schema.ResourceData, meta interface{}) ([
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
-	//d.Set("clone_from", property.CloneFrom.PropertyID)
+	
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
 	d.SetId(property.PropertyID)
@@ -154,14 +179,7 @@ func resourcePropertyVariableImport(d *schema.ResourceData, meta interface{}) ([
 }
 
 func resourcePropertyVariableExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	/*
-		property := papi.NewProperty(papi.NewProperties())
-		property.PropertyID = d.Id()
-		e := property.GetProperty()
-		if e != nil {
-			return false, e
-		}
-	*/
+	
 	return true, nil
 }
 
@@ -170,36 +188,9 @@ func resourcePropertyVariableRead(d *schema.ResourceData, meta interface{}) erro
 	return nil
 }
 
-var akamaiPropertyVariableSchema = map[string]*schema.Schema{
-	"name": {
-		Type:     schema.TypeString,
-		Required: true,
-	},
-	"fqname": {
-		Type:     schema.TypeString,
-		Required: true,
-	},
-	"value": {
-		Type:     schema.TypeString,
-		Optional: true,
-	},
-	"description": {
-		Type:     schema.TypeString,
-		Optional: true,
-	},
-	"hidden": {
-		Type:     schema.TypeBool,
-		Required: true,
-	},
-	"sensitive": {
-		Type:     schema.TypeBool,
-		Required: true,
-	},
-}
-
 func resourcePropertyVariableUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] UPDATING")
-	//d.Partial(true)
+	
 
 	var name string
 	var value string
@@ -234,7 +225,7 @@ func resourcePropertyVariableUpdate(d *schema.ResourceData, meta interface{}) er
 	d.Set("hidden", hidden)
 	d.Set("sensitive", sensitive)
 
-	//d.Partial(false)
+	
 
 	log.Println("[DEBUG] Done")
 	return nil

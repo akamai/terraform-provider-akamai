@@ -3,8 +3,7 @@ package akamai
 import (
 	"log"
 	"strings"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
+    "github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -21,6 +20,51 @@ func resourcePropertyVariables() *schema.Resource {
 		},
 		Schema: akamaiPropertyVariablesSchema,
 	}
+}
+
+var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
+	"variables": &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"variable": &schema.Schema{
+					Type:     schema.TypeSet,
+					Optional: true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"name": {
+								Type:     schema.TypeString,
+								Required: true,
+							},
+							"hidden": {
+								Type:     schema.TypeBool,
+								Required: true,
+							},
+							"sensitive": {
+								Type:     schema.TypeBool,
+								Required: true,
+							},
+							"description": {
+								Type:     schema.TypeString,
+								Optional: true,
+							},
+							
+							"value": {
+								Type:     schema.TypeString,
+								Optional: true,
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	"json": {
+		Type: schema.TypeString,
+		Computed:    true,
+		Description: "JSON variables representation",
+	},
 }
 
 func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) error {
@@ -68,7 +112,7 @@ func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) e
 
 	sha := getSHAString(string(jsonBody))
 	d.Set("json", string(jsonBody))
-	//d.Set("json", jsonBody)
+	
 	d.SetId(sha)
 	log.Println("[DEBUG] Done")
 	return nil
@@ -112,7 +156,7 @@ func resourcePropertyVariablesImport(d *schema.ResourceData, meta interface{}) (
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
-	//d.Set("clone_from", property.CloneFrom.PropertyID)
+	
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
 	d.SetId(property.PropertyID)
@@ -138,51 +182,6 @@ func resourcePropertyVariablesRead(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
-	"variables": &schema.Schema{
-		Type:     schema.TypeSet,
-		Optional: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"variable": &schema.Schema{
-					Type:     schema.TypeSet,
-					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							"name": {
-								Type:     schema.TypeString,
-								Required: true,
-							},
-							"description": {
-								Type:     schema.TypeString,
-								Optional: true,
-							},
-							"hidden": {
-								Type:     schema.TypeBool,
-								Required: true,
-							},
-							"sensitive": {
-								Type:     schema.TypeBool,
-								Required: true,
-							},
-							"value": {
-								Type:     schema.TypeString,
-								Optional: true,
-							},
-						},
-					},
-				},
-			},
-		},
-	},
-	"json": {
-		Type: schema.TypeString,
-		//Type: schema.TypeSet,
-		Computed:    true,
-		Description: "JSON variables representation",
-	},
-}
-
 func resourcePropertyVariablesUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] UPDATING")
 	rule := papi.NewRule()
@@ -200,12 +199,6 @@ func resourcePropertyVariablesUpdate(d *schema.ResourceData, meta interface{}) e
 					for _, v := range vv.(*schema.Set).List() {
 						variableMap, ok := v.(map[string]interface{})
 						if ok {
-							/*log.Printf("[DEBUG] Check for variables LOOP  name %s\n", variableMap["name"])
-							log.Printf("[DEBUG] Check for variables LOOP  value %s\n", variableMap["value"])
-							log.Printf("[DEBUG] Check for variables LOOP  description%s\n", variableMap["description"])
-							log.Printf("[DEBUG] Check for variables LOOP  hidden%s\n", variableMap["hidden"])
-							log.Printf("[DEBUG] Check for variables LOOP  sensitive%s\n", variableMap["sensitive"])
-							log.Printf("[DEBUG] Check for variables LOOP  fqname%s\n", variableMap["fqname"])*/
 							newVariable := papi.NewVariable()
 							newVariable.Name = variableMap["name"].(string)
 							newVariable.Description = variableMap["description"].(string)
@@ -229,7 +222,7 @@ func resourcePropertyVariablesUpdate(d *schema.ResourceData, meta interface{}) e
 
 		sha := getSHAString(string(jsonBody))
 		d.Set("json", string(jsonBody))
-		//d.Set("json", jsonBody)
+		
 		d.SetId(sha)
 	}
 	log.Println("[DEBUG] Done")

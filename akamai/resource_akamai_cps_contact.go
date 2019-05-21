@@ -11,23 +11,6 @@ func resourceCPSContact() *schema.Resource {
 	}
 }
 
-func unmarshalCPSContact(d map[string]interface{}) *cps.Contact {
-	return &cps.Contact{
-		FirstName:      readNullableString(d["first_name"]),
-		LastName:       readNullableString(d["last_name"]),
-		Title:          readNullableString(d["title"]),
-		Organization:   readNullableString(d["organization_name"]),
-		Email:          readNullableString(d["email"]),
-		Phone:          readNullableString(d["phone"]),
-		AddressLineOne: readNullableString(d["address_line_one"]),
-		AddressLineTwo: readNullableString(d["address_line_two"]),
-		City:           readNullableString(d["city"]),
-		Region:         readNullableString(d["region"]),
-		PostalCode:     readNullableString(d["postal_code"]),
-		Country:        readNullableString(d["country"]),
-	}
-}
-
 var cpsContactSchema = map[string]*schema.Schema{
 	"first_name": &schema.Schema{
 		Type:     schema.TypeString,
@@ -77,4 +60,21 @@ var cpsContactSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	},
+}
+
+func unmarshalCPSContact(d map[string]interface{}) *cps.Contact {
+	return &cps.Contact{
+		FirstName:      readNullableString(d["first_name"]),
+		LastName:       readNullableString(d["last_name"]),
+		Title:          readNullableString(d["title"]),
+		Organization:   readNullableString(d["organization_name"]),
+		Email:          readNullableString(d["email"]),
+		Phone:          readNullableString(d["phone"]),
+		AddressLineOne: readNullableString(d["address_line_one"]),
+		AddressLineTwo: readNullableString(d["address_line_two"]),
+		City:           readNullableString(d["city"]),
+		Region:         readNullableString(d["region"]),
+		PostalCode:     readNullableString(d["postal_code"]),
+		Country:        readNullableString(d["country"]),
+	}
 }

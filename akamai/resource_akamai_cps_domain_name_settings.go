@@ -11,6 +11,19 @@ func resourceCPSDomainNameSettings() *schema.Resource {
 	}
 }
 
+var cpsDomainNameSettings = map[string]*schema.Schema{
+	"clone_dns_names": &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false, // VERIFY
+	},
+	"dns_names": &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true,
+		Elem:     &schema.Schema{Type: schema.TypeString},
+	},
+}
+
 func unmarshalCPSDomainNameSettings(d map[string]interface{}) *cps.DomainNameSettings {
 	cloneDomainNames, _ := d["clone_dns_names"].(bool)
 
@@ -23,17 +36,4 @@ func unmarshalCPSDomainNameSettings(d map[string]interface{}) *cps.DomainNameSet
 	}
 
 	return domainNameSettings
-}
-
-var cpsDomainNameSettings = map[string]*schema.Schema{
-	"clone_dns_names": &schema.Schema{
-		Type:     schema.TypeBool,
-		Optional: true,
-		Default:  false, // VERIFY
-	},
-	"dns_names": &schema.Schema{
-		Type:     schema.TypeSet,
-		Optional: true,
-		Elem:     &schema.Schema{Type: schema.TypeString},
-	},
 }

@@ -2,12 +2,9 @@ package akamai
 
 import (
 	"errors"
-
 	"log"
-
 	"strings"
 	"time"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -24,6 +21,61 @@ func resourcePropertyActivation() *schema.Resource {
 		},
 		Schema: akamaiPropertyActivationSchema,
 	}
+}
+
+var akamaiPropertyActivationSchema = map[string]*schema.Schema{
+	"contract": &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+		ForceNew: true,
+	},
+	"group": &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+		ForceNew: true,
+	},
+	"network": &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+		Default:  "staging",
+	},
+
+	"activate": &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  true,
+	},
+	"name": &schema.Schema{
+		Type:     schema.TypeString,
+		Required: true,
+		ForceNew: true,
+	},
+	"hostname": &schema.Schema{
+		Type:     schema.TypeSet,
+		Required: true,
+		Elem:     &schema.Schema{Type: schema.TypeString},
+	},
+	"contact": &schema.Schema{
+		Type:     schema.TypeSet,
+		Required: true,
+		Elem:     &schema.Schema{Type: schema.TypeString},
+	},
+	"account": &schema.Schema{
+		Type:     schema.TypeString,
+		Computed: true,
+	},
+	"staging_version": &schema.Schema{
+		Type:     schema.TypeInt,
+		Computed: true,
+	},
+	"production_version": &schema.Schema{
+		Type:     schema.TypeInt,
+		Computed: true,
+	},
+	"version": &schema.Schema{
+		Type:     schema.TypeInt,
+		Computed: true,
+	},
 }
 
 func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) error {
@@ -48,13 +100,7 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 		if contract == nil {
 			return errors.New("contract_id must be specified to activate a new property")
 		}
-
-		/*
-		       var e error
-		   		property, e = findPropertyActivation(d)
-		   		if e != nil {
-		   			return e
-		   		}*/
+		
 	}
 
 	err := ensureEditableVersion(property)
@@ -215,7 +261,7 @@ func resourcePropertyActivationImport(d *schema.ResourceData, meta interface{}) 
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
-	//d.Set("clone_from", property.CloneFrom.PropertyID)
+	
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
 	d.SetId(property.PropertyID)
@@ -242,17 +288,13 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	// Cannot set clone_from. Not provided on GET requests.
-	// d.Set("clone_from", nil)
-
-	// Cannot set product. Not provided on GET requests.
-	// d.Set("product", property.ProductID)
+	
 
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
 	d.Set("name", property.PropertyName)
-	//d.Set("note", property.Note)
+	
 
 	d.Set("version", property.LatestVersion)
 	if property.StagingVersion > 0 {
@@ -263,69 +305,6 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	return nil
-}
-
-var akamaiPropertyActivationSchema = map[string]*schema.Schema{
-	"account": &schema.Schema{
-		Type:     schema.TypeString,
-		Computed: true,
-	},
-	"contract": &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-		ForceNew: true,
-	},
-	"group": &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-		ForceNew: true,
-	},
-	"network": &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-		Default:  "staging",
-	},
-
-	"activate": &schema.Schema{
-		Type:     schema.TypeBool,
-		Optional: true,
-		Default:  true,
-	},
-	"name": &schema.Schema{
-		Type:     schema.TypeString,
-		Required: true,
-		ForceNew: true,
-	},
-	"version": &schema.Schema{
-		Type:     schema.TypeInt,
-		Computed: true,
-	},
-	"staging_version": &schema.Schema{
-		Type:     schema.TypeInt,
-		Computed: true,
-	},
-	"production_version": &schema.Schema{
-		Type:     schema.TypeInt,
-		Computed: true,
-	},
-	/*"rule_format": &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-	},
-	"ipv6": &schema.Schema{
-		Type:     schema.TypeBool,
-		Optional: true,
-	},*/
-	"hostname": &schema.Schema{
-		Type:     schema.TypeSet,
-		Required: true,
-		Elem:     &schema.Schema{Type: schema.TypeString},
-	},
-	"contact": &schema.Schema{
-		Type:     schema.TypeSet,
-		Required: true,
-		Elem:     &schema.Schema{Type: schema.TypeString},
-	},
 }
 
 func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) error {

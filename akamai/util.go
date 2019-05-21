@@ -3,7 +3,6 @@ package akamai
 import (
 	"crypto/sha1"
 	"encoding/hex"
-
 	"github.com/hashicorp/terraform/helper/schema"
 )
 

@@ -2,7 +2,6 @@ package akamai
 
 import (
 	"log"
-
 	cps "github.com/akamai/AkamaiOPEN-edgegrid-golang/cps-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -17,6 +16,95 @@ func resourceEnrollment() *schema.Resource {
 		Exists: resourceEnrollmentExists,
 		Schema: akamaiEnrollmentSchema,
 	}
+}
+
+var akamaiEnrollmentSchema = map[string]*schema.Schema{
+	"contract_id": {
+		Type:     schema.TypeString,
+		Required: true,
+		ForceNew: true,
+	},
+	"deploy_not_after": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"deploy_not_before": {
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"admin_contact": {
+		Type:     schema.TypeSet,
+		Required: true,
+		Elem:     resourceCPSContact(),
+	},
+	"certificate_chain_type": &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"certificate_type": &schema.Schema{
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"change_management": &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false, // VERIFY
+	},
+	"csr": {
+		Type:     schema.TypeSet,
+		Required: true, // VERIFY
+		Elem:     resourceCPSCSR(),
+	},
+	"enable_multi_stacked_certificates": &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false, // VERIFY
+	},
+	"max_allowed_san_names": &schema.Schema{
+		Type:     schema.TypeInt,
+		Optional: true,
+	},
+	"max_allowed_wildcard_san_names": &schema.Schema{
+		Type:     schema.TypeInt,
+		Optional: true,
+	},
+	"network_configuration": {
+		Type:     schema.TypeSet,
+		Required: true,
+		Elem:     resourceCPSNetworkConfiguration(),
+	},
+	"org": {
+		Type:     schema.TypeSet,
+		Required: true,
+		Elem:     resourceCPSOrganization(),
+	},
+	"pending_changes": &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true,
+		Elem:     &schema.Schema{Type: schema.TypeString},
+	},
+	"ra": &schema.Schema{
+		Type:     schema.TypeString,
+		Required: true,
+	},
+	"signature_algorithm": &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+	},
+	"tech_contact": &schema.Schema{
+		Type:     schema.TypeSet,
+		Required: true, // VERIFY
+		Elem:     resourceCPSContact(),
+	},
+	"third_party": &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true, // VERIFY
+		Elem:     resourceCPSThirdParty(),
+	},
+	"validation_type": &schema.Schema{
+		Type:     schema.TypeString,
+		Required: true,
+	},
 }
 
 func resourceEnrollmentCreate(d *schema.ResourceData, meta interface{}) error {
@@ -131,95 +219,6 @@ func unmarshalListEnrollmentsParams(d *schema.ResourceData) *cps.ListEnrollments
 	return &cps.ListEnrollmentsQueryParams{
 		ContractID: d.Get("contract_id").(string),
 	}
-}
-
-var akamaiEnrollmentSchema = map[string]*schema.Schema{
-	"contract_id": {
-		Type:     schema.TypeString,
-		Required: true,
-		ForceNew: true,
-	},
-	"deploy_not_after": {
-		Type:     schema.TypeString,
-		Optional: true,
-	},
-	"deploy_not_before": {
-		Type:     schema.TypeString,
-		Optional: true,
-	},
-	"admin_contact": {
-		Type:     schema.TypeSet,
-		Required: true,
-		Elem:     resourceCPSContact(),
-	},
-	"certificate_chain_type": &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-	},
-	"certificate_type": &schema.Schema{
-		Type:     schema.TypeString,
-		Required: true,
-	},
-	"change_management": &schema.Schema{
-		Type:     schema.TypeBool,
-		Optional: true,
-		Default:  false, // VERIFY
-	},
-	"csr": {
-		Type:     schema.TypeSet,
-		Required: true, // VERIFY
-		Elem:     resourceCPSCSR(),
-	},
-	"enable_multi_stacked_certificates": &schema.Schema{
-		Type:     schema.TypeBool,
-		Optional: true,
-		Default:  false, // VERIFY
-	},
-	"max_allowed_san_names": &schema.Schema{
-		Type:     schema.TypeInt,
-		Optional: true,
-	},
-	"max_allowed_wildcard_san_names": &schema.Schema{
-		Type:     schema.TypeInt,
-		Optional: true,
-	},
-	"network_configuration": {
-		Type:     schema.TypeSet,
-		Required: true,
-		Elem:     resourceCPSNetworkConfiguration(),
-	},
-	"org": {
-		Type:     schema.TypeSet,
-		Required: true,
-		Elem:     resourceCPSOrganization(),
-	},
-	"pending_changes": &schema.Schema{
-		Type:     schema.TypeSet,
-		Optional: true,
-		Elem:     &schema.Schema{Type: schema.TypeString},
-	},
-	"ra": &schema.Schema{
-		Type:     schema.TypeString,
-		Required: true,
-	},
-	"signature_algorithm": &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-	},
-	"tech_contact": &schema.Schema{
-		Type:     schema.TypeSet,
-		Required: true, // VERIFY
-		Elem:     resourceCPSContact(),
-	},
-	"third_party": &schema.Schema{
-		Type:     schema.TypeSet,
-		Optional: true, // VERIFY
-		Elem:     resourceCPSThirdParty(),
-	},
-	"validation_type": &schema.Schema{
-		Type:     schema.TypeString,
-		Required: true,
-	},
 }
 
 func getCPSV2Service(d *schema.ResourceData) (*edgegrid.Config, error) {
