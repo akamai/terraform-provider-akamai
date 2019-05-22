@@ -2,10 +2,10 @@ package akamai
 
 import (
 	"fmt"
-	"log"
-	"strings"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
+	"log"
+	"strings"
 )
 
 func resourcePropertyVariable() *schema.Resource {
@@ -47,12 +47,9 @@ var akamaiPropertyVariableSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	},
-	
 }
 
-
 func resourcePropertyVariableCreate(d *schema.ResourceData, meta interface{}) error {
-	
 
 	var name string
 	var value string
@@ -94,7 +91,6 @@ func resourcePropertyVariableCreate(d *schema.ResourceData, meta interface{}) er
 	d.Set("fqname", fqname)
 	d.SetId(fmt.Sprintf("%s-%s-%s-%s", name, value, description, fqname))
 
-	
 	log.Println("[DEBUG] Done")
 	return nil
 }
@@ -170,7 +166,7 @@ func resourcePropertyVariableImport(d *schema.ResourceData, meta interface{}) ([
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
-	
+
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
 	d.SetId(property.PropertyID)
@@ -179,7 +175,7 @@ func resourcePropertyVariableImport(d *schema.ResourceData, meta interface{}) ([
 }
 
 func resourcePropertyVariableExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	
+
 	return true, nil
 }
 
@@ -190,7 +186,6 @@ func resourcePropertyVariableRead(d *schema.ResourceData, meta interface{}) erro
 
 func resourcePropertyVariableUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] UPDATING")
-	
 
 	var name string
 	var value string
@@ -224,8 +219,6 @@ func resourcePropertyVariableUpdate(d *schema.ResourceData, meta interface{}) er
 	d.Set("description", description)
 	d.Set("hidden", hidden)
 	d.Set("sensitive", sensitive)
-
-	
 
 	log.Println("[DEBUG] Done")
 	return nil

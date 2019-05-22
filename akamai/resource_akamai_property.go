@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"strconv"
-	"strings"
-	"time"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/tidwall/gjson"
+	"log"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func resourceProperty() *schema.Resource {
@@ -140,7 +140,7 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	"ipv6": &schema.Schema{
 		Type:     schema.TypeBool,
 		Optional: true,
-	}, 
+	},
 	"contact": &schema.Schema{
 		Type:     schema.TypeSet,
 		Required: true,
@@ -300,7 +300,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("clone_from")
 	d.SetPartial("network")
 	d.SetPartial("cp_code")
-	
+
 	rules := papi.NewRules()
 	rules.PropertyID = d.Id()
 	rules.PropertyVersion = property.LatestVersion
@@ -315,7 +315,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	//fixupAdaptiveImageCompression(rules)
 
 	// get rules from the TF config
-	
+
 	rulecheck, ok := d.GetOk("rules")
 	if ok {
 		log.Printf("[DEBUG] Unmarshal Rules from JSON")
@@ -336,7 +336,6 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetPartial("default")
 	d.SetPartial("origin")
-	
 
 	hostnameEdgeHostnameMap, err := createHostnames(property, product, d)
 	if err != nil {
@@ -353,7 +352,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	if edgeHostnameOk {
 		d.Set("edge_hostname", edgeHostnames)
 	}
-	
+
 	d.Partial(false)
 	log.Println("[DEBUG] Done")
 	return nil
@@ -497,7 +496,7 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
-	
+
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
 	d.SetId(property.PropertyID)
@@ -524,8 +523,6 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	
-
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
@@ -543,8 +540,6 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 
 	return nil
 }
-
-
 
 func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] UPDATING")
@@ -581,7 +576,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 			return e
 		}
 	}
-	
+
 	rules, e := property.GetRules()
 	if e != nil {
 		return e
@@ -605,7 +600,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	updateStandardBehaviors(rules, cpCode, origin)
 	//fixupAdaptiveImageCompression(rules)
 	// get rules from the TF config
-	
+
 	rulecheck, ok := d.GetOk("rules")
 	if ok {
 		log.Printf("[DEBUG] Unmarshal Rules from JSON")
@@ -632,7 +627,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetPartial("default")
 	d.SetPartial("origin")
-	
+
 	if d.HasChange("ipv6") || d.HasChange("edge_hostname_map") {
 		hostnameEdgeHostnameMap, err := createHostnames(property, product, d)
 		if err != nil {
@@ -643,12 +638,11 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return err
 		}
-		
+
 		d.SetPartial("ipv6")
 		d.Set("edge_hostname", edgeHostnames)
 	}
 
-	
 	d.Partial(false)
 
 	log.Println("[DEBUG] Done")
@@ -874,7 +868,7 @@ func fixupAdaptiveImageCompression(rules *papi.Rules) {
 		log.Println("[DEBUG] Fixing Up adaptiveImageCompression Behavior Leave early")
 		return
 	}
-	
+
 	log.Println("[DEBUG] Fixing Up adaptiveImageCompression Behavior")
 	behavior.MergeOptions(papi.OptionValue{
 		"excellentConnectionOption": "Adapt Images",
@@ -946,7 +940,6 @@ func createHostnames(property *papi.Property, product *papi.Product, d *schema.R
 	if ok {
 		for key, value := range edgeHostnameMapTest.(map[string]interface{}) {
 			log.Println("[DEBUG] EdgeHostnameMap ", key, value)
-			
 
 			if strings.Contains(key, "cnamefrom") {
 				hostname = value.(string)
@@ -1094,7 +1087,6 @@ func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[strin
 
 		propertyHostnames.Hostnames.Items = []*papi.Hostname{}
 		for from, to := range hostnameEdgeHostnameMap {
-			
 
 			log.Println("[DEBUG] Check for Edge Host Map for replacing hostname")
 			edgeHostnameMapTest, ok := d.GetOk("edge_hostname_map")
@@ -1111,19 +1103,18 @@ func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[strin
 					mapString[strKey] = strValue
 					if strings.Contains(strValue, "ehn_") {
 						edgeHostList = append(edgeHostList, strValue)
-						
+
 						log.Println("[DEBUG] EdgeHostnameMap set EHN_KEY ", key, value)
 					}
 				}
 
-				
 				for _, value := range edgeHostList {
 					hostname := propertyHostnames.NewHostname()
-					
+
 					log.Println("[DEBUG] edgeHostList ", value)
-					
+
 					strValue := fmt.Sprintf("%v", value)
-					
+
 					if strings.Contains(strValue, "ehn_") {
 						mapString["ehn_Key"] = strValue
 						log.Println("[DEBUG] edgeHostList set EHN_KEY ", value)
@@ -1134,9 +1125,8 @@ func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[strin
 					hostname.CnameType = papi.CnameTypeEdgeHostname
 					hostname.CnameFrom = mapString[value+"-cnamefrom"]
 					hostname.CnameTo = mapString[value+"-cnameto"]
-					
+
 					hostname.CertEnrollmentId = mapString[value+"-certenrollmentid"]
-					
 
 				}
 
@@ -1179,27 +1169,27 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 
 		log.Println("[DEBUG] RulesJson")
 		rulesJSON := gjson.Get(rules.(string), "rules")
-		
+
 		rulesJSON.ForEach(func(key, value gjson.Result) bool {
 			log.Println("[DEBUG] unmarshalRulesFromJson KEY RULES KEY = " + key.String() + " VAL " + value.String())
-		
+
 			if key.String() == "behaviors" {
 				behavior := gjson.Parse(value.String())
 				log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR " + behavior.String())
 				if gjson.Get(behavior.String(), "#.name").Exists() {
-		
+
 					behavior.ForEach(func(key, value gjson.Result) bool {
 						log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR LOOP KEY =" + key.String() + " VAL " + value.String())
-		
+
 						bb, ok := value.Value().(map[string]interface{})
 						if ok {
 							log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR MAP  ", bb)
 							for k, v := range bb {
 								log.Println("k:", k, "v:", v)
 							}
-						
+
 							beh := papi.NewBehavior()
-						
+
 							beh.Name = bb["name"].(string)
 							boptions, ok := bb["options"]
 							log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR BOPTIONS ", boptions)
@@ -1214,7 +1204,7 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 					}) // behavior list loop
 
 				}
-			
+
 				if key.String() == "criteria" {
 					criteria := gjson.Parse(value.String())
 
@@ -1280,7 +1270,7 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 		if ok {
 			log.Println("unmarshalRulesFromJson VARS from JSON ", jsonvars)
 			variables := gjson.Parse(jsonvars.(string))
-			result := gjson.Get(variables.String(), "variables") 
+			result := gjson.Get(variables.String(), "variables")
 			log.Println("unmarshalRulesFromJson VARS from JSON VARIABLES ", result)
 
 			result.ForEach(func(key, value gjson.Result) bool {
@@ -1434,7 +1424,6 @@ func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule 
 		if ok {
 			rule.Name, _ = vv["name"].(string)
 			rule.Comments, _ = vv["comments"].(string)
-
 
 			ruledetail := gjson.Parse(value.String())
 			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
@@ -1612,7 +1601,7 @@ func findProperty(d *schema.ResourceData) *papi.Property {
 	if err != nil {
 		return nil
 	}
-	
+
 	if err != nil || results == nil {
 		return nil
 	}

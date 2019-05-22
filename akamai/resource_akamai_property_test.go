@@ -2,11 +2,11 @@ package akamai
 
 import (
 	"fmt"
-	"testing"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
+	"testing"
 )
 
 var testAccAkamaiPropertyConfig = fmt.Sprintf(`
@@ -20,25 +20,27 @@ resource "akamai_property" "akamai_developer" {
 
   contact = ["dshafik@akamai.com"]
 
-  account_id = "act_B-F-1ACME"
-  product_id = "prd_SPM"
+
+  product = "prd_SPM"
   cp_code = "409449"
-  contract_id = "ctr_C-1FRYVV3"
-  group_id = "grp_68817"
-
-  hostname = ["akamaideveloper.net"]
-
-  network = "STAGING"
+  contract = "ctr_C-1FRYVV3"
+  group = "grp_68817"
+  
 
   rule_format = "v2016-11-15"
   
-  
+  rules = "${akamai_property_rules.akamai_developer.json}"
 
   origin {
     is_secure = false
     hostname = "akamaideveloper.net"
     forward_hostname = "ORIGIN_HOSTNAME"
   }
+
+  
+}
+
+resource "akamai_property_rules" "akamai_developer" {
 
   rules {
     behavior {

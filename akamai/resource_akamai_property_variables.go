@@ -1,11 +1,11 @@
 package akamai
 
 import (
-	"log"
-	"strings"
-    "github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
+	"log"
+	"strings"
 )
 
 func resourcePropertyVariables() *schema.Resource {
@@ -49,7 +49,7 @@ var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
 								Type:     schema.TypeString,
 								Optional: true,
 							},
-							
+
 							"value": {
 								Type:     schema.TypeString,
 								Optional: true,
@@ -61,7 +61,7 @@ var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
 		},
 	},
 	"json": {
-		Type: schema.TypeString,
+		Type:        schema.TypeString,
 		Computed:    true,
 		Description: "JSON variables representation",
 	},
@@ -112,7 +112,7 @@ func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) e
 
 	sha := getSHAString(string(jsonBody))
 	d.Set("json", string(jsonBody))
-	
+
 	d.SetId(sha)
 	log.Println("[DEBUG] Done")
 	return nil
@@ -156,7 +156,7 @@ func resourcePropertyVariablesImport(d *schema.ResourceData, meta interface{}) (
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
-	
+
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
 	d.SetId(property.PropertyID)
@@ -222,7 +222,7 @@ func resourcePropertyVariablesUpdate(d *schema.ResourceData, meta interface{}) e
 
 		sha := getSHAString(string(jsonBody))
 		d.Set("json", string(jsonBody))
-		
+
 		d.SetId(sha)
 	}
 	log.Println("[DEBUG] Done")

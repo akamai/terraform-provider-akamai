@@ -4,13 +4,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceDNSv2Record() *schema.Resource {
@@ -48,10 +48,10 @@ func resourceDNSv2Record() *schema.Resource {
 				Required: true,
 			},
 			"target": {
-				Type: schema.TypeSet,
-				Elem: &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeSet,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
-				Set: schema.HashString,
+				Set:      schema.HashString,
 			},
 			//	"afsdb":
 			"subtype": {
@@ -236,7 +236,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	if ok {
 		recordtype = d.Get("recordtype").(string)
 	}
-	
+
 	validationresult := validateRecord(d)
 	log.Printf("[DEBUG] [Akamai DNSv2] Validation result recordcreate %s", validationresult)
 	if validationresult != "VALID" {
@@ -260,7 +260,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	if len(rdata) > 0 {
 		extractString := strings.Join(rdata, " ")
 		sha1hashtest := getSHAString(extractString)
-		
+
 		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordread [%s]", sha1hashtest)
 	}
 	// If there's no existing record we'll create a blank one
@@ -270,7 +270,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] [Akamai DNSv2] Creating new record")
 		// Save the zone to the API
 		e = recordcreate.Save(zone)
-		
+
 		if e != nil {
 			return e
 		}
@@ -288,9 +288,8 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 				return e
 			}
 		}
-		
+
 	}
-	
 
 	// Give terraform the ID
 	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
@@ -361,20 +360,19 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 			// Save the zone to the API
 			log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
 			e = recordcreate.Save(zone)
-			
+
 		} else {
 			log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
 			e = recordcreate.Update(zone)
 			if e != nil {
 				return e
 			}
-			
+
 		}
 		d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 	}
 
 	// Give terraform the ID
-	
 
 	return nil
 }
@@ -400,7 +398,6 @@ func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	host := d.Get("name").(string)
 	recordtype := d.Get("recordtype").(string)
 	ttl := d.Get("ttl").(int)
-	
 
 	target := d.Get("target").(*schema.Set).List()
 
@@ -609,9 +606,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			protocol := d.Get("protocol").(int)
 			algorithm := d.Get("algorithm").(int)
 			key := d.Get("key").(string)
-			
+
 			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(protocol)+" "+strconv.Itoa(algorithm)+" "+key)
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -622,9 +619,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			keytag := d.Get("keytag").(int)
 			algorithm := d.Get("algorithm").(int)
 			digest := d.Get("digest").(string)
-			
+
 			records = append(records, strconv.Itoa(keytag)+" "+strconv.Itoa(digestType)+" "+strconv.Itoa(algorithm)+" "+digest)
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -633,9 +630,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records := make([]string, 0, len(target))
 			hardware := d.Get("hardware").(string)
 			software := d.Get("software").(string)
-			
+
 			records = append(records, hardware+" "+software)
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -684,7 +681,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 
 			}
 			sort.Strings(records)
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -701,9 +698,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			if !(checktarget == ".") {
 				service = service + "."
 			}
-			
+
 			records = append(records, strconv.Itoa(order)+" "+strconv.Itoa(preference)+" "+flagsnaptr+" "+regexp+" "+replacement+" "+service)
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -716,9 +713,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			nextHashedOwnerName := d.Get("next_hashed_owner_name").(string)
 			salt := d.Get("salt").(string)
 			typeBitmaps := d.Get("type_bitmaps").(string)
-			
+
 			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(iterations)+" "+salt+" "+nextHashedOwnerName+" "+typeBitmaps)
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -729,12 +726,11 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			algorithm := d.Get("algorithm").(int)
 			iterations := d.Get("iterations").(int)
 			salt := d.Get("salt").(string)
-			
-			saltbase32 := salt 
 
-			
+			saltbase32 := salt
+
 			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(iterations)+" "+saltbase32)
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -751,9 +747,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			if !(checktxt == ".") {
 				txt = txt + "."
 			}
-			
+
 			records = append(records, mailbox+" "+txt)
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -769,9 +765,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			signature := d.Get("signature").(string)
 			signer := d.Get("signer").(string)
 			typeCovered := d.Get("type_covered").(string)
-			
+
 			records = append(records, typeCovered+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(labels)+" "+strconv.Itoa(originalTTL)+" "+expiration+" "+inception+" "+signature+" "+signer+" "+strconv.Itoa(keytag))
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -789,7 +785,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 				} else {
 					records = append(records, strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+strconv.Itoa(priority)+" "+recContent.(string)+".")
 				}
-				
+
 			}
 			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
@@ -802,9 +798,8 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			fingerprintType := d.Get("fingerprint_type").(int)
 			fingerprint := d.Get("fingerprint").(string)
 
-			
 			records = append(records, strconv.Itoa(algorithm)+" "+strconv.Itoa(fingerprintType)+" "+fingerprint)
-			
+
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
@@ -833,8 +828,6 @@ func validateRecord(d *schema.ResourceData) string {
 	for _, recContent := range target {
 		records = append(records, recContent.(string))
 	}
-
-	
 
 	simplerecord := map[string]bool{"A": true, "AAAA": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "TXT": true}
 	if simplerecord[recordtype] {
@@ -896,7 +889,7 @@ func validateRecord(d *schema.ResourceData) string {
 			keytag := d.Get("keytag").(int)
 			algorithm := d.Get("algorithm").(int)
 			digest := d.Get("digest").(string)
-			
+
 			if digestType == 0 {
 				return "digest_type"
 			}
@@ -1010,7 +1003,6 @@ func validateRecord(d *schema.ResourceData) string {
 			nextHashedOwnerName := d.Get("next_hashed_owner_name").(string)
 			salt := d.Get("salt").(string)
 			typeBitmaps := d.Get("type_bitmaps").(string)
-			
 
 			if host == "null" {
 				return "host"
@@ -1048,7 +1040,7 @@ func validateRecord(d *schema.ResourceData) string {
 			algorithm := d.Get("algorithm").(int)
 			iterations := d.Get("iterations").(int)
 			salt := d.Get("salt").(string)
-			
+
 			saltbase32 := salt
 
 			if host == "null" {
@@ -1072,7 +1064,7 @@ func validateRecord(d *schema.ResourceData) string {
 			if salt == "null" {
 				return "salt"
 			}
-			
+
 			if saltbase32 == "null" {
 				return "saltbase32"
 			}

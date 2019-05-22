@@ -3,12 +3,12 @@ package akamai
 import (
 	"errors"
 	"fmt"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
@@ -45,7 +45,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	"ipv6": {
 		Type:     schema.TypeBool,
 		Required: true,
-	}, 
+	},
 	"certenrollmentid": {
 		Type:     schema.TypeInt,
 		Optional: true,
@@ -54,14 +54,14 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:     schema.TypeInt,
 		Optional: true,
 		Default:  180,
-	}, 
+	},
 	"lehid": {
-		Type: schema.TypeString,
+		Type:        schema.TypeString,
 		Computed:    true,
 		Description: "List Edge Host Name",
 	},
 	"edgehostmap": {
-		Type: schema.TypeMap,
+		Type:        schema.TypeMap,
 		Computed:    true,
 		Description: "List Edge Host Map",
 	},
@@ -88,7 +88,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 	property := papi.NewProperty(papi.NewProperties())
 	property.Group = group
 	property.Contract = contract
-	
+
 	if group == nil {
 		return errors.New("group_id must be specified to create a new Edge Hostname")
 	}
@@ -101,7 +101,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 		return errors.New("product_id must be specified to create a new Edge Hostname")
 	}
 	// The API now has data, so save the partial state
-	
+
 	d.SetPartial("name")
 	d.SetPartial("contract")
 	d.SetPartial("group")
@@ -109,18 +109,17 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 
 	log.Println("[DEBUG] createHostnamesExt START")
 
-	
 	hostnameEdgeHostnameMap, err := createHostnamesExt(property, product, d)
 	if err != nil {
 		return err
 	}
 
 	log.Println("[DEBUG] setEdgeHostnames START ", hostnameEdgeHostnameMap)
-	
+
 	for _, eHn := range hostnameEdgeHostnameMap {
 		log.Println("[DEBUG] Figuring out foundEdgeHostname " + eHn.EdgeHostnameDomain)
 		log.Println("[DEBUG] Figuring out foundEdgeHostname " + eHn.EdgeHostnameID)
-		
+
 		edgehostmap := make(map[string]string)
 		for k, t := range hostnameEdgeHostnameMap {
 			var DomainPrefix string
@@ -150,7 +149,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 			edgehostmap[t.EdgeHostnameID+"-edgeHostnameDomain"] = t.EdgeHostnameDomain
 			edgehostmap[t.EdgeHostnameID+"-ipVersionBehavior"] = t.IPVersionBehavior
 			edgehostmap[t.EdgeHostnameID+"-cnametype"] = "EDGE_HOSTNAME"
-			
+
 			if t.Secure {
 				edgehostmap[t.EdgeHostnameID+"-secure"] = "true"
 			} else {
@@ -217,7 +216,7 @@ func resourceSecureEdgeHostNameImport(d *schema.ResourceData, meta interface{}) 
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
-	
+
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
 	d.SetId(property.PropertyID)
@@ -249,7 +248,6 @@ func resourceSecureEdgeHostNameExists(d *schema.ResourceData, meta interface{}) 
 		return false, err
 	}
 	log.Println("[DEBUG] Edgehostname EXISTS in contract ")
-	
 
 	return true, nil
 }
@@ -283,7 +281,6 @@ func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) er
 	}
 	log.Println("[DEBUG] Edgehostnames exist in contract ")
 
-	
 	log.Println("[DEBUG] Edgehostnames Default host ", edgeHostnames.EdgeHostnames.Items[0])
 	defaultEdgeHostname := edgeHostnames.EdgeHostnames.Items[0]
 
@@ -293,7 +290,7 @@ func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) er
 
 	if edgeHostnameOk {
 		for _, eHn := range edgeHostnames.EdgeHostnames.Items {
-			
+
 			if eHn.EdgeHostnameDomain == edgeHostname.(string) {
 				foundEdgeHostname = true
 				defaultEdgeHostname = eHn
@@ -311,8 +308,6 @@ func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) er
 
 	return nil
 }
-
-
 
 func createHostnamesExt(property *papi.Property, product *papi.Product, d *schema.ResourceData) (map[string]*papi.EdgeHostname, error) {
 	// If the property has edge hostnames and none is specified in the schema, then don't update them
@@ -356,7 +351,7 @@ func createHostnamesExt(property *papi.Property, product *papi.Product, d *schem
 	if edgeHostnameOk {
 		foundEdgeHostname := false
 		for _, eHn := range edgeHostnames.EdgeHostnames.Items {
-			
+
 			if eHn.EdgeHostnameDomain == edgeHostname.(string) {
 				foundEdgeHostname = true
 				defaultEdgeHostname = eHn
@@ -397,9 +392,9 @@ func createHostnamesExt(property *papi.Property, product *papi.Product, d *schem
 		// Search for existing hostname, map 1:1
 		var overrideDefault bool
 		for _, hostname := range hostnames {
-			
+
 			if edgeHostname, ok := edgeHostnamesMap[hostname+".edgesuite.net"]; ok {
-			
+
 				hostnameEdgeHostnameMap[hostname] = edgeHostname
 				// Override the default with the first one found
 				if !overrideDefault {
@@ -409,7 +404,7 @@ func createHostnamesExt(property *papi.Property, product *papi.Product, d *schem
 				continue
 			}
 			if edgeHostname, ok := edgeHostnamesMap[hostname+".edgekey.net"]; ok {
-			
+
 				hostnameEdgeHostnameMap[hostname] = edgeHostname
 				// Override the default with the first one found
 				if !overrideDefault {
@@ -418,7 +413,6 @@ func createHostnamesExt(property *papi.Property, product *papi.Product, d *schem
 				}
 				continue
 			}
-			
 
 		}
 
@@ -426,9 +420,9 @@ func createHostnamesExt(property *papi.Property, product *papi.Product, d *schem
 		if len(hostnameEdgeHostnameMap) < len(hostnames) {
 			log.Printf("[DEBUG] Hostnames being set to default: %d of %d\n", len(hostnameEdgeHostnameMap), len(hostnames))
 			for _, hostname := range hostnames {
-				
+
 				if _, ok := hostnameEdgeHostnameMap[hostname]; !ok {
-					
+
 					hostnameEdgeHostnameMap[hostname] = defaultEdgeHostname
 				}
 			}
@@ -476,7 +470,7 @@ func resourceSecureEdgeHostNameUpdate(d *schema.ResourceData, meta interface{}) 
 	property := papi.NewProperty(papi.NewProperties())
 	property.Group = group
 	property.Contract = contract
-	
+
 	if group == nil {
 		return errors.New("group_id must be specified to create a new Edge Hostname")
 	}
@@ -489,7 +483,7 @@ func resourceSecureEdgeHostNameUpdate(d *schema.ResourceData, meta interface{}) 
 		return errors.New("product_id must be specified to create a new Edge Hostname")
 	}
 	// The API now has data, so save the partial state
-	
+
 	d.SetPartial("name")
 	d.SetPartial("contract")
 	d.SetPartial("group")
@@ -548,7 +542,6 @@ func createSecureEdgehostname(edgeHostnames *papi.EdgeHostnames, product *papi.P
 
 	go newEdgeHostname.PollStatus("")
 
-	
 	for newEdgeHostname.Status != "CREATED" {
 		select {
 		case <-newEdgeHostname.StatusChange:

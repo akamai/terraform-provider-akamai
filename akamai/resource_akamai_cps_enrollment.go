@@ -1,10 +1,10 @@
 package akamai
 
 import (
-	"log"
 	cps "github.com/akamai/AkamaiOPEN-edgegrid-golang/cps-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/hashicorp/terraform/helper/schema"
+	"log"
 )
 
 func resourceEnrollment() *schema.Resource {

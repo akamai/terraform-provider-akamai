@@ -1,11 +1,11 @@
 package akamai
 
 import (
-	"log"
-	"strings"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
+	"log"
+	"strings"
 )
 
 func resourcePropertyRules() *schema.Resource {
@@ -223,7 +223,7 @@ var akamaiPropertyRulesSchema = map[string]*schema.Schema{
 func resourcePropertyRulesCreate(d *schema.ResourceData, meta interface{}) error {
 
 	rules := papi.NewRules()
-	
+
 	// get rules from the TF config
 	unmarshalRules(d, rules)
 
@@ -231,11 +231,10 @@ func resourcePropertyRulesCreate(d *schema.ResourceData, meta interface{}) error
 	if err != nil {
 		return err
 	}
-	
 
 	sha := getSHAString(string(jsonBody))
 	d.Set("json", string(jsonBody))
-	
+
 	d.SetId(sha)
 
 	log.Println("[DEBUG] Done")
@@ -279,7 +278,7 @@ func resourcePropertyRulesImport(d *schema.ResourceData, meta interface{}) ([]*s
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
-	
+
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
 	d.SetId(property.PropertyID)
@@ -302,7 +301,7 @@ func resourcePropertyRulesUpdate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] UPDATING")
 	d.Partial(true)
 	rules := papi.NewRules()
-	
+
 	// get rules from the TF config
 	unmarshalRules(d, rules)
 
@@ -310,7 +309,7 @@ func resourcePropertyRulesUpdate(d *schema.ResourceData, meta interface{}) error
 	if err != nil {
 		return err
 	}
-	
+
 	sha := getSHAString(string(jsonBody))
 	d.Set("json", string(jsonBody))
 	//d.Set("json", jsonBody)

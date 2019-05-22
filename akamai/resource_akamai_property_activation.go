@@ -2,11 +2,11 @@ package akamai
 
 import (
 	"errors"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"strings"
 	"time"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourcePropertyActivation() *schema.Resource {
@@ -100,7 +100,7 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 		if contract == nil {
 			return errors.New("contract_id must be specified to activate a new property")
 		}
-		
+
 	}
 
 	err := ensureEditableVersion(property)
@@ -220,12 +220,11 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
-
 	e = property.Delete()
 	if e != nil {
 		return e
 	}
-	
+
 	d.SetId("")
 
 	log.Println("[DEBUG] Done")
@@ -261,7 +260,7 @@ func resourcePropertyActivationImport(d *schema.ResourceData, meta interface{}) 
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
-	
+
 	d.Set("name", property.PropertyName)
 	d.Set("version", property.LatestVersion)
 	d.SetId(property.PropertyID)
@@ -288,13 +287,10 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	
-
 	d.Set("account", property.AccountID)
 	d.Set("contract", property.ContractID)
 	d.Set("group", property.GroupID)
 	d.Set("name", property.PropertyName)
-	
 
 	d.Set("version", property.LatestVersion)
 	if property.StagingVersion > 0 {

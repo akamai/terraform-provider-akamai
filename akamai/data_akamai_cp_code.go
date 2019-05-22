@@ -2,9 +2,9 @@ package akamai
 
 import (
 	"fmt"
-	"log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
+	"log"
 )
 
 func dataSourceCPCode() *schema.Resource {

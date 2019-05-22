@@ -2,10 +2,10 @@ package akamai
 
 import (
 	"fmt"
-	"log"
-	"sort"
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
+	"log"
+	"sort"
 )
 
 func dataSourceAuthoritiesSet() *schema.Resource {

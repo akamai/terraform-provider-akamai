@@ -3,10 +3,10 @@ package akamai
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-	"sync"
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
+	"log"
+	"sync"
 )
 
 var dnsWriteLock sync.Mutex
@@ -102,7 +102,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 			if e != nil {
 				return e
 			}
-			
+
 			e = zonecreate.SubmitChangelist()
 			if e != nil {
 				return e
@@ -124,7 +124,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	// Give terraform the ID
 	d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
 	return resourceDNSv2ZoneRead(d, meta)
-	
+
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
