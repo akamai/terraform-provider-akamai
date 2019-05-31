@@ -94,11 +94,11 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 	var property *papi.Property
 	if property = findProperty(d); property == nil {
 		if group == nil {
-			return errors.New("group_id must be specified to activate a new property")
+			return errors.New("group must be specified to activate a new property")
 		}
 
 		if contract == nil {
-			return errors.New("contract_id must be specified to activate a new property")
+			return errors.New("contract must be specified to activate a new property")
 		}
 
 	}

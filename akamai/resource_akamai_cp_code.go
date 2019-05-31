@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"errors"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
@@ -15,13 +14,13 @@ func resourceCPCode() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCPCodeCreate,
 		Read:   resourceCPCodeRead,
-		Update: resourceCPCodeUpdate,
 		Delete: resourceCPCodeDelete,
-		Exists: resourceCPCodeExists,
+
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"contract": &schema.Schema{
 				Type:     schema.TypeString,
@@ -64,20 +63,7 @@ func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
 
 	// No PAPI CP Code delete operation exists.
 	// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
-	return errors.New("deleting CP Codes is unsupported")
-}
-
-func resourceCPCodeExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	log.Printf("[DEBUG] Finding CP Code")
-
-	cpCodeName := d.Get("name").(string)
-	cpCode, err := resourceCPCodePAPINewCPCodes(d, meta).FindCpCode(cpCodeName)
-	if err != nil {
-		return false, err
-	}
-
-	log.Printf("[DEBUG] Found CP Code: %+v", cpCode)
-	return cpCode != nil, nil
+	return schema.Noop(d, meta)
 }
 
 func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
@@ -91,18 +77,12 @@ func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", cpCode.CpcodeName)
-	d.Set("product", cpCode.ProductIDs[0])
+	if len(cpCode.ProductIDs) > 0 {
+		d.Set("product", cpCode.ProductIDs[0])
+	}
 
 	log.Printf("[DEBUG] Read CP Code: %+v", cpCode)
 	return nil
-}
-
-func resourceCPCodeUpdate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] Updating CP Code")
-
-	// No PAPI CP Code update operation exists.
-	// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
-	return errors.New("updating CP Codes is unsupported")
 }
 
 func resourceCPCodePAPINewCPCodes(d *schema.ResourceData, meta interface{}) *papi.CpCodes {

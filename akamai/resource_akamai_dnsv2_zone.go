@@ -22,7 +22,7 @@ func resourceDNSv2Zone() *schema.Resource {
 			State: resourceDNSv2ZoneImport,
 		},
 		Schema: map[string]*schema.Schema{
-			"contractid": {
+			"contract": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -45,7 +45,7 @@ func resourceDNSv2Zone() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"gid": {
+			"group": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -64,7 +64,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	// in your config.tf which might overwrite each other
 
 	hostname := d.Get("zone").(string)
-	contractid := d.Get("contractid").(string)
+	contract := d.Get("contract").(string)
 	zonetype := d.Get("type").(string)
 	masterlist := d.Get("masters").(*schema.Set).List()
 	masters := make([]string, 0, len(masterlist))
@@ -75,9 +75,9 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 
 	}
 	comment := d.Get("comment").(string)
-	gid := d.Get("gid").(string)
+	group := d.Get("group").(string)
 	signandserve := d.Get("signandserve").(bool)
-	zonequerystring := dnsv2.ZoneQueryString{ContractId: contractid, Gid: gid}
+	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
 	zonecreate := dnsv2.ZoneCreate{Zone: hostname, Type: zonetype, Masters: masters, Comment: comment, SignAndServe: signandserve}
 
 	// First try to get the zone from the API
@@ -163,7 +163,7 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	// in your config.tf which might overwrite each other
 
 	hostname := d.Get("zone").(string)
-	contractid := d.Get("contractid").(string)
+	contract := d.Get("contract").(string)
 	zonetype := d.Get("type").(string)
 	masterlist := d.Get("masters").(*schema.Set).List()
 	masters := make([]string, 0, len(masterlist))
@@ -174,9 +174,9 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	}
 	comment := d.Get("comment").(string)
-	gid := d.Get("gid").(string)
+	group := d.Get("group").(string)
 	signandserve := d.Get("signandserve").(bool)
-	zonequerystring := dnsv2.ZoneQueryString{ContractId: contractid, Gid: gid}
+	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
 	zonecreate := dnsv2.ZoneCreate{Zone: hostname, Type: zonetype, Masters: masters, Comment: comment, SignAndServe: signandserve}
 
 	b, err := json.Marshal(zonecreate)
@@ -249,7 +249,7 @@ func resourceDNSv2ZoneDelete(d *schema.ResourceData, meta interface{}) error {
 	dnsWriteLock.Lock()
 	defer dnsWriteLock.Unlock()
 
-	contractid := d.Get("contractid").(string)
+	contract := d.Get("contract").(string)
 	hostname := d.Get("zone").(string)
 	zonetype := d.Get("type").(string)
 	masterlist := d.Get("masters").(*schema.Set).List()
@@ -261,9 +261,9 @@ func resourceDNSv2ZoneDelete(d *schema.ResourceData, meta interface{}) error {
 
 	}
 	comment := d.Get("comment").(string)
-	gid := d.Get("gid").(string)
+	group := d.Get("group").(string)
 
-	zonequerystring := dnsv2.ZoneQueryString{ContractId: contractid, Gid: gid}
+	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
 	zonecreate := dnsv2.ZoneCreate{Zone: hostname, Type: zonetype, Masters: masters, Comment: comment}
 	// find the zone first
 	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)

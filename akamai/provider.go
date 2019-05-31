@@ -2,8 +2,6 @@ package akamai
 
 import (
 	"fmt"
-
-	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v1"
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -28,11 +26,6 @@ func Provider() terraform.ResourceProvider {
 				Type:     schema.TypeString,
 				Default:  "default",
 			},
-			"dnsv2_section": &schema.Schema{
-				Optional: true,
-				Type:     schema.TypeString,
-				Default:  "default",
-			},
 			"papi_section": &schema.Schema{
 				Optional: true,
 				Type:     schema.TypeString,
@@ -52,15 +45,14 @@ func Provider() terraform.ResourceProvider {
 			"akamai_cp_codes":        dataSourceCPCode(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cp_code":            resourceCPCode(),
-			"akamai_dnsv2_zone":         resourceDNSv2Zone(),
-			"akamai_dnsv2_record":       resourceDNSv2Record(),
-			"akamai_property":           resourceProperty(),
-			"akamai_cps_enrollment":     resourceEnrollment(),
-			"akamai_property_rules":     resourcePropertyRules(),
-			"akamai_property_variable":  resourcePropertyVariable(),
-			"akamai_property_variables": resourcePropertyVariables(),
-			//"akamai_property_simple":      resourcePropertySimple(),
+			"akamai_cp_code":              resourceCPCode(),
+			"akamai_dns_zone":             resourceDNSv2Zone(),
+			"akamai_dns_record":           resourceDNSv2Record(),
+			"akamai_property":             resourceProperty(),
+			"akamai_cps_enrollment":       resourceEnrollment(),
+			"akamai_property_rules":       resourcePropertyRules(),
+			"akamai_property_variable":    resourcePropertyVariable(),
+			"akamai_property_variables":   resourcePropertyVariables(),
 			"akamai_secure_edge_hostname": resourceSecureEdgeHostName(),
 			"akamai_property_activation":  resourcePropertyActivation(),
 		},
@@ -69,10 +61,6 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	dnsConfig, err := getConfigDNSV1Service(d)
-	if err != nil {
-		return nil, err
-	}
 	dnsv2Config, err := getConfigDNSV2Service(d)
 	if err != nil {
 		return nil, err
@@ -87,30 +75,16 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return nil, err
 	}
 
-	if dnsConfig == nil && dnsv2Config == nil && papiConfig == nil && cpsConfig == nil {
+	if dnsv2Config == nil && papiConfig == nil && cpsConfig == nil {
 		return nil, fmt.Errorf("at least one edgerc section must be defined")
 	}
 
 	return &Config{}, nil
 }
 
-func getConfigDNSV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("dns_section").(string)
-
-	DNSConfig, err := edgegrid.Init(edgerc, section)
-	if err != nil {
-		return nil, err
-	}
-
-	dns.Init(DNSConfig)
-
-	return &DNSConfig, nil
-}
-
 func getConfigDNSV2Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	edgerc := d.Get("edgerc").(string)
-	section := d.Get("dnsv2_section").(string)
+	section := d.Get("dns_section").(string)
 	DNSv2Config, err := edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err

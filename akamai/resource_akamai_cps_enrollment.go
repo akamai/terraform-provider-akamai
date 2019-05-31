@@ -19,7 +19,7 @@ func resourceEnrollment() *schema.Resource {
 }
 
 var akamaiEnrollmentSchema = map[string]*schema.Schema{
-	"contract_id": {
+	"contract": {
 		Type:     schema.TypeString,
 		Required: true,
 		ForceNew: true,
@@ -105,6 +105,10 @@ var akamaiEnrollmentSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Required: true,
 	},
+	"location": &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+	},
 }
 
 func resourceEnrollmentCreate(d *schema.ResourceData, meta interface{}) error {
@@ -132,9 +136,22 @@ func resourceEnrollmentExists(d *schema.ResourceData, meta interface{}) (bool, e
 		return false, err
 	}
 
-	log.Printf("[DEBUG] EEnrollment found: %+v", enrollment)
+	log.Printf("[DEBUG] Enrollment found: %+v", enrollment)
 
 	return true, nil
+}
+
+func resourceEnrollmentRead(d *schema.ResourceData, meta interface{}) error {
+	enrollment, err := cps.GetEnrollment(d.Get("location").(string))
+
+	if err != nil || enrollment == nil {
+		log.Printf("[DEBUG] Enrollment with location doesn't exist: %+v", d.Id())
+		return  err
+	}
+
+	log.Printf("[DEBUG] Enrollment found: %+v", enrollment)
+	d.SetId(*enrollment.Location)
+	return nil
 }
 
 func resourceEnrollmentStub(d *schema.ResourceData, meta interface{}) error {
@@ -201,7 +218,7 @@ func unmarshalEnrollment(d *schema.ResourceData) *cps.Enrollment {
 
 func unmarshalCreateEnrollmentParams(d *schema.ResourceData) *cps.CreateEnrollmentQueryParams {
 	params := &cps.CreateEnrollmentQueryParams{
-		ContractID: d.Get("contract_id").(string),
+		ContractID: d.Get("contract").(string),
 	}
 
 	if deployNotBefore, ok := d.Get("deploy_not_before").(string); ok {
@@ -217,7 +234,7 @@ func unmarshalCreateEnrollmentParams(d *schema.ResourceData) *cps.CreateEnrollme
 
 func unmarshalListEnrollmentsParams(d *schema.ResourceData) *cps.ListEnrollmentsQueryParams {
 	return &cps.ListEnrollmentsQueryParams{
-		ContractID: d.Get("contract_id").(string),
+		ContractID: d.Get("contract").(string),
 	}
 }
 

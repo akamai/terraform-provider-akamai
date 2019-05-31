@@ -90,15 +90,15 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 	property.Contract = contract
 
 	if group == nil {
-		return errors.New("group_id must be specified to create a new Edge Hostname")
+		return errors.New("group must be specified to create a new Edge Hostname")
 	}
 
 	if contract == nil {
-		return errors.New("contract_id must be specified to create a new Edge Hostname")
+		return errors.New("contract must be specified to create a new Edge Hostname")
 	}
 
 	if product == nil {
-		return errors.New("product_id must be specified to create a new Edge Hostname")
+		return errors.New("product must be specified to create a new Edge Hostname")
 	}
 	// The API now has data, so save the partial state
 
@@ -472,15 +472,15 @@ func resourceSecureEdgeHostNameUpdate(d *schema.ResourceData, meta interface{}) 
 	property.Contract = contract
 
 	if group == nil {
-		return errors.New("group_id must be specified to create a new Edge Hostname")
+		return errors.New("group must be specified to create a new Edge Hostname")
 	}
 
 	if contract == nil {
-		return errors.New("contract_id must be specified to create a new Edge Hostname")
+		return errors.New("contract must be specified to create a new Edge Hostname")
 	}
 
 	if product == nil {
-		return errors.New("product_id must be specified to create a new Edge Hostname")
+		return errors.New("product must be specified to create a new Edge Hostname")
 	}
 	// The API now has data, so save the partial state
 
