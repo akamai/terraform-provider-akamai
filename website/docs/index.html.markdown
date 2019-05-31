@@ -21,10 +21,14 @@ Use the navigation to the left to read about the available resources.
 ```hcl
 # Configure the Akamai Provider
 provider "akamai" {
-  edgerc = "/path/to/.edgerc"
-  papi_section = "papi"
-  dns_section = "dns"
+    edgerc = "~/.edgerc"
+    papi_section = "papi"
+    # .. one of the two below
+    dns_section = "dns"
+    dnsv2_section = "dns"
+    cps_section = "cps"
 }
+
 
 # Create a Property
 resource "akamai_property" "example_property" {
@@ -51,41 +55,24 @@ Usage:
 
 ```hcl
 provider "akamai" {
-  edgerc = "/path/to/.edgerc"
+edgerc       =  "~/.edgerc"
 }
+
 ```
 
-It is possible to use separate credentials for each service, by specifying their section. By
-default the `default` section is used.
+You should specify separate credentials for each service. You may use the same .edgerc section for multiple services. By default the default section is used.
 
 ```hcl
 provider "akamai" {
-  edgerc = "/path/to/.edgerc"
-  papi_section = "papi"
-  dns_section = "dns"
+    edgerc = "~/.edgerc" 
+    papi_section = "papi"
+    dns_section = "dns"
+    cps_section = "cps"
 }
-```
-
-### Environment variables
-
-To use environment variables, you must create four different variables. The name
-of the variables follow the following convention, which includes an optional `SECTION` name:
-
-- `AKAMAI[_SECTION]_HOST`
-- `AKAMAI[_SECTION]_CLIENT_TOKEN`
-- `AKAMAI[_SECTION]_CLIENT_SECRET`
-- `AKAMAI[_SECTION]_ACCESS_TOKEN`
-
-If you are using the `default` section, you may either specify `DEFAULT` or omit the section name.
-
-Usage:
 
 ```
-$ export AKAMAI_HOST=akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net
-$ export AKAMAI_ACCESS_TOKEN=akab-access-token-xxx-xxxxxxxxxxxxxxxx
-$ export AKAMAI_CLIENT_TOKEN=akab-client-token-xxx-xxxxxxxxxxxxxxxx
-$ export AKAMAI_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=
-$ terraform plan
+
+
 ```
 
 ## Argument Reference
@@ -95,3 +82,5 @@ The following arguments are supported in the `provider` block:
 * `edgerc` - (Optional) The location of the `.edgerc` file containing credentials. Default: `$HOME/.edgerc`
 * `papi_section` — (Optional) The credential section to use for the Property Manager API (PAPI). Default: `default`.
 * `dns_section` — (Optional) The credential section to use for the Config DNS API. Default: `default`.
+* `cps_section` — (Optional) The credential section to use for the Config CPS. Default: `default`.
+
