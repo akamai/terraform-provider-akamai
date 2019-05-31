@@ -38,10 +38,10 @@ resource "akamai_secure_edge_hostname" "terraform-demo" {
 
 The following arguments are supported:
 
-*`contract` — (Required) The contract ID.  
-*`group` — (Required) The group ID.  
-*`product` — (Required) The product ID.  
-*`edge_hostname` — (Required) One or more edge hostnames (must be <= to the number of public hostnames).  
-*`ipv6` —  (Required) Whether the property should use IPv6 to origin.  
-*`certenrollmentid` - (Optional) The certificate enrollment ID.  
-*`slotnumber` - (Optional) The slot number.  
+* `contract` — (Required) The contract ID.  
+* `group` — (Required) The group ID.  
+* `product` — (Required) The product ID.  
+* `edge_hostname` — (Required) One or more edge hostnames (must be <= to the number of public hostnames).  
+* `ipv6` —  (Required) Whether the property should use IPv6 to origin.  
+* `certenrollmentid` - (Optional) The certificate enrollment ID.  
+* `slotnumber` - (Optional) The slot number.  

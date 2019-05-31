@@ -36,10 +36,10 @@ resource "akamai_property" "terraform-demo-web" {
 
 The following arguments are supported:
 
-*`name` — (Required) The contract name.
+* `name` — (Required) The contract name.
 
 ## Attributes Reference
 
 The following are the return attributes:
 
-*`id` — The contract ID.
+* `id` — The contract ID.

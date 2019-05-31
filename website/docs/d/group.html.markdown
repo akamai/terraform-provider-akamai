@@ -36,10 +36,10 @@ resource "akamai_property" "terraform-demo-web" {
 
 The following arguments are supported:
 
-*`name` — (Required) The group name.
+* `name` — (Required) The group name.
 
 ## Attributes Reference
 
 The following are the return attributes:
 
-*`id` — The group ID.
+* `id` — The group ID.

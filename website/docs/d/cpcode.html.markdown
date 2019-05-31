@@ -36,10 +36,10 @@ resource "akamai_property" "terraform-demo-web" {
 
 The following arguments are supported:
 
-*`name` — (Required) The cpcode.
+* `name` — (Required) The cpcode.
 
 ## Attributes Reference
 
 The following are the return attributes:
 
-*`id` — The cpcode.
+* `id` — The cpcode.

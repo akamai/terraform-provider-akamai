@@ -42,10 +42,10 @@ resource "akamai_dnsv2_zone" "demozone" {
 
 The following arguments are supported:
 
-*`contractid` — (Required) The contract ID.  
-*`zone` — (Required) Domain zone, encapsulating any nested subdomains.  
-*`type` — (Required) Whether the zone is primary or secondary.  
-*`masters` — (Required) The names or addresses of the customer’s nameservers from which the zone data should be retrieved.  
-*`comment` — (Required) The comment.  
-*`gid` — (Required) The currently selected group ID.  
-*`signandserve` — (Required) Whether DNSSEC Sign&Serve is enabled.  
+* `contractid` — (Required) The contract ID.  
+* `zone` — (Required) Domain zone, encapsulating any nested subdomains.  
+* `type` — (Required) Whether the zone is primary or secondary.  
+* `masters` — (Required) The names or addresses of the customer’s nameservers from which the zone data should be retrieved.  
+* `comment` — (Required) The comment.  
+* `gid` — (Required) The currently selected group ID.  
+* `signandserve` — (Required) Whether DNSSEC Sign&Serve is enabled.  
