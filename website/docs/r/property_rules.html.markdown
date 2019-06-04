@@ -18,86 +18,49 @@ The `akamai_property_rules` provides the resource for configuring a nested block
 Basic usage:
 
 ```hcl
-resource "akamai_property_rules" "terraform-demo-rules" {
-
-rules {   
-  {
-    “name”: “Origin”
-    "children": []
-    “behaviors”: [
-    {
-    “name”: “origin”
-    option {
-           key = "originType"
-           value = "CUSTOMER"
-           }
-    option {
-           key = "hostname"
-           value = "api.example.org”
-           }
-    option {
-           key = "forwardHostHeader"
-           value = "REQUEST_HOST_HEADER”
-           }
-    option {
-           key = "cachekeyHostname"
-           value = "ORIGIN_HOSTNAME”
-           }
-    option {
-           key = "compress"
-           value = true
-           }
-    option {
-           key = "enableTrueClientIp"
-           value = false
-           }
-    option {
-           key = "httpPort"
-           value = 80
-           }
-           }
-   ],
-   "criteria": [
-    {
-      "name": "path",
-      option {
-         key = "matchCaseSensitive"
-         value = false
+resource "akamai_property_rules" "example" {
+  rules { # Default rule
+  
+    behavior { # Downstream Cache behavior
+      name = "downstreamCache"
+      option { # behavior option
+        key = "behavior"
+        value = "TUNNEL_ORIGIN"
       }
-      option {
-        key = "matchOperator"
-        value = "IS_ONE_OF"
-      }
-      option {
-      key = "values"
-      value = [
-      "/api/*"
-      ]
-      }
-
-   }
-     ]
-"criteriaMustSatisfy": "all",
-"comments": “Direct to origin based for APIs based on the path ."
-
-}
-
-{
-       "name": "APIGateway"
-   "children": []
-  "behaviors": [
-    {
-      "name": "rapid"
-    option {
-        key = "enabled"
-      value = true
-           }
     }
-    ]
+  
+    rule { # "Performance" child rule
+      name = "Performance"
+      
+      rule { # "JPEG Images" child rule 
+        name = "JPEG Images"
+        
+        behavior { # Adaptive Image Compression behavior
+          name = "adaptiveImageCompression"
+          
+          # Options
+          option {
+            key = "tier1MobileCompressionMethod"
+            value = "COMPRESS"
+          }
+          option {
+            key = "tier1MobileCompressionValue"
+            value = "80"
+          }
+          option {
+            key = "tier2MobileCompressionMethod"
+            value = "COMPRESS"
+          }
+        }
+      }
+    }
+  }
 }
 
+resource "akamai_property" "example" {
+  rules = "${akamai_property_rules.example.json}"
+  ...
 }
-
 ```
 
 ## Argument Reference
@@ -128,3 +91,9 @@ The `option` block supports:
 * `values` — (Optional) An array of values for the option.
 
 One of `value` or `values` is required.
+
+## Attributes Reference
+
+The following are the return attributes:
+
+* `json` — The resulting JSON rule tree

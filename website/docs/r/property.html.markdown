@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: property"
-sidebar_current: "docs-akamai-resource-property"
+sidebar_current: "docs-akamai-resource-property-config"
 description: |-
   Create and update Akamai Properties
 ---
@@ -16,22 +16,21 @@ update, and activate properties on the Akamai platform.
 Basic usage:
 
 ```hcl
-resource "akamai_property" "terraform-demo-web" {
+resource "akamai_property" "example" {
     name    = "terraform-demo"
     contact = ["user@example.org"]
 
     product  = "prd_SPM"
-    contract = "contract_####"
+    contract = "ctr_####"
     group    = "grp_####"
     cp_code  = "cpc_#####"
 
-    edge_hostname_map = "${merge(akamai_secure_edge_hostname.terraform-demo.edgehostmap)}"
+    edge_hostnames = "${merge(akamai_edge_hostname.example.edgehostmap)}"
 
     rule_format = "v2018-02-27"
     rules       = "${data.local_file.terraform-demo.content}"
     variables   = "${akamai_property_variables.origin.json}"
 }
-
 ```
 
 ## Argument Reference
@@ -44,7 +43,7 @@ The following arguments are supported:
 * `product` — (Optional) The product ID.
 * `cp_code` — (Required) The CP Code id or name to use (or create).
 * `name` — (Required) The property name.
-* `rule_format` — (Optional) The rule format to use (more).
+* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)).
 * `contact` — (Required) One or more email addresses to inform about activation changes.
 * `edge_hostname` — (Optional) One or more edge hostnames (must be <= to the number of public hostnames)
 * `edge_hostname_map` — (Optional) The edge hostname mapping.

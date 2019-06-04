@@ -26,39 +26,37 @@ Basic usage:
 
 ```hcl
 resource "akamai_cps_enrollment" "cps_terraformdemo" {
-
     contract_id = "ctr_XXX"
     admin_contact = ["devrel@akamai.com"]
-    validation_type = ‘third-party”
+    validation_type = "third-party"
     techcontact = ["devrel@akamai.com"]
-    ra = “third-party”
-    enable_multi_stacked_certificates = “true”
-    change_management = “true”
+    ra = "third-party"
+    enable_multi_stacked_certificates = "true"
+    change_management = "true"
     csr {
-        "cn": "www.example.com",
-        "c": "US",
-        "st": "MA",
-        "l": "Cambridge",
-        "o": "Akamai",
-        "ou": "WebEx",
-        "sans": [
-        "san1.example.com",
-        "san2.example.com",
-        "san3.example.com",
-        "san4.example.com"
-        ] 
-        },
+        cn = "www.example.com"
+        c = "US"
+        st = "MA"
+        l = "Cambridge"
+        o = "Akamai"
+        ou = "WebEx"
+        sans = [
+          "san1.example.com",
+          "san2.example.com",
+          "san3.example.com",
+          "san4.example.com"
+          ] 
+    },
     org {
-        "name": "Akamai Technologies",
-        "addressLineOne": "150 Broadway",
-        "addressLineTwo": null,
-        "city": "Cambridge",
-        "region": "MA",
-        "postalCode": "02142",
-        "country": "US",
-        "phone": "617-555-0111"
-        }
-
+        name = "Akamai Technologies"
+        addressLineOne = "150 Broadway"
+        addressLineTwo = null
+        city = "Cambridge"
+        region = "MA"
+        postalCode = "02142"
+        country = "US"
+        phone = "617-555-0111"
+    }
 }
 
 ```

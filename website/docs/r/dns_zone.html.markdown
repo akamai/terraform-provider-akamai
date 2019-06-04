@@ -1,41 +1,34 @@
 ---
 layout: "akamai"
-page_title: "Akamai: dnsv2 zone"
-sidebar_current: "docs-akamai-dnsv2_zone"
+page_title: "Akamai: dns zone"
+sidebar_current: "docs-akamai-resource-dns-zone"
 description: |-
-  DNS V2Zone
+  DNS Zone
 ---
 
-# akamai_dnsv2_zone
+# akamai_dns_zone
 
-
-The `akamai_dnsv2_zone` provides the resource for configuring a dns zone to integrate easily with your existing DNS infrastructure to provide a secure, high performance, highly available and scalable solution for DNS hosting.
-
-
+The `akamai_dns_zone` provides the resource for configuring a dns zone to integrate easily with your existing DNS infrastructure to provide a secure, high performance, highly available and scalable solution for DNS hosting.
 
 ## Example Usage
 
 Basic usage:
 
 ```hcl
-
-resource "akamai_dnsv2_zone" "demozone" {
-
-    contractid = "ctr_XXX"
+resource "akamai_dns_zone" "demozone" {
+    contract = "ctr_XXX"
+    group = 100
+    
     zone = "example.com"
-    type =  "Primary”
+    type =  "primary"
     masters = [
-              “1.2.3.4”,
-              “1.2.3.5”
-              ]
-    comment =  “some comment”
-    gid =100
+      "1.2.3.4",
+      "1.2.3.5"
+    ] 
+    
+    comment =  "some comment"
     signandserve = true
 }
-
-
-
-
 ```
 
 ## Argument Reference

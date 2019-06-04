@@ -11,25 +11,20 @@ description: |-
 
 Use `akamai_group` datasource to retrieve a group id.
 
-
-
 ## Example Usage
 
 Basic usage:
 
 ```hcl
-data "akamai_group" "terraform-demo" {
+data "akamai_group" "example" {
     name = "group name"
 }
 
 
-resource "akamai_property" "terraform-demo-web" {
-    group    = "${data.akamai_group.terraform-demo.id}"
-....
+resource "akamai_property" "example" {
+    group    = "${data.akamai_group.example.id}"
+    ...
 }
-
-
-
 ```
 
 ## Argument Reference

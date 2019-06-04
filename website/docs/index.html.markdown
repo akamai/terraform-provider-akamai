@@ -22,10 +22,9 @@ Use the navigation to the left to read about the available resources.
 # Configure the Akamai Provider
 provider "akamai" {
     edgerc = "~/.edgerc"
+    
     papi_section = "papi"
-    # .. one of the two below
     dns_section = "dns"
-    dnsv2_section = "dns"
     cps_section = "cps"
 }
 
@@ -55,7 +54,7 @@ Usage:
 
 ```hcl
 provider "akamai" {
-edgerc       =  "~/.edgerc"
+    edgerc =  "~/.edgerc"
 }
 
 ```

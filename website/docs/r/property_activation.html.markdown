@@ -18,20 +18,15 @@ The `akamai_property_activation` provides the resource for activating a property
 Basic usage:
 
 ```hcl
-resource "akamai_property_activation" "terraform-demo" {
-
-     name     = "${akamai_property.a_sample_property.akamaideveloper.netname}"
-     contact  = ["devrel@akamai.com"] 
-     hostname =  ["akamaideveloper.net"]
-     contract = "ctr_XXX"
-     group    = "grp_XXX"
+resource "akamai_property_activation" "example" {
+     name     = "${akamai_property.example.name}"
+     contact  = ["user@example.org"] 
+     hostname =  ["example.org"]
+     contract = "ctr_####"
+     group    = "grp_###"
      network  = "STAGING"
      activate = "${var.akamai_property_activate}"
-
 }
-
-
-
 ```
 
 ## Argument Reference

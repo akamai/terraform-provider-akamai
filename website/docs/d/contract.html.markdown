@@ -18,18 +18,14 @@ Use `akamai_contract` datasource to retrieve a group id.
 Basic usage:
 
 ```hcl
-data "akamai_contract" "terraform-demo" {
-     name = "contract_name"
+data "akamai_contract" "example" {
+     name = "contract name"
 }
 
-resource "akamai_property" "terraform-demo-web" {
-     contract = "${data.akamai_contract.terraform-demo.id}"
-...
+resource "akamai_property" "example" {
+    contract = "${data.akamai_contract.example.id}"
+    ...
 }
-
-
-
-
 ```
 
 ## Argument Reference

@@ -1,15 +1,15 @@
 ---
 layout: "akamai"
-page_title: "Akamai: dnsv2 record"
-sidebar_current: "docs-akamai-dnsv2_record"
+page_title: "Akamai: dns record"
+sidebar_current: "docs-akamai-resource-dns-record"
 description: |-
-  DNS V2Record
+  DNS Record
 ---
 
-# akamai_dnsv2_record
+# akamai_dns_record
 
 
-The `akamai_dnsv2_record` provides the resource for configuring a dns record to integrate easily with your existing DNS infrastructure to provide a secure, high performance, highly available and scalable solution for DNS hosting.
+The `akamai_dns_record` provides the resource for configuring a dns record to integrate easily with your existing DNS infrastructure to provide a secure, high performance, highly available and scalable solution for DNS hosting.
 
 
 
@@ -18,31 +18,25 @@ The `akamai_dnsv2_record` provides the resource for configuring a dns record to 
 Basic usage:
 
 ```hcl
-
-#A record
-resource "akamai_dnsv2_record" "origin" {
-
-    zone = "akamaideveloper.net"
-    name = "test.akamaideveloper.net"
+# A record
+resource "akamai_dns_record" "origin" {
+    zone = "origin.org"
+    name = "origin.example.org"
     recordtype =  "A"
     active = true
     ttl =  30
-    target = ["${aws_elb.demoapp.dns_name}"]
-
+    target = ["192.0.2.42"]
 }
-#CName record
-resource "akamai_dnsv2_record" "edge" {
 
+# CNAME record
+resource "akamai_dns_record" "www" {
     zone = "example.com"
-    name = "demo.example.com”
+    name = "www.example.com"
     recordtype =  "CNAME"
     active = true
     ttl =  600 
-    target = “sample.edgesuite.com”
+    target = "origin.example.org.edgesuite.net"
 }
-
-
-
 ```
 
 ## Argument Reference

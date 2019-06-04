@@ -8,28 +8,21 @@ description: |-
 
 # akamai_cpcode
 
-
 Use `akamai_cpcode` datasource to retrieve a group id.
-
-
 
 ## Example Usage
 
 Basic usage:
 
 ```hcl
-data "akamai_cpcode" "terraform-demo" {
-     name = "cpcode_name"
+data "akamai_cpcode" "example" {
+     name = "cpcode name"
 }
 
-resource "akamai_property" "terraform-demo-web" {
-     contract = "${data.akamai_cpcode.terraform-demo.id}"
-...
+resource "akamai_property" "example" {
+    contract = "${data.akamai_cpcode.example.id}"
+    ...
 }
-
-
-
-
 ```
 
 ## Argument Reference
