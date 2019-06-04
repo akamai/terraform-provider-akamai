@@ -294,7 +294,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	// Give terraform the ID
 	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 
-	return nil
+	return resourceDNSRecordUpdate(d, meta)
 }
 
 // Create a new DNS Record
@@ -374,12 +374,74 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	// Give terraform the ID
 
-	return nil
+	return resourceDNSRecordRead(d, meta)
 }
 
-// Only ever save data from the tf config in the tf state file, to help with
-// api issues. See func unmarshalResourceData for more info.
 func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
+	var zone string
+	var host string
+	var recordtype string
+
+	_, ok := d.GetOk("zone")
+	if ok {
+		zone = d.Get("zone").(string)
+	}
+	_, ok = d.GetOk("name")
+	if ok {
+		host = d.Get("name").(string)
+	}
+	_, ok = d.GetOk("recordtype")
+	if ok {
+		recordtype = d.Get("recordtype").(string)
+	}
+
+	recordcreate := bindRecord(d)
+
+	b, err := json.Marshal(recordcreate.Target)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	log.Printf("[DEBUG] [Akamai DNSv2] record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
+	extractString := strings.Join(recordcreate.Target, " ")
+	sha1hash := getSHAString(extractString)
+	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for Existing SHA test %s %s", extractString, sha1hash)
+
+	// try to get the zone from the API
+	log.Printf("[INFO] [Akamai DNSv2] Searching for zone records %s %s %s", zone, host, recordtype)
+	targets, e := dnsv2.GetRdata(zone, host, recordtype)
+	if e != nil {
+		//return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e,e)
+		d.SetId("")
+		return nil
+
+	}
+	b1, err := json.Marshal(targets)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	log.Printf("[DEBUG] [Akamai DNSv2] record data read JSON %s", string(b1))
+
+	if len(targets) > 0 {
+		sort.Strings(targets)
+		extractStringTest := strings.Join(targets, " ")
+		sha1hashtest := getSHAString(extractStringTest)
+
+		if sha1hashtest == sha1hash {
+			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
+			d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
+			return nil
+		} else {
+			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
+			d.SetId("")
+			return nil
+		}
+	} else {
+		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists msimatch no target retunred  [%s] [%s] [%s] ", zone, host, recordtype)
+		d.SetId("")
+		return nil
+	}
 	return nil
 }
 

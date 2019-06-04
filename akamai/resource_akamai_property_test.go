@@ -52,27 +52,6 @@ resource "akamai_property_rules" "akamai_developer" {
     }
 
     rule {
-      name = "Performance"
-      rule {
-          name = "JPEG Images"
-          behavior {
-              name = "adaptiveImageCompression"
-              option {
-                   key = "tier1MobileCompressionMethod"
-                   value = "COMPRESS"
-              }
-              option {
-                 key = "tier1MobileCompressionValue"
-                 value = "80"
-              }
-              option {
-                   key = "tier2MobileCompressionMethod"
-                   value = "COMPRESS"
-              }
-          }
-      }
-    }
-    rule {
       name = "Uncacheable Responses"
       comment = "Cache me outside"
       criteria {
@@ -120,7 +99,7 @@ resource "akamai_property_rules" "akamai_developer" {
 }
 `)
 
-func TestAccAkamaiPropertyZone_basic(t *testing.T) {
+func TestAccAkamaiProperty_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,

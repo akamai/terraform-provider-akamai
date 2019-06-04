@@ -124,8 +124,9 @@ func resourceEnrollmentCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] enrollmentCreate response %+v", response)
 
 	d.SetId(response.Location)
+	d.Set("location", response.Location)
 
-	return nil
+	return resourceEnrollmentRead(d, meta)
 }
 
 func resourceEnrollmentExists(d *schema.ResourceData, meta interface{}) (bool, error) {
@@ -146,7 +147,7 @@ func resourceEnrollmentRead(d *schema.ResourceData, meta interface{}) error {
 
 	if err != nil || enrollment == nil {
 		log.Printf("[DEBUG] Enrollment with location doesn't exist: %+v", d.Id())
-		return  err
+		return err
 	}
 
 	log.Printf("[DEBUG] Enrollment found: %+v", enrollment)

@@ -151,7 +151,7 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Optional: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
-	"edge_hostname_map": &schema.Schema{
+	"hostnames": &schema.Schema{
 		Type:     schema.TypeMap,
 		Optional: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
@@ -628,7 +628,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("default")
 	d.SetPartial("origin")
 
-	if d.HasChange("ipv6") || d.HasChange("edge_hostname_map") {
+	if d.HasChange("ipv6") || d.HasChange("hostnames") {
 		hostnameEdgeHostnameMap, err := createHostnames(property, product, d)
 		if err != nil {
 			return err
@@ -912,7 +912,7 @@ func createHostnames(property *papi.Property, product *papi.Product, d *schema.R
 	}
 
 	log.Println("[DEBUG] Check for Edge Host Map for hostnames")
-	edgeHostnameMapTest, ok := d.GetOk("edge_hostname_map")
+	edgeHostnameMapTest, ok := d.GetOk("hostnames")
 	var hostname string
 	var hostCount int
 
@@ -1089,7 +1089,7 @@ func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[strin
 		for from, to := range hostnameEdgeHostnameMap {
 
 			log.Println("[DEBUG] Check for Edge Host Map for replacing hostname")
-			edgeHostnameMapTest, ok := d.GetOk("edge_hostname_map")
+			edgeHostnameMapTest, ok := d.GetOk("hostnames")
 			if ok {
 
 				log.Println("[DEBUG] Check for Edge Host Map for hostnames ", edgeHostnameMapTest)

@@ -60,7 +60,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Computed:    true,
 		Description: "List Edge Host Name",
 	},
-	"edgehostmap": {
+	"hostnames": {
 		Type:        schema.TypeMap,
 		Computed:    true,
 		Description: "List Edge Host Map",
@@ -165,7 +165,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 		}
 		log.Println("[DEBUG] Figuring out MAP ", edgehostmap)
 
-		d.Set("edgehostmap", edgehostmap)
+		d.Set("hostnames", edgehostmap)
 		d.Set("edgehostnamedomain", eHn.EdgeHostnameDomain)
 		d.Set("id", eHn.EdgeHostnameID)
 		d.Set("lehid", eHn.EdgeHostnameID)

@@ -49,7 +49,7 @@ func resourceDNSv2Zone() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"signandserve": {
+			"sign_and_serve": {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
@@ -76,7 +76,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	comment := d.Get("comment").(string)
 	group := d.Get("group").(string)
-	signandserve := d.Get("signandserve").(bool)
+	signandserve := d.Get("sign_and_serve").(bool)
 	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
 	zonecreate := dnsv2.ZoneCreate{Zone: hostname, Type: zonetype, Masters: masters, Comment: comment, SignAndServe: signandserve}
 
@@ -175,7 +175,7 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	comment := d.Get("comment").(string)
 	group := d.Get("group").(string)
-	signandserve := d.Get("signandserve").(bool)
+	signandserve := d.Get("sign_and_serve").(bool)
 	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
 	zonecreate := dnsv2.ZoneCreate{Zone: hostname, Type: zonetype, Masters: masters, Comment: comment, SignAndServe: signandserve}
 

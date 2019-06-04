@@ -10,25 +10,30 @@ import (
 	"testing"
 )
 
-var testAccAkamaiDNSv2ZoneConfig = fmt.Sprintf(`
+var testAccAkamaiDNSZoneConfig = fmt.Sprintf(`
 provider "akamai" {
   edgerc = "~/.edgerc"
   dns_section = "dns"
 }
 
-resource "akamai_dns_zone" "test_zone" {
-    contract = "C-1FRYVV3"
-    zone = "akavaiodeveloper.net"
-    masters = ["1.2.3.4" , "1.2.3.5"]
-    type = "PRIMARY"
-    comment =  "This is a test zone"
-    group     = "64867"
-    signandserve = false
+locals {
+  zone = "akavdev.net"
 }
+
+resource "akamai_dns_zone" "test_zone" {
+	contract = "C-1FRYVV3"
+	zone = "akavaiodeveloper.net"
+	masters = ["1.2.3.4" , "1.2.3.5"]
+	type = "primary"
+	comment =  "This is a test zone"
+	group     = "64867"
+	sign_and_serve = false
+}
+
 
 `)
 
-var testAccAkamaiDNSv2ZoneConfigWithCounter = fmt.Sprintf(`
+var testAccAkamaiDNSZoneConfigWithCounter = fmt.Sprintf(`
 provider "akamai" {
   edgerc = "~/.edgerc"
   dns_section = "dns"
@@ -39,56 +44,57 @@ locals {
 }
 
 resource "akamai_dns_zone" "test_zone" {
-    contract = "C-1FRYVV3"
-    zone = "${local.zone}"
-    masters = ["1.2.3.4" , "1.2.3.5"]
-    type = "PRIMARY"
-    comment =  "This is a test zone"
-    group     = "64867"
-    signandserve = false
+	contract = "C-1FRYVV3"
+	zone = "akavaiodeveloper.net"
+	masters = ["1.2.3.4" , "1.2.3.5"]
+	type = "primary"
+	comment =  "This is a test zone"
+	group     = "64867"
+	sign_and_serve = false
 }
+
 
 `)
 
-func TestAccAkamaiDNSv2Zone_basic(t *testing.T) {
+func TestAccAkamaiDNSZone_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiDNSv2ZoneDestroy,
+		CheckDestroy: testAccCheckAkamaiDNSZoneDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiDNSv2ZoneConfig,
+				Config: testAccAkamaiDNSZoneConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiDNSv2ZoneExists,
+					testAccCheckAkamaiDNSZoneExists,
 				),
 			},
 		},
 	})
 }
 
-func TestAccAkamaiDNSv2Zone_counter(t *testing.T) {
+func TestAccAkamaiDNSZone_counter(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiDNSv2ZoneDestroy,
+		CheckDestroy: testAccCheckAkamaiDNSZoneDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiDNSv2ZoneConfigWithCounter,
+				Config: testAccAkamaiDNSZoneConfigWithCounter,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiDNSv2ZoneExists,
+					testAccCheckAkamaiDNSZoneExists,
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckAkamaiDNSv2ZoneDestroy(s *terraform.State) error {
+func testAccCheckAkamaiDNSZoneDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "akamai_dns_zone" {
 			continue
 		}
 
-		hostname := strings.Split(rs.Primary.ID, "-")[2]
+		hostname := strings.Split(rs.Primary.ID, "-")[5]
 		zone, err := dnsv2.GetZone(hostname)
 		if err != nil {
 			return err
@@ -123,13 +129,13 @@ func testAccCheckAkamaiDNSv2ZoneDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckAkamaiDNSv2ZoneExists(s *terraform.State) error {
+func testAccCheckAkamaiDNSZoneExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "akamai_dns_zone" {
 			continue
 		}
 
-		hostname := strings.Split(rs.Primary.ID, "-")[2]
+		hostname := strings.Split(rs.Primary.ID, "-")[5]
 		_, err := dnsv2.GetZone(hostname)
 		if err != nil {
 			return err

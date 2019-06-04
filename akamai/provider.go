@@ -21,6 +21,11 @@ func Provider() terraform.ResourceProvider {
 				Optional: true,
 				Type:     schema.TypeString,
 			},
+			"cps_section": &schema.Schema{
+				Optional: true,
+				Type:     schema.TypeString,
+				Default:  "default",
+			},
 			"dns_section": &schema.Schema{
 				Optional: true,
 				Type:     schema.TypeString,
@@ -31,51 +36,47 @@ func Provider() terraform.ResourceProvider {
 				Type:     schema.TypeString,
 				Default:  "default",
 			},
-			"cps_section": &schema.Schema{
-				Optional: true,
-				Type:     schema.TypeString,
-				Default:  "default",
-			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_dns_record_set":  dataSourceDNSRecordSet(),
 			"akamai_authorities_set": dataSourceAuthoritiesSet(),
-			"akamai_group":           dataSourcePropertyGroups(),
 			"akamai_contract":        dataSourcePropertyContract(),
 			"akamai_cp_codes":        dataSourceCPCode(),
+			"akamai_dns_record_set":  dataSourceDNSRecordSet(),
+			"akamai_group":           dataSourcePropertyGroups(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cp_code":              resourceCPCode(),
-			"akamai_dns_zone":             resourceDNSv2Zone(),
-			"akamai_dns_record":           resourceDNSv2Record(),
-			"akamai_property":             resourceProperty(),
-			"akamai_cps_enrollment":       resourceEnrollment(),
-			"akamai_property_rules":       resourcePropertyRules(),
-			"akamai_property_variable":    resourcePropertyVariable(),
-			"akamai_property_variables":   resourcePropertyVariables(),
-			"akamai_secure_edge_hostname": resourceSecureEdgeHostName(),
-			"akamai_property_activation":  resourcePropertyActivation(),
+			"akamai_cp_code":             resourceCPCode(),
+			"akamai_cps_enrollment":      resourceEnrollment(),
+			"akamai_dns_zone":            resourceDNSv2Zone(),
+			"akamai_dns_record":          resourceDNSv2Record(),
+			"akamai_edge_hostname":       resourceSecureEdgeHostName(),
+			"akamai_property":            resourceProperty(),
+			"akamai_property_rules":      resourcePropertyRules(),
+			"akamai_property_variable":   resourcePropertyVariable(),
+			"akamai_property_variables":  resourcePropertyVariables(),
+			"akamai_property_activation": resourcePropertyActivation(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	dnsv2Config, err := getConfigDNSV2Service(d)
-	if err != nil {
-		return nil, err
-	}
-	papiConfig, err := getPAPIV1Service(d)
-	if err != nil {
-		return nil, err
-	}
-
 	cpsConfig, err := getCPSV2Service(d)
 	if err != nil {
 		return nil, err
 	}
 
-	if dnsv2Config == nil && papiConfig == nil && cpsConfig == nil {
+	dnsv2Config, err := getConfigDNSV2Service(d)
+	if err != nil {
+		return nil, err
+	}
+
+	papiConfig, err := getPAPIV1Service(d)
+	if err != nil {
+		return nil, err
+	}
+
+	if cpsConfig == nil && dnsv2Config == nil && papiConfig == nil {
 		return nil, fmt.Errorf("at least one edgerc section must be defined")
 	}
 
