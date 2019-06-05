@@ -22,10 +22,9 @@ type MetadataH struct {
 } //`json:"metadata"`
 
 type RecordSetResponse struct {
-	Metadata MetadataH `json:"metadata"`
+	Metadata   MetadataH   `json:"metadata"`
 	Recordsets []Recordset `json:"recordsets"`
 }
-
 
 /*
 type RecordSetResponse struct {
@@ -41,9 +40,6 @@ type RecordSetResponse struct {
 	} `json:"recordsets"`
 }
 */
-
-
-
 
 /*
 {

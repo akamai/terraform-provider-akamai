@@ -4,7 +4,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 
 	"sync"
-
 )
 
 // The record types implemented and their fields are as defined here

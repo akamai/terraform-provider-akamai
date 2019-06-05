@@ -37,8 +37,8 @@ var (
 */
 
 type ZoneQueryString struct {
-	ContractId string `json:"contractid,omitempty"`
-	Gid        string `json:"lastactivationdate,omitempty"`
+	Contract string `json:"contractid,omitempty"`
+	Group    string `json:"lastactivationdate,omitempty"`
 }
 
 type ZoneCreate struct {
@@ -87,8 +87,8 @@ func NewChangeListResponse(zone string) *ChangeListResponse {
 	return changelist
 }
 
-func NewZoneQueryString(ContractId string, gid string) *ZoneQueryString {
-	zonequerystring := &ZoneQueryString{ContractId: ContractId, Gid: gid}
+func NewZoneQueryString(Contract string, group string) *ZoneQueryString {
+	zonequerystring := &ZoneQueryString{Contract: Contract, Group: group}
 	return zonequerystring
 }
 
@@ -204,7 +204,7 @@ func (zone *ZoneCreate) Save(zonequerystring ZoneQueryString) error {
 	req, err := client.NewJSONRequest(
 		Config,
 		"POST",
-		"/config-dns/v2/zones/?contractId="+zonequerystring.ContractId+"&gid="+zonequerystring.Gid,
+		"/config-dns/v2/zones/?contractId="+zonequerystring.Contract+"&gid="+zonequerystring.Group,
 		zone,
 	)
 	if err != nil {
