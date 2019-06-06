@@ -438,7 +438,7 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 			return nil
 		}
 	} else {
-		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists msimatch no target retunred  [%s] [%s] [%s] ", zone, host, recordtype)
+		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch no target returned  [%s] [%s] [%s] ", zone, host, recordtype)
 		d.SetId("")
 		return nil
 	}

@@ -5,12 +5,13 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
+	"strings"
 )
 
 func resourceEnrollment() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceEnrollmentCreate,
-		Read:   resourceEnrollmentStub,
+		Read:   resourceEnrollmentRead,
 		Update: resourceEnrollmentStub,
 		Delete: resourceEnrollmentStub,
 		Exists: resourceEnrollmentExists,
@@ -112,25 +113,45 @@ var akamaiEnrollmentSchema = map[string]*schema.Schema{
 }
 
 func resourceEnrollmentCreate(d *schema.ResourceData, meta interface{}) error {
-	params := unmarshalCreateEnrollmentParams(d)
-	enrollment := unmarshalEnrollment(d)
 
-	response, err := enrollment.Create(*params)
-
-	if err != nil {
-		return err
+	var prefix string
+	if strings.Contains(d.Get("location").(string), "enrollments") {
+		prefix = ""
+	} else {
+		prefix = "/cps/v2/enrollments/"
 	}
+	log.Printf("[DEBUG] Check Enrollment Exists with location prefix  : %s", prefix)
+	enrollment, err := cps.GetEnrollment(prefix + d.Get("location").(string))
 
-	log.Printf("[DEBUG] enrollmentCreate response %+v", response)
+	if err != nil || enrollment == nil {
+		log.Printf("[DEBUG] Enrollment with location doesn't exist: CREATE %+v", d.Id())
 
-	d.SetId(response.Location)
-	d.Set("location", response.Location)
+		params := unmarshalCreateEnrollmentParams(d)
+		enrollment := unmarshalEnrollment(d)
 
+		response, err := enrollment.Create(*params)
+
+		if err != nil {
+			return err
+		}
+
+		log.Printf("[DEBUG] enrollmentCreate response %+v", response)
+
+		d.SetId(response.Location)
+		d.Set("location", response.Location)
+	}
 	return resourceEnrollmentRead(d, meta)
 }
 
 func resourceEnrollmentExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	enrollment, err := cps.GetEnrollment(d.Id())
+	var prefix string
+	if strings.Contains(d.Get("location").(string), "enrollments") {
+		prefix = ""
+	} else {
+		prefix = "/cps/v2/enrollments/"
+	}
+	log.Printf("[DEBUG] Check Enrollment Exists with location prefix  : %s", prefix)
+	enrollment, err := cps.GetEnrollment(prefix + d.Get("location").(string))
 
 	if err != nil || enrollment == nil {
 		log.Printf("[DEBUG] Enrollment with location doesn't exist: %+v", d.Id())
@@ -143,7 +164,14 @@ func resourceEnrollmentExists(d *schema.ResourceData, meta interface{}) (bool, e
 }
 
 func resourceEnrollmentRead(d *schema.ResourceData, meta interface{}) error {
-	enrollment, err := cps.GetEnrollment(d.Get("location").(string))
+	var prefix string
+	if strings.Contains(d.Get("location").(string), "enrollments") {
+		prefix = ""
+	} else {
+		prefix = "/cps/v2/enrollments/"
+	}
+	log.Printf("[DEBUG] Check Enrollment Read with location prefix  : %s", prefix)
+	enrollment, err := cps.GetEnrollment(prefix + d.Get("location").(string))
 
 	if err != nil || enrollment == nil {
 		log.Printf("[DEBUG] Enrollment with location doesn't exist: %+v", d.Id())

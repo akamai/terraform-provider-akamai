@@ -5,7 +5,8 @@ provider "akamai" {
 }
 
 resource "akamai_cps_enrollment" "enrollmenttwo" {
-  contract_id = "C-1FRYVV3"
+  contract = "C-1FRYVV3"
+  location = "/cps/v2/enrollments/73752"
   certificate_chain_type = "default"
   certificate_type = "san"
   change_management = false
@@ -29,13 +30,13 @@ resource "akamai_cps_enrollment" "enrollmenttwo" {
   }
 
   csr {
-    cn = "testenrollment.akadev.com"
+    cn = "testenrollment.akadev1.com"
     c = "FR"
     st = "Ile de France"
     l = "Paris"
     o = "Akamai Technologies"
     ou = ""
-    sans = ["testenrollment.akadev.com"]
+    sans = ["testenrollment.akadev1.com"]
   }
 
   network_configuration {
@@ -49,7 +50,7 @@ resource "akamai_cps_enrollment" "enrollmenttwo" {
 
     dns_name_settings {
       clone_dns_names = true
-      dns_names = ["testenrollment.akadev.com"]
+      dns_names = ["testenrollment.akadev1.com"]
     }
   }
 
