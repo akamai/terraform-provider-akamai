@@ -134,7 +134,6 @@ err:
 	return group, nil
 }
 
-
 // Group represents a group resource
 type Group struct {
 	client.Resource
