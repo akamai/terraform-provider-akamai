@@ -99,18 +99,6 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 
-	"network": &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-		Default:  "staging",
-	},
-
-	"activate": &schema.Schema{
-		Type:     schema.TypeBool,
-		Optional: true,
-		Default:  true,
-	},
-
 	// Will get added to the default rule
 	"cp_code": &schema.Schema{
 		Type:     schema.TypeString,
@@ -401,10 +389,6 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	if !ok {
 		return errors.New("missing group ID")
 	}
-	network, ok := d.GetOk("network")
-	if !ok {
-		return errors.New("missing network")
-	}
 	propertyID := d.Id()
 
 	property := papi.NewProperty(papi.NewProperties())
@@ -422,38 +406,15 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 		return e
 	}
 
-	activation, e := activations.GetLatestActivation(papi.NetworkValue(strings.ToUpper(network.(string))), papi.StatusActive)
-	// an error here means there has not been any activation yet, so we can skip deactivating the property
-	// if there was no error, then activations were found, this can be an Activation or a Deactivation, so we check the ActivationType
-	// in case it has already been deactivated
-	if e == nil && activation.ActivationType == papi.ActivationTypeActivate {
-		deactivation := papi.NewActivation(papi.NewActivations())
-		deactivation.PropertyVersion = property.LatestVersion
-		deactivation.ActivationType = papi.ActivationTypeDeactivate
-		deactivation.Network = activation.Network
-		deactivation.NotifyEmails = activation.NotifyEmails
-		e = deactivation.Save(property, true)
-		if e != nil {
-			return e
-		}
-		log.Printf("[DEBUG] DEACTIVATION SAVED - ID %s STATUS %s\n", deactivation.ActivationID, deactivation.Status)
 
-		go deactivation.PollStatus(property)
+	_, e = activations.GetLatestActivation(papi.NetworkStaging, papi.StatusActive)
+	if e == nil {
+		return errors.New("property is still active on staging and cannot be deleted")
+	}
 
-	polling:
-		for deactivation.Status != papi.StatusActive {
-			select {
-			case statusChanged := <-deactivation.StatusChange:
-				log.Printf("[DEBUG] Property Status: %s\n", deactivation.Status)
-				if statusChanged == false {
-					break polling
-				}
-				continue polling
-			case <-time.After(time.Minute * 90):
-				log.Println("[DEBUG] Deactivation Timeout (90 minutes)")
-				break polling
-			}
-		}
+	_, e = activations.GetLatestActivation(papi.NetworkProduction, papi.StatusActive)
+	if e == nil {
+		return errors.New("property is still active on production and cannot be deleted")
 	}
 
 	e = property.Delete()

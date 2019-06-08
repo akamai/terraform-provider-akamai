@@ -115,7 +115,8 @@ func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) e
 
 	d.SetId(sha)
 	log.Println("[DEBUG] Done")
-	return nil
+
+	return resourcePropertyVariablesRead(d,meta)
 }
 
 func resourcePropertyVariablesDelete(d *schema.ResourceData, meta interface{}) error {

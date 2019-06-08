@@ -55,7 +55,7 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(cpCode.CpcodeID)
 
 	log.Printf("[DEBUG] Created CP Code: +%v", cpCode)
-	return nil
+	return resourceCPCodeRead(d, meta)
 }
 
 func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {

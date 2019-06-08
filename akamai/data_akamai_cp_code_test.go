@@ -9,7 +9,7 @@ import (
 )
 
 func TestAccDataSourceCPCode_basic(t *testing.T) {
-	dataSourceName := "data.akamai_cp_codes.test"
+	dataSourceName := "data.akamai_cp_code.test"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -30,10 +30,10 @@ func testAccDataSourceCPCode_basic(name string) string {
 	return fmt.Sprintf(`
 provider "akamai" {
   edgerc = "~/.edgerc"
-  dns_section = "papi"
+  dns_section = "global"
 }
 
-data  "akamai_cp_codes" "test" {
+data  "akamai_cp_code" "test" {
     name = "%s"
     contract = "ctr_C-1FRYVV3"
     group = "grp_68817"
