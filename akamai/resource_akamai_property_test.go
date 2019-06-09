@@ -50,79 +50,79 @@ resource "akamai_property" "akamai_developer" {
 resource "akamai_property_rules" "rules" {
  	rules {
 		behavior {
-			name = "origin"
+			name =  "origin"
         	option { 
-       			name = "cacheKeyHostname"
+       			key =  "cacheKeyHostname"
             	value = "ORIGIN_HOSTNAME"
         	}
 			option { 
-    			name = "compress"
+    			key =  "compress"
      			value = true
      		}
     		option { 
-    			name = "enableTrueClientIp"
+    			key =  "enableTrueClientIp"
      			value = false
      		}
     		option { 
-    			name = "forwardHostHeader"
+    			key =  "forwardHostHeader"
      			value = "REQUEST_HOST_HEADER"
      		}
     		option { 
-    			name = "hostname"
+    			key =  "hostname"
      			value = "example.org"
      		}
     		option { 
-    			name = "httpPort"
+    			key =  "httpPort"
      			value = 80
      		}
     		option { 
-    			name = "httpsPort"
+    			key =  "httpsPort"
      			value = 443
      		}
     		option { 
-    			name = "originSni"
+    			key =  "originSni"
      			value = true
      		}
     		option { 
-    			name = "originType"
+    			key =  "originType"
      			value = "CUSTOMER"
      		}
     		option { 
-    			name = "verificationMode"
+    			key =  "verificationMode"
      			value = "PLATFORM_SETTINGS"
      		}
     		option { 
-    			name = "originCertificate"
+    			key =  "originCertificate"
      			value = ""
      		}
     		option { 
-    			name = "ports"
+    			key =  "ports"
      			value = ""
      		}
       	}
 		behavior {
-			name = "cpCode"
+			name =  "cpCode"
 			option {
-				name = "id"
+				key =  "id"
 				value = "${akamai_cp_code.cp_code.id}"
 			}
 			option {
-				name = "name"
+				key =  "name"
 				value = "${akamai_cp_code.cp_code.name}"
 			}
 		}
 		behavior {
-			name = "caching"
+			name =  "caching"
 			option {
-				name = "behavior"
+				key =  "behavior"
 				value = "MAX_AGE"
 			}
 			option {
-                name = "mustRevalidate"
+                key =  "mustRevalidate"
                 value = "false"
 			}
             option {
-                name = "ttl"
+                key =  "ttl"
                 value = "1d"
             }
 		}
