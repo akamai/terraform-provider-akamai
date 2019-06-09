@@ -39,11 +39,8 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
-resource "random_pet" "cp_code_name" {
-}
-
 resource "akamai_cp_code" "cp_code" {
-	name = "${random_pet.cp_code_name.id}"
+	name = "terraform-testing"
 	contract = "${data.akamai_contract.contract.id}"
 	group = "${data.akamai_group.group.id}"
 	product = "prd_SPM"

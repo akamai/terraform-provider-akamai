@@ -27,14 +27,11 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
-resource "random_pet" "domain" {
-}
-
 resource "akamai_edge_hostname" "test" {
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
-    edge_hostname =  "${random_pet.id}.edgesuite.net"
+    edge_hostname =  "terraform-test.example.org.edgesuite.net"
     ipv6 = true
 }
 `)

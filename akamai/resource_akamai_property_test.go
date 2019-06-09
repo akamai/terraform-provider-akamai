@@ -29,11 +29,8 @@ resource "akamai_cp_code" "cp_code" {
 	product = "prd_SPM"
 }
 
-resource "random_pet" "property_name" {
-}
-
 resource "akamai_property" "akamai_developer" {
-  name = "${random_pet.property_name.id}"
+  name = "terraform-test"
 
   contact = ["user@example.org"]
 
