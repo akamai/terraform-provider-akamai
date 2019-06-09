@@ -2,12 +2,13 @@ package akamai
 
 import (
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
 	"log"
 	"strings"
 	"testing"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 var testAccAkamaiDNSZoneConfig = fmt.Sprintf(`
@@ -20,17 +21,18 @@ locals {
   zone = "akavdev.net"
 }
 
+data "akamai_contract" "contract" {
+}
+
 resource "akamai_dns_zone" "test_zone" {
-	contract = "C-1FRYVV3"
-	zone = "akavaiodeveloper.net"
+	contract = "${data.akamai_contract.contract.id}"
+	zone = "example.net"
 	masters = ["1.2.3.4" , "1.2.3.5"]
 	type = "primary"
 	comment =  "This is a test zone"
 	group     = "64867"
 	sign_and_serve = false
 }
-
-
 `)
 
 var testAccAkamaiDNSZoneConfigWithCounter = fmt.Sprintf(`
@@ -40,20 +42,18 @@ provider "akamai" {
 }
 
 locals {
-  zone = "akavaiodeveloper.net"
+  zone = "example.net"
 }
 
 resource "akamai_dns_zone" "test_zone" {
-	contract = "C-1FRYVV3"
-	zone = "akavaiodeveloper.net"
+	contract = "${data.akamai_contract.contract.id}"
+	zone = "example.org"
 	masters = ["1.2.3.4" , "1.2.3.5"]
 	type = "primary"
 	comment =  "This is a test zone"
 	group     = "64867"
 	sign_and_serve = false
 }
-
-
 `)
 
 func TestAccAkamaiDNSZone_basic(t *testing.T) {

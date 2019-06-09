@@ -2,11 +2,12 @@ package akamai
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"testing"
 )
 
 var testAccAkamaiPropertyConfig = fmt.Sprintf(`
@@ -15,87 +16,117 @@ provider "akamai" {
   papi_section = "global"
 }
 
-resource "akamai_property" "akamai_developer" {
-  name = "akamaideveloper.com"
-
-  contact = ["dshafik@akamai.com"]
-
-
-  product = "prd_SPM"
-  cp_code = "409449"
-  contract = "ctr_C-1FRYVV3"
-  group = "grp_68817"
-  
-
-  rule_format = "v2016-11-15"
-  
-  rules = "${akamai_property_rules.akamai_developer.json}"
-
-  origin {
-    is_secure = false
-    hostname = "akamaideveloper.net"
-    forward_hostname = "ORIGIN_HOSTNAME"
-  }
-
-  
+data "akamai_contract" "contract" {
 }
 
-resource "akamai_property_rules" "akamai_developer" {
+data "akamai_group" "group" {
+}
 
-  rules {
-    behavior {
-      name = "downstreamCache"
-      option {
-        key = "behavior"
-        value = "TUNNEL_ORIGIN"
-      }
-    }
+resource "akamai_cp_code" "cp_code" {
+	name = "terraform-testing"
+	contract = "${data.akamai_contract.contract.id}"
+	group = "${data.akamai_group.group.id}"
+	product = "prd_SPM"
+}
 
-    rule {
-      name = "Uncacheable Responses"
-      comment = "Cache me outside"
-      criteria {
-        name = "cacheability"
-        option {
-          key = "matchOperator"
-          value = "IS_NOT"
-        }
-        option {
-          key = "value"
-          value = "CACHEABLE"
-        }
-      }
-      behavior {
-        name = "downstreamCache"
-        option {
-          key = "behavior"
-          value = "TUNNEL_ORIGIN"
-        }
-      }
-      rule {
-        name = "Uncacheable Responses"
-        comment = "Child rule"
-        criteria {
-          name = "cacheability"
-          option {
-            key = "matchOperator"
-            value = "IS_NOT"
-          }
-          option {
-            key = "value"
-            value = "CACHEABLE"
-          }
-        }
-        behavior {
-          name = "downstreamCache"
-          option {
-            key = "behavior"
-            value = "TUNNEL_ORIGIN"
-          }
-        }
-      }
+resource "random_pet" "property_name" {
+}
+
+resource "akamai_property" "akamai_developer" {
+  name = "${random_pet.property_name.id}"
+
+  contact = ["user@example.org"]
+
+  product = "prd_SPM"
+  cp_code = "${akamai_cp_code.cp_code.id}"
+  contract = "${data.akamai_contract.contract.id}"
+  group = "${data.akamai_group.group.id}"
+  
+  rule_format = "v2016-11-15"
+  
+  rules = "${akamai_property_rules.rules.json}"
+}
+
+resource "akamai_property_rules" "rules" {
+ 	rules {
+		behavior {
+			name = "origin"
+        	option { 
+       			name = "cacheKeyHostname"
+            	value = "ORIGIN_HOSTNAME"
+        	}
+			option { 
+    			name = "compress"
+     			value = true
+     		}
+    		option { 
+    			name = "enableTrueClientIp"
+     			value = false
+     		}
+    		option { 
+    			name = "forwardHostHeader"
+     			value = "REQUEST_HOST_HEADER"
+     		}
+    		option { 
+    			name = "hostname"
+     			value = "example.org"
+     		}
+    		option { 
+    			name = "httpPort"
+     			value = 80
+     		}
+    		option { 
+    			name = "httpsPort"
+     			value = 443
+     		}
+    		option { 
+    			name = "originSni"
+     			value = true
+     		}
+    		option { 
+    			name = "originType"
+     			value = "CUSTOMER"
+     		}
+    		option { 
+    			name = "verificationMode"
+     			value = "PLATFORM_SETTINGS"
+     		}
+    		option { 
+    			name = "originCertificate"
+     			value = ""
+     		}
+    		option { 
+    			name = "ports"
+     			value = ""
+     		}
+      	}
+		behavior {
+			name = "cpCode"
+			option {
+				name = "id"
+				value = "${akamai_cp_code.cp_code.id}"
+			}
+			option {
+				name = "name"
+				value = "${akamai_cp_code.cp_code.name}"
+			}
+		}
+		behavior {
+			name = "caching"
+			option {
+				name = "behavior"
+				value = "MAX_AGE"
+			}
+			option {
+                name = "mustRevalidate"
+                value = "false"
+			}
+            option {
+                name = "ttl"
+                value = "1d"
+            }
+		}
     }
-  }
 }
 `)
 

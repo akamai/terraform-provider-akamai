@@ -2,10 +2,11 @@ package akamai
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"log"
 	//"strings"
 	"testing"
 )
@@ -17,12 +18,12 @@ provider "akamai" {
 }
 
 locals {
-  zone = "akavdev.net"
+  zone = "example.net"
 }
 
 resource "akamai_dns_record" "a_record" {
 	zone = "${local.zone}"
-	name = "akavdev.net"
+	name = "example.net"
 	recordtype =  "A"
 	active = true
 	ttl = 300
@@ -38,12 +39,12 @@ provider "akamai" {
 }
 
 locals {
-  zone = "akavaiodeveloper.net"
+  zone = "example.net"
 }
 
 resource "akamai_dns_record" "a_record" {
 	zone = "${local.zone}"
-	name = "akavaiodeveloper.net"
+	name = "example.net"
 	recordtype =  "A"
 	active = true
 	ttl = 300
