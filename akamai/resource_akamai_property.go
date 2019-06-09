@@ -1,17 +1,17 @@
 package akamai
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/tidwall/gjson"
 	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/tidwall/gjson"
 )
 
 func resourceProperty() *schema.Resource {
@@ -405,7 +405,6 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	if e != nil {
 		return e
 	}
-
 
 	_, e = activations.GetLatestActivation(papi.NetworkStaging, papi.StatusActive)
 	if e == nil {
@@ -1534,27 +1533,6 @@ func extractRules(drules *schema.Set) []*papi.Rule {
 		rules = append(rules, rule)
 	}
 	return rules
-}
-
-func activateProperty(property *papi.Property, d *schema.ResourceData) (*papi.Activation, error) {
-	log.Println("[DEBUG] Creating new activation")
-	activation := papi.NewActivation(papi.NewActivations())
-	activation.PropertyVersion = property.LatestVersion
-	activation.Network = papi.NetworkValue(strings.ToUpper(d.Get("network").(string)))
-	for _, email := range d.Get("contact").(*schema.Set).List() {
-		activation.NotifyEmails = append(activation.NotifyEmails, email.(string))
-	}
-	activation.Note = "Using Terraform"
-	log.Println("[DEBUG] Activating")
-	err := activation.Save(property, true)
-	if err != nil {
-		body, _ := json.Marshal(activation)
-		log.Printf("[DEBUG] API Request Body: %s\n", string(body))
-		return nil, err
-	}
-	log.Println("[DEBUG] Activation submitted successfully")
-
-	return activation, nil
 }
 
 func findProperty(d *schema.ResourceData) *papi.Property {
