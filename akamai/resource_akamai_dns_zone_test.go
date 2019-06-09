@@ -24,13 +24,16 @@ locals {
 data "akamai_contract" "contract" {
 }
 
+data "akamai_group" "group" {
+}
+
 resource "akamai_dns_zone" "test_zone" {
 	contract = "${data.akamai_contract.contract.id}"
 	zone = "example.net"
 	masters = ["1.2.3.4" , "1.2.3.5"]
 	type = "primary"
 	comment =  "This is a test zone"
-	group     = "64867"
+	group     = "${data.akamai_group.group.id}"
 	sign_and_serve = false
 }
 `)
@@ -45,13 +48,19 @@ locals {
   zone = "example.net"
 }
 
+data "akamai_contract" "contract" {
+}
+
+data "akamai_group" "group" {
+}
+
 resource "akamai_dns_zone" "test_zone" {
 	contract = "${data.akamai_contract.contract.id}"
 	zone = "example.org"
 	masters = ["1.2.3.4" , "1.2.3.5"]
 	type = "primary"
 	comment =  "This is a test zone"
-	group     = "64867"
+	group     = "${data.akamai_group.group.id}"
 	sign_and_serve = false
 }
 `)
