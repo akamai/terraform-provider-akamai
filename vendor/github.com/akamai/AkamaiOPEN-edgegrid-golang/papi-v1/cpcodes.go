@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 )
@@ -234,10 +235,10 @@ func (cpcode *CpCode) Save() error {
 		"POST",
 		fmt.Sprintf(
 			"/papi/v1/cpcodes?contractId=%s&groupId=%s",
-			cpcode.parent.Contract.ContractID,
-			cpcode.parent.Group.GroupID,
+			cpcode.parent.ContractID,
+			cpcode.parent.GroupID,
 		),
-		client.JSONBody{"productId": cpcode.ProductID, "productIds": cpcode.ProductIDs, "cpcodeName": cpcode.CpcodeName},
+		client.JSONBody{"productId": cpcode.ProductID, "cpcodeName": cpcode.CpcodeName},
 	)
 	if err != nil {
 		return err
@@ -256,6 +257,8 @@ func (cpcode *CpCode) Save() error {
 	if err = client.BodyJSON(res, &location); err != nil {
 		return err
 	}
+
+	log.Printf("[DEBUG] cpcodeLink: %s", location["cpcodeLink"].(string))
 
 	req, err = client.NewRequest(
 		Config,
@@ -285,6 +288,8 @@ func (cpcode *CpCode) Save() error {
 		return err
 	}
 
+	log.Printf("[DEBUG] CPCodes: %d \n\n%#v\n\n", len(cpcodes.CpCodes.Items), cpcodes.CpCodes.Items[0])
+
 	newCpcode := cpcodes.CpCodes.Items[0]
 	newCpcode.parent = cpcode.parent
 
@@ -292,7 +297,6 @@ func (cpcode *CpCode) Save() error {
 
 	cpcode.CpcodeID = cpcodes.CpCodes.Items[0].CpcodeID
 	cpcode.CpcodeName = cpcodes.CpCodes.Items[0].CpcodeName
-	cpcode.ProductID = cpcodes.CpCodes.Items[0].ProductID
 	cpcode.ProductIDs = cpcodes.CpCodes.Items[0].ProductIDs
 	cpcode.CreatedDate = cpcodes.CpCodes.Items[0].CreatedDate
 
