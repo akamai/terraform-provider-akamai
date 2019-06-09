@@ -1,11 +1,11 @@
 package akamai
 
 import (
-	"fmt"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
 	"log"
 	"testing"
+
+	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccDataSourceGroup_basic(t *testing.T) {
@@ -17,31 +17,29 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 		CheckDestroy: testAccCheckAkamaiGroupDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceGroup_basic("Davey Shafik"),
+				Config: testAccDataSourceGroup_basic(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dataSourceName, "id", "grp_68817"),
+					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 				),
 			},
 		},
 	})
 }
 
-func testAccDataSourceGroup_basic(name string) string {
-	return fmt.Sprintf(`
+func testAccDataSourceGroup_basic() string {
+	return `
 provider "akamai" {
   edgerc = "~/.edgerc"
   dns_section = "papi"
 }
 
 data "akamai_group" "test" {
-	name = "%s"
 }
 
 output "groupid" {
 value = "${data.akamai_group.test.id}"
 }
-
-`, name)
+`
 }
 
 func testAccCheckAkamaiGroupDestroy(s *terraform.State) error {
