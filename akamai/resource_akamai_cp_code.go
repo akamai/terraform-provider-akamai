@@ -51,7 +51,7 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
 	cpCode, err := cpCodes.FindCpCode(d.Get("name").(string))
 	if cpCode == nil || err != nil {
-		cpCode := cpCodes.NewCpCode()
+		cpCode = cpCodes.NewCpCode()
 		cpCode.ProductID = d.Get("product").(string)
 		cpCode.CpcodeName = d.Get("name").(string)
 		log.Printf("[DEBUG] CPCode: %#v", cpCode)
