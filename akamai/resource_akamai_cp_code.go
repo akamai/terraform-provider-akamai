@@ -1,9 +1,12 @@
 package akamai
 
 import (
+	"log"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
-	"log"
 )
 
 // PAPI CP Code
@@ -44,17 +47,25 @@ func resourceCPCode() *schema.Resource {
 func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Creating CP Code")
 
-	cpCode := resourceCPCodePAPINewCPCodes(d, meta).NewCpCode()
-	cpCode.ProductID = d.Get("product").(string)
-	cpCode.CpcodeName = d.Get("name").(string)
-	err := cpCode.Save()
-	if err != nil {
-		return err
+	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
+	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
+	cpCode, err := cpCodes.FindCpCode(d.Get("name").(string))
+	if cpCode == nil || err != nil {
+		cpCode := cpCodes.NewCpCode()
+		cpCode.ProductID = d.Get("product").(string)
+		cpCode.CpcodeName = d.Get("name").(string)
+		log.Printf("[DEBUG] CPCode: %#v", cpCode)
+		err := cpCode.Save()
+		if err != nil {
+			log.Print("[DEBUG] Error saving")
+			log.Printf("%s", err.(client.APIError).RawBody)
+			return err
+		}
 	}
 
+	log.Printf("[DEBUG] Resulting CP Code: %#v\n\n\n", cpCode)
 	d.SetId(cpCode.CpcodeID)
 
-	log.Printf("[DEBUG] Created CP Code: +%v", cpCode)
 	return resourceCPCodeRead(d, meta)
 }
 
@@ -69,18 +80,20 @@ func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
 func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Reading CP Code")
 
-	cpCode := resourceCPCodePAPINewCPCodes(d, meta).NewCpCode()
-	cpCode.CpcodeID = d.Id()
-	err := cpCode.GetCpCode()
-	if err != nil {
-		return err
+	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
+	cpCode, err := cpCodes.FindCpCode(d.Id())
+	if cpCode == nil || err != nil {
+		cpCode, err = cpCodes.FindCpCode(d.Get("name").(string))
+		if err != nil {
+			return err
+		}
 	}
 
-	d.Set("name", cpCode.CpcodeName)
-	if len(cpCode.ProductIDs) > 0 {
-		d.Set("product", cpCode.ProductIDs[0])
+	if cpCode == nil {
+		return nil
 	}
 
+	d.SetId(cpCode.CpcodeID)
 	log.Printf("[DEBUG] Read CP Code: %+v", cpCode)
 	return nil
 }
