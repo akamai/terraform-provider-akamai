@@ -222,8 +222,10 @@ func (activation *Activation) Save(property *Property, acknowledgeWarnings bool)
 		Config,
 		"POST",
 		fmt.Sprintf(
-			"/papi/v1/properties/%s/activations",
+			"/papi/v1/properties/%s/activations?contractId=%s&groupId=%s",
 			property.PropertyID,
+			property.ContractID,
+			property.GroupID,
 		),
 		activation,
 	)
