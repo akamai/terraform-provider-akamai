@@ -1157,6 +1157,14 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 								beh.Options = boptions.(map[string]interface{})
 								log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR EXTRACT BOPTIONS ", beh.Options)
 							}
+
+							// Fixup CPCode
+							if beh.Name == "cpCode" {
+								cpCode := papi.NewCpCodes(nil, nil).NewCpCode()
+								cpCode.CpcodeID = beh.Options["id"].(string)
+								beh.Options = papi.OptionValue{"value": papi.OptionValue{"id": cpCode.ID()}}
+							}
+
 							propertyRules.Rule.MergeBehavior(beh)
 						}
 
