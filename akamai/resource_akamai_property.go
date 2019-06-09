@@ -136,7 +136,7 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	},
 	"edge_hostnames": &schema.Schema{
 		Type:     schema.TypeMap,
-		Optional: true,
+		Computed: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
 	"hostnames": &schema.Schema{
@@ -336,10 +336,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetPartial("hostname")
 	d.SetPartial("ipv6")
-	_, edgeHostnameOk := d.GetOk("edge_hostnames")
-	if edgeHostnameOk {
-		d.Set("edge_hostnames", edgeHostnames)
-	}
+	d.Set("edge_hostnames", edgeHostnames)
 
 	d.Partial(false)
 	log.Println("[DEBUG] Done")
