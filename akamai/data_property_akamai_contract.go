@@ -2,44 +2,53 @@ package akamai
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
-	"log"
 )
 
 func dataSourcePropertyContract() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourcePropertyContractRead,
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"group": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 		},
 	}
 }
 
 func dataSourcePropertyContractRead(d *schema.ResourceData, meta interface{}) error {
-	name := d.Get("name").(string)
+	_, groupOk := d.GetOk("group")
+	group := d.Get("group").(string)
+	contracts := papi.NewContracts()
+	// If no group, just return the first contract
+	if !groupOk {
+		err := contracts.GetContracts()
+		if err != nil {
+			return fmt.Errorf("error looking up Contracts for group %q: %s", group, err)
+		}
 
-	log.Printf("[DEBUG] [Akamai Property Contract] Start Searching for property group Contract records %s ", name)
-
-	groups := papi.NewGroups()
-	err := groups.GetGroups()
-	if err != nil {
-		return fmt.Errorf("error looking up Groups  for %q: %s", name, err)
+		d.SetId(contracts.Contracts.Items[0].ContractID)
+		return nil
 	}
 
-	group, err := groups.FindGroupId(name)
+	// Otherwise find the group and return it's first contract
+	log.Print("[DEBUG] [Akamai Property Contract] Start Searching for property contract by group")
 
+	groups, err := papi.GetGroups()
 	if err != nil {
-		return fmt.Errorf("error looking up Group Contract for %q: %s", name, err)
+		return fmt.Errorf("error looking up Group Contract for %q: %s", group, err)
 	}
 
-	log.Printf("[DEBUG] [Akamai Property Contract] Searching for records [%v]", group)
+	for _, g := range groups.Groups.Items {
+		if g.GroupID == group || g.GroupID == "grp_"+group || g.GroupName == group {
+			d.SetId(g.ContractIDs[0])
+			return nil
+		}
+	}
 
-	d.Set("id", group.ContractIDs)
-	d.SetId(group.ContractIDs[0])
-
-	return nil
+	return fmt.Errorf("error looking up Group Contract for %q: %s", group, err)
 }
