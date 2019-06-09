@@ -42,7 +42,7 @@ resource "akamai_edge_hostname" "test" {
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test.edgesuite.net"
+    edge_hostname =  "terraform-test.example.org.edgesuite.net"
     ipv6 = true
 }
 
@@ -56,7 +56,7 @@ resource "akamai_property" "property" {
   contract = "${data.akamai_contract.contract.id}"
   group = "${data.akamai_group.group.id}"
 
-  edge_hostnames = "${merge(akamai_edge_hostname.test.hostnames)}"
+  hostnames = "${merge(akamai_edge_hostname.test.hostnames)}"
   
   rule_format = "v2016-11-15"
   
@@ -179,7 +179,7 @@ func testAccCheckAkamaiPropertyActivationExists(s *terraform.State) error {
 		if rs.Type != "akamai_property_activation" {
 			continue
 		}
-		propertyID := rs.Primary.ID
+		propertyID := rs.Primary.Attributes["property"]
 
 		property := papi.NewProperty(papi.NewProperties())
 		property.PropertyID = propertyID

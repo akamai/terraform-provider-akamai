@@ -64,11 +64,12 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	// The API now has data, so save the partial state
-	d.SetId(property.PropertyID)
 	d.SetPartial("network")
+	d.Set("property", property.PropertyID)
 
 	if d.Get("activate").(bool) {
 		activation, err := activateProperty(property, d)
+		d.SetId(activation.ActivationID)
 		if err != nil {
 			return err
 		}
@@ -91,6 +92,8 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 				break polling
 			}
 		}
+	} else {
+		d.SetId("none")
 	}
 
 	d.Partial(false)

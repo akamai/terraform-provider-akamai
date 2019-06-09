@@ -136,12 +136,12 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	},
 	"edge_hostnames": &schema.Schema{
 		Type:     schema.TypeMap,
-		Required: true,
+		Optional: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
 	"hostnames": &schema.Schema{
 		Type:     schema.TypeMap,
-		Optional: true,
+		Required: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
 	"clone_from": &schema.Schema{
