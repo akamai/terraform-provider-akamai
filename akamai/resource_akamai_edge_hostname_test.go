@@ -31,10 +31,9 @@ resource "random_pet" "domain" {
 }
 
 resource "akamai_edge_hostname" "test" {
-    #name = "${random_pet.id}.edgesuite.net"
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
-    group = "${data.akamai_contract.contract.id}"
+    group = "${data.akamai_group.group.id}"
     edge_hostname =  "${random_pet.id}.edgesuite.net"
     ipv6 = true
 }
