@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 )
@@ -258,8 +257,6 @@ func (cpcode *CpCode) Save() error {
 		return err
 	}
 
-	log.Printf("[DEBUG] cpcodeLink: %s", location["cpcodeLink"].(string))
-
 	req, err = client.NewRequest(
 		Config,
 		"GET",
@@ -287,8 +284,6 @@ func (cpcode *CpCode) Save() error {
 	if err = client.BodyJSON(res, cpcodes); err != nil {
 		return err
 	}
-
-	log.Printf("[DEBUG] CPCodes: %d \n\n%#v\n\n", len(cpcodes.CpCodes.Items), cpcodes.CpCodes.Items[0])
 
 	newCpcode := cpcodes.CpCodes.Items[0]
 	newCpcode.parent = cpcode.parent
