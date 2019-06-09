@@ -115,12 +115,12 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 		return e
 	}
 
-	network := d.Get("network").(papi.NetworkValue)
+	network := papi.NetworkValue(d.Get("network").(string))
 	version := d.Get("version").(int)
 	for _, activation := range activations.Activations.Items {
 		if activation.Network == network && activation.PropertyVersion == version && activation.Status != papi.StatusInactive && activation.Status != papi.StatusDeactivated {
 			// The version is not inactive, so we need to deactivate it
-			activation, err := deactivateProperty(property, d, d.Get("network").(papi.NetworkValue))
+			activation, err := deactivateProperty(property, d, papi.NetworkValue(d.Get("network").(string)))
 			if err != nil {
 				return err
 			}
@@ -169,7 +169,7 @@ func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) 
 		return false, nil
 	}
 
-	network := d.Get("network").(papi.NetworkValue)
+	network := papi.NetworkValue(d.Get("network").(string))
 	version := d.Get("version").(int)
 	for _, activation := range activations.Activations.Items {
 		if activation.Network == network && activation.PropertyVersion == version {
@@ -195,7 +195,7 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 		return nil
 	}
 
-	network := d.Get("network").(papi.NetworkValue)
+	network := papi.NetworkValue(d.Get("network").(string))
 	version := d.Get("version").(int)
 	for _, activation := range activations.Activations.Items {
 		if activation.Network == network && activation.PropertyVersion == version {
@@ -223,13 +223,13 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		}
 
 		old, new := d.GetChange("network")
-		if old.(papi.NetworkValue) != new.(papi.NetworkValue) {
+		if old.(string) != new.(string) {
 			// deactivate on the old network, we don't need to wait for this
-			deactivateProperty(property, d, old.(papi.NetworkValue))
+			deactivateProperty(property, d, papi.NetworkValue(old.(string)))
 		}
 
 		var activation *papi.Activation
-		network := d.Get("network").(papi.NetworkValue)
+		network := papi.NetworkValue(d.Get("network").(string))
 		version := d.Get("version").(int)
 		for _, a := range activations.Activations.Items {
 			if a.Network == network && a.PropertyVersion == version && a.Status != papi.StatusFailed && a.Status != papi.StatusDeactivated && a.Status != papi.StatusAborted && a.ActivationType != papi.ActivationTypeDeactivate {
@@ -275,7 +275,7 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 }
 
 func activateProperty(property *papi.Property, d *schema.ResourceData) (*papi.Activation, error) {
-	activation := getActivation(d, papi.ActivationTypeActivate, d.Get("network").(papi.NetworkValue))
+	activation := getActivation(d, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)))
 	err := activation.Save(property, true)
 	if err != nil {
 		body, _ := json.Marshal(activation)
