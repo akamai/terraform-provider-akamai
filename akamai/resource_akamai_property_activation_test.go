@@ -18,11 +18,11 @@ provider "akamai" {
 }
 
 resource "akamai_property_activation" "property_activation" {
-	property = "${akamai_property.akamai_developer.id}"
-	version = "${akamai_property.akamai_developer.version}"
+	property = "${akamai_property.property.id}"
+	version = "${akamai_property.property.version}"
 	network = "STAGING"
 	activate = true
-	contact = ["user@example.org"]
+	contact = ["dshafik@akamai.com"]
 }
 
 data "akamai_contract" "contract" {
@@ -38,11 +38,16 @@ resource "akamai_cp_code" "cp_code" {
 	product = "prd_SPM"
 }
 
-resource "random_pet" "property_name" {
+resource "akamai_edge_hostname" "test" {
+    product = "prd_SPM"
+    contract = "${data.akamai_contract.contract.id}"
+    group = "${data.akamai_group.group.id}"
+    edge_hostname =  "terraform-test.edgesuite.net"
+    ipv6 = true
 }
 
-resource "akamai_property" "akamai_developer" {
-  name = "${random_pet.property_name.id}"
+resource "akamai_property" "property" {
+  name = "terraform-test"
 
   contact = ["user@example.org"]
 
@@ -50,6 +55,8 @@ resource "akamai_property" "akamai_developer" {
   cp_code = "${akamai_cp_code.cp_code.id}"
   contract = "${data.akamai_contract.contract.id}"
   group = "${data.akamai_group.group.id}"
+
+  edge_hostnames = "${merge(akamai_edge_hostname.test.hostnames)}"
   
   rule_format = "v2016-11-15"
   
@@ -59,79 +66,79 @@ resource "akamai_property" "akamai_developer" {
 resource "akamai_property_rules" "rules" {
  	rules {
 		behavior {
-			name = "origin"
+			name =  "origin"
         	option { 
-       			name = "cacheKeyHostname"
+       			key =  "cacheKeyHostname"
             	value = "ORIGIN_HOSTNAME"
         	}
 			option { 
-    			name = "compress"
-     			value = true
+    			key =  "compress"
+     			value = "true"
      		}
     		option { 
-    			name = "enableTrueClientIp"
-     			value = false
+    			key =  "enableTrueClientIp"
+     			value = "false"
      		}
     		option { 
-    			name = "forwardHostHeader"
+    			key =  "forwardHostHeader"
      			value = "REQUEST_HOST_HEADER"
      		}
     		option { 
-    			name = "hostname"
+    			key =  "hostname"
      			value = "example.org"
      		}
     		option { 
-    			name = "httpPort"
-     			value = 80
+    			key =  "httpPort"
+     			value = "80"
      		}
     		option { 
-    			name = "httpsPort"
-     			value = 443
+    			key =  "httpsPort"
+     			value = "443"
      		}
     		option { 
-    			name = "originSni"
-     			value = true
+    			key =  "originSni"
+     			value = "true"
      		}
     		option { 
-    			name = "originType"
+    			key =  "originType"
      			value = "CUSTOMER"
      		}
     		option { 
-    			name = "verificationMode"
+    			key =  "verificationMode"
      			value = "PLATFORM_SETTINGS"
      		}
     		option { 
-    			name = "originCertificate"
+    			key =  "originCertificate"
      			value = ""
      		}
     		option { 
-    			name = "ports"
+    			key =  "ports"
      			value = ""
      		}
       	}
 		behavior {
-			name = "cpCode"
+			name =  "cpCode"
 			option {
-				name = "id"
+				key =  "id"
 				value = "${akamai_cp_code.cp_code.id}"
 			}
 			option {
-				name = "name"
+				key =  "name"
 				value = "${akamai_cp_code.cp_code.name}"
 			}
 		}
 		behavior {
-			name = "caching"
+			name =  "caching"
 			option {
-				name = "behavior"
+				key =  "behavior"
 				value = "MAX_AGE"
 			}
 			option {
-                name = "mustRevalidate"
+                key =  "mustRevalidate"
                 value = "false"
 			}
             option {
-                name = "ttl"
+                key =  "ttl"
                 value = "1d"
             }
 		}
