@@ -156,9 +156,11 @@ func (activation *Activation) GetActivation(property *Property) (time.Duration, 
 		Config,
 		"GET",
 		fmt.Sprintf(
-			"/papi/v1/properties/%s/activations/%s",
+			"/papi/v1/properties/%s/activations/%s?contractId=%s&groupId=%s",
 			property.PropertyID,
 			activation.ActivationID,
+			property.ContractID,
+			property.GroupID,
 		),
 		nil,
 	)

@@ -31,7 +31,7 @@
     "jsonhooks-v1",
     "papi-v1"
   ]
-  revision = "34c98c3da2f711a26b93ce2049bd5d22a4b366b4"
+  revision = "5e7c2cd16fef5753a6685f4041f5c0858492a2bd"
 
 [[projects]]
   name = "github.com/apparentlymart/go-cidr"
