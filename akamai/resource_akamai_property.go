@@ -134,9 +134,9 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Required: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
-	"edge_hostname": &schema.Schema{
+	"edge_hostnames": &schema.Schema{
 		Type:     schema.TypeMap,
-		Optional: true,
+		Required: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
 	"hostnames": &schema.Schema{
@@ -336,9 +336,9 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetPartial("hostname")
 	d.SetPartial("ipv6")
-	_, edgeHostnameOk := d.GetOk("edge_hostname")
+	_, edgeHostnameOk := d.GetOk("edge_hostnames")
 	if edgeHostnameOk {
-		d.Set("edge_hostname", edgeHostnames)
+		d.Set("edge_hostnames", edgeHostnames)
 	}
 
 	d.Partial(false)
@@ -600,7 +600,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		d.SetPartial("ipv6")
-		d.Set("edge_hostname", edgeHostnames)
+		d.Set("edge_hostnames", edgeHostnames)
 	}
 
 	d.Partial(false)
@@ -859,7 +859,7 @@ func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *pap
 
 func createHostnames(property *papi.Property, product *papi.Product, d *schema.ResourceData) (map[string]*papi.EdgeHostname, error) {
 	// If the property has edge hostnames and none is specified in the schema, then don't update them
-	edgeHostname, edgeHostnameOk := d.GetOk("edge_hostname")
+	edgeHostname, edgeHostnameOk := d.GetOk("edge_hostnames")
 	if edgeHostnameOk == false {
 		hostnames, err := property.GetHostnames(nil)
 		if err != nil {
