@@ -40,7 +40,7 @@ func Provider() terraform.ResourceProvider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_authorities_set": dataSourceAuthoritiesSet(),
 			"akamai_contract":        dataSourcePropertyContract(),
-			"akamai_cp_code":        dataSourceCPCode(),
+			"akamai_cp_code":         dataSourceCPCode(),
 			"akamai_dns_record_set":  dataSourceDNSRecordSet(),
 			"akamai_group":           dataSourcePropertyGroups(),
 		},
