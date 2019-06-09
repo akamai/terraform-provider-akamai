@@ -8,10 +8,7 @@ description: |-
 
 # akamai_property_rules
 
-
-
 The `akamai_property_rules` provides the resource for configuring a nested block of property rules, criteria, and behaviors. A property’s main functionality is encapsulated in its set of rules and rules are composed of the matches and the behavior that applies under those matches.
-
 
 ## Example Usage
 
