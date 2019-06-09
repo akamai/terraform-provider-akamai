@@ -291,8 +291,14 @@ func activateProperty(property *papi.Property, d *schema.ResourceData) (*papi.Ac
 }
 
 func deactivateProperty(property *papi.Property, d *schema.ResourceData, network papi.NetworkValue) (*papi.Activation, error) {
+	version, err := property.GetLatestVersion(network)
+	if err != nil || version == nil {
+		// Not active
+		return nil, nil
+	}
+
 	activation := getActivation(d, papi.ActivationTypeDeactivate, network)
-	err := activation.Save(property, true)
+	err = activation.Save(property, true)
 	if err != nil {
 		body, _ := json.Marshal(activation)
 		log.Printf("[DEBUG] API Request Body: %s\n", string(body))
