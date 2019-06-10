@@ -16,6 +16,23 @@ provider "akamai" {
   papi_section = "global"
 }
 
+resource "akamai_property" "property" {
+  name = "terraform-test"
+
+  contact = ["user@example.org"]
+
+  product = "prd_SPM"
+  cp_code = "${akamai_cp_code.cp_code.id}"
+  contract = "${data.akamai_contract.contract.id}"
+  group = "${data.akamai_group.group.id}"
+
+  hostnames = "${merge(akamai_edge_hostname.test.hostnames)}"
+  
+  rule_format = "v2016-11-15"
+  
+  rules = "${akamai_property_rules.rules.json}"
+}
+
 data "akamai_contract" "contract" {
 }
 
@@ -29,19 +46,12 @@ resource "akamai_cp_code" "cp_code" {
 	product = "prd_SPM"
 }
 
-resource "akamai_property" "akamai_developer" {
-  name = "terraform-test"
-
-  contact = ["user@example.org"]
-
-  product = "prd_SPM"
-  cp_code = "${akamai_cp_code.cp_code.id}"
-  contract = "${data.akamai_contract.contract.id}"
-  group = "${data.akamai_group.group.id}"
-  
-  rule_format = "v2016-11-15"
-  
-  rules = "${akamai_property_rules.rules.json}"
+resource "akamai_edge_hostname" "test" {
+    product = "prd_SPM"
+    contract = "${data.akamai_contract.contract.id}"
+    group = "${data.akamai_group.group.id}"
+    edge_hostname =  "terraform-test.example.org.edgesuite.net"
+    ipv6 = true
 }
 
 resource "akamai_property_rules" "rules" {
@@ -54,11 +64,11 @@ resource "akamai_property_rules" "rules" {
         	}
 			option { 
     			key =  "compress"
-     			value = true
+     			value = "true"
      		}
     		option { 
     			key =  "enableTrueClientIp"
-     			value = false
+     			value = "false"
      		}
     		option { 
     			key =  "forwardHostHeader"
@@ -70,15 +80,15 @@ resource "akamai_property_rules" "rules" {
      		}
     		option { 
     			key =  "httpPort"
-     			value = 80
+     			value = "80"
      		}
     		option { 
     			key =  "httpsPort"
-     			value = 443
+     			value = "443"
      		}
     		option { 
     			key =  "originSni"
-     			value = true
+     			value = "true"
      		}
     		option { 
     			key =  "originType"
