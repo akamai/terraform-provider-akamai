@@ -13,7 +13,6 @@ import (
 
 var testAccAkamaiDNSv2RecordConfig = fmt.Sprintf(`
 provider "akamai" {
-  edgerc = "~/.edgerc"
   dns_section = "dns"
 }
 
@@ -45,7 +44,6 @@ resource "akamai_dns_record" "a_record" {
 
 var testAccAkamaiDNSv2RecordConfigWithCounter = fmt.Sprintf(`
 provider "akamai" {
-  edgerc = "~/.edgerc"
   dns_section = "dns"
 }
 

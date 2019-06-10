@@ -29,7 +29,6 @@ func TestAccDataSourceCPCode_basic(t *testing.T) {
 func testAccDataSourceCPCode_basic() string {
 	return `
 provider "akamai" {
-  edgerc = "~/.edgerc"
   papi_section = "papi"
 }
 

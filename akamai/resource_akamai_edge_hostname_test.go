@@ -13,12 +13,7 @@ import (
 
 var testAccAkamaiSecureEdgeHostNameConfig = fmt.Sprintf(`
 provider "akamai" {
-  edgerc = "~/.edgerc"
-  dns_section = "papi"
-}
-
-locals {
-  zone = "akavdev.net"
+  papi_section = "papi"
 }
 
 data "akamai_contract" "contract" {

@@ -30,7 +30,6 @@ func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
 func testAccDataSourceDNSRecordSet_basic(name string) string {
 	return fmt.Sprintf(`
 provider "akamai" {
-  edgerc = "~/.edgerc"
   dns_section = "dns"
 }
 

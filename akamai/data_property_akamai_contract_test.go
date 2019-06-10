@@ -29,7 +29,6 @@ func TestAccDataSourceContract_basic(t *testing.T) {
 func testAccDataSourceContract_basic() string {
 	return `
 provider "akamai" {
-  edgerc = "~/.edgerc"
   papi_section = "papi"
 }
 

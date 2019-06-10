@@ -29,7 +29,6 @@ func TestAccAkamaiCPCode_basic(t *testing.T) {
 func testAccAkamaiCpCodeConfig() string {
 	return `
 provider "akamai" {
-  edgerc = "~/.edgerc"
   papi_section = "papi"
 }
 

@@ -11,7 +11,6 @@ import (
 
 var testAccAkamaiPropertyRulesConfig = fmt.Sprintf(`
 provider "akamai" {
-  edgerc = "~/.edgerc"
   papi_section = "papi"
 }
 

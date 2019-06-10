@@ -2,10 +2,11 @@ package akamai
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
 	"log"
 	"testing"
+
+	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
@@ -29,7 +30,6 @@ func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
 func testAccDataSourceAuthoritiesSet_basic(name string) string {
 	return fmt.Sprintf(`
 provider "akamai" {
-  edgerc = "~/.edgerc"
   dns_section = "dns"
 }
 

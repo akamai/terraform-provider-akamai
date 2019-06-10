@@ -11,8 +11,7 @@ import (
 
 var testAccAkamaiPropertyConfig = fmt.Sprintf(`
 provider "akamai" {
-  edgerc = "~/.edgerc"
-  papi_section = "global"
+  papi_section = "papi"
 }
 
 resource "akamai_property" "property" {

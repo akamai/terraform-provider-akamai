@@ -29,8 +29,7 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 func testAccDataSourceGroup_basic() string {
 	return `
 provider "akamai" {
-  edgerc = "~/.edgerc"
-  dns_section = "papi"
+  papi_section = "papi"
 }
 
 data "akamai_group" "test" {

@@ -13,7 +13,6 @@ import (
 
 var testAccAkamaiDNSZoneConfig = fmt.Sprintf(`
 provider "akamai" {
-  edgerc = "~/.edgerc"
   dns_section = "dns"
 }
 
@@ -40,7 +39,6 @@ resource "akamai_dns_zone" "test_zone" {
 
 var testAccAkamaiDNSZoneConfigWithCounter = fmt.Sprintf(`
 provider "akamai" {
-  edgerc = "~/.edgerc"
   dns_section = "dns"
 }
 
