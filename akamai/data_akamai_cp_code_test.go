@@ -39,18 +39,10 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
-resource "akamai_cp_code" "cp_code" {
-	name = "terraform-testing"
-	contract = "${data.akamai_contract.contract.id}"
-	group = "${data.akamai_group.group.id}"
-	product = "prd_SPM"
-}
-
 data  "akamai_cp_code" "test" {
-	depends_on = ["akamai_cp_code.cp_code"]
     name = "terraform-testing"
-    contract = "${akamai_contract.contract.id}"
-    group = "${akamai_contract.group.id}"
+    contract = "${data.akamai_contract.contract.id}"
+    group = "${data.akamai_group.group.id}"
 }
 `
 }
