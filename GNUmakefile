@@ -12,7 +12,7 @@ test: fmtcheck
 	go test $(TEST) -v $(TESTARGS) -timeout 60s
 
 testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 300m
 
 vet:
 	@echo "go vet ."
