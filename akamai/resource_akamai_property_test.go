@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -154,7 +153,7 @@ func TestAccAkamaiProperty_basic(t *testing.T) {
 }
 
 func testAccCheckAkamaiPropertyDestroy(s *terraform.State) error {
-	
+
 	return nil
 }
 
