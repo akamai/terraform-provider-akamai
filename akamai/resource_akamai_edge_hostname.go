@@ -312,6 +312,9 @@ func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) er
 func createHostnamesExt(property *papi.Property, product *papi.Product, d *schema.ResourceData) (map[string]*papi.EdgeHostname, error) {
 	// If the property has edge hostnames and none is specified in the schema, then don't update them
 	log.Println("[DEBUG] Figuring out hostnames START")
+
+	var defaultEdgeHostname *papi.EdgeHostname
+
 	edgeHostname, edgeHostnameOk := d.GetOk("edge_hostname")
 
 	certenrollmentid, ok := d.GetOk("certenrollmentid")
@@ -345,8 +348,13 @@ func createHostnamesExt(property *papi.Property, product *papi.Product, d *schem
 	log.Println("[DEBUG] Edgehostnames exist in contract ")
 
 	hostnameEdgeHostnameMap := map[string]*papi.EdgeHostname{}
-	log.Println("[DEBUG] Edgehostnames Default host ", edgeHostnames.EdgeHostnames.Items[0])
-	defaultEdgeHostname := edgeHostnames.EdgeHostnames.Items[0]
+
+	if len(edgeHostnames.EdgeHostnames.Items) > 0 {
+		log.Println("[DEBUG] Edgehostnames Default host ", edgeHostnames.EdgeHostnames.Items[0])
+		defaultEdgeHostname = edgeHostnames.EdgeHostnames.Items[0]
+	} else {
+		defaultEdgeHostname = edgeHostnames.EdgeHostnames.Items[0]
+	}
 
 	if edgeHostnameOk {
 		foundEdgeHostname := false
