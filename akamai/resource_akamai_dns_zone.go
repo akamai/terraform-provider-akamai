@@ -246,43 +246,11 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schem
 }
 
 func resourceDNSv2ZoneDelete(d *schema.ResourceData, meta interface{}) error {
-	dnsWriteLock.Lock()
-	defer dnsWriteLock.Unlock()
+	log.Printf("[DEBUG] Deleting DNS Zone")
 
-	contract := d.Get("contract").(string)
-	hostname := d.Get("zone").(string)
-	zonetype := d.Get("type").(string)
-	masterlist := d.Get("masters").(*schema.Set).List()
-	masters := make([]string, 0, len(masterlist))
-	if len(masterlist) > 0 {
-		for _, master := range masterlist {
-			masters = append(masters, master.(string))
-		}
-
-	}
-	comment := d.Get("comment").(string)
-	group := d.Get("group").(string)
-
-	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
-	zonecreate := dnsv2.ZoneCreate{Zone: hostname, Type: zonetype, Masters: masters, Comment: comment}
-	// find the zone first
-	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
-	zoneresponse, err := dnsv2.GetZone(hostname)
-	log.Printf("[DEUG] [Akamai DNS] Searching for zone [%v]", zoneresponse)
-	if err != nil {
-		return err
-	}
-
-	// 'delete' the zone - this is a soft delete which
-	// will just remove the non required records
-	err = zonecreate.Delete(zonequerystring)
-	if err != nil {
-		return err
-	}
-
-	d.SetId("")
-
-	return nil
+	// No ZONE delete operation permitted.
+	
+	return schema.Noop(d, meta)
 }
 
 func resourceDNSv2ZoneExists(d *schema.ResourceData, meta interface{}) (bool, error) {
