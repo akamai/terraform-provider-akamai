@@ -485,7 +485,13 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("group", property.GroupID)
 	d.Set("name", property.PropertyName)
 	d.Set("note", property.Note)
-	d.Set("rule_format", property.RuleFormat)
+	
+	if ruleFormat, ok := d.GetOk("rule_format"); ok {
+        d.Set("rule_format",ruleFormat.(string))
+    } else {
+        d.Set("rule_format", property.RuleFormat)
+	}
+	
 	log.Printf("[DEBUG] Property RuleFormat from API : %s\n", property.RuleFormat)
 	d.Set("version", property.LatestVersion)
 	if property.StagingVersion > 0 {

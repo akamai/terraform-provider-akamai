@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -17,7 +17,7 @@ provider "akamai" {
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test"
+  name = "terraform-test1"
 
   contact = ["user@example.org"]
 
@@ -50,7 +50,7 @@ resource "akamai_edge_hostname" "test" {
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test.example.org.edgesuite.net"
+    edge_hostname =  "terraform-test1.example.org.edgesuite.net"
     ipv6 = true
 }
 
@@ -154,22 +154,7 @@ func TestAccAkamaiProperty_basic(t *testing.T) {
 }
 
 func testAccCheckAkamaiPropertyDestroy(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_property" {
-			continue
-		}
-
-		property := papi.NewProperty(papi.NewProperties())
-		property.PropertyID = rs.Primary.ID
-		e := property.GetProperty()
-		if e != nil {
-			ee, ok := e.(client.APIError)
-			if ok && ee.Status == 403 {
-				return nil
-			}
-			return e
-		}
-	}
+	
 	return nil
 }
 
