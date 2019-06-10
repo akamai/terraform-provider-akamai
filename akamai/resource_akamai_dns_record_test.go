@@ -17,19 +17,30 @@ provider "akamai" {
   dns_section = "dns"
 }
 
-locals {
-  zone = "example.net"
+data "akamai_contract" "contract" {
+}
+
+data "akamai_group" "group" {
+}
+
+resource "akamai_dns_zone" "test_zone" {
+	contract = "${data.akamai_contract.contract.id}"
+	zone = "example.net"
+	masters = ["1.2.3.4" , "1.2.3.5"]
+	type = "primary"
+	comment =  "This is a test zone"
+	group     = "${data.akamai_group.group.id}"
+	sign_and_serve = false
 }
 
 resource "akamai_dns_record" "a_record" {
-	zone = "${local.zone}"
+	zone = "${akamai_dns_zone.test_zone.zone}"
 	name = "example.net"
 	recordtype =  "A"
 	active = true
 	ttl = 300
 	target = ["10.0.0.2","10.0.0.3"]
 }
-
 `)
 
 var testAccAkamaiDNSv2RecordConfigWithCounter = fmt.Sprintf(`
@@ -38,20 +49,31 @@ provider "akamai" {
   dns_section = "dns"
 }
 
-locals {
-  zone = "example.net"
+data "akamai_contract" "contract" {
+}
+
+data "akamai_group" "group" {
+}
+
+resource "akamai_dns_zone" "test_zone" {
+	contract = "${data.akamai_contract.contract.id}"
+	zone = "example.net"
+	masters = ["1.2.3.4" , "1.2.3.5"]
+	type = "primary"
+	comment =  "This is a test zone"
+	group     = "${data.akamai_group.group.id}"
+	sign_and_serve = false
 }
 
 resource "akamai_dns_record" "a_record" {
-	zone = "${local.zone}"
-	name = "example.net"
+	count = 3
+	zone = "${akamai_dns_zone.test_zone.zone}"
+	name = "${count.index}.example.net"
 	recordtype =  "A"
 	active = true
 	ttl = 300
 	target = ["10.0.0.2","10.0.0.3"]
 }
-
-
 `)
 
 func TestAccAkamaiDNSv2Record_basic(t *testing.T) {

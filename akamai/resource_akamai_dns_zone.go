@@ -3,10 +3,12 @@ package akamai
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
+	"sync"
+
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
-	"log"
-	"sync"
 )
 
 var dnsWriteLock sync.Mutex
@@ -64,7 +66,6 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	// in your config.tf which might overwrite each other
 
 	hostname := d.Get("zone").(string)
-	contract := d.Get("contract").(string)
 	zonetype := d.Get("type").(string)
 	masterlist := d.Get("masters").(*schema.Set).List()
 	masters := make([]string, 0, len(masterlist))
@@ -75,8 +76,9 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 
 	}
 	comment := d.Get("comment").(string)
-	group := d.Get("group").(string)
 	signandserve := d.Get("sign_and_serve").(bool)
+	contract := strings.Replace(d.Get("contract").(string), "ctr_", "", 1)
+	group := strings.Replace(d.Get("group").(string), "grp_", "", 1)
 	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
 	zonecreate := dnsv2.ZoneCreate{Zone: hostname, Type: zonetype, Masters: masters, Comment: comment, SignAndServe: signandserve}
 
@@ -249,7 +251,7 @@ func resourceDNSv2ZoneDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Deleting DNS Zone")
 
 	// No ZONE delete operation permitted.
-	
+
 	return schema.Noop(d, meta)
 }
 
