@@ -78,8 +78,7 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 		go activation.PollStatus(property)
 
 	polling:
-		//for activation.Status != papi.StatusActive {
-		for activation.Status != "Created" {
+		for activation.Status != papi.StatusActive {
 			select {
 			case statusChanged := <-activation.StatusChange:
 				log.Printf("[DEBUG] Property Status: %s\n", activation.Status)
@@ -132,8 +131,7 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 			go activation.PollStatus(property)
 
 		polling:
-			//for activation.Status != papi.StatusActive {
-			for activation.Status != "Created" {
+			for activation.Status != papi.StatusActive {
 				select {
 				case statusChanged := <-activation.StatusChange:
 					log.Printf("[DEBUG] Property Status: %s\n", activation.Status)
