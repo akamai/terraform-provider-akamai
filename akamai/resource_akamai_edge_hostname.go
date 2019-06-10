@@ -353,7 +353,7 @@ func createHostnamesExt(property *papi.Property, product *papi.Product, d *schem
 		log.Println("[DEBUG] Edgehostnames Default host ", edgeHostnames.EdgeHostnames.Items[0])
 		defaultEdgeHostname = edgeHostnames.EdgeHostnames.Items[0]
 	} else {
-		defaultEdgeHostname = edgeHostnames.EdgeHostnames.Items[0]
+		defaultEdgeHostname = nil
 	}
 
 	if edgeHostnameOk {
