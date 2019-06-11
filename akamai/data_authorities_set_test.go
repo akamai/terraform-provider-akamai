@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"fmt"
 	"log"
 	"testing"
 
@@ -18,31 +17,31 @@ func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
 		CheckDestroy: testAccCheckAuthoritiesSetDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceAuthoritiesSet_basic("C-1FRYVV3"),
+				Config: testAccDataSourceAuthoritiesSet_basic(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dataSourceName, "id", "C-1FRYVV3"),
+					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 				),
 			},
 		},
 	})
 }
 
-func testAccDataSourceAuthoritiesSet_basic(name string) string {
-	return fmt.Sprintf(`
+func testAccDataSourceAuthoritiesSet_basic() string {
+	return `
 provider "akamai" {
+  papi_section = "dns"
   dns_section = "dns"
 }
 
-data "akamai_authorities_set" "test" {
-	contract = "%s"
-  }
-  
-  
-  output "authorities" {
-	value = "${join(",", data.akamai_authorities_set.test.authorities)}"
-  }
+data "akamai_contract" "contract" { }
 
-`, name)
+data "akamai_authorities_set" "test" {
+	contract = "${data.akamai_contract.contract.id}"
+}
+  
+output "authorities" {
+	value = "${join(",", data.akamai_authorities_set.test.authorities)}"
+}`
 }
 
 func testAccCheckAuthoritiesSetDestroy(s *terraform.State) error {
