@@ -39,11 +39,8 @@ resource "akamai_dns_zone" "test_zone" {
 
 var testAccAkamaiDNSZoneConfigWithCounter = fmt.Sprintf(`
 provider "akamai" {
+  papi_section = "dns"
   dns_section = "dns"
-}
-
-locals {
-  zone = "example.net"
 }
 
 data "akamai_contract" "contract" {

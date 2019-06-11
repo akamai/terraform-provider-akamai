@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -16,30 +15,23 @@ func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
 		CheckDestroy: testAccCheckAkamaiDNSv2RecordDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceDNSRecordSet_basic("akavdev.net"),
+				Config: testAccDataSourceDNSRecordSet_basic(),
 				Check: resource.ComposeTestCheckFunc(
-					//resource.TestCheckOutput("test_addrs", "4 example.com."),
-					//resource.TestCheckResourceAttr(dataSourceName, "rdata.%", "4 example.com."),
-					resource.TestCheckResourceAttr(dataSourceName, "host", "akavdev.net"),
+					resource.TestCheckResourceAttr(dataSourceName, "host", "example.org"),
 				),
 			},
 		},
 	})
 }
 
-func testAccDataSourceDNSRecordSet_basic(name string) string {
-	return fmt.Sprintf(`
-provider "akamai" {
+func testAccDataSourceDNSRecordSet_basic() string {
+	return `provider "akamai" {
   dns_section = "dns"
 }
 
-locals {
-  zone = "akavdev.net"
-}
-
 resource "akamai_dns_record" "test" {
-	zone = "${local.zone}"
-	name = "%s"
+	zone = "example.org"
+	name = "example.org"
 	recordtype =  "A"
 	active = true
 	ttl = 300
@@ -48,13 +40,13 @@ resource "akamai_dns_record" "test" {
 
 
 data "akamai_dns_record_set" "test" {
-	  zone = "${local.zone}"
-		host = "akavdev.net"
-		record_type = "A"
-	}
+	zone = "example.org"
+	host = "example.org"
+	record_type = "A"
+}
 
-	output "test_addrs" {
-		value = "${join(",", data.akamai_dns_record_set.test.rdata)}"
-	}
-`, name)
+output "test_addrs" {
+	value = "${join(",", data.akamai_dns_record_set.test.rdata)}"
+}
+`
 }

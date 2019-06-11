@@ -13,6 +13,7 @@ import (
 
 var testAccAkamaiDNSv2RecordConfig = fmt.Sprintf(`
 provider "akamai" {
+  papi_section = "dns"
   dns_section = "dns"
 }
 
@@ -44,6 +45,7 @@ resource "akamai_dns_record" "a_record" {
 
 var testAccAkamaiDNSv2RecordConfigWithCounter = fmt.Sprintf(`
 provider "akamai" {
+  papi_section = "dns"
   dns_section = "dns"
 }
 
