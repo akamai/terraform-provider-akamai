@@ -26,7 +26,7 @@ resource "akamai_edge_hostname" "test" {
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test.example.org.edgesuite.net"
+    edge_hostname =  "terraform-test.exampleterraform.io.edgesuite.net"
     ipv6 = true
 }
 `)

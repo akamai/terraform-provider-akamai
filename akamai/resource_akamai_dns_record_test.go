@@ -25,7 +25,7 @@ data "akamai_group" "group" {
 
 resource "akamai_dns_zone" "test_zone" {
 	contract = "${data.akamai_contract.contract.id}"
-	zone = "example.net"
+	zone = "exampleterraform.io"
 	masters = ["1.2.3.4" , "1.2.3.5"]
 	type = "primary"
 	comment =  "This is a test zone"
@@ -35,7 +35,7 @@ resource "akamai_dns_zone" "test_zone" {
 
 resource "akamai_dns_record" "a_record" {
 	zone = "${akamai_dns_zone.test_zone.zone}"
-	name = "example.net"
+	name = "exampleterraform.io"
 	recordtype =  "A"
 	active = true
 	ttl = 300
@@ -57,7 +57,7 @@ data "akamai_group" "group" {
 
 resource "akamai_dns_zone" "test_zone" {
 	contract = "${data.akamai_contract.contract.id}"
-	zone = "example.net"
+	zone = "exampleterraform.io"
 	masters = ["1.2.3.4" , "1.2.3.5"]
 	type = "primary"
 	comment =  "This is a test zone"
@@ -68,7 +68,7 @@ resource "akamai_dns_zone" "test_zone" {
 resource "akamai_dns_record" "a_record" {
 	count = 3
 	zone = "${akamai_dns_zone.test_zone.zone}"
-	name = "${count.index}.example.net"
+	name = "${count.index}.exampleterraform.io"
 	recordtype =  "A"
 	active = true
 	ttl = 300

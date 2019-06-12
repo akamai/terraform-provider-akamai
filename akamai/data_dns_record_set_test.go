@@ -17,7 +17,7 @@ func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
 			{
 				Config: testAccDataSourceDNSRecordSet_basic(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dataSourceName, "host", "example.org"),
+					resource.TestCheckResourceAttr(dataSourceName, "host", "exampleterraform.io"),
 				),
 			},
 		},
@@ -30,8 +30,8 @@ func testAccDataSourceDNSRecordSet_basic() string {
 }
 
 resource "akamai_dns_record" "test" {
-	zone = "example.org"
-	name = "example.org"
+	zone = "exampleterraform.io"
+	name = "exampleterraform.io"
 	recordtype =  "A"
 	active = true
 	ttl = 300
@@ -40,8 +40,8 @@ resource "akamai_dns_record" "test" {
 
 
 data "akamai_dns_record_set" "test" {
-	zone = "example.org"
-	host = "example.org"
+	zone = "exampleterraform.io"
+	host = "exampleterraform.io"
 	record_type = "A"
 }
 
