@@ -14,6 +14,10 @@ provider "akamai" {
   papi_section = "papi"
 }
 
+output "json" {
+	value = "${akamai_property_rules.rules.json}"
+}
+
 resource "akamai_property_rules" "rules" {
  	rules {
 		behavior {
