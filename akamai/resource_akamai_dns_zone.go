@@ -77,8 +77,8 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	comment := d.Get("comment").(string)
 	signandserve := d.Get("sign_and_serve").(bool)
-	contract := strings.Replace(d.Get("contract").(string), "ctr_", "", 1)
-	group := strings.Replace(d.Get("group").(string), "grp_", "", 1)
+	contract := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
+	group := strings.TrimPrefix(d.Get("group").(string), "grp_")
 	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
 	zonecreate := dnsv2.ZoneCreate{Zone: hostname, Type: zonetype, Masters: masters, Comment: comment, SignAndServe: signandserve}
 
