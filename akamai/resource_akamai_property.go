@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
@@ -403,14 +404,41 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 		return e
 	}
 
-	_, e = activations.GetLatestActivation(papi.NetworkStaging, papi.StatusActive)
-	if e == nil {
-		return errors.New("property is still active on staging and cannot be deleted")
+	var (
+		err = make(chan error, 2)
+		wg  sync.WaitGroup
+	)
+
+	checkNetwork := func(network papi.NetworkValue) {
+		defer wg.Done()
+
+		var retried bool
+	checkAgain:
+		_, e = activations.GetLatestActivation(network, papi.StatusActive)
+		if e == nil {
+			if !retried {
+				time.Sleep(time.Second * 30)
+				retried = true
+				goto checkAgain
+			}
+			err <- fmt.Errorf("property is still active on %s and cannot be deleted", network)
+		}
 	}
 
-	_, e = activations.GetLatestActivation(papi.NetworkProduction, papi.StatusActive)
-	if e == nil {
-		return errors.New("property is still active on production and cannot be deleted")
+	wg.Add(2)
+	go checkNetwork(papi.NetworkStaging)
+	go checkNetwork(papi.NetworkProduction)
+
+	// Bail as quickly as possible
+	if e = <-err; e != nil {
+		return e
+	}
+
+	wg.Wait()
+	close(err)
+
+	if e = <-err; e != nil {
+		return e
 	}
 
 	e = property.Delete()
