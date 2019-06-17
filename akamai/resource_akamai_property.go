@@ -6,7 +6,6 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
@@ -399,46 +398,54 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 		return e
 	}
 
-	activations, e := property.GetActivations()
-	if e != nil {
-		return e
+	//activations, e := property.GetActivations()
+	//if e != nil {
+	//	return e
+	//}
+	//
+	//var (
+	//	err = make(chan error, 2)
+	//	wg  sync.WaitGroup
+	//)
+	//
+	//checkNetwork := func(network papi.NetworkValue) {
+	//	defer wg.Done()
+	//
+	//	retries := 0
+	//checkAgain:
+	//	_, e = activations.GetLatestActivation(network, papi.StatusActive)
+	//	if e == nil {
+	//		if retries < 180 { // wait up to 90 minutes
+	//			time.Sleep(time.Second * 30)
+	//			retries++
+	//			goto checkAgain
+	//		}
+	//		err <- fmt.Errorf("property is still active on %s and cannot be deleted", network)
+	//	}
+	//}
+	//
+	//wg.Add(2)
+	//go checkNetwork(papi.NetworkStaging)
+	//go checkNetwork(papi.NetworkProduction)
+	//
+	//// Bail as quickly as possible
+	//if e = <-err; e != nil {
+	//	return e
+	//}
+	//
+	//wg.Wait()
+	//close(err)
+	//
+	//if e = <-err; e != nil {
+	//	return e
+	//}
+
+	if property.StagingVersion != 0 {
+		return fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkStaging)
 	}
 
-	var (
-		err = make(chan error, 2)
-		wg  sync.WaitGroup
-	)
-
-	checkNetwork := func(network papi.NetworkValue) {
-		defer wg.Done()
-
-		retries := 0
-	checkAgain:
-		_, e = activations.GetLatestActivation(network, papi.StatusActive)
-		if e == nil {
-			if retries < 180 { // wait up to 90 minutes
-				time.Sleep(time.Second * 30)
-				retries++
-				goto checkAgain
-			}
-			err <- fmt.Errorf("property is still active on %s and cannot be deleted", network)
-		}
-	}
-
-	wg.Add(2)
-	go checkNetwork(papi.NetworkStaging)
-	go checkNetwork(papi.NetworkProduction)
-
-	// Bail as quickly as possible
-	if e = <-err; e != nil {
-		return e
-	}
-
-	wg.Wait()
-	close(err)
-
-	if e = <-err; e != nil {
-		return e
+	if property.ProductionVersion != 0 {
+		return fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkProduction)
 	}
 
 	e = property.Delete()
