@@ -412,13 +412,13 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	checkNetwork := func(network papi.NetworkValue) {
 		defer wg.Done()
 
-		var retried bool
+		retries := 0
 	checkAgain:
 		_, e = activations.GetLatestActivation(network, papi.StatusActive)
 		if e == nil {
-			if !retried {
+			if retries < 180 { // wait up to 90 minutes
 				time.Sleep(time.Second * 30)
-				retried = true
+				retries++
 				goto checkAgain
 			}
 			err <- fmt.Errorf("property is still active on %s and cannot be deleted", network)
