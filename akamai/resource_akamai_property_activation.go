@@ -69,11 +69,11 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 
 	if d.Get("activate").(bool) {
 		activation, err := activateProperty(property, d)
-		d.SetId(activation.ActivationID)
 		if err != nil {
 			return err
 		}
 
+		d.SetId(activation.ActivationID)
 		d.Set("status", string(activation.Status))
 		go activation.PollStatus(property)
 
