@@ -98,8 +98,6 @@ resource "akamai_property_rules" "rules" {
 `)
 
 func TestAccAkamaiPropertyRules_basic(t *testing.T) {
-	json := `{"accountId":"","contractId":"","groupId":"","propertyId":"","propertyVersion":0,"etag":"","ruleFormat":"","rules":{"name":"default","behaviors":[{"name":"origin","options":{"cacheKeyHostname":"ORIGIN_HOSTNAME","compress":1,"enableTrueClientIp":0,"forwardHostHeader":"REQUEST_HOST_HEADER","hostname":"exampleterraform.io","httpPort":80,"httpsPort":443,"originCertificate":"","originSni":1,"originType":"CUSTOMER","ports":"","verificationMode":"PLATFORM_SETTINGS"}},{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"1d"}},{"name":"cpCode","options":{"id":"cp-code-id"}}],"options":{}}}`
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -108,8 +106,8 @@ func TestAccAkamaiPropertyRules_basic(t *testing.T) {
 			{
 				Config: testAccAkamaiPropertyRulesConfig,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"akamai_property_rules.rules", "json", json,
+					resource.TestCheckResourceAttrSet(
+						"akamai_property_rules.rules", "json",
 					),
 				),
 			},
