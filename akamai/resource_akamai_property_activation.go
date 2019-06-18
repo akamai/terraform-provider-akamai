@@ -127,7 +127,6 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 				return err
 			}
 
-			d.Set("status", string(activation.Status))
 			go activation.PollStatus(property)
 
 		polling:
