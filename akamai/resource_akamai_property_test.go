@@ -17,7 +17,7 @@ provider "akamai" {
 resource "akamai_property" "property" {
   name = "terraform-test1"
 
-  contact = ["user@example.org"]
+  contact = ["user@exampleterraform.io"]
 
   product = "prd_SPM"
   cp_code = "${akamai_cp_code.cp_code.id}"
@@ -48,7 +48,7 @@ resource "akamai_edge_hostname" "test" {
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test1.example.org.edgesuite.net"
+    edge_hostname =  "terraform-test1.exampleterraform.io.edgesuite.net"
     ipv6 = true
 }
 
@@ -74,7 +74,7 @@ resource "akamai_property_rules" "rules" {
      		}
     		option { 
     			key =  "hostname"
-     			value = "example.org"
+     			value = "exampleterraform.io"
      		}
     		option { 
     			key =  "httpPort"

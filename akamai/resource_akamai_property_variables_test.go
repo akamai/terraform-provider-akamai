@@ -18,7 +18,7 @@ resource "akamai_property_variables" "test" {
 	variables {
 	  	variable {
 			name = "PMUSER_ORIGIN"
-		  	value =  "origin.example.org"
+		  	value =  "origin.exampleterraform.io"
 		  	description  =  "Example Origin"
 		  	hidden =  true
 		  	sensitive =  false
@@ -28,7 +28,6 @@ resource "akamai_property_variables" "test" {
 `)
 
 func TestAccAkamaiPropertyVariables_basic(t *testing.T) {
-	json := `{"name":"","variables":[{"name":"PMUSER_ORIGIN","value":"origin.example.org","description":"Example Origin","hidden":true,"sensitive":false}],"options":{}}`
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -37,8 +36,8 @@ func TestAccAkamaiPropertyVariables_basic(t *testing.T) {
 			{
 				Config: testAccAkamaiPropertyVariablesConfig,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"akamai_property_variables.test", "json", json,
+					resource.TestCheckResourceAttrSet(
+						"akamai_property_variables.test", "json",
 					),
 				),
 			},

@@ -51,7 +51,7 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 	if getDefault {
 		name = groups.AccountName
 		if contractOk {
-			name += "-" + strings.Replace(contract.(string), "ctr_", "", 1)
+			name += "-" + strings.TrimPrefix(contract.(string), "ctr_")
 			group, err = groups.FindGroup(name)
 		} else {
 			// Find the first one
