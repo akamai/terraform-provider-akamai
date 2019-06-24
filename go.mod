@@ -1,4 +1,4 @@
-module github.com/akamai/terraform-provider-akamai
+module github.com/terraform-providers/terraform-provider-akamai
 
 require (
 	github.com/agext/levenshtein v0.0.0-20170217063020-5f10fee96522
