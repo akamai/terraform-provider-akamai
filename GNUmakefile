@@ -38,20 +38,6 @@ lint:
 test-compile:
 	go test -c ./akamai $(TESTARGS)
 
-dep:
-	@which dep > /dev/null; if [ $$? -ne 0 ]; then \
-		echo "==> Installing dep..."; \
-		go get -u github.com/golang/dep/cmd/dep; \
-	fi
-
-dep-install: dep
-	@echo "==> Installing vendor dependencies..."
-	@dep ensure -vendor-only
-
-dep-update: dep
-	@echo "==> Updating vendor dependencies..."
-	@dep ensure -update
-
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
