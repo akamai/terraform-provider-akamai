@@ -2,11 +2,16 @@ package akamai
 
 import (
 	"fmt"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+)
+
+const (
+	Version = "0.1.0"
 )
 
 // Config contains the Akamai provider configuration (unused).
@@ -15,16 +20,13 @@ type Config struct {
 
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() terraform.ResourceProvider {
+	client.UserAgent = client.UserAgent + " terraform/" + Version
+
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"edgerc": &schema.Schema{
 				Optional: true,
 				Type:     schema.TypeString,
-			},
-			"cps_section": &schema.Schema{
-				Optional: true,
-				Type:     schema.TypeString,
-				Default:  "default",
 			},
 			"dns_section": &schema.Schema{
 				Optional: true,
