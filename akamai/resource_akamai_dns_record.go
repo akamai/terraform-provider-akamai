@@ -12,6 +12,7 @@ import (
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func resourceDNSv2Record() *schema.Resource {
@@ -39,6 +40,19 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					RRTypeA,
+					RRTypeTxt,
+					RRTypeNs,
+					RRTypeCname,
+					RRTypeMx,
+					RRTypeNaptr,
+					RRTypePtr,
+					RRTypeSrv,
+					RRTypeSpf,
+					RRTypeAaaa,
+					RRTypeCaa,
+				}, false),
 			},
 			"ttl": {
 				Type:     schema.TypeInt,
@@ -1249,3 +1263,26 @@ func validateRecord(d *schema.ResourceData) string {
 	}
 	return "INVALID"
 }
+
+// Resource record types supported by the Akamai FastDNS API
+const (
+	RRTypeA         = "A"
+	RRTypeAaaa      = "AAAA"
+	RRTypeAfsdb     = "AFSDB"
+	RRTypeAkamaiCdn = "AKAMAICDN"
+	RRTypeAkamaiTlc = "AKAMAITLC"
+	RRTypeCaa       = "CAA"
+	RRTypeCname     = "CNAME"
+	RRTypeHinfo     = "HINFO"
+	RRTypeLoc       = "LOC"
+	RRTypeMx        = "MX"
+	RRTypeNaptr     = "NAPTR"
+	RRTypeNs        = "NS"
+	RRTypePtr       = "PTR"
+	RRTypeRp        = "RP"
+	RRTypeSrv       = "SRV"
+	RRTypeSpf       = "SPF"
+	RRTypeSshfp     = "SSHFP"
+	RRTypeTlsa      = "TLSA"
+	RRTypeTxt       = "TXT"
+)
