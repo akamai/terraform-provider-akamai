@@ -4,13 +4,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
+
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceDNSv2Record() *schema.Resource {
@@ -53,13 +54,10 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 				Set:      schema.HashString,
 			},
-			//	"afsdb":
 			"subtype": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//	"cname":
-			//	"dnskey":
 			"flags": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -76,7 +74,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//	"ds":
 			"keytag": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -89,7 +86,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//"hinfo":
 			"hardware": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -98,13 +94,10 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//	 "loc":
-			//		"mx":
 			"priority": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//	"naptr":
 			"order": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -129,8 +122,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//"ns":
-			//"nsec3":
 			"iterations": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -147,9 +138,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//"nsec3param":
-			//	"ptr":
-			//	"rp":
 			"mailbox": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -158,7 +146,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//	"rrsig":
 			"type_covered": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -187,8 +174,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//"spf":
-			//	"srv":
 			"weight": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -197,7 +182,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//"sshfp": {
 			"fingerprint_type": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -210,7 +194,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//"txt": {
 		},
 	}
 }
