@@ -27,9 +27,10 @@ func resourceDNSv2Record() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"zone": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.NoZeroValues,
 			},
 			"name": {
 				Type:     schema.TypeString,
