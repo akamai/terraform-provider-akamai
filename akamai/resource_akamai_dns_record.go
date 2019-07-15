@@ -43,16 +43,26 @@ func resourceDNSv2Record() *schema.Resource {
 				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					RRTypeA,
-					RRTypeTxt,
-					RRTypeNs,
+					RRTypeAaaa,
 					RRTypeCname,
+					RRTypeLoc,
+					RRTypeNs,
+					RRTypePtr,
+					RRTypeSpf,
+					RRTypeTxt,
+					RRTypeAfsdb,
+					RRTypeDnskey,
+					RRTypeDs,
+					RRTypeHinfo,
+					RRTypeLoc,
 					RRTypeMx,
 					RRTypeNaptr,
-					RRTypePtr,
+					RRTypeNsec3,
+					RRTypeNsec3Param,
+					RRTypeRp,
+					RRTypeRrsig,
 					RRTypeSrv,
-					RRTypeSpf,
-					RRTypeAaaa,
-					RRTypeCaa,
+					RRTypeSshfp,
 				}, false),
 			},
 			"ttl": {
@@ -1267,23 +1277,28 @@ func validateRecord(d *schema.ResourceData) string {
 
 // Resource record types supported by the Akamai FastDNS API
 const (
-	RRTypeA         = "A"
-	RRTypeAaaa      = "AAAA"
-	RRTypeAfsdb     = "AFSDB"
-	RRTypeAkamaiCdn = "AKAMAICDN"
-	RRTypeAkamaiTlc = "AKAMAITLC"
-	RRTypeCaa       = "CAA"
-	RRTypeCname     = "CNAME"
-	RRTypeHinfo     = "HINFO"
-	RRTypeLoc       = "LOC"
-	RRTypeMx        = "MX"
-	RRTypeNaptr     = "NAPTR"
-	RRTypeNs        = "NS"
-	RRTypePtr       = "PTR"
-	RRTypeRp        = "RP"
-	RRTypeSrv       = "SRV"
-	RRTypeSpf       = "SPF"
-	RRTypeSshfp     = "SSHFP"
-	RRTypeTlsa      = "TLSA"
-	RRTypeTxt       = "TXT"
+	RRTypeA          = "A"
+	RRTypeAaaa       = "AAAA"
+	RRTypeAfsdb      = "AFSDB"
+	RRTypeAkamaiCdn  = "AKAMAICDN"
+	RRTypeAkamaiTlc  = "AKAMAITLC"
+	RRTypeCaa        = "CAA"
+	RRTypeCname      = "CNAME"
+	RRTypeHinfo      = "HINFO"
+	RRTypeLoc        = "LOC"
+	RRTypeMx         = "MX"
+	RRTypeNaptr      = "NAPTR"
+	RRTypeNs         = "NS"
+	RRTypePtr        = "PTR"
+	RRTypeRp         = "RP"
+	RRTypeSrv        = "SRV"
+	RRTypeSpf        = "SPF"
+	RRTypeSshfp      = "SSHFP"
+	RRTypeTlsa       = "TLSA"
+	RRTypeTxt        = "TXT"
+	RRTypeDnskey     = "DNSKEY"
+	RRTypeDs         = "DS"
+	RRTypeNsec3      = "NSEC3"
+	RRTypeNsec3Param = "NSEC3PARAM"
+	RRTypeRrsig      = "RRSIG"
 )
