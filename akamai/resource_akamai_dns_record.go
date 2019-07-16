@@ -54,7 +54,6 @@ func resourceDNSv2Record() *schema.Resource {
 					RRTypeDnskey,
 					RRTypeDs,
 					RRTypeHinfo,
-					RRTypeLoc,
 					RRTypeMx,
 					RRTypeNaptr,
 					RRTypeNsec3,
@@ -1275,6 +1274,47 @@ func validateRecord(d *schema.ResourceData) string {
 	return "INVALID"
 }
 
+func newValidateRecord(d *schema.ResourceData) error {
+	var recordtype string
+	if v, ok := d.GetOk("recordtype"); ok {
+		recordtype = v.(string)
+	}
+
+	switch recordtype {
+	case RRTypeA, RRTypeAaaa, RRTypeCname, RRTypeLoc, RRTypeNs, RRTypePtr, RRTypeSpf, RRTypeTxt:
+		if err := checkBasicRecordTypes(d); err != nil {
+			return err
+		}
+		return checkTargets(d)
+	case RRTypeAfsdb:
+		return checkAsdfRecord(d)
+	case RRTypeDnskey:
+		return checkDnskeyRecord(d)
+	case RRTypeDs:
+		return checkDsRecord(d)
+	case RRTypeHinfo:
+		return checkHinfoRecord(d)
+	case RRTypeMx:
+		return checkMxRecord(d)
+	case RRTypeNaptr:
+		return checkNaptrRecord(d)
+	case RRTypeNsec3:
+		return checkNsec3Record(d)
+	case RRTypeNsec3Param:
+		return checkNsec3ParamRecord(d)
+	case RRTypeRp:
+		return checkRpRecord(d)
+	case RRTypeRrsig:
+		return checkRrsigRecord(d)
+	case RRTypeSrv:
+		return checkSrvRecord(d)
+	case RRTypeSshfp:
+		return checkSshfpRecord(d)
+	default:
+		return nil
+	}
+}
+
 func checkBasicRecordTypes(d *schema.ResourceData) error {
 	host := d.Get("host").(string)
 	recordtype := d.Get("recordtype").(string)
@@ -1400,18 +1440,6 @@ func checkHinfoRecord(d *schema.ResourceData) error {
 
 	if software == "" {
 		return fmt.Errorf("Type software must be set for HINFO.")
-	}
-
-	return nil
-}
-
-func checkLocRecord(d *schema.ResourceData) error {
-	if err := checkBasicRecordTypes(d); err != nil {
-		return err
-	}
-
-	if err := checkTargets(d); err != nil {
-		return err
 	}
 
 	return nil
