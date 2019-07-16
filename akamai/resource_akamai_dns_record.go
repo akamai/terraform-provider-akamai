@@ -1310,6 +1310,18 @@ func checkTargets(d *schema.ResourceData) error {
 	return nil
 }
 
+func checkSimpleRecord(d *schema.ResourceData) error {
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func checkAsdfRecord(d *schema.ResourceData) error {
 	subtype := d.Get("subtype").(int)
 	if subtype == 0 {
