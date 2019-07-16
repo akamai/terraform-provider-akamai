@@ -246,7 +246,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err := validateRecord(d)
 	if err != nil {
-		return fmt.Errorf("DNS record validation failure: %v", err)
+		return fmt.Errorf("DNS record validation failure on zone %v: %v", zone, err)
 	}
 
 	recordcreate := bindRecord(d)
@@ -334,11 +334,11 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	vaidationresult := validateRecord(d)
-	log.Printf("[DEBUG] [Akamai DNSv2] Validation result recordupdate %s", vaidationresult)
-	if vaidationresult != "VALID" {
-		return fmt.Errorf("Parameter Validation failure %s, %s  %s %s", zone, host, recordtype, vaidationresult)
+	err := validateRecord(d)
+	if err != nil {
+		return fmt.Errorf("DNS record validation failure on zone %v: %v", zone, err)
 	}
+
 	recordcreate := bindRecord(d)
 	extractString := strings.Join(recordcreate.Target, " ")
 	sha1hash := getSHAString(extractString)
