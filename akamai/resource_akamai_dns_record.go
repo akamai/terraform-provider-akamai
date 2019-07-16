@@ -912,7 +912,7 @@ func validateRecord(d *schema.ResourceData) error {
 	case RRTypeSshfp:
 		return checkSshfpRecord(d)
 	default:
-		return nil
+		return fmt.Errorf("Invalid recordtype %v", recordtype)
 	}
 }
 
