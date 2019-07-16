@@ -45,7 +45,8 @@ func resourceDNSv2Zone() *schema.Resource {
 			},
 			"comment": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "Managed by Terraform",
 			},
 			"group": {
 				Type:     schema.TypeString,
