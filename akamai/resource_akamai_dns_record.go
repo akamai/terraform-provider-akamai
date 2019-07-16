@@ -1275,6 +1275,382 @@ func validateRecord(d *schema.ResourceData) string {
 	return "INVALID"
 }
 
+func checkBasicRecordTypes(d *schema.ResourceData) error {
+	host := d.Get("host").(string)
+	recordtype := d.Get("recordtype").(string)
+	ttl := d.Get("ttl").(int)
+
+	if host == "" {
+		return fmt.Errorf("Type host must be set")
+	}
+
+	if recordtype == "" {
+		return fmt.Errorf("Type recordtype must be set")
+	}
+
+	if ttl == 0 {
+		return fmt.Errorf("Type ttl must be set")
+	}
+
+	return nil
+}
+
+func checkTargets(d *schema.ResourceData) error {
+	target := d.Get("target").(*schema.Set).List()
+	records := make([]string, 0, len(target))
+
+	for _, recContent := range target {
+		records = append(records, recContent.(string))
+	}
+
+	if len(records) == 0 {
+		return fmt.Errorf("Type records must be set.")
+	}
+
+	return nil
+}
+
+func checkAsdfRecord(d *schema.ResourceData) error {
+	subtype := d.Get("subtype").(int)
+	if subtype == 0 {
+		return fmt.Errorf("Type subtype must be set for ASDF.")
+	}
+
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkDnskeyRecord(d *schema.ResourceData) error {
+	flags := d.Get("flags").(int)
+	protocol := d.Get("protocol").(int)
+	algorithm := d.Get("algoritm").(int)
+	key := d.Get("key").(string)
+	ttl := d.Get("ttl").(int)
+
+	if !(flags == 0 || flags == 256 || flags == 257) {
+		return fmt.Errorf("Type flags must not be %v for DNSKEY.", flags)
+	}
+
+	if ttl == 0 {
+		return fmt.Errorf("Type ttl must be set for DNSKEY.")
+	}
+
+	if protocol == 0 {
+		return fmt.Errorf("Type protocol must be set for DNSKEY.")
+	}
+
+	if !((algorithm >= 1 && algorithm <= 8) || algorithm != 10) {
+		return fmt.Errorf("Type algorithm must not be %v for DNSKEY.", algorithm)
+	}
+
+	if key == "" {
+		return fmt.Errorf("Type key must be set for DNSKEY.")
+	}
+
+	return nil
+}
+
+func checkDsRecord(d *schema.ResourceData) error {
+	digestType := d.Get("digest_type").(int)
+	keytag := d.Get("keytag").(int)
+	algorithm := d.Get("algorithm").(int)
+	digest := d.Get("digest").(string)
+
+	if digestType == 0 {
+		return fmt.Errorf("Type digest_type must be set for DS.")
+	}
+
+	if keytag == 0 {
+		return fmt.Errorf("Type keytag must be set for DS.")
+	}
+
+	if algorithm == 0 {
+		return fmt.Errorf("Type algorithm must be set for DS.")
+	}
+
+	if digest == "" {
+		return fmt.Errorf("Type digest must be set for DS.")
+	}
+
+	return nil
+}
+
+func checkHinfoRecord(d *schema.ResourceData) error {
+	hardware := d.Get("hardware").(string)
+	software := d.Get("software").(string)
+
+	if hardware == "" {
+		return fmt.Errorf("Type hardware must be set for HINFO.")
+	}
+
+	if software == "" {
+		return fmt.Errorf("Type software must be set for HINFO.")
+	}
+
+	return nil
+}
+
+func checkLocRecord(d *schema.ResourceData) error {
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkMxRecord(d *schema.ResourceData) error {
+	priority := d.Get("priority").(int)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if priority < 0 || priority > 65535 {
+		return fmt.Errorf("Type priority must be set for MX.")
+	}
+
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkNaptrRecord(d *schema.ResourceData) error {
+	flagsnaptr := d.Get("flagsnaptr").(string)
+	order := d.Get("order").(int)
+	preference := d.Get("preference").(int)
+	regexp := d.Get("regexp").(string)
+	replacement := d.Get("replacement").(string)
+	service := d.Get("service").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if flagsnaptr == "" {
+		return fmt.Errorf("Type flagsnaptr must be set for NAPTR.")
+	}
+
+	if order < 0 || order > 65535 {
+		return fmt.Errorf("Type order must not be %v for NAPTR.", order)
+	}
+
+	if preference == 0 {
+		return fmt.Errorf("Type preference must be set for NAPTR.")
+	}
+
+	if regexp == "" {
+		return fmt.Errorf("Type regexp must be set for NAPTR.")
+	}
+
+	if replacement == "" {
+		return fmt.Errorf("Type replacement must be set for NAPTR.")
+	}
+
+	if service == "" {
+		return fmt.Errorf("Type service must be set for NAPTR.")
+	}
+
+	return nil
+}
+
+func checkNsec3Record(d *schema.ResourceData) error {
+	flags := d.Get("flags").(int)
+	algorithm := d.Get("algorithm").(int)
+	iterations := d.Get("iterations").(int)
+	nextHashedOwnerName := d.Get("next_hashed_owner_name").(string)
+	salt := d.Get("salt").(string)
+	typeBitmaps := d.Get("type_bitmaps").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if !(flags == 0 || flags == 1) {
+		return fmt.Errorf("Type flags must be set for NSEC3.")
+	}
+
+	if algorithm != 1 {
+		return fmt.Errorf("Type flags must be set for NSEC3.")
+	}
+	if iterations == 0 {
+		return fmt.Errorf("Type iterations must be set for NSEC3.")
+	}
+	if nextHashedOwnerName == "" {
+		return fmt.Errorf("Type nextHashedOwnerName must be set for NSEC3.")
+	}
+	if salt == "" {
+		return fmt.Errorf("Type salt must be set for NSEC3.")
+	}
+	if typeBitmaps == "" {
+		return fmt.Errorf("Type typeBitMaps must be set for NSEC3.")
+	}
+	return nil
+}
+
+func checkNsec3ParamRecord(d *schema.ResourceData) error {
+	flags := d.Get("flags").(int)
+	algorithm := d.Get("algorithm").(int)
+	iterations := d.Get("iterations").(int)
+	salt := d.Get("salt").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if !(flags == 0 || flags == 1) {
+		return fmt.Errorf("Type flags must be set for NSEC3PARAM.")
+	}
+
+	if algorithm != 1 {
+		return fmt.Errorf("Type algorithm must be set for NSEC3PARAM.")
+	}
+
+	if iterations == 0 {
+		return fmt.Errorf("Type iterations must be set for NSEC3PARAM.")
+	}
+
+	if salt == "" {
+		return fmt.Errorf("Type salt must be set for NSEC3PARAM.")
+	}
+
+	return nil
+}
+
+func checkRpRecord(d *schema.ResourceData) error {
+	mailbox := d.Get("mailbox").(string)
+	txt := d.Get("txt").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if mailbox == "" {
+		return fmt.Errorf("Type mailbox must be set for RP.")
+	}
+
+	if txt == "" {
+		return fmt.Errorf("Type txt must be set for RP.")
+	}
+
+	return nil
+}
+
+func checkRrsigRecord(d *schema.ResourceData) error {
+	expiration := d.Get("expiration").(string)
+	inception := d.Get("inception").(string)
+	originalTTL := d.Get("original_ttl").(int)
+	algorithm := d.Get("algorithm").(int)
+	labels := d.Get("labels").(int)
+	keytag := d.Get("keytag").(int)
+	signature := d.Get("signature").(string)
+	signer := d.Get("signer").(string)
+	typeCovered := d.Get("type_covered").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if expiration == "" {
+		return fmt.Errorf("Type expiration must be set for RRSIG.")
+	}
+
+	if inception == "" {
+		return fmt.Errorf("Type inception must be set for RRSIG.")
+	}
+
+	if originalTTL == 0 {
+		return fmt.Errorf("Type originalTTL must be set for RRSIG.")
+	}
+
+	if algorithm == 0 {
+		return fmt.Errorf("Type algorithm must be set for RRSIG.")
+	}
+
+	if labels == 0 {
+
+		return fmt.Errorf("Type labels must be set for RRSIG.")
+	}
+
+	if keytag == 0 {
+		return fmt.Errorf("Type keytag must be set for RRSIG.")
+	}
+
+	if signature == "" {
+		return fmt.Errorf("Type signature must be set for RRSIG.")
+	}
+
+	if signer == "" {
+		return fmt.Errorf("Type signer must be set for RRSIG.")
+	}
+
+	if typeCovered == "" {
+		return fmt.Errorf("Type typeCovered must be set for RRSIG.")
+	}
+
+	return nil
+}
+
+func checkSrvRecord(d *schema.ResourceData) error {
+	priority := d.Get("priority").(int)
+	weight := d.Get("weight").(int)
+	port := d.Get("port").(int)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+
+	if priority == 0 {
+		return fmt.Errorf("Type priority must be set for SRV.")
+	}
+
+	if weight < 0 || weight > 65535 {
+		return fmt.Errorf("Type weight must not be %v for SRV.", weight)
+	}
+
+	if port == 0 {
+		return fmt.Errorf("Type port must be set for SRV.")
+	}
+
+	return nil
+}
+
+func checkSshfpRecord(d *schema.ResourceData) error {
+	algorithm := d.Get("algorithm").(int)
+	fingerprintType := d.Get("fingerprint_type").(int)
+	fingerprint := d.Get("fingerprint").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if algorithm == 0 {
+		return fmt.Errorf("Type algorithm must be set for SSHFP.")
+	}
+
+	if fingerprintType == 0 {
+		return fmt.Errorf("Type fingerprintType must be set for SSHFP.")
+	}
+
+	if fingerprint == "null" {
+		return fmt.Errorf("Type fingerprint must be set for SSHFP.")
+	}
+
+	return nil
+}
+
 // Resource record types supported by the Akamai FastDNS API
 const (
 	RRTypeA          = "A"
