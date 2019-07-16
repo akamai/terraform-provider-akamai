@@ -36,6 +36,13 @@ func resourceDNSv2Zone() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
+					value := v.(string)
+					if value != "PRIMARY" && value != "SECONDARY" && value != "ALIAS" {
+						es = append(es, fmt.Errorf("Type must be PRIMARY, SECONDARY, or ALIAS"))
+					}
+					return
+				},
 			},
 			"masters": {
 				Type:     schema.TypeSet,
