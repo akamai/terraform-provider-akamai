@@ -33,16 +33,10 @@ func resourceDNSv2Zone() *schema.Resource {
 				Required: true,
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
-					value := v.(string)
-					if value != "PRIMARY" && value != "SECONDARY" && value != "ALIAS" {
-						es = append(es, fmt.Errorf("Type must be PRIMARY, SECONDARY, or ALIAS"))
-					}
-					return
-				},
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validateZoneType,
 			},
 			"masters": {
 				Type:     schema.TypeSet,
@@ -284,4 +278,13 @@ func resourceDNSv2ZoneExists(d *schema.ResourceData, meta interface{}) (bool, er
 	zone, err := dnsv2.GetZone(hostname)
 	log.Printf("[DEBUG] [Akamai DNSV2] Searching for Existing zone result [%v]", zone)
 	return zone != nil, err
+}
+
+// validateZoneType is a SchemaValidateFunc to validate the Zone type.
+func validateZoneType(v interface{}, k string) (ws []string, es []error) {
+	value := v.(string)
+	if value != "PRIMARY" && value != "SECONDARY" && value != "ALIAS" {
+		es = append(es, fmt.Errorf("Type must be PRIMARY, SECONDARY, or ALIAS"))
+	}
+	return
 }

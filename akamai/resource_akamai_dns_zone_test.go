@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -146,4 +146,23 @@ func testAccCheckAkamaiDNSZoneExists(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+func TestValidateZoneType(t *testing.T) {
+	badValues := []string{"primary", "secondary", "alias", "foo", "BAR"}
+	goodValues := []string{"PRIMARY", "SECONDARY", "ALIAS"}
+
+	for _, bv := range badValues {
+		_, err := validateZoneType(bv, "")
+		if err == nil {
+			t.Errorf("Value %v is invalid: %v", bv, err)
+		}
+	}
+
+	for _, gv := range goodValues {
+		_, err := validateZoneType(gv, "")
+		if err != nil {
+			t.Errorf("Value %v is invalid: %v", gv, err)
+		}
+	}
 }

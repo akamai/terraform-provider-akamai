@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+
 	//"strings"
 	"testing"
 )
