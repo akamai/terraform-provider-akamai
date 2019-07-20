@@ -1,6 +1,7 @@
 package akamai
 
 import (
+	"errors"
 	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
@@ -8,6 +9,9 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+	"log"
+	"os"
+	"strings"
 )
 
 const (
@@ -16,6 +20,80 @@ const (
 
 // Config contains the Akamai provider configuration (unused).
 type Config struct {
+}
+
+func getConfigOptions(section string) *schema.Resource {
+	section = strings.ToUpper(section)
+
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"host": {
+				Type:     schema.TypeString,
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					if v := os.Getenv("AKAMAI_" + section + "_HOST"); v != "" {
+						return v, nil
+					} else if v := os.Getenv("AKAMAI_HOST"); v != "" {
+						return v, nil
+					}
+
+					return nil, errors.New("host not set")
+				},
+			},
+			"access_token": {
+				Type:     schema.TypeString,
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					if v := os.Getenv("AKAMAI_" + section + "_ACCESS_TOKEN"); v != "" {
+						return v, nil
+					} else if v := os.Getenv("AKAMAI_ACCESS_TOKEN"); v != "" {
+						return v, nil
+					}
+
+					return nil, errors.New("access_token not set")
+				},
+			},
+			"client_token": {
+				Type:     schema.TypeString,
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					if v := os.Getenv("AKAMAI_" + section + "_CLIENT_TOKEN"); v != "" {
+						return v, nil
+					} else if v := os.Getenv("AKAMAI_CLIENT_TOKEN"); v != "" {
+						return v, nil
+					}
+
+					return nil, errors.New("client_token not set")
+				},
+			},
+			"client_secret": {
+				Type:     schema.TypeString,
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					if v := os.Getenv("AKAMAI_" + section + "_CLIENT_SECRET"); v != "" {
+						return v, nil
+					} else if v := os.Getenv("AKAMAI_CLIENT_SECRET"); v != "" {
+						return v, nil
+					}
+
+					return nil, errors.New("client_secret not set")
+				},
+			},
+			"max_body": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					if v := os.Getenv("AKAMAI_" + section + "_MAX_SIZE"); v != "" {
+						return v, nil
+					} else if v := os.Getenv("AKAMAI_MAX_SIZE"); v != "" {
+						return v, nil
+					}
+
+					return 131072, nil
+				},
+			},
+		},
+	}
 }
 
 // Provider returns the Akamai terraform.Resource provider.
@@ -37,6 +115,21 @@ func Provider() terraform.ResourceProvider {
 				Optional: true,
 				Type:     schema.TypeString,
 				Default:  "default",
+			},
+			"property_section": &schema.Schema{
+				Optional: true,
+				Type:     schema.TypeString,
+				Default:  "default",
+			},
+			"property": &schema.Schema{
+				Optional: true,
+				Type:     schema.TypeSet,
+				Elem:     getConfigOptions("property"),
+			},
+			"dns": &schema.Schema{
+				Optional: true,
+				Type:     schema.TypeSet,
+				Elem:     getConfigOptions("dns"),
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -72,35 +165,71 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	if dnsv2Config == nil && papiConfig == nil {
-		return nil, fmt.Errorf("at least one edgerc section must be defined")
+		return nil, fmt.Errorf("at least one configuration must be defined")
 	}
 
 	return &Config{}, nil
 }
 
 func getConfigDNSV2Service(d *schema.ResourceData) (*edgegrid.Config, error) {
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("dns_section").(string)
-	DNSv2Config, err := edgegrid.Init(edgerc, section)
+	var DNSv2Config edgegrid.Config
+	var err error
+	if edgerc, ok := d.GetOk("edgerc"); ok {
+		section := d.Get("dns_section").(string)
+		DNSv2Config, err = edgegrid.Init(edgerc.(string), section)
+	} else if _, ok := d.GetOk("dns"); ok {
+		config := d.Get("dns").(*schema.Set)
+
+		DNSv2Config = edgegrid.Config{}
+
+		log.Printf("[DEBUG] %#v", config)
+	} else {
+		return nil, nil
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	dnsv2.Init(DNSv2Config)
-
 	return &DNSv2Config, nil
 }
 
 func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("papi_section").(string)
+	var papiConfig edgegrid.Config
+	if edgerc, ok := d.GetOk("edgerc"); ok && edgerc.(string) != "" {
+		var err error
 
-	papiConfig, err := edgegrid.Init(edgerc, section)
-	if err != nil {
-		return nil, err
+		log.Printf("[DEBUG] Setting property config via edgerc")
+		if section, ok := d.GetOk("papi_section"); ok {
+			papiConfig, err = edgegrid.Init(edgerc.(string), section.(string))
+		} else if section, ok := d.GetOk("property_section"); ok {
+			papiConfig, err = edgegrid.Init(edgerc.(string), section.(string))
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		papi.Init(papiConfig)
+		return &papiConfig, nil
 	}
 
-	papi.Init(papiConfig)
+	if _, ok := d.GetOk("property"); ok {
+		log.Printf("[DEBUG] Setting property config via HCL")
+		config := d.Get("property").(*schema.Set).List()[0].(map[string]interface{})
 
-	return &papiConfig, nil
+		papiConfig = edgegrid.Config{
+			Host:         config["host"].(string),
+			AccessToken:  config["access_token"].(string),
+			ClientToken:  config["client_token"].(string),
+			ClientSecret: config["client_secret"].(string),
+			MaxBody:      config["max_body"].(int),
+		}
+
+		papi.Init(papiConfig)
+		return &papiConfig, nil
+	}
+
+	return nil, nil
 }
