@@ -25,12 +25,10 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"property": &schema.Schema{
 		Type:     schema.TypeString,
 		Required: true,
-		ForceNew: true,
 	},
 	"version": &schema.Schema{
 		Type:     schema.TypeInt,
 		Optional: true,
-		ForceNew: true,
 	},
 	"network": &schema.Schema{
 		Type:     schema.TypeString,
