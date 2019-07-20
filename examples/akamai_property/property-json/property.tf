@@ -1,179 +1,78 @@
+variable "AKAMAI_HOST" {
+  type = string
+}
 
-resource "akamai_property" "akavadeveloper" {
-    name = "akavadev1.com"
-    contact = ["dshafik@akamai.com"]
-    product = "prd_SPM"
-    contract = "${data.akamai_contract.our_contract.id}" #"ctr_C-1FRYVV3"
-    group = "${data.akamai_group.our_group.id}" #"grp_68817"
-    cp_code = "${data.akamai_cp_codes.cp_codes.id}" #"cpc_846350"
-    # Use one of hostnames or secure_hostnames, we may not need to separate
-    #hostname = ["www.akavadev1.com"]
-    #activate = false
+variable "AKAMAI_ACCESS_TOKEN" {
+  type = string
+}
 
-    origin {
-    is_secure = false
-    hostname = "www.akava1.com"
-    forward_hostname = "ORIGIN_HOSTNAME"
+variable "AKAMAI_CLIENT_TOKEN" {
+  type = string
+}
+
+variable "AKAMAI_CLIENT_SECRET" {
+  type = string
+}
+
+provider "akamai" {
+  property {
+    host = "${var.AKAMAI_HOST}"
+    access_token = "${var.AKAMAI_ACCESS_TOKEN}"
+    client_token = "${var.AKAMAI_CLIENT_TOKEN}"
+    client_secret = "${var.AKAMAI_CLIENT_SECRET}"
+  }
+}
+
+resource "akamai_property" "terraform_example" {
+  name = "terraform_example"
+  contact = [
+    "dshafik@akamai.com"
+  ]
+  product = "prd_SPM"
+  contract = "${data.akamai_contract.contract.id}"
+  group = "${data.akamai_group.group.id}"
+  cp_code = "cpc_846642"
+
+  hostnames = {
+    "terraform.example.org" = "${akamai_edge_hostname.ehn.edge_hostname}"
+    "terraform.example.com" = "${akamai_edge_hostname.ehn.edge_hostname}"
   }
 
-
-
-    # rules takes a resulting JSON string with the full rules
-
-    # Load from a data.local_file
-    #rulesjson = "${jsonencode(data.local_file.akavadeveloper_json.content)}"
-
-    # Generate from a resource.akamai_property_rules
-    rules = "${akamai_property_rules.akavadeveloper.json}"
-    #rules =   ["${jsonencode(local.rulesObject)}"]
+  variables = "${akamai_property_variables.origin.json}"
+  rules = "${data.local_file.rules.content}"
 }
 
+resource "akamai_edge_hostname" "ehn" {
+  edge_hostname = "terraform.example.org.edgesuite.net"
 
-resource "akamai_secure_edge_hostname" "akavadeveloper" {
-    #name = "akavadev1.com.edgekey.net"
-    product = "prd_SPM"
-    contract = "${data.akamai_contract.our_contract.id}" #"ctr_C-1FRYVV3"
-    group = "${data.akamai_group.our_group.id}" #"grp_68817"
-    edge_hostname =  "www.akavadev1-1.edgekey.net"
-    certenrollmentid = "12356666"
-    ipv6 = true
+  product = "prd_SPM"
+  contract = "${data.akamai_contract.contract.id}"
+  group = "${data.akamai_group.group.id}"
 
-
+  ipv4 = true
+  ipv6 = true
 }
 
-/*
-data "external" "generate_json" {
-    program = ["/usr/bin/bash","${path.module}/merge.sh"]
-   query = {
-    p = "akavadev1.com"
-   }
+data "akamai_contract" "contract" {
+  group = "${data.akamai_group.group.name}"
 }
-*/
-/*
-data "local_file" "akavadeveloper_json" {
-    depends_on = ["data.external.generate_json"]
-    #filename = "${path.module}/rules.json"
-    filename =  "${path.module}/akavadev1.com/dist/akavadev1.com.papi.json"
+
+data "akamai_group" "group" {
+  name = "Terraform Provider"
 }
-*/
 
-resource "akamai_property_rules" "akavadeveloper" {
-    rules {
-        behavior {
-            name = "downstreamCache"
-            option {
-                key = "behavior"
-                value = "TUNNEL_ORIGIN"
-            }
-        }
+data "local_file" "rules" {
+  filename = "rules.json"
+}
 
-
-        rule {
-            name = "Uncacheable Responses"
-            comment = "Cache me outside"
-            criteria {
-                name = "cacheability"
-                option {
-                key = "matchOperator"
-                value = "IS_NOT"
-                }
-                option {
-                key = "value"
-                value = "CACHEABLE"
-                }
-            }
-            behavior {
-                name = "downstreamCache"
-                option {
-                key = "behavior"
-                value = "TUNNEL_ORIGIN"
-                }
-            }
-            rule {
-                name = "Uncacheable Responses"
-                comment = "Child rule"
-                criteria {
-                    name = "cacheability"
-                    option {
-                        key = "matchOperator"
-                        value = "IS_NOT"
-                    }
-                    option {
-                        key = "value"
-                        value = "CACHEABLE"
-                    }
-                }
-                behavior {
-                    name = "downstreamCache"
-                    option {
-                        key = "behavior"
-                        value = "TUNNEL_ORIGIN"
-                    }
-                }
-            }
-        }
+resource "akamai_property_variables" "origin" {
+  variables {
+    variable {
+      name        = "PMUSER_ORIGIN"
+      value       = "origin.example.org"
+      description = "Terraform Demo Origin"
+      hidden      = true
+      sensitive   = false
     }
-}
-
-resource "akamai_property_variable" "origin" {
-    "name" = "ORIGIN"
-    "value" = "origin.akavadeveloper.com"
-    "description" = "Property Origin"
-    "hidden" = false
-    "sensitive" = false
-    "fqname" = "origin.akavadev1.com"
-}
-
-/*
-resource "akamai_cp_code" "akavadeveloper" {
-    name = "PDM"
-    product = "prd_SPM"
-    contract = "ctr_C-1FRYVV3"
-    group = "grp_130690" # "grp_68817"
-   # cp_code = "cpc_846350"
-}
-*/
-
-/*
-resource "akamai_cp_code" "akavadeveloper" {
-    name = "akavadev1.com"
-    product = "prd_SPM"
-    contract = "ctr_C-1FRYVV3"
-    group = "grp_130690" # "grp_68817"
-   # cp_code = "cpc_846350"
-}
-*/
-
-data  "akamai_cp_codes" "cp_codes" {
-    name = "akavadev1.com"
-    contract = "ctr_C-1FRYVV3"
-    group = "grp_130690" #grp_68817"
-
-}
-
-output "cp_codes" {
-  value = "${data.akamai_cp_codes.cp_codes.id}"
-}
-
-
-data "akamai_group" "our_group" {
-    name = "Terraform Provider" #"Davey Shafik"
-}
-
-output "groupid" {
-  value = "${data.akamai_group.our_group.id}"
-}
-
-
-data "akamai_contract" "our_contract" {
-    name = "Davey Shafik"
-}
-
-output "contractid" {
-  value = "${data.akamai_contract.our_contract.id}"
-}
-
-
-output "json" {
-  value = "${akamai_property_rules.akavadeveloper.json}"
+  }
 }

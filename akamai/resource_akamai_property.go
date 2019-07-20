@@ -6,7 +6,6 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -96,6 +95,7 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	"product": &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
+		Default:  "prd_SPM",
 		ForceNew: true,
 	},
 
@@ -143,32 +143,6 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Type:     schema.TypeMap,
 		Required: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
-	},
-	"clone_from": &schema.Schema{
-		Type:     schema.TypeSet,
-		Optional: true,
-		ForceNew: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"property": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"version": {
-					Type:     schema.TypeInt,
-					Optional: true,
-				},
-				"etag": {
-					Type:     schema.TypeString,
-					Optional: true,
-				},
-				"copy_hostnames": {
-					Type:     schema.TypeBool,
-					Optional: true,
-					Default:  false,
-				},
-			},
-		},
 	},
 
 	// Will get added to the default rule
@@ -246,11 +220,6 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 		return e
 	}
 
-	cloneFrom, e := getCloneFrom(d)
-	if e != nil {
-		return e
-	}
-
 	var property *papi.Property
 	if property = findProperty(d); property == nil {
 		if group == nil {
@@ -265,7 +234,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 			return errors.New("product must be specified to create a new property")
 		}
 
-		property, e = createProperty(contract, group, product, cloneFrom, d)
+		property, e = createProperty(contract, group, product, d)
 		if e != nil {
 			return e
 		}
@@ -325,25 +294,55 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("default")
 	d.SetPartial("origin")
 
-	hostnameEdgeHostnameMap, err := createHostnames(property, product, d)
-	if err != nil {
-		return err
-	}
+	ehnMap, err := setHostnames(property, d)
 
-	edgeHostnames, err := setEdgeHostnames(property, hostnameEdgeHostnameMap, d)
-	if err != nil {
-		return err
-	}
-	d.SetPartial("hostname")
 	d.SetPartial("ipv6")
-	d.Set("edge_hostnames", edgeHostnames)
+	d.Set("edge_hostnames", ehnMap)
 
 	d.Partial(false)
 	log.Println("[DEBUG] Done")
 	return nil
 }
 
-func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Product, cloneFrom *papi.ClonePropertyFrom, d *schema.ResourceData) (*papi.Property, error) {
+func setHostnames(property *papi.Property, d *schema.ResourceData) (map[string]string, error) {
+	hostnameEdgeHostnames := d.Get("hostnames").(map[string]interface{})
+
+	ehns, err := papi.GetEdgeHostnames(property.Contract, property.Group, "")
+	if err != nil {
+		return nil, err
+	}
+
+	hostnames, err := property.GetHostnames(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	ehnMap := make(map[string]string, len(hostnameEdgeHostnames))
+	for public, edgeHostname := range hostnameEdgeHostnames {
+		ehn := ehns.NewEdgeHostname()
+		ehn.EdgeHostnameDomain = edgeHostname.(string)
+		ehn, err = ehns.FindEdgeHostname(ehn)
+		if err != nil {
+			return nil, err
+		}
+
+		hostname := hostnames.NewHostname()
+		hostname.EdgeHostnameID = ehn.EdgeHostnameID
+		hostname.CnameFrom = public
+		hostname.CnameTo = ehn.EdgeHostnameDomain
+
+		ehnMap[public] = ehn.EdgeHostnameDomain
+	}
+
+	err = hostnames.Save()
+	if err != nil {
+		return nil, err
+	}
+
+	return ehnMap, nil
+}
+
+func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Product, d *schema.ResourceData) (*papi.Property, error) {
 	log.Println("[DEBUG] Creating property")
 
 	property, err := group.NewProperty(contract)
@@ -353,9 +352,6 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 
 	property.ProductID = product.ProductID
 	property.PropertyName = d.Get("name").(string)
-	if cloneFrom != nil {
-		property.CloneFrom = cloneFrom
-	}
 
 	if ruleFormat, ok := d.GetOk("rule_format"); ok {
 		property.RuleFormat = ruleFormat.(string)
@@ -397,48 +393,6 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	if e != nil {
 		return e
 	}
-
-	//activations, e := property.GetActivations()
-	//if e != nil {
-	//	return e
-	//}
-	//
-	//var (
-	//	err = make(chan error, 2)
-	//	wg  sync.WaitGroup
-	//)
-	//
-	//checkNetwork := func(network papi.NetworkValue) {
-	//	defer wg.Done()
-	//
-	//	retries := 0
-	//checkAgain:
-	//	_, e = activations.GetLatestActivation(network, papi.StatusActive)
-	//	if e == nil {
-	//		if retries < 180 { // wait up to 90 minutes
-	//			time.Sleep(time.Second * 30)
-	//			retries++
-	//			goto checkAgain
-	//		}
-	//		err <- fmt.Errorf("property is still active on %s and cannot be deleted", network)
-	//	}
-	//}
-	//
-	//wg.Add(2)
-	//go checkNetwork(papi.NetworkStaging)
-	//go checkNetwork(papi.NetworkProduction)
-	//
-	//// Bail as quickly as possible
-	//if e = <-err; e != nil {
-	//	return e
-	//}
-	//
-	//wg.Wait()
-	//close(err)
-	//
-	//if e = <-err; e != nil {
-	//	return e
-	//}
 
 	if property.StagingVersion != 0 {
 		return fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkStaging)
@@ -554,11 +508,6 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.Set("version", property.LatestVersion)
 
-	product, e := getProduct(d, property.Contract)
-	if e != nil {
-		return e
-	}
-
 	var cpCode *papi.CpCode
 	if d.HasChange("cp_code") {
 		cpCode, e = getCPCode(d, property.Contract, property.Group)
@@ -627,18 +576,12 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("origin")
 
 	if d.HasChange("ipv6") || d.HasChange("hostnames") {
-		hostnameEdgeHostnameMap, err := createHostnames(property, product, d)
+		ehnMap, err := setHostnames(property, d)
 		if err != nil {
 			return err
 		}
 
-		edgeHostnames, err := setEdgeHostnames(property, hostnameEdgeHostnameMap, d)
-		if err != nil {
-			return err
-		}
-
-		d.SetPartial("ipv6")
-		d.Set("edge_hostnames", edgeHostnames)
+		d.Set("edge_hostnames", ehnMap)
 	}
 
 	d.Partial(false)
@@ -750,54 +693,6 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product,
 	return product, nil
 }
 
-func getCloneFrom(d *schema.ResourceData) (*papi.ClonePropertyFrom, error) {
-	log.Println("[DEBUG] Setting up clone from")
-
-	cF, ok := d.GetOk("clone_from")
-
-	if !ok {
-		return nil, nil
-	}
-
-	set := cF.(*schema.Set)
-	cloneFrom := set.List()[0].(map[string]interface{})
-
-	propertyID := cloneFrom["property"].(string)
-
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyID
-	err := property.GetProperty()
-	if err != nil {
-		return nil, err
-	}
-
-	version := cloneFrom["version"].(int)
-
-	if cloneFrom["version"].(int) == 0 {
-		v, err := property.GetLatestVersion("")
-		if err != nil {
-			return nil, err
-		}
-		version = v.PropertyVersion
-	}
-
-	clone := papi.NewClonePropertyFrom()
-	clone.PropertyID = propertyID
-	clone.Version = version
-
-	if cloneFrom["etag"].(string) != "" {
-		clone.CloneFromVersionEtag = cloneFrom["etag"].(string)
-	}
-
-	if cloneFrom["copy_hostnames"].(bool) != false {
-		clone.CopyHostnames = true
-	}
-
-	log.Println("[DEBUG] Clone from complete")
-
-	return clone, nil
-}
-
 func createOrigin(d *schema.ResourceData) (*papi.OptionValue, error) {
 	log.Println("[DEBUG] Setting origin")
 	if origin, ok := d.GetOk("origin"); ok {
@@ -893,271 +788,6 @@ func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *pap
 		b.Options = *origin
 		rules.Rule.MergeBehavior(b)
 	}
-}
-
-func createHostnames(property *papi.Property, product *papi.Product, d *schema.ResourceData) (map[string]*papi.EdgeHostname, error) {
-	// If the property has edge hostnames and none is specified in the schema, then don't update them
-	edgeHostname, edgeHostnameOk := d.GetOk("edge_hostnames")
-	if edgeHostnameOk == false {
-		hostnames, err := property.GetHostnames(nil)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(hostnames.Hostnames.Items) > 0 {
-			return nil, nil
-		}
-	}
-
-	log.Println("[DEBUG] Check for Edge Host Map for hostnames")
-	edgeHostnameMapTest, ok := d.GetOk("hostnames")
-	var hostname string
-	var hostCount int
-
-	if ok {
-
-		log.Println("[DEBUG] Check for Edge Host Map for hostnames ", edgeHostnameMapTest)
-
-		for key, value := range edgeHostnameMapTest.(map[string]interface{}) {
-
-			log.Println("[DEBUG] EdgeHostnameMap ", key, value)
-			if strings.Contains(value.(string), "ehn_") {
-			}
-			log.Println("[DEBUG] EdgeHostnameMap ", key, value)
-			hostCount = hostCount + 1
-		}
-
-	}
-
-	if hostCount == 0 {
-		hostCount = 1
-	}
-
-	hostnames := make([]string, 0, hostCount)
-
-	if ok {
-		for key, value := range edgeHostnameMapTest.(map[string]interface{}) {
-			log.Println("[DEBUG] EdgeHostnameMap ", key, value)
-
-			if strings.Contains(key, "cnamefrom") {
-				hostname = value.(string)
-				log.Println("[DEBUG] Figuring out edgehostname ", hostname)
-				hostnames = append(hostnames, hostname)
-			}
-		}
-	}
-
-	ipv6 := d.Get("ipv6").(bool)
-
-	log.Println("[DEBUG] Figuring out hostnames")
-	edgeHostnames := papi.NewEdgeHostnames()
-	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "")
-	if err != nil {
-		return nil, err
-	}
-
-	hostnameEdgeHostnameMap := map[string]*papi.EdgeHostname{}
-	defaultEdgeHostname := edgeHostnames.EdgeHostnames.Items[0]
-
-	if edgeHostnameOk {
-		foundEdgeHostname := false
-		for _, eHn := range edgeHostnames.EdgeHostnames.Items {
-			if eHn.EdgeHostnameDomain == edgeHostname.(string) {
-				foundEdgeHostname = true
-				defaultEdgeHostname = eHn
-			}
-		}
-
-		if foundEdgeHostname == false {
-			var err error
-			defaultEdgeHostname, err = createEdgehostname(edgeHostnames, product, edgeHostname.(string), ipv6)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		for _, hostname := range hostnames {
-			if _, ok := hostnameEdgeHostnameMap[hostname]; !ok {
-				hostnameEdgeHostnameMap[hostname] = defaultEdgeHostname
-				return hostnameEdgeHostnameMap, nil
-			}
-		}
-	}
-
-	// Contract/Group has _some_ Edge Hostnames, try to map 1:1 (e.g. example.com -> example.com.edgesuite.net)
-	// If some mapping exists, map non-existent ones to the first 1:1 we find, otherwise if none exist map to the
-	// first Edge Hostname found in the contract/group
-	if len(edgeHostnames.EdgeHostnames.Items) > 0 {
-		log.Println("[DEBUG] Hostnames retrieved, trying to map")
-		edgeHostnamesMap := map[string]*papi.EdgeHostname{}
-
-		for _, edgeHostname := range edgeHostnames.EdgeHostnames.Items {
-			edgeHostnamesMap[edgeHostname.EdgeHostnameDomain] = edgeHostname
-		}
-
-		// Search for existing hostname, map 1:1
-		var overrideDefault bool
-		for _, hostname := range hostnames {
-			if edgeHostname, ok := edgeHostnamesMap[hostname+".edgesuite.net"]; ok {
-				hostnameEdgeHostnameMap[hostname] = edgeHostname
-				// Override the default with the first one found
-				if !overrideDefault {
-					defaultEdgeHostname = edgeHostname
-					overrideDefault = true
-				}
-				continue
-			}
-			if edgeHostname, ok := edgeHostnamesMap[hostname+".edgekey.net"]; ok {
-				hostnameEdgeHostnameMap[hostname] = edgeHostname
-				// Override the default with the first one found
-				if !overrideDefault {
-					defaultEdgeHostname = edgeHostname
-					overrideDefault = true
-				}
-				continue
-			}
-		}
-
-		// Fill in defaults
-		if len(hostnameEdgeHostnameMap) < len(hostnames) {
-			log.Printf("[DEBUG] Hostnames being set to default: %d of %d\n", len(hostnameEdgeHostnameMap), len(hostnames))
-			for _, hostname := range hostnames {
-				if _, ok := hostnameEdgeHostnameMap[hostname]; !ok {
-					hostnameEdgeHostnameMap[hostname] = defaultEdgeHostname
-				}
-			}
-		}
-	}
-
-	// Contract/Group has no Edge Hostnames, create a single based on the first hostname
-	// mapping example.com -> example.com.edgegrid.net
-	if len(edgeHostnames.EdgeHostnames.Items) == 0 {
-		log.Println("[DEBUG] No Edge Hostnames found, creating new one")
-		newEdgeHostname, err := createEdgehostname(edgeHostnames, product, hostnames[0], ipv6)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, hostname := range hostnames {
-			hostnameEdgeHostnameMap[hostname] = newEdgeHostname
-		}
-
-		log.Printf("[DEBUG] Edgehostname created: %s\n", newEdgeHostname.EdgeHostnameDomain)
-	}
-
-	return hostnameEdgeHostnameMap, nil
-}
-
-func createEdgehostname(edgeHostnames *papi.EdgeHostnames, product *papi.Product, hostname string, ipv6 bool) (*papi.EdgeHostname, error) {
-	newEdgeHostname := papi.NewEdgeHostname(edgeHostnames)
-	newEdgeHostname.ProductID = product.ProductID
-	newEdgeHostname.IPVersionBehavior = "IPV4"
-	if ipv6 {
-		newEdgeHostname.IPVersionBehavior = "IPV6_COMPLIANCE"
-	}
-
-	newEdgeHostname.EdgeHostnameDomain = hostname
-	err := newEdgeHostname.Save("")
-	if err != nil {
-		return nil, err
-	}
-
-	go newEdgeHostname.PollStatus("")
-
-	for newEdgeHostname.Status != papi.StatusActive {
-		select {
-		case <-newEdgeHostname.StatusChange:
-		case <-time.After(time.Minute * 20):
-			return nil, fmt.Errorf("no edge hostname found and a timeout occurred trying to create \"%s.%s\"", newEdgeHostname.DomainPrefix, newEdgeHostname.DomainSuffix)
-		}
-	}
-
-	return newEdgeHostname, nil
-}
-
-func setEdgeHostnames(property *papi.Property, hostnameEdgeHostnameMap map[string]*papi.EdgeHostname, d *schema.ResourceData) (map[string]string, error) {
-	if hostnameEdgeHostnameMap != nil {
-		log.Println("[DEBUG] Setting Edge Hostnames")
-		propertyHostnames, err := property.GetHostnames(nil)
-		if err != nil {
-			return nil, err
-		}
-
-		propertyHostnames.Hostnames.Items = []*papi.Hostname{}
-		for from, to := range hostnameEdgeHostnameMap {
-
-			log.Println("[DEBUG] Check for Edge Host Map for replacing hostname")
-			edgeHostnameMapTest, ok := d.GetOk("hostnames")
-			if ok {
-
-				log.Println("[DEBUG] Check for Edge Host Map for hostnames ", edgeHostnameMapTest)
-				mapString := make(map[string]string)
-				var edgeHostList []string
-
-				for key, value := range edgeHostnameMapTest.(map[string]interface{}) {
-					log.Println("[DEBUG] EdgeHostnameMap ", key, value)
-					strKey := fmt.Sprintf("%v", key)
-					strValue := fmt.Sprintf("%v", value)
-					mapString[strKey] = strValue
-					if strings.Contains(strValue, "ehn_") {
-						edgeHostList = append(edgeHostList, strValue)
-
-						log.Println("[DEBUG] EdgeHostnameMap set EHN_KEY ", key, value)
-					}
-				}
-
-				for _, value := range edgeHostList {
-					hostname := propertyHostnames.NewHostname()
-
-					log.Println("[DEBUG] edgeHostList ", value)
-
-					strValue := fmt.Sprintf("%v", value)
-
-					if strings.Contains(strValue, "ehn_") {
-						mapString["ehn_Key"] = strValue
-						log.Println("[DEBUG] edgeHostList set EHN_KEY ", value)
-					}
-
-					log.Println("[DEBUG] Check for Edge Host Map for cnamefrom ", mapString[value+"-cnamefrom"])
-					log.Println("[DEBUG] Check for Edge Host Map for cnameto ", mapString[value+"-cnameto"])
-					hostname.CnameType = papi.CnameTypeEdgeHostname
-					hostname.CnameFrom = mapString[value+"-cnamefrom"]
-					hostname.CnameTo = mapString[value+"-cnameto"]
-
-					hostname.CertEnrollmentId = mapString[value+"-certenrollmentid"]
-
-				}
-
-			} else {
-				log.Println("[DEBUG] Nor Edge Host Map for cnamefrom use existing ")
-				hostname := propertyHostnames.NewHostname()
-				hostname.CnameType = papi.CnameTypeEdgeHostname
-				hostname.CnameFrom = from
-				hostname.CnameTo = to.EdgeHostnameDomain
-				hostname.EdgeHostnameID = to.EdgeHostnameID
-			}
-		}
-
-		log.Println("[DEBUG] Saving edge hostnames", propertyHostnames)
-
-		err = propertyHostnames.Save()
-		log.Println("[DEBUG] Edge hostnames saved")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	hostnames, err := property.GetHostnames(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var ehn = make(map[string]string)
-	for _, hostname := range hostnames.Hostnames.Items {
-		ehn[strings.Replace(hostname.CnameFrom, ".", "-", -1)] = hostname.CnameTo
-	}
-
-	return ehn, nil
 }
 
 func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
