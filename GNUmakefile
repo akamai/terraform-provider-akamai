@@ -35,6 +35,12 @@ errcheck:
 lint:
 	@sh -c "'$(CURDIR)/scripts/golint.sh'"
 
+tools:
+	@echo "==> installing required tooling..."
+	GO111MODULE=on go install github.com/bflad/tfproviderlint/cmd/tfproviderlint
+	GO111MODULE=on go install github.com/client9/misspell/cmd/misspell
+	GO111MODULE=on go install github.com/golangci/golangci-lint/cmd/golangci-lint
+
 test-compile:
 	go test -c ./akamai $(TESTARGS)
 

@@ -9,6 +9,9 @@ env:
   - GO111MODULE=on
     GOFLAGS=-mod=vendor
 
+install:
+- make tools
+
 script:
 - make lint
 - make test
