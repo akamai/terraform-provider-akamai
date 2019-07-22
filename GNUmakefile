@@ -33,7 +33,8 @@ errcheck:
 	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
 
 lint:
-	@sh -c "'$(CURDIR)/scripts/golint.sh'"
+	@echo "==> Checking source code against linters..."
+	@golangci-lint run ./$(PKG_NAME)
 
 tools:
 	@echo "==> installing required tooling..."
