@@ -1,14 +1,18 @@
+dist: trusty
+sudo: required
+services:
+- docker
 language: go
 go:
-- 1.9.x
-- 1.10.x
-- 1.11.x
-- 1.12.x
-
+- "1.11.x"
 env:
-  global:
+  - GO111MODULE=on
     GOFLAGS=-mod=vendor
 
+install:
+- make tools
+
 script:
-- make build
 - make test
+- make build
+

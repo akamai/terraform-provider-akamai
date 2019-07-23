@@ -8,3 +8,11 @@ require (
 	github.com/tidwall/match v1.0.1 // indirect
 	github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 // indirect
 )
+
+replace (
+	// https://github.com/golang/lint/issues/446
+	github.com/golang/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422
+	// https://github.com/sourcegraph/go-diff/issues/33
+	github.com/sourcegraph/go-diff => github.com/sourcegraph/go-diff v0.5.1
+	sourcegraph.com/sourcegraph/go-diff => github.com/sourcegraph/go-diff v0.5.1
+)

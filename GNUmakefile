@@ -1,5 +1,6 @@
 TEST?=$$(go list ./... | grep -v /vendor/)
 GOFMT_FILES?=$$(find . -name '*.go' | grep -v /vendor/)
+PKG_NAME=akamai
 
 default: build
 
@@ -33,7 +34,13 @@ errcheck:
 	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
 
 lint:
-	@sh -c "'$(CURDIR)/scripts/golint.sh'"
+	@echo "==> Checking source code against linters..."
+	@golangci-lint run ./$(PKG_NAME)
+
+tools:
+	@echo "==> installing required tooling..."
+	GO111MODULE=off go get -u github.com/client9/misspell/cmd/misspell
+	GO111MODULE=off go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 
 test-compile:
 	go test -c ./akamai $(TESTARGS)

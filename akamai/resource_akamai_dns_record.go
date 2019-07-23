@@ -4,13 +4,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
+
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func resourceDNSv2Record() *schema.Resource {
@@ -25,9 +27,10 @@ func resourceDNSv2Record() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"zone": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.NoZeroValues,
 			},
 			"name": {
 				Type:     schema.TypeString,
@@ -38,6 +41,28 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					RRTypeA,
+					RRTypeAaaa,
+					RRTypeCname,
+					RRTypeLoc,
+					RRTypeNs,
+					RRTypePtr,
+					RRTypeSpf,
+					RRTypeTxt,
+					RRTypeAfsdb,
+					RRTypeDnskey,
+					RRTypeDs,
+					RRTypeHinfo,
+					RRTypeMx,
+					RRTypeNaptr,
+					RRTypeNsec3,
+					RRTypeNsec3Param,
+					RRTypeRp,
+					RRTypeRrsig,
+					RRTypeSrv,
+					RRTypeSshfp,
+				}, false),
 			},
 			"ttl": {
 				Type:     schema.TypeInt,
@@ -53,13 +78,10 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 				Set:      schema.HashString,
 			},
-			//	"afsdb":
 			"subtype": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//	"cname":
-			//	"dnskey":
 			"flags": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -76,7 +98,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//	"ds":
 			"keytag": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -89,7 +110,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//"hinfo":
 			"hardware": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -98,13 +118,10 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//	 "loc":
-			//		"mx":
 			"priority": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//	"naptr":
 			"order": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -129,8 +146,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//"ns":
-			//"nsec3":
 			"iterations": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -147,9 +162,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//"nsec3param":
-			//	"ptr":
-			//	"rp":
 			"mailbox": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -158,7 +170,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//	"rrsig":
 			"type_covered": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -187,8 +198,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//"spf":
-			//	"srv":
 			"weight": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -197,7 +206,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//"sshfp": {
 			"fingerprint_type": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -210,7 +218,6 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//"txt": {
 		},
 	}
 }
@@ -237,10 +244,9 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 		recordtype = d.Get("recordtype").(string)
 	}
 
-	validationresult := validateRecord(d)
-	log.Printf("[DEBUG] [Akamai DNSv2] Validation result recordcreate %s", validationresult)
-	if validationresult != "VALID" {
-		return fmt.Errorf("Parameter Validation failure %s, %s  %s %s", zone, host, recordtype, validationresult)
+	err := validateRecord(d)
+	if err != nil {
+		return fmt.Errorf("DNS record validation failure on zone %v: %v", zone, err)
 	}
 
 	recordcreate := bindRecord(d)
@@ -328,11 +334,11 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	vaidationresult := validateRecord(d)
-	log.Printf("[DEBUG] [Akamai DNSv2] Validation result recordupdate %s", vaidationresult)
-	if vaidationresult != "VALID" {
-		return fmt.Errorf("Parameter Validation failure %s, %s  %s %s", zone, host, recordtype, vaidationresult)
+	err := validateRecord(d)
+	if err != nil {
+		return fmt.Errorf("DNS record validation failure on zone %v: %v", zone, err)
 	}
+
 	recordcreate := bindRecord(d)
 	extractString := strings.Join(recordcreate.Target, " ")
 	sha1hash := getSHAString(extractString)
@@ -869,21 +875,68 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 	return emptyrecordcreate
 }
 
-func validateRecord(d *schema.ResourceData) string {
-
-	var host string
+func validateRecord(d *schema.ResourceData) error {
 	var recordtype string
-
-	_, ok := d.GetOk("name")
-	if ok {
-		host = d.Get("name").(string)
-	}
-	_, ok = d.GetOk("recordtype")
-	if ok {
-		recordtype = d.Get("recordtype").(string)
+	if v, ok := d.GetOk("recordtype"); ok {
+		recordtype = v.(string)
 	}
 
+	switch recordtype {
+	case RRTypeA, RRTypeAaaa, RRTypeCname, RRTypeLoc, RRTypeNs, RRTypePtr, RRTypeSpf, RRTypeTxt:
+		if err := checkBasicRecordTypes(d); err != nil {
+			return err
+		}
+		return checkTargets(d)
+	case RRTypeAfsdb:
+		return checkAsdfRecord(d)
+	case RRTypeDnskey:
+		return checkDnskeyRecord(d)
+	case RRTypeDs:
+		return checkDsRecord(d)
+	case RRTypeHinfo:
+		return checkHinfoRecord(d)
+	case RRTypeMx:
+		return checkMxRecord(d)
+	case RRTypeNaptr:
+		return checkNaptrRecord(d)
+	case RRTypeNsec3:
+		return checkNsec3Record(d)
+	case RRTypeNsec3Param:
+		return checkNsec3ParamRecord(d)
+	case RRTypeRp:
+		return checkRpRecord(d)
+	case RRTypeRrsig:
+		return checkRrsigRecord(d)
+	case RRTypeSrv:
+		return checkSrvRecord(d)
+	case RRTypeSshfp:
+		return checkSshfpRecord(d)
+	default:
+		return fmt.Errorf("Invalid recordtype %v", recordtype)
+	}
+}
+
+func checkBasicRecordTypes(d *schema.ResourceData) error {
+	host := d.Get("host").(string)
+	recordtype := d.Get("recordtype").(string)
 	ttl := d.Get("ttl").(int)
+
+	if host == "" {
+		return fmt.Errorf("Type host must be set")
+	}
+
+	if recordtype == "" {
+		return fmt.Errorf("Type recordtype must be set")
+	}
+
+	if ttl == 0 {
+		return fmt.Errorf("Type ttl must be set")
+	}
+
+	return nil
+}
+
+func checkTargets(d *schema.ResourceData) error {
 	target := d.Get("target").(*schema.Set).List()
 	records := make([]string, 0, len(target))
 
@@ -891,378 +944,378 @@ func validateRecord(d *schema.ResourceData) string {
 		records = append(records, recContent.(string))
 	}
 
-	simplerecord := map[string]bool{"A": true, "AAAA": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "TXT": true}
-	if simplerecord[recordtype] {
-
-		if host == "null" {
-			return "host"
-		}
-		if recordtype == "null" {
-			return "recordtype"
-		}
-		if ttl == 0 {
-			return "ttl"
-		}
-		if len(records) == 0 {
-			return "target"
-		}
-		return "VALID"
-	} else {
-		if recordtype == "AFSDB" {
-
-			subtype := d.Get("subtype").(int)
-			if subtype == 0 {
-				return "subtype"
-			}
-			if len(records) == 0 {
-				return "target"
-			}
-			return "VALID"
-		}
-		if recordtype == "DNSKEY" {
-
-			flags := d.Get("flags").(int)
-			protocol := d.Get("protocol").(int)
-			algorithm := d.Get("algorithm").(int)
-			key := d.Get("key").(string)
-			log.Printf("[DEBUG] [Akamai DNSv2] DNSKEY FLAGS %d ", flags)
-			if flags == 0 || flags == 256 || flags == 257 {
-				log.Printf("[DEBUG] [Akamai DNSv2] INSIDE IF DNSKEY FLAGS %d ", flags)
-			} else {
-				return "flags"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if protocol == 0 {
-				return "protocol"
-			}
-			log.Printf("[DEBUG] [Akamai DNSv2] ALGORITHM FLAGS %d ", algorithm)
-			if !((algorithm >= 1 && algorithm <= 8) || algorithm != 10) {
-				return "algorithm"
-			}
-			if key == "null" {
-				return "key"
-			}
-			return "VALID"
-		}
-		if recordtype == "DS" {
-			digestType := d.Get("digest_type").(int)
-			keytag := d.Get("keytag").(int)
-			algorithm := d.Get("algorithm").(int)
-			digest := d.Get("digest").(string)
-
-			if digestType == 0 {
-				return "digest_type"
-			}
-			if keytag == 0 {
-				return "keytag"
-			}
-			if algorithm == 0 {
-				return "algorithm"
-			}
-			if digest == "null" {
-				return "digest"
-			}
-
-			return "VALID"
-		}
-		if recordtype == "HINFO" {
-
-			hardware := d.Get("hardware").(string)
-			software := d.Get("software").(string)
-
-			if hardware == "null" {
-				return "hardware"
-			}
-			if software == "null" {
-				return "software"
-			}
-
-			return "VALID"
-		}
-		if recordtype == "LOC" {
-
-			if host == "null" {
-				return "host"
-			}
-			if recordtype == "null" {
-				return "recordtype"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if len(target) == 0 {
-				return "target"
-			}
-
-			return "VALID"
-		}
-		if recordtype == "MX" {
-			priority := d.Get("priority").(int)
-
-			if host == "null" {
-				return "host"
-			}
-			if recordtype == "null" {
-				return "recordtype"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if priority < 0 || priority > 65535 {
-				return "priority"
-			}
-			if len(target) == 0 {
-				return "target"
-			}
-
-			return "VALID"
-		}
-		if recordtype == "NAPTR" {
-
-			flagsnaptr := d.Get("flagsnaptr").(string)
-			order := d.Get("order").(int)
-			preference := d.Get("preference").(int)
-			regexp := d.Get("regexp").(string)
-			replacement := d.Get("replacement").(string)
-			service := d.Get("service").(string)
-			if host == "null" {
-				return "host"
-			}
-			if recordtype == "null" {
-				return "recordtype"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if flagsnaptr == "null" {
-				return "flagsnaptr"
-			}
-			if order < 0 || order > 65535 {
-				return "order"
-			}
-			if preference == 0 {
-				return "preference"
-			}
-			if regexp == "null" {
-				return "regexp"
-			}
-			if replacement == "null" {
-				return "replacement"
-			}
-			if service == "null" {
-				return "service"
-			}
-
-			return "VALID"
-		}
-		if recordtype == "NSEC3" {
-
-			flags := d.Get("flags").(int)
-			algorithm := d.Get("algorithm").(int)
-			iterations := d.Get("iterations").(int)
-			nextHashedOwnerName := d.Get("next_hashed_owner_name").(string)
-			salt := d.Get("salt").(string)
-			typeBitmaps := d.Get("type_bitmaps").(string)
-
-			if host == "null" {
-				return "host"
-			}
-			if recordtype == "null" {
-				return "recordtype"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if !(flags == 0 || flags == 1) {
-				log.Printf("[DEBUG] [Akamai DNSv2] NSEC3 FLAGS %d ", flags)
-				return "flags"
-			}
-			if algorithm != 1 {
-				return "algorithm"
-			}
-			if iterations == 0 {
-				return "iterations"
-			}
-			if nextHashedOwnerName == "null" {
-				return "next_hashed_owner_name"
-			}
-			if salt == "null" {
-				return "salt"
-			}
-			if typeBitmaps == "null" {
-				return "type_bitmaps"
-			}
-			return "VALID"
-		}
-		if recordtype == "NSEC3PARAM" {
-
-			flags := d.Get("flags").(int)
-			algorithm := d.Get("algorithm").(int)
-			iterations := d.Get("iterations").(int)
-			salt := d.Get("salt").(string)
-
-			saltbase32 := salt
-
-			if host == "null" {
-				return "host"
-			}
-			if recordtype == "null" {
-				return "recordtype"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if !(flags == 0 || flags == 1) {
-				return "flags"
-			}
-			if algorithm != 1 {
-				return "algorithm"
-			}
-			if iterations == 0 {
-				return "iterations"
-			}
-			if salt == "null" {
-				return "salt"
-			}
-
-			if saltbase32 == "null" {
-				return "saltbase32"
-			}
-			return "VALID"
-		}
-		if recordtype == "RP" {
-
-			mailbox := d.Get("mailbox").(string)
-			txt := d.Get("txt").(string)
-
-			if host == "null" {
-				return "host"
-			}
-			if recordtype == "null" {
-				return "recordtype"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if mailbox == "null" {
-				return "mailbox"
-			}
-			if txt == "null" {
-				return "txt"
-			}
-			return "VALID"
-		}
-		if recordtype == "RRSIG" { //TODO FIX
-
-			expiration := d.Get("expiration").(string)
-			inception := d.Get("inception").(string)
-			originalTTL := d.Get("original_ttl").(int)
-			algorithm := d.Get("algorithm").(int)
-			labels := d.Get("labels").(int)
-			keytag := d.Get("keytag").(int)
-			signature := d.Get("signature").(string)
-			signer := d.Get("signer").(string)
-			typeCovered := d.Get("type_covered").(string)
-			if host == "null" {
-				return "host"
-			}
-			if recordtype == "null" {
-				return "recordtype"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if expiration == "null" {
-				return "expiration"
-			}
-			if inception == "null" {
-				return "inception"
-			}
-			if originalTTL == 0 {
-				return "original_ttl"
-			}
-			if algorithm == 0 {
-				return "algorithm"
-			}
-			if labels == 0 {
-				return "labels"
-			}
-			if keytag == 0 {
-				return "keytag"
-			}
-			if signature == "null" {
-				return "signature"
-			}
-			if signer == "null" {
-				return "signer"
-			}
-			if typeCovered == "null" {
-				return "type_covered"
-			}
-			return "VALID"
-		}
-		if recordtype == "SRV" {
-
-			records := make([]string, 0, len(target))
-			priority := d.Get("priority").(int)
-			weight := d.Get("weight").(int)
-			port := d.Get("port").(int)
-
-			for _, recContent := range target {
-				records = append(records, strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+strconv.Itoa(priority)+" "+recContent.(string))
-			}
-			if host == "null" {
-				return "host"
-			}
-			if recordtype == "null" {
-				return "recordtype"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if priority == 0 {
-				return "priority"
-			}
-			if weight < 0 || weight > 65535 {
-				return "weight"
-			}
-			if port == 0 {
-				return "port"
-			}
-			if len(target) <= 0 {
-				return "target"
-			}
-
-			return "VALID"
-		}
-		if recordtype == "SSHFP" {
-
-			algorithm := d.Get("algorithm").(int)
-			fingerprintType := d.Get("fingerprint_type").(int)
-			fingerprint := d.Get("fingerprint").(string)
-
-			if host == "null" {
-				return "host"
-			}
-			if recordtype == "null" {
-				return "recordtype"
-			}
-			if ttl == 0 {
-				return "ttl"
-			}
-			if algorithm == 0 {
-				return "algorithm"
-			}
-			if fingerprintType == 0 {
-				return "fingerprint_type"
-			}
-			if fingerprint == "null" {
-				return "fingerprint"
-			}
-			return "VALID"
-		}
+	if len(records) == 0 {
+		return fmt.Errorf("Type records must be set.")
 	}
-	return "INVALID"
+
+	return nil
 }
+
+func checkSimpleRecord(d *schema.ResourceData) error {
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkAsdfRecord(d *schema.ResourceData) error {
+	subtype := d.Get("subtype").(int)
+	if subtype == 0 {
+		return fmt.Errorf("Type subtype must be set for ASDF.")
+	}
+
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkDnskeyRecord(d *schema.ResourceData) error {
+	flags := d.Get("flags").(int)
+	protocol := d.Get("protocol").(int)
+	algorithm := d.Get("algoritm").(int)
+	key := d.Get("key").(string)
+	ttl := d.Get("ttl").(int)
+
+	if !(flags == 0 || flags == 256 || flags == 257) {
+		return fmt.Errorf("Type flags must not be %v for DNSKEY.", flags)
+	}
+
+	if ttl == 0 {
+		return fmt.Errorf("Type ttl must be set for DNSKEY.")
+	}
+
+	if protocol == 0 {
+		return fmt.Errorf("Type protocol must be set for DNSKEY.")
+	}
+
+	if !((algorithm >= 1 && algorithm <= 8) || algorithm != 10) {
+		return fmt.Errorf("Type algorithm must not be %v for DNSKEY.", algorithm)
+	}
+
+	if key == "" {
+		return fmt.Errorf("Type key must be set for DNSKEY.")
+	}
+
+	return nil
+}
+
+func checkDsRecord(d *schema.ResourceData) error {
+	digestType := d.Get("digest_type").(int)
+	keytag := d.Get("keytag").(int)
+	algorithm := d.Get("algorithm").(int)
+	digest := d.Get("digest").(string)
+
+	if digestType == 0 {
+		return fmt.Errorf("Type digest_type must be set for DS.")
+	}
+
+	if keytag == 0 {
+		return fmt.Errorf("Type keytag must be set for DS.")
+	}
+
+	if algorithm == 0 {
+		return fmt.Errorf("Type algorithm must be set for DS.")
+	}
+
+	if digest == "" {
+		return fmt.Errorf("Type digest must be set for DS.")
+	}
+
+	return nil
+}
+
+func checkHinfoRecord(d *schema.ResourceData) error {
+	hardware := d.Get("hardware").(string)
+	software := d.Get("software").(string)
+
+	if hardware == "" {
+		return fmt.Errorf("Type hardware must be set for HINFO.")
+	}
+
+	if software == "" {
+		return fmt.Errorf("Type software must be set for HINFO.")
+	}
+
+	return nil
+}
+
+func checkMxRecord(d *schema.ResourceData) error {
+	priority := d.Get("priority").(int)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if priority < 0 || priority > 65535 {
+		return fmt.Errorf("Type priority must be set for MX.")
+	}
+
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkNaptrRecord(d *schema.ResourceData) error {
+	flagsnaptr := d.Get("flagsnaptr").(string)
+	order := d.Get("order").(int)
+	preference := d.Get("preference").(int)
+	regexp := d.Get("regexp").(string)
+	replacement := d.Get("replacement").(string)
+	service := d.Get("service").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if flagsnaptr == "" {
+		return fmt.Errorf("Type flagsnaptr must be set for NAPTR.")
+	}
+
+	if order < 0 || order > 65535 {
+		return fmt.Errorf("Type order must not be %v for NAPTR.", order)
+	}
+
+	if preference == 0 {
+		return fmt.Errorf("Type preference must be set for NAPTR.")
+	}
+
+	if regexp == "" {
+		return fmt.Errorf("Type regexp must be set for NAPTR.")
+	}
+
+	if replacement == "" {
+		return fmt.Errorf("Type replacement must be set for NAPTR.")
+	}
+
+	if service == "" {
+		return fmt.Errorf("Type service must be set for NAPTR.")
+	}
+
+	return nil
+}
+
+func checkNsec3Record(d *schema.ResourceData) error {
+	flags := d.Get("flags").(int)
+	algorithm := d.Get("algorithm").(int)
+	iterations := d.Get("iterations").(int)
+	nextHashedOwnerName := d.Get("next_hashed_owner_name").(string)
+	salt := d.Get("salt").(string)
+	typeBitmaps := d.Get("type_bitmaps").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if !(flags == 0 || flags == 1) {
+		return fmt.Errorf("Type flags must be set for NSEC3.")
+	}
+
+	if algorithm != 1 {
+		return fmt.Errorf("Type flags must be set for NSEC3.")
+	}
+	if iterations == 0 {
+		return fmt.Errorf("Type iterations must be set for NSEC3.")
+	}
+	if nextHashedOwnerName == "" {
+		return fmt.Errorf("Type nextHashedOwnerName must be set for NSEC3.")
+	}
+	if salt == "" {
+		return fmt.Errorf("Type salt must be set for NSEC3.")
+	}
+	if typeBitmaps == "" {
+		return fmt.Errorf("Type typeBitMaps must be set for NSEC3.")
+	}
+	return nil
+}
+
+func checkNsec3ParamRecord(d *schema.ResourceData) error {
+	flags := d.Get("flags").(int)
+	algorithm := d.Get("algorithm").(int)
+	iterations := d.Get("iterations").(int)
+	salt := d.Get("salt").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if !(flags == 0 || flags == 1) {
+		return fmt.Errorf("Type flags must be set for NSEC3PARAM.")
+	}
+
+	if algorithm != 1 {
+		return fmt.Errorf("Type algorithm must be set for NSEC3PARAM.")
+	}
+
+	if iterations == 0 {
+		return fmt.Errorf("Type iterations must be set for NSEC3PARAM.")
+	}
+
+	if salt == "" {
+		return fmt.Errorf("Type salt must be set for NSEC3PARAM.")
+	}
+
+	return nil
+}
+
+func checkRpRecord(d *schema.ResourceData) error {
+	mailbox := d.Get("mailbox").(string)
+	txt := d.Get("txt").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if mailbox == "" {
+		return fmt.Errorf("Type mailbox must be set for RP.")
+	}
+
+	if txt == "" {
+		return fmt.Errorf("Type txt must be set for RP.")
+	}
+
+	return nil
+}
+
+func checkRrsigRecord(d *schema.ResourceData) error {
+	expiration := d.Get("expiration").(string)
+	inception := d.Get("inception").(string)
+	originalTTL := d.Get("original_ttl").(int)
+	algorithm := d.Get("algorithm").(int)
+	labels := d.Get("labels").(int)
+	keytag := d.Get("keytag").(int)
+	signature := d.Get("signature").(string)
+	signer := d.Get("signer").(string)
+	typeCovered := d.Get("type_covered").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if expiration == "" {
+		return fmt.Errorf("Type expiration must be set for RRSIG.")
+	}
+
+	if inception == "" {
+		return fmt.Errorf("Type inception must be set for RRSIG.")
+	}
+
+	if originalTTL == 0 {
+		return fmt.Errorf("Type originalTTL must be set for RRSIG.")
+	}
+
+	if algorithm == 0 {
+		return fmt.Errorf("Type algorithm must be set for RRSIG.")
+	}
+
+	if labels == 0 {
+
+		return fmt.Errorf("Type labels must be set for RRSIG.")
+	}
+
+	if keytag == 0 {
+		return fmt.Errorf("Type keytag must be set for RRSIG.")
+	}
+
+	if signature == "" {
+		return fmt.Errorf("Type signature must be set for RRSIG.")
+	}
+
+	if signer == "" {
+		return fmt.Errorf("Type signer must be set for RRSIG.")
+	}
+
+	if typeCovered == "" {
+		return fmt.Errorf("Type typeCovered must be set for RRSIG.")
+	}
+
+	return nil
+}
+
+func checkSrvRecord(d *schema.ResourceData) error {
+	priority := d.Get("priority").(int)
+	weight := d.Get("weight").(int)
+	port := d.Get("port").(int)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+
+	if priority == 0 {
+		return fmt.Errorf("Type priority must be set for SRV.")
+	}
+
+	if weight < 0 || weight > 65535 {
+		return fmt.Errorf("Type weight must not be %v for SRV.", weight)
+	}
+
+	if port == 0 {
+		return fmt.Errorf("Type port must be set for SRV.")
+	}
+
+	return nil
+}
+
+func checkSshfpRecord(d *schema.ResourceData) error {
+	algorithm := d.Get("algorithm").(int)
+	fingerprintType := d.Get("fingerprint_type").(int)
+	fingerprint := d.Get("fingerprint").(string)
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if algorithm == 0 {
+		return fmt.Errorf("Type algorithm must be set for SSHFP.")
+	}
+
+	if fingerprintType == 0 {
+		return fmt.Errorf("Type fingerprintType must be set for SSHFP.")
+	}
+
+	if fingerprint == "null" {
+		return fmt.Errorf("Type fingerprint must be set for SSHFP.")
+	}
+
+	return nil
+}
+
+// Resource record types supported by the Akamai FastDNS API
+const (
+	RRTypeA          = "A"
+	RRTypeAaaa       = "AAAA"
+	RRTypeAfsdb      = "AFSDB"
+	RRTypeAkamaiCdn  = "AKAMAICDN"
+	RRTypeAkamaiTlc  = "AKAMAITLC"
+	RRTypeCaa        = "CAA"
+	RRTypeCname      = "CNAME"
+	RRTypeHinfo      = "HINFO"
+	RRTypeLoc        = "LOC"
+	RRTypeMx         = "MX"
+	RRTypeNaptr      = "NAPTR"
+	RRTypeNs         = "NS"
+	RRTypePtr        = "PTR"
+	RRTypeRp         = "RP"
+	RRTypeSrv        = "SRV"
+	RRTypeSpf        = "SPF"
+	RRTypeSshfp      = "SSHFP"
+	RRTypeTlsa       = "TLSA"
+	RRTypeTxt        = "TXT"
+	RRTypeDnskey     = "DNSKEY"
+	RRTypeDs         = "DS"
+	RRTypeNsec3      = "NSEC3"
+	RRTypeNsec3Param = "NSEC3PARAM"
+	RRTypeRrsig      = "RRSIG"
+)
