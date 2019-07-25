@@ -24,7 +24,9 @@ resource "akamai_property" "property" {
   contract = "${data.akamai_contract.contract.id}"
   group = "${data.akamai_group.group.id}"
 
-  hostnames = "${merge(akamai_edge_hostname.test.hostnames)}"
+  hostnames = {
+	"terraform.example.org" = "${akamai_edge_hostname.test.edge_hostname}"
+  }
   
   rule_format = "v2016-11-15"
   
@@ -49,7 +51,6 @@ resource "akamai_edge_hostname" "test" {
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
     edge_hostname =  "terraform-test1.exampleterraform.io.edgesuite.net"
-    ipv6 = true
 }
 
 resource "akamai_property_rules" "rules" {
