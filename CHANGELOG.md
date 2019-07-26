@@ -1,6 +1,4 @@
-## 0.2.0 (Unreleased)
-
-## 0.1.2
+## 0.1.2 (Unreleased)
 
 * Fixed handling of CPCode behavior in rules.json
 * Fixed hostname complexity, now a simple `{"public.host" = "edge.host"}` map
