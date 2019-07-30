@@ -158,15 +158,16 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 		}
 
 		log.Println("[DEBUG] Existing edge hostname FOUND = ", ehnFound.EdgeHostnameID)
+		d.SetId(ehnFound.EdgeHostnameID)
 	} else {
 		log.Printf("[DEBUG] Creating new edge hostname: %#v\n\n", ehn)
 		err = ehn.Save("")
 		if err != nil {
 			return err
 		}
+		d.SetId(ehn.EdgeHostnameID)
 	}
 
-	d.SetId(ehn.EdgeHostnameID)
 	d.Partial(false)
 
 	log.Println("[DEBUG] Done")
