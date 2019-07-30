@@ -125,7 +125,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 
 	ipv4 := d.Get("ipv4").(bool)
 	if ipv4 {
-		ehn.IPVersionBehavior = "IPv4"
+		ehn.IPVersionBehavior = "IPV4"
 	}
 
 	ipv6 := d.Get("ipv6").(bool)
