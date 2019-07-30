@@ -117,7 +117,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 		ehn.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgekey.net")
 		ehn.DomainSuffix = "edgekey.net"
 		ehn.SecureNetwork = "ENHANCED_TLS"
-	case strings.HasSuffix(edgeHostname, ".akamized.net"):
+	case strings.HasSuffix(edgeHostname, ".akamaized.net"):
 		ehn.DomainPrefix = strings.TrimSuffix(edgeHostname, ".akamized.net")
 		ehn.DomainSuffix = "akamized.net"
 		ehn.SecureNetwork = "SHARED_CERT"
