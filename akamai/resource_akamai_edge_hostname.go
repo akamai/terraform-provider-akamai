@@ -3,6 +3,7 @@ package akamai
 import (
 	"errors"
 	"fmt"
+        "github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
@@ -146,12 +147,14 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if ehnFound, err := edgeHostnames.FindEdgeHostname(ehn); ehnFound != nil && ehnFound.EdgeHostnameID != "" {
-		if ehnFound.IPVersionBehavior != ehn.IPVersionBehavior {
-			return fmt.Errorf("existing edge hostname found with different IP version (%s vs %s)", ehnFound.IPVersionBehavior, ehn.IPVersionBehavior)
+
+	        jsonBody, e := jsonhooks.Marshal(ehnFound)
+		if (e == nil) {
+			log.Printf("[DEBUG] EHN Found = %s\n", jsonBody);
 		}
 
-		if ehnFound.SecureNetwork != ehn.SecureNetwork {
-			return fmt.Errorf("existing edge hostname found on different network (%s vs %s)", ehnFound.SecureNetwork, ehn.SecureNetwork)
+		if ehnFound.IPVersionBehavior != ehn.IPVersionBehavior {
+			return fmt.Errorf("existing edge hostname found with different IP version (%s vs %s)", ehnFound.IPVersionBehavior, ehn.IPVersionBehavior)
 		}
 
 		log.Println("[DEBUG] Existing edge hostname FOUND = ", ehnFound.EdgeHostnameID)
