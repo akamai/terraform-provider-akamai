@@ -1,15 +1,20 @@
 ## 0.1.3 (Unreleased)
+
+* [FIX] Correct ordering of values for `SRV` records (`akamai_dns_record`) [GH-17]
+* [FIX] IPV4-only hostnames no longer fail (`akamai_edge_hostname`) [GH-21]
+* [FIX] Don't try to deactive any version but the current one (`akamai_property_activation`) [GH-21]
+
 ## 0.1.2 (July 26, 2019)
 
-* Fixed handling of CPCode behavior in rules.json
-* Fixed hostname complexity, now a simple `{"public.host" = "edge.host"}` map
-* Fixed accidental deactivations
-* Added explicit property and dns credential blocks to provider config
-* Added better validation to `akamai_dns_record`
+* [FIX] Fixed handling of CPCode behavior in rules.json
+* [FIX] Fixed hostname complexity, now a simple `{"public.host" = "edge.host"}` map
+* [FIX] Fixed accidental deactivations
+* [ADD] Added explicit property and dns credential blocks to provider config
+* [ADD] Added better validation to `akamai_dns_record`
 
 ## 0.1.1 (July 09, 2019)
 
-* Bug fixes
+* [FIX] Bug fixes
 
 ## 0.1.0 (June 19, 2019)
 
