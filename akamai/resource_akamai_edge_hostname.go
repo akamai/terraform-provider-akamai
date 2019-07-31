@@ -3,7 +3,7 @@ package akamai
 import (
 	"errors"
 	"fmt"
-        "github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
@@ -148,9 +148,9 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 
 	if ehnFound, err := edgeHostnames.FindEdgeHostname(ehn); ehnFound != nil && ehnFound.EdgeHostnameID != "" {
 
-	        jsonBody, e := jsonhooks.Marshal(ehnFound)
-		if (e == nil) {
-			log.Printf("[DEBUG] EHN Found = %s\n", jsonBody);
+		jsonBody, e := jsonhooks.Marshal(ehnFound)
+		if e == nil {
+			log.Printf("[DEBUG] EHN Found = %s\n", jsonBody)
 		}
 
 		if ehnFound.IPVersionBehavior != ehn.IPVersionBehavior {
