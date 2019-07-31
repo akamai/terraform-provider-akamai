@@ -3,6 +3,7 @@ package akamai
 import (
 	"errors"
 	"fmt"
+        "github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
@@ -117,15 +118,15 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 		ehn.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgekey.net")
 		ehn.DomainSuffix = "edgekey.net"
 		ehn.SecureNetwork = "ENHANCED_TLS"
-	case strings.HasSuffix(edgeHostname, ".akamized.net"):
-		ehn.DomainPrefix = strings.TrimSuffix(edgeHostname, ".akamized.net")
-		ehn.DomainSuffix = "akamized.net"
+	case strings.HasSuffix(edgeHostname, ".akamaized.net"):
+		ehn.DomainPrefix = strings.TrimSuffix(edgeHostname, ".akamaized.net")
+		ehn.DomainSuffix = "akamaized.net"
 		ehn.SecureNetwork = "SHARED_CERT"
 	}
 
 	ipv4 := d.Get("ipv4").(bool)
 	if ipv4 {
-		ehn.IPVersionBehavior = "IPv4"
+		ehn.IPVersionBehavior = "IPV4"
 	}
 
 	ipv6 := d.Get("ipv6").(bool)
@@ -146,24 +147,27 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if ehnFound, err := edgeHostnames.FindEdgeHostname(ehn); ehnFound != nil && ehnFound.EdgeHostnameID != "" {
+
+	        jsonBody, e := jsonhooks.Marshal(ehnFound)
+		if (e == nil) {
+			log.Printf("[DEBUG] EHN Found = %s\n", jsonBody);
+		}
+
 		if ehnFound.IPVersionBehavior != ehn.IPVersionBehavior {
 			return fmt.Errorf("existing edge hostname found with different IP version (%s vs %s)", ehnFound.IPVersionBehavior, ehn.IPVersionBehavior)
 		}
 
-		if ehnFound.SecureNetwork != ehn.SecureNetwork {
-			return fmt.Errorf("existing edge hostname found on different network (%s vs %s)", ehnFound.SecureNetwork, ehn.SecureNetwork)
-		}
-
 		log.Println("[DEBUG] Existing edge hostname FOUND = ", ehnFound.EdgeHostnameID)
+		d.SetId(ehnFound.EdgeHostnameID)
 	} else {
 		log.Printf("[DEBUG] Creating new edge hostname: %#v\n\n", ehn)
 		err = ehn.Save("")
 		if err != nil {
 			return err
 		}
+		d.SetId(ehn.EdgeHostnameID)
 	}
 
-	d.SetId(ehn.EdgeHostnameID)
 	d.Partial(false)
 
 	log.Println("[DEBUG] Done")

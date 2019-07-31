@@ -110,40 +110,40 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 
 	log.Printf("[DEBUG] DEACTIVE PROPERTY %v", property)
 
-	activations, e := property.GetActivations()
-	if e != nil {
-		return e
-	}
-
 	network := papi.NetworkValue(d.Get("network").(string))
+	propertyVersion := property.ProductionVersion;
+	if (network == "STAGING") {
+		propertyVersion = property.StagingVersion;
+	}
 	version := d.Get("version").(int)
-	for _, activation := range activations.Activations.Items {
-		if activation.Network == network && activation.PropertyVersion == version && activation.Status != papi.StatusInactive && activation.Status != papi.StatusDeactivated {
-			// The version is not inactive, so we need to deactivate it
-			activation, err := deactivateProperty(property, d, papi.NetworkValue(d.Get("network").(string)))
-			if err != nil {
-				return err
-			}
+	log.Printf("[DEBUG] Version to deactivate is %d and current active %s version is %d\n", version, network, propertyVersion);
 
-			go activation.PollStatus(property)
+	if (propertyVersion == version) {
+		// The current active version is the one we need to deactivate
+		log.Printf("[DEBUG] Deactivating %s version %d \n", network, version);
+		activation, err := deactivateProperty(property, d, papi.NetworkValue(d.Get("network").(string)))
+		if err != nil {
+			return err
+		}
 
-		polling:
-			for activation.Status != papi.StatusActive {
-				select {
-				case statusChanged := <-activation.StatusChange:
-					log.Printf("[DEBUG] Property Status: %s\n", activation.Status)
-					if statusChanged == false {
-						break polling
-					}
-					continue polling
-				case <-time.After(time.Minute * 90):
-					log.Println("[DEBUG] Activation Timeout (90 minutes)")
+		go activation.PollStatus(property)
+
+	polling:
+		for activation.Status != papi.StatusActive {
+			select {
+			case statusChanged := <-activation.StatusChange:
+				log.Printf("[DEBUG] Property Status: %s\n", activation.Status)
+				if statusChanged == false {
 					break polling
 				}
+				continue polling
+			case <-time.After(time.Minute * 90):
+				log.Println("[DEBUG] Activation Timeout (90 minutes)")
+				break polling
 			}
-
-			d.Set("status", string(activation.Status))
 		}
+
+		d.Set("status", string(activation.Status))
 	}
 
 	d.SetId("")
