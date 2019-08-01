@@ -3,6 +3,8 @@
 * [FIX] Correct ordering of values for `SRV` records (`akamai_dns_record`) [GH-17]
 * [FIX] IPV4-only hostnames no longer fail (`akamai_edge_hostname`) [GH-21]
 * [FIX] Don't try to deactive any version but the current one (`akamai_property_activation`) [GH-21]
+* [FIX] Fix crash in DNS record validation [GH-27]
+* [ADD] Make zone type (primary or secondary) case-insensitive [GH-29]
 
 ## 0.1.2 (July 26, 2019)
 
