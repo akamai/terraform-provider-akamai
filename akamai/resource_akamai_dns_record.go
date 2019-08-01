@@ -917,18 +917,12 @@ func validateRecord(d *schema.ResourceData) error {
 }
 
 func checkBasicRecordTypes(d *schema.ResourceData) error {
-	host := d.Get("host").(string)
 	recordtype := d.Get("recordtype").(string)
-	ttl := d.Get("ttl").(int)
-
-	if host == "" {
-		return fmt.Errorf("Type host must be set")
-	}
-
 	if recordtype == "" {
 		return fmt.Errorf("Type recordtype must be set")
 	}
 
+	ttl := d.Get("ttl").(int)
 	if ttl == 0 {
 		return fmt.Errorf("Type ttl must be set")
 	}
