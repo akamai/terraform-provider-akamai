@@ -11,8 +11,6 @@ description: |-
 
 The `akamai_dns_record` provides the resource for configuring a dns record to integrate easily with your existing DNS infrastructure to provide a secure, high performance, highly available and scalable solution for DNS hosting.
 
-
-
 ## Example Usage
 
 Basic usage:

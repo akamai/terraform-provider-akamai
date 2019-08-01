@@ -25,7 +25,11 @@ resource "akamai_property" "example" {
     group    = "grp_####"
     cp_code  = "cpc_#####"
 
-    edge_hostnames = "${merge(akamai_edge_hostname.example.edgehostmap)}"
+    hostnames = {
+      "example.org" = "example.org.edgesuite.net"
+      "www.example.org" = "example.org.edgesuite.net"
+      "sub.example.org" = "sub.example.org.edgesuite.net"
+    }
 
     rule_format = "v2018-02-27"
     rules       = "${data.local_file.terraform-demo.content}"
@@ -37,22 +41,42 @@ resource "akamai_property" "example" {
 
 The following arguments are supported:
 
+### Property Basics
+
 * `account` — (Required) The account ID.
 * `contract` — (Optional) The contract ID.
 * `group` — (Optional) The group ID.
-* `product` — (Optional) The product ID.
-* `cp_code` — (Required) The CP Code id or name to use (or create).
+* `product` — (Optional) The product ID. (Default: `prd_SPM` for Ion)
 * `name` — (Required) The property name.
-* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)).
 * `contact` — (Required) One or more email addresses to inform about activation changes.
-* `edge_hostname` — (Optional) One or more edge hostnames (must be <= to the number of public hostnames)
-* `edge_hostname_map` — (Optional) The edge hostname mapping.
+* `hostnames` — (Required) A map of public hostnames to edge hostnames (e.g. `{"example.org" = "example.org.edgesuite.net"}`)
+
+### Property Rules
+
+* `rules` — (Required) A JSON encoded string of property rules (see: [`akamai_property_rules`](/docs/providers/akamai/r/property_rules.html))
+* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)).
+
+In addition the specifying the rule tree in it's entirety, you can also set the default CP Code and Origin explicitly. *This will override your JSON configuration*.
+
+* `cp_code` — (Required) The CP Code id or name to use (or create).
 * `origin` — (Optional) The property origin (an origin must be specified to activate a property, but may be defined in your rules block).
-* `is_secure` — (Required) Whether the property configuration should be deployed to the the secure (TLS) Akamai network.
-* `hostname` — (Required) The origin hostname.
-* `port` — (Optional) The origin port to connect to (default: 80).
-* `forward_hostname` — (Optional) The value for the Hostname header sent to origin. (default: ORIGIN_HOSTNAME).
-* `cache_key_hostname` — (Optional) The hostname uses for the cache key. (default: ORIGIN_HOSTNAME).
-* `compress` — (Optional, boolean) Whether origin supports gzip compression (default: false).
-* `enable_true_client_ip` — (Optional, boolean) Whether the X-True-Client-IP header should be sent to origin (default: false).
-* `rules` –  (Optional) The rules comprising of the matches and behavior as a json string.
+  * `hostname` — (Required) The origin hostname.
+  * `port` — (Optional) The origin port to connect to (default: 80).
+  * `forward_hostname` — (Optional) The value for the Hostname header sent to origin. (default: `ORIGIN_HOSTNAME`).
+  * `cache_key_hostname` — (Optional) The hostname uses for the cache key. (default: `ORIGIN_HOSTNAME`).
+  * `compress` — (Optional, boolean) Whether origin supports gzip compression (default: `false`).
+  * `enable_true_client_ip` — (Optional, boolean) Whether the X-True-Client-IP header should be sent to origin (default: `false`).
+
+You can also define property manager variables. *This will override your JSON configuration*.
+
+* `variables` — (Optional) A JSON encoded string of property manager variable definitions (see: [`akamai_property_variables`](/docs/providers/akamai/r/property_variables.html))
+
+### Attribute Reference
+
+The following attributes are returned:
+
+* `account` — the Account ID under which the property is created.
+* `version` — the current version of the property config.
+* `production_version` — the current version of the property active on the production network.
+* `staging_version` — the current version of the property active on the staging network.
+* `edge_hostnames` — the final public hostname to edge hostname map

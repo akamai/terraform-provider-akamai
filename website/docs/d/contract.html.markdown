@@ -19,7 +19,7 @@ Basic usage:
 
 ```hcl
 data "akamai_contract" "example" {
-     name = "contract name"
+     group = "group name"
 }
 
 resource "akamai_property" "example" {
@@ -32,7 +32,7 @@ resource "akamai_property" "example" {
 
 The following arguments are supported:
 
-* `name` — (Required) The contract name.
+* `group` — (Optional) The group within which the contract can be found.
 
 ## Attributes Reference
 
