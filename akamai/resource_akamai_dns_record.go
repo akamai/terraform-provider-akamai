@@ -917,7 +917,7 @@ func validateRecord(d *schema.ResourceData) error {
 }
 
 func checkBasicRecordTypes(d *schema.ResourceData) error {
-	host := d.Get("host").(string)
+	host := d.Get("name").(string)
 	recordtype := d.Get("recordtype").(string)
 	ttl := d.Get("ttl").(int)
 
