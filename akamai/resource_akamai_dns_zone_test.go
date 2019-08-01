@@ -149,8 +149,8 @@ func testAccCheckAkamaiDNSZoneExists(s *terraform.State) error {
 }
 
 func TestValidateZoneType(t *testing.T) {
-	badValues := []string{"primary", "secondary", "alias", "foo", "BAR"}
-	goodValues := []string{"PRIMARY", "SECONDARY", "ALIAS"}
+	badValues := []string{"foo", "BAR"}
+	goodValues := []string{"PRIMARY", "SECONDARY", "ALIAS", "primary", "secondary", "alias"}
 
 	for _, bv := range badValues {
 		_, err := validateZoneType(bv, "")
