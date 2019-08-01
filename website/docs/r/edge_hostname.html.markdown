@@ -36,12 +36,12 @@ The following arguments are supported:
 * `group` — (Required) The group ID.  
 * `product` — (Required) The product ID.  
 * `edge_hostname` — (Required) One or more edge hostnames (must be <= to the number of public hostnames).
-* `ipv4` - (Optional) Whether the property supports IPv4 to origin.  (Default: `true`).
+* `ipv4` — (Optional) Whether the property supports IPv4 to origin.  (Default: `true`).
 * `ipv6` —  (Optional) Whether the property supports IPv6 to origin. (Default: `false`).
-* `certificate` - (Optional) The certificate enrollment ID.  
+* `certificate` — (Optional) The certificate enrollment ID.  
 
 ## Attributes Reference
 
 The following attributes are returned:
 
-* `ip_behavior`: Whether the hostname uses `IPV4`, `IPV6` or `IPV6_COMPLIANCE`.
+* `ip_behavior` — Whether the hostname uses `IPV4`, `IPV6` or `IPV6_COMPLIANCE`.

@@ -32,8 +32,8 @@ resource "akamai_property" "example" {
 The following arguments are supported:
 
 * `name` — (Required) The CP code name.
-* `group` - (Required) The group ID
-* `contract` - (Required) The contract ID
+* `group` — (Required) The group ID
+* `contract` — (Required) The contract ID
 
 ## Attributes Reference
 
