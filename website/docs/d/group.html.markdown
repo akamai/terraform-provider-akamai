@@ -32,7 +32,7 @@ resource "akamai_property" "example" {
 The following arguments are supported:
 
 * `name` — (Required) The group name.
-* `contract` - (Optional) The contract ID
+* `contract` — (Optional) The contract ID
 
 ## Attributes Reference
 
