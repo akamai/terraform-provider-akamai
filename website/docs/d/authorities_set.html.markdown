@@ -19,7 +19,7 @@ Basic usage:
 
 ```hcl
 data "akamai_authorities_set" "example" {
-     contract = "ctr_####"
+     contract = "ctr_#####"
 }
 ```
 
