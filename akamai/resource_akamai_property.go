@@ -125,10 +125,6 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	},
-	"ipv6": &schema.Schema{
-		Type:     schema.TypeBool,
-		Optional: true,
-	},
 	"contact": &schema.Schema{
 		Type:     schema.TypeSet,
 		Required: true,
@@ -151,10 +147,6 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"is_secure": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
 				"hostname": {
 					Type:     schema.TypeString,
 					Required: true,
