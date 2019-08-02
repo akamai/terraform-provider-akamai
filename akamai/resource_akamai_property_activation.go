@@ -111,16 +111,16 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[DEBUG] DEACTIVE PROPERTY %v", property)
 
 	network := papi.NetworkValue(d.Get("network").(string))
-	propertyVersion := property.ProductionVersion;
-	if (network == "STAGING") {
-		propertyVersion = property.StagingVersion;
+	propertyVersion := property.ProductionVersion
+	if network == "STAGING" {
+		propertyVersion = property.StagingVersion
 	}
 	version := d.Get("version").(int)
-	log.Printf("[DEBUG] Version to deactivate is %d and current active %s version is %d\n", version, network, propertyVersion);
+	log.Printf("[DEBUG] Version to deactivate is %d and current active %s version is %d\n", version, network, propertyVersion)
 
-	if (propertyVersion == version) {
+	if propertyVersion == version {
 		// The current active version is the one we need to deactivate
-		log.Printf("[DEBUG] Deactivating %s version %d \n", network, version);
+		log.Printf("[DEBUG] Deactivating %s version %d \n", network, version)
 		activation, err := deactivateProperty(property, d, papi.NetworkValue(d.Get("network").(string)))
 		if err != nil {
 			return err
@@ -208,11 +208,11 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] UPDATING")
 
-        log.Println("[DEBUG] Fetching property")
-        propertyID := d.Get("property").(string)
-        property := papi.NewProperty(papi.NewProperties())
-        property.PropertyID = propertyID
-        e := property.GetProperty()
+	log.Println("[DEBUG] Fetching property")
+	propertyID := d.Get("property").(string)
+	property := papi.NewProperty(papi.NewProperties())
+	property.PropertyID = propertyID
+	e := property.GetProperty()
 	if e != nil {
 		return e
 	}
