@@ -33,11 +33,14 @@ resource "akamai_property_activation" "example" {
 
 The following arguments are supported:
 
-* `contract` — (Optional) The contract ID.
-* `group` — (Optional) The group ID.
-* `network` — (Optional) Akamai network to activate on. Allowed values staging (default) or production.
-* `activate` — (Optional, boolean) Whether to activate the property on the network. Default: true.
-* `name` — (Required) The property name.
-* `hostname` — (Required) One or more public hostnames.
+* `property` — (Required) The property ID.
+* `version` — (Optional) The version to activate (Default: latest)
+* `network` — (Optional) Akamai network to activate on. Allowed values `staging` or `production` (Default: `staging`).
+* `activate` — (Optional, boolean) Whether to activate the property on the network. (Default: `true`).
 * `contact` — (Required) One or more email addresses to inform about activation changes.
-* `account` — (Required) The account ID.
+
+## Attribute Reference
+
+The follwing attributes are returned:
+
+* `status` — the current activation status

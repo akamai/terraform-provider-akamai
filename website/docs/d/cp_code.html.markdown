@@ -1,22 +1,24 @@
 ---
 layout: "akamai"
-page_title: "Akamai: cpcode"
+page_title: "Akamai: cp_code"
 sidebar_current: "docs-akamai-data-cpcode"
 description: |-
- CPCode
+ CP Code
 ---
 
-# akamai_cpcode
+# akamai_cp_code
 
-Use `akamai_cpcode` datasource to retrieve a group id.
+Use `akamai_cp_code` datasource to retrieve a group id.
 
 ## Example Usage
 
 Basic usage:
 
 ```hcl
-data "akamai_cpcode" "example" {
+data "akamai_cp_code" "example" {
      name = "cpcode name"
+     group = "grp_#####"
+     contract = "ctr_#####"
 }
 
 resource "akamai_property" "example" {
@@ -29,10 +31,12 @@ resource "akamai_property" "example" {
 
 The following arguments are supported:
 
-* `name` — (Required) The cpcode.
+* `name` — (Required) The CP code name.
+* `group` — (Required) The group ID
+* `contract` — (Required) The contract ID
 
 ## Attributes Reference
 
 The following are the return attributes:
 
-* `id` — The cpcode.
+* `id` — The CP code ID.

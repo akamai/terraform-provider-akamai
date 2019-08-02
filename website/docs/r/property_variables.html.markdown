@@ -41,7 +41,7 @@ resource "akamai_property_variables" "origin" {
 
 The following arguments are supported:
 
-The `variables` block may contain many `variable` blocks which supports:
+The `variables` block may contain many `variable` blocks which support the following arguments:
 
 * `name` — (Required) The name of the variable.
 * `value` — (Required) The default value to assign to the variable

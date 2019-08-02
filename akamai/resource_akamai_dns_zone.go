@@ -37,6 +37,9 @@ func resourceDNSv2Zone() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validateZoneType,
+				StateFunc: func(val interface{}) string {
+					return strings.ToUpper(val.(string))
+				},
 			},
 			"masters": {
 				Type:     schema.TypeSet,
@@ -282,7 +285,7 @@ func resourceDNSv2ZoneExists(d *schema.ResourceData, meta interface{}) (bool, er
 
 // validateZoneType is a SchemaValidateFunc to validate the Zone type.
 func validateZoneType(v interface{}, k string) (ws []string, es []error) {
-	value := v.(string)
+	value := strings.ToUpper(v.(string))
 	if value != "PRIMARY" && value != "SECONDARY" && value != "ALIAS" {
 		es = append(es, fmt.Errorf("Type must be PRIMARY, SECONDARY, or ALIAS"))
 	}
