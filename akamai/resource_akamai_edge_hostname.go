@@ -154,7 +154,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 		}
 
 		if ehnFound.IPVersionBehavior != ehn.IPVersionBehavior {
-			return fmt.Errorf("existing edge hostname found with different IP version (%s vs %s)", ehnFound.IPVersionBehavior, ehn.IPVersionBehavior)
+			return fmt.Errorf("existing edge hostname found with incompatible IP version (%s vs %s). You must use the same settings, or try a different edge hostname", ehnFound.IPVersionBehavior, ehn.IPVersionBehavior)
 		}
 
 		log.Println("[DEBUG] Existing edge hostname FOUND = ", ehnFound.EdgeHostnameID)
