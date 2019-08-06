@@ -115,6 +115,98 @@ func TestAccAkamaiPropertyRules_basic(t *testing.T) {
 	})
 }
 
+var testAccAkamaiPropertyRulesSiteshield = fmt.Sprintf(`
+provider "akamai" {
+	property {
+		host = "test"
+		access_token = "test"
+		client_token = "test"
+		client_secret = "test"
+	}
+}
+
+output "json" {
+	value = "${akamai_property_rules.rules.json}"
+}
+
+resource "akamai_property_rules" "rules" {
+ 	rules {
+		behavior { 
+			name = "siteShield" 
+			option { 
+				key = "ssmap" 
+				value = "mapname.akamai.net"
+			}
+		}
+	}
+}
+`)
+
+func TestAkamaiPropertyRules_siteshield(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Destroy: false,
+				Config:  testAccAkamaiPropertyRulesSiteshield,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"siteShield\",\"options\":{\"ssmap\":{\"value\":\"mapname.akamai.net\"}}}],\"options\":{}}}"),
+					resource.TestCheckResourceAttrSet(
+						"akamai_property_rules.rules", "json",
+					),
+				),
+			},
+		},
+	})
+}
+
+var testAccAkamaiPropertyRulesCPCode = fmt.Sprintf(`
+provider "akamai" {
+	property {
+		host = "test"
+		access_token = "test"
+		client_token = "test"
+		client_secret = "test"
+	}
+}
+
+output "json" {
+	value = "${akamai_property_rules.rules.json}"
+}
+
+resource "akamai_property_rules" "rules" {
+ 	rules {
+		behavior { 
+			name = "cpCode" 
+			option { 
+				key = "id" 
+				value = "cpc_12345"
+			}
+		}
+	}
+}
+`)
+
+func TestAkamaiPropertyRules_cpCode(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Destroy: false,
+				Config:  testAccAkamaiPropertyRulesCPCode,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"cpCode\",\"options\":{\"value\":{\"id\":12345}}}],\"options\":{}}}"),
+					resource.TestCheckResourceAttrSet(
+						"akamai_property_rules.rules", "json",
+					),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckAkamaiPropertyRulesDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "akamai_property_rules" {
