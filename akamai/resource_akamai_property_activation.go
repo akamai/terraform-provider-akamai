@@ -208,7 +208,11 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] UPDATING")
 
-	property, e := getProperty(d)
+	log.Println("[DEBUG] Fetching property")
+	propertyID := d.Get("property").(string)
+	property := papi.NewProperty(papi.NewProperties())
+	property.PropertyID = propertyID
+	e := property.GetProperty()
 	if e != nil {
 		return e
 	}
