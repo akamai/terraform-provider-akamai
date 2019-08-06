@@ -1,6 +1,7 @@
 TEST?=$$(go list ./... | grep -v /vendor/)
 GOFMT_FILES?=$$(find . -name '*.go' | grep -v /vendor/)
 PKG_NAME=akamai
+WEBSITE_REPO=github.com/hashicorp/terraform-website
 
 default: build
 

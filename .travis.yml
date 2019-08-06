@@ -2,9 +2,11 @@ dist: trusty
 sudo: required
 services:
 - docker
+
 language: go
 go:
 - "1.11.x"
+
 env:
   - GO111MODULE=on
     GOFLAGS=-mod=vendor
@@ -15,4 +17,4 @@ install:
 script:
 - make test
 - make build
-
+- make website-test
