@@ -8,10 +8,7 @@ description: |-
 
 # akamai_property_activation
 
-
-
 The `akamai_property_activation` provides the resource for activating a property in the appropriate environment. Once you are satisfied with any version of a property, an activation deploys it, either to the Akamai staging or production network. You activate a specific version, but the same version can be activated separately more than once.
-
 
 ## Example Usage
 
@@ -19,13 +16,11 @@ Basic usage:
 
 ```hcl
 resource "akamai_property_activation" "example" {
-     name     = "${akamai_property.example.name}"
-     contact  = ["user@example.org"] 
-     hostname =  ["example.org"]
-     contract = "ctr_####"
-     group    = "grp_###"
+     property = "${akamai_property.example.id}"
+     version = "latest"
      network  = "STAGING"
      activate = "${var.akamai_property_activate}"
+     contact  = ["user@example.org"] 
 }
 ```
 
