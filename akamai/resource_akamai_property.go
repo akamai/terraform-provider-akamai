@@ -818,17 +818,6 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 								log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR EXTRACT BOPTIONS ", beh.Options)
 							}
 
-							// Fixup CPCode
-							if beh.Name == "cpCode" {
-								if _, ok := beh.Options["value"]; !ok {
-									if _, ok := beh.Options["id"]; ok {
-										cpCode := papi.NewCpCodes(nil, nil).NewCpCode()
-										cpCode.CpcodeID = beh.Options["id"].(string)
-										beh.Options = papi.OptionValue{"value": papi.OptionValue{"id": cpCode.ID()}}
-									}
-								}
-							}
-
 							propertyRules.Rule.MergeBehavior(beh)
 						}
 
@@ -945,6 +934,25 @@ func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) {
 							if ok {
 								beh.Options = extractOptions(boptions.(*schema.Set))
 							}
+
+							// Fixup CPCode
+							if beh.Name == "cpCode" {
+								if _, ok := beh.Options["value"]; !ok {
+									if _, ok := beh.Options["id"]; ok {
+										cpCode := papi.NewCpCodes(nil, nil).NewCpCode()
+										cpCode.CpcodeID = beh.Options["id"].(string)
+										beh.Options = papi.OptionValue{"value": papi.OptionValue{"id": cpCode.ID()}}
+									}
+								}
+							}
+
+							// Fixup SiteShield
+							if beh.Name == "siteShield" {
+								if _, ok := beh.Options["ssmap"].(string); ok {
+									beh.Options = papi.OptionValue{"ssmap": papi.OptionValue{"value": beh.Options["ssmap"].(string)}}
+								}
+							}
+
 							propertyRules.Rule.MergeBehavior(beh)
 						}
 					}
