@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-var testAccAkamaiPropertyRulesConfig = fmt.Sprintf(`
+var testAccAkamaiPropertyRulesConfig = `
 provider "akamai" {
   papi_section = "papi"
 }
@@ -95,7 +95,7 @@ resource "akamai_property_rules" "rules" {
 		}
     }
 }
-`)
+`
 
 func TestAccAkamaiPropertyRules_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -115,7 +115,7 @@ func TestAccAkamaiPropertyRules_basic(t *testing.T) {
 	})
 }
 
-var testAccAkamaiPropertyRulesSiteshield = fmt.Sprintf(`
+var testAccAkamaiPropertyRulesSiteshield = `
 provider "akamai" {
 	property {
 		host = "test"
@@ -140,7 +140,7 @@ resource "akamai_property_rules" "rules" {
 		}
 	}
 }
-`)
+`
 
 func TestAkamaiPropertyRules_siteshield(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -161,7 +161,7 @@ func TestAkamaiPropertyRules_siteshield(t *testing.T) {
 	})
 }
 
-var testAccAkamaiPropertyRulesCPCode = fmt.Sprintf(`
+var testAccAkamaiPropertyRulesCPCode = `
 provider "akamai" {
 	property {
 		host = "test"
@@ -186,7 +186,7 @@ resource "akamai_property_rules" "rules" {
 		}
 	}
 }
-`)
+`
 
 func TestAkamaiPropertyRules_cpCode(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -198,6 +198,65 @@ func TestAkamaiPropertyRules_cpCode(t *testing.T) {
 				Config:  testAccAkamaiPropertyRulesCPCode,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"cpCode\",\"options\":{\"value\":{\"id\":12345}}}],\"options\":{}}}"),
+					resource.TestCheckResourceAttrSet(
+						"akamai_property_rules.rules", "json",
+					),
+				),
+			},
+		},
+	})
+}
+
+var testAccAkamaiPropertyRulesIsSecure = `
+provider "akamai" {
+	property {
+		host = "test"
+		access_token = "test"
+		client_token = "test"
+		client_secret = "test"
+	}
+}
+
+output "json" {
+	value = "${akamai_property_rules.rules.json}"
+}
+
+resource "akamai_property_rules" "rules" {
+ 	rules {
+		is_secure = %s
+	}
+}
+`
+
+func TestAkamaiPropertyRules_isSecureTrue(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Destroy: false,
+				Config:  fmt.Sprintf(testAccAkamaiPropertyRulesIsSecure, "true"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":true}}}"),
+					resource.TestCheckResourceAttrSet(
+						"akamai_property_rules.rules", "json",
+					),
+				),
+			},
+		},
+	})
+}
+
+func TestAkamaiPropertyRules_isSecureFalse(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Destroy: false,
+				Config:  fmt.Sprintf(testAccAkamaiPropertyRulesIsSecure, "false"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 					resource.TestCheckResourceAttrSet(
 						"akamai_property_rules.rules", "json",
 					),

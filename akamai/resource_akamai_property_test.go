@@ -1,7 +1,7 @@
 package akamai
 
 import (
-	"fmt"
+	"github.com/hashicorp/terraform/helper/schema"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-var testAccAkamaiPropertyConfig = fmt.Sprintf(`
+var testAccAkamaiPropertyConfig = `
 provider "akamai" {
   papi_section = "papi"
 }
@@ -134,7 +134,7 @@ resource "akamai_property_rules" "rules" {
 		}
     }
 }
-`)
+`
 
 func TestAccAkamaiProperty_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -152,8 +152,102 @@ func TestAccAkamaiProperty_basic(t *testing.T) {
 	})
 }
 
-func testAccCheckAkamaiPropertyDestroy(s *terraform.State) error {
+func TestAccAkamaiProperty_isSecureTrue(t *testing.T) {
+	config := map[string]interface{}{
+		"rules":     `{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\"}}`,
+		"is_secure": true,
+	}
 
+	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
+	rules := &papi.Rules{}
+	unmarshalRulesFromJSON(d, rules)
+	if rules.Rule.Options.IsSecure != true {
+		t.Fail()
+	}
+}
+
+func TestAccAkamaiProperty_isSecureFalse(t *testing.T) {
+	config := map[string]interface{}{
+		"rules":     `{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\"}}`,
+		"is_secure": false,
+	}
+
+	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
+	rules := &papi.Rules{}
+	unmarshalRulesFromJSON(d, rules)
+	if rules.Rule.Options.IsSecure == true {
+		t.Fail()
+	}
+}
+
+func TestAccAkamaiProperty_isSecureUnset(t *testing.T) {
+	config := map[string]interface{}{
+		"rules": `{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\"}}`,
+	}
+
+	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
+	rules := &papi.Rules{}
+	unmarshalRulesFromJSON(d, rules)
+	if rules.Rule.Options.IsSecure == true {
+		t.Fail()
+	}
+}
+
+func TestAccAkamaiProperty_isSecureJsonTrue(t *testing.T) {
+	config := map[string]interface{}{
+		"rules": "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":true}}}",
+	}
+
+	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
+	rules := &papi.Rules{}
+	unmarshalRulesFromJSON(d, rules)
+	if rules.Rule.Options.IsSecure != true {
+		t.Fail()
+	}
+}
+
+func TestAccAkamaiProperty_isSecureJsonFalse(t *testing.T) {
+	config := map[string]interface{}{
+		"rules": "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":false}}}",
+	}
+
+	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
+	rules := &papi.Rules{}
+	unmarshalRulesFromJSON(d, rules)
+	if rules.Rule.Options.IsSecure == true {
+		t.Fail()
+	}
+}
+
+func TestAccAkamaiProperty_isSecureJsonTrueConfigFalse(t *testing.T) {
+	config := map[string]interface{}{
+		"rules":     "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":true}}}",
+		"is_secure": false,
+	}
+
+	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
+	rules := &papi.Rules{}
+	unmarshalRulesFromJSON(d, rules)
+	if rules.Rule.Options.IsSecure == true {
+		t.Fail()
+	}
+}
+
+func TestAccAkamaiProperty_isSecureJsonFalseConfigTrue(t *testing.T) {
+	config := map[string]interface{}{
+		"rules":     "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":false}}}",
+		"is_secure": true,
+	}
+
+	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
+	rules := &papi.Rules{}
+	unmarshalRulesFromJSON(d, rules)
+	if rules.Rule.Options.IsSecure != true {
+		t.Fail()
+	}
+}
+
+func testAccCheckAkamaiPropertyDestroy(s *terraform.State) error {
 	return nil
 }
 
