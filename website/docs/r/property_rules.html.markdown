@@ -66,6 +66,7 @@ The following arguments are supported:
 
 The `rule` block supports:
 
+* `is_secure` — (Optional) Whether the property is a secure (Enhanced TLS) property or not (top-level only).
 * `criteria` — (Optional) One or more criteria to match requests on.
 * `behavior` — (Optional) One or more behaviors to apply to requests that match.
 * `rule` — (Optional) Child rules (may be nested five levels deep).
