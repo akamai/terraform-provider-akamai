@@ -3,6 +3,11 @@ sudo: required
 services:
 - docker
 
+# only build master branch (and PRs)
+branches:
+  only:
+    - "master"
+
 language: go
 go:
 - "1.11.x"
