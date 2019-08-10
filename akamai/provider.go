@@ -138,6 +138,7 @@ func Provider() terraform.ResourceProvider {
 			"akamai_cp_code":         dataSourceCPCode(),
 			"akamai_dns_record_set":  dataSourceDNSRecordSet(),
 			"akamai_group":           dataSourcePropertyGroups(),
+			"akamai_property_rules":  dataPropertyRules(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_cp_code":             resourceCPCode(),

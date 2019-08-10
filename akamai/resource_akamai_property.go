@@ -27,56 +27,6 @@ func resourceProperty() *schema.Resource {
 	}
 }
 
-var akpsOption = &schema.Schema{
-	Type:     schema.TypeSet,
-	Optional: true,
-	Elem: &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"key": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"values": {
-				Type:     schema.TypeSet,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
-			},
-			"value": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-		},
-	},
-}
-
-var akpsCriteria = &schema.Schema{
-	Type:     schema.TypeSet,
-	Optional: true,
-	Elem: &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"option": akpsOption,
-		},
-	},
-}
-
-var akpsBehavior = &schema.Schema{
-	Type:     schema.TypeSet,
-	Optional: true,
-	Elem: &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"option": akpsOption,
-		},
-	},
-}
-
 var akamaiPropertySchema = map[string]*schema.Schema{
 	"account": &schema.Schema{
 		Type:     schema.TypeString,
@@ -98,11 +48,14 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Default:  "prd_SPM",
 		ForceNew: true,
 	},
-
+	"rule_format": &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+	},
 	// Will get added to the default rule
 	"cp_code": &schema.Schema{
 		Type:     schema.TypeString,
-		Required: true,
+		Optional: true,
 	},
 	"name": &schema.Schema{
 		Type:     schema.TypeString,
@@ -120,10 +73,6 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	"production_version": &schema.Schema{
 		Type:     schema.TypeInt,
 		Computed: true,
-	},
-	"rule_format": &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
 	},
 	"contact": &schema.Schema{
 		Type:     schema.TypeSet,
@@ -196,47 +145,34 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.Partial(true)
 
-	group, e := getGroup(d)
-	if e != nil {
-		return e
+	group, err := getGroup(d)
+	if err != nil {
+		return err
 	}
 
-	contract, e := getContract(d)
-	if e != nil {
-		return e
+	contract, err := getContract(d)
+	if err != nil {
+		return err
 	}
 
-	cpCode, e := getCPCode(d, contract, group)
-	if e != nil {
-		return e
-	}
-
-	product, e := getProduct(d, contract)
-	if e != nil {
-		return e
+	product, err := getProduct(d, contract)
+	if err != nil {
+		return err
 	}
 
 	var property *papi.Property
 	if property = findProperty(d); property == nil {
-		if group == nil {
-			return errors.New("group must be specified to create a new property")
-		}
-
-		if contract == nil {
-			return errors.New("contract must be specified to create a new property")
-		}
-
 		if product == nil {
 			return errors.New("product must be specified to create a new property")
 		}
 
-		property, e = createProperty(contract, group, product, d)
-		if e != nil {
-			return e
+		property, err = createProperty(contract, group, product, d)
+		if err != nil {
+			return err
 		}
 	}
 
-	err := ensureEditableVersion(property)
+	err = ensureEditableVersion(property)
 	if err != nil {
 		return err
 	}
@@ -254,38 +190,20 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("network")
 	d.SetPartial("cp_code")
 
-	rules := papi.NewRules()
-	rules.PropertyID = d.Id()
-	rules.PropertyVersion = property.LatestVersion
-
-	origin, e := createOrigin(d)
-	if e != nil {
-		return e
+	rules, err := getRules(d, property, contract, group)
+	if err != nil {
+		return err
 	}
-
-	updateStandardBehaviors(rules, cpCode, origin)
-	fixupPerformanceBehaviors(rules)
-	//fixupAdaptiveImageCompression(rules)
-
-	// get rules from the TF config
-
-	rulecheck, ok := d.GetOk("rules")
-	if ok {
-		log.Printf("[DEBUG] Unmarshal Rules from JSON")
-		unmarshalRulesFromJSON(d, rules)
-	}
-	log.Printf("[DEBUG] Check for rules Json CREATE %s\n", rulecheck)
-
-	e = rules.Save()
-	if e != nil {
-		if e == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
+	err = rules.Save()
+	if err != nil {
+		if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
 			var msg string
 			for _, v := range rules.Errors {
 				msg = msg + fmt.Sprintf("\n Rule validation error: %s %s %s %s %s", v.Type, v.Title, v.Detail, v.Instance, v.BehaviorName)
 			}
 			return errors.New("Error - Invalid Property Rules" + msg)
 		}
-		return e
+		return err
 	}
 	d.SetPartial("default")
 	d.SetPartial("origin")
@@ -304,6 +222,51 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group) (*papi.Rules, error) {
+	rules := papi.NewRules()
+	rules.Rule.Name = "default"
+	rules.PropertyID = d.Id()
+	rules.PropertyVersion = property.LatestVersion
+
+	origin, err := createOrigin(d)
+	if err != nil {
+		return nil, err
+	}
+
+	// get rules from the TF config
+
+	rulecheck, ok := d.GetOk("rules")
+	log.Printf("[DEBUG] Check for rules Json CREATE %s\n", rulecheck)
+
+	if ok {
+		log.Printf("[DEBUG] Unmarshal Rules from JSON")
+		unmarshalRulesFromJSON(d, rules)
+	}
+
+	if ruleFormat, ok := d.GetOk("rule_format"); ok {
+		rules.RuleFormat = ruleFormat.(string)
+	} else {
+		ruleFormats := papi.NewRuleFormats()
+		rules.RuleFormat, err = ruleFormats.GetLatest()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if ok := d.HasChange("rule_format"); ok {
+	}
+
+	cpCode, err := getCPCode(d, contract, group)
+	if err != nil {
+		return nil, err
+	}
+
+	updateStandardBehaviors(rules, cpCode, origin)
+	fixupPerformanceBehaviors(rules)
+
+	return rules, nil
+}
+
 func setHostnames(property *papi.Property, d *schema.ResourceData) (map[string]string, error) {
 	hostnameEdgeHostnames := d.Get("hostnames").(map[string]interface{})
 
@@ -312,18 +275,19 @@ func setHostnames(property *papi.Property, d *schema.ResourceData) (map[string]s
 		return nil, err
 	}
 
-	hostnames, err := property.GetHostnames(nil)
-	if err != nil {
-		return nil, err
-	}
+	hostnames := papi.NewHostnames()
+	hostnames.PropertyVersion = property.LatestVersion
+	hostnames.PropertyID = property.PropertyID
 
 	ehnMap := make(map[string]string, len(hostnameEdgeHostnames))
 	for public, edgeHostname := range hostnameEdgeHostnames {
 		ehn := ehns.NewEdgeHostname()
 		ehn.EdgeHostnameDomain = edgeHostname.(string)
+		log.Printf("[DEBUG] Searching for edge hostname: %s, for hostname: %s", edgeHostname.(string), public)
 		ehn, err = ehns.FindEdgeHostname(ehn)
+		log.Printf("[DEBUG] Found edge hostname: %s", ehn.EdgeHostnameDomain)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("edge hostname not found: %s", ehn.EdgeHostnameDomain)
 		}
 
 		hostname := hostnames.NewHostname()
@@ -508,59 +472,20 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.Set("version", property.LatestVersion)
 
-	var cpCode *papi.CpCode
-	if d.HasChange("cp_code") {
-		cpCode, e = getCPCode(d, property.Contract, property.Group)
-		if e != nil {
-			return e
-		}
-		d.SetPartial("cp_code")
-	} else {
-		cpCode = papi.NewCpCode(papi.NewCpCodes(property.Contract, property.Group))
-		cpCode.CpcodeID = d.Get("cp_code").(string)
-		e := cpCode.GetCpCode()
-		if e != nil {
-			return e
+	rules, err := getRules(d, property, property.Contract, property.Group)
+
+	if d.HasChange("rule_format") {
+		if ruleFormat, ok := d.GetOk("rule_format"); ok {
+			property.RuleFormat = ruleFormat.(string)
+			rules.RuleFormat = ruleFormat.(string)
 		}
 	}
-
-	rules, e := property.GetRules()
-	if e != nil {
-		return e
-	}
-
-	if ruleFormat, ok := d.GetOk("rule_format"); ok {
-		rules.RuleFormat = ruleFormat.(string)
-	} else {
-		ruleFormats := papi.NewRuleFormats()
-		rules.RuleFormat, err = ruleFormats.GetLatest()
-		if err != nil {
-			return err
-		}
-	}
-
-	origin, e := createOrigin(d)
-	if e != nil {
-		return e
-	}
-
-	updateStandardBehaviors(rules, cpCode, origin)
-	//fixupAdaptiveImageCompression(rules)
-	// get rules from the TF config
-
-	rulecheck, ok := d.GetOk("rules")
-	if ok {
-		log.Printf("[DEBUG] Unmarshal Rules from JSON")
-		unmarshalRulesFromJSON(d, rules)
-	}
-	log.Printf("[DEBUG] Check for rules Json Before Unmarshal UPDATE %s\n", rulecheck)
 
 	jsonBody, err := jsonhooks.Marshal(rules)
 	if err != nil {
 		return err
 	}
 	log.Printf("[DEBUG] Check rules after unmarshal from Json %s\n", string(jsonBody))
-
 	e = rules.Save()
 	if e != nil {
 		if e == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
@@ -570,15 +495,16 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 			return errors.New("Error - Invalid Property Rules" + msg)
 		}
-		return e
+		log.Printf("update rules.Save err: %#v", e)
+		return fmt.Errorf("update rules.Save err: %#v", e)
 	}
 	d.SetPartial("default")
 	d.SetPartial("origin")
 
-	if d.HasChange("ipv6") || d.HasChange("hostnames") {
+	if d.HasChange("hostnames") {
 		ehnMap, err := setHostnames(property, d)
 		if err != nil {
-			return err
+			return fmt.Errorf("setHostnames err: %#v", err)
 		}
 
 		d.Set("edge_hostnames", ehnMap)
@@ -771,6 +697,7 @@ func fixupAdaptiveImageCompression(rules *papi.Rules) {
 }
 
 func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *papi.OptionValue) {
+	log.Printf("[DEBUG] cpCode: %#v", cpCode)
 	if cpCode != nil {
 		b := papi.NewBehavior()
 		b.Name = "cpCode"
@@ -794,7 +721,7 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 	// Default Rules
 	rules, ok := d.GetOk("rules")
 	if ok {
-		propertyRules.Rule = &papi.Rule{}
+		propertyRules.Rule = &papi.Rule{Name: "default"}
 		log.Println("[DEBUG] RulesJson")
 		rulesJSON := gjson.Get(rules.(string), "rules")
 
@@ -939,6 +866,19 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 			propertyRules.Rule.Options.IsSecure = true
 		} else if set && !is_secure.(bool) {
 			propertyRules.Rule.Options.IsSecure = false
+		}
+
+		// ADD cp_code from resource
+		cp_code, set := d.GetOk("cp_code")
+		if set {
+			beh := papi.NewBehavior()
+			beh.Name = "cpCode"
+			beh.Options = papi.OptionValue{
+				"value": papi.OptionValue{
+					"id": cp_code.(string),
+				},
+			}
+			propertyRules.Rule.AddBehavior(beh)
 		}
 	}
 }

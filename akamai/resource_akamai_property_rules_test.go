@@ -3,6 +3,7 @@ package akamai
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -97,6 +98,8 @@ resource "akamai_property_rules" "rules" {
 }
 `
 
+var errorRegex, err = regexp.Compile("The akamai_property_rules resource has moved to a data source, please change 'resource \"akamai_property_rules\"' to 'data \"akamai_property_rules\"")
+
 func TestAccAkamaiPropertyRules_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -104,12 +107,8 @@ func TestAccAkamaiPropertyRules_basic(t *testing.T) {
 		CheckDestroy: testAccCheckAkamaiPropertyRulesDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiPropertyRulesConfig,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(
-						"akamai_property_rules.rules", "json",
-					),
-				),
+				ExpectError: errorRegex,
+				Config:      testAccAkamaiPropertyRulesConfig,
 			},
 		},
 	})
@@ -148,14 +147,9 @@ func TestAkamaiPropertyRules_siteshield(t *testing.T) {
 		Providers:  testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Destroy: false,
-				Config:  testAccAkamaiPropertyRulesSiteshield,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"siteShield\",\"options\":{\"ssmap\":{\"value\":\"mapname.akamai.net\"}}}],\"options\":{}}}"),
-					resource.TestCheckResourceAttrSet(
-						"akamai_property_rules.rules", "json",
-					),
-				),
+				ExpectError: errorRegex,
+				Destroy:     false,
+				Config:      testAccAkamaiPropertyRulesSiteshield,
 			},
 		},
 	})
@@ -194,14 +188,9 @@ func TestAkamaiPropertyRules_cpCode(t *testing.T) {
 		Providers:  testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Destroy: false,
-				Config:  testAccAkamaiPropertyRulesCPCode,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"cpCode\",\"options\":{\"value\":{\"id\":12345}}}],\"options\":{}}}"),
-					resource.TestCheckResourceAttrSet(
-						"akamai_property_rules.rules", "json",
-					),
-				),
+				ExpectError: errorRegex,
+				Destroy:     false,
+				Config:      testAccAkamaiPropertyRulesCPCode,
 			},
 		},
 	})
@@ -234,14 +223,9 @@ func TestAkamaiPropertyRules_isSecureTrue(t *testing.T) {
 		Providers:  testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Destroy: false,
-				Config:  fmt.Sprintf(testAccAkamaiPropertyRulesIsSecure, "true"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":true}}}"),
-					resource.TestCheckResourceAttrSet(
-						"akamai_property_rules.rules", "json",
-					),
-				),
+				ExpectError: errorRegex,
+				Destroy:     false,
+				Config:      fmt.Sprintf(testAccAkamaiPropertyRulesIsSecure, "true"),
 			},
 		},
 	})
@@ -253,14 +237,9 @@ func TestAkamaiPropertyRules_isSecureFalse(t *testing.T) {
 		Providers:  testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Destroy: false,
-				Config:  fmt.Sprintf(testAccAkamaiPropertyRulesIsSecure, "false"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-					resource.TestCheckResourceAttrSet(
-						"akamai_property_rules.rules", "json",
-					),
-				),
+				ExpectError: errorRegex,
+				Destroy:     false,
+				Config:      fmt.Sprintf(testAccAkamaiPropertyRulesIsSecure, "false"),
 			},
 		},
 	})
