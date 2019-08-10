@@ -758,7 +758,6 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 				log.Printf("[DEBUG] [Akamai DNSv2] Existing MX records to append to target before schema data LEN %d %v", len(rdata), records)
 
 			}
-			//sort.Strings(records)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
