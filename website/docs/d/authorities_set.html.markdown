@@ -8,10 +8,7 @@ description: |-
 
 # akamai_authorities_set
 
-
 Use `akamai_authorities_set` datasource to retrieve a contracts authorities set for use when creating new zones.
-
-
 
 ## Example Usage
 

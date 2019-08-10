@@ -9,7 +9,7 @@ description: |-
 # akamai_group
 
 
-Use `akamai_group` datasource to retrieve a group id.
+Use `akamai_group` data source to retrieve a group id.
 
 ## Example Usage
 

@@ -17,7 +17,6 @@ Basic usage:
 ```hcl
 resource "akamai_property_activation" "example" {
      property = "${akamai_property.example.id}"
-     version = "latest"
      network  = "STAGING"
      activate = "${var.akamai_property_activate}"
      contact  = ["user@example.org"] 
@@ -29,7 +28,7 @@ resource "akamai_property_activation" "example" {
 The following arguments are supported:
 
 * `property` — (Required) The property ID.
-* `version` — (Optional) The version to activate (Default: latest)
+* `version` — (Optional) The version to activate. When unset it will activate the latest version of the property.
 * `network` — (Optional) Akamai network to activate on. Allowed values `staging` or `production` (Default: `staging`).
 * `activate` — (Optional, boolean) Whether to activate the property on the network. (Default: `true`).
 * `contact` — (Required) One or more email addresses to inform about activation changes.

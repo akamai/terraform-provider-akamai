@@ -1,21 +1,21 @@
 ---
 layout: "akamai"
 page_title: "Akamai: property rules"
-sidebar_current: "docs-akamai-resource-property-rules"
+sidebar_current: "docs-akamai-data-property-rules"
 description: |-
   Property Rules
 ---
 
 # akamai_property_rules
 
-The `akamai_property_rules` provides the resource for configuring a nested block of property rules, criteria, and behaviors. A property’s main functionality is encapsulated in its set of rules and rules are composed of the matches and the behavior that applies under those matches.
+The `akamai_property_rules` data source allows you to configure a nested block of property rules, criteria, and behaviors. A property’s main functionality is encapsulated in its set of rules and rules are composed of the matches and the behavior that applies under those matches.
 
 ## Example Usage
 
 Basic usage:
 
 ```hcl
-resource "akamai_property_rules" "example" {
+data "akamai_property_rules" "example" {
   rules { # Default rule
   
     behavior { # Downstream Cache behavior
@@ -55,8 +55,9 @@ resource "akamai_property_rules" "example" {
 }
 
 resource "akamai_property" "example" {
-  rules = "${akamai_property_rules.example.json}"
-  ...
+  rules = "${data.akamai_property_rules.example.json}"
+  
+  // ...
 }
 ```
 

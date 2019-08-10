@@ -8,7 +8,7 @@ description: |-
 
 # akamai_cp_code
 
-Use `akamai_cp_code` datasource to retrieve a group id.
+Use `akamai_cp_code` data source to retrieve a group id.
 
 ## Example Usage
 

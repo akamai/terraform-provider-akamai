@@ -21,8 +21,6 @@ Use the navigation to the left to read about the available resources.
 ```hcl
 # Configure the Akamai Provider
 provider "akamai" {
-    edgerc = "~/.edgerc"
-    
     property {
       host = "${var.akamai_host}"
       access_token = "${var.akamai_access_token}"
