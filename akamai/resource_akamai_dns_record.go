@@ -731,16 +731,26 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			increment := d.Get("priority_increment").(int)
 
 			for _, recContent := range target {
-				records = append(records, strconv.Itoa(priority)+" "+recContent.(string))
+				checktarget := recContent.(string)[len(recContent.(string))-1:]
+				if checktarget != "." {
+					records = append(records, strconv.Itoa(priority)+" "+recContent.(string)+".")
+
+				} else {
+					records = append(records, strconv.Itoa(priority)+" "+recContent.(string))
+				}
 				if increment > 0 {
 					priority = priority + increment
 				}
 			}
-			log.Printf("[DEBUG] [Akamai DNSv2] Appended new target to taget array LEN %d %v", len(records), records)
+			log.Printf("[DEBUG] [Akamai DNSv2] Appended new target to target array LEN %d %v", len(records), records)
 
 			if len(rdata) > 0 {
 				log.Printf("[DEBUG] [Akamai DNSv2] rdata Exists MX records to append to target LEN %d", len(rdata))
 				for _, r := range rdata {
+					checktarget := r[len(r)-1:]
+					if checktarget != "." {
+						r = r + "."
+					}
 					if !(contains(records, r)) {
 						records = append(records, r)
 					}
@@ -748,7 +758,6 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 				log.Printf("[DEBUG] [Akamai DNSv2] Existing MX records to append to target before schema data LEN %d %v", len(rdata), records)
 
 			}
-			sort.Strings(records)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
