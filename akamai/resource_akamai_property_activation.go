@@ -3,6 +3,7 @@ package akamai
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -72,6 +73,7 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 		}
 
 		d.SetId(activation.ActivationID)
+		d.Set("version", activation.PropertyVersion)
 		d.Set("status", string(activation.Status))
 		go activation.PollStatus(property)
 
@@ -217,31 +219,25 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		return e
 	}
 
-	if d.Get("activate").(bool) {
-		activations, err := property.GetActivations()
-		if err != nil {
-			// No activations found
-			return nil
-		}
+	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)))
+	if err != nil {
+		return err
+	}
 
+	a, err := findExistingActivation(property, activation)
+	if err == nil {
+		activation = a
+	}
+
+	if d.Get("activate").(bool) {
 		old, new := d.GetChange("network")
 		if old.(string) != new.(string) {
 			// deactivate on the old network, we don't need to wait for this
 			deactivateProperty(property, d, papi.NetworkValue(old.(string)))
 		}
 
-		var activation *papi.Activation
-		network := papi.NetworkValue(d.Get("network").(string))
-		version := d.Get("version").(int)
-		for _, a := range activations.Activations.Items {
-			if a.Network == network && a.PropertyVersion == version && a.Status != papi.StatusFailed && a.Status != papi.StatusDeactivated && a.Status != papi.StatusAborted && a.ActivationType != papi.ActivationTypeDeactivate {
-				activation = a
-				break
-			}
-		}
-
-		// Already an activation in process, we'll just wait on that one
-		if activation == nil {
+		// No activation in progress, create a new one
+		if a == nil {
 			activation, err = activateProperty(property, d)
 			if err != nil {
 				return err
@@ -249,6 +245,7 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		}
 
 		d.SetId(activation.ActivationID)
+		d.Set("version", activation.PropertyVersion)
 		d.Set("status", string(activation.Status))
 
 		go activation.PollStatus(property)
@@ -267,6 +264,7 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 				break polling
 			}
 		}
+		d.Set("version", activation.PropertyVersion)
 		d.Set("status", string(activation.Status))
 	} else {
 		return resourcePropertyRead(d, meta)
@@ -277,8 +275,16 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 }
 
 func activateProperty(property *papi.Property, d *schema.ResourceData) (*papi.Activation, error) {
-	activation := getActivation(d, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)))
-	err := activation.Save(property, true)
+	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)))
+	if err != nil {
+		return nil, err
+	}
+
+	if a, err := findExistingActivation(property, activation); err == nil && a != nil {
+		return a, nil
+	}
+
+	err = activation.Save(property, true)
 	if err != nil {
 		body, _ := json.Marshal(activation)
 		log.Printf("[DEBUG] API Request Body: %s\n", string(body))
@@ -296,7 +302,15 @@ func deactivateProperty(property *papi.Property, d *schema.ResourceData, network
 		return nil, nil
 	}
 
-	activation := getActivation(d, papi.ActivationTypeDeactivate, network)
+	activation, err := getActivation(d, property, papi.ActivationTypeDeactivate, network)
+	if err != nil {
+		return nil, err
+	}
+
+	if a, err := findExistingActivation(property, activation); err == nil && a != nil {
+		return a, nil
+	}
+
 	err = activation.Save(property, true)
 	if err != nil {
 		body, _ := json.Marshal(activation)
@@ -308,10 +322,19 @@ func deactivateProperty(property *papi.Property, d *schema.ResourceData, network
 	return activation, nil
 }
 
-func getActivation(d *schema.ResourceData, activationType papi.ActivationValue, network papi.NetworkValue) *papi.Activation {
+func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue) (*papi.Activation, error) {
 	log.Println("[DEBUG] Creating new activation")
 	activation := papi.NewActivation(papi.NewActivations())
-	activation.PropertyVersion = d.Get("version").(int)
+	if version, ok := d.GetOk("version"); ok && version.(int) != 0 {
+		activation.PropertyVersion = version.(int)
+	} else {
+		version, err := property.GetLatestVersion("")
+		if err != nil {
+			return nil, err
+		}
+		log.Printf("[DEBUG] Using latest version: %d\n", version.PropertyVersion)
+		activation.PropertyVersion = version.PropertyVersion
+	}
 	activation.Network = network
 	for _, email := range d.Get("contact").(*schema.Set).List() {
 		activation.NotifyEmails = append(activation.NotifyEmails, email.(string))
@@ -321,5 +344,37 @@ func getActivation(d *schema.ResourceData, activationType papi.ActivationValue, 
 	activation.ActivationType = activationType
 
 	log.Println("[DEBUG] Activating")
-	return activation
+	return activation, nil
+}
+
+func findExistingActivation(property *papi.Property, activation *papi.Activation) (*papi.Activation, error) {
+	activations, err := property.GetActivations()
+	if err != nil {
+		return nil, err
+	}
+
+	inProgressStates := map[papi.StatusValue]bool{
+		papi.StatusActive:              true,
+		papi.StatusNew:                 true,
+		papi.StatusPending:             true,
+		papi.StatusPendingDeactivation: true,
+		papi.StatusZone1:               true,
+		papi.StatusZone2:               true,
+		papi.StatusZone3:               true,
+	}
+	for _, a := range activations.Activations.Items {
+		if _, ok := inProgressStates[a.Status]; !ok {
+			continue
+		}
+
+		// There is an activation in progress, if it's for the same version/network/type we can re-use it
+		if a.PropertyVersion != activation.PropertyVersion || a.ActivationType != activation.ActivationType || a.Network != activation.Network {
+			return nil, fmt.Errorf("%s already in progress: v%d on %s", activation.ActivationType, activation.PropertyVersion, activation.Network)
+		}
+
+		log.Println("[DEBUG] Existing activation found")
+		return a, nil
+	}
+
+	return nil, nil
 }
