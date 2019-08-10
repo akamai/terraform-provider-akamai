@@ -155,39 +155,46 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	dnsv2Config, err := getConfigDNSV2Service(d)
-	if err != nil {
-		return nil, err
-	}
+	dnsv2Config, dnsErr := getConfigDNSV2Service(d)
+	papiConfig, papiErr := getPAPIV1Service(d)
 
-	papiConfig, err := getPAPIV1Service(d)
-	if err != nil {
-		return nil, err
-	}
-
-	if dnsv2Config == nil && papiConfig == nil {
+	if dnsErr != nil && papiErr != nil || dnsv2Config == nil && papiConfig == nil {
 		return nil, fmt.Errorf("at least one configuration must be defined")
 	}
 
 	return &Config{}, nil
 }
 
-func getConfigDNSV2Service(d *schema.ResourceData) (*edgegrid.Config, error) {
+type resourceData interface {
+	GetOk(string) (interface{}, bool)
+	Get(string) interface{}
+}
+
+type set interface {
+	List() []interface{}
+}
+
+func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 	var DNSv2Config edgegrid.Config
 	var err error
-	if edgerc, ok := d.GetOk("edgerc"); ok {
-		section := d.Get("dns_section").(string)
-		DNSv2Config, err = edgegrid.Init(edgerc.(string), section)
-	} else if _, ok := d.GetOk("dns"); ok {
-		config := d.Get("dns").(*schema.Set)
+	if _, ok := d.GetOk("dns"); ok {
+		config := d.Get("dns").(set).List()[0].(map[string]interface{})
 
-		DNSv2Config = edgegrid.Config{}
+		DNSv2Config = edgegrid.Config{
+			Host:         config["host"].(string),
+			AccessToken:  config["access_token"].(string),
+			ClientToken:  config["client_token"].(string),
+			ClientSecret: config["client_secret"].(string),
+			MaxBody:      config["max_body"].(int),
+		}
 
-		log.Printf("[DEBUG] %#v", config)
-	} else {
-		return nil, nil
+		dnsv2.Init(DNSv2Config)
+		return &DNSv2Config, nil
 	}
 
+	edgerc := d.Get("edgerc").(string)
+	section := d.Get("dns_section").(string)
+	DNSv2Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
@@ -196,29 +203,11 @@ func getConfigDNSV2Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	return &DNSv2Config, nil
 }
 
-func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
+func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
 	var papiConfig edgegrid.Config
-	if edgerc, ok := d.GetOk("edgerc"); ok && edgerc.(string) != "" {
-		var err error
-
-		log.Printf("[DEBUG] Setting property config via edgerc")
-		if section, ok := d.GetOk("papi_section"); ok {
-			papiConfig, err = edgegrid.Init(edgerc.(string), section.(string))
-		} else if section, ok := d.GetOk("property_section"); ok {
-			papiConfig, err = edgegrid.Init(edgerc.(string), section.(string))
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		papi.Init(papiConfig)
-		return &papiConfig, nil
-	}
-
 	if _, ok := d.GetOk("property"); ok {
 		log.Printf("[DEBUG] Setting property config via HCL")
-		config := d.Get("property").(*schema.Set).List()[0].(map[string]interface{})
+		config := d.Get("property").(set).List()[0].(map[string]interface{})
 
 		papiConfig = edgegrid.Config{
 			Host:         config["host"].(string),
@@ -232,5 +221,20 @@ func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 		return &papiConfig, nil
 	}
 
-	return nil, nil
+	var err error
+	edgerc := d.Get("edgerc").(string)
+	if section, ok := d.GetOk("property_section"); ok && section != "default" {
+		papiConfig, err = edgegrid.Init(edgerc, section.(string))
+	} else if section, ok := d.GetOk("papi_section"); ok && section != "default" {
+		papiConfig, err = edgegrid.Init(edgerc, section.(string))
+	} else {
+		papiConfig, err = edgegrid.Init(edgerc, "default")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	papi.Init(papiConfig)
+	return &papiConfig, nil
 }
