@@ -54,7 +54,7 @@ The following arguments are supported:
 
 ### Property Rules
 
-* `rules` — (Required) A JSON encoded string of property rules (see: [`akamai_property_rules`](/docs/providers/akamai/r/property_rules.html))
+* `rules` — (Required) A JSON encoded string of property rules (see: [`akamai_property_rules`](/docs/providers/akamai/d/property_rules.html))
 * `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)).
 
 In addition the specifying the rule tree in it's entirety, you can also set the default CP Code and Origin explicitly. *This will override your JSON configuration*.
