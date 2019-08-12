@@ -503,6 +503,7 @@ max_body = 2`,
 }
 
 func setEnv(home string, env map[string]string) {
+	os.Clearenv()
 	os.Setenv("HOME", home)
 	if len(env) > 0 {
 		for key, val := range env {
