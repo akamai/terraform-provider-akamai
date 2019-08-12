@@ -51,9 +51,11 @@ resource "akamai_edge_hostname" "test" {
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
     edge_hostname =  "terraform-test1.exampleterraform.io.edgesuite.net"
+	ipv4 = true
+	ipv6 = true
 }
 
-resource "akamai_property_rules" "rules" {
+data "akamai_property_rules" "rules" {
  	rules {
 		behavior {
 			name =  "origin"

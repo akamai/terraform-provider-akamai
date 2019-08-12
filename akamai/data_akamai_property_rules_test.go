@@ -16,7 +16,7 @@ output "json" {
 	value = "${data.akamai_property_rules.rules.json}"
 }
 
-resource "akamai_property_rules" "rules" {
+data "akamai_property_rules" "rules" {
  	rules {
 		behavior {
 			name = "origin"
