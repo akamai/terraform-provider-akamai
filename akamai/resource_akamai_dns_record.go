@@ -858,9 +858,9 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			for _, recContent := range target {
 				checktarget := recContent.(string)[len(recContent.(string))-1:]
 				if checktarget == "." {
-					records = append(records, strconv.Itoa(priority)+" "+strconv.Itoa(port)+" "+strconv.Itoa(weight)+" "+recContent.(string))
+					records = append(records, strconv.Itoa(priority)+" "+strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+recContent.(string))
 				} else {
-					records = append(records, strconv.Itoa(priority)+" "+strconv.Itoa(port)+" "+strconv.Itoa(weight)+" "+recContent.(string)+".")
+					records = append(records, strconv.Itoa(priority)+" "+strconv.Itoa(weight)+" "+strconv.Itoa(port)+" "+recContent.(string)+".")
 				}
 
 			}
