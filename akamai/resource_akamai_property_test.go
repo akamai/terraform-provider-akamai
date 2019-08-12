@@ -30,7 +30,7 @@ resource "akamai_property" "property" {
   
   rule_format = "v2016-11-15"
   
-  rules = "${akamai_property_rules.rules.json}"
+  rules = "${data.akamai_property_rules.rules.json}"
 }
 
 data "akamai_contract" "contract" {
