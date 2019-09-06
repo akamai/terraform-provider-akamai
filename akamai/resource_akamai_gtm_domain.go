@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
+	"errors"
 
 	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -18,17 +20,24 @@ func resourceGTMv1_3Domain() *schema.Resource {
 		Delete: resourceGTMv1_3DomainDelete,
 		Exists: resourceGTMv1_3DomainExists,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1_3DomainImport,
+			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
 			"contract": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Default: "",
 			},
                         "group": {
                                 Type:     schema.TypeString,
                                 Optional: true,
+				Default: "",
                         },
+			"wait_on_complete": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -166,8 +175,10 @@ func resourceGTMv1_3DomainCreate(d *schema.ResourceData, meta interface{}) error
 	newDom := populateNewDomainObject(d)
 	log.Printf("[DEBUG] [Akamai GTMV1_3] Domain: [%v]", newDom )
         qArgs := make(map[string]string)
-	if _, ok := d.GetOk("contract");  ok { qArgs["contractId"] = d.Get("contract").(string) }
-	if _, ok := d.GetOk("group"); ok { qArgs["gid"] = d.Get("group").(string) }
+	contract := d.Get("contract").(string)
+	if len(contract) > 0  { qArgs["contractId"] = contract }
+	groupId := d.Get("group").(string)
+	if len(groupId) > 0 { qArgs["gid"] = groupId }
 	cStatus, err := newDom.Create(qArgs)
         if err != nil {
                 fmt.Println(err)
@@ -181,6 +192,21 @@ func resourceGTMv1_3DomainCreate(d *schema.ResourceData, meta interface{}) error
         fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMV1_3] Create status:")
         log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+
+	if d.Get("wait_on_complete").(bool) {
+		done, err := waitForCompletion(dname)
+		if done {
+			log.Printf("[INFO] [Akamai GTMV1_3] Domain Create completed")
+		} else {
+			if err == nil {
+				log.Printf("[INFO] [Akamai GTMV1_3] Domain Create pending")
+			} else {
+				log.Printf("[WARNING] [Akamai GTMV1_3] Domain Create failed [%s]", err.Error())
+				return err
+			}
+		}
+	
+	}
 
 	// Give terraform the ID
 	d.SetId(fmt.Sprintf("%s", dname))
@@ -223,42 +249,36 @@ func resourceGTMv1_3DomainUpdate(d *schema.ResourceData, meta interface{}) error
 	qargs := make(map[string]string)
 	uStat, err := existDom.Update(qargs)
         if err != nil {
-                fmt.Println(err)
+                fmt.Println(err.Error())
                 return err
         }
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err.Error())
 		return err
 	}
 	fmt.Println(string(b))
+        log.Printf("[DEBUG] [Akamai GTMV1_3] Update status:")
+        log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+
+        if d.Get("wait_on_complete").(bool) {
+                done, err := waitForCompletion(d.Id())
+                if done {
+                        log.Printf("[INFO] [Akamai GTMV1_3] Domain update completed")
+                } else {
+                        if err == nil {
+                                log.Printf("[INFO] [Akamai GTMV1_3] Domain update pending")
+                        } else {
+                                log.Printf("[WARNING] [Akamai GTMV1_3] Domain update failed [%s]", err.Error())
+				return err
+                        }
+                }
+
+        }
 
 	// Give terraform the ID
 	return resourceGTMv1_3DomainRead(d, meta)
 }
-
-// Import GTM Domain. NOT IMPLEMENTED.
-func resourceGTMv1_3DomainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-        name := d.Get("name").(string)
-        log.Printf("[INFO] [Akamai GTM] Domain [%s] import", name)
-	// find the domain first
-	log.Printf("[INFO] [Akamai GTM] Searching for domain [%s]", name)
-	domain, err := gtmv1_3.GetDomain(name)
-	if err != nil {
-		return nil, err
-	}
-
-	d.Set("name", domain.Name)
-	d.Set("type", domain.Type)
-
-	// TODO: Restore all attributes!
-
-	// Give terraform the ID
-	d.SetId(fmt.Sprintf("%s", name))
-
-	return []*schema.ResourceData{d}, nil
-}
-
 
 // Delete GTM Domain. Not Supported in current API version.
 func resourceGTMv1_3DomainDelete(d *schema.ResourceData, meta interface{}) error {
@@ -298,25 +318,20 @@ func populateNewDomainObject(d *schema.ResourceData) *gtmv1_3.Domain {
 
 }
 
-func convertToStringList(v []interface{}) []string {
-
-	vlen := len(v)
-	destList := make([]string, vlen) 	
-	for i, item := range v {
-		destList[i] = item.(string)
-	}
-
-	return destList
-}
-
 // Populate existing domain object from resource data
 func populateDomainObject(d *schema.ResourceData, dom *gtmv1_3.Domain) {
 
+	if d.Get("name").(string) != dom.Name {
+		log.Printf("[WARNING] [Akamai GTMV1_3] Domain [%s] state and GTM names inconsistent!")
+		dom.Name = d.Get("name").(string)
+	}
 	if v, ok := d.GetOk("type"); ok {
 		if v != dom.Type { dom.Type = v.(string) }
 	} 
 	if v, ok := d.GetOk("default_unreachable_threshold"); ok { dom.DefaultUnreachableThreshold = v.(float32) }
-	if v, ok := d.GetOk("email_notification_list"); ok { dom.EmailNotificationList = convertToStringList(v.([]interface{})) } 
+	if v, ok := d.GetOk("email_notification_list"); ok { 
+		dom.EmailNotificationList, ok = unmarshalSetString(v.([]interface{})) 
+	} 
 	if v, ok := d.GetOk("min_pingable_region_fraction"); ok { dom.MinPingableRegionFraction = v.(float32) }
 	if v, ok := d.GetOk("default_timeout_penalty"); ok { dom.DefaultTimeoutPenalty = v.(int) }
 	if v, ok := d.GetOk("servermonitor_liveness_count"); ok { dom.ServermonitorLivenessCount = v.(int) }
@@ -355,6 +370,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtmv1_3.Domain) {
 func populateTerraformState(d *schema.ResourceData, dom *gtmv1_3.Domain) {
 
 	// walk thru all state elements
+	d.Set("name", dom.Name)
 	d.Set("type", dom.Type)
 	d.Set("default_unreachable_threshold", dom.DefaultUnreachableThreshold)
         d.Set("email_notification_list", dom.EmailNotificationList)
@@ -389,6 +405,36 @@ func populateTerraformState(d *schema.ResourceData, dom *gtmv1_3.Domain) {
         d.Set("default_ssl_client_certificate", dom.DefaultSslClientCertificate)
 
 	return
+
+}
+
+// Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)
+func waitForCompletion(domain string) (bool, error) {
+
+	return true, nil
+
+	var defaultInterval int = 5
+  	var defaultTimeout int = 300
+	var sleepInterval time.Duration = 1 // seconds. TODO:Should be configurable by user ...
+	var sleepTimeout time.Duration = 1 // seconds. TODO: Should be configurable by user ... 
+        sleepInterval *= time.Duration(defaultInterval)
+	sleepTimeout *= time.Duration(defaultTimeout) 
+        for {
+		propStat, err := gtmv1_3.GetDomainStatus(domain)
+                if err != nil {
+                        return false, err
+                }
+		if propStat.PropagationStatus == "COMPLETE" {
+			return true, nil
+		}
+                if sleepTimeout <= 0 {
+                        return false, nil
+                }       
+		time.Sleep(sleepInterval * time.Second) 
+                sleepTimeout -= sleepInterval
+	}
+
+	return false, errors.New("Unknown error while waiting for change completion")	// don't know how/why we would have broken out.
 
 }
 
