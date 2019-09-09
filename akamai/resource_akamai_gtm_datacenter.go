@@ -363,9 +363,12 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtmv1_3.Datacenter) {
 				dc.DefaultLoadObject.LoadObject = dlo["load_object"].(string)
 			}
         		dc.DefaultLoadObject.LoadObjectPort = dlo["load_object_port"].(int)
-			ls, ok := unmarshalSetString(dlo["load_servers"]) 
-        		if ok { 
+                        if dlo["load_servers"] != nil {
+                                ls := make([]string, len(dlo["load_servers"].([]interface{})))
+                                for i, sl := range dlo["load_servers"].([]interface{}) {
+                                        ls[i] = sl.(string)
 				dc.DefaultLoadObject.LoadServers = ls 
+				}
 			}
 		}
 	}
