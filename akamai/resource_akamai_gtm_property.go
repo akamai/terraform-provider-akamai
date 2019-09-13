@@ -142,7 +142,7 @@ func resourceGTMv1_3Property() *schema.Resource {
                                 Type:    schema.TypeInt,
                                 Optional: true,
                         },
-                        "traffic_targets": {
+                        "traffic_targets": &schema.Schema{
                                 Type:    schema.TypeList,
                                 Optional: true,
 				ConfigMode: schema.SchemaConfigModeAttr,
@@ -160,7 +160,7 @@ func resourceGTMv1_3Property() *schema.Resource {
                                 			Type:         schema.TypeFloat,
                                 			Optional:     true,
                         			},
-                                                "servers": {
+                                                "servers": &schema.Schema{
                                                         Type:    schema.TypeList,
                                                         Elem:    &schema.Schema{Type: schema.TypeString},
                                                         Optional: true,
@@ -178,7 +178,7 @@ func resourceGTMv1_3Property() *schema.Resource {
                                         },
                                 },
                         },
-                        "mx_records": {
+                        "mx_records": &schema.Schema{
                                 Type:    schema.TypeList,
                                 Optional: true,
 				ConfigMode: schema.SchemaConfigModeAttr,
@@ -195,7 +195,7 @@ func resourceGTMv1_3Property() *schema.Resource {
                                         },
                                 },
                         },
-                        "liveness_tests": {
+                        "liveness_tests": &schema.Schema{
                                 Type:    schema.TypeList,
                                 Optional: true,
 				ConfigMode: schema.SchemaConfigModeAttr,
@@ -302,8 +302,8 @@ func resourceGTMv1_3Property() *schema.Resource {
 	}
 }
 
-// utility func to parse Terraform property resource id
-func parsePropertyResourceId(id string) (string, string, error) {
+// utility func to parse Terraform resource string id
+func parseResourceStringId(id string) (string, string, error) {
 
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
@@ -312,6 +312,12 @@ func parsePropertyResourceId(id string) (string, string, error) {
 
 	return parts[0], parts[1], nil
 
+}
+
+// utility func to parse Terraform property resource id
+func parsePropertyResourceId(id string) (string, string, error) {
+
+	return parseResourceStringId(id)
 }
 
 // Create a new GTM Property
@@ -525,9 +531,9 @@ func resourceGTMv1_3PropertyExists(d *schema.ResourceData, meta interface{}) (bo
 func populateNewPropertyObject(d *schema.ResourceData) *gtmv1_3.Property {
 
 	propObj := gtmv1_3.NewProperty(d.Get("name").(string))
-	propObj.TrafficTargets = []*gtmv1_3.TrafficTarget{propObj.NewTrafficTarget()}
-        propObj.TrafficTargets = []*gtmv1_3.TrafficTarget{propObj.NewTrafficTarget()}
-        propObj.MxRecords = []*gtmv1_3.MxRecord{propObj.NewMxRecord()}
+	propObj.TrafficTargets = make([]*gtmv1_3.TrafficTarget, 1)
+        propObj.LivenessTests = make([]*gtmv1_3.LivenessTest, 1)
+        propObj.MxRecords = make([]*gtmv1_3.MxRecord, 1)
 	populatePropertyObject(d, propObj)
 
 	return propObj
@@ -644,7 +650,7 @@ func populateTrafficTargetObject(d *schema.ResourceData, prop *gtmv1_3.Property)
 // create and populate Terraform traffic_targets schema 
 func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtmv1_3.Property) {
 
-	traffListNew := make([]map[string]interface{}, len(prop.TrafficTargets))
+	traffListNew := make([]interface{}, len(prop.TrafficTargets))
 	for i, tt := range prop.TrafficTargets {
 		traffSvrNew := map[string]interface{}{
 					"datacenter_id":	tt.DatacenterId,
@@ -681,7 +687,7 @@ func populateMxRecordObject(d *schema.ResourceData, prop *gtmv1_3.Property) {
 // create and populate Terraform mx_record schema
 func populateTerraformMxRecordState(d *schema.ResourceData, prop *gtmv1_3.Property) {
 
-        recordListNew := make([]map[string]interface{}, len(prop.MxRecords))
+        recordListNew := make([]interface{}, len(prop.MxRecords))
         for i, r := range prop.MxRecords {
                 mxRecordNew := map[string]interface{}{
                                         "preference":	r.Preference,
@@ -704,7 +710,7 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtmv1_3.Property) 
                         lt := prop.NewLivenessTest(v["name"].(string),
 							v["test_object_protocol"].(string),
 							v["test_interval"].(int),
-							v["test_timeout"].(float32)) // create new object
+							float32(v["test_timeout"].(float64))) // create new object
                         lt.ErrorPenalty = v["error_penalty"].(int)
                         lt.PeerCertificateVerification = v["peer_certificate_verification"].(bool)
                         lt.TestObject = v["test_object"].(string)
@@ -733,7 +739,7 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtmv1_3.Property) 
 // create and populate Terraform liveness_test schema
 func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtmv1_3.Property) {
 
-        livenessListNew := make([]map[string]interface{}, len(prop.LivenessTests))
+        livenessListNew := make([]interface{}, len(prop.LivenessTests))
         for i, l := range prop.LivenessTests {
                 livenessNew := map[string]interface{}{
 					"name":					l.Name,

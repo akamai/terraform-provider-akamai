@@ -51,24 +51,24 @@ func resourceGTMv1_3Datacenter() *schema.Resource {
 				Type:    schema.TypeBool,
                                 Optional: true,
 			},
-			"default_load_object": {
+			"default_load_object": &schema.Schema{
 				Type:    schema.TypeSet,
 				Optional: true,
 				ConfigMode: schema.SchemaConfigModeAttr,
 				MaxItems: 1,
 				Elem:    &schema.Resource{
 					Schema:map[string]*schema.Schema{
-						"load_servers": {
+						"load_servers": &schema.Schema{
         	                        		Type:    schema.TypeList,
 							Elem:    &schema.Schema{Type: schema.TypeString},
                         	        		Optional: true,
 						},
-						"load_object": {
+						"load_object": &schema.Schema{
 							Type:    schema.TypeString,
 							Optional: true,
 							Default: "",
 						},
-						"load_object_port": {
+						"load_object_port": &schema.Schema{
 							Type:    schema.TypeInt,
 							Optional: true,
 						},
