@@ -42,8 +42,7 @@ func resourceGTMv1_3Cidrmap() *schema.Resource {
                                         Schema:map[string]*schema.Schema{
                                                 "datacenter_id": {
                                                         Type:     schema.TypeInt,
-                                                        Optional: true,
-							Default: nil,
+                                                        Required: true,
                                                 },
                                                 "nickname": {
                                                         Type:         schema.TypeString,
@@ -92,9 +91,9 @@ func resourceGTMv1_3CidrMapCreate(d *schema.ResourceData, meta interface{}) erro
         domain := d.Get("domain").(string)
 
 	log.Printf("[INFO] [Akamai GTM] Creating cidrMap [%s] in domain [%s]", d.Get("name").(string), domain)
-	newRsrc := populateNewCidrMapObject(d)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Proposed New CidrMap: [%v]", newRsrc )
-	cStatus, err := newRsrc.Create(domain)
+	newCidr := populateNewCidrMapObject(d)
+	log.Printf("[DEBUG] [Akamai GTMV1_3] Proposed New CidrMap: [%v]", newCidr )
+	cStatus, err := newCidr.Create(domain)
         if err != nil {
 		log.Printf("[DEBUG] [Akamai GTMV1_3] CidrMap Create failed: %s", err.Error())
                 fmt.Println(err)
@@ -298,6 +297,7 @@ func populateNewCidrMapObject(d *schema.ResourceData) *gtmv1_3.CidrMap {
 	cidrObj := gtmv1_3.NewCidrMap(d.Get("name").(string))
 	cidrObj.DefaultDatacenter = &gtmv1_3.DatacenterBase{}
         cidrObj.Assignments = make([]*gtmv1_3.CidrAssignment, 1)
+        cidrObj.Links = make([]*gtmv1_3.Link, 1)
 	populateCidrMapObject(d, cidrObj)
 
 	return cidrObj
@@ -379,7 +379,6 @@ func populateCidrDefaultDCObject(d *schema.ResourceData, cidr *gtmv1_3.CidrMap) 
 		cidrDefaultDCList := as.([]interface{})
                 asMap := cidrDefaultDCList[0].(map[string]interface{})
 		if asMap["datacenter_id"] != nil && asMap["datacenter_id"].(int) != 0 {
-			log.Printf("[DEBUG] [Akamai GTMv1_3] Default Datacenter: %v ... %d ", asMap["datacenter_id"], asMap["datacenter_id"].(int))
                 	cidrDefaultDCObj.DatacenterId = asMap["datacenter_id"].(int)
                 	cidrDefaultDCObj.Nickname = asMap["nickname"].(string)
 		} else {

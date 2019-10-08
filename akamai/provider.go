@@ -165,8 +165,8 @@ func Provider() terraform.ResourceProvider {
                         "akamai_gtm_property":        resourceGTMv1_3Property(),
                         "akamai_gtm_resource":        resourceGTMv1_3Resource(),
                         "akamai_gtm_cidrmap":         resourceGTMv1_3Cidrmap(),
-                        //"akamai_gtm_geomap":        resourceGTMv1_3Geomap(),
-                        //"akamai_gtm_asmap":         resourceGTMv1_3ASmap(),
+                        "akamai_gtm_geomap":          resourceGTMv1_3Geomap(),
+                        "akamai_gtm_asmap":           resourceGTMv1_3ASmap(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

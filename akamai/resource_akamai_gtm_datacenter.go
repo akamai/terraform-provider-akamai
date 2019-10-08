@@ -382,7 +382,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtmv1_3.Datacenter) {
 	if v, ok := d.GetOk("servermonitor_liveness_count"); ok { dc.ServermonitorLivenessCount = v.(int) }
 	if v, ok := d.GetOk("servermonitor_load_count"); ok { dc.ServermonitorLoadCount = v.(int) }
 	if v, ok := d.GetOk("servermonitor_pool"); ok { dc.ServermonitorPool = v.(string) }
-	if v, ok := d.GetOk("state_or_province"); ok { dc.SstateOrProvince = v.(string) }
+	if v, ok := d.GetOk("state_or_province"); ok { dc.StateOrProvince = v.(string) }
 	if v, ok := d.GetOk("virtual"); ok { dc.Virtual = v.(bool) }
 
 	return
@@ -423,7 +423,7 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtmv1_3.Datacenter) {
         d.Set("servermonitor_liveness_count", dc.ServermonitorLivenessCount)
         d.Set("servermonitor_load_count", dc.ServermonitorLoadCount)
         d.Set("servermonitor_pool", dc.ServermonitorPool)
-        d.Set("state_or_province", dc.SstateOrProvince)
+        d.Set("state_or_province", dc.StateOrProvince)
         d.Set("virtual", dc.Virtual)
 
 	return
