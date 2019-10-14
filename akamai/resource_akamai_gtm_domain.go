@@ -54,7 +54,7 @@ func resourceGTMv1_3Domain() *schema.Resource {
                         },
  			"default_unreachable_threshold": {
 				Type:    schema.TypeFloat,
-                                Optional: true,
+                                Computed: true,
 			},
 			"email_notification_list": {
                                 Type:    schema.TypeList,
@@ -63,31 +63,32 @@ func resourceGTMv1_3Domain() *schema.Resource {
                         },
 			"min_pingable_region_fraction": {
                                 Type:    schema.TypeFloat,
-                                Optional: true,
+                                Computed: true,
                         },
 			"default_timeout_penalty": {
                                 Type:    schema.TypeInt,
                                 Optional: true,
+				Default: 25,
                     	},
 			"servermonitor_liveness_count": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"round_robin_prefix": {
                                 Type:     schema.TypeString,
-                                Optional: true,
+                                Computed: true,
                         },
 			"servermonitor_load_count": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"ping_interval": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"max_ttl": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"load_imbalance_percentage": {
                                 Type:    schema.TypeFloat,
@@ -95,19 +96,19 @@ func resourceGTMv1_3Domain() *schema.Resource {
                         },
 			"default_health_max": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"map_update_interval": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"max_properties": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"max_resources": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"default_ssl_client_private_key": {
                                 Type:     schema.TypeString,
@@ -116,10 +117,11 @@ func resourceGTMv1_3Domain() *schema.Resource {
 			"default_error_penalty": {
                                 Type:    schema.TypeInt,
                                 Optional: true,
+				Default: 75,
                         },
 			"max_test_timeout": {
                                 Type:    schema.TypeFloat,
-                                Optional: true,
+                                Computed: true,
                         },
 			"cname_coalescing_enabled": {
                                 Type:    schema.TypeBool,
@@ -127,11 +129,11 @@ func resourceGTMv1_3Domain() *schema.Resource {
                         },
 			"default_health_multiplier": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"servermonitor_pool": {
                                 Type:     schema.TypeString,
-                                Optional: true,
+                                Computed: true,
                         },
 			"load_feedback": {
                                 Type:    schema.TypeBool,
@@ -139,23 +141,23 @@ func resourceGTMv1_3Domain() *schema.Resource {
                         },
 			"min_ttl": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"default_max_unreachable_penalty": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"default_health_threshold": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"min_test_interval": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"ping_packet_size": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"default_ssl_client_certificate": {
                                 Type:     schema.TypeString,
@@ -330,7 +332,11 @@ func populateDomainObject(d *schema.ResourceData, dom *gtmv1_3.Domain) {
 	} 
 	if v, ok := d.GetOk("default_unreachable_threshold"); ok { dom.DefaultUnreachableThreshold = v.(float32) }
 	if v, ok := d.GetOk("email_notification_list"); ok { 
-		dom.EmailNotificationList, ok = unmarshalSetString(v.([]interface{})) 
+		ls := make([]string, len(v.([]interface{})))
+                for i, sl := range v.([]interface{}) {
+                    	ls[i] = sl.(string)
+                }
+		dom.EmailNotificationList = ls 
 	} 
 	if v, ok := d.GetOk("min_pingable_region_fraction"); ok { dom.MinPingableRegionFraction = v.(float32) }
 	if v, ok := d.GetOk("default_timeout_penalty"); ok { dom.DefaultTimeoutPenalty = v.(int) }

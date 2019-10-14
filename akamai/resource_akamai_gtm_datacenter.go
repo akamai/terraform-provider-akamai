@@ -93,27 +93,27 @@ func resourceGTMv1_3Datacenter() *schema.Resource {
                         },
 			"ping_interval": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"ping_packet_size": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"score_penalty": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"servermonitor_liveness_count": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"servermonitor_load_count": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"servermonitor_pool": {
                                 Type:    schema.TypeString,
-                                Optional: true,
+                                Computed: true,
                         },
 			"state_or_province": {
                                 Type:    schema.TypeString,

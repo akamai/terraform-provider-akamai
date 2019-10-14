@@ -85,6 +85,7 @@ func resourceGTMv1_3Property() *schema.Resource {
                         "dynamic_ttl": {
                                 Type:     schema.TypeInt,
                                 Optional: true,
+				Default: 300,
                         },
                         "max_unreachable_penalty": {
                                 Type:    schema.TypeInt,
@@ -136,11 +137,11 @@ func resourceGTMv1_3Property() *schema.Resource {
                         },
 			"weighted_hash_bits_for_ipv4": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
 			"weighted_hash_bits_for_ipv6": {
                                 Type:    schema.TypeInt,
-                                Optional: true,
+                                Computed: true,
                         },
                         "traffic_targets": &schema.Schema{
                                 Type:    schema.TypeList,
