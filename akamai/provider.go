@@ -112,11 +112,11 @@ func Provider() terraform.ResourceProvider {
 				Type:     schema.TypeString,
 				Default:  "default",
 			},
-                        "gtm_section": &schema.Schema{
-                                Optional: true,
-                                Type:     schema.TypeString,
-                                Default:  "default",
-                        },
+			"gtm_section": &schema.Schema{
+				Optional: true,
+				Type:     schema.TypeString,
+				Default:  "default",
+			},
 			"papi_section": &schema.Schema{
 				Optional: true,
 				Type:     schema.TypeString,
@@ -137,11 +137,11 @@ func Provider() terraform.ResourceProvider {
 				Type:     schema.TypeSet,
 				Elem:     getConfigOptions("dns"),
 			},
-                        "gtm": &schema.Schema{
-                                Optional: true,
-                                Type:     schema.TypeSet,
-                                Elem:     getConfigOptions("gtm"),
-                        },
+			"gtm": &schema.Schema{
+				Optional: true,
+				Type:     schema.TypeSet,
+				Elem:     getConfigOptions("gtm"),
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_authorities_set": dataSourceAuthoritiesSet(),
@@ -161,12 +161,12 @@ func Provider() terraform.ResourceProvider {
 			"akamai_property_variables":  resourcePropertyVariables(),
 			"akamai_property_activation": resourcePropertyActivation(),
 			"akamai_gtm_domain":          resourceGTMv1_3Domain(),
-                        "akamai_gtm_datacenter":      resourceGTMv1_3Datacenter(),
-                        "akamai_gtm_property":        resourceGTMv1_3Property(),
-                        "akamai_gtm_resource":        resourceGTMv1_3Resource(),
-                        "akamai_gtm_cidrmap":         resourceGTMv1_3Cidrmap(),
-                        "akamai_gtm_geomap":          resourceGTMv1_3Geomap(),
-                        "akamai_gtm_asmap":           resourceGTMv1_3ASmap(),
+			"akamai_gtm_datacenter":      resourceGTMv1_3Datacenter(),
+			"akamai_gtm_property":        resourceGTMv1_3Property(),
+			"akamai_gtm_resource":        resourceGTMv1_3Resource(),
+			"akamai_gtm_cidrmap":         resourceGTMv1_3Cidrmap(),
+			"akamai_gtm_geomap":          resourceGTMv1_3Geomap(),
+			"akamai_gtm_asmap":           resourceGTMv1_3ASmap(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
@@ -175,7 +175,7 @@ func Provider() terraform.ResourceProvider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	dnsv2Config, dnsErr := getConfigDNSV2Service(d)
 	papiConfig, papiErr := getPAPIV1Service(d)
-        gtmv1_3Config, gtmErr := getConfigGTMV1_3Service(d)
+	gtmv1_3Config, gtmErr := getConfigGTMV1_3Service(d)
 
 	if dnsErr != nil && papiErr != nil && gtmErr != nil || dnsv2Config == nil && papiConfig == nil && gtmv1_3Config == nil {
 		return nil, fmt.Errorf("at least one configuration must be defined")
@@ -223,32 +223,32 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 }
 
 func getConfigGTMV1_3Service(d resourceData) (*edgegrid.Config, error) {
-        var GTMv1_3Config edgegrid.Config
-        var err error
-        if _, ok := d.GetOk("gtm"); ok {
-                config := d.Get("gtm").(set).List()[0].(map[string]interface{})
+	var GTMv1_3Config edgegrid.Config
+	var err error
+	if _, ok := d.GetOk("gtm"); ok {
+		config := d.Get("gtm").(set).List()[0].(map[string]interface{})
 
-                GTMv1_3Config = edgegrid.Config{
-                        Host:         config["host"].(string),
-                        AccessToken:  config["access_token"].(string),
-                        ClientToken:  config["client_token"].(string),
-                        ClientSecret: config["client_secret"].(string),
-                        MaxBody:      config["max_body"].(int),
-                }
+		GTMv1_3Config = edgegrid.Config{
+			Host:         config["host"].(string),
+			AccessToken:  config["access_token"].(string),
+			ClientToken:  config["client_token"].(string),
+			ClientSecret: config["client_secret"].(string),
+			MaxBody:      config["max_body"].(int),
+		}
 
-                gtmv1_3.Init(GTMv1_3Config)
-                return &GTMv1_3Config, nil
-        }
+		gtmv1_3.Init(GTMv1_3Config)
+		return &GTMv1_3Config, nil
+	}
 
-        edgerc := d.Get("edgerc").(string)
-        section := d.Get("gtm_section").(string)
-        GTMv1_3Config, err = edgegrid.Init(edgerc, section)
-        if err != nil {
-                return nil, err
-        }
+	edgerc := d.Get("edgerc").(string)
+	section := d.Get("gtm_section").(string)
+	GTMv1_3Config, err = edgegrid.Init(edgerc, section)
+	if err != nil {
+		return nil, err
+	}
 
-        gtmv1_3.Init(GTMv1_3Config)
-        return &GTMv1_3Config, nil
+	gtmv1_3.Init(GTMv1_3Config)
+	return &GTMv1_3Config, nil
 }
 
 func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
