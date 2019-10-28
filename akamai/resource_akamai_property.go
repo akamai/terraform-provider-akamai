@@ -19,7 +19,7 @@ func resourceProperty() *schema.Resource {
 		Read:   resourcePropertyRead,
 		Update: resourcePropertyUpdate,
 		Delete: resourcePropertyDelete,
-		Exists: resourcePropertyExists,
+		//Exists: resourcePropertyExists,
 		Importer: &schema.ResourceImporter{
 			State: resourcePropertyImport,
 		},
@@ -414,6 +414,7 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 	return []*schema.ResourceData{d}, nil
 }
 
+/*
 func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
@@ -424,7 +425,7 @@ func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, err
 
 	return true, nil
 }
-
+*/
 func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
@@ -438,6 +439,12 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("group", property.GroupID)
 	d.Set("name", property.PropertyName)
 	d.Set("note", property.Note)
+
+	rules, err := getRules(d, property, property.Contract, property.Group)
+
+	if err == nil {
+		d.Set("rules", rules)
+	}
 
 	if ruleFormat, ok := d.GetOk("rule_format"); ok {
 		d.Set("rule_format", ruleFormat.(string))
