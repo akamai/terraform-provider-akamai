@@ -1,11 +1,12 @@
 package akamai
 
 import (
+	"log"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/tidwall/gjson"
-	"log"
 )
 
 func dataPropertyRules() *schema.Resource {
@@ -224,7 +225,7 @@ func dataPropertyRulesRead(d *schema.ResourceData, meta interface{}) error {
 	// get rules from the TF config
 	unmarshalRules(d, rules)
 
-	jsonBody, err := jsonhooks.Marshal(rules)
+	jsonBody, err := jsonhooks.Marshal(rules.Rule)
 	if err != nil {
 		return err
 	}

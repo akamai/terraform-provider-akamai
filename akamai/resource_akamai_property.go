@@ -213,13 +213,20 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("ipv6")
 	d.Set("edge_hostnames", ehnMap)
 
+	jsonBody, err := jsonhooks.Marshal(rules)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[DEBUG] CREATE Check rules after unmarshal from Json %s\n", string(jsonBody))
+
 	if err == nil {
 		d.Set("rules", rules)
 	}
 
 	d.Partial(false)
 	log.Println("[DEBUG] Done")
-	return nil
+	return resourcePropertyUpdate(d, meta)
 }
 
 func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group) (*papi.Rules, error) {
@@ -236,7 +243,7 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 	// get rules from the TF config
 
 	rulecheck, ok := d.GetOk("rules")
-	log.Printf("[DEBUG] Check for rules Json CREATE %s\n", rulecheck)
+	log.Printf("[DEBUG] Check for rules Json getRules %s\n", rulecheck)
 
 	if ok {
 		log.Printf("[DEBUG] Unmarshal Rules from JSON")
@@ -414,19 +421,8 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 	return []*schema.ResourceData{d}, nil
 }
 
-/*
-func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = d.Id()
-	e := property.GetProperty()
-	if e != nil {
-		return false, e
-	}
-
-	return true, nil
-}
-*/
 func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
+	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
 	err := property.GetProperty()
@@ -440,14 +436,20 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("name", property.PropertyName)
 	d.Set("note", property.Note)
 
-	rules, err := getRules(d, property, property.Contract, property.Group)
+	rules, err := property.GetRules()
+	jsonBody, err := jsonhooks.Marshal(rules.Rule)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] READ Check rules after unmarshal from Json %s\n", string(jsonBody))
 
 	if err == nil {
-		d.Set("rules", rules)
+		log.Printf("[DEBUG] Save Rules from API : %s\n", string(jsonBody))
+		d.Set("rules", string(jsonBody))
 	}
 
-	if ruleFormat, ok := d.GetOk("rule_format"); ok {
-		d.Set("rule_format", ruleFormat.(string))
+	if rules.RuleFormat != "" {
+		d.Set("rule_format", rules.RuleFormat)
 	} else {
 		d.Set("rule_format", property.RuleFormat)
 	}
@@ -461,6 +463,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("production_version", property.ProductionVersion)
 	}
 
+	d.Partial(false)
 	return nil
 }
 
@@ -492,7 +495,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Check rules after unmarshal from Json %s\n", string(jsonBody))
+	log.Printf("[DEBUG] UPDATE Check rules after unmarshal from Json %s\n", string(jsonBody))
 	e = rules.Save()
 	if e != nil {
 		if e == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
@@ -520,7 +523,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	d.Partial(false)
 
 	log.Println("[DEBUG] Done")
-	return nil
+	return resourcePropertyRead(d, meta)
 }
 
 // Helpers
@@ -730,7 +733,9 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 	if ok {
 		propertyRules.Rule = &papi.Rule{Name: "default"}
 		log.Println("[DEBUG] RulesJson")
-		rulesJSON := gjson.Get(rules.(string), "rules")
+
+		log.Println("unmarshalRulesFromJson RULES from JSON ", rules.(string))
+		rulesJSON := gjson.Parse(rules.(string))
 
 		rulesJSON.ForEach(func(key, value gjson.Result) bool {
 			log.Println("[DEBUG] unmarshalRulesFromJson KEY RULES KEY = " + key.String() + " VAL " + value.String())
