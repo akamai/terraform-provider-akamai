@@ -79,7 +79,7 @@ func resourceGTMv1_3Resource() *schema.Resource {
 			},
 			"resource_instances": &schema.Schema{
 				Type:       schema.TypeList,
-				Optional:   true,
+				Computed:   true,
 				ConfigMode: schema.SchemaConfigModeAttr,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -95,7 +95,7 @@ func resourceGTMv1_3Resource() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"load_servers": &schema.Schema{
+						"load_servers": {
 							Type:     schema.TypeList,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
@@ -328,7 +328,7 @@ func resourceGTMv1_3ResourceExists(d *schema.ResourceData, meta interface{}) (bo
 func populateNewResourceObject(d *schema.ResourceData) *gtmv1_3.Resource {
 
 	rsrcObj := gtmv1_3.NewResource(d.Get("name").(string))
-	rsrcObj.ResourceInstances = make([]*gtmv1_3.ResourceInstance, 1)
+	rsrcObj.ResourceInstances = make([]*gtmv1_3.ResourceInstance, 0)
 	populateResourceObject(d, rsrcObj)
 
 	return rsrcObj
@@ -383,6 +383,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtmv1_3.Resource) {
 // Populate Terraform state from provided Resource object
 func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtmv1_3.Resource) {
 
+	log.Printf("[DEBUG] [Akamai GTMV1_3] Entering populateTerraformResourceState")
 	// walk thru all state elements
 	d.Set("name", rsrc.Name)
 	d.Set("type", rsrc.Type)
@@ -406,9 +407,8 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtmv1_3.Resour
 func populateResourceInstancesObject(d *schema.ResourceData, rsrc *gtmv1_3.Resource) {
 
 	// pull apart List
-	ri := d.Get("resource_instances")
-	if ri != nil {
-		rsrcInstanceList := ri.([]interface{})
+	rsrcInstanceList := d.Get("resource_instances").([]interface{})
+	if rsrcInstanceList != nil {
 		rsrcInstanceObjList := make([]*gtmv1_3.ResourceInstance, len(rsrcInstanceList)) // create new object list
 		for i, v := range rsrcInstanceList {
 			riMap := v.(map[string]interface{})
@@ -434,15 +434,17 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtmv1
 
 	riListNew := make([]interface{}, len(rsrc.ResourceInstances))
 	for i, ri := range rsrc.ResourceInstances {
-		riNew := map[string]interface{}{
-			"datacenter_id":           ri.DatacenterId,
-			"use_default_load_object": ri.UseDefaultLoadObject,
-			"load_object":             ri.LoadObject,
-			"load_object_port":        ri.LoadObjectPort,
-			"load_servers":            ri.LoadServers,
-		}
-		riListNew[i] = riNew
+		riNew := make(map[string]interface{})
+		riNew["datacenter_id"] = ri.DatacenterId
+		riNew["use_default_load_object"] = ri.UseDefaultLoadObject
+		riNew["load_object"] = ri.LoadObject.LoadObject
+		riNew["load_object_port"] = ri.LoadObjectPort
+		riNew["load_servers"] = ri.LoadServers
+		riListNew[i] = &riNew
 	}
-	d.Set("resource_instances", riListNew)
+	err := d.Set("resource_instances", riListNew)
+	if err != nil {
+		log.Printf("[ERROR] [Akamai GTMV1_3] Error writing resource_instances: %s", err.Error())
+	}
 
 }

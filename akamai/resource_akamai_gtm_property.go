@@ -161,7 +161,7 @@ func resourceGTMv1_3Property() *schema.Resource {
 							Type:     schema.TypeFloat,
 							Optional: true,
 						},
-						"servers": &schema.Schema{
+						"servers": {
 							Type:     schema.TypeList,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
@@ -716,7 +716,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtmv1_3.P
 		}
 		traffListNew[i] = traffSvrNew
 	}
-	d.Set("traffic_servers", traffListNew)
+	d.Set("traffic_targets", traffListNew)
 
 }
 

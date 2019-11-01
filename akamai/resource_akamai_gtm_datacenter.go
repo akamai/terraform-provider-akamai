@@ -436,8 +436,9 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtmv1_3.Datacenter) {
 	d.Set("cloud_server_targeting", dc.CloudServerTargeting)
 	d.Set("continent", dc.Continent)
 	d.Set("country", dc.Country)
-	_, ok := d.GetOkExists("default_load_object")
-	if ok {
+	// _, ok := d.GetOkExists("default_load_object")
+	if true { 
+		// ok {
 		log.Printf("[DEBUG] [Akamai GTMv1_3] default_load_object Exists")
 		dloNew := make(map[string]interface{})
 		if dc.DefaultLoadObject != nil {
