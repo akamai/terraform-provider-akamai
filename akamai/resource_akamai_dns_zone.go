@@ -44,7 +44,7 @@ func resourceDNSv2Zone() *schema.Resource {
 			"masters": {
 				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Required: true,
+				Optional: true,
 				Set:      schema.HashString,
 			},
 			"comment": {
@@ -74,12 +74,18 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	zonetype := d.Get("type").(string)
 	masterlist := d.Get("masters").(*schema.Set).List()
 	masters := make([]string, 0, len(masterlist))
+
+	if zonetype == "SECONDARY" && len(masterlist) == 0 {
+		return fmt.Errorf("DNS Secondary zone requires masters for zone %v", hostname)
+	}
+
 	if len(masterlist) > 0 {
 		for _, master := range masterlist {
 			masters = append(masters, master.(string))
 		}
 
 	}
+
 	comment := d.Get("comment").(string)
 	signandserve := d.Get("sign_and_serve").(bool)
 	contract := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
