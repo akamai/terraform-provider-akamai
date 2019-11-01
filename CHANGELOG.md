@@ -1,4 +1,5 @@
 ## 0.1.4 (Unreleased)
+* [FIX] Add support for update of rules state (`akamai_property`) [GH-66]
 * [FIX] Add support for masters being optional (`akamai_dns_zone`) [GH-61]
 ## 0.1.3 (August 12, 2019)
 
