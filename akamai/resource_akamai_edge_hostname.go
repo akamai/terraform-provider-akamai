@@ -142,6 +142,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 
 	if certEnrollmentId, ok := d.GetOk("certificate"); ok {
 		ehn.CertEnrollmentId = certEnrollmentId.(int)
+		ehn.SlotNumber = certEnrollmentId.(int)
 	} else if ehn.SecureNetwork == "ENHANCED_TLS" {
 		return errors.New("A certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames")
 	}
