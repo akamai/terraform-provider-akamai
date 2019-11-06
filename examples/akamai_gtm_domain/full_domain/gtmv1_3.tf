@@ -8,6 +8,11 @@ locals {
   group = "12345"
 }
 
+// Mapping API Structure element names to Resource attribute names:
+// Convert camelcase element names to resource attribute names by inserting 
+// an underscore before any uppercase letter and chnaging case to lower, 
+// e.g. defaultHealthMax -> default_health_max
+
 
 resource "akamai_gtm_domain" "tfexample_domain" {
     // 
