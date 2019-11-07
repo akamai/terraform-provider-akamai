@@ -148,7 +148,7 @@ func TestAkamaiDataPropertyRules_siteshield(t *testing.T) {
 				Destroy: false,
 				Config:  testAccAkamaiDataPropertyRulesSiteshield,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"name\":\"default\",\"behaviors\":[{\"name\":\"siteShield\",\"options\":{\"ssmap\":{\"value\":\"mapname.akamai.net\"}}}],\"options\":{}}"),
+					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"siteShield\",\"options\":{\"ssmap\":{\"value\":\"mapname.akamai.net\"}}}],\"options\":{}}}"),
 					resource.TestCheckResourceAttrSet(
 						"data.akamai_property_rules.rules", "json",
 					),
@@ -194,7 +194,7 @@ func TestAkamaiDataPropertyRules_cpCode(t *testing.T) {
 				Destroy: false,
 				Config:  testAccAkamaiDataPropertyRulesCPCode,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"name\":\"default\",\"behaviors\":[{\"name\":\"cpCode\",\"options\":{\"value\":{\"id\":12345}}}],\"options\":{}}"),
+					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"cpCode\",\"options\":{\"value\":{\"id\":12345}}}],\"options\":{}}}"),
 					resource.TestCheckResourceAttrSet(
 						"data.akamai_property_rules.rules", "json",
 					),
@@ -234,7 +234,7 @@ func TestAkamaiDataPropertyRules_isSecureTrue(t *testing.T) {
 				Destroy: false,
 				Config:  fmt.Sprintf(testAccAkamaiDataPropertyRulesIsSecure, "true"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"name\":\"default\",\"options\":{\"is_secure\":true}}"),
+					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":true}}}"),
 					resource.TestCheckResourceAttrSet(
 						"data.akamai_property_rules.rules", "json",
 					),
@@ -253,7 +253,7 @@ func TestAkamaiDataPropertyRules_isSecureFalse(t *testing.T) {
 				Destroy: false,
 				Config:  fmt.Sprintf(testAccAkamaiDataPropertyRulesIsSecure, "false"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"name\":\"default\",\"options\":{}}"),
+					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 					resource.TestCheckResourceAttrSet(
 						"data.akamai_property_rules.rules", "json",
 					),

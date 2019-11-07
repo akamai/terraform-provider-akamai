@@ -225,7 +225,7 @@ func dataPropertyRulesRead(d *schema.ResourceData, meta interface{}) error {
 	// get rules from the TF config
 	unmarshalRules(d, rules)
 
-	jsonBody, err := jsonhooks.Marshal(rules.Rule)
+	jsonBody, err := jsonhooks.Marshal(rules)
 	if err != nil {
 		return err
 	}

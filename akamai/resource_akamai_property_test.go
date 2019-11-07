@@ -157,7 +157,7 @@ func TestAccAkamaiProperty_basic(t *testing.T) {
 
 func TestAccAkamaiProperty_isSecureTrue(t *testing.T) {
 	config := map[string]interface{}{
-		"rules":     `{\"name\":\"default\"}`,
+		"rules":     `{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\"}}`,
 		"is_secure": true,
 	}
 
@@ -171,7 +171,7 @@ func TestAccAkamaiProperty_isSecureTrue(t *testing.T) {
 
 func TestAccAkamaiProperty_isSecureFalse(t *testing.T) {
 	config := map[string]interface{}{
-		"rules":     `{\"name\":\"default\"}`,
+		"rules":     `{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\"}}`,
 		"is_secure": false,
 	}
 
@@ -185,7 +185,7 @@ func TestAccAkamaiProperty_isSecureFalse(t *testing.T) {
 
 func TestAccAkamaiProperty_isSecureUnset(t *testing.T) {
 	config := map[string]interface{}{
-		"rules": `{\"name\":\"default\"}`,
+		"rules": `{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\"}}`,
 	}
 
 	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
@@ -198,7 +198,7 @@ func TestAccAkamaiProperty_isSecureUnset(t *testing.T) {
 
 func TestAccAkamaiProperty_isSecureJsonTrue(t *testing.T) {
 	config := map[string]interface{}{
-		"rules": "{\"name\":\"default\",\"options\":{\"is_secure\":true}}",
+		"rules": "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":true}}}",
 	}
 
 	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
@@ -211,7 +211,7 @@ func TestAccAkamaiProperty_isSecureJsonTrue(t *testing.T) {
 
 func TestAccAkamaiProperty_isSecureJsonFalse(t *testing.T) {
 	config := map[string]interface{}{
-		"rules": "{\"name\":\"default\",\"options\":{\"is_secure\":false}}",
+		"rules": "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":false}}}",
 	}
 
 	d := schema.TestResourceDataRaw(t, Provider().(*schema.Provider).ResourcesMap["akamai_property"].Schema, config)
@@ -224,7 +224,7 @@ func TestAccAkamaiProperty_isSecureJsonFalse(t *testing.T) {
 
 func TestAccAkamaiProperty_isSecureJsonTrueConfigFalse(t *testing.T) {
 	config := map[string]interface{}{
-		"rules":     "{\"name\":\"default\",\"options\":{\"is_secure\":true}}",
+		"rules":     "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":true}}}",
 		"is_secure": false,
 	}
 
@@ -238,7 +238,7 @@ func TestAccAkamaiProperty_isSecureJsonTrueConfigFalse(t *testing.T) {
 
 func TestAccAkamaiProperty_isSecureJsonFalseConfigTrue(t *testing.T) {
 	config := map[string]interface{}{
-		"rules":     "{\"name\":\"default\",\"options\":{\"is_secure\":false}}",
+		"rules":     "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":false}}}",
 		"is_secure": true,
 	}
 

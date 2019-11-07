@@ -3,7 +3,7 @@ provider "akamai" {
 	papi_section = "papi"
 }
 
-resource "akamai_property_rules" "rules" {
+data "akamai_property_rules" "rules" {
 	rules {
 		behavior {
 			name = "origin"
@@ -82,5 +82,5 @@ resource "akamai_property_rules" "rules" {
 }
 
 output "json" {
-	value = "${akamai_property_rules.rules.json}"
+	value = "${data.akamai_property_rules.rules.json}"
 }

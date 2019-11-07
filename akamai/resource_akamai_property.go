@@ -445,7 +445,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 
 	if err == nil {
 		log.Printf("[DEBUG] Save Rules from API : %s\n", string(jsonBody))
-		d.Set("rules", string(jsonBody))
+		d.Set("rules", rules)
 	}
 
 	if rules.RuleFormat != "" {
@@ -735,8 +735,8 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 		log.Println("[DEBUG] RulesJson")
 
 		log.Println("unmarshalRulesFromJson RULES from JSON ", rules.(string))
-		rulesJSON := gjson.Parse(rules.(string))
 
+		rulesJSON := gjson.Get(rules.(string), "rules")
 		rulesJSON.ForEach(func(key, value gjson.Result) bool {
 			log.Println("[DEBUG] unmarshalRulesFromJson KEY RULES KEY = " + key.String() + " VAL " + value.String())
 
