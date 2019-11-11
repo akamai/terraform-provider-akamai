@@ -32,7 +32,7 @@ func resourceGTMv1_3Property() *schema.Resource {
 			},
 			"name": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 			},
 			"type": {
 				Type:     schema.TypeString,

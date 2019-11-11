@@ -264,8 +264,22 @@ func resourceGTMv1_3DatacenterUpdate(d *schema.ResourceData, meta interface{}) e
 func resourceGTMv1_3DatacenterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMV1_3] Import")
-
-	err := resourceGTMv1_3DatacenterRead(d, meta)
+	log.Printf("[DEBUG] Importing [Akamai GTMV1_3] Datacenter: %s", d.Id())
+	// retrieve the datacenter and domain
+	domain, dcID, err := parseDatacenterResourceId(d.Id())
+	if err != nil {
+		return nil, errors.New("Invalid datacenter resource Id")
+	}
+	dc, err := gtmv1_3.GetDatacenter(dcID, domain)
+	if err != nil {
+		fmt.Println(err)
+		log.Printf("[DEBUG] [Akamai GTMV1_3] Datacenter Read error: %s", err.Error())
+		return nil, err
+	}
+	populateTerraformDCState(d, dc)
+	d.Set("domain", domain)
+	d.Set("wait_on_complete", true)
+	log.Printf("[DEBUG] [Akamai GTMV1_3] Import %v", dc)
 	return []*schema.ResourceData{d}, err
 
 }
@@ -436,22 +450,15 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtmv1_3.Datacenter) {
 	d.Set("cloud_server_targeting", dc.CloudServerTargeting)
 	d.Set("continent", dc.Continent)
 	d.Set("country", dc.Country)
-	// _, ok := d.GetOkExists("default_load_object")
-	if true { 
-		// ok {
-		log.Printf("[DEBUG] [Akamai GTMv1_3] default_load_object Exists")
-		dloNew := make(map[string]interface{})
-		if dc.DefaultLoadObject != nil {
-			dloNew["load_object"] = dc.DefaultLoadObject.LoadObject
-			dloNew["load_object_port"] = dc.DefaultLoadObject.LoadObjectPort
-			dloNew["load_servers"] = dc.DefaultLoadObject.LoadServers
-		}
-		dloNewList := make([]interface{}, 1)
-		dloNewList[0] = dloNew
-		d.Set("default_load_object", dloNewList)
-	} else {
-		log.Printf("[WARNING] [Akamai GTMv1_3] default_load_object attribute NOT in Terraform State")
+	dloNew := make(map[string]interface{})
+	if dc.DefaultLoadObject != nil {
+		dloNew["load_object"] = dc.DefaultLoadObject.LoadObject
+		dloNew["load_object_port"] = dc.DefaultLoadObject.LoadObjectPort
+		dloNew["load_servers"] = dc.DefaultLoadObject.LoadServers
 	}
+	dloNewList := make([]interface{}, 1)
+	dloNewList[0] = dloNew
+	d.Set("default_load_object", dloNewList)
 	d.Set("latitude", dc.Latitude)
 	d.Set("longitude", dc.Longitude)
 	d.Set("ping_interval", dc.PingInterval)

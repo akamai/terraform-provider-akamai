@@ -167,6 +167,27 @@ func resourceGTMv1_3Domain() *schema.Resource {
 	}
 }
 
+// Retrieve optional query args. contractId, groupId [and accountSwitchKey] supported.
+func GetQueryArgs(d *schema.ResourceData) map[string]string {
+
+	qArgs := make(map[string]string)
+	contract := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
+	if contract != "" && len(contract) > 0 {
+		qArgs["contractId"] = contract
+	}
+	groupId := strings.TrimPrefix(d.Get("group").(string), "grp_")
+	if groupId != "" && len(groupId) > 0 {
+		qArgs["gid"] = groupId
+	}
+	//accountSwitch := d.Get("account_switch_key").(string)
+	// if accountSwitch != nil && len(accountSwitch) > 0 {
+	//        qArgs["accountSwitchKey"] = accountSwitch
+	//}
+
+	return qArgs
+
+}
+
 // Create a new GTM Domain
 func resourceGTMv1_3DomainCreate(d *schema.ResourceData, meta interface{}) error {
 
@@ -176,16 +197,8 @@ func resourceGTMv1_3DomainCreate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[INFO] [Akamai GTM] Creating domain [%s]", dname)
 	newDom := populateNewDomainObject(d)
 	log.Printf("[DEBUG] [Akamai GTMV1_3] Domain: [%v]", newDom)
-	qArgs := make(map[string]string)
-	contract := d.Get("contract").(string)
-	if len(contract) > 0 {
-		qArgs["contractId"] = contract
-	}
-	groupId := d.Get("group").(string)
-	if len(groupId) > 0 {
-		qArgs["gid"] = groupId
-	}
-	cStatus, err := newDom.Create(qArgs)
+
+	cStatus, err := newDom.Create(GetQueryArgs(d))
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -252,8 +265,7 @@ func resourceGTMv1_3DomainUpdate(d *schema.ResourceData, meta interface{}) error
 	populateDomainObject(d, existDom)
 	log.Printf("[DEBUG] Updating [Akamai GTMv1_3] Domain PROPOSED: %v", existDom)
 	//existDom := populateNewDomainObject(d)
-	qargs := make(map[string]string)
-	uStat, err := existDom.Update(qargs)
+	uStat, err := existDom.Update(GetQueryArgs(d))
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -284,15 +296,57 @@ func resourceGTMv1_3DomainUpdate(d *schema.ResourceData, meta interface{}) error
 
 	// Give terraform the ID
 	return resourceGTMv1_3DomainRead(d, meta)
+
 }
 
 // Delete GTM Domain. Not Supported in current API version.
 func resourceGTMv1_3DomainDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Deleting GTM Domain")
+        log.Printf("[DEBUG] [Akamai GTMv1_3] Domain: %s", d.Id())
+        // Get existing domain
+        existDom, err := gtmv1_3.GetDomain(d.Id())
+        if err != nil {
+                fmt.Println(err.Error())
+                return err
+        }
+        uStat, err := existDom.Delete()
+        if err != nil {
+                fmt.Println(err.Error())
+                return err
+        }
+        b, err := json.Marshal(uStat)
+        if err != nil {
+                fmt.Println(err.Error())
+                return err
+        }
+        fmt.Println(string(b))
+        log.Printf("[DEBUG] [Akamai GTMV1_3] Delete status:")
+        log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
 
+        if d.Get("wait_on_complete").(bool) {
+                done, err := waitForCompletion(d.Id())
+                if done {
+                        log.Printf("[INFO] [Akamai GTMV1_3] Domain delete completed")
+                } else {
+                        if err == nil {
+                                log.Printf("[INFO] [Akamai GTMV1_3] Domain delete pending")
+                        } else {
+                                log.Printf("[WARNING] [Akamai GTMV1_3] Domain delete failed [%s]", err.Error())
+                                return err
+                        }
+                }
+
+        }
+
+        d.SetId("")
+	return nil
+
+	/*
 	// No GTM Domain delete operation permitted.
 
 	return schema.Noop(d, meta)
+	*/
+
 }
 
 // Test GTM Domain existance
