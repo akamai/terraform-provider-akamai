@@ -419,7 +419,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtmv1_3.Domain) {
 		dom.PingInterval = v.(int)
 	}
 	if v, ok := d.GetOk("max_ttl"); ok {
-		dom.MaxTTL = v.(int64)
+		dom.MaxTTL = int64(v.(int))
 	}
 	if v, ok := d.GetOk("load_imbalance_percentage"); ok {
 		dom.LoadImbalancePercentage = v.(float64)
@@ -458,7 +458,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtmv1_3.Domain) {
 		dom.LoadFeedback = v.(bool)
 	}
 	if v, ok := d.GetOk("min_ttl"); ok {
-		dom.MinTTL = v.(int64)
+		dom.MinTTL = int64(v.(int))
 	}
 	if v, ok := d.GetOk("default_max_unreachable_penalty"); ok {
 		dom.DefaultMaxUnreachablePenalty = v.(int)

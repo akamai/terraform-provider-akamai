@@ -692,11 +692,11 @@ func testGetConfigServiceExec(t *testing.T, tests []testsStruct, configService g
 				if reflect.DeepEqual(err, tt.wantErr) {
 					return
 				}
-				t.Errorf("getPAPIV1Service() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("getService() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getPAPIV1Service() = %v, want %v", got, tt.want)
+				t.Errorf("getService() = %v, want %v", got, tt.want)
 			}
 		})
 	}
