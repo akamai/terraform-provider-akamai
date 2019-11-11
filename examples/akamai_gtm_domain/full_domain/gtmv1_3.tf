@@ -12,7 +12,9 @@ locals {
 // Convert camelcase element names to resource attribute names by inserting 
 // an underscore before any uppercase letter and chnaging case to lower, 
 // e.g. defaultHealthMax -> default_health_max
-
+//
+// Reference https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html for descriptions of 
+// configurable GTM objects, elements and valid values.
 
 resource "akamai_gtm_domain" "tfexample_domain" {
     // 
@@ -59,7 +61,7 @@ resource "akamai_gtm_datacenter" "tfexample_dc_1" {
     domain = "${akamai_gtm_domain.tfexample_domain.name}"
     //
     // Computed - DO NOT CONFIGURE
-    datacenter_id = 3131
+    // datacenter_id = 3131
     // ping_interval
     // ping_packet_size
     // score_penalty
@@ -113,7 +115,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     // Optional 
     failover_delay = 0
     failback_delay = 0
-    static_ttl = 45
     traffic_targets = [{
 	datacenter_id = "${akamai_gtm_datacenter.tfexample_dc_1.datacenter_id}"
 	enabled = true 
