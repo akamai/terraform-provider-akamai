@@ -145,7 +145,7 @@ func resourceGTMv1_3Property() *schema.Resource {
 			},
 			"traffic_targets": &schema.Schema{
 				Type:       schema.TypeList,
-				Optional:   true,
+				Required:   true,
 				ConfigMode: schema.SchemaConfigModeAttr,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -198,7 +198,7 @@ func resourceGTMv1_3Property() *schema.Resource {
 			},
 			"liveness_tests": &schema.Schema{
 				Type:       schema.TypeList,
-				Optional:   true,
+				Required:   true,
 				ConfigMode: schema.SchemaConfigModeAttr,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

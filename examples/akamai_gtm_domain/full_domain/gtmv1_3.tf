@@ -107,14 +107,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     score_aggregation_type = "median"
     handout_limit = 5
     handout_mode = "normal"
-    //
-    // Computed - DO NOT CONFIGURE
-    // weighted_hash_bits_for_ipv4
-    // weighted_hash_bits_for_ipv6
-    //
-    // Optional 
-    failover_delay = 0
-    failback_delay = 0
     traffic_targets = [{
 	datacenter_id = "${akamai_gtm_datacenter.tfexample_dc_1.datacenter_id}"
 	enabled = true 
@@ -150,6 +142,14 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	test_object_username = ""
 	timeout_penalty = 0
 	}]
+    //
+    // Computed - DO NOT CONFIGURE
+    // weighted_hash_bits_for_ipv4
+    // weighted_hash_bits_for_ipv6
+    //
+    // Optional
+    failover_delay = 0
+    failback_delay = 0
     /*
     mx_records = [{
 	exchange = "test_e"

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_gtm_property
 
-`akamai_gtm_property` provides the resource for creating and configuring a gtm property to integrate easily with your existing GTM infrastructure to provide a secure, high performance, highly available and scalable solution for Global Traffic Management.
+`akamai_gtm_property` provides the resource for creating, configuring and importing a gtm property to integrate easily with your existing GTM infrastructure to provide a secure, high performance, highly available and scalable solution for Global Traffic Management. Note: Import requires an ID of the format: `existing_domain_name`:`existing_property_name`
 
 ## Example Usage
 
@@ -37,6 +37,37 @@ Required
 * `score_aggregation_type`
 * `handout_limit` 
 * `handout_mode`  
+* `traffic_targets` — (List)
+  * `datacenter_id`
+  * `enabled` — (Boolean)
+  * `weight`
+  * `servers` — (List)
+  * `name` — Traffic target name
+  * `handout_cname`
+* `liveness_tests` — (List)
+  * `name` — Liveness test name
+  * `test_interval`
+  * `test_object_protocol`
+  * `test_timeout`
+  * `answer_required` — (Boolean)
+  * `disable_nonstandard_port_warning` — (Boolean)
+  * `error_penalty`
+  * `host_header`
+  * `http_error3xx` — (Boolean)
+  * `http_error4xx` — (Boolean)
+  * `http_error5xx` — (Boolean)
+  * `peer_certificate_verification` — (Boolean)
+  * `recursion_requested` — (Boolean)
+  * `request_string`
+  * `resource_type`
+  * `response_string`
+  * `ssl_client_certificate`
+  * `ssl_client_private_key`
+  * `test_object`
+  * `test_object_password`
+  * `test_object_port`
+  * `test_object_username`
+  * `timeout_penalty`
 
 Optional
  
@@ -61,40 +92,7 @@ Optional
 * `cname`
 * `comments`
 * `ghost_demand_reporting`
-* `traffic_targets` — (List)
-  * `datacenter_id`
-  * `enabled` — (Boolean)
-  * `weight`
-  * `servers` — (List)
-  * `name` — Traffic target name
-  * `handout_cname`
-* `liveness_tests` — (List)
-
-  * `name` — Liveness test name
-  * `test_interval`
-  * `test_object_protocol`
-  * `test_timeout`
-  * `answer_required` — (Boolean)
-  * `disable_nonstandard_port_warning` — (Boolean)
-  * `error_penalty`
-  * `host_header`
-  * `http_error3xx` — (Boolean)
-  * `http_error4xx` — (Boolean)
-  * `http_error5xx` — (Boolean)
-  * `peer_certificate_verification` — (Boolean)
-  * `recursion_requested` — (Boolean)
-  * `request_string`
-  * `resource_type`
-  * `response_string`
-  * `ssl_client_certificate`
-  * `ssl_client_private_key`
-  * `test_object`
-  * `test_object_password`
-  * `test_object_port`
-  * `test_object_username`
-  * `timeout_penalty`
 * `mx_records` — (List)
-
   * `exchange`
   * `preference`
 

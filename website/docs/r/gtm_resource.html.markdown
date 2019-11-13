@@ -8,7 +8,7 @@ description: |-
 
 # akamai_gtm_resource
 
-`akamai_gtm_resource` provides the resource for creating and configuring a gtm resource to integrate easily with your existing GTM infrastructure to provide a secure, high performance, highly available and scalable solution for Global Traffic Management.
+`akamai_gtm_resource` provides the resource for creating, configuring and importing a gtm resource to integrate easily with your existing GTM infrastructure to provide a secure, high performance, highly available and scalable solution for Global Traffic Management. Note: Import requires an ID of the format: `existing_domain_name`:`existing_resource_name`
 
 ## Example Usage
 

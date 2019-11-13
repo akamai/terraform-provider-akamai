@@ -8,7 +8,7 @@ description: |-
 
 # akamai_gtm_asmap
 
-`akamai_gtm_asmap` provides the resource for creating and configuring a gtm AS Map to integrate easily with your existing GTM infrastructure to provide a secure, high performance, highly available and scalable solution for Global Traffic Management.
+`akamai_gtm_asmap` provides the resource for creating, configuring and importing a gtm AS Map to integrate easily with your existing GTM infrastructure to provide a secure, high performance, highly available and scalable solution for Global Traffic Management. Note: Import requires an ID of the format: `existing_domain_name`:`existing_map_name`
 
 ## Example Usage
 
