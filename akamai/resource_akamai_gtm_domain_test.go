@@ -6,7 +6,7 @@ import (
 	//"strings"
 	"testing"
 
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -23,8 +23,6 @@ provider "akamai" {
 
 locals {
   	domain = "%s"
-    	//contract = "s"
-    	//group = "s"
 }
 
 data "akamai_contract" "contract" {
@@ -37,10 +35,8 @@ resource "akamai_gtm_domain" "test_domain" {
         name = "${local.domain}"
         type = "weighted"
 	contract = "${data.akamai_contract.contract.id}"
-        //contract = "${local.contract}"
 	comment =  "This is a test zone"
 	group     = "${data.akamai_group.group.id}"
-	//group     = "${local.group}"
 }
 `, gtm_test_domain)
 
@@ -71,16 +67,21 @@ func testAccCheckAkamaiGTMDomainDestroy(s *terraform.State) error {
 		}
 
 		//hostname := strings.Split(rs.Primary.ID, "-")[5]
-		domain, err := gtmv1_3.GetDomain(rs.Primary.ID)
+		domain, err := gtm.GetDomain(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for domain [%v]", domain)
-
-		/*
-			if ** check some conditions ** {
-				return fmt.Errorf("domain was not deleted %s", rs.Primary.ID)
-			}*/
+		log.Printf("[DEBUG] [Akamai GTMV1_3] deleting domain [%v]", domain)
+		_, err = domain.Delete()
+		if err != nil {
+			if _, ok := err.(gtm.CommonError); ok {
+				if err.(gtm.CommonError).GetItem("apiErrorMessage") == "DELETE method is not supported for this resource. Supported methods are: [GET, PUT]" {
+					// can't delete Domain unless admin. Might be hole in this logic, but ....
+					return nil
+				}
+			}
+			return fmt.Errorf("domain %s was not deleted. Error:  %s", rs.Primary.ID, err.Error())
+		}
 	}
 	return nil
 }
@@ -90,9 +91,7 @@ func testAccCheckAkamaiGTMDomainExists(s *terraform.State) error {
 		if rs.Type != "akamai_gtm_domain" {
 			continue
 		}
-
-		//hostname := strings.Split(rs.Primary.ID, "-")[5]
-		_, err := gtmv1_3.GetDomain(rs.Primary.ID)
+		_, err := gtm.GetDomain(rs.Primary.ID)
 		if err != nil {
 			return err
 		}

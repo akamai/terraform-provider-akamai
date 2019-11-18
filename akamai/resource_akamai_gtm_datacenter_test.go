@@ -139,9 +139,6 @@ func TestAccAkamaiGTMDatacenter_update(t *testing.T) {
 
 func testAccCheckAkamaiGTMDatacenterDestroy(s *terraform.State) error {
 
-	// The API doesn't currently support Datacenter Delete
-	return nil
-
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "akamai_gtm_datacenter" {
 			continue

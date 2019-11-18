@@ -302,49 +302,49 @@ func resourceGTMv1_3DomainUpdate(d *schema.ResourceData, meta interface{}) error
 // Delete GTM Domain. Not Supported in current API version.
 func resourceGTMv1_3DomainDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Deleting GTM Domain")
-        log.Printf("[DEBUG] [Akamai GTMv1_3] Domain: %s", d.Id())
-        // Get existing domain
-        existDom, err := gtmv1_3.GetDomain(d.Id())
-        if err != nil {
-                fmt.Println(err.Error())
-                return err
-        }
-        uStat, err := existDom.Delete()
-        if err != nil {
-                fmt.Println(err.Error())
-                return err
-        }
-        b, err := json.Marshal(uStat)
-        if err != nil {
-                fmt.Println(err.Error())
-                return err
-        }
-        fmt.Println(string(b))
-        log.Printf("[DEBUG] [Akamai GTMV1_3] Delete status:")
-        log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1_3] Domain: %s", d.Id())
+	// Get existing domain
+	existDom, err := gtmv1_3.GetDomain(d.Id())
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	uStat, err := existDom.Delete()
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	b, err := json.Marshal(uStat)
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	fmt.Println(string(b))
+	log.Printf("[DEBUG] [Akamai GTMV1_3] Delete status:")
+	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
 
-        if d.Get("wait_on_complete").(bool) {
-                done, err := waitForCompletion(d.Id())
-                if done {
-                        log.Printf("[INFO] [Akamai GTMV1_3] Domain delete completed")
-                } else {
-                        if err == nil {
-                                log.Printf("[INFO] [Akamai GTMV1_3] Domain delete pending")
-                        } else {
-                                log.Printf("[WARNING] [Akamai GTMV1_3] Domain delete failed [%s]", err.Error())
-                                return err
-                        }
-                }
+	if d.Get("wait_on_complete").(bool) {
+		done, err := waitForCompletion(d.Id())
+		if done {
+			log.Printf("[INFO] [Akamai GTMV1_3] Domain delete completed")
+		} else {
+			if err == nil {
+				log.Printf("[INFO] [Akamai GTMV1_3] Domain delete pending")
+			} else {
+				log.Printf("[WARNING] [Akamai GTMV1_3] Domain delete failed [%s]", err.Error())
+				return err
+			}
+		}
 
-        }
+	}
 
-        d.SetId("")
+	d.SetId("")
 	return nil
 
 	/*
-	// No GTM Domain delete operation permitted.
+		// No GTM Domain delete operation permitted.
 
-	return schema.Noop(d, meta)
+		return schema.Noop(d, meta)
 	*/
 
 }

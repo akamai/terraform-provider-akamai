@@ -65,7 +65,7 @@ func resourceGTMv1_3Resource() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"load_imbalance_percent": {
+			"load_imbalance_percentage": {
 				Type:     schema.TypeFloat,
 				Optional: true,
 			},
@@ -365,8 +365,8 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtmv1_3.Resource) {
 	if v, ok := d.GetOk("aggregation_type"); ok {
 		rsrc.AggregationType = v.(string)
 	}
-	if v, ok := d.GetOk("load_imbalance_percent"); ok {
-		rsrc.LoadImbalancePercent = v.(float64)
+	if v, ok := d.GetOk("load_imbalance_percentage"); ok {
+		rsrc.LoadImbalancePercentage = v.(float64)
 	}
 	if v, ok := d.GetOk("max_u_multiplicative_increment"); ok {
 		rsrc.MaxUMultiplicativeIncrement = v.(float64)
@@ -393,7 +393,7 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtmv1_3.Resour
 	d.Set("leader_string", rsrc.LeaderString)
 	d.Set("constrained_property", rsrc.ConstrainedProperty)
 	d.Set("aggregation_type", rsrc.AggregationType)
-	d.Set("load_imbalance_percent", rsrc.LoadImbalancePercent)
+	d.Set("load_imbalance_percentage", rsrc.LoadImbalancePercentage)
 	d.Set("upper_bound", rsrc.UpperBound)
 	d.Set("max_u_multiplicative_increment", rsrc.MaxUMultiplicativeIncrement)
 	d.Set("decay_rate", rsrc.DecayRate)
