@@ -3,10 +3,11 @@ package dnsv2
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"net"
 	"strconv"
 	"strings"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 )
 
 type Recordset struct {
@@ -162,7 +163,7 @@ func GetRdata(zone string, name string, record_type string) ([]string, error) {
 	for _, r := range records.Recordsets {
 		if r.Name == name {
 			for _, i := range r.Rdata {
-				str := strings.Replace(i, "\"", "", -1)
+				str := i
 
 				if record_type == "AAAA" {
 					addr := net.ParseIP(str)

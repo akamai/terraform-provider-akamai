@@ -437,16 +437,17 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("note", property.Note)
 
 	rules, err := property.GetRules()
-	jsonBody, err := jsonhooks.Marshal(rules.Rule)
+	jsonBody, err := jsonhooks.Marshal(rules)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] READ Check rules after unmarshal from Json %s\n", string(jsonBody))
 
 	if err == nil {
 		log.Printf("[DEBUG] Save Rules from API : %s\n", string(jsonBody))
 		d.Set("rules", rules)
 	}
+
+	log.Printf("[DEBUG] READ Check rules after unmarshal from Json %s\n", string(jsonBody))
 
 	if rules.RuleFormat != "" {
 		d.Set("rule_format", rules.RuleFormat)
@@ -456,13 +457,14 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] Property RuleFormat from API : %s\n", property.RuleFormat)
 	d.Set("version", property.LatestVersion)
+	log.Printf("[DEBUG] Property Veresion from API : %d\n", property.LatestVersion)
 	if property.StagingVersion > 0 {
 		d.Set("staging_version", property.StagingVersion)
 	}
 	if property.ProductionVersion > 0 {
 		d.Set("production_version", property.ProductionVersion)
 	}
-
+	d.SetPartial("rule_format")
 	d.Partial(false)
 	return nil
 }
