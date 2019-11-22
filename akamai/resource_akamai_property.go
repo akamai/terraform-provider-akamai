@@ -238,7 +238,7 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 	rules := papi.NewRules()
 	rules.Rule.Name = "default"
 	id := strings.Split(d.Id(), "-")
-	rules.PropertyID = id[0] //d.Id()
+	rules.PropertyID = id[0]
 	rules.PropertyVersion = property.LatestVersion
 
 	origin, err := createOrigin(d)
@@ -250,7 +250,6 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 
 	//rulecheck
 	_, ok := d.GetOk("rules")
-	//log.Printf("[DEBUG] Check for rules Json getRules %s\n", rulecheck)
 
 	if ok {
 		log.Printf("[DEBUG] Unmarshal Rules from JSON")
@@ -364,7 +363,7 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	id := strings.Split(d.Id(), "-")
-	propertyID := id[0] //d.Id()
+	propertyID := id[0]
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
@@ -398,7 +397,7 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 
 func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	id := strings.Split(d.Id(), "-")
-	resourceID := id[0] //d.Id()
+	resourceID := id[0]
 	propertyID := resourceID
 
 	if !strings.HasPrefix(resourceID, "prp_") {
@@ -457,15 +456,11 @@ func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, err
 
 	if sha1hashAPI == sha1hash {
 		log.Printf("[DEBUG] [Akamai Property] SHA sum from JSON rules Exists matches [%s] vs  [%s] ", sha1hashAPI, sha1hash)
-		//d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
 		return true, nil
 	} else {
-		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] ", sha1hashAPI, sha1hash)
-		//d.SetId("")
-
+		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] ", sha1hashAPI, sha1hash
 		return false, nil
 	}
-	//return true, nil
 }
 
 func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
@@ -474,7 +469,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	id := strings.Split(d.Id(), "-")
 	property.PropertyID = id[0]
 
-	//property.PropertyID = d.Id()
+	
 	err := property.GetProperty()
 	if err != nil {
 		return err
@@ -602,7 +597,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 func getProperty(d *schema.ResourceData) (*papi.Property, error) {
 	log.Println("[DEBUG] Fetching property")
 	id := strings.Split(d.Id(), "-")
-	propertyID := id[0] //d.Id()
+	propertyID := id[0]
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
 	e := property.GetProperty()
@@ -807,7 +802,7 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 		propertyRules.Rule = &papi.Rule{Name: "default"}
 		log.Println("[DEBUG] RulesJson")
 
-		//log.Println("unmarshalRulesFromJson RULES from JSON ", rules.(string))
+		
 
 		rulesJSON := gjson.Get(rules.(string), "rules")
 		rulesJSON.ForEach(func(key, value gjson.Result) bool {
