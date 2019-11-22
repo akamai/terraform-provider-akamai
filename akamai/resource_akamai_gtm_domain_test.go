@@ -3,7 +3,6 @@ package akamai
 import (
 	"fmt"
 	"log"
-	//"strings"
 	"testing"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
@@ -12,9 +11,6 @@ import (
 )
 
 var gtm_test_domain = "gtm_terra_testdomain.akadns.net"
-
-//var gtm_test_contract = ""
-//var gtm_test_group = ""
 
 var testAccAkamaiGTMDomainConfig = fmt.Sprintf(`
 provider "akamai" {
@@ -35,14 +31,38 @@ resource "akamai_gtm_domain" "test_domain" {
         name = "${local.domain}"
         type = "weighted"
 	contract = "${data.akamai_contract.contract.id}"
-	comment =  "This is a test zone"
+	comment =  "Test"
 	group     = "${data.akamai_group.group.id}"
 }
 `, gtm_test_domain)
 
-func TestAccAkamaiGTMDomain_basic(t *testing.T) {
+var testAccAkamaiGTMDomainUpdateConfig = fmt.Sprintf(`
+provider "akamai" {
+  gtm_section = "gtm"
+}
+
+locals {
+        domain = "%s"
+}
+
+data "akamai_contract" "contract" {
+}
+
+data "akamai_group" "group" {
+}
+
+resource "akamai_gtm_domain" "test_domain" {
+        name = "${local.domain}"
+        type = "weighted"
+        contract = "${data.akamai_contract.contract.id}"
+        comment =  "Test update"
+        group     = "${data.akamai_group.group.id}"
+}
+`, gtm_test_domain)
+
+func TestAccAkamaiGTMADomain_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheckTF(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMDomainDestroy,
 		Steps: []resource.TestStep{
@@ -56,18 +76,44 @@ func TestAccAkamaiGTMDomain_basic(t *testing.T) {
 	})
 }
 
+func TestAccAkamaiGTMADomain_update(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheckTF(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAkamaiGTMDomainDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAkamaiGTMDomainConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAkamaiGTMDomainExists,
+					resource.TestCheckResourceAttr("akamai_gtm_domain.test_domain", "comment", "Test"),
+				),
+			},
+			{
+				Config: testAccAkamaiGTMDomainUpdateConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAkamaiGTMDomainExists,
+					resource.TestCheckResourceAttr("akamai_gtm_domain.test_domain", "comment", "Test update"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckAkamaiGTMDomainDestroy(s *terraform.State) error {
 
 	// The API doesn't currently support Domain Delete
-	return nil
+	//return nil
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "akamai_gtm_domain" {
 			continue
 		}
 
-		//hostname := strings.Split(rs.Primary.ID, "-")[5]
 		domain, err := gtm.GetDomain(rs.Primary.ID)
+		if domain == nil {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
@@ -97,4 +143,13 @@ func testAccCheckAkamaiGTMDomainExists(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+// Sets a Hack flag so cn work with existing Domains (only Admin can Delete)
+func testAccPreCheckTF(t *testing.T) {
+
+	// by definition, we are running acceptance tests. ;-)
+	log.Printf("[DEBUG] [Akamai GTMV1_3] Setting HashiAcc true")
+	HashiAcc = true
+
 }

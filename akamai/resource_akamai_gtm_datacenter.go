@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"strconv"
@@ -197,7 +197,7 @@ func resourceGTMv1_3DatacenterRead(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return errors.New("Invalid datacenter resource Id")
 	}
-	dc, err := gtmv1_3.GetDatacenter(dcID, domain)
+	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
 		fmt.Println(err)
 		log.Printf("[DEBUG] [Akamai GTMV1_3] Datacenter Read error: %s", err.Error())
@@ -221,7 +221,7 @@ func resourceGTMv1_3DatacenterUpdate(d *schema.ResourceData, meta interface{}) e
 		return errors.New("Invalid datacenter resource Id")
 	}
 	// Get existing datacenter
-	existDC, err := gtmv1_3.GetDatacenter(dcID, domain)
+	existDC, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -270,7 +270,7 @@ func resourceGTMv1_3DatacenterImport(d *schema.ResourceData, meta interface{}) (
 	if err != nil {
 		return nil, errors.New("Invalid datacenter resource Id")
 	}
-	dc, err := gtmv1_3.GetDatacenter(dcID, domain)
+	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
 		fmt.Println(err)
 		log.Printf("[DEBUG] [Akamai GTMV1_3] Datacenter Read error: %s", err.Error())
@@ -291,7 +291,7 @@ func resourceGTMv1_3DatacenterDelete(d *schema.ResourceData, meta interface{}) e
 	log.Printf("[DEBUG] [Akamai GTMV1_3] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMV1_3] Datacenter: %d", d.Get("datacenter_id").(int))
 	// Get existing datacenter
-	existDC, err := gtmv1_3.GetDatacenter(d.Get("datacenter_id").(int), domain)
+	existDC, err := gtm.GetDatacenter(d.Get("datacenter_id").(int), domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -341,16 +341,16 @@ func resourceGTMv1_3DatacenterExists(d *schema.ResourceData, meta interface{}) (
 		return false, errors.New("Invalid datacenter resource Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for existing datacenter [%d] in domain %s", dcID, domain)
-	dc, err := gtmv1_3.GetDatacenter(dcID, domain)
+	dc, err := gtm.GetDatacenter(dcID, domain)
 	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for Existing datacenter result [%v]", domain)
 	return dc != nil, err
 }
 
 // Create and populate a new datacenter object from resource data
-func populateNewDatacenterObject(d *schema.ResourceData) *gtmv1_3.Datacenter {
+func populateNewDatacenterObject(d *schema.ResourceData) *gtm.Datacenter {
 
-	dcObj := gtmv1_3.NewDatacenter()
-	dcObj.DefaultLoadObject = gtmv1_3.NewLoadObject()
+	dcObj := gtm.NewDatacenter()
+	dcObj.DefaultLoadObject = gtm.NewLoadObject()
 	populateDatacenterObject(d, dcObj)
 
 	return dcObj
@@ -358,7 +358,7 @@ func populateNewDatacenterObject(d *schema.ResourceData) *gtmv1_3.Datacenter {
 }
 
 // Populate existing datacenter object from resource data
-func populateDatacenterObject(d *schema.ResourceData, dc *gtmv1_3.Datacenter) {
+func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 
 	if v, ok := d.GetOk("nickname"); ok {
 		dc.Nickname = v.(string)
@@ -383,7 +383,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtmv1_3.Datacenter) {
 		dlo := getSingleSchemaSetItem(v)
 		if dlo != nil {
 			if dc.DefaultLoadObject == nil {
-				dc.DefaultLoadObject = gtmv1_3.NewLoadObject()
+				dc.DefaultLoadObject = gtm.NewLoadObject()
 			}
 			if dlo["load_object"] != nil {
 				dc.DefaultLoadObject.LoadObject = dlo["load_object"].(string)
@@ -440,7 +440,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtmv1_3.Datacenter) {
 }
 
 // Populate Terraform state from provided Datacenter object
-func populateTerraformDCState(d *schema.ResourceData, dc *gtmv1_3.Datacenter) {
+func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 
 	// walk thru all state elements
 	d.Set("nickname", dc.Nickname)

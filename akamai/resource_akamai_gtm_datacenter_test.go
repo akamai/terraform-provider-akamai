@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -95,7 +95,7 @@ resource "akamai_gtm_datacenter" "test_datacenter" {
 
 func TestAccAkamaiGTMDatacenter_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheckTF(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMDatacenterDestroy,
 		Steps: []resource.TestStep{
@@ -113,7 +113,7 @@ func TestAccAkamaiGTMDatacenter_basic(t *testing.T) {
 
 func TestAccAkamaiGTMDatacenter_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheckTF(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMDatacenterDestroy,
 		Steps: []resource.TestStep{
@@ -145,7 +145,10 @@ func testAccCheckAkamaiGTMDatacenterDestroy(s *terraform.State) error {
 		}
 
 		dcid, dom, err := parseIntID(rs.Primary.ID)
-		dc, err := gtmv1_3.GetDatacenter(dcid, dom)
+		dc, err := gtm.GetDatacenter(dcid, dom)
+		if dc == nil {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
@@ -178,7 +181,7 @@ func testAccCheckAkamaiGTMDatacenterExists(s *terraform.State) error {
 		}
 
 		dcid, dom, err := parseIntID(rs.Primary.ID)
-		_, err = gtmv1_3.GetDatacenter(dcid, dom)
+		_, err = gtm.GetDatacenter(dcid, dom)
 		if err != nil {
 			return err
 		}

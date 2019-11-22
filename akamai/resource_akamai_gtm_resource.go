@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 )
@@ -175,7 +175,7 @@ func resourceGTMv1_3ResourceRead(d *schema.ResourceData, meta interface{}) error
 	if err != nil {
 		return errors.New("Invalid resource resource Id")
 	}
-	rsrc, err := gtmv1_3.GetResource(resource, domain)
+	rsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
 		fmt.Println(err)
 		log.Printf("[DEBUG] [Akamai GTMV1_3] Resource Read error: %s", err.Error())
@@ -197,7 +197,7 @@ func resourceGTMv1_3ResourceUpdate(d *schema.ResourceData, meta interface{}) err
 		return errors.New("Invalid resource Id")
 	}
 	// Get existing property
-	existRsrc, err := gtmv1_3.GetResource(resource, domain)
+	existRsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -246,7 +246,7 @@ func resourceGTMv1_3ResourceImport(d *schema.ResourceData, meta interface{}) ([]
 	if err != nil {
 		return []*schema.ResourceData{d}, errors.New("Invalid resource resource Id")
 	}
-	rsrc, err := gtmv1_3.GetResource(resource, domain)
+	rsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +270,7 @@ func resourceGTMv1_3ResourceDelete(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return errors.New("Invalid resource Id")
 	}
-	existRsrc, err := gtmv1_3.GetResource(resource, domain)
+	existRsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -320,15 +320,15 @@ func resourceGTMv1_3ResourceExists(d *schema.ResourceData, meta interface{}) (bo
 		return false, errors.New("Invalid resource resource Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for existing resource [%s] in domain %s", resource, domain)
-	rsrc, err := gtmv1_3.GetResource(resource, domain)
+	rsrc, err := gtm.GetResource(resource, domain)
 	return rsrc != nil, err
 }
 
 // Create and populate a new resource object from resource data
-func populateNewResourceObject(d *schema.ResourceData) *gtmv1_3.Resource {
+func populateNewResourceObject(d *schema.ResourceData) *gtm.Resource {
 
-	rsrcObj := gtmv1_3.NewResource(d.Get("name").(string))
-	rsrcObj.ResourceInstances = make([]*gtmv1_3.ResourceInstance, 0)
+	rsrcObj := gtm.NewResource(d.Get("name").(string))
+	rsrcObj.ResourceInstances = make([]*gtm.ResourceInstance, 0)
 	populateResourceObject(d, rsrcObj)
 
 	return rsrcObj
@@ -336,7 +336,7 @@ func populateNewResourceObject(d *schema.ResourceData) *gtmv1_3.Resource {
 }
 
 // Populate existing resource object from resource data
-func populateResourceObject(d *schema.ResourceData, rsrc *gtmv1_3.Resource) {
+func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource) {
 
 	if v, ok := d.GetOk("name"); ok {
 		rsrc.Name = v.(string)
@@ -381,7 +381,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtmv1_3.Resource) {
 }
 
 // Populate Terraform state from provided Resource object
-func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtmv1_3.Resource) {
+func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource) {
 
 	log.Printf("[DEBUG] [Akamai GTMV1_3] Entering populateTerraformResourceState")
 	// walk thru all state elements
@@ -404,12 +404,12 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtmv1_3.Resour
 }
 
 // create and populate GTM Resource ResourceInstances object
-func populateResourceInstancesObject(d *schema.ResourceData, rsrc *gtmv1_3.Resource) {
+func populateResourceInstancesObject(d *schema.ResourceData, rsrc *gtm.Resource) {
 
 	// pull apart List
 	rsrcInstanceList := d.Get("resource_instances").([]interface{})
 	if rsrcInstanceList != nil {
-		rsrcInstanceObjList := make([]*gtmv1_3.ResourceInstance, len(rsrcInstanceList)) // create new object list
+		rsrcInstanceObjList := make([]*gtm.ResourceInstance, len(rsrcInstanceList)) // create new object list
 		for i, v := range rsrcInstanceList {
 			riMap := v.(map[string]interface{})
 			rsrcInstance := rsrc.NewResourceInstance(riMap["datacenter_id"].(int)) // create new object
@@ -430,7 +430,7 @@ func populateResourceInstancesObject(d *schema.ResourceData, rsrc *gtmv1_3.Resou
 }
 
 // create and populate Terraform resource_instances schema
-func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtmv1_3.Resource) {
+func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.Resource) {
 
 	riListNew := make([]interface{}, len(rsrc.ResourceInstances))
 	for i, ri := range rsrc.ResourceInstances {

@@ -2,11 +2,10 @@ package akamai
 
 import (
 	"fmt"
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"log"
-	"regexp"
 	"testing"
 )
 
@@ -24,18 +23,16 @@ data "akamai_contract" "contract" {
 
 data "akamai_group" "group" {
 }
-/*
+
 resource "akamai_gtm_domain" "test_domain" {
         name = "${local.domain}"
         type = "weighted"
-        //contract = "${local.contract}"
 	contract = "${data.akamai_contract.contract.id}"
 	comment =  "This is a test domain"
-	//group     = "${local.group}"
 	group  = "${data.akamai_group.group.id}"
 	wait_on_complete = true
 }
-*/
+
 resource "akamai_gtm_resource" "test_resource" {
     	//domain = "${akamai_gtm_domain.test_domain.name}"
 	domain = "${local.domain}"
@@ -44,11 +41,9 @@ resource "akamai_gtm_resource" "test_resource" {
     	type = "XML load object via HTTP"
     	load_imbalance_percentage = 50
     	wait_on_complete = true
-	/*
     	depends_on = [
          	"akamai_gtm_domain.test_domain"
     	]
-	*/
 }
 `, gtm_test_domain)
 
@@ -60,7 +55,7 @@ provider "akamai" {
 locals {
         domain = "%s"
 }       
-/*
+
 data "akamai_contract" "contract" {
 }
 
@@ -75,7 +70,7 @@ resource "akamai_gtm_domain" "test_domain" {
         group  = "${data.akamai_group.group.id}"
         wait_on_complete = true
 }
-*/
+
 resource "akamai_gtm_resource" "test_resource" {
         domain = "${local.domain}" // "${akamai_gtm_domain.test_domain.name}"
         name = "test_resource_1"
@@ -91,14 +86,10 @@ resource "akamai_gtm_resource" "test_resource" {
 
 func TestAccAkamaiGTMResource_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheckTF(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMResourceDestroy,
 		Steps: []resource.TestStep{
-			{
-				Config:      testAccAkamaiGTMDomainConfig,
-				ExpectError: regexp.MustCompile(fmt.Sprintf("Domain Validation Error proposed domain name \"%s\" conflicts with existing domain", gtm_test_domain)),
-			},
 			{
 				Config: testAccAkamaiGTMResourceConfig,
 				Check: resource.ComposeTestCheckFunc(
@@ -113,14 +104,10 @@ func TestAccAkamaiGTMResource_basic(t *testing.T) {
 
 func TestAccAkamaiGTMResource_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheckTF(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMResourceDestroy,
 		Steps: []resource.TestStep{
-			{
-				Config:      testAccAkamaiGTMDomainConfig,
-				ExpectError: regexp.MustCompile(fmt.Sprintf("Domain Validation Error proposed domain name \"%s\" conflicts with existing domain", gtm_test_domain)),
-			},
 			{
 				Config: testAccAkamaiGTMResourceConfig,
 				Check: resource.ComposeTestCheckFunc(
@@ -149,8 +136,13 @@ func testAccCheckAkamaiGTMResourceDestroy(s *terraform.State) error {
 		}
 
 		rname, dom, err := parseStringID(rs.Primary.ID)
-		rsrc, err := gtmv1_3.GetResource(rname, dom)
+		rsrc, err := gtm.GetResource(rname, dom)
+		if rsrc == nil {
+			log.Printf("[DEBUG] [Akamai GTM] : Resource %s not found. Ignoring error (Hashicorp).", rname)
+			return nil
+		}
 		if err != nil {
+			log.Printf("[INFO] [Akamai GTM] Resource Destroy: Error reading resource [%s]", err.Error())
 			return err
 		}
 		log.Printf("[DEBUG] [Akamai GTMV1_3] Deleting test resource [%v]", rname)
@@ -168,7 +160,7 @@ func testAccCheckAkamaiGTMResourceExists(s *terraform.State) error {
 			continue
 		}
 		rname, dom, err := parseStringID(rs.Primary.ID)
-		_, err = gtmv1_3.GetResource(rname, dom)
+		_, err = gtm.GetResource(rname, dom)
 		if err != nil {
 			return err
 		}

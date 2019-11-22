@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"strings"
@@ -376,7 +376,7 @@ func resourceGTMv1_3PropertyRead(d *schema.ResourceData, meta interface{}) error
 	if err != nil {
 		return errors.New("Invalid property resource Id")
 	}
-	prop, err := gtmv1_3.GetProperty(property, domain)
+	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
 		fmt.Println(err)
 		log.Printf("[DEBUG] [Akamai GTMV1_3] Property Read error: %s", err.Error())
@@ -398,7 +398,7 @@ func resourceGTMv1_3PropertyUpdate(d *schema.ResourceData, meta interface{}) err
 		return errors.New("Invalid property resource Id")
 	}
 	// Get existing property
-	existProp, err := gtmv1_3.GetProperty(property, domain)
+	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -447,7 +447,7 @@ func resourceGTMv1_3PropertyImport(d *schema.ResourceData, meta interface{}) ([]
 	if err != nil {
 		return []*schema.ResourceData{d}, errors.New("Invalid property resource Id")
 	}
-	prop, err := gtmv1_3.GetProperty(property, domain)
+	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -471,7 +471,7 @@ func resourceGTMv1_3PropertyDelete(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return errors.New("Invalid property resource Id")
 	}
-	existProp, err := gtmv1_3.GetProperty(property, domain)
+	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -521,17 +521,17 @@ func resourceGTMv1_3PropertyExists(d *schema.ResourceData, meta interface{}) (bo
 		return false, errors.New("Invalid property resource Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for existing property [%s] in domain %s", property, domain)
-	prop, err := gtmv1_3.GetProperty(property, domain)
+	prop, err := gtm.GetProperty(property, domain)
 	return prop != nil, err
 }
 
 // Create and populate a new property object from resource data
-func populateNewPropertyObject(d *schema.ResourceData) *gtmv1_3.Property {
+func populateNewPropertyObject(d *schema.ResourceData) *gtm.Property {
 
-	propObj := gtmv1_3.NewProperty(d.Get("name").(string))
-	propObj.TrafficTargets = make([]*gtmv1_3.TrafficTarget, 1)
-	propObj.LivenessTests = make([]*gtmv1_3.LivenessTest, 1)
-	propObj.MxRecords = make([]*gtmv1_3.MxRecord, 1)
+	propObj := gtm.NewProperty(d.Get("name").(string))
+	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 1)
+	propObj.LivenessTests = make([]*gtm.LivenessTest, 1)
+	propObj.MxRecords = make([]*gtm.MxRecord, 1)
 	populatePropertyObject(d, propObj)
 
 	return propObj
@@ -539,7 +539,7 @@ func populateNewPropertyObject(d *schema.ResourceData) *gtmv1_3.Property {
 }
 
 // Populate existing property object from resource data
-func populatePropertyObject(d *schema.ResourceData, prop *gtmv1_3.Property) {
+func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	if v, ok := d.GetOk("name"); ok {
 		prop.Name = v.(string)
@@ -634,7 +634,7 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtmv1_3.Property) {
 }
 
 // Populate Terraform state from provided Property object
-func populateTerraformPropertyState(d *schema.ResourceData, prop *gtmv1_3.Property) {
+func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) {
 
 	// walk thru all state elements
 	d.Set("name", prop.Name)
@@ -673,13 +673,13 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtmv1_3.Proper
 }
 
 // create and populate GTM Property TrafficTargets object
-func populateTrafficTargetObject(d *schema.ResourceData, prop *gtmv1_3.Property) {
+func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	// pull apart List
 	tt := d.Get("traffic_targets")
 	if tt != nil {
 		traffTargList := tt.([]interface{})
-		trafficObjList := make([]*gtmv1_3.TrafficTarget, len(traffTargList)) // create new object list
+		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
 		for i, v := range traffTargList {
 			ttMap := v.(map[string]interface{})
 			trafficTarget := prop.NewTrafficTarget() // create new object
@@ -702,7 +702,7 @@ func populateTrafficTargetObject(d *schema.ResourceData, prop *gtmv1_3.Property)
 }
 
 // create and populate Terraform traffic_targets schema
-func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtmv1_3.Property) {
+func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Property) {
 
 	traffListNew := make([]interface{}, len(prop.TrafficTargets))
 	for i, tt := range prop.TrafficTargets {
@@ -721,12 +721,12 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtmv1_3.P
 }
 
 // Populate existing mxrecord object from resource data
-func populateMxRecordObject(d *schema.ResourceData, prop *gtmv1_3.Property) {
+func populateMxRecordObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	// pull apart List
 	mxRecList := d.Get("mx_records").([]interface{})
 	if mxRecList != nil {
-		recordObjList := make([]*gtmv1_3.MxRecord, len(mxRecList)) // create new object list
+		recordObjList := make([]*gtm.MxRecord, len(mxRecList)) // create new object list
 		for i, v := range mxRecList {
 			recMap := v.(map[string]interface{})
 			record := prop.NewMxRecord() // create new object
@@ -739,7 +739,7 @@ func populateMxRecordObject(d *schema.ResourceData, prop *gtmv1_3.Property) {
 }
 
 // create and populate Terraform mx_record schema
-func populateTerraformMxRecordState(d *schema.ResourceData, prop *gtmv1_3.Property) {
+func populateTerraformMxRecordState(d *schema.ResourceData, prop *gtm.Property) {
 
 	recordListNew := make([]interface{}, len(prop.MxRecords))
 	for i, r := range prop.MxRecords {
@@ -754,11 +754,11 @@ func populateTerraformMxRecordState(d *schema.ResourceData, prop *gtmv1_3.Proper
 }
 
 // Populate existing livenesstest  object from resource data
-func populateLivenessTestObject(d *schema.ResourceData, prop *gtmv1_3.Property) {
+func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	liveTestList := d.Get("liveness_tests").([]interface{})
 	if liveTestList != nil {
-		liveTestObjList := make([]*gtmv1_3.LivenessTest, len(liveTestList)) // create new object list
+		liveTestObjList := make([]*gtm.LivenessTest, len(liveTestList)) // create new object list
 		for i, l := range liveTestList {
 			v := l.(map[string]interface{})
 			lt := prop.NewLivenessTest(v["name"].(string),
@@ -791,7 +791,7 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtmv1_3.Property) 
 }
 
 // create and populate Terraform liveness_test schema
-func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtmv1_3.Property) {
+func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Property) {
 
 	livenessListNew := make([]interface{}, len(prop.LivenessTests))
 	for i, l := range prop.LivenessTests {

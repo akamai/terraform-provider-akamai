@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -68,6 +68,31 @@ resource "akamai_gtm_property" "test_property" {
         name = ""
         handout_cname = ""
         }]
+    liveness_tests = [{
+        name = "lt1"
+        test_interval = 30
+        test_object_protocol = "HTTP"
+        test_timeout = 20
+        answer_required = false
+        disable_nonstandard_port_warning = false
+        error_penalty = 0
+        host_header = ""
+        http_error3xx = false
+        http_error4xx = false
+        http_error5xx = false
+        peer_certificate_verification = false
+        recursion_requested = false
+        request_string = ""
+        resource_type = ""
+        response_string = ""
+        ssl_client_certificate = ""
+        ssl_client_private_key = ""
+        test_object = "junk"
+        test_object_password = ""
+        test_object_port = 1
+        test_object_username = ""
+        timeout_penalty = 0
+	}]
     depends_on = [
         "akamai_gtm_domain.test_domain",
 	"akamai_gtm_datacenter.test_datacenter"
@@ -129,6 +154,31 @@ resource "akamai_gtm_property" "test_property" {
         name = ""
         handout_cname = ""
         }]
+    liveness_tests = [{
+        name = "lt1"
+        test_interval = 30
+        test_object_protocol = "HTTP"
+        test_timeout = 20
+        answer_required = false
+        disable_nonstandard_port_warning = false
+        error_penalty = 0
+        host_header = ""
+        http_error3xx = false
+        http_error4xx = false
+        http_error5xx = false
+        peer_certificate_verification = false
+        recursion_requested = false
+        request_string = ""
+        resource_type = ""
+        response_string = ""
+        ssl_client_certificate = ""
+        ssl_client_private_key = ""
+        test_object = "junk"
+        test_object_password = ""
+        test_object_port = 1
+        test_object_username = ""
+        timeout_penalty = 0
+        }]
     depends_on = [
         "akamai_gtm_domain.test_domain",
 	"akamai_gtm_datacenter.test_datacenter"
@@ -138,7 +188,7 @@ resource "akamai_gtm_property" "test_property" {
 
 func TestAccAkamaiGTMProperty_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheckTF(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMPropertyDestroy,
 		Steps: []resource.TestStep{
@@ -156,7 +206,7 @@ func TestAccAkamaiGTMProperty_basic(t *testing.T) {
 
 func TestAccAkamaiGTMProperty_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { testAccPreCheckTF(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMPropertyDestroy,
 		Steps: []resource.TestStep{
@@ -191,7 +241,10 @@ func testAccCheckAkamaiGTMPropertyDestroy(s *terraform.State) error {
 		}
 
 		prop, dom, err := parseStringID(rs.Primary.ID)
-		p, err := gtmv1_3.GetProperty(prop, dom)
+		p, err := gtm.GetProperty(prop, dom)
+		if p == nil {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
@@ -221,7 +274,7 @@ func testAccCheckAkamaiGTMPropertyExists(s *terraform.State) error {
 		}
 
 		prop, dom, err := parseStringID(rs.Primary.ID)
-		_, err = gtmv1_3.GetProperty(prop, dom)
+		_, err = gtm.GetProperty(prop, dom)
 		if err != nil {
 			return err
 		}
