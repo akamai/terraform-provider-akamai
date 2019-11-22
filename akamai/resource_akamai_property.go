@@ -458,7 +458,7 @@ func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, err
 		log.Printf("[DEBUG] [Akamai Property] SHA sum from JSON rules Exists matches [%s] vs  [%s] ", sha1hashAPI, sha1hash)
 		return true, nil
 	} else {
-		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] ", sha1hashAPI, sha1hash
+		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] ", sha1hashAPI, sha1hash)
 		return false, nil
 	}
 }
@@ -469,7 +469,6 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	id := strings.Split(d.Id(), "-")
 	property.PropertyID = id[0]
 
-	
 	err := property.GetProperty()
 	if err != nil {
 		return err
@@ -801,8 +800,6 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 	if ok {
 		propertyRules.Rule = &papi.Rule{Name: "default"}
 		log.Println("[DEBUG] RulesJson")
-
-		
 
 		rulesJSON := gjson.Get(rules.(string), "rules")
 		rulesJSON.ForEach(func(key, value gjson.Result) bool {
