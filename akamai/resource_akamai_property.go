@@ -214,6 +214,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.Set("edge_hostnames", ehnMap)
 
 	rulesAPI, err := property.GetRules()
+	rulesAPI.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rulesAPI)
 	if err != nil {
 		return err
@@ -433,6 +434,11 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 }
 
 func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	i := strings.Index(d.Id(), "-")
+	log.Printf("[DEBUG] EXISTS check ID %d\n", i)
+	if i == -1 {
+		return false, nil
+	}
 	property := papi.NewProperty(papi.NewProperties())
 	id := strings.Split(d.Id(), "-")
 	property.PropertyID = id[0]
@@ -442,6 +448,7 @@ func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, err
 	}
 
 	rulesAPI, err := property.GetRules()
+	rulesAPI.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rulesAPI)
 	if err != nil {
 		return false, err
@@ -481,6 +488,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("note", property.Note)
 
 	rules, err := property.GetRules()
+	rules.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rules)
 	if err != nil {
 		return err
@@ -494,7 +502,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("rules", rules)
 	}
 
-	log.Printf("[DEBUG] READ Check rules after unmarshal from Json %s\n", string(jsonBody))
+	//log.Printf("[DEBUG] READ Check rules after unmarshal from Json %s\n", string(jsonBody))
 
 	if rules.RuleFormat != "" {
 		d.Set("rule_format", rules.RuleFormat)
@@ -513,7 +521,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetPartial("rule_format")
 
-	d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
+	//d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
 
 	d.Partial(false)
 	return nil
@@ -562,6 +570,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	rules, err = property.GetRules()
+	rules.Etag = ""
 	jsonBody, err = jsonhooks.Marshal(rules)
 	if err != nil {
 		return err
