@@ -133,8 +133,10 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Optional: true,
 	},
 	"rules": {
-		Type:     schema.TypeString,
-		Optional: true,
+		Type:             schema.TypeString,
+		Optional:         true,
+		ValidateFunc:     ValidateJsonString,
+		DiffSuppressFunc: suppressEquivalentJsonDiffs,
 	},
 	"variables": {
 		Type:     schema.TypeString,
@@ -227,7 +229,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
 
 	if err == nil {
-		d.Set("rules", rules)
+		d.Set("rules", string(jsonBody))
 	}
 
 	d.Partial(false)
@@ -499,7 +501,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 
 	if err == nil {
 		log.Printf("[DEBUG] READ Rules from API : %s\n", string(jsonBody))
-		d.Set("rules", rules)
+		d.Set("rules", string(jsonBody))
 	}
 
 	//log.Printf("[DEBUG] READ Check rules after unmarshal from Json %s\n", string(jsonBody))
@@ -580,7 +582,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] UPDATE SHA from Json %s\n", sha1hashAPI)
 
 	if err == nil {
-		d.Set("rules", rules)
+		d.Set("rules", string(jsonBody))
 	}
 
 	d.SetPartial("default")
@@ -964,7 +966,7 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 					"id": cp_code.(string),
 				},
 			}
-			propertyRules.Rule.AddBehavior(beh)
+			propertyRules.Rule.MergeBehavior(beh)
 		}
 	}
 }
