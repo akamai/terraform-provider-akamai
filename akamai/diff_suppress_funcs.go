@@ -37,7 +37,6 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	}
 	log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
 	log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", jsonBytesEqual(ob.Bytes(), nb.Bytes()))
 
 	rulesOld, err := getRulesForComp(d, old)
 	rulesOld.Etag = ""
