@@ -31,17 +31,18 @@ data "akamai_group" "group" {
 resource "akamai_gtm_domain" "test_domain" {
         name = "${local.domain}"
         type = "weighted"
-        //contract = "${local.contract}"
 	contract = "${data.akamai_contract.contract.id}"
-	comment =  "This is a test zone"
-	//group     = "${local.group}"
+	comment =  "This is a test domain"
 	group  = "${data.akamai_group.group.id}"
+	load_imbalance_percentage = 10
 	wait_on_complete = true
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = "${akamai_gtm_domain.test_domain.name}"
     nickname = "test_datacenter"
+    continent = "EU"
+    virtual = true
     wait_on_complete = true
     default_load_object = [{
         load_object = "test"
@@ -73,14 +74,17 @@ resource "akamai_gtm_domain" "test_domain" {
         name = "${local.domain}"
         type = "weighted"
         contract = "${data.akamai_contract.contract.id}"
-        comment =  "This is a test zone"
+        comment =  "This is a test domain"
         group  = "${data.akamai_group.group.id}"
+        load_imbalance_percentage = 10
         wait_on_complete = true
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = "${akamai_gtm_domain.test_domain.name}"
-    nickname = "test_datacenter_updated"
+    nickname = "test_datacenter"
+    continent = "NA"
+    virtual = true
     wait_on_complete = true
     default_load_object = [{
         load_object = "test"
@@ -103,9 +107,9 @@ func TestAccAkamaiGTMDatacenter_basic(t *testing.T) {
 				Config: testAccAkamaiGTMDatacenterConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAkamaiGTMDatacenterExists,
-					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "nickname", "test_datacenter"),
+					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "continent", "EU"),
 				),
-				ExpectNonEmptyPlan: true,
+				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -121,17 +125,17 @@ func TestAccAkamaiGTMDatacenter_update(t *testing.T) {
 				Config: testAccAkamaiGTMDatacenterConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAkamaiGTMDatacenterExists,
-					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "nickname", "test_datacenter"),
+					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "continent", "EU"),
 				),
-				ExpectNonEmptyPlan: true,
+				//ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccAkamaiGTMDatacenterUpdateConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAkamaiGTMDatacenterExists,
-					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "nickname", "test_datacenter_updated"),
+					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "continent", "NA"),
 				),
-				ExpectNonEmptyPlan: true,
+				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})

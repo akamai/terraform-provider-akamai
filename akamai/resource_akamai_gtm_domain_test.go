@@ -33,6 +33,7 @@ resource "akamai_gtm_domain" "test_domain" {
 	contract = "${data.akamai_contract.contract.id}"
 	comment =  "Test"
 	group     = "${data.akamai_group.group.id}"
+	load_imbalance_percentage = 10
 }
 `, gtm_test_domain)
 
@@ -57,6 +58,7 @@ resource "akamai_gtm_domain" "test_domain" {
         contract = "${data.akamai_contract.contract.id}"
         comment =  "Test update"
         group     = "${data.akamai_group.group.id}"
+        load_imbalance_percentage = 10
 }
 `, gtm_test_domain)
 
@@ -70,6 +72,7 @@ func TestAccAkamaiGTMADomain_basic(t *testing.T) {
 				Config: testAccAkamaiGTMDomainConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAkamaiGTMDomainExists,
+					resource.TestCheckResourceAttr("akamai_gtm_domain.test_domain", "comment", "Test"),
 				),
 			},
 		},

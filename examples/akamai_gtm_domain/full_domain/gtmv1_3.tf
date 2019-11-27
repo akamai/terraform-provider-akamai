@@ -61,7 +61,7 @@ resource "akamai_gtm_datacenter" "tfexample_dc_1" {
     domain = "${akamai_gtm_domain.tfexample_domain.name}"
     //
     // Computed - DO NOT CONFIGURE
-    // datacenter_id = 3131
+    // datacenter_id
     // ping_interval
     // ping_packet_size
     // score_penalty
@@ -73,7 +73,7 @@ resource "akamai_gtm_datacenter" "tfexample_dc_1" {
     nickname = "tfexample_dc_1"
     wait_on_complete = false
     default_load_object = [{
-        load_object = "test"
+        load_object = "/test"
 	load_object_port = 80 
 	load_servers = ["1.2.3.4", "1.2.3.5"]
     }]
@@ -85,7 +85,6 @@ resource "akamai_gtm_datacenter" "tfexample_dc_1" {
 resource "akamai_gtm_datacenter" "tfexample_dc_2" {
     domain = "${akamai_gtm_domain.tfexample_domain.name}"
     nickname = "tfexample_dc_2"
-    datacenter_id = 3132
     wait_on_complete = false
     //
     // Datacenters need strict dependencies for multiple creation since dcids are auto generated
@@ -118,7 +117,7 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	}]
     liveness_tests = [{
 	name = "lt1"
-	test_interval = 10
+	test_interval = 30
 	test_object_protocol = "HTTP"
 	test_timeout = 20
 	// optional
@@ -136,7 +135,7 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	response_string = ""
 	ssl_client_certificate = ""
 	ssl_client_private_key = ""
-	test_object = "junk"
+	test_object = "/junk"
 	test_object_password = ""
 	test_object_port = 1
 	test_object_username = ""

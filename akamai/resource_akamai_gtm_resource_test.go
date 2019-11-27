@@ -30,6 +30,7 @@ resource "akamai_gtm_domain" "test_domain" {
 	contract = "${data.akamai_contract.contract.id}"
 	comment =  "This is a test domain"
 	group  = "${data.akamai_group.group.id}"
+        load_imbalance_percentage = 10
 	wait_on_complete = true
 }
 
@@ -68,6 +69,7 @@ resource "akamai_gtm_domain" "test_domain" {
         contract = "${data.akamai_contract.contract.id}"
         comment =  "This is a test zone"
         group  = "${data.akamai_group.group.id}"
+        load_imbalance_percentage = 10
         wait_on_complete = true
 }
 

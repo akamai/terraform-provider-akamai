@@ -32,7 +32,7 @@ resource "akamai_gtm_domain" "test_domain" {
         type = "weighted"
         //contract = "${local.contract}"
 	contract = "${data.akamai_contract.contract.id}"
-	comment =  "This is a test zone"
+	comment =  "This is a test domain"
 	//group     = "${local.group}"
 	group = "${data.akamai_group.group.id}"
 	wait_on_complete = true
@@ -73,6 +73,8 @@ resource "akamai_gtm_property" "test_property" {
         test_interval = 30
         test_object_protocol = "HTTP"
         test_timeout = 20
+        test_object = "junk"
+        //
         answer_required = false
         disable_nonstandard_port_warning = false
         error_penalty = 0
@@ -87,7 +89,6 @@ resource "akamai_gtm_property" "test_property" {
         response_string = ""
         ssl_client_certificate = ""
         ssl_client_private_key = ""
-        test_object = "junk"
         test_object_password = ""
         test_object_port = 1
         test_object_username = ""
@@ -119,7 +120,7 @@ resource "akamai_gtm_domain" "test_domain" {
         name = "${local.domain}"
         type = "weighted"
         contract = "${data.akamai_contract.contract.id}"
-        comment =  "This is a test zone"
+        comment =  "This is a test domain"
         group   = "${data.akamai_group.group.id}"
         wait_on_complete = true
 }
@@ -159,6 +160,8 @@ resource "akamai_gtm_property" "test_property" {
         test_interval = 30
         test_object_protocol = "HTTP"
         test_timeout = 20
+        test_object = "/junk"
+	//
         answer_required = false
         disable_nonstandard_port_warning = false
         error_penalty = 0
@@ -173,7 +176,6 @@ resource "akamai_gtm_property" "test_property" {
         response_string = ""
         ssl_client_certificate = ""
         ssl_client_private_key = ""
-        test_object = "junk"
         test_object_password = ""
         test_object_port = 1
         test_object_username = ""
