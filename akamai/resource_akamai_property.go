@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/tidwall/gjson"
 )
 
@@ -19,7 +20,7 @@ func resourceProperty() *schema.Resource {
 		Read:   resourcePropertyRead,
 		Update: resourcePropertyUpdate,
 		Delete: resourcePropertyDelete,
-		Exists: resourcePropertyExists,
+		//Exists: resourcePropertyExists,
 		Importer: &schema.ResourceImporter{
 			State: resourcePropertyImport,
 		},
@@ -135,7 +136,7 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	"rules": {
 		Type:             schema.TypeString,
 		Optional:         true,
-		ValidateFunc:     ValidateJsonString,
+		ValidateFunc:     validation.ValidateJsonString,
 		DiffSuppressFunc: suppressEquivalentJsonDiffs,
 	},
 	"variables": {
@@ -435,6 +436,7 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 	return []*schema.ResourceData{d}, nil
 }
 
+/*
 func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	i := strings.Index(d.Id(), "-")
 	log.Printf("[DEBUG] EXISTS check ID %d\n", i)
@@ -471,7 +473,7 @@ func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, err
 		return false, nil
 	}
 }
-
+*/
 func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
@@ -521,7 +523,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	if property.ProductionVersion > 0 {
 		d.Set("production_version", property.ProductionVersion)
 	}
-	d.SetPartial("rule_format")
+	//d.SetPartial("rule_format")
 
 	//d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
 
@@ -557,6 +559,9 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+	if err == nil {
+		d.Set("rules", string(jsonBody))
+	}
 	log.Printf("[DEBUG] UPDATE Check rules after unmarshal from Json %s\n", string(jsonBody))
 	e = rules.Save()
 	if e != nil {
@@ -581,10 +586,10 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	sha1hashAPI := getSHAString(string(jsonBody))
 	log.Printf("[DEBUG] UPDATE SHA from Json %s\n", sha1hashAPI)
 
-	if err == nil {
+	/*if err == nil {
 		d.Set("rules", string(jsonBody))
 	}
-
+	*/
 	d.SetPartial("default")
 	d.SetPartial("origin")
 
@@ -810,23 +815,23 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 	rules, ok := d.GetOk("rules")
 	if ok {
 		propertyRules.Rule = &papi.Rule{Name: "default"}
-		log.Println("[DEBUG] RulesJson")
+		//		log.Println("[DEBUG] RulesJson")
 
 		rulesJSON := gjson.Get(rules.(string), "rules")
 		rulesJSON.ForEach(func(key, value gjson.Result) bool {
-			log.Println("[DEBUG] unmarshalRulesFromJson KEY RULES KEY = " + key.String() + " VAL " + value.String())
+			//			log.Println("[DEBUG] unmarshalRulesFromJson KEY RULES KEY = " + key.String() + " VAL " + value.String())
 
 			if key.String() == "behaviors" {
 				behavior := gjson.Parse(value.String())
-				log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR " + behavior.String())
+				//				log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR " + behavior.String())
 				if gjson.Get(behavior.String(), "#.name").Exists() {
 
 					behavior.ForEach(func(key, value gjson.Result) bool {
-						log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR LOOP KEY =" + key.String() + " VAL " + value.String())
+						//						log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR LOOP KEY =" + key.String() + " VAL " + value.String())
 
 						bb, ok := value.Value().(map[string]interface{})
 						if ok {
-							log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR MAP  ", bb)
+							//							log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR MAP  ", bb)
 							for k, v := range bb {
 								log.Println("k:", k, "v:", v)
 							}
@@ -835,10 +840,10 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 
 							beh.Name = bb["name"].(string)
 							boptions, ok := bb["options"]
-							log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR BOPTIONS ", boptions)
+							//							log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR BOPTIONS ", boptions)
 							if ok {
 								beh.Options = boptions.(map[string]interface{})
-								log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR EXTRACT BOPTIONS ", beh.Options)
+								//								log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR EXTRACT BOPTIONS ", beh.Options)
 							}
 
 							propertyRules.Rule.MergeBehavior(beh)
@@ -853,17 +858,17 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 					criteria := gjson.Parse(value.String())
 
 					criteria.ForEach(func(key, value gjson.Result) bool {
-						log.Println("[DEBUG] unmarshalRulesFromJson KEY CRITERIA " + key.String() + " VAL " + value.String())
+						//						log.Println("[DEBUG] unmarshalRulesFromJson KEY CRITERIA " + key.String() + " VAL " + value.String())
 
 						cc, ok := value.Value().(map[string]interface{})
 						if ok {
-							log.Println("[DEBUG] unmarshalRulesFromJson CRITERIA MAP  ", cc)
+							//							log.Println("[DEBUG] unmarshalRulesFromJson CRITERIA MAP  ", cc)
 							newCriteria := papi.NewCriteria()
 							newCriteria.Name = cc["name"].(string)
 
 							coptions, ok := cc["option"]
 							if ok {
-								println("OPTIONS ", coptions)
+								//								println("OPTIONS ", coptions)
 								newCriteria.Options = coptions.(map[string]interface{})
 							}
 							propertyRules.Rule.MergeCriteria(newCriteria)
@@ -875,7 +880,7 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 
 			if key.String() == "children" {
 				childRules := gjson.Parse(value.String())
-				println("CHILD RULES " + childRules.String())
+				//				println("CHILD RULES " + childRules.String())
 
 				for _, rule := range extractRulesJSON(d, childRules) {
 					propertyRules.Rule.MergeChildRule(rule)
@@ -884,14 +889,14 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 
 			if key.String() == "variables" {
 
-				log.Println("unmarshalRulesFromJson VARS from JSON ", value.String())
+				//				log.Println("unmarshalRulesFromJson VARS from JSON ", value.String())
 				variables := gjson.Parse(value.String())
 
 				variables.ForEach(func(key, value gjson.Result) bool {
-					log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
+					//					log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
 					variableMap, ok := value.Value().(map[string]interface{})
-					log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
-					log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
+					//					log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
+					//					log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
 					if ok {
 						newVariable := papi.NewVariable()
 						newVariable.Name = variableMap["name"].(string)
@@ -907,7 +912,7 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 			}
 
 			if key.String() == "options" {
-				log.Println("unmarshalRulesFromJson OPTIONS from JSON", value.String())
+				//				log.Println("unmarshalRulesFromJson OPTIONS from JSON", value.String())
 				options := gjson.Parse(value.String())
 				options.ForEach(func(key, value gjson.Result) bool {
 					switch {
@@ -925,16 +930,16 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 		// ADD vars from variables resource
 		jsonvars, ok := d.GetOk("variables")
 		if ok {
-			log.Println("unmarshalRulesFromJson VARS from JSON ", jsonvars)
+			//			log.Println("unmarshalRulesFromJson VARS from JSON ", jsonvars)
 			variables := gjson.Parse(jsonvars.(string))
 			result := gjson.Get(variables.String(), "variables")
-			log.Println("unmarshalRulesFromJson VARS from JSON VARIABLES ", result)
+			//			log.Println("unmarshalRulesFromJson VARS from JSON VARIABLES ", result)
 
 			result.ForEach(func(key, value gjson.Result) bool {
-				log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
+				//				log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
 				variableMap, ok := value.Value().(map[string]interface{})
-				log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
-				log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
+				//				log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
+				//				log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
 				if ok {
 					newVariable := papi.NewVariable()
 					newVariable.Name = variableMap["name"].(string)
@@ -1026,17 +1031,17 @@ func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule 
 			rule.Comments, _ = vv["comments"].(string)
 
 			ruledetail := gjson.Parse(value.String())
-			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
+			//			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
 
 			ruledetail.ForEach(func(key, value gjson.Result) bool {
 
 				if key.String() == "behaviors" {
-					log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE ", key.String())
+					//					log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE ", key.String())
 
 					behaviors := gjson.Parse(value.String())
-					log.Println("[DEBUG] BEHAVIORS NAME ", behaviors)
+					//					log.Println("[DEBUG] BEHAVIORS NAME ", behaviors)
 					behaviors.ForEach(func(key, value gjson.Result) bool {
-						log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE LOOP KEY = " + key.String() + " VAL " + value.String())
+						//						log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE LOOP KEY = " + key.String() + " VAL " + value.String())
 						behaviorMap, ok := value.Value().(map[string]interface{})
 						if ok {
 							newBehavior := papi.NewBehavior()
@@ -1052,7 +1057,7 @@ func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule 
 				}
 
 				if key.String() == "criteria" {
-					log.Println("[DEBUG] CRITERIA KEY CHILD RULE ", key.String())
+					//					log.Println("[DEBUG] CRITERIA KEY CHILD RULE ", key.String())
 					criterias := gjson.Parse(value.String())
 					criterias.ForEach(func(key, value gjson.Result) bool {
 						criteriaMap, ok := value.Value().(map[string]interface{})
@@ -1070,7 +1075,7 @@ func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule 
 				}
 
 				if key.String() == "variables" {
-					log.Println("[DEBUG] VARIABLES KEY CHILD RULE ", key.String())
+					//					log.Println("[DEBUG] VARIABLES KEY CHILD RULE ", key.String())
 					variables := gjson.Parse(value.String())
 					variables.ForEach(func(key, value gjson.Result) bool {
 						variableMap, ok := value.Value().(map[string]interface{})
@@ -1089,7 +1094,7 @@ func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule 
 
 				if key.String() == "children" {
 					childRules := gjson.Parse(value.String())
-					println("CHILD RULES " + childRules.String())
+					//					println("CHILD RULES " + childRules.String())
 					for _, newRule := range extractRulesJSON(d, childRules) {
 						rule.MergeChildRule(newRule)
 					}
