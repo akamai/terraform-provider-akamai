@@ -1,11 +1,12 @@
 package akamai
 
 import (
+	"log"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/tidwall/gjson"
-	"log"
 )
 
 func dataPropertyRules() *schema.Resource {

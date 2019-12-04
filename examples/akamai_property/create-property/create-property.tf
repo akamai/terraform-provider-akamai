@@ -3,103 +3,125 @@ provider "akamai" {
   papi_section = "global"
 }
 
-resource "akamai_property" "akamai_developer" {
-  activate = false
-  name = "akamaideveloper.com"
+resource "akamai_property" "property" {
+  name = "akavadeveloper"
 
-  contact = ["dshafik@akamai.com"]
+  contact = ["user@akavadeveloper.io"]
 
-  account_id = "act_B-F-1ACME"
-  product_id = "prd_SPM"
-  cp_code = "409449"
-  contract_id = "ctr_C-1FRYVV3"
-  group_id = "grp_68817"
+  product = "prd_SPM"
+  cp_code = "${akamai_cp_code.cp_code.id}"
+  contract = "${data.akamai_contract.contract.id}"
+  group = "${data.akamai_group.group.id}"
 
-  hostname = ["akamaideveloper.net"]
-
-  network = "STAGING"
-
+  hostnames = {
+	"terraform.example.org" = "${akamai_edge_hostname.test.edge_hostname}"
+  }
+  
   rule_format = "v2016-11-15"
+  
+  rules = "${data.akamai_property_rules.rules.json}"
+}
 
-  origin {
-    is_secure = false
-    hostname = "akamaideveloper.net"
-    forward_hostname = "ORIGIN_HOSTNAME"
-  }
+data "akamai_contract" "contract" {
+}
 
-  rules {
-    behavior {
-      name = "downstreamCache"
-      option {
-        key = "behavior"
-        value = "TUNNEL_ORIGIN"
-      }
-    }
+data "akamai_group" "group" {
+}
 
-    rule {
-      name = "Performance"
-      rule {
-          name = "JPEG Images"
-          behavior {
-              name = "adaptiveImageCompression"
-              option {
-                   key = "tier1MobileCompressionMethod"
-                   value = "COMPRESS"
-              }
-              option {
-                 key = "tier1MobileCompressionValue"
-                 value = "80"
-              }
-              option {
-                   key = "tier2MobileCompressionMethod"
-                   value = "COMPRESS"
-              }
-          }
-      }
+resource "akamai_cp_code" "cp_code" {
+	name = "terraform-testing"
+	contract = "${data.akamai_contract.contract.id}"
+	group = "${data.akamai_group.group.id}"
+	product = "prd_SPM"
+}
+
+resource "akamai_edge_hostname" "test" {
+    product = "prd_SPM"
+    contract = "${data.akamai_contract.contract.id}"
+    group = "${data.akamai_group.group.id}"
+    edge_hostname =  "terraform-test1.akavadeveloper.io.edgesuite.net"
+	ipv4 = true
+	ipv6 = true
+}
+
+data "akamai_property_rules" "rules" {
+ 	rules {
+		behavior {
+			name =  "origin"
+        	option { 
+       			key =  "cacheKeyHostname"
+            	value = "ORIGIN_HOSTNAME"
+        	}
+			option { 
+    			key =  "compress"
+     			value = "true"
+     		}
+    		option { 
+    			key =  "enableTrueClientIp"
+     			value = "false"
+     		}
+    		option { 
+    			key =  "forwardHostHeader"
+     			value = "REQUEST_HOST_HEADER"
+     		}
+    		option { 
+    			key =  "hostname"
+     			value = "exampleakavadeveloper.io"
+     		}
+    		option { 
+    			key =  "httpPort"
+     			value = "80"
+     		}
+    		option { 
+    			key =  "httpsPort"
+     			value = "443"
+     		}
+    		option { 
+    			key =  "originSni"
+     			value = "true"
+     		}
+    		option { 
+    			key =  "originType"
+     			value = "CUSTOMER"
+     		}
+    		option { 
+    			key =  "verificationMode"
+     			value = "PLATFORM_SETTINGS"
+     		}
+    		option { 
+    			key =  "originCertificate"
+     			value = ""
+     		}
+    		option { 
+    			key =  "ports"
+     			value = ""
+     		}
+      	}
+		behavior {
+			name =  "cpCode"
+			option {
+				key =  "id"
+				value = "${akamai_cp_code.cp_code.id}"
+			}
+			option {
+				key =  "name"
+				value = "${akamai_cp_code.cp_code.name}"
+			}
+		}
+		behavior {
+			name =  "caching"
+			option {
+				key =  "behavior"
+				value = "MAX_AGE"
+			}
+			option {
+                key =  "mustRevalidate"
+                value = "false"
+			}
+            option {
+                key =  "ttl"
+                value = "1d"
+            }
+		}
     }
-    rule {
-      name = "Uncacheable Responses"
-      comment = "Cache me outside"
-      criteria {
-        name = "cacheability"
-        option {
-          key = "matchOperator"
-          value = "IS_NOT"
-        }
-        option {
-          key = "value"
-          value = "CACHEABLE"
-        }
-      }
-      behavior {
-        name = "downstreamCache"
-        option {
-          key = "behavior"
-          value = "TUNNEL_ORIGIN"
-        }
-      }
-      rule {
-        name = "Uncacheable Responses"
-        comment = "Child rule"
-        criteria {
-          name = "cacheability"
-          option {
-            key = "matchOperator"
-            value = "IS_NOT"
-          }
-          option {
-            key = "value"
-            value = "CACHEABLE"
-          }
-        }
-        behavior {
-          name = "downstreamCache"
-          option {
-            key = "behavior"
-            value = "TUNNEL_ORIGIN"
-          }
-        }
-      }
-    }
-  }
 }
