@@ -4,21 +4,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"strings"
 )
 
-func resourceGTMv1_3Property() *schema.Resource {
+func resourceGTMv1Property() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGTMv1_3PropertyCreate,
-		Read:   resourceGTMv1_3PropertyRead,
-		Update: resourceGTMv1_3PropertyUpdate,
-		Delete: resourceGTMv1_3PropertyDelete,
-		Exists: resourceGTMv1_3PropertyExists,
+		Create: resourceGTMv1PropertyCreate,
+		Read:   resourceGTMv1PropertyRead,
+		Update: resourceGTMv1PropertyUpdate,
+		Delete: resourceGTMv1PropertyDelete,
+		Exists: resourceGTMv1PropertyExists,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1_3PropertyImport,
+			State: resourceGTMv1PropertyImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -74,8 +74,34 @@ func resourceGTMv1_3Property() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
+			"static_rr_sets": &schema.Schema{
+                                Type:       schema.TypeList,
+                                Optional:   true,
+                                ConfigMode: schema.SchemaConfigModeAttr,
+                                Elem: &schema.Resource{
+                                        Schema: map[string]*schema.Schema{
+						"type": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"ttl": {
+							Type:     schema.TypeInt,
+							Optional: true,
+						},
+						"rdata": {
+							Type:     schema.TypeList,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+							Optional: true,
+						},
+					},
+				},
+			},
 			"unreachable_threshold": {
 				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"min_live_fraction": {
+				Type:     schema.TypeFloat,
 				Optional: true,
 			},
 			"health_multiplier": {
@@ -169,12 +195,12 @@ func resourceGTMv1_3Property() *schema.Resource {
 						"name": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Default:  "",
+							//Default:  "",
 						},
 						"handout_cname": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Default:  "",
+							//Default:  "",
 						},
 					},
 				},
@@ -242,6 +268,10 @@ func resourceGTMv1_3Property() *schema.Resource {
 							Type:     schema.TypeBool,
 							Optional: true,
 						},
+						"disabled": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
 						"test_object_protocol": {
 							Type:     schema.TypeString,
 							Required: true,
@@ -269,6 +299,23 @@ func resourceGTMv1_3Property() *schema.Resource {
 						"host_header": {
 							Type:     schema.TypeString,
 							Optional: true,
+						},
+						"http_headers": {
+							Type:       schema.TypeList,
+							Optional:   true,
+							ConfigMode: schema.SchemaConfigModeAttr,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"name": {
+										Type:     schema.TypeString,
+										Optional: true,
+									},
+									"value": {
+										Type:     schema.TypeString,
+										Optional: true,
+									},
+								},
+							},
 						},
 						"test_object_username": {
 							Type:     schema.TypeString,
@@ -320,16 +367,16 @@ func parsePropertyResourceId(id string) (string, string, error) {
 }
 
 // Create a new GTM Property
-func resourceGTMv1_3PropertyCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error {
 
 	domain := d.Get("domain").(string)
 
 	log.Printf("[INFO] [Akamai GTM] Creating property [%s] in domain [%s]", d.Get("name").(string), domain)
 	newProp := populateNewPropertyObject(d)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Proposed New Property: [%v]", newProp)
+	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New Property: [%v]", newProp)
 	cStatus, err := newProp.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Property Create failed: %s", err.Error())
+		log.Printf("[DEBUG] [Akamai GTMv1] Property Create failed: %s", err.Error())
 		fmt.Println(err)
 		return err
 	}
@@ -339,18 +386,18 @@ func resourceGTMv1_3PropertyCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Property Create status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] Property Create status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] Property Create completed")
+			log.Printf("[INFO] [Akamai GTMv1] Property Create completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] Property Create pending")
+				log.Printf("[INFO] [Akamai GTMv1] Property Create pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] Property Create failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] Property Create failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -359,18 +406,18 @@ func resourceGTMv1_3PropertyCreate(d *schema.ResourceData, meta interface{}) err
 
 	// Give terraform the ID. Format domain::property
 	propertyId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Generated Property Resource Id: %s", propertyId)
+	log.Printf("[DEBUG] [Akamai GTMv1] Generated Property Resource Id: %s", propertyId)
 	d.SetId(propertyId)
-	return resourceGTMv1_3PropertyRead(d, meta)
+	return resourceGTMv1PropertyRead(d, meta)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1_3PropertyRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyRead(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] READ")
-	log.Printf("[DEBUG] Reading [Akamai GTMV1_3] Property: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] READ")
+	log.Printf("[DEBUG] Reading [Akamai GTMv1] Property: %s", d.Id())
 	// retrieve the property and domain
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
@@ -379,19 +426,19 @@ func resourceGTMv1_3PropertyRead(d *schema.ResourceData, meta interface{}) error
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
 		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Property Read error: %s", err.Error())
+		log.Printf("[DEBUG] [Akamai GTMv1] Property Read error: %s", err.Error())
 		return err
 	}
 	populateTerraformPropertyState(d, prop)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] READ %v", prop)
+	log.Printf("[DEBUG] [Akamai GTMv1] READ %v", prop)
 	return nil
 }
 
 // Update GTM Property
-func resourceGTMv1_3PropertyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] UPDATE")
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] Property: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] Property: %s", d.Id())
 	// pull domain and property out of resource id
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
@@ -403,9 +450,9 @@ func resourceGTMv1_3PropertyUpdate(d *schema.ResourceData, meta interface{}) err
 		fmt.Println(err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] Property BEFORE: %v", existProp)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] Property BEFORE: %v", existProp)
 	populatePropertyObject(d, existProp)
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] Property PROPOSED: %v", existProp)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] Property PROPOSED: %v", existProp)
 	uStat, err := existProp.Update(domain)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -417,29 +464,29 @@ func resourceGTMv1_3PropertyUpdate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Property Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] Property Update  status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] Property update completed")
+			log.Printf("[INFO] [Akamai GTMv1] Property update completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] Property update pending")
+				log.Printf("[INFO] [Akamai GTMv1] Property update pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] Property update failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] Property update failed [%s]", err.Error())
 				return err
 			}
 		}
 
 	}
 
-	return resourceGTMv1_3PropertyRead(d, meta)
+	return resourceGTMv1PropertyRead(d, meta)
 }
 
 // Import GTM Property.
-func resourceGTMv1_3PropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1PropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] Property [%s] Import", d.Id())
 	// pull domain and property out of resource id
@@ -461,11 +508,11 @@ func resourceGTMv1_3PropertyImport(d *schema.ResourceData, meta interface{}) ([]
 }
 
 // Delete GTM Property.
-func resourceGTMv1_3PropertyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error {
 
 	domain := d.Get("domain").(string)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] DELETE")
-	log.Printf("[DEBUG] Deleting [Akamai GTMV1_3] Property: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
+	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Property: %s", d.Id())
 	// Get existing property
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
@@ -476,7 +523,7 @@ func resourceGTMv1_3PropertyDelete(d *schema.ResourceData, meta interface{}) err
 		fmt.Println(err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Deleting [Akamai GTMV1_3] Property: %v", existProp)
+	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Property: %v", existProp)
 	uStat, err := existProp.Delete(domain)
 	if err != nil {
 		fmt.Println(err)
@@ -488,18 +535,18 @@ func resourceGTMv1_3PropertyDelete(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Property Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] Property Delete status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] Property delete completed")
+			log.Printf("[INFO] [Akamai GTMv1] Property delete completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] Property delete pending")
+				log.Printf("[INFO] [Akamai GTMv1] Property delete pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] Property delete failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] Property delete failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -512,15 +559,15 @@ func resourceGTMv1_3PropertyDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 // Test GTM Property existance
-func resourceGTMv1_3PropertyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceGTMv1PropertyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
-	log.Printf("[DEBUG] [Akamai GTMv1_3] Exists")
+	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and property out of resource id
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
 		return false, errors.New("Invalid property resource Id")
 	}
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for existing property [%s] in domain %s", property, domain)
+	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing property [%s] in domain %s", property, domain)
 	prop, err := gtm.GetProperty(property, domain)
 	return prop != nil, err
 }
@@ -577,6 +624,9 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	if v, ok := d.GetOk("unreachable_threshold"); ok {
 		prop.UnreachableThreshold = v.(int)
 	}
+	if v, ok := d.GetOk("min_live_fraction"); ok {
+		prop.MinLiveFraction = v.(float64)
+	}
 	if v, ok := d.GetOk("health_multiplier"); ok {
 		prop.HealthMultiplier = v.(int)
 	}
@@ -627,6 +677,7 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	}
 	populateTrafficTargetObject(d, prop)
 	populateMxRecordObject(d, prop)
+	populateStaticRRSetObject(d, prop)
 	populateLivenessTestObject(d, prop)
 
 	return
@@ -649,6 +700,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) 
 	d.Set("balance_by_download_score", prop.BalanceByDownloadScore)
 	d.Set("static_ttl", prop.StaticTTL)
 	d.Set("unreachable_threshold", prop.UnreachableThreshold)
+	d.Set("min_live_fraction", prop.MinLiveFraction)
 	d.Set("health_multiplier", prop.HealthMultiplier)
 	d.Set("dynamic_ttl", prop.DynamicTTL)
 	d.Set("max_unreachable_penalty", prop.MaxUnreachablePenalty)
@@ -666,6 +718,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) 
 	d.Set("comments", prop.Comments)
 	populateTerraformTrafficTargetState(d, prop)
 	populateTerraformMxRecordState(d, prop)
+	populateTerraformStaticRRSetState(d, prop)
 	populateTerraformLivenessTestState(d, prop)
 
 	return
@@ -717,6 +770,47 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		traffListNew[i] = traffSvrNew
 	}
 	d.Set("traffic_targets", traffListNew)
+
+}
+
+// Populate existing static_rr_sets object from resource data
+func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
+
+	// pull apart List
+	staticSetList := d.Get("static_rr_sets").([]interface{})
+	if staticSetList != nil {
+		staticObjList := make([]*gtm.StaticRRSet, len(staticSetList)) // create new object list
+		for i, v := range staticSetList {
+			recMap := v.(map[string]interface{})
+			record := prop.NewStaticRRSet() // create new object
+			record.TTL = recMap["ttl"].(int)
+			record.Type = recMap["type"].(string)
+			if recMap["rdata"] != nil {
+				rls := make([]string, len(recMap["rdata"].([]interface{})))
+				for i, d := range recMap["rdata"].([]interface{}) {
+					rls[i] = d.(string)
+				}
+				record.Rdata = rls
+			}
+			staticObjList[i] = record
+		}
+		prop.StaticRRSets = staticObjList
+	}
+}
+
+// create and populate Terraform static_rr_sets schema
+func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Property) {
+
+	recordListNew := make([]interface{}, len(prop.StaticRRSets))
+	for i, r := range prop.StaticRRSets {
+		staticRecordNew := map[string]interface{}{
+			"type":  r.Type,
+			"ttl":   r.TTL,
+			"rdata": r.Rdata,
+		}
+		recordListNew[i] = staticRecordNew
+	}
+	d.Set("static_rr_sets", recordListNew)
 
 }
 
@@ -773,6 +867,7 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 			lt.HttpError3xx = v["http_error3xx"].(bool)
 			lt.HttpError4xx = v["http_error4xx"].(bool)
 			lt.HttpError5xx = v["http_error5xx"].(bool)
+			lt.Disabled = v["disabled"].(bool)
 			lt.TestObjectPassword = v["test_object_password"].(string)
 			lt.TestObjectPort = v["test_object_port"].(int)
 			lt.SslClientPrivateKey = v["ssl_client_private_key"].(string)
@@ -784,6 +879,18 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 			lt.AnswerRequired = v["answer_required"].(bool)
 			lt.ResourceType = v["resource_type"].(string)
 			lt.RecursionRequested = v["recursion_requested"].(bool)
+			httpHeaderList := v["http_headers"].([]interface{})
+			if httpHeaderList != nil {
+				headerObjList := make([]*gtm.HttpHeader, len(httpHeaderList)) // create new object list
+				for i, h := range httpHeaderList {
+					recMap := h.(map[string]interface{})
+					record := lt.NewHttpHeader() // create new object
+					record.Name = recMap["name"].(string)
+					record.Value = recMap["value"].(string)
+					headerObjList[i] = record
+				}
+				lt.HttpHeaders = headerObjList
+			}
 			liveTestObjList[i] = lt
 		}
 		prop.LivenessTests = liveTestObjList
@@ -806,6 +913,7 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			"http_error3xx":                    l.HttpError3xx,
 			"http_error4xx":                    l.HttpError4xx,
 			"http_error5xx":                    l.HttpError5xx,
+			"disabled":                         l.Disabled,
 			"test_object_protocol":             l.TestObjectProtocol,
 			"test_object_password":             l.TestObjectPassword,
 			"test_object_port":                 l.TestObjectPort,
@@ -820,6 +928,15 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			"resource_type":                    l.ResourceType,
 			"recursion_requested":              l.RecursionRequested,
 		}
+		httpHeaderListNew := make([]interface{}, len(l.HttpHeaders))
+		for i, r := range l.HttpHeaders {
+			httpHeaderNew := map[string]interface{}{
+				"name":  r.Name,
+				"value": r.Value,
+			}
+			httpHeaderListNew[i] = httpHeaderNew
+		}
+		livenessNew["http_headers"] = httpHeaderListNew
 		livenessListNew[i] = livenessNew
 	}
 	d.Set("liveness_tests", livenessListNew)

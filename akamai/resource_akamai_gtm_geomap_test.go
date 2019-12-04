@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -188,7 +188,7 @@ func testAccCheckAkamaiGTMGeoMapDestroy(s *terraform.State) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Deleting test geomap [%v]", geoName)
+		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test geomap [%v]", geoName)
 		_, err = geo.Delete(dom)
 		if err != nil {
 			return fmt.Errorf("geomap was not deleted %s. Error: %s", rs.Primary.ID, err.Error())

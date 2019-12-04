@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -82,6 +82,8 @@ resource "akamai_gtm_property" "test_property" {
         http_error3xx = false
         http_error4xx = false
         http_error5xx = false
+	disabled = true
+	http_headers = []
         peer_certificate_verification = false
         recursion_requested = false
         request_string = ""
@@ -166,6 +168,8 @@ resource "akamai_gtm_property" "test_property" {
         disable_nonstandard_port_warning = false
         error_penalty = 0
         host_header = ""
+        disabled = false
+        http_headers = []
         http_error3xx = false
         http_error4xx = false
         http_error5xx = false
@@ -250,7 +254,7 @@ func testAccCheckAkamaiGTMPropertyDestroy(s *terraform.State) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Deleting test property [%v]", prop)
+		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test property [%v]", prop)
 		_, err = p.Delete(prop)
 		if err != nil {
 			return fmt.Errorf("property was not deleted %s. Error: %s", rs.Primary.ID, err.Error())

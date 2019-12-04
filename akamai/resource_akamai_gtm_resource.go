@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 )
 
-func resourceGTMv1_3Resource() *schema.Resource {
+func resourceGTMv1Resource() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGTMv1_3ResourceCreate,
-		Read:   resourceGTMv1_3ResourceRead,
-		Update: resourceGTMv1_3ResourceUpdate,
-		Delete: resourceGTMv1_3ResourceDelete,
-		Exists: resourceGTMv1_3ResourceExists,
+		Create: resourceGTMv1ResourceCreate,
+		Read:   resourceGTMv1ResourceRead,
+		Update: resourceGTMv1ResourceUpdate,
+		Delete: resourceGTMv1ResourceDelete,
+		Exists: resourceGTMv1ResourceExists,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1_3ResourceImport,
+			State: resourceGTMv1ResourceImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -79,13 +79,13 @@ func resourceGTMv1_3Resource() *schema.Resource {
 			},
 			"resource_instances": &schema.Schema{
 				Type:       schema.TypeList,
-				Computed:   true,
+				Optional:   true,
 				ConfigMode: schema.SchemaConfigModeAttr,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
 							Type:     schema.TypeInt,
-							Optional: true,
+							Required: true,
 						},
 						"use_default_load_object": {
 							Type:     schema.TypeBool,
@@ -103,7 +103,6 @@ func resourceGTMv1_3Resource() *schema.Resource {
 						"load_object_port": {
 							Type:     schema.TypeInt,
 							Optional: true,
-							Default:  "",
 						},
 					},
 				},
@@ -120,16 +119,16 @@ func parseResourceResourceId(id string) (string, string, error) {
 }
 
 // Create a new GTM Resource
-func resourceGTMv1_3ResourceCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ResourceCreate(d *schema.ResourceData, meta interface{}) error {
 
 	domain := d.Get("domain").(string)
 
 	log.Printf("[INFO] [Akamai GTM] Creating resource [%s] in domain [%s]", d.Get("name").(string), domain)
 	newRsrc := populateNewResourceObject(d)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Proposed New Resource: [%v]", newRsrc)
+	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New Resource: [%v]", newRsrc)
 	cStatus, err := newRsrc.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Resource Create failed: %s", err.Error())
+		log.Printf("[DEBUG] [Akamai GTMv1] Resource Create failed: %s", err.Error())
 		fmt.Println(err)
 		return err
 	}
@@ -139,18 +138,18 @@ func resourceGTMv1_3ResourceCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Resource Create status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] Resource Create status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] Resource Create completed")
+			log.Printf("[INFO] [Akamai GTMv1] Resource Create completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] Resource Create pending")
+				log.Printf("[INFO] [Akamai GTMv1] Resource Create pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] Resource Create failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] Resource Create failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -159,17 +158,17 @@ func resourceGTMv1_3ResourceCreate(d *schema.ResourceData, meta interface{}) err
 
 	// Give terraform the ID. Format domain:resource
 	resourceId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Generated Resource Resource Id: %s", resourceId)
+	log.Printf("[DEBUG] [Akamai GTMv1] Generated Resource Resource Id: %s", resourceId)
 	d.SetId(resourceId)
-	return resourceGTMv1_3ResourceRead(d, meta)
+	return resourceGTMv1ResourceRead(d, meta)
 
 }
 
 // read resource. updates state with entire API result configuration.
-func resourceGTMv1_3ResourceRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ResourceRead(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] READ")
-	log.Printf("[DEBUG] Reading [Akamai GTMV1_3] Resource: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] READ")
+	log.Printf("[DEBUG] Reading [Akamai GTMv1] Resource: %s", d.Id())
 	// retrieve the property and domain
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
@@ -178,19 +177,19 @@ func resourceGTMv1_3ResourceRead(d *schema.ResourceData, meta interface{}) error
 	rsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
 		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Resource Read error: %s", err.Error())
+		log.Printf("[DEBUG] [Akamai GTMv1] Resource Read error: %s", err.Error())
 		return err
 	}
 	populateTerraformResourceState(d, rsrc)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] READ %v", rsrc)
+	log.Printf("[DEBUG] [Akamai GTMv1] READ %v", rsrc)
 	return nil
 }
 
 // Update GTM Resource
-func resourceGTMv1_3ResourceUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ResourceUpdate(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] UPDATE")
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] Resource: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] Resource: %s", d.Id())
 	// pull domain and resource out of id
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
@@ -202,9 +201,9 @@ func resourceGTMv1_3ResourceUpdate(d *schema.ResourceData, meta interface{}) err
 		fmt.Println(err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] Resource BEFORE: %v", existRsrc)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] Resource BEFORE: %v", existRsrc)
 	populateResourceObject(d, existRsrc)
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] Resource PROPOSED: %v", existRsrc)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] Resource PROPOSED: %v", existRsrc)
 	uStat, err := existRsrc.Update(domain)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -216,29 +215,29 @@ func resourceGTMv1_3ResourceUpdate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Resource Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] Resource Update  status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] Resource update completed")
+			log.Printf("[INFO] [Akamai GTMv1] Resource update completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] Resource update pending")
+				log.Printf("[INFO] [Akamai GTMv1] Resource update pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] Resource update failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] Resource update failed [%s]", err.Error())
 				return err
 			}
 		}
 
 	}
 
-	return resourceGTMv1_3ResourceRead(d, meta)
+	return resourceGTMv1ResourceRead(d, meta)
 }
 
 // Import GTM Resource.
-func resourceGTMv1_3ResourceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1ResourceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] Resource [%s] Import", d.Id())
 	// pull domain and resource out of resource id
@@ -260,11 +259,11 @@ func resourceGTMv1_3ResourceImport(d *schema.ResourceData, meta interface{}) ([]
 }
 
 // Delete GTM Resource.
-func resourceGTMv1_3ResourceDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ResourceDelete(d *schema.ResourceData, meta interface{}) error {
 
 	domain := d.Get("domain").(string)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] DELETE")
-	log.Printf("[DEBUG] Deleting [Akamai GTMV1_3] Resource: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
+	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Resource: %s", d.Id())
 	// Get existing resource
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
@@ -275,7 +274,7 @@ func resourceGTMv1_3ResourceDelete(d *schema.ResourceData, meta interface{}) err
 		fmt.Println(err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Deleting [Akamai GTMV1_3] Resource: %v", existRsrc)
+	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Resource: %v", existRsrc)
 	uStat, err := existRsrc.Delete(domain)
 	if err != nil {
 		fmt.Println(err)
@@ -287,18 +286,18 @@ func resourceGTMv1_3ResourceDelete(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Resource Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] Resource Delete status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] Resource delete completed")
+			log.Printf("[INFO] [Akamai GTMv1] Resource delete completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] Resource delete pending")
+				log.Printf("[INFO] [Akamai GTMv1] Resource delete pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] Resource delete failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] Resource delete failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -311,15 +310,15 @@ func resourceGTMv1_3ResourceDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 // Test GTM Resource existance
-func resourceGTMv1_3ResourceExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceGTMv1ResourceExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
-	log.Printf("[DEBUG] [Akamai GTMv1_3] Exists")
+	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and resource out of resource id
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
 		return false, errors.New("Invalid resource resource Id")
 	}
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for existing resource [%s] in domain %s", resource, domain)
+	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing resource [%s] in domain %s", resource, domain)
 	rsrc, err := gtm.GetResource(resource, domain)
 	return rsrc != nil, err
 }
@@ -383,7 +382,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource) {
 // Populate Terraform state from provided Resource object
 func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource) {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Entering populateTerraformResourceState")
+	log.Printf("[DEBUG] [Akamai GTMv1] Entering populateTerraformResourceState")
 	// walk thru all state elements
 	d.Set("name", rsrc.Name)
 	d.Set("type", rsrc.Type)
@@ -444,7 +443,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 	}
 	err := d.Set("resource_instances", riListNew)
 	if err != nil {
-		log.Printf("[ERROR] [Akamai GTMV1_3] Error writing resource_instances: %s", err.Error())
+		log.Printf("[ERROR] [Akamai GTMv1] Error writing resource_instances: %s", err.Error())
 	}
 
 }

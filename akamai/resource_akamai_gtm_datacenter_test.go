@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -156,7 +156,7 @@ func testAccCheckAkamaiGTMDatacenterDestroy(s *terraform.State) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Deleting test datacenter [%v]", dcid)
+		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test datacenter [%v]", dcid)
 		_, err = dc.Delete(dom)
 		if err != nil {
 			return fmt.Errorf("datacenter was not deleted %s. Error: %s", rs.Primary.ID, err.Error())

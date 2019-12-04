@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	Version = "0.1.4-dev"
+	Version = "0.1.4-dev-2"
 )
 
 // Config contains the Akamai provider configuration (unused).
@@ -160,13 +160,13 @@ func Provider() terraform.ResourceProvider {
 			"akamai_property_rules":      resourcePropertyRules(),
 			"akamai_property_variables":  resourcePropertyVariables(),
 			"akamai_property_activation": resourcePropertyActivation(),
-			"akamai_gtm_domain":          resourceGTMv1_3Domain(),
-			"akamai_gtm_datacenter":      resourceGTMv1_3Datacenter(),
-			"akamai_gtm_property":        resourceGTMv1_3Property(),
-			"akamai_gtm_resource":        resourceGTMv1_3Resource(),
-			"akamai_gtm_cidrmap":         resourceGTMv1_3Cidrmap(),
-			"akamai_gtm_geomap":          resourceGTMv1_3Geomap(),
-			"akamai_gtm_asmap":           resourceGTMv1_3ASmap(),
+			"akamai_gtm_domain":          resourceGTMv1Domain(),
+			"akamai_gtm_datacenter":      resourceGTMv1Datacenter(),
+			"akamai_gtm_property":        resourceGTMv1Property(),
+			"akamai_gtm_resource":        resourceGTMv1Resource(),
+			"akamai_gtm_cidrmap":         resourceGTMv1Cidrmap(),
+			"akamai_gtm_geomap":          resourceGTMv1Geomap(),
+			"akamai_gtm_asmap":           resourceGTMv1ASmap(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
@@ -175,9 +175,9 @@ func Provider() terraform.ResourceProvider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	dnsv2Config, dnsErr := getConfigDNSV2Service(d)
 	papiConfig, papiErr := getPAPIV1Service(d)
-	gtmv1_3Config, gtmErr := getConfigGTMV1_3Service(d)
+	gtmConfig, gtmErr := getConfigGTMV1Service(d)
 
-	if dnsErr != nil && papiErr != nil && gtmErr != nil || dnsv2Config == nil && papiConfig == nil && gtmv1_3Config == nil {
+	if dnsErr != nil && papiErr != nil && gtmErr != nil || dnsv2Config == nil && papiConfig == nil && gtmConfig == nil {
 		return nil, fmt.Errorf("at least one configuration must be defined")
 	}
 
@@ -222,13 +222,13 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 	return &DNSv2Config, nil
 }
 
-func getConfigGTMV1_3Service(d resourceData) (*edgegrid.Config, error) {
-	var GTMv1_3Config edgegrid.Config
+func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
+	var GTMv1Config edgegrid.Config
 	var err error
 	if _, ok := d.GetOk("gtm"); ok {
 		config := d.Get("gtm").(set).List()[0].(map[string]interface{})
 
-		GTMv1_3Config = edgegrid.Config{
+		GTMv1Config = edgegrid.Config{
 			Host:         config["host"].(string),
 			AccessToken:  config["access_token"].(string),
 			ClientToken:  config["client_token"].(string),
@@ -236,19 +236,19 @@ func getConfigGTMV1_3Service(d resourceData) (*edgegrid.Config, error) {
 			MaxBody:      config["max_body"].(int),
 		}
 
-		gtmv1_3.Init(GTMv1_3Config)
-		return &GTMv1_3Config, nil
+		gtm.Init(GTMv1Config)
+		return &GTMv1Config, nil
 	}
 
 	edgerc := d.Get("edgerc").(string)
 	section := d.Get("gtm_section").(string)
-	GTMv1_3Config, err = edgegrid.Init(edgerc, section)
+	GTMv1Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
 
-	gtmv1_3.Init(GTMv1_3Config)
-	return &GTMv1_3Config, nil
+	gtm.Init(GTMv1Config)
+	return &GTMv1Config, nil
 }
 
 func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {

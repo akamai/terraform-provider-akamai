@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -120,7 +120,7 @@ func testAccCheckAkamaiGTMDomainDestroy(s *terraform.State) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("[DEBUG] [Akamai GTMV1_3] deleting domain [%v]", domain)
+		log.Printf("[DEBUG] [Akamai GTMV1] deleting domain [%v]", domain)
 		_, err = domain.Delete()
 		if err != nil {
 			if _, ok := err.(gtm.CommonError); ok {
@@ -152,7 +152,7 @@ func testAccCheckAkamaiGTMDomainExists(s *terraform.State) error {
 func testAccPreCheckTF(t *testing.T) {
 
 	// by definition, we are running acceptance tests. ;-)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Setting HashiAcc true")
+	log.Printf("[DEBUG] [Akamai GTMV1] Setting HashiAcc true")
 	HashiAcc = true
 
 }

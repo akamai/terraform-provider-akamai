@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 )
 
-func resourceGTMv1_3Cidrmap() *schema.Resource {
+func resourceGTMv1Cidrmap() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGTMv1_3CidrMapCreate,
-		Read:   resourceGTMv1_3CidrMapRead,
-		Update: resourceGTMv1_3CidrMapUpdate,
-		Delete: resourceGTMv1_3CidrMapDelete,
-		Exists: resourceGTMv1_3CidrMapExists,
+		Create: resourceGTMv1CidrMapCreate,
+		Read:   resourceGTMv1CidrMapRead,
+		Update: resourceGTMv1CidrMapUpdate,
+		Delete: resourceGTMv1CidrMapDelete,
+		Exists: resourceGTMv1CidrMapExists,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1_3CidrMapImport,
+			State: resourceGTMv1CidrMapImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -85,16 +85,16 @@ func parseResourceCidrMapId(id string) (string, string, error) {
 }
 
 // Create a new GTM CidrMap
-func resourceGTMv1_3CidrMapCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1CidrMapCreate(d *schema.ResourceData, meta interface{}) error {
 
 	domain := d.Get("domain").(string)
 
 	log.Printf("[INFO] [Akamai GTM] Creating cidrMap [%s] in domain [%s]", d.Get("name").(string), domain)
 	newCidr := populateNewCidrMapObject(d)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Proposed New CidrMap: [%v]", newCidr)
+	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New CidrMap: [%v]", newCidr)
 	cStatus, err := newCidr.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMV1_3] CidrMap Create failed: %s", err.Error())
+		log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Create failed: %s", err.Error())
 		fmt.Println(err)
 		return err
 	}
@@ -104,18 +104,18 @@ func resourceGTMv1_3CidrMapCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] CidrMap Create status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Create status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] CidrMap Create completed")
+			log.Printf("[INFO] [Akamai GTMv1] CidrMap Create completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] CidrMap Create pending")
+				log.Printf("[INFO] [Akamai GTMv1] CidrMap Create pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] CidrMap Create failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] CidrMap Create failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -124,52 +124,52 @@ func resourceGTMv1_3CidrMapCreate(d *schema.ResourceData, meta interface{}) erro
 
 	// Give terraform the ID. Format domain:cidrMap
 	cidrMapId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Generated CidrMap CidrMap Id: %s", cidrMapId)
+	log.Printf("[DEBUG] [Akamai GTMv1] Generated CidrMap CidrMap Id: %s", cidrMapId)
 	d.SetId(cidrMapId)
-	return resourceGTMv1_3CidrMapRead(d, meta)
+	return resourceGTMv1CidrMapRead(d, meta)
 
 }
 
 // read cidrMap. updates state with entire API result configuration.
-func resourceGTMv1_3CidrMapRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1CidrMapRead(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] READ")
-	log.Printf("[DEBUG] Reading [Akamai GTMV1_3] CidrMap: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] READ")
+	log.Printf("[DEBUG] Reading [Akamai GTMv1] CidrMap: %s", d.Id())
 	// retrieve the property and domain
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
 		return errors.New("Invalid cidrMap cidrMap Id")
 	}
-	cidr, err := gtmv1_3.GetCidrMap(cidrMap, domain)
+	cidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
 		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMV1_3] CidrMap Read error: %s", err.Error())
+		log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Read error: %s", err.Error())
 		return err
 	}
 	populateTerraformCidrMapState(d, cidr)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] READ %v", cidr)
+	log.Printf("[DEBUG] [Akamai GTMv1] READ %v", cidr)
 	return nil
 }
 
 // Update GTM CidrMap
-func resourceGTMv1_3CidrMapUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] UPDATE")
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] CidrMap: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] CidrMap: %s", d.Id())
 	// pull domain and cidrMap out of id
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
 		return errors.New("Invalid cidrMap Id")
 	}
 	// Get existingCidrMap
-	existCidr, err := gtmv1_3.GetCidrMap(cidrMap, domain)
+	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] CidrMap BEFORE: %v", existCidr)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] CidrMap BEFORE: %v", existCidr)
 	populateCidrMapObject(d, existCidr)
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] CidrMap PROPOSED: %v", existCidr)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] CidrMap PROPOSED: %v", existCidr)
 	uStat, err := existCidr.Update(domain)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -181,29 +181,29 @@ func resourceGTMv1_3CidrMapUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] CidrMap Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Update  status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] CidrMap update completed")
+			log.Printf("[INFO] [Akamai GTMv1] CidrMap update completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] CidrMap update pending")
+				log.Printf("[INFO] [Akamai GTMv1] CidrMap update pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] CidrMap update failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] CidrMap update failed [%s]", err.Error())
 				return err
 			}
 		}
 
 	}
 
-	return resourceGTMv1_3CidrMapRead(d, meta)
+	return resourceGTMv1CidrMapRead(d, meta)
 }
 
 // Import GTM CidrMap.
-func resourceGTMv1_3CidrMapImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1CidrMapImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] CidrMap [%s] Import", d.Id())
 	// pull domain and cidrMap out of cidrMap id
@@ -211,7 +211,7 @@ func resourceGTMv1_3CidrMapImport(d *schema.ResourceData, meta interface{}) ([]*
 	if err != nil {
 		return []*schema.ResourceData{d}, errors.New("Invalid cidrMap cidrMap Id")
 	}
-	cidr, err := gtmv1_3.GetCidrMap(cidrMap, domain)
+	cidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -225,21 +225,21 @@ func resourceGTMv1_3CidrMapImport(d *schema.ResourceData, meta interface{}) ([]*
 }
 
 // Delete GTM CidrMap.
-func resourceGTMv1_3CidrMapDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1CidrMapDelete(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] DELETE")
-	log.Printf("[DEBUG] Deleting [Akamai GTMV1_3] CidrMap: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
+	log.Printf("[DEBUG] Deleting [Akamai GTMv1] CidrMap: %s", d.Id())
 	// Get existing cidrMap
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
 		return errors.New("Invalid cidrMap Id")
 	}
-	existCidr, err := gtmv1_3.GetCidrMap(cidrMap, domain)
+	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Deleting [Akamai GTMV1_3] CidrMap: %v", existCidr)
+	log.Printf("[DEBUG] Deleting [Akamai GTMv1] CidrMap: %v", existCidr)
 	uStat, err := existCidr.Delete(domain)
 	if err != nil {
 		fmt.Println(err)
@@ -251,18 +251,18 @@ func resourceGTMv1_3CidrMapDelete(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] CidrMap Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Delete status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] CidrMap delete completed")
+			log.Printf("[INFO] [Akamai GTMv1] CidrMap delete completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] CidrMap delete pending")
+				log.Printf("[INFO] [Akamai GTMv1] CidrMap delete pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] CidrMap delete failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] CidrMap delete failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -275,26 +275,26 @@ func resourceGTMv1_3CidrMapDelete(d *schema.ResourceData, meta interface{}) erro
 }
 
 // Test GTM CidrMap existance
-func resourceGTMv1_3CidrMapExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceGTMv1CidrMapExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
-	log.Printf("[DEBUG] [Akamai GTMv1_3] Exists")
+	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and cidrMap out of cidrMap id
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
 		return false, errors.New("Invalid cidrMap cidrMap Id")
 	}
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for existing cidrMap [%s] in domain %s", cidrMap, domain)
-	cidr, err := gtmv1_3.GetCidrMap(cidrMap, domain)
+	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing cidrMap [%s] in domain %s", cidrMap, domain)
+	cidr, err := gtm.GetCidrMap(cidrMap, domain)
 	return cidr != nil, err
 }
 
 // Create and populate a new cidrMap object from cidrMap data
-func populateNewCidrMapObject(d *schema.ResourceData) *gtmv1_3.CidrMap {
+func populateNewCidrMapObject(d *schema.ResourceData) *gtm.CidrMap {
 
-	cidrObj := gtmv1_3.NewCidrMap(d.Get("name").(string))
-	cidrObj.DefaultDatacenter = &gtmv1_3.DatacenterBase{}
-	cidrObj.Assignments = make([]*gtmv1_3.CidrAssignment, 1)
-	cidrObj.Links = make([]*gtmv1_3.Link, 1)
+	cidrObj := gtm.NewCidrMap(d.Get("name").(string))
+	cidrObj.DefaultDatacenter = &gtm.DatacenterBase{}
+	cidrObj.Assignments = make([]*gtm.CidrAssignment, 1)
+	cidrObj.Links = make([]*gtm.Link, 1)
 	populateCidrMapObject(d, cidrObj)
 
 	return cidrObj
@@ -302,7 +302,7 @@ func populateNewCidrMapObject(d *schema.ResourceData) *gtmv1_3.CidrMap {
 }
 
 // Populate existing cidrMap object from cidrMap data
-func populateCidrMapObject(d *schema.ResourceData, cidr *gtmv1_3.CidrMap) {
+func populateCidrMapObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	if v, ok := d.GetOk("name"); ok {
 		cidr.Name = v.(string)
@@ -313,7 +313,7 @@ func populateCidrMapObject(d *schema.ResourceData, cidr *gtmv1_3.CidrMap) {
 }
 
 // Populate Terraform state from provided CidrMap object
-func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtmv1_3.CidrMap) {
+func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	// walk thru all state elements
 	d.Set("name", cidr.Name)
@@ -323,16 +323,16 @@ func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtmv1_3.CidrMap
 }
 
 // create and populate GTM CidrMap Assignments object
-func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtmv1_3.CidrMap) {
+func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	// pull apart List
 	as := d.Get("assignments")
 	if as != nil {
 		cidrAssignmentsList := as.([]interface{})
-		cidrAssignmentsObjList := make([]*gtmv1_3.CidrAssignment, len(cidrAssignmentsList)) // create new object list
+		cidrAssignmentsObjList := make([]*gtm.CidrAssignment, len(cidrAssignmentsList)) // create new object list
 		for i, v := range cidrAssignmentsList {
 			asMap := v.(map[string]interface{})
-			cidrAssignment := gtmv1_3.CidrAssignment{}
+			cidrAssignment := gtm.CidrAssignment{}
 			cidrAssignment.DatacenterId = asMap["datacenter_id"].(int)
 			cidrAssignment.Nickname = asMap["nickname"].(string)
 			if asMap["blocks"] != nil {
@@ -349,7 +349,7 @@ func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtmv1_3.CidrMap
 }
 
 // create and populate Terraform cidrMap assigments schema
-func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtmv1_3.CidrMap) {
+func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	asListNew := make([]interface{}, len(cidr.Assignments))
 	for i, as := range cidr.Assignments {
@@ -365,19 +365,19 @@ func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtmv1_3
 }
 
 // create and populate GTM CidrMap DefaultDatacenter object
-func populateCidrDefaultDCObject(d *schema.ResourceData, cidr *gtmv1_3.CidrMap) {
+func populateCidrDefaultDCObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	// pull apart List
 	as := d.Get("default_datacenter")
 	if as != nil && len(as.([]interface{})) > 0 {
-		cidrDefaultDCObj := gtmv1_3.DatacenterBase{} // create new object
+		cidrDefaultDCObj := gtm.DatacenterBase{} // create new object
 		cidrDefaultDCList := as.([]interface{})
 		asMap := cidrDefaultDCList[0].(map[string]interface{})
 		if asMap["datacenter_id"] != nil && asMap["datacenter_id"].(int) != 0 {
 			cidrDefaultDCObj.DatacenterId = asMap["datacenter_id"].(int)
 			cidrDefaultDCObj.Nickname = asMap["nickname"].(string)
 		} else {
-			log.Printf("[INFO] [Akamai GTMv1_3] No Default Datacenter specified")
+			log.Printf("[INFO] [Akamai GTMv1] No Default Datacenter specified")
 			var nilInt int
 			cidrDefaultDCObj.DatacenterId = nilInt
 			cidrDefaultDCObj.Nickname = ""
@@ -387,7 +387,7 @@ func populateCidrDefaultDCObject(d *schema.ResourceData, cidr *gtmv1_3.CidrMap) 
 }
 
 // create and populate Terraform cidrMap default_datacenter schema
-func populateTerraformCidrDefaultDCState(d *schema.ResourceData, cidr *gtmv1_3.CidrMap) {
+func populateTerraformCidrDefaultDCState(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	ddcListNew := make([]interface{}, 1)
 	ddcNew := map[string]interface{}{

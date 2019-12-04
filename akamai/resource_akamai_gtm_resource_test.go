@@ -2,7 +2,7 @@ package akamai
 
 import (
 	"fmt"
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"log"
@@ -147,7 +147,7 @@ func testAccCheckAkamaiGTMResourceDestroy(s *terraform.State) error {
 			log.Printf("[INFO] [Akamai GTM] Resource Destroy: Error reading resource [%s]", err.Error())
 			return err
 		}
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Deleting test resource [%v]", rname)
+		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test resource [%v]", rname)
 		_, err = rsrc.Delete(dom)
 		if err != nil {
 			return fmt.Errorf("resource was not deleted %s. Error: %s", rs.Primary.ID, err.Error())

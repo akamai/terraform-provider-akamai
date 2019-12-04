@@ -9,20 +9,20 @@ import (
 	"time"
 
 	client "github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
 // Hack for Hashicorp Acceptance Tests
 var HashiAcc = false
 
-func resourceGTMv1_3Domain() *schema.Resource {
+func resourceGTMv1Domain() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGTMv1_3DomainCreate,
-		Read:   resourceGTMv1_3DomainRead,
-		Update: resourceGTMv1_3DomainUpdate,
-		Delete: resourceGTMv1_3DomainDelete,
-		Exists: resourceGTMv1_3DomainExists,
+		Create: resourceGTMv1DomainCreate,
+		Read:   resourceGTMv1DomainRead,
+		Update: resourceGTMv1DomainUpdate,
+		Delete: resourceGTMv1DomainDelete,
+		Exists: resourceGTMv1DomainExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -193,14 +193,14 @@ func GetQueryArgs(d *schema.ResourceData) map[string]string {
 }
 
 // Create a new GTM Domain
-func resourceGTMv1_3DomainCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 
 	dname := d.Get("name").(string)
 	//comment := d.Get("comment").(string)
 
 	log.Printf("[INFO] [Akamai GTM] Creating domain [%s]", dname)
 	newDom := populateNewDomainObject(d)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Domain: [%v]", newDom)
+	log.Printf("[DEBUG] [Akamai GTMv1] Domain: [%v]", newDom)
 
 	cStatus, err := newDom.Create(GetQueryArgs(d))
 
@@ -221,7 +221,7 @@ func resourceGTMv1_3DomainCreate(d *schema.ResourceData, meta interface{}) error
 		}
 		if origErr.Status == 400 && strings.Contains(origErr.RawBody, "proposed domain name") && strings.Contains(origErr.RawBody, "Domain Validation Error") {
 			// Already exists
-			log.Printf("[DEBUG] [Akamai GTMV1_3] : Domain %s already exists. Ignoring error (Hashicorp).", dname)
+			log.Printf("[DEBUG] [Akamai GTMv1] : Domain %s already exists. Ignoring error (Hashicorp).", dname)
 		} else {
 			log.Printf("[INFO] [Akamai GTM] Error creating domain [%s]", err.Error())
 			return err
@@ -233,18 +233,18 @@ func resourceGTMv1_3DomainCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Create status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] Create status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(dname)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] Domain Create completed")
+			log.Printf("[INFO] [Akamai GTMv1] Domain Create completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] Domain Create pending")
+				log.Printf("[INFO] [Akamai GTMv1] Domain Create pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] Domain Create failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] Domain Create failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -252,41 +252,41 @@ func resourceGTMv1_3DomainCreate(d *schema.ResourceData, meta interface{}) error
 	}
 	// Give terraform the ID
 	d.SetId(dname)
-	return resourceGTMv1_3DomainRead(d, meta)
+	return resourceGTMv1DomainRead(d, meta)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1_3DomainRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] [Akamai GTMv1_3] READ")
-	log.Printf("[DEBUG] Reading [Akamai GTMv1_3] Domain: %s", d.Id())
+func resourceGTMv1DomainRead(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[DEBUG] [Akamai GTMv1] READ")
+	log.Printf("[DEBUG] Reading [Akamai GTMv1] Domain: %s", d.Id())
 	// retrieve the domain
 	dom, err := gtm.GetDomain(d.Id())
 	if err != nil {
 		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Domain Read error: %s", err.Error())
+		log.Printf("[DEBUG] [Akamai GTMv1] Domain Read error: %s", err.Error())
 		return err
 	}
 	populateTerraformState(d, dom)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] READ %v", dom)
+	log.Printf("[DEBUG] [Akamai GTMv1] READ %v", dom)
 	return nil
 }
 
 // Update GTM Domain
-func resourceGTMv1_3DomainUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMv1_3] UPDATE")
-	log.Printf("[DEBUG] Updating [Akamai GTMv1_3] Domain: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] Domain: %s", d.Id())
 	// Get existing domain
 	existDom, err := gtm.GetDomain(d.Id())
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	log.Printf("[DEBUG] Updating [Akamai GTMv1_3] Domain BEFORE: %v", existDom)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] Domain BEFORE: %v", existDom)
 	populateDomainObject(d, existDom)
-	log.Printf("[DEBUG] Updating [Akamai GTMv1_3] Domain PROPOSED: %v", existDom)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] Domain PROPOSED: %v", existDom)
 	//existDom := populateNewDomainObject(d)
 	uStat, err := existDom.Update(GetQueryArgs(d))
 	if err != nil {
@@ -299,18 +299,18 @@ func resourceGTMv1_3DomainUpdate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Update status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] Update status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(d.Id())
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] Domain update completed")
+			log.Printf("[INFO] [Akamai GTMv1] Domain update completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] Domain update pending")
+				log.Printf("[INFO] [Akamai GTMv1] Domain update pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] Domain update failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] Domain update failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -318,14 +318,14 @@ func resourceGTMv1_3DomainUpdate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	// Give terraform the ID
-	return resourceGTMv1_3DomainRead(d, meta)
+	return resourceGTMv1DomainRead(d, meta)
 
 }
 
 // Delete GTM Domain. Admin priviledges required in current API version.
-func resourceGTMv1_3DomainDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Deleting GTM Domain")
-	log.Printf("[DEBUG] [Akamai GTMv1_3] Domain: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] Domain: %s", d.Id())
 	// Get existing domain
 	existDom, err := gtm.GetDomain(d.Id())
 	if err != nil {
@@ -349,7 +349,7 @@ func resourceGTMv1_3DomainDelete(d *schema.ResourceData, meta interface{}) error
 			return err
 		}
 		if origErr.Status == 405 && strings.Contains(origErr.RawBody, "Bad Request") && strings.Contains(origErr.RawBody, "DELETE method is not supported") {
-			log.Printf("[DEBUG] [Akamai GTMV1_3] : Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
+			log.Printf("[DEBUG] [Akamai GTMv1] : Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
 		} else {
 			log.Printf("[INFO] [Akamai GTM] Error deleting domain [%s]", err.Error())
 			return err
@@ -361,18 +361,18 @@ func resourceGTMv1_3DomainDelete(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] Delete status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(d.Id())
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] Domain delete completed")
+			log.Printf("[INFO] [Akamai GTMv1] Domain delete completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] Domain delete pending")
+				log.Printf("[INFO] [Akamai GTMv1] Domain delete pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] Domain delete failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] Domain delete failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -391,12 +391,12 @@ func resourceGTMv1_3DomainDelete(d *schema.ResourceData, meta interface{}) error
 }
 
 // Test GTM Domain existance
-func resourceGTMv1_3DomainExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceGTMv1DomainExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
 	name := d.Get("name").(string)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for domain [%s]", name)
+	log.Printf("[DEBUG] [Akamai GTMv1] Searching for domain [%s]", name)
 	domain, err := gtm.GetDomain(name)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for Existing domain result [%v]", domain)
+	log.Printf("[DEBUG] [Akamai GTMv1] Searching for Existing domain result [%v]", domain)
 	return domain != nil, err
 }
 
@@ -424,7 +424,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 
 	if d.Get("name").(string) != dom.Name {
 		dom.Name = d.Get("name").(string)
-		log.Printf("[WARNING] [Akamai GTMV1_3] Domain [%s] state and GTM names inconsistent!", dom.Name)
+		log.Printf("[WARNING] [Akamai GTMv1] Domain [%s] state and GTM names inconsistent!", dom.Name)
 	}
 	if v, ok := d.GetOk("type"); ok {
 		if v != dom.Type {

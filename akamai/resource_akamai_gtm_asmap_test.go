@@ -2,7 +2,7 @@ package akamai
 
 import (
 	"fmt"
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"log"
@@ -193,7 +193,7 @@ func testAccCheckAkamaiGTMAsMapDestroy(s *terraform.State) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("[DEBUG] [Akamai GTMV1_3] Deleting test asmap [%v]", asName)
+		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test asmap [%v]", asName)
 		_, err = as.Delete(dom)
 		if err != nil {
 			return fmt.Errorf("asmap was not deleted %s. Error: %s", rs.Primary.ID, err.Error())

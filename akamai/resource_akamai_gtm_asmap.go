@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	gtmv1_3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_3"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 )
 
-func resourceGTMv1_3ASmap() *schema.Resource {
+func resourceGTMv1ASmap() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGTMv1_3ASmapCreate,
-		Read:   resourceGTMv1_3ASmapRead,
-		Update: resourceGTMv1_3ASmapUpdate,
-		Delete: resourceGTMv1_3ASmapDelete,
-		Exists: resourceGTMv1_3ASmapExists,
+		Create: resourceGTMv1ASmapCreate,
+		Read:   resourceGTMv1ASmapRead,
+		Update: resourceGTMv1ASmapUpdate,
+		Delete: resourceGTMv1ASmapDelete,
+		Exists: resourceGTMv1ASmapExists,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1_3ASmapImport,
+			State: resourceGTMv1ASmapImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -85,16 +85,16 @@ func parseResourceASmapId(id string) (string, string, error) {
 }
 
 // Create a new GTM ASmap
-func resourceGTMv1_3ASmapCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ASmapCreate(d *schema.ResourceData, meta interface{}) error {
 
 	domain := d.Get("domain").(string)
 
 	log.Printf("[INFO] [Akamai GTM] Creating asMap [%s] in domain [%s]", d.Get("name").(string), domain)
 	newAS := populateNewASmapObject(d)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Proposed New ASmap: [%v]", newAS)
+	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New ASmap: [%v]", newAS)
 	cStatus, err := newAS.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMV1_3] ASmap Create failed: %s", err.Error())
+		log.Printf("[DEBUG] [Akamai GTMv1] ASmap Create failed: %s", err.Error())
 		fmt.Println(err)
 		return err
 	}
@@ -104,18 +104,18 @@ func resourceGTMv1_3ASmapCreate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] ASmap Create status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Create status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] ASmap Create completed")
+			log.Printf("[INFO] [Akamai GTMv1] ASmap Create completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] ASmap Create pending")
+				log.Printf("[INFO] [Akamai GTMv1] ASmap Create pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] ASmap Create failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] ASmap Create failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -124,52 +124,52 @@ func resourceGTMv1_3ASmapCreate(d *schema.ResourceData, meta interface{}) error 
 
 	// Give terraform the ID. Format domain:asMap
 	asMapId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Generated ASmap ASmap Id: %s", asMapId)
+	log.Printf("[DEBUG] [Akamai GTMv1] Generated ASmap ASmap Id: %s", asMapId)
 	d.SetId(asMapId)
-	return resourceGTMv1_3ASmapRead(d, meta)
+	return resourceGTMv1ASmapRead(d, meta)
 
 }
 
 // read asMap. updates state with entire API result configuration.
-func resourceGTMv1_3ASmapRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ASmapRead(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] READ")
-	log.Printf("[DEBUG] Reading [Akamai GTMV1_3] ASmap: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] READ")
+	log.Printf("[DEBUG] Reading [Akamai GTMv1] ASmap: %s", d.Id())
 	// retrieve the property and domain
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
 		return errors.New("Invalid asMap asMap Id")
 	}
-	as, err := gtmv1_3.GetAsMap(asMap, domain)
+	as, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
 		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMV1_3] ASmap Read error: %s", err.Error())
+		log.Printf("[DEBUG] [Akamai GTMv1] ASmap Read error: %s", err.Error())
 		return err
 	}
 	populateTerraformASmapState(d, as)
-	log.Printf("[DEBUG] [Akamai GTMV1_3] READ %v", as)
+	log.Printf("[DEBUG] [Akamai GTMv1] READ %v", as)
 	return nil
 }
 
 // Update GTM ASmap
-func resourceGTMv1_3ASmapUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ASmapUpdate(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] UPDATE")
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] ASmap: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] ASmap: %s", d.Id())
 	// pull domain and asMap out of id
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
 		return errors.New("Invalid asMap Id")
 	}
 	// Get existingASmap
-	existAs, err := gtmv1_3.GetAsMap(asMap, domain)
+	existAs, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] ASmap BEFORE: %v", existAs)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] ASmap BEFORE: %v", existAs)
 	populateASmapObject(d, existAs)
-	log.Printf("[DEBUG] Updating [Akamai GTMV1_3] ASmap PROPOSED: %v", existAs)
+	log.Printf("[DEBUG] Updating [Akamai GTMv1] ASmap PROPOSED: %v", existAs)
 	uStat, err := existAs.Update(domain)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -181,29 +181,29 @@ func resourceGTMv1_3ASmapUpdate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] ASmap Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Update  status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] ASmap update completed")
+			log.Printf("[INFO] [Akamai GTMv1] ASmap update completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] ASmap update pending")
+				log.Printf("[INFO] [Akamai GTMv1] ASmap update pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] ASmap update failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] ASmap update failed [%s]", err.Error())
 				return err
 			}
 		}
 
 	}
 
-	return resourceGTMv1_3ASmapRead(d, meta)
+	return resourceGTMv1ASmapRead(d, meta)
 }
 
 // Import GTM ASmap.
-func resourceGTMv1_3ASmapImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1ASmapImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] ASmap [%s] Import", d.Id())
 	// pull domain and asMap out of asMap id
@@ -211,7 +211,7 @@ func resourceGTMv1_3ASmapImport(d *schema.ResourceData, meta interface{}) ([]*sc
 	if err != nil {
 		return []*schema.ResourceData{d}, errors.New("Invalid asMap Id")
 	}
-	as, err := gtmv1_3.GetAsMap(asMap, domain)
+	as, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -225,21 +225,21 @@ func resourceGTMv1_3ASmapImport(d *schema.ResourceData, meta interface{}) ([]*sc
 }
 
 // Delete GTM ASmap.
-func resourceGTMv1_3ASmapDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ASmapDelete(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[DEBUG] [Akamai GTMV1_3] DELETE")
-	log.Printf("[DEBUG] Deleting [Akamai GTMV1_3] ASmap: %s", d.Id())
+	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
+	log.Printf("[DEBUG] Deleting [Akamai GTMv1] ASmap: %s", d.Id())
 	// Get existing asMap
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
 		return errors.New("Invalid asMap Id")
 	}
-	existAs, err := gtmv1_3.GetAsMap(asMap, domain)
+	existAs, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Deleting [Akamai GTMV1_3] ASmap: %v", existAs)
+	log.Printf("[DEBUG] Deleting [Akamai GTMv1] ASmap: %v", existAs)
 	uStat, err := existAs.Delete(domain)
 	if err != nil {
 		fmt.Println(err)
@@ -251,18 +251,18 @@ func resourceGTMv1_3ASmapDelete(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 	fmt.Println(string(b))
-	log.Printf("[DEBUG] [Akamai GTMV1_3] ASmap Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMV1_3] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Delete status:")
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
-			log.Printf("[INFO] [Akamai GTMV1_3] ASmap delete completed")
+			log.Printf("[INFO] [Akamai GTMv1] ASmap delete completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMV1_3] ASmap delete pending")
+				log.Printf("[INFO] [Akamai GTMv1] ASmap delete pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMV1_3] ASmap delete failed [%s]", err.Error())
+				log.Printf("[WARNING] [Akamai GTMv1] ASmap delete failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -275,26 +275,26 @@ func resourceGTMv1_3ASmapDelete(d *schema.ResourceData, meta interface{}) error 
 }
 
 // Test GTM ASmap existance
-func resourceGTMv1_3ASmapExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceGTMv1ASmapExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
-	log.Printf("[DEBUG] [Akamai GTMv1_3] Exists")
+	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and asMap out of asMap id
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
 		return false, errors.New("Invalid asMap asMap Id")
 	}
-	log.Printf("[DEBUG] [Akamai GTMV1_3] Searching for existing asMap [%s] in domain %s", asMap, domain)
-	as, err := gtmv1_3.GetAsMap(asMap, domain)
+	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing asMap [%s] in domain %s", asMap, domain)
+	as, err := gtm.GetAsMap(asMap, domain)
 	return as != nil, err
 }
 
 // Create and populate a new asMap object from asMap data
-func populateNewASmapObject(d *schema.ResourceData) *gtmv1_3.AsMap {
+func populateNewASmapObject(d *schema.ResourceData) *gtm.AsMap {
 
-	asObj := gtmv1_3.NewAsMap(d.Get("name").(string))
-	asObj.DefaultDatacenter = &gtmv1_3.DatacenterBase{}
-	asObj.Assignments = make([]*gtmv1_3.AsAssignment, 1)
-	asObj.Links = make([]*gtmv1_3.Link, 1)
+	asObj := gtm.NewAsMap(d.Get("name").(string))
+	asObj.DefaultDatacenter = &gtm.DatacenterBase{}
+	asObj.Assignments = make([]*gtm.AsAssignment, 1)
+	asObj.Links = make([]*gtm.Link, 1)
 	populateASmapObject(d, asObj)
 
 	return asObj
@@ -302,7 +302,7 @@ func populateNewASmapObject(d *schema.ResourceData) *gtmv1_3.AsMap {
 }
 
 // Populate existing asMap object from asMap data
-func populateASmapObject(d *schema.ResourceData, as *gtmv1_3.AsMap) {
+func populateASmapObject(d *schema.ResourceData, as *gtm.AsMap) {
 
 	if v, ok := d.GetOk("name"); ok {
 		as.Name = v.(string)
@@ -313,7 +313,7 @@ func populateASmapObject(d *schema.ResourceData, as *gtmv1_3.AsMap) {
 }
 
 // Populate Terraform state from provided ASmap object
-func populateTerraformASmapState(d *schema.ResourceData, as *gtmv1_3.AsMap) {
+func populateTerraformASmapState(d *schema.ResourceData, as *gtm.AsMap) {
 
 	// walk thru all state elements
 	d.Set("name", as.Name)
@@ -323,16 +323,16 @@ func populateTerraformASmapState(d *schema.ResourceData, as *gtmv1_3.AsMap) {
 }
 
 // create and populate GTM ASmap Assignments object
-func populateAsAssignmentsObject(d *schema.ResourceData, as *gtmv1_3.AsMap) {
+func populateAsAssignmentsObject(d *schema.ResourceData, as *gtm.AsMap) {
 
 	// pull apart List
 	assgn := d.Get("assignments")
 	if assgn != nil {
 		asAssignmentsList := assgn.([]interface{})
-		asAssignmentsObjList := make([]*gtmv1_3.AsAssignment, len(asAssignmentsList)) // create new object list
+		asAssignmentsObjList := make([]*gtm.AsAssignment, len(asAssignmentsList)) // create new object list
 		for i, v := range asAssignmentsList {
 			asMap := v.(map[string]interface{})
-			asAssignment := gtmv1_3.AsAssignment{}
+			asAssignment := gtm.AsAssignment{}
 			asAssignment.DatacenterId = asMap["datacenter_id"].(int)
 			asAssignment.Nickname = asMap["nickname"].(string)
 			if asMap["as_numbers"] != nil {
@@ -349,7 +349,7 @@ func populateAsAssignmentsObject(d *schema.ResourceData, as *gtmv1_3.AsMap) {
 }
 
 // create and populate Terraform asMap assigments schema
-func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtmv1_3.AsMap) {
+func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtm.AsMap) {
 
 	asListNew := make([]interface{}, len(as.Assignments))
 	for i, assgn := range as.Assignments {
@@ -365,19 +365,19 @@ func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtmv1_3.AsM
 }
 
 // create and populate GTM ASmap DefaultDatacenter object
-func populateAsDefaultDCObject(d *schema.ResourceData, as *gtmv1_3.AsMap) {
+func populateAsDefaultDCObject(d *schema.ResourceData, as *gtm.AsMap) {
 
 	// pull apart List
 	asm := d.Get("default_datacenter")
 	if asm != nil && len(asm.([]interface{})) > 0 {
-		asDefaultDCObj := gtmv1_3.DatacenterBase{} // create new object
+		asDefaultDCObj := gtm.DatacenterBase{} // create new object
 		asDefaultDCList := asm.([]interface{})
 		asMap := asDefaultDCList[0].(map[string]interface{})
 		if asMap["datacenter_id"] != nil && asMap["datacenter_id"].(int) != 0 {
 			asDefaultDCObj.DatacenterId = asMap["datacenter_id"].(int)
 			asDefaultDCObj.Nickname = asMap["nickname"].(string)
 		} else {
-			log.Printf("[INFO] [Akamai GTMv1_3] No Default Datacenter specified")
+			log.Printf("[INFO] [Akamai GTMv1] No Default Datacenter specified")
 			var nilInt int
 			asDefaultDCObj.DatacenterId = nilInt
 			asDefaultDCObj.Nickname = ""
@@ -387,7 +387,7 @@ func populateAsDefaultDCObject(d *schema.ResourceData, as *gtmv1_3.AsMap) {
 }
 
 // create and populate Terraform asMap default_datacenter schema
-func populateTerraformAsDefaultDCState(d *schema.ResourceData, as *gtmv1_3.AsMap) {
+func populateTerraformAsDefaultDCState(d *schema.ResourceData, as *gtm.AsMap) {
 
 	ddcListNew := make([]interface{}, 1)
 	ddcNew := map[string]interface{}{
