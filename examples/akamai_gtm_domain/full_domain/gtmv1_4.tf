@@ -45,9 +45,9 @@ resource "akamai_gtm_domain" "tfexample_domain" {
     // min_test_interval
     // ping_packet_size
     //
-    //Optional - list all?
-    contract = "${locals.contract}"
-    group = "${locals.group}"
+    //Optional [partial]   
+    contract = "${local.contract}"
+    group = "${local.group}"
     email_notification_list = []
     load_imbalance_percentage = 20
     wait_on_complete = false
@@ -69,7 +69,7 @@ resource "akamai_gtm_datacenter" "tfexample_dc_1" {
     // servermonitor_load_count
     // servermonitor_pool
     //
-    // Optional
+    // Optional [partial]
     nickname = "tfexample_dc_1"
     wait_on_complete = false
     default_load_object = [{
@@ -111,7 +111,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	enabled = true 
 	weight = 100
 	servers = ["1.2.3.4"]
-	// optional
     	name = ""
     	handout_cname = ""
 	}]
@@ -120,7 +119,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	test_interval = 30
 	test_object_protocol = "HTTP"
 	test_timeout = 20
-	// optional
 	answer_required = false
 	disable_nonstandard_port_warning = false
 	error_penalty = 0
@@ -128,6 +126,8 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	http_error3xx = false
 	http_error4xx = false
 	http_error5xx = false
+	disabled = false
+	http_headers = []
 	peer_certificate_verification = false
 	recursion_requested = false
 	request_string = ""
@@ -146,15 +146,13 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     // weighted_hash_bits_for_ipv4
     // weighted_hash_bits_for_ipv6
     //
-    // Optional
+    // Optional [partial]
     failover_delay = 0
     failback_delay = 0
-    /*
     mx_records = [{
 	exchange = "test_e"
 	preference = 100
 	}]
-    */
     wait_on_complete = false
     depends_on = [
          "akamai_gtm_domain.tfexample_domain",
