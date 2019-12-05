@@ -332,8 +332,9 @@ func testAccCheckAkamaiPropertyActivationExists(s *terraform.State) error {
 		if rs.Type != "akamai_property_activation" {
 			continue
 		}
-		propertyID := rs.Primary.Attributes["property"]
 
+		id := strings.Split(rs.Primary.Attributes["property"], "-")
+		propertyID := id[0]
 		property := papi.NewProperty(papi.NewProperties())
 		property.PropertyID = propertyID
 		property.Contract = &papi.Contract{ContractID: rs.Primary.Attributes["contract"]}
@@ -366,7 +367,8 @@ func testAccCheckAkamaiPropertyActivationLatest(s *terraform.State) error {
 		if rs.Type != "akamai_property_activation" {
 			continue
 		}
-		propertyID := rs.Primary.Attributes["property"]
+		id := strings.Split(rs.Primary.Attributes["property"], "-")
+		propertyID := id[0]
 
 		property := papi.NewProperty(papi.NewProperties())
 		property.PropertyID = propertyID
