@@ -224,9 +224,11 @@ func NewRule() *Rule {
 // options.
 func (rule *Rule) MergeBehavior(behavior *Behavior) {
 	for _, existingBehavior := range rule.Behaviors {
-		if existingBehavior.Name == behavior.Name {
-			existingBehavior.MergeOptions(behavior.Options)
-			return
+		if behavior.Name == "cpCode" || behavior.Name == "origin" {
+			if existingBehavior.Name == behavior.Name {
+				existingBehavior.MergeOptions(behavior.Options)
+				return
+			}
 		}
 	}
 
@@ -237,12 +239,12 @@ func (rule *Rule) MergeBehavior(behavior *Behavior) {
 //
 // If the behavior already exists it is replaced with the given behavior
 func (rule *Rule) AddBehavior(behavior *Behavior) {
-	for key, existingBehavior := range rule.Behaviors {
+	/*for key, existingBehavior := range rule.Behaviors {
 		if existingBehavior.Name == behavior.Name {
 			rule.Behaviors[key] = behavior
 			return
 		}
-	}
+	}*/
 
 	rule.Behaviors = append(rule.Behaviors, behavior)
 }
@@ -252,12 +254,12 @@ func (rule *Rule) AddBehavior(behavior *Behavior) {
 // If the criteria already exists, it's options are merged with the existing
 // options.
 func (rule *Rule) MergeCriteria(criteria *Criteria) {
-	for _, existingCriteria := range rule.Criteria {
+	/*for _, existingCriteria := range rule.Criteria {
 		if existingCriteria.Name == criteria.Name {
 			existingCriteria.MergeOptions(criteria.Options)
 			return
 		}
-	}
+	}*/
 
 	rule.Criteria = append(rule.Criteria, criteria)
 }
@@ -266,12 +268,12 @@ func (rule *Rule) MergeCriteria(criteria *Criteria) {
 //
 // If the criteria already exists, it is replaced with the given criteria.
 func (rule *Rule) AddCriteria(criteria *Criteria) {
-	for key, existingCriteria := range rule.Criteria {
+	/*for key, existingCriteria := range rule.Criteria {
 		if existingCriteria.Name == criteria.Name {
 			rule.Criteria[key] = criteria
 			return
 		}
-	}
+	}*/
 
 	rule.Criteria = append(rule.Criteria, criteria)
 }
@@ -281,7 +283,7 @@ func (rule *Rule) AddCriteria(criteria *Criteria) {
 // If the rule already exists, criteria, behaviors, and child rules are added to
 // the existing rule.
 func (rule *Rule) MergeChildRule(childRule *Rule) {
-	for key, existingChildRule := range rule.Children {
+	/*for key, existingChildRule := range rule.Children {
 		if existingChildRule.Name == childRule.Name {
 			for _, behavior := range childRule.Behaviors {
 				rule.Children[key].MergeBehavior(behavior)
@@ -297,7 +299,7 @@ func (rule *Rule) MergeChildRule(childRule *Rule) {
 
 			return
 		}
-	}
+	}*/
 
 	rule.Children = append(rule.Children, childRule)
 }
@@ -306,13 +308,13 @@ func (rule *Rule) MergeChildRule(childRule *Rule) {
 //
 // If the rule already exists, it is replaced by the given rule.
 func (rule *Rule) AddChildRule(childRule *Rule) {
-	for key, existingChildRule := range rule.Children {
+	/*for key, existingChildRule := range rule.Children {
 		if existingChildRule.Name == childRule.Name {
 			rule.Children[key] = childRule
 
 			return
 		}
-	}
+	}*/
 
 	rule.Children = append(rule.Children, childRule)
 }
@@ -454,7 +456,7 @@ func NewCriteria() *Criteria {
 }
 
 // MergeOptions merges the given options with the existing options
-func (criteria *Criteria) MergeOptions(newOptions OptionValue) {
+/*func (criteria *Criteria) MergeOptions(newOptions OptionValue) {
 	options := make(map[string]interface{})
 	for k, v := range criteria.Options {
 		options[k] = v
@@ -466,6 +468,7 @@ func (criteria *Criteria) MergeOptions(newOptions OptionValue) {
 
 	criteria.Options = OptionValue(options)
 }
+*/
 
 // Behavior represents a rule behavior resource
 type Behavior struct {

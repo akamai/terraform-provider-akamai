@@ -1,8 +1,10 @@
 package akamai
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
+	"strings"
 	"testing"
+
+	"github.com/hashicorp/terraform/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/resource"
@@ -260,7 +262,9 @@ func testAccCheckAkamaiPropertyExists(s *terraform.State) error {
 		}
 
 		property := papi.NewProperty(papi.NewProperties())
-		property.PropertyID = rs.Primary.ID
+		id := strings.Split(rs.Primary.ID, "-")
+		property.PropertyID = id[0]
+		//property.PropertyID = rs.Primary.ID
 		e := property.GetProperty()
 		if e != nil {
 			return e
