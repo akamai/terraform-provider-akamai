@@ -217,7 +217,7 @@ resource "akamai_property" "property" {
 }
 
 data "akamai_property_rules" "rules" {
- 	rules
+ 	rules {
 		behavior {
 			name =  "origin"
         	option { 
