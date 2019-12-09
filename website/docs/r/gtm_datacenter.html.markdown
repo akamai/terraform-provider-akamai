@@ -40,6 +40,7 @@ Optional
 * `city`
 * `clone_of`
 * `cloud_server_targeting` — (Boolean)
+* `cloud_server_host_header_override` — (Boolean)
 * `continent`
 * `country`
 * `latitude`

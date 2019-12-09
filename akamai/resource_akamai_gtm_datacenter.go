@@ -208,8 +208,6 @@ func resourceGTMv1DatacenterRead(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 	populateTerraformDCState(d, dc)
-	// Need set for Import. Good to confirm for read as well ...
-	d.Set("domain", domain)
 	log.Printf("[DEBUG] [Akamai GTMv1] READ %v", dc)
 	return nil
 }
@@ -291,11 +289,14 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, meta interface{}) ([]
 // Delete GTM Datacenter.
 func resourceGTMv1DatacenterDelete(d *schema.ResourceData, meta interface{}) error {
 
-	domain := d.Get("domain").(string)
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
-	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Datacenter: %d", d.Get("datacenter_id").(int))
+	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Datacenter: %s", d.Id())
+	domain, dcID, err := parseDatacenterResourceId(d.Id())
+	if err != nil {
+		return errors.New("Invalid datacenter resource Id")
+	}
 	// Get existing datacenter
-	existDC, err := gtm.GetDatacenter(d.Get("datacenter_id").(int), domain)
+	existDC, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -442,8 +443,6 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 		dc.Virtual = v.(bool)
 	}
 
-	return
-
 }
 
 // Populate Terraform state from provided Datacenter object
@@ -477,7 +476,5 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 	d.Set("servermonitor_pool", dc.ServermonitorPool)
 	d.Set("state_or_province", dc.StateOrProvince)
 	d.Set("virtual", dc.Virtual)
-
-	return
 
 }

@@ -127,7 +127,10 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	http_error4xx = false
 	http_error5xx = false
 	disabled = false
-	http_headers = []
+	http_headers = [{
+		name = "test_name"
+		value = "test_value"
+		}]
 	peer_certificate_verification = false
 	recursion_requested = false
 	request_string = ""
@@ -147,12 +150,14 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     // weighted_hash_bits_for_ipv6
     //
     // Optional [partial]
+    static_rr_sets = [{
+       type = "MX"
+       ttl = 300
+       rdata = ["100 test_e"]
+       }]
     failover_delay = 0
     failback_delay = 0
-    mx_records = [{
-	exchange = "test_e"
-	preference = 100
-	}]
+    mx_records = []
     wait_on_complete = false
     depends_on = [
          "akamai_gtm_domain.tfexample_domain",

@@ -75,11 +75,11 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 			},
 			"static_rr_sets": &schema.Schema{
-                                Type:       schema.TypeList,
-                                Optional:   true,
-                                ConfigMode: schema.SchemaConfigModeAttr,
-                                Elem: &schema.Resource{
-                                        Schema: map[string]*schema.Schema{
+				Type:       schema.TypeList,
+				Optional:   true,
+				ConfigMode: schema.SchemaConfigModeAttr,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
 						"type": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -201,23 +201,6 @@ func resourceGTMv1Property() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							//Default:  "",
-						},
-					},
-				},
-			},
-			"mx_records": &schema.Schema{
-				Type:       schema.TypeList,
-				Optional:   true,
-				ConfigMode: schema.SchemaConfigModeAttr,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"exchange": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"preference": {
-							Type:     schema.TypeInt,
-							Optional: true,
 						},
 					},
 				},
@@ -510,7 +493,6 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, meta interface{}) ([]*s
 // Delete GTM Property.
 func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error {
 
-	domain := d.Get("domain").(string)
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Property: %s", d.Id())
 	// Get existing property
@@ -676,11 +658,8 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 		prop.Comments = v.(string)
 	}
 	populateTrafficTargetObject(d, prop)
-	populateMxRecordObject(d, prop)
 	populateStaticRRSetObject(d, prop)
 	populateLivenessTestObject(d, prop)
-
-	return
 
 }
 
@@ -717,11 +696,8 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) 
 	d.Set("cname", prop.CName)
 	d.Set("comments", prop.Comments)
 	populateTerraformTrafficTargetState(d, prop)
-	populateTerraformMxRecordState(d, prop)
 	populateTerraformStaticRRSetState(d, prop)
 	populateTerraformLivenessTestState(d, prop)
-
-	return
 
 }
 
@@ -811,39 +787,6 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 		recordListNew[i] = staticRecordNew
 	}
 	d.Set("static_rr_sets", recordListNew)
-
-}
-
-// Populate existing mxrecord object from resource data
-func populateMxRecordObject(d *schema.ResourceData, prop *gtm.Property) {
-
-	// pull apart List
-	mxRecList := d.Get("mx_records").([]interface{})
-	if mxRecList != nil {
-		recordObjList := make([]*gtm.MxRecord, len(mxRecList)) // create new object list
-		for i, v := range mxRecList {
-			recMap := v.(map[string]interface{})
-			record := prop.NewMxRecord() // create new object
-			record.Preference = recMap["preference"].(int)
-			record.Exchange = recMap["exchange"].(string)
-			recordObjList[i] = record
-		}
-		prop.MxRecords = recordObjList
-	}
-}
-
-// create and populate Terraform mx_record schema
-func populateTerraformMxRecordState(d *schema.ResourceData, prop *gtm.Property) {
-
-	recordListNew := make([]interface{}, len(prop.MxRecords))
-	for i, r := range prop.MxRecords {
-		mxRecordNew := map[string]interface{}{
-			"preference": r.Preference,
-			"exchange":   r.Exchange,
-		}
-		recordListNew[i] = mxRecordNew
-	}
-	d.Set("mx_records", recordListNew)
 
 }
 

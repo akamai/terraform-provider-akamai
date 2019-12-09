@@ -35,7 +35,7 @@ resource "akamai_gtm_domain" "test_domain" {
 	comment =  "This is a test domain"
 	group  = "${data.akamai_group.group.id}"
 	load_imbalance_percentage = 10
-	wait_on_complete = true
+	wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
@@ -43,7 +43,7 @@ resource "akamai_gtm_datacenter" "test_datacenter" {
     nickname = "test_datacenter"
     continent = "EU"
     virtual = true
-    wait_on_complete = true
+    wait_on_complete = false
     default_load_object = [{
         load_object = "test"
         load_object_port = 80
@@ -77,7 +77,7 @@ resource "akamai_gtm_domain" "test_domain" {
         comment =  "This is a test domain"
         group  = "${data.akamai_group.group.id}"
         load_imbalance_percentage = 10
-        wait_on_complete = true
+        wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
@@ -148,7 +148,7 @@ func testAccCheckAkamaiGTMDatacenterDestroy(s *terraform.State) error {
 			continue
 		}
 
-		dcid, dom, err := parseIntID(rs.Primary.ID)
+		dcid, dom, _ := parseIntID(rs.Primary.ID)
 		dc, err := gtm.GetDatacenter(dcid, dom)
 		if dc == nil {
 			return nil

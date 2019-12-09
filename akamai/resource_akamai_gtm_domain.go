@@ -196,8 +196,6 @@ func GetQueryArgs(d *schema.ResourceData) map[string]string {
 func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 
 	dname := d.Get("name").(string)
-	//comment := d.Get("comment").(string)
-
 	log.Printf("[INFO] [Akamai GTM] Creating domain [%s]", dname)
 	newDom := populateNewDomainObject(d)
 	log.Printf("[DEBUG] [Akamai GTMv1] Domain: [%v]", newDom)
@@ -317,7 +315,6 @@ func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	}
 
-	// Give terraform the ID
 	return resourceGTMv1DomainRead(d, meta)
 
 }
@@ -378,15 +375,8 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 		}
 
 	}
-
 	d.SetId("")
 	return nil
-
-	/*
-		// No GTM Domain delete operation permitted.
-
-		return schema.Noop(d, meta)
-	*/
 
 }
 
@@ -523,8 +513,6 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 		dom.DefaultSslClientCertificate = v.(string)
 	}
 
-	return
-
 }
 
 // Populate Terraform state from provided Domain object
@@ -565,34 +553,39 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain) {
 	d.Set("ping_packet_size", dom.PingPacketSize)
 	d.Set("default_ssl_client_certificate", dom.DefaultSslClientCertificate)
 
-	return
-
 }
 
 // Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)
 func waitForCompletion(domain string) (bool, error) {
 
-	return true, nil
-
-	var defaultInterval int = 5
-	var defaultTimeout int = 300
-	var sleepInterval time.Duration = 1 // seconds. TODO:Should be configurable by user ...
-	var sleepTimeout time.Duration = 1  // seconds. TODO: Should be configurable by user ...
-	sleepInterval *= time.Duration(defaultInterval)
-	sleepTimeout *= time.Duration(defaultTimeout)
+	var defaultInterval time.Duration = 5 * time.Second
+	var defaultTimeout time.Duration = 300 * time.Second
+	var sleepInterval time.Duration = defaultInterval // seconds. TODO:Should be configurable by user ...
+	var sleepTimeout time.Duration = defaultTimeout   // seconds. TODO: Should be configurable by user ...
+	if HashiAcc {
+		// Override for ACC tests
+		sleepTimeout = sleepInterval
+	}
+	log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Interval [%v]", sleepInterval/time.Second)
+	log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Timeout [%v]", sleepTimeout/time.Second)
 	for {
 		propStat, err := gtm.GetDomainStatus(domain)
 		if err != nil {
 			return false, err
 		}
+		log.Printf("[DEBUG] [Akamai GTMv1] WAIT: propStat.PropagationStatus [%v]", propStat.PropagationStatus)
 		if propStat.PropagationStatus == "COMPLETE" {
+			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return COMPLETE")
 			return true, nil
 		}
 		if sleepTimeout <= 0 {
+			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return TIMED OUT")
 			return false, nil
 		}
-		time.Sleep(sleepInterval * time.Second)
+		time.Sleep(sleepInterval)
 		sleepTimeout -= sleepInterval
+		log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Time Remaining [%v]", sleepTimeout/time.Second)
+
 	}
 
 	return false, errors.New("Unknown error while waiting for change completion") // don't know how/why we would have broken out.

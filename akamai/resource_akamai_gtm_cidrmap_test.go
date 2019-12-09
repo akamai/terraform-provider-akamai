@@ -32,13 +32,13 @@ resource "akamai_gtm_domain" "test_domain" {
 	comment =  "This is a test zone"
 	group  = "${data.akamai_group.group.id}"
         load_imbalance_percentage = 10
-	wait_on_complete = true
+	wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = "${akamai_gtm_domain.test_domain.name}"
     nickname = "test_cidr_datacenter"
-    wait_on_complete = true
+    wait_on_complete = false
     virtual = true
     default_load_object = [{
         load_object = "test"
@@ -91,13 +91,13 @@ resource "akamai_gtm_domain" "test_domain" {
         comment =  "This is a test domain"
         group  = "${data.akamai_group.group.id}"
         load_imbalance_percentage = 10
-        wait_on_complete = true
+        wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = "${akamai_gtm_domain.test_domain.name}"
     nickname = "test_cidr_datacenter"
-    wait_on_complete = true
+    wait_on_complete = false
     virtual = true
     default_load_object = [{
         load_object = "test"
@@ -180,7 +180,7 @@ func testAccCheckAkamaiGTMCidrMapDestroy(s *terraform.State) error {
 			continue
 		}
 
-		cidrName, dom, err := parseStringID(rs.Primary.ID)
+		cidrName, dom, _ := parseStringID(rs.Primary.ID)
 		cidr, err := gtm.GetCidrMap(cidrName, dom)
 		if cidr == nil {
 			return nil

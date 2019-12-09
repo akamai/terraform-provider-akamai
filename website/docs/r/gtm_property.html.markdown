@@ -50,9 +50,13 @@ Required
   * `test_object_protocol`
   * `test_timeout`
   * `answer_required` — (Boolean)
+  * `disabled` — (Boolean)
   * `disable_nonstandard_port_warning` — (Boolean)
   * `error_penalty`
   * `host_header`
+  * `http_headers` — (List)
+     `name`
+     `value`
   * `http_error3xx` — (Boolean)
   * `http_error4xx` — (Boolean)
   * `http_error5xx` — (Boolean)
@@ -92,9 +96,11 @@ Optional
 * `cname`
 * `comments`
 * `ghost_demand_reporting`
-* `mx_records` — (List)
-  * `exchange`
-  * `preference`
+* `min_live_fraction`
+* `static_rr_sets` — (List)
+  * `type`
+  * `ttl`
+  * `rdata` — (List)
 
 Computed
 

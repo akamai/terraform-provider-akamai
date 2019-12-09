@@ -105,9 +105,6 @@ func TestAccAkamaiGTMADomain_update(t *testing.T) {
 
 func testAccCheckAkamaiGTMDomainDestroy(s *terraform.State) error {
 
-	// The API doesn't currently support Domain Delete
-	//return nil
-
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "akamai_gtm_domain" {
 			continue

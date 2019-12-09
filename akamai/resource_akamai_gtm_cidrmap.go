@@ -326,18 +326,18 @@ func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtm.CidrMap) {
 func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	// pull apart List
-	as := d.Get("assignments")
-	if as != nil {
-		cidrAssignmentsList := as.([]interface{})
+	cassgns := d.Get("assignments")
+	if cassgns != nil {
+		cidrAssignmentsList := cassgns.([]interface{})
 		cidrAssignmentsObjList := make([]*gtm.CidrAssignment, len(cidrAssignmentsList)) // create new object list
 		for i, v := range cidrAssignmentsList {
-			asMap := v.(map[string]interface{})
+			cidrMap := v.(map[string]interface{})
 			cidrAssignment := gtm.CidrAssignment{}
-			cidrAssignment.DatacenterId = asMap["datacenter_id"].(int)
-			cidrAssignment.Nickname = asMap["nickname"].(string)
-			if asMap["blocks"] != nil {
-				ls := make([]string, len(asMap["blocks"].([]interface{})))
-				for i, sl := range asMap["blocks"].([]interface{}) {
+			cidrAssignment.DatacenterId = cidrMap["datacenter_id"].(int)
+			cidrAssignment.Nickname = cidrMap["nickname"].(string)
+			if cidrMap["blocks"] != nil {
+				ls := make([]string, len(cidrMap["blocks"].([]interface{})))
+				for i, sl := range cidrMap["blocks"].([]interface{}) {
 					ls[i] = sl.(string)
 				}
 				cidrAssignment.Blocks = ls
@@ -351,16 +351,16 @@ func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 // create and populate Terraform cidrMap assigments schema
 func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
-	asListNew := make([]interface{}, len(cidr.Assignments))
-	for i, as := range cidr.Assignments {
-		asNew := map[string]interface{}{
-			"datacenter_id": as.DatacenterId,
-			"nickname":      as.Nickname,
-			"blocks":        as.Blocks,
+	cidrListNew := make([]interface{}, len(cidr.Assignments))
+	for i, cassign := range cidr.Assignments {
+		cidrNew := map[string]interface{}{
+			"datacenter_id": cassign.DatacenterId,
+			"nickname":      cassign.Nickname,
+			"blocks":        cassign.Blocks,
 		}
-		asListNew[i] = asNew
+		cidrListNew[i] = cidrNew
 	}
-	d.Set("assignments", asListNew)
+	d.Set("assignments", cidrListNew)
 
 }
 
@@ -368,14 +368,14 @@ func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.Cid
 func populateCidrDefaultDCObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	// pull apart List
-	as := d.Get("default_datacenter")
-	if as != nil && len(as.([]interface{})) > 0 {
+	cidrdd := d.Get("default_datacenter")
+	if cidrdd != nil && len(cidrdd.([]interface{})) > 0 {
 		cidrDefaultDCObj := gtm.DatacenterBase{} // create new object
-		cidrDefaultDCList := as.([]interface{})
-		asMap := cidrDefaultDCList[0].(map[string]interface{})
-		if asMap["datacenter_id"] != nil && asMap["datacenter_id"].(int) != 0 {
-			cidrDefaultDCObj.DatacenterId = asMap["datacenter_id"].(int)
-			cidrDefaultDCObj.Nickname = asMap["nickname"].(string)
+		cidrDefaultDCList := cidrdd.([]interface{})
+		cidrddMap := cidrDefaultDCList[0].(map[string]interface{})
+		if cidrddMap["datacenter_id"] != nil && cidrddMap["datacenter_id"].(int) != 0 {
+			cidrDefaultDCObj.DatacenterId = cidrddMap["datacenter_id"].(int)
+			cidrDefaultDCObj.Nickname = cidrddMap["nickname"].(string)
 		} else {
 			log.Printf("[INFO] [Akamai GTMv1] No Default Datacenter specified")
 			var nilInt int

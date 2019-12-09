@@ -645,7 +645,7 @@ max_body = 2`,
 	}
 
 	// Invoke tests
-	testGetConfigServiceExec(t, tests, getConfigGTMV1_3Service)
+	testGetConfigServiceExec(t, tests, getConfigGTMV1Service)
 
 }
 

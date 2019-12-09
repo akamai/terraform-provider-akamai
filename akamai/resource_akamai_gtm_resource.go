@@ -261,7 +261,6 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, meta interface{}) ([]*s
 // Delete GTM Resource.
 func resourceGTMv1ResourceDelete(d *schema.ResourceData, meta interface{}) error {
 
-	domain := d.Get("domain").(string)
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Resource: %s", d.Id())
 	// Get existing resource

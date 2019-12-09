@@ -32,13 +32,13 @@ resource "akamai_gtm_domain" "test_domain" {
 	comment =  "This is a test zone"
 	group  = "${data.akamai_group.group.id}"
         load_imbalance_percentage = 10
-	wait_on_complete = true
+	wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = "${akamai_gtm_domain.test_domain.name}"
     nickname = "test_geo_datacenter"
-    wait_on_complete = true
+    wait_on_complete = false
     virtual = true
     default_load_object = [{
         load_object = "test"
@@ -91,13 +91,13 @@ resource "akamai_gtm_domain" "test_domain" {
         comment =  "This is a test zone"
         group  = "${data.akamai_group.group.id}"
         load_imbalance_percentage = 10
-        wait_on_complete = true
+        wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = "${akamai_gtm_domain.test_domain.name}"
     nickname = "test_geo_datacenter"
-    wait_on_complete = true
+    wait_on_complete = false
     virtual = true
     default_load_object = [{
         load_object = "test"
@@ -180,7 +180,7 @@ func testAccCheckAkamaiGTMGeoMapDestroy(s *terraform.State) error {
 			continue
 		}
 
-		geoName, dom, err := parseStringID(rs.Primary.ID)
+		geoName, dom, _ := parseStringID(rs.Primary.ID)
 		geo, err := gtm.GetGeoMap(geoName, dom)
 		if geo == nil {
 			return nil

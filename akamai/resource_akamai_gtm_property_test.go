@@ -35,13 +35,13 @@ resource "akamai_gtm_domain" "test_domain" {
 	comment =  "This is a test domain"
 	//group     = "${local.group}"
 	group = "${data.akamai_group.group.id}"
-	wait_on_complete = true
+	wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = "${akamai_gtm_domain.test_domain.name}"
     nickname = "test_datacenter"
-    wait_on_complete = true
+    wait_on_complete = false
     default_load_object = [{
         load_object = "test"
         load_object_port = 80
@@ -124,13 +124,13 @@ resource "akamai_gtm_domain" "test_domain" {
         contract = "${data.akamai_contract.contract.id}"
         comment =  "This is a test domain"
         group   = "${data.akamai_group.group.id}"
-        wait_on_complete = true
+        wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = "${akamai_gtm_domain.test_domain.name}"
     nickname = "test_datacenter"
-    wait_on_complete = true
+    wait_on_complete = false
     default_load_object = [{
         load_object = "test"
         load_object_port = 80
@@ -238,15 +238,12 @@ func TestAccAkamaiGTMProperty_update(t *testing.T) {
 
 func testAccCheckAkamaiGTMPropertyDestroy(s *terraform.State) error {
 
-	// The API doesn't currently support Property Delete
-	return nil
-
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "akamai_gtm_property" {
 			continue
 		}
 
-		prop, dom, err := parseStringID(rs.Primary.ID)
+		prop, dom, _ := parseStringID(rs.Primary.ID)
 		p, err := gtm.GetProperty(prop, dom)
 		if p == nil {
 			return nil

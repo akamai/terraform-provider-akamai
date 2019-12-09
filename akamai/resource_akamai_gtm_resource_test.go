@@ -31,7 +31,7 @@ resource "akamai_gtm_domain" "test_domain" {
 	comment =  "This is a test domain"
 	group  = "${data.akamai_group.group.id}"
         load_imbalance_percentage = 10
-	wait_on_complete = true
+	wait_on_complete = false
 }
 
 resource "akamai_gtm_resource" "test_resource" {
@@ -41,7 +41,7 @@ resource "akamai_gtm_resource" "test_resource" {
     	aggregation_type = "latest"
     	type = "XML load object via HTTP"
     	load_imbalance_percentage = 50
-    	wait_on_complete = true
+    	wait_on_complete = false
     	depends_on = [
          	"akamai_gtm_domain.test_domain"
     	]
@@ -70,7 +70,7 @@ resource "akamai_gtm_domain" "test_domain" {
         comment =  "This is a test zone"
         group  = "${data.akamai_group.group.id}"
         load_imbalance_percentage = 10
-        wait_on_complete = true
+        wait_on_complete = false
 }
 
 resource "akamai_gtm_resource" "test_resource" {
@@ -79,7 +79,7 @@ resource "akamai_gtm_resource" "test_resource" {
         aggregation_type = "latest"
         type = "XML load object via HTTP"
         load_imbalance_percentage = 70
-        wait_on_complete = true
+        wait_on_complete = false
         depends_on = [
                 "akamai_gtm_domain.test_domain"
         ]
@@ -137,7 +137,7 @@ func testAccCheckAkamaiGTMResourceDestroy(s *terraform.State) error {
 			continue
 		}
 
-		rname, dom, err := parseStringID(rs.Primary.ID)
+		rname, dom, _ := parseStringID(rs.Primary.ID)
 		rsrc, err := gtm.GetResource(rname, dom)
 		if rsrc == nil {
 			log.Printf("[DEBUG] [Akamai GTM] : Resource %s not found. Ignoring error (Hashicorp).", rname)
