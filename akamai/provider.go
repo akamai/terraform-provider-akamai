@@ -79,6 +79,19 @@ func getConfigOptions(section string) *schema.Resource {
 					return nil, errors.New("client_secret not set")
 				},
 			},
+			"account_key": {
+				Type:     schema.TypeString,
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					if v := os.Getenv("AKAMAI_" + section + "_ACCOUNT_KEY"); v != "" {
+						return v, nil
+					} else if v := os.Getenv("AKAMAI_ACCOUNT_KEY"); v != "" {
+						return v, nil
+					}
+
+					return nil, errors.New("account_key not set")
+				},
+			},
 			"max_body": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -185,6 +198,7 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 			AccessToken:  config["access_token"].(string),
 			ClientToken:  config["client_token"].(string),
 			ClientSecret: config["client_secret"].(string),
+			AccountKey:   config["account_key"].(string),
 			MaxBody:      config["max_body"].(int),
 		}
 
@@ -214,6 +228,7 @@ func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
 			AccessToken:  config["access_token"].(string),
 			ClientToken:  config["client_token"].(string),
 			ClientSecret: config["client_secret"].(string),
+			AccountKey:   config["account_key"].(string),
 			MaxBody:      config["max_body"].(int),
 		}
 
