@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	Version = "0.1.4-dev-2"
+	Version = "0.1.4-dev-3"
 )
 
 // Config contains the Akamai provider configuration (unused).

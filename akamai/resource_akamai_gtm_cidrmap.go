@@ -293,7 +293,7 @@ func populateNewCidrMapObject(d *schema.ResourceData) *gtm.CidrMap {
 
 	cidrObj := gtm.NewCidrMap(d.Get("name").(string))
 	cidrObj.DefaultDatacenter = &gtm.DatacenterBase{}
-	cidrObj.Assignments = make([]*gtm.CidrAssignment, 1)
+	cidrObj.Assignments = make([]*gtm.CidrAssignment, 0)
 	cidrObj.Links = make([]*gtm.Link, 1)
 	populateCidrMapObject(d, cidrObj)
 

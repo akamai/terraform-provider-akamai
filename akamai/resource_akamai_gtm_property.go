@@ -558,9 +558,9 @@ func resourceGTMv1PropertyExists(d *schema.ResourceData, meta interface{}) (bool
 func populateNewPropertyObject(d *schema.ResourceData) *gtm.Property {
 
 	propObj := gtm.NewProperty(d.Get("name").(string))
-	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 1)
-	propObj.LivenessTests = make([]*gtm.LivenessTest, 1)
-	propObj.MxRecords = make([]*gtm.MxRecord, 1)
+	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
+	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
+	propObj.MxRecords = make([]*gtm.MxRecord, 0)
 	populatePropertyObject(d, propObj)
 
 	return propObj
