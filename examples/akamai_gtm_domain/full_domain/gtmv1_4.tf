@@ -157,7 +157,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
        }]
     failover_delay = 0
     failback_delay = 0
-    mx_records = []
     wait_on_complete = false
     depends_on = [
          "akamai_gtm_domain.tfexample_domain",
