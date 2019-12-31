@@ -1,8 +1,9 @@
-## 0.1.4 (Unreleased)
-* [FIX] Add support for update of rules state (`akamai_property`) [GH-66]
-* [FIX] Add support for masters being optional (`akamai_dns_zone`) [GH-61]
-* [FIX] Create edge hostname 400 error Bad Request Request parameter Slot Number (`akamai_property`) [GH-56]
-* [FIX] TXT record - State update failure due to sha verification issue (`akamai_dns_zone`) [GH-58]
+## 0.1.5 (Unreleased)
+## 0.1.4 (December 06, 2019)
+* [FIX] Add support for update of rules state (`akamai_property`) ([#66](https://github.com/terraform-providers/terraform-provider-template/issues/66))
+* [FIX] Add support for masters being optional (`akamai_dns_zone`) ([#61](https://github.com/terraform-providers/terraform-provider-template/issues/61))
+* [FIX] Create edge hostname 400 error Bad Request Request parameter Slot Number (`akamai_property`) ([#56](https://github.com/terraform-providers/terraform-provider-template/issues/56))
+* [FIX] TXT record - State update failure due to sha verification issue (`akamai_dns_zone`) ([#58](https://github.com/terraform-providers/terraform-provider-template/issues/58))
 ## 0.1.3 (August 12, 2019)
 
 * [FIX] Correct ordering of values for `SRV` records (`akamai_dns_record`) ([#17](https://github.com/terraform-providers/terraform-provider-template/issues/17))

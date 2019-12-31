@@ -66,7 +66,7 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 
 	// The API now has data, so save the partial state
 	d.SetPartial("network")
-	d.Set("property", property.PropertyID)
+	d.Set("property", property.PropertyID+"-"+id[1])
 
 	if d.Get("activate").(bool) {
 		activation, err := activateProperty(property, d)
