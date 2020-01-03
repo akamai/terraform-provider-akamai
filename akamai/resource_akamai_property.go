@@ -1030,6 +1030,16 @@ func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule 
 			rule.Name, _ = vv["name"].(string)
 			rule.Comments, _ = vv["comments"].(string)
 
+			if vv["criteriaMustSatisfy"].(string) == "all" {
+				rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
+			}
+
+			if vv["criteriaMustSatisfy"].(string) == "any" {
+				rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
+			}
+
+			log.Println("[DEBUG] extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comments)
+
 			ruledetail := gjson.Parse(value.String())
 			//			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
 
@@ -1120,6 +1130,15 @@ func extractRules(drules *schema.Set) []*papi.Rule {
 		if ok {
 			rule.Name = vv["name"].(string)
 			rule.Comments = vv["comment"].(string)
+
+			if vv["criteriaMustSatisfy"].(string) == "all" {
+				rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
+			}
+
+			if vv["criteriaMustSatisfy"].(string) == "any" {
+				rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
+			}
+
 			behaviors, ok := vv["behavior"]
 			if ok {
 				for _, behavior := range behaviors.(*schema.Set).List() {
