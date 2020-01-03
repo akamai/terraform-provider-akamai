@@ -235,12 +235,12 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if d.Get("activate").(bool) {
-		old, new := d.GetChange("network")
+		/*old, new := d.GetChange("network")
 		if old.(string) != new.(string) {
 			// deactivate on the old network, we don't need to wait for this
 			deactivateProperty(property, d, papi.NetworkValue(old.(string)))
 		}
-
+		*/
 		// No activation in progress, create a new one
 		if a == nil {
 			activation, err = activateProperty(property, d)
