@@ -32,7 +32,7 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_cp_code" "cp_code" {
-	name = "terraform-testing"
+	name = "terraform-testing1"
 	contract = "${data.akamai_contract.contract.id}"
 	group = "${data.akamai_group.group.id}"
 	product = "prd_SPM"
@@ -42,12 +42,12 @@ resource "akamai_edge_hostname" "test" {
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test.exampleterraform.io.edgesuite.net"
+    edge_hostname =  "terraform-test1.exampleterraform.io.edgesuite.net"
     ipv6 = true
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test"
+  name = "terraform-test1"
 
   contact = ["user@exampleterraform.io"]
 
@@ -193,12 +193,12 @@ resource "akamai_edge_hostname" "test" {
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test.exampleterraform.io.edgesuite.net"
+    edge_hostname =  "terraform-test1.exampleterraform.io.edgesuite.net"
     ipv6 = true
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test"
+  name = "terraform-test1"
 
   contact = ["user@exampleterraform.io"]
 

@@ -343,32 +343,32 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	extractString := strings.Join(recordcreate.Target, " ")
 	sha1hash := getSHAString(extractString)
 
-	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for recordupdate [%s]", sha1hash)
+	log.Printf("[DEBUG] [Akamai DNSv2] UPDATE SHA sum for recordupdate [%s]", sha1hash)
 	// First try to get the zone from the API
-	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records [%s]", zone)
+	log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Searching for records [%s]", zone)
 
 	rdata, e := dnsv2.GetRdata(zone, host, recordtype)
 	if e != nil {
 		return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e)
 	}
 
-	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records LEN %d", len(rdata))
+	log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Searching for records LEN %d", len(rdata))
 	if len(rdata) > 0 {
 		sort.Strings(rdata)
 		extractString := strings.Join(recordcreate.Target, " ")
 		sha1hashtest := getSHAString(extractString)
-		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordread [%s]", sha1hashtest)
+		log.Printf("[DEBUG] [Akamai DNSv2] UPDATE SHA sum from recordread [%s]", sha1hashtest)
 		// If there's no existing record we'll create a blank one
 		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
 			// if the record is not found/404 we will create a new
-			log.Printf("[DEBUG] [Akamai DNSv2] [ERROR] %s", e.Error())
-			log.Printf("[DEBUG] [Akamai DNSv2] Creating new record")
+			log.Printf("[DEBUG] [Akamai DNSv2] UPDATE [ERROR] %s", e.Error())
+			log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Creating new record")
 			// Save the zone to the API
-			log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
+			log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Updating record")
 			e = recordcreate.Save(zone)
 
 		} else {
-			log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
+			log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Updating record")
 			e = recordcreate.Update(zone)
 			if e != nil {
 				return e
@@ -408,13 +408,14 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		fmt.Println(err)
 	}
 
-	log.Printf("[DEBUG] [Akamai DNSv2] record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
+	log.Printf("[DEBUG] [Akamai DNSv2] READ record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
+	//sort.Strings(recordcreate.Target)
 	extractString := strings.Join(recordcreate.Target, " ")
 	sha1hash := getSHAString(extractString)
-	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for Existing SHA test %s %s", extractString, sha1hash)
+	log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum for Existing SHA test %s %s", extractString, sha1hash)
 
 	// try to get the zone from the API
-	log.Printf("[INFO] [Akamai DNSv2] Searching for zone records %s %s %s", zone, host, recordtype)
+	log.Printf("[INFO] [Akamai DNSv2] READ Searching for zone records %s %s %s", zone, host, recordtype)
 	targets, e := dnsv2.GetRdata(zone, host, recordtype)
 	if e != nil {
 		//return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e,e)
@@ -427,7 +428,7 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		fmt.Println(err)
 	}
 
-	log.Printf("[DEBUG] [Akamai DNSv2] record data read JSON %s", string(b1))
+	log.Printf("[DEBUG] [Akamai DNSv2] READ record data read JSON %s", string(b1))
 
 	if len(targets) > 0 {
 		sort.Strings(targets)
@@ -435,16 +436,16 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		sha1hashtest := getSHAString(extractStringTest)
 
 		if sha1hashtest == sha1hash {
-			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
+			log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
 			d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 			return nil
 		} else {
-			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
+			log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
 			d.SetId("")
 			return nil
 		}
 	} else {
-		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch no target returned  [%s] [%s] [%s] ", zone, host, recordtype)
+		log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists mismatch no target returned  [%s] [%s] [%s] ", zone, host, recordtype)
 		d.SetId("")
 		return nil
 	}
@@ -515,13 +516,14 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 		fmt.Println(err)
 	}
 
-	log.Printf("[DEBUG] [Akamai DNSv2] record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
+	log.Printf("[DEBUG] [Akamai DNSv2] EXISTS record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
+	//sort.Strings(recordcreate.Target)
 	extractString := strings.Join(recordcreate.Target, " ")
 	sha1hash := getSHAString(extractString)
-	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for Existing SHA test %s %s", extractString, sha1hash)
+	log.Printf("[DEBUG] [Akamai DNSv2] EXISTS SHA sum for Existing SHA test %s %s", extractString, sha1hash)
 
 	// try to get the zone from the API
-	log.Printf("[INFO] [Akamai DNSv2] Searching for zone records %s %s %s", zone, host, recordtype)
+	log.Printf("[INFO] [Akamai DNSv2] EXISTS Searching for zone records %s %s %s", zone, host, recordtype)
 	targets, e := dnsv2.GetRdata(zone, host, recordtype)
 	if e != nil {
 		//return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e,e)
@@ -532,7 +534,7 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 		fmt.Println(err)
 	}
 
-	log.Printf("[DEBUG] [Akamai DNSv2] record data read JSON %s", string(b1))
+	log.Printf("[DEBUG] [Akamai DNSv2] EXISTS record data read JSON %s", string(b1))
 
 	if len(targets) > 0 {
 		sort.Strings(targets)
@@ -540,14 +542,14 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 		sha1hashtest := getSHAString(extractStringTest)
 
 		if sha1hashtest == sha1hash {
-			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
+			log.Printf("[DEBUG] [Akamai DNSv2] EXISTS SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
 			return true, nil
 		} else {
-			log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
+			log.Printf("[DEBUG] [Akamai DNSv2] EXISTS SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
 			return false, nil
 		}
 	} else {
-		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists msimatch no target retunred  [%s] [%s] [%s] ", zone, host, recordtype)
+		log.Printf("[DEBUG] [Akamai DNSv2] EXISTS SHA sum from recordExists msimatch no target retunred  [%s] [%s] [%s] ", zone, host, recordtype)
 		return false, nil
 	}
 }
@@ -758,7 +760,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 				log.Printf("[DEBUG] [Akamai DNSv2] Existing MX records to append to target before schema data LEN %d %v", len(rdata), records)
 
 			}
-
+			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}

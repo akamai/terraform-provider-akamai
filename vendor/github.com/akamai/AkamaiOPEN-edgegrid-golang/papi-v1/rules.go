@@ -546,6 +546,6 @@ func NewRuleErrors() *RuleErrors {
 type RuleCriteriaMustSatisfyValue string
 
 const (
-	RuleCriteriaMustSatisfyAll RuleCriteriaMustSatisfyValue = "any"
-	RuleCriteriaMustSatisfyAny RuleCriteriaMustSatisfyValue = "all"
+	RuleCriteriaMustSatisfyAll RuleCriteriaMustSatisfyValue = "all"
+	RuleCriteriaMustSatisfyAny RuleCriteriaMustSatisfyValue = "any"
 )
