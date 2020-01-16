@@ -34,10 +34,9 @@ func resourceGTMv1Cidrmap() *schema.Resource {
 				Required: true,
 			},
 			"default_datacenter": &schema.Schema{
-				Type:       schema.TypeList,
-				Required:   true,
-				MaxItems:   1,
-				ConfigMode: schema.SchemaConfigModeAttr,
+				Type:     schema.TypeList,
+				Required: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -51,10 +50,9 @@ func resourceGTMv1Cidrmap() *schema.Resource {
 					},
 				},
 			},
-			"assignments": &schema.Schema{
-				Type:       schema.TypeList,
-				Optional:   true,
-				ConfigMode: schema.SchemaConfigModeAttr,
+			"assignment": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -326,7 +324,7 @@ func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtm.CidrMap) {
 func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	// pull apart List
-	cassgns := d.Get("assignments")
+	cassgns := d.Get("assignment")
 	if cassgns != nil {
 		cidrAssignmentsList := cassgns.([]interface{})
 		cidrAssignmentsObjList := make([]*gtm.CidrAssignment, len(cidrAssignmentsList)) // create new object list
@@ -360,7 +358,7 @@ func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.Cid
 		}
 		cidrListNew[i] = cidrNew
 	}
-	d.Set("assignments", cidrListNew)
+	d.Set("assignment", cidrListNew)
 
 }
 

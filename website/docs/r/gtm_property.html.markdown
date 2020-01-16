@@ -22,6 +22,9 @@ resource "akamai_gtm_property" "demo_property" {
     score_aggregation_type = "median"
     handout_limit = 5
     handout_mode = "normal"
+    traffic_target {
+        datacenter_id = 3131
+    }
 }
 ```
 
@@ -37,14 +40,17 @@ Required
 * `score_aggregation_type`
 * `handout_limit` 
 * `handout_mode`  
-* `traffic_targets` — (List)
+* `traffic_target` — (multiple allowed)
   * `datacenter_id`
   * `enabled` — (Boolean)
   * `weight`
   * `servers` — (List)
   * `name` — Traffic target name
   * `handout_cname`
-* `liveness_tests` — (List)
+
+Optional
+
+* `liveness_test` — (multiple allowed)
   * `name` — Liveness test name
   * `test_interval`
   * `test_object_protocol`
@@ -54,7 +60,7 @@ Required
   * `disable_nonstandard_port_warning` — (Boolean)
   * `error_penalty`
   * `host_header`
-  * `http_headers` — (List)
+  * `http_header` — (multiple allowed)
      `name`
      `value`
   * `http_error3xx` — (Boolean)
@@ -72,14 +78,11 @@ Required
   * `test_object_port`
   * `test_object_username`
   * `timeout_penalty`
-
-Optional
- 
 * `wait_on_complete` — (Boolean, Default: true) Wait for transaction to complete
 * `failover_delay`
 * `failback_delay`
 * `ipv6` — (Boolean)
-* `stickiness_bonus_percent`
+* `stickiness_bonus_percentage`
 * `stickiness_bonus_constant`
 * `health_threshold`
 * `use_computed_targets` — (Boolean)
@@ -97,7 +100,7 @@ Optional
 * `comments`
 * `ghost_demand_reporting`
 * `min_live_fraction`
-* `static_rr_sets` — (List)
+* `static_rr_set` — (multiple allowed)
   * `type`
   * `ttl`
   * `rdata` — (List)

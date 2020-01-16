@@ -72,11 +72,11 @@ resource "akamai_gtm_datacenter" "tfexample_dc_1" {
     // Optional [partial]
     nickname = "tfexample_dc_1"
     wait_on_complete = false
-    default_load_object = [{
+    default_load_object {
         load_object = "/test"
 	load_object_port = 80 
 	load_servers = ["1.2.3.4", "1.2.3.5"]
-    }]
+    }
     depends_on = [
          "akamai_gtm_domain.tfexample_domain"
     ]
@@ -106,15 +106,23 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     score_aggregation_type = "median"
     handout_limit = 5
     handout_mode = "normal"
-    traffic_targets = [{
+    traffic_target {
 	datacenter_id = "${akamai_gtm_datacenter.tfexample_dc_1.datacenter_id}"
 	enabled = true 
 	weight = 100
 	servers = ["1.2.3.4"]
     	name = ""
     	handout_cname = ""
-	}]
-    liveness_tests = [{
+    }
+
+    //
+    // Computed - DO NOT CONFIGURE
+    // weighted_hash_bits_for_ipv4
+    // weighted_hash_bits_for_ipv6
+    //
+    // Optional [partial]
+
+    liveness_test {
 	name = "lt1"
 	test_interval = 30
 	test_object_protocol = "HTTP"
@@ -127,10 +135,10 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	http_error4xx = false
 	http_error5xx = false
 	disabled = false
-	http_headers = [{
+	http_header {
 		name = "test_name"
 		value = "test_value"
-		}]
+	}
 	peer_certificate_verification = false
 	recursion_requested = false
 	request_string = ""
@@ -143,18 +151,19 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	test_object_port = 1
 	test_object_username = ""
 	timeout_penalty = 0
-	}]
-    //
-    // Computed - DO NOT CONFIGURE
-    // weighted_hash_bits_for_ipv4
-    // weighted_hash_bits_for_ipv6
-    //
-    // Optional [partial]
-    static_rr_sets = [{
+    }
+    liveness_test {
+        name = "lt2"
+        test_interval = 30
+        test_object_protocol = "HTTP"
+        test_timeout = 20
+        test_object = "/junk"
+    }
+    static_rr_set {
        type = "MX"
        ttl = 300
        rdata = ["100 test_e"]
-       }]
+    }
     failover_delay = 0
     failback_delay = 0
     wait_on_complete = false
@@ -175,13 +184,13 @@ resource "akamai_gtm_resource" "tfexample_resource_1" {
     type = "XML load object via HTTP"
     //
     // Optional
-    resource_instances = [{
+    resource_instance {
         datacenter_id = "${akamai_gtm_datacenter.tfexample_dc_1.datacenter_id}"
         use_default_load_object = false
         load_object = "/test1"
         load_servers = ["1.2.3.4"]
         load_object_port = 80
-        }]
+    }
     wait_on_complete = false
     depends_on = [
          "akamai_gtm_domain.tfexample_domain", "akamai_gtm_datacenter.tfexample_dc_1"
@@ -193,13 +202,13 @@ resource "akamai_gtm_resource" "tfexample_resource_2" {
     name = "tfexample_resource_2"
     aggregation_type = "median"
     type = "XML load object via HTTP"
-    resource_instances = [{
+    resource_instance {
         datacenter_id = "${akamai_gtm_datacenter.tfexample_dc_2.datacenter_id}"
         use_default_load_object = false
         load_object = "/test"
         load_servers = ["1.2.3.4"]
         load_object_port = 80
-        }]
+    }
     wait_on_complete = false
     depends_on = [
          "akamai_gtm_domain.tfexample_domain", "akamai_gtm_datacenter.tfexample_dc_2"
@@ -213,18 +222,18 @@ resource "akamai_gtm_cidrmap" "tfexample_cidr_1" {
     // Required
     domain = "${akamai_gtm_domain.tfexample_domain.name}"
     name = "tfexample_cidr_1"
-    default_datacenter = [{
+    default_datacenter {
         datacenter_id = 5400
         nickname = "All Other CIDR Blocks"
-        }]
+    }
     //
     // Optional 
-    assignments = [{
+    assignment {
         datacenter_id = "${akamai_gtm_datacenter.tfexample_dc_1.datacenter_id}"
         nickname = "${akamai_gtm_datacenter.tfexample_dc_1.nickname}"
         // Optional
         blocks = ["1.2.3.9/24"]
-        }]
+    }
     wait_on_complete = true
     depends_on = [
         "akamai_gtm_domain.tfexample_domain", 
@@ -235,10 +244,10 @@ resource "akamai_gtm_cidrmap" "tfexample_cidr_1" {
 resource "akamai_gtm_cidrmap" "tfexample_cidr_2" {
     domain = "${akamai_gtm_domain.tfexample_domain.name}"
     name = "tfexample_cidr_2"
-    default_datacenter = [{
+    default_datacenter {
         datacenter_id = 5400
         nickname = "All Other CIDR Blocks"
-        }]
+    }
     wait_on_complete = true
     depends_on = [
         "akamai_gtm_domain.tfexample_domain",
@@ -252,22 +261,22 @@ resource "akamai_gtm_asmap" "tfexample_as_1" {
     // Required
     domain = "${akamai_gtm_domain.tfexample_domain.name}"
     name = "tfexample_as_1"
-    default_datacenter = [{
+    default_datacenter {
         datacenter_id = 5400
         nickname = "All Other AS numbers"
-        }]
+    } 
     //
     // Optional
-    assignments = [{
+    assignment {
         datacenter_id = "${akamai_gtm_datacenter.tfexample_dc_1.datacenter_id}"
         nickname = "${akamai_gtm_datacenter.tfexample_dc_1.nickname}"
         as_numbers = [12222, 16702,17334]
-        },
-	{
+    }
+    assignment {
         datacenter_id = "${akamai_gtm_datacenter.tfexample_dc_2.datacenter_id}"
         nickname = "${akamai_gtm_datacenter.tfexample_dc_2.nickname}"
         as_numbers = [12229, 16703,17335]
-        }]
+    }
     wait_on_complete = true
     depends_on = [
         "akamai_gtm_domain.tfexample_domain",
@@ -283,18 +292,18 @@ resource "akamai_gtm_geomap" "tfexample_geo_2" {
     // Required
     domain = "${akamai_gtm_domain.tfexample_domain.name}"
     name = "tfexample_geo_2"
-    default_datacenter = [{
+    default_datacenter {
         datacenter_id = 5400
         nickname = "All Others"
-        }]
+        }
     //
     // Optional
-    assignments = [{
+    assignment {
         datacenter_id = "${akamai_gtm_datacenter.tfexample_dc_2.datacenter_id}"
         nickname = "${akamai_gtm_datacenter.tfexample_dc_2.nickname}"
         // Optional
         countries = ["GB"]
-        }]
+    }
     wait_on_complete = true
     depends_on = [
         "akamai_gtm_domain.tfexample_domain",

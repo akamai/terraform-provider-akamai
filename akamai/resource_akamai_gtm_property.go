@@ -46,7 +46,7 @@ func resourceGTMv1Property() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"stickiness_bonus_percent": {
+			"stickiness_bonus_percentage": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
@@ -74,10 +74,9 @@ func resourceGTMv1Property() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			"static_rr_sets": &schema.Schema{
-				Type:       schema.TypeList,
-				Optional:   true,
-				ConfigMode: schema.SchemaConfigModeAttr,
+			"static_rr_set": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
@@ -169,10 +168,10 @@ func resourceGTMv1Property() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"traffic_targets": &schema.Schema{
-				Type:       schema.TypeList,
-				Required:   true,
-				ConfigMode: schema.SchemaConfigModeAttr,
+			"traffic_target": {
+				Type:     schema.TypeList,
+				Required: true,
+				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -205,10 +204,10 @@ func resourceGTMv1Property() *schema.Resource {
 					},
 				},
 			},
-			"liveness_tests": &schema.Schema{
-				Type:       schema.TypeList,
-				Required:   true,
-				ConfigMode: schema.SchemaConfigModeAttr,
+			"liveness_test": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -229,7 +228,7 @@ func resourceGTMv1Property() *schema.Resource {
 						},
 						"test_object": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						"request_string": {
 							Type:     schema.TypeString,
@@ -283,10 +282,9 @@ func resourceGTMv1Property() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"http_headers": {
-							Type:       schema.TypeList,
-							Optional:   true,
-							ConfigMode: schema.SchemaConfigModeAttr,
+						"http_header": {
+							Type:     schema.TypeList,
+							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"name": {
@@ -579,8 +577,8 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	if v, ok := d.GetOk("score_aggregation_type"); ok {
 		prop.ScoreAggregationType = v.(string)
 	}
-	if v, ok := d.GetOk("stickiness_bonus_percent"); ok {
-		prop.StickinessBonusPercent = v.(int)
+	if v, ok := d.GetOk("stickiness_bonus_percentage"); ok {
+		prop.StickinessBonusPercentage = v.(int)
 	}
 	if v, ok := d.GetOk("stickiness_bonus_constant"); ok {
 		prop.StickinessBonusConstant = v.(int)
@@ -671,7 +669,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) 
 	d.Set("type", prop.Type)
 	d.Set("ipv6", prop.Ipv6)
 	d.Set("score_aggregation_type", prop.ScoreAggregationType)
-	d.Set("stickiness_bonus_percent", prop.StickinessBonusPercent)
+	d.Set("stickiness_bonus_percentage", prop.StickinessBonusPercentage)
 	d.Set("stickiness_bonus_constant", prop.StickinessBonusConstant)
 	d.Set("health_threshold", prop.HealthThreshold)
 	d.Set("use_computed_targets", prop.UseComputedTargets)
@@ -706,7 +704,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) 
 func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	// pull apart List
-	tt := d.Get("traffic_targets")
+	tt := d.Get("traffic_target")
 	if tt != nil {
 		traffTargList := tt.([]interface{})
 		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
@@ -746,7 +744,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		}
 		traffListNew[i] = traffSvrNew
 	}
-	d.Set("traffic_targets", traffListNew)
+	d.Set("traffic_target", traffListNew)
 
 }
 
@@ -754,7 +752,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	// pull apart List
-	staticSetList := d.Get("static_rr_sets").([]interface{})
+	staticSetList := d.Get("static_rr_set").([]interface{})
 	if staticSetList != nil {
 		staticObjList := make([]*gtm.StaticRRSet, len(staticSetList)) // create new object list
 		for i, v := range staticSetList {
@@ -787,14 +785,14 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 		}
 		recordListNew[i] = staticRecordNew
 	}
-	d.Set("static_rr_sets", recordListNew)
+	d.Set("static_rr_set", recordListNew)
 
 }
 
 // Populate existing livenesstest  object from resource data
 func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 
-	liveTestList := d.Get("liveness_tests").([]interface{})
+	liveTestList := d.Get("liveness_test").([]interface{})
 	if liveTestList != nil {
 		liveTestObjList := make([]*gtm.LivenessTest, len(liveTestList)) // create new object list
 		for i, l := range liveTestList {
@@ -823,7 +821,7 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 			lt.AnswerRequired = v["answer_required"].(bool)
 			lt.ResourceType = v["resource_type"].(string)
 			lt.RecursionRequested = v["recursion_requested"].(bool)
-			httpHeaderList := v["http_headers"].([]interface{})
+			httpHeaderList := v["http_header"].([]interface{})
 			if httpHeaderList != nil {
 				headerObjList := make([]*gtm.HttpHeader, len(httpHeaderList)) // create new object list
 				for i, h := range httpHeaderList {
@@ -880,9 +878,9 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			}
 			httpHeaderListNew[i] = httpHeaderNew
 		}
-		livenessNew["http_headers"] = httpHeaderListNew
+		livenessNew["http_header"] = httpHeaderListNew
 		livenessListNew[i] = livenessNew
 	}
-	d.Set("liveness_tests", livenessListNew)
+	d.Set("liveness_test", livenessListNew)
 
 }

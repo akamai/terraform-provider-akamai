@@ -30,8 +30,8 @@ The following arguments are supported:
 
 Required
 
-* `contract` — The contract ID 
-* `group` — The currently selected group ID   
+* `contract` — The contract ID (if creating domain) 
+* `group` — The currently selected group ID (if creating domain)   
 * `name` — Domain name  
 * `type` — Domain type  
 
@@ -47,6 +47,7 @@ Optional
 * `cname_coalescing_enabled` — (Boolean)
 * `load_feedback` — (Boolean)
 * `default_ssl_client_certificate`
+* `end_user_mapping_enabled` — (Boolean)
 
 Computed
 

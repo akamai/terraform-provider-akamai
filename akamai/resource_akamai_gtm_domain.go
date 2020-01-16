@@ -167,6 +167,10 @@ func resourceGTMv1Domain() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"end_user_mapping_enabled": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -512,6 +516,9 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 	if v, ok := d.GetOk("default_ssl_client_certificate"); ok {
 		dom.DefaultSslClientCertificate = v.(string)
 	}
+	if v, ok := d.GetOk("end_user_mapping_enabled"); ok {
+		dom.EndUserMappingEnabled = v.(bool)
+	}
 
 }
 
@@ -552,6 +559,7 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain) {
 	d.Set("min_test_interval", dom.MinTestInterval)
 	d.Set("ping_packet_size", dom.PingPacketSize)
 	d.Set("default_ssl_client_certificate", dom.DefaultSslClientCertificate)
+	d.Set("end_user_mapping_enabled", dom.EndUserMappingEnabled)
 
 }
 

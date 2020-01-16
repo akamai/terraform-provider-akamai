@@ -51,10 +51,9 @@ func resourceGTMv1Geomap() *schema.Resource {
 					},
 				},
 			},
-			"assignments": &schema.Schema{
-				Type:       schema.TypeList,
-				Optional:   true,
-				ConfigMode: schema.SchemaConfigModeAttr,
+			"assignment": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -326,7 +325,7 @@ func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap) {
 func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap) {
 
 	// pull apart List
-	geoa := d.Get("assignments")
+	geoa := d.Get("assignment")
 	if geoa != nil {
 		geoAssignmentsList := geoa.([]interface{})
 		geoAssignmentsObjList := make([]*gtm.GeoAssignment, len(geoAssignmentsList)) // create new object list
@@ -360,7 +359,7 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 		}
 		geoListNew[i] = geoNew
 	}
-	d.Set("assignments", geoListNew)
+	d.Set("assignment", geoListNew)
 
 }
 

@@ -4,10 +4,9 @@ package client
 import (
 	"bytes"
 	"errors"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -15,6 +14,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 )
 
 var (
@@ -76,6 +78,9 @@ func NewJSONRequest(config edgegrid.Config, method, path string, body interface{
 			return nil, err
 		}
 		buf := bytes.NewReader(jsonBody)
+
+		log.Println("[DEBUG] SOAP CALL JSON " + string(jsonBody))
+
 		req, err = NewRequest(config, method, path, buf)
 	} else {
 		req, err = NewRequest(config, method, path, nil)

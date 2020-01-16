@@ -77,10 +77,9 @@ func resourceGTMv1Resource() *schema.Resource {
 				Type:     schema.TypeFloat,
 				Optional: true,
 			},
-			"resource_instances": &schema.Schema{
-				Type:       schema.TypeList,
-				Optional:   true,
-				ConfigMode: schema.SchemaConfigModeAttr,
+			"resource_instance": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -405,7 +404,7 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource) 
 func populateResourceInstancesObject(d *schema.ResourceData, rsrc *gtm.Resource) {
 
 	// pull apart List
-	rsrcInstanceList := d.Get("resource_instances").([]interface{})
+	rsrcInstanceList := d.Get("resource_instance").([]interface{})
 	if rsrcInstanceList != nil {
 		rsrcInstanceObjList := make([]*gtm.ResourceInstance, len(rsrcInstanceList)) // create new object list
 		for i, v := range rsrcInstanceList {
@@ -440,7 +439,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 		riNew["load_servers"] = ri.LoadServers
 		riListNew[i] = &riNew
 	}
-	err := d.Set("resource_instances", riListNew)
+	err := d.Set("resource_instance", riListNew)
 	if err != nil {
 		log.Printf("[ERROR] [Akamai GTMv1] Error writing resource_instances: %s", err.Error())
 	}

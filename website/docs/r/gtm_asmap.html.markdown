@@ -18,9 +18,10 @@ Basic usage:
 resource "akamai_gtm_asmap" "demo_asmap" {
     domain = "demo_domain.akadns.net"
     name = "demo_as"
-    default_datacenter = [{
+    default_datacenter { 
         datacenter_id = 5400
         nickname = "All Other AS numbers"
+    }
 }
 ```
 
@@ -39,7 +40,7 @@ Required
 Optional
  
 * `wait_on_complete` — (Boolean, Default: true) Wait for transaction to complete
-* `assignments` — (List)
+* `assignment` — (multiple allowed)
   * `datacenter_id`
   * `nickname`
   * `as_numbers` — (List)

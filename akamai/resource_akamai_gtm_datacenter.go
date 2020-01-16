@@ -56,10 +56,9 @@ func resourceGTMv1Datacenter() *schema.Resource {
 				Optional: true,
 			},
 			"default_load_object": &schema.Schema{
-				Type:       schema.TypeSet,
-				Optional:   true,
-				ConfigMode: schema.SchemaConfigModeAttr,
-				MaxItems:   1,
+				Type:     schema.TypeSet,
+				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"load_servers": &schema.Schema{
@@ -457,14 +456,14 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 	d.Set("cloud_server_targeting", dc.CloudServerTargeting)
 	d.Set("continent", dc.Continent)
 	d.Set("country", dc.Country)
-	dloNew := make(map[string]interface{})
+	dloNewList := make([]interface{}, 0)
 	if dc.DefaultLoadObject != nil {
+		dloNew := make(map[string]interface{})
 		dloNew["load_object"] = dc.DefaultLoadObject.LoadObject
 		dloNew["load_object_port"] = dc.DefaultLoadObject.LoadObjectPort
 		dloNew["load_servers"] = dc.DefaultLoadObject.LoadServers
+		dloNewList = append(dloNewList, dloNew)
 	}
-	dloNewList := make([]interface{}, 1)
-	dloNewList[0] = dloNew
 	d.Set("default_load_object", dloNewList)
 	d.Set("latitude", dc.Latitude)
 	d.Set("longitude", dc.Longitude)

@@ -51,10 +51,9 @@ func resourceGTMv1ASmap() *schema.Resource {
 					},
 				},
 			},
-			"assignments": &schema.Schema{
-				Type:       schema.TypeList,
-				Optional:   true,
-				ConfigMode: schema.SchemaConfigModeAttr,
+			"assignment": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -326,7 +325,7 @@ func populateTerraformASmapState(d *schema.ResourceData, as *gtm.AsMap) {
 func populateAsAssignmentsObject(d *schema.ResourceData, as *gtm.AsMap) {
 
 	// pull apart List
-	assgn := d.Get("assignments")
+	assgn := d.Get("assignment")
 	if assgn != nil {
 		asAssignmentsList := assgn.([]interface{})
 		asAssignmentsObjList := make([]*gtm.AsAssignment, len(asAssignmentsList)) // create new object list
@@ -360,7 +359,7 @@ func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtm.AsMap) 
 		}
 		asListNew[i] = asNew
 	}
-	d.Set("assignments", asListNew)
+	d.Set("assignment", asListNew)
 
 }
 

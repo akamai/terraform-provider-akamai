@@ -37,7 +37,7 @@ Required
 Optional
  
 * `wait_on_complete` — (Boolean, Default: true) Wait for transaction to complete
-* `resource_instances`  — (List)
+* `resource_instance`  — (multiple allowed) 
   * `datacenter_id`
   * `load_object`
   * `load_object_port`
