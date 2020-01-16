@@ -516,7 +516,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] Property RuleFormat from API : %s\n", property.RuleFormat)
 	d.Set("version", property.LatestVersion)
-	log.Printf("[DEBUG] Property Veresion from API : %d\n", property.LatestVersion)
+	log.Printf("[DEBUG] Property Version from API : %d\n", property.LatestVersion)
 	if property.StagingVersion > 0 {
 		d.Set("staging_version", property.StagingVersion)
 	}
@@ -590,6 +590,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 		d.Set("rules", string(jsonBody))
 	}
 	*/
+	d.Set("version", property.LatestVersion)
 	d.SetPartial("default")
 	d.SetPartial("origin")
 
@@ -1029,15 +1030,16 @@ func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule 
 		if ok {
 			rule.Name, _ = vv["name"].(string)
 			rule.Comments, _ = vv["comments"].(string)
+			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
+			if ok {
+				if criteriaMustSatisfy.(string) == "all" {
+					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
+				}
 
-			if vv["criteriaMustSatisfy"].(string) == "all" {
-				rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
+				if criteriaMustSatisfy.(string) == "any" {
+					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
+				}
 			}
-
-			if vv["criteriaMustSatisfy"].(string) == "any" {
-				rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
-			}
-
 			log.Println("[DEBUG] extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comments)
 
 			ruledetail := gjson.Parse(value.String())
@@ -1123,6 +1125,7 @@ func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule 
 }
 
 func extractRules(drules *schema.Set) []*papi.Rule {
+
 	var rules []*papi.Rule
 	for _, v := range drules.List() {
 		rule := papi.NewRule()
@@ -1131,14 +1134,16 @@ func extractRules(drules *schema.Set) []*papi.Rule {
 			rule.Name = vv["name"].(string)
 			rule.Comments = vv["comment"].(string)
 
-			if vv["criteriaMustSatisfy"].(string) == "all" {
-				rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
-			}
+			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
+			if ok {
+				if criteriaMustSatisfy.(string) == "all" {
+					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
+				}
 
-			if vv["criteriaMustSatisfy"].(string) == "any" {
-				rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
+				if criteriaMustSatisfy.(string) == "any" {
+					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
+				}
 			}
-
 			behaviors, ok := vv["behavior"]
 			if ok {
 				for _, behavior := range behaviors.(*schema.Set).List() {
@@ -1196,6 +1201,7 @@ func extractRules(drules *schema.Set) []*papi.Rule {
 		}
 		rules = append(rules, rule)
 	}
+
 	return rules
 }
 

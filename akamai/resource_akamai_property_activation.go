@@ -272,7 +272,7 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		d.Set("version", activation.PropertyVersion)
 		d.Set("status", string(activation.Status))
 	} else {
-		return resourcePropertyRead(d, meta)
+		return resourcePropertyActivationRead(d, meta)
 	}
 
 	log.Println("[DEBUG] Done")
