@@ -165,6 +165,9 @@ rules = "${data.template_file.rules.rendered}"
 }
 ```
 
+## How does Terraform handle changes made through other clients (UI, APIs)?
+We recommend that anyone using Terraform should manage all changes through the provider. However in case this isn't true in emergency scenarios, the terraform state tree will become inconsistent. The next 'terraform plan' will warn and suggest changes. In case you make the same change in the UI and terraform, the state will go back to being consistent and the warning will go away.
+
 ## Upgrading the Akamai Provider
 
 To upgrade the provider, simply run `terraform init` again, and all providers will be updated to their latest version within specified version constraints.
