@@ -56,7 +56,7 @@ func resourceGTMv1Datacenter() *schema.Resource {
 				Optional: true,
 			},
 			"default_load_object": &schema.Schema{
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
@@ -386,23 +386,22 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 		dc.Country = v.(string)
 	}
 	// pull apart Set
-	if v, ok := d.GetOk("default_load_object"); ok {
-		dlo := getSingleSchemaSetItem(v)
-		if dlo != nil {
-			if dc.DefaultLoadObject == nil {
-				dc.DefaultLoadObject = gtm.NewLoadObject()
-			}
-			if dlo["load_object"] != nil {
-				dc.DefaultLoadObject.LoadObject = dlo["load_object"].(string)
-			}
-			dc.DefaultLoadObject.LoadObjectPort = dlo["load_object_port"].(int)
-			if dlo["load_servers"] != nil {
-				ls := make([]string, len(dlo["load_servers"].([]interface{})))
-				for i, sl := range dlo["load_servers"].([]interface{}) {
+	dloList := d.Get("default_load_object").([]interface{})
+	if dloList != nil {
+		dloObject := gtm.NewLoadObject()
+		for _, v := range dloList {
+			dloMap := v.(map[string]interface{})
+			dloObject.LoadObject = dloMap["load_object"].(string)
+			dloObject.LoadObjectPort = dloMap["load_object_port"].(int)
+			if dloMap["load_servers"] != nil {
+				ls := make([]string, len(dloMap["load_servers"].([]interface{})))
+				for i, sl := range dloMap["load_servers"].([]interface{}) {
 					ls[i] = sl.(string)
-					dc.DefaultLoadObject.LoadServers = ls
+					dloObject.LoadServers = ls
 				}
 			}
+			dc.DefaultLoadObject = dloObject
+			break
 		}
 	}
 	if v, ok := d.GetOk("latitude"); ok {
@@ -458,11 +457,14 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 	d.Set("country", dc.Country)
 	dloNewList := make([]interface{}, 0)
 	if dc.DefaultLoadObject != nil {
-		dloNew := make(map[string]interface{})
-		dloNew["load_object"] = dc.DefaultLoadObject.LoadObject
-		dloNew["load_object_port"] = dc.DefaultLoadObject.LoadObjectPort
-		dloNew["load_servers"] = dc.DefaultLoadObject.LoadServers
-		dloNewList = append(dloNewList, dloNew)
+		if dc.DefaultLoadObject.LoadObject != "" || len(dc.DefaultLoadObject.LoadServers) != 0 || dc.DefaultLoadObject.LoadObjectPort > 0 {
+			// We can't distinguish a null object so hack to see if there are any non zero values
+			dloNew := make(map[string]interface{})
+			dloNew["load_object"] = dc.DefaultLoadObject.LoadObject
+			dloNew["load_object_port"] = dc.DefaultLoadObject.LoadObjectPort
+			dloNew["load_servers"] = dc.DefaultLoadObject.LoadServers
+			dloNewList = append(dloNewList, dloNew)
+		}
 	}
 	d.Set("default_load_object", dloNewList)
 	d.Set("latitude", dc.Latitude)

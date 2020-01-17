@@ -75,7 +75,7 @@ type Property struct {
 	Type                    string           `json:"type"`
 	Ipv6                    bool             `json:"ipv6,omitempty"`
 	ScoreAggregationType    string           `json:"scoreAggregationType"`
-	StickinessBonusPercent  int              `json:"stickinessBonusPercentage,omitempty"`
+	StickinessBonusPercentage  int              `json:"stickinessBonusPercentage,omitempty"`
 	StickinessBonusConstant int              `json:"stickinessBonusConstant,omitempty"`
 	HealthThreshold         int              `json:"healthThreshold,omitempty"`
 	UseComputedTargets      bool             `json:"useComputedTargets,omitempty"`

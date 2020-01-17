@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"net/http"
+	"reflect"
 	"strings"
+	"unicode"
 )
 
 //
@@ -54,6 +56,7 @@ type Domain struct {
 	MinTestInterval              int             `json:"minTestInterval,omitempty"`
 	PingPacketSize               int             `json:"pingPacketSize,omitempty"`
 	DefaultSslClientCertificate  string          `json:"defaultSslClientCertificate,omitempty"`
+	EndUserMappingEnabled        bool            `json:"endUserMappingEnabled,omitempty"`
 }
 
 type DomainsList struct {
@@ -329,5 +332,157 @@ func (domain *Domain) Delete() (*ResponseStatus, error) {
 	}
 
 	return responseBody.Status, nil
+
+}
+
+// NullObjectAttributeStruct represents core and child null onject attributes
+type NullPerObjectAttributeStruct struct {
+	CoreObjectFields  map[string]string
+	ChildObjectFields map[string]interface{} // NullObjectAttributeStruct
+}
+
+// NullFieldMapStruct returned null Objects structure
+type NullFieldMapStruct struct {
+	Domain      NullPerObjectAttributeStruct            // entry is domain
+	Properties  map[string]NullPerObjectAttributeStruct // entries are properties
+	Datacenters map[string]NullPerObjectAttributeStruct // entries are datacenters
+	Resources   map[string]NullPerObjectAttributeStruct // entries are resources
+	CidrMaps    map[string]NullPerObjectAttributeStruct // entries are cidrmaps
+	GeoMaps     map[string]NullPerObjectAttributeStruct // entries are geomaps
+	AsMaps      map[string]NullPerObjectAttributeStruct // entries are asmaps
+}
+
+type ObjectMap map[string]interface{}
+
+// Retrieve map of null fields
+func (domain *Domain) NullFieldMap() (*NullFieldMapStruct, error) {
+
+	var nullFieldMap = &NullFieldMapStruct{}
+	var domFields = NullPerObjectAttributeStruct{}
+	domainMap := make(map[string]string)
+	var objMap = ObjectMap{}
+
+	req, err := client.NewRequest(
+		Config,
+		"GET",
+		fmt.Sprintf("/config-gtm/v1/domains/%s", domain.Name),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	setVersionHeader(req, schemaVersion)
+	printHttpRequest(req, true)
+	res, err := client.Do(Config, req)
+	if err != nil {
+		return nil, err
+	}
+	printHttpResponse(res, true)
+	if client.IsError(res) && res.StatusCode != 404 {
+		return nil, client.NewAPIError(res)
+	} else if res.StatusCode == 404 {
+		return nil, CommonError{entityName: "Domain", name: domain.Name}
+	} else {
+		err = client.BodyJSON(res, &objMap)
+		if err != nil {
+			return nullFieldMap, err
+		}
+	}
+	for i, d := range objMap {
+		objval := fmt.Sprint(d)
+		if fmt.Sprintf("%T", d) == "<nil>" {
+			if objval == "<nil>" {
+				domainMap[makeFirstCharUpperCase(i)] = ""
+			}
+			continue
+		}
+		switch i {
+		case "properties":
+			nullFieldMap.Properties = processObjectList(d.([]interface{}))
+		case "datacenters":
+			nullFieldMap.Datacenters = processObjectList(d.([]interface{}))
+		case "resources":
+			nullFieldMap.Resources = processObjectList(d.([]interface{}))
+		case "cidrMaps":
+			nullFieldMap.CidrMaps = processObjectList(d.([]interface{}))
+		case "geographicMaps":
+			nullFieldMap.GeoMaps = processObjectList(d.([]interface{}))
+		case "asMaps":
+			nullFieldMap.AsMaps = processObjectList(d.([]interface{}))
+		}
+	}
+
+	domFields.CoreObjectFields = domainMap
+	nullFieldMap.Domain = domFields
+
+	return nullFieldMap, nil
+
+}
+
+func makeFirstCharUpperCase(origString string) string {
+
+	a := []rune(origString)
+	a[0] = unicode.ToUpper(a[0])
+	// hack
+	if origString == "cname" {
+		a[1] = unicode.ToUpper(a[1])
+	}
+	return string(a)
+}
+
+func processObjectList(objectList []interface{}) map[string]NullPerObjectAttributeStruct {
+
+	nullObjectsList := make(map[string]NullPerObjectAttributeStruct)
+	for _, obj := range objectList {
+		nullObjectFields := NullPerObjectAttributeStruct{}
+		objectName := ""
+		objectDCID := ""
+		objectMap := make(map[string]string)
+		objectChildList := make(map[string]interface{})
+		for objf, objd := range obj.(map[string]interface{}) {
+			objval := fmt.Sprint(objd)
+			switch fmt.Sprintf("%T", objd) {
+			case "<nil>":
+				if objval == "<nil>" {
+					objectMap[makeFirstCharUpperCase(objf)] = ""
+				}
+			case "map[string]interface {}":
+				// include null stand alone struct elements in core
+				for moname, movalue := range objd.(map[string]interface{}) {
+					if fmt.Sprintf("%T", movalue) == "<nil>" {
+						objectMap[makeFirstCharUpperCase(moname)] = ""
+					}
+				}
+			case "[]interface {}":
+				//_, ok := objd.([]interface{})
+				//if !ok {
+				iSlice := objd.([]interface{})
+				if len(iSlice) > 0 && reflect.TypeOf(iSlice[0]).Kind() != reflect.String && reflect.TypeOf(iSlice[0]).Kind() != reflect.Int64 {
+					objectChildList[makeFirstCharUpperCase(objf)] = processObjectList(objd.([]interface{}))
+				}
+			default:
+				if objf == "name" {
+					objectName = objval
+				}
+				if objf == "datacenterId" {
+					objectDCID = objval
+				}
+			}
+		}
+		nullObjectFields.CoreObjectFields = objectMap
+		nullObjectFields.ChildObjectFields = objectChildList
+
+		if objectDCID == "" {
+			if objectName != "" {
+				nullObjectsList[objectName] = nullObjectFields
+			} else {
+				nullObjectsList["unknown"] = nullObjectFields // TODO: What if mnore than one?
+			}
+		} else {
+			nullObjectsList[objectDCID] = nullObjectFields
+		}
+	}
+
+	return nullObjectsList
 
 }
