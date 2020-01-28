@@ -221,6 +221,7 @@ func resourceGTMv1Property() *schema.Resource {
 						"peer_certificate_verification": {
 							Type:     schema.TypeBool,
 							Optional: true,
+							Default:  true,
 						},
 						"test_interval": {
 							Type:     schema.TypeInt,
@@ -265,6 +266,7 @@ func resourceGTMv1Property() *schema.Resource {
 						"test_object_port": {
 							Type:     schema.TypeInt,
 							Optional: true,
+							Default:  80,
 						},
 						"ssl_client_private_key": {
 							Type:     schema.TypeString,

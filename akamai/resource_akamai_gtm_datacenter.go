@@ -125,6 +125,7 @@ func resourceGTMv1Datacenter() *schema.Resource {
 			"virtual": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  true,
 			},
 		},
 	}
