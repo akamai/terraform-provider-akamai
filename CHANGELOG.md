@@ -1,4 +1,9 @@
 ## 0.2.0 (Unreleased)
+
+## 0.1.6 (Unreleased)
+
+* [ADD] Add Support for GTM domains and contained elements (domain, datacenter, property, resource, cidrmap, geographicmap, asmap)
+
 ## 0.1.5 (January 06, 2020)
 
 * [FIX] Criteria is always end up using must satisfy "all" (`akamai_property`) ([#81](https://github.com/terraform-providers/terraform-provider-template/issues/81))

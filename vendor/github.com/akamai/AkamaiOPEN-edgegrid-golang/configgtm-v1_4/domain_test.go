@@ -465,11 +465,11 @@ func TestCreateDomain(t *testing.T) {
 
 	defer gock.Off()
 
-	mock := gock.New("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-gtm/v1/domains/" + gtmTestDomain)
+	mock := gock.New("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-gtm/v1/domains")
 	mock.
-		Put("/config-gtm/v1/domains/"+gtmTestDomain).
+		Post("/config-gtm/v1/domains/").
 		HeaderPresent("Authorization").
-		Reply(200).
+		Reply(201).
 		SetHeader("Content-Type", "application/vnd.config-gtm.v1.4+json;charset=UTF-8").
 		BodyString(`{
                         "resource" : {

@@ -29,83 +29,83 @@ type MxRecord struct {
 
 // HttpHeader struc
 type HttpHeader struct {
-        Name		string 		`json:"name,omitempty"`
-        Value		string    	`json:"value,omitempty"`
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
 }
 
 type LivenessTest struct {
-	Name                          string  		`json:"name"`
-	ErrorPenalty                  int     		`json:"errorPenalty,omitempty"`
-	PeerCertificateVerification   bool   		`json:"peerCertificateVerification,omitempty"`
-	TestInterval                  int     		`json:"testInterval"`
-	TestObject                    string  		`json:"testObject"`
-	Links                         []*Link 		`json:"links,omitempty"`
-	RequestString                 string  		`json:"requestString,omitempty"`
-	ResponseString                string  		`json:"responseString,omitempty"`
-	HttpError3xx                  bool    		`json:"httpError3xx,omitempty"`
-	HttpError4xx                  bool    		`json:"httpError4xx,omitempty"`
-	HttpError5xx                  bool    		`json:"httpError5xx,omitempty"`
-        Disabled                      bool    		`json:"disabled,omitempty"`
-	TestObjectProtocol            string  		`json:"testObjectProtocol"`
-	TestObjectPassword            string  		`json:"testObjectPassword,omitempty"`
-	TestObjectPort                int     		`json:"testObjectPort,omitempty"`
-	SslClientPrivateKey           string  		`json:"sslClientPrivateKey,omitempty"`
-	SslClientCertificate          string  		`json:"sslClientCertificate,omitempty"`
-	DisableNonstandardPortWarning bool    		`json:"disableNonstandardPortWarning,omitempty"`
-	HostHeader                    string  		`json:"hostHeader,omitempty"`
-	HttpHeaders		      []*HttpHeader	`json:"httpHeaders,opmitempty"`
-	TestObjectUsername            string  		`json:"testObjectUsername,omitempty"`
-	TestTimeout                   float32 		`json:"testTimeout"`
-	TimeoutPenalty                int     		`json:"timeoutPenalty,omitempty"`
-	AnswerRequired                bool    		`json:"answerRequired,omitempty"`
-	ResourceType                  string  		`json:"resourceType,omitempty"`
-	RecursionRequested            bool    		`json:"recursionRequested,omitempty"`
+	Name                          string        `json:"name"`
+	ErrorPenalty                  int           `json:"errorPenalty,omitempty"`
+	PeerCertificateVerification   bool          `json:"peerCertificateVerification,omitempty"`
+	TestInterval                  int           `json:"testInterval"`
+	TestObject                    string        `json:"testObject"`
+	Links                         []*Link       `json:"links,omitempty"`
+	RequestString                 string        `json:"requestString,omitempty"`
+	ResponseString                string        `json:"responseString,omitempty"`
+	HttpError3xx                  bool          `json:"httpError3xx,omitempty"`
+	HttpError4xx                  bool          `json:"httpError4xx,omitempty"`
+	HttpError5xx                  bool          `json:"httpError5xx,omitempty"`
+	Disabled                      bool          `json:"disabled,omitempty"`
+	TestObjectProtocol            string        `json:"testObjectProtocol"`
+	TestObjectPassword            string        `json:"testObjectPassword,omitempty"`
+	TestObjectPort                int           `json:"testObjectPort,omitempty"`
+	SslClientPrivateKey           string        `json:"sslClientPrivateKey,omitempty"`
+	SslClientCertificate          string        `json:"sslClientCertificate,omitempty"`
+	DisableNonstandardPortWarning bool          `json:"disableNonstandardPortWarning,omitempty"`
+	HostHeader                    string        `json:"hostHeader,omitempty"`
+	HttpHeaders                   []*HttpHeader `json:"httpHeaders,opmitempty"`
+	TestObjectUsername            string        `json:"testObjectUsername,omitempty"`
+	TestTimeout                   float32       `json:"testTimeout"`
+	TimeoutPenalty                int           `json:"timeoutPenalty,omitempty"`
+	AnswerRequired                bool          `json:"answerRequired,omitempty"`
+	ResourceType                  string        `json:"resourceType,omitempty"`
+	RecursionRequested            bool          `json:"recursionRequested,omitempty"`
 }
 
 // StaticRRSet Struct
 type StaticRRSet struct {
-        Type                    string          `json:"type,omitempty"`
-	TTL			int		`json:"ttl,omitempty"`
-        Rdata                   []string        `json:"rdata,omitempty"`
+	Type  string   `json:"type,omitempty"`
+	TTL   int      `json:"ttl,omitempty"`
+	Rdata []string `json:"rdata,omitempty"`
 }
 
 // Property represents a GTM property
 type Property struct {
-	Name                    string           `json:"name"`
-	Type                    string           `json:"type"`
-	Ipv6                    bool             `json:"ipv6,omitempty"`
-	ScoreAggregationType    string           `json:"scoreAggregationType"`
-	StickinessBonusPercentage  int              `json:"stickinessBonusPercentage,omitempty"`
-	StickinessBonusConstant int              `json:"stickinessBonusConstant,omitempty"`
-	HealthThreshold         int              `json:"healthThreshold,omitempty"`
-	UseComputedTargets      bool             `json:"useComputedTargets,omitempty"`
-	BackupIp                string           `json:"backupIp,omitempty"`
-	BalanceByDownloadScore  bool             `json:"balanceByDownloadScore,omitempty"`
-	StaticTTL               int              `json:"staticTTL,omitempty"`
-	StaticRRSets		[]*StaticRRSet	 `json:"staticRRSets,omitempty"`
-	LastModified            string           `json:"lastModified,omitempty"`
-	UnreachableThreshold    int              `json:"unreachableThreshold,omitempty"`
-	MinLiveFraction		float64          `json:"minLiveFraction,omitempty"`
-	HealthMultiplier        int              `json:"healthMultiplier,omitempty"`
-	DynamicTTL              int              `json:"dynamicTTL,omitempty"`
-	MaxUnreachablePenalty   int              `json:"maxUnreachablePenalty,omitempty"`
-	MapName                 string           `json:"mapName,omitempty"`
-	HandoutLimit            int              `json:"handoutLimit"`
-	HandoutMode             string           `json:"handoutMode"`
-	FailoverDelay           int              `json:"failoverDelay,omitempty"`
-	BackupCName             string           `json:"backupCName,omitempty"`
-	FailbackDelay           int              `json:"failbackDelay,omitempty"`
-	LoadImbalancePercentage float64          `json:"loadImbalancePercentage,omitempty"`
-	HealthMax               int              `json:"healthMax,omitempty"`
-	GhostDemandReporting    bool             `json:"ghostDemandReporting,omitempty"`
-	Comments                string           `json:"comments,omitempty"`
-	CName                   string           `json:"cname,omitempty"`
-	WeightedHashBitsForIPv4 int              `json:"weightedHashBitsForIPv4,omitempty"`
-	WeightedHashBitsForIPv6 int              `json:"weightedHashBitsForIPv6,omitempty"`
-	TrafficTargets          []*TrafficTarget `json:"trafficTargets, omitempty"`
-	MxRecords               []*MxRecord      `json:"mxRecords,omitempty"`
-	Links                   []*Link          `json:"links,omitempty"`
-	LivenessTests           []*LivenessTest  `json:"livenessTests,omitempty"`
+	Name                      string           `json:"name"`
+	Type                      string           `json:"type"`
+	Ipv6                      bool             `json:"ipv6,omitempty"`
+	ScoreAggregationType      string           `json:"scoreAggregationType"`
+	StickinessBonusPercentage int              `json:"stickinessBonusPercentage,omitempty"`
+	StickinessBonusConstant   int              `json:"stickinessBonusConstant,omitempty"`
+	HealthThreshold           int              `json:"healthThreshold,omitempty"`
+	UseComputedTargets        bool             `json:"useComputedTargets,omitempty"`
+	BackupIp                  string           `json:"backupIp,omitempty"`
+	BalanceByDownloadScore    bool             `json:"balanceByDownloadScore,omitempty"`
+	StaticTTL                 int              `json:"staticTTL,omitempty"`
+	StaticRRSets              []*StaticRRSet   `json:"staticRRSets,omitempty"`
+	LastModified              string           `json:"lastModified,omitempty"`
+	UnreachableThreshold      int              `json:"unreachableThreshold,omitempty"`
+	MinLiveFraction           float64          `json:"minLiveFraction,omitempty"`
+	HealthMultiplier          int              `json:"healthMultiplier,omitempty"`
+	DynamicTTL                int              `json:"dynamicTTL,omitempty"`
+	MaxUnreachablePenalty     int              `json:"maxUnreachablePenalty,omitempty"`
+	MapName                   string           `json:"mapName,omitempty"`
+	HandoutLimit              int              `json:"handoutLimit"`
+	HandoutMode               string           `json:"handoutMode"`
+	FailoverDelay             int              `json:"failoverDelay,omitempty"`
+	BackupCName               string           `json:"backupCName,omitempty"`
+	FailbackDelay             int              `json:"failbackDelay,omitempty"`
+	LoadImbalancePercentage   float64          `json:"loadImbalancePercentage,omitempty"`
+	HealthMax                 int              `json:"healthMax,omitempty"`
+	GhostDemandReporting      bool             `json:"ghostDemandReporting,omitempty"`
+	Comments                  string           `json:"comments,omitempty"`
+	CName                     string           `json:"cname,omitempty"`
+	WeightedHashBitsForIPv4   int              `json:"weightedHashBitsForIPv4,omitempty"`
+	WeightedHashBitsForIPv6   int              `json:"weightedHashBitsForIPv6,omitempty"`
+	TrafficTargets            []*TrafficTarget `json:"trafficTargets, omitempty"`
+	MxRecords                 []*MxRecord      `json:"mxRecords,omitempty"`
+	Links                     []*Link          `json:"links,omitempty"`
+	LivenessTests             []*LivenessTest  `json:"livenessTests,omitempty"`
 }
 
 type PropertyList struct {
@@ -129,14 +129,14 @@ func (prop *Property) NewMxRecord() *MxRecord {
 // NewStaticRRSet is a method applied to a property object that instantiates a StaticRRSet object.
 func (prop *Property) NewStaticRRSet() *StaticRRSet {
 
-        return &StaticRRSet{}
+	return &StaticRRSet{}
 
 }
 
 // NewHttpHeader is a method applied to a livenesstest object that instantiates an HttpHeader  object.
-func (lt *LivenessTest) NewHttpHeader() *HttpHeader  {
+func (lt *LivenessTest) NewHttpHeader() *HttpHeader {
 
-        return &HttpHeader{}
+	return &HttpHeader{}
 
 }
 
@@ -267,8 +267,6 @@ func (property *Property) save(domainName string) (*PropertyResponse, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -278,6 +276,8 @@ func (property *Property) save(domainName string) (*PropertyResponse, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -318,8 +318,6 @@ func (property *Property) Delete(domainName string) (*ResponseStatus, error) {
 		return nil, err
 	}
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -329,6 +327,8 @@ func (property *Property) Delete(domainName string) (*ResponseStatus, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {

@@ -216,8 +216,6 @@ func (domain *Domain) save(queryArgs map[string]string, req *http.Request) (*Dom
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -227,6 +225,8 @@ func (domain *Domain) save(queryArgs map[string]string, req *http.Request) (*Dom
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -306,8 +306,6 @@ func (domain *Domain) Delete() (*ResponseStatus, error) {
 		return nil, err
 	}
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -317,6 +315,8 @@ func (domain *Domain) Delete() (*ResponseStatus, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -454,10 +454,8 @@ func processObjectList(objectList []interface{}) map[string]NullPerObjectAttribu
 					}
 				}
 			case "[]interface {}":
-				//_, ok := objd.([]interface{})
-				//if !ok {
 				iSlice := objd.([]interface{})
-				if len(iSlice) > 0 && reflect.TypeOf(iSlice[0]).Kind() != reflect.String && reflect.TypeOf(iSlice[0]).Kind() != reflect.Int64 {
+				if len(iSlice) > 0 && reflect.TypeOf(iSlice[0]).Kind() != reflect.String && reflect.TypeOf(iSlice[0]).Kind() != reflect.Int64 && reflect.TypeOf(iSlice[0]).Kind() != reflect.Float64 && reflect.TypeOf(iSlice[0]).Kind() != reflect.Int32 {
 					objectChildList[makeFirstCharUpperCase(objf)] = processObjectList(objd.([]interface{}))
 				}
 			default:

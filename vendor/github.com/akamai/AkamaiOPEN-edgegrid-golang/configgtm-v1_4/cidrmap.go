@@ -167,8 +167,6 @@ func (cidr *CidrMap) save(domainName string) (*CidrMapResponse, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -178,6 +176,8 @@ func (cidr *CidrMap) save(domainName string) (*CidrMapResponse, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
