@@ -93,16 +93,14 @@ func resourceGTMv1GeomapCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New GeoMap: [%v]", newGeo)
 	cStatus, err := newGeo.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMv1] GeoMap Create failed: %s", err.Error())
-		fmt.Println(err)
+		log.Printf("[ERROR] GeoMapCreate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(cStatus.Status)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] GeoMapCreate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] GeoMap Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -141,8 +139,7 @@ func resourceGTMv1GeomapRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	geo, err := gtm.GetGeoMap(geoMap, domain)
 	if err != nil {
-		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMv1] GeoMap Read error: %s", err.Error())
+		log.Printf("[ERROR] [Akamai GTMv1] GeoMap Read error: %s", err.Error())
 		return err
 	}
 	populateTerraformGeoMapState(d, geo)
@@ -163,7 +160,7 @@ func resourceGTMv1GeomapUpdate(d *schema.ResourceData, meta interface{}) error {
 	// Get existingGeoMap
 	existGeo, err := gtm.GetGeoMap(geoMap, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] GeoMapUpdate failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] GeoMap BEFORE: %v", existGeo)
@@ -171,15 +168,14 @@ func resourceGTMv1GeomapUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] GeoMap PROPOSED: %v", existGeo)
 	uStat, err := existGeo.Update(domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] GeoMapUpdate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] GeoMapUpdate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] GeoMap Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -235,21 +231,20 @@ func resourceGTMv1GeomapDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 	existGeo, err := gtm.GetGeoMap(geoMap, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] GeoMapDelete failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] GeoMap: %v", existGeo)
 	uStat, err := existGeo.Delete(domain)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] GeoMapDelete failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] GeoMapDelete failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] GeoMap Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 

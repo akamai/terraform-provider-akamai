@@ -93,16 +93,14 @@ func resourceGTMv1ASmapCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New ASmap: [%v]", newAS)
 	cStatus, err := newAS.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMv1] ASmap Create failed: %s", err.Error())
-		fmt.Println(err)
+		log.Printf("[ERROR] [Akamai GTMv1] ASmap Create failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(cStatus.Status)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] AsMapCreate:  %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -141,8 +139,7 @@ func resourceGTMv1ASmapRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	as, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
-		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMv1] ASmap Read error: %s", err.Error())
+		log.Printf("[ERROR] [Akamai GTMv1] ASmap Read error: %s", err.Error())
 		return err
 	}
 	populateTerraformASmapState(d, as)
@@ -163,7 +160,7 @@ func resourceGTMv1ASmapUpdate(d *schema.ResourceData, meta interface{}) error {
 	// Get existingASmap
 	existAs, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] ASmapUpdate: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] ASmap BEFORE: %v", existAs)
@@ -171,15 +168,14 @@ func resourceGTMv1ASmapUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] ASmap PROPOSED: %v", existAs)
 	uStat, err := existAs.Update(domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] ASmapUpdate: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] ASmapUpdate: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -231,25 +227,25 @@ func resourceGTMv1ASmapDelete(d *schema.ResourceData, meta interface{}) error {
 	// Get existing asMap
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
+		log.Printf("[ERROR] ASmapDelete: %s", err.Error())
 		return errors.New("Invalid asMap Id")
 	}
 	existAs, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] ASmapDelete: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] ASmap: %v", existAs)
 	uStat, err := existAs.Delete(domain)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] ASmapDelete: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] ASmapDelete: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 

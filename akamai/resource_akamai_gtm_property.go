@@ -359,16 +359,14 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New Property: [%v]", newProp)
 	cStatus, err := newProp.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMv1] Property Create failed: %s", err.Error())
-		fmt.Println(err)
+		log.Printf("[ERROR] PropertyCreate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(cStatus.Status)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] PropertyCreate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -408,8 +406,7 @@ func resourceGTMv1PropertyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
-		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMv1] Property Read error: %s", err.Error())
+		log.Printf("[ERROR] PropertyRead failed: %s", err.Error())
 		return err
 	}
 	populateTerraformPropertyState(d, prop)
@@ -430,7 +427,7 @@ func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error
 	// Get existing property
 	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] PropertyUpdate failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Property BEFORE: %v", existProp)
@@ -438,15 +435,14 @@ func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Property PROPOSED: %v", existProp)
 	uStat, err := existProp.Update(domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] PropertyUpdate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] PropertyUpdate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -502,21 +498,20 @@ func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error
 	}
 	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] PropertyDelete failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Property: %v", existProp)
 	uStat, err := existProp.Delete(domain)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] PropertyDelete failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] PropertyDelete failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 

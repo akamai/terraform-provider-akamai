@@ -209,32 +209,31 @@ func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
-			log.Printf("[INFO] [Akamai GTM] Error creating domain [%s]", err.Error())
+			log.Printf("[ERROR] DomainCreate failed: %s", err.Error())
 			return err
 		}
 		if _, ok := err.(gtm.CommonError); !ok {
-			log.Printf("[INFO] [Akamai GTM] Error creating domain [%s]", err.Error())
+			log.Printf("[ERROR] DomainCreate failed: %s", err.Error())
 			return err
 		}
 		origErr, ok := err.(gtm.CommonError).GetItem("err").(client.APIError)
 		if !ok {
-			log.Printf("[INFO] [Akamai GTM] Error creating domain [%s]", err.Error())
+			log.Printf("[ERROR] DomainCreate failed: %s", err.Error())
 			return err
 		}
 		if origErr.Status == 400 && strings.Contains(origErr.RawBody, "proposed domain name") && strings.Contains(origErr.RawBody, "Domain Validation Error") {
 			// Already exists
-			log.Printf("[DEBUG] [Akamai GTMv1] : Domain %s already exists. Ignoring error (Hashicorp).", dname)
+			log.Printf("[WARNING] [Akamai GTMv1] : Domain %s already exists. Ignoring error (Hashicorp).", dname)
 		} else {
-			log.Printf("[INFO] [Akamai GTM] Error creating domain [%s]", err.Error())
+			log.Printf("[ERROR] [Akamai GTM] Error creating domain [%s]", err.Error())
 			return err
 		}
 	}
 	b, err := json.Marshal(cStatus)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] DomainCreate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -266,8 +265,7 @@ func resourceGTMv1DomainRead(d *schema.ResourceData, meta interface{}) error {
 	// retrieve the domain
 	dom, err := gtm.GetDomain(d.Id())
 	if err != nil {
-		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMv1] Domain Read error: %s", err.Error())
+		log.Printf("[ERROR] DomainRead error: %s", err.Error())
 		return err
 	}
 	populateTerraformState(d, dom)
@@ -283,7 +281,7 @@ func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 	// Get existing domain
 	existDom, err := gtm.GetDomain(d.Id())
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] DomainUpdate failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Domain BEFORE: %v", existDom)
@@ -292,15 +290,14 @@ func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 	//existDom := populateNewDomainObject(d)
 	uStat, err := existDom.Update(GetQueryArgs(d))
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] DomainUpdate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] DomainUpdate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Update status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -330,38 +327,37 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 	// Get existing domain
 	existDom, err := gtm.GetDomain(d.Id())
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] DomainDelete failed: %s", err.Error())
 		return err
 	}
 	uStat, err := existDom.Delete()
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
-			log.Printf("[INFO] [Akamai GTM] Error deleting domain [%s]", err.Error())
+			log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
 			return err
 		}
 		if _, ok := err.(gtm.CommonError); !ok {
-			log.Printf("[INFO] [Akamai GTM] Error deleting domain [%s]", err.Error())
+			log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
 			return err
 		}
 		origErr, ok := err.(gtm.CommonError).GetItem("err").(client.APIError)
 		if !ok {
-			log.Printf("[INFO] [Akamai GTM] Error deleting domain [%s]", err.Error())
+			log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
 			return err
 		}
 		if origErr.Status == 405 && strings.Contains(origErr.RawBody, "Bad Request") && strings.Contains(origErr.RawBody, "DELETE method is not supported") {
-			log.Printf("[DEBUG] [Akamai GTMv1] : Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
+			log.Printf("[Warning] [Akamai GTMv1] : Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
 		} else {
-			log.Printf("[INFO] [Akamai GTM] Error deleting domain [%s]", err.Error())
+			log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
 			return err
 		}
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 

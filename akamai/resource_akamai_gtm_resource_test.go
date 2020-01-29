@@ -25,25 +25,24 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_gtm_domain" "test_domain" {
-        name = "${local.domain}"
+        name = local.domain
         type = "weighted"
-	contract = "${data.akamai_contract.contract.id}"
+	contract = data.akamai_contract.contract.id
 	comment =  "This is a test domain"
-	group  = "${data.akamai_group.group.id}"
+	group  = data.akamai_group.group.id
         load_imbalance_percentage = 10
 	wait_on_complete = false
 }
 
 resource "akamai_gtm_resource" "test_resource" {
-    	//domain = "${akamai_gtm_domain.test_domain.name}"
-	domain = "${local.domain}"
+	domain = local.domain
     	name = "test_resource_1"
     	aggregation_type = "latest"
     	type = "XML load object via HTTP"
     	load_imbalance_percentage = 50
     	wait_on_complete = false
     	depends_on = [
-         	"akamai_gtm_domain.test_domain"
+         	akamai_gtm_domain.test_domain
     	]
 }
 `, gtm_test_domain)
@@ -66,22 +65,22 @@ data "akamai_group" "group" {
 resource "akamai_gtm_domain" "test_domain" {
         name = "${local.domain}"
         type = "weighted"
-        contract = "${data.akamai_contract.contract.id}"
+        contract = data.akamai_contract.contract.id
         comment =  "This is a test zone"
-        group  = "${data.akamai_group.group.id}"
+        group  = data.akamai_group.group.id
         load_imbalance_percentage = 10
         wait_on_complete = false
 }
 
 resource "akamai_gtm_resource" "test_resource" {
-        domain = "${local.domain}" // "${akamai_gtm_domain.test_domain.name}"
+        domain = local.domain
         name = "test_resource_1"
         aggregation_type = "latest"
         type = "XML load object via HTTP"
         load_imbalance_percentage = 70
         wait_on_complete = false
         depends_on = [
-                "akamai_gtm_domain.test_domain"
+                akamai_gtm_domain.test_domain
         ]
 }
 `, gtm_test_domain)

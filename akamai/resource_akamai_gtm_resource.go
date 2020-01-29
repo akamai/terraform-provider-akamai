@@ -127,16 +127,14 @@ func resourceGTMv1ResourceCreate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New Resource: [%v]", newRsrc)
 	cStatus, err := newRsrc.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMv1] Resource Create failed: %s", err.Error())
-		fmt.Println(err)
+		log.Printf("[ERROR] ResourceCreate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(cStatus.Status)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] ResourceCreate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Resource Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -175,8 +173,7 @@ func resourceGTMv1ResourceRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	rsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
-		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMv1] Resource Read error: %s", err.Error())
+		log.Printf("[ERROR] ResourceRead failed: %s", err.Error())
 		return err
 	}
 	populateTerraformResourceState(d, rsrc)
@@ -197,7 +194,7 @@ func resourceGTMv1ResourceUpdate(d *schema.ResourceData, meta interface{}) error
 	// Get existing property
 	existRsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] ResourceUpdate failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Resource BEFORE: %v", existRsrc)
@@ -205,15 +202,14 @@ func resourceGTMv1ResourceUpdate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Resource PROPOSED: %v", existRsrc)
 	uStat, err := existRsrc.Update(domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] ResourceUpdate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] ResourceUpdate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Resource Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -269,21 +265,20 @@ func resourceGTMv1ResourceDelete(d *schema.ResourceData, meta interface{}) error
 	}
 	existRsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] ResourceDelete failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Resource: %v", existRsrc)
 	uStat, err := existRsrc.Delete(domain)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] ResourceDelete failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] ResourceDelete failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Resource Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 

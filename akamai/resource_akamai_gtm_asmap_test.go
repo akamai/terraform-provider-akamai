@@ -26,46 +26,46 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_gtm_domain" "test_domain" {
-        name = "${local.domain}"
+        name = local.domain
         type = "weighted"
-	contract = "${data.akamai_contract.contract.id}"
+	contract = data.akamai_contract.contract.id
 	comment =  "This is a test zone"
-	group  = "${data.akamai_group.group.id}"
+	group  = data.akamai_group.group.id
         load_imbalance_percentage = 10
 	wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
-    domain = "${akamai_gtm_domain.test_domain.name}"
+    domain = akamai_gtm_domain.test_domain.name
     nickname = "test_as_datacenter"
     wait_on_complete = false
     virtual = true
-    default_load_object = [{
+    default_load_object {
         load_object = "test"
         load_object_port = 80
         load_servers = ["1.2.3.4", "1.2.3.5"]
-    }]
+    }
     depends_on = [
-         "akamai_gtm_domain.test_domain"
+         akamai_gtm_domain.test_domain
     ]
 }
 
 resource "akamai_gtm_asmap" "test_as" {
-    domain = "${akamai_gtm_domain.test_domain.name}"
+    domain = akamai_gtm_domain.test_domain.name
     name = "test_asmap"
-    default_datacenter = [{
+    default_datacenter {
         datacenter_id = 5400
         nickname = "All Other AS numbers"
-        }]
-    assignments = [{
-        datacenter_id = "${akamai_gtm_datacenter.test_datacenter.datacenter_id}"
-        nickname = "${akamai_gtm_datacenter.test_datacenter.nickname}"
+    }
+    assignment {
+        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
+        nickname = akamai_gtm_datacenter.test_datacenter.nickname
         as_numbers = [12222, 16702,17334]
-        }]
-    wait_on_complete = true
+    }
+    wait_on_complete = false
     depends_on = [
-        "akamai_gtm_domain.test_domain",
-        "akamai_gtm_datacenter.test_datacenter"
+        akamai_gtm_domain.test_domain,
+        akamai_gtm_datacenter.test_datacenter
     ]
 }`, gtm_test_domain)
 
@@ -85,46 +85,46 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_gtm_domain" "test_domain" {
-        name = "${local.domain}"
+        name = local.domain
         type = "weighted"
-        contract = "${data.akamai_contract.contract.id}"
+        contract = data.akamai_contract.contract.id
         comment =  "This is a test zone"
-        group  = "${data.akamai_group.group.id}"
+        group  = data.akamai_group.group.id
         load_imbalance_percentage = 10
         wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
-    domain = "${akamai_gtm_domain.test_domain.name}"
+    domain = akamai_gtm_domain.test_domain.name
     nickname = "test_as_datacenter"
     wait_on_complete = false
     virtual = true
-    default_load_object = [{
+    default_load_object {
         load_object = "test"
         load_object_port = 80
         load_servers = ["1.2.3.4", "1.2.3.5"]
-    }]  
+    }  
     depends_on = [
-         "akamai_gtm_domain.test_domain"
+         akamai_gtm_domain.test_domain
     ]    
 }  
 
 resource "akamai_gtm_asmap" "test_as" {
-    domain = "${akamai_gtm_domain.test_domain.name}"
+    domain = akamai_gtm_domain.test_domain.name
     name = "test_asmap"
-    default_datacenter = [{
+    default_datacenter {
         datacenter_id = 5400
         nickname = "All Other CIDR Blocks"
-        }]
-    assignments = [{
-        datacenter_id = "${akamai_gtm_datacenter.test_datacenter.datacenter_id}"
-        nickname = "${akamai_gtm_datacenter.test_datacenter.nickname}"
+    }
+    assignment {
+        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
+        nickname = akamai_gtm_datacenter.test_datacenter.nickname
         as_numbers = [12222, 16702,17334]
-        }]
+    }
     wait_on_complete = false
     depends_on = [
-        "akamai_gtm_domain.test_domain",
-        "akamai_gtm_datacenter.test_datacenter"
+        akamai_gtm_domain.test_domain,
+        akamai_gtm_datacenter.test_datacenter
     ]
  
 }`, gtm_test_domain)
@@ -142,7 +142,7 @@ func TestAccAkamaiGTMAsMap_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAkamaiGTMAsMapExists,
 					testAccCheckNumbersValues,
-					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "true"),
+					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -161,7 +161,7 @@ func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAkamaiGTMAsMapExists,
 					testAccCheckNumbersValues,
-					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "true"),
+					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -214,7 +214,7 @@ func testAccCheckNumbersValues(s *terraform.State) error {
 		log.Printf("[DEBUG] [Akamai GTMV1_3] ASMAP Validating as_numbers")
 		// Walk thru all attributes
 		mapAttribs := rs.Primary.Attributes
-		assignEntries, err := strconv.Atoi(mapAttribs["assignments.#"])
+		assignEntries, err := strconv.Atoi(mapAttribs["assignment.#"])
 		if err != nil {
 			return fmt.Errorf("Assignments attribute was not found")
 		}

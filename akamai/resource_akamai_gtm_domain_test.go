@@ -28,11 +28,11 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_gtm_domain" "test_domain" {
-        name = "${local.domain}"
+        name = local.domain
         type = "weighted"
-	contract = "${data.akamai_contract.contract.id}"
+	contract = data.akamai_contract.contract.id
 	comment =  "Test"
-	group     = "${data.akamai_group.group.id}"
+	group     = data.akamai_group.group.id
 	load_imbalance_percentage = 10
 }
 `, gtm_test_domain)
@@ -53,11 +53,11 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_gtm_domain" "test_domain" {
-        name = "${local.domain}"
+        name = local.domain
         type = "weighted"
-        contract = "${data.akamai_contract.contract.id}"
+        contract = data.akamai_contract.contract.id
         comment =  "Test update"
-        group     = "${data.akamai_group.group.id}"
+        group     = data.akamai_group.group.id
         load_imbalance_percentage = 10
 }
 `, gtm_test_domain)

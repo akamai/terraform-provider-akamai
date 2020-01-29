@@ -154,16 +154,14 @@ func resourceGTMv1DatacenterCreate(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New Datacenter: [%v]", newDC)
 	cStatus, err := newDC.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMv1] DC Create failed: %s", err.Error())
-		fmt.Println(err)
+		log.Printf("[ERROR] DatacenterCreate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(cStatus.Status)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] DatacenterCreate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -203,8 +201,7 @@ func resourceGTMv1DatacenterRead(d *schema.ResourceData, meta interface{}) error
 	}
 	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
-		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Read error: %s", err.Error())
+		log.Printf("[ERROR] DatacenterRead failed: %s", err.Error())
 		return err
 	}
 	populateTerraformDCState(d, dc)
@@ -225,7 +222,7 @@ func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) err
 	// Get existing datacenter
 	existDC, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] DatacenterUpdate failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Datacenter BEFORE: %v", existDC)
@@ -233,15 +230,14 @@ func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Datacenter PROPOSED: %v", existDC)
 	uStat, err := existDC.Update(domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] DatacenterUpdate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] DatacenterUpdate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -274,8 +270,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, meta interface{}) ([]
 	}
 	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
-		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Read error: %s", err.Error())
+		log.Printf("[ERROR] DatacenterImport error: %s", err.Error())
 		return nil, err
 	}
 	populateTerraformDCState(d, dc)
@@ -298,21 +293,20 @@ func resourceGTMv1DatacenterDelete(d *schema.ResourceData, meta interface{}) err
 	// Get existing datacenter
 	existDC, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] DatacenterDelete failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Datacenter: %v", existDC)
 	uStat, err := existDC.Delete(domain)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] DatacenterDelete failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] DatacenterDelete failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 

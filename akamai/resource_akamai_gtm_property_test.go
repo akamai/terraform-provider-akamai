@@ -28,47 +28,45 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_gtm_domain" "test_domain" {
-        name = "${local.domain}"
+        name = local.domain
         type = "weighted"
-        //contract = "${local.contract}"
-	contract = "${data.akamai_contract.contract.id}"
+	contract = data.akamai_contract.contract.id
 	comment =  "This is a test domain"
-	//group     = "${local.group}"
-	group = "${data.akamai_group.group.id}"
+	group = data.akamai_group.group.id
 	wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
-    domain = "${akamai_gtm_domain.test_domain.name}"
+    domain = akamai_gtm_domain.test_domain.name
     nickname = "test_datacenter"
     wait_on_complete = false
-    default_load_object = [{
+    default_load_object {
         load_object = "test"
         load_object_port = 80
         load_servers = ["1.2.3.4", "1.2.3.5"]
-    }]
+    }
     depends_on = [
-         "akamai_gtm_domain.test_domain"
+         akamai_gtm_domain.test_domain
     ]
 }   
 
 resource "akamai_gtm_property" "test_property" {
-    domain = "${akamai_gtm_domain.test_domain.name}"
+    domain = akamai_gtm_domain.test_domain.name
     name = "test_property"
     type = "weighted-round-robin"
     score_aggregation_type = "median"
     handout_limit = 5
     handout_mode = "normal"
-    traffic_targets = [{
-        datacenter_id = "${akamai_gtm_datacenter.test_datacenter.datacenter_id}"
+    traffic_target {
+        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
         enabled = true
         weight = 100
         servers = ["1.2.3.4"]
         // optional
         name = ""
         handout_cname = ""
-        }]
-    liveness_tests = [{
+    }
+    liveness_test {
         name = "lt1"
         test_interval = 30
         test_object_protocol = "HTTP"
@@ -83,7 +81,6 @@ resource "akamai_gtm_property" "test_property" {
         http_error4xx = false
         http_error5xx = false
 	disabled = true
-	http_headers = []
         peer_certificate_verification = false
         recursion_requested = false
         request_string = ""
@@ -95,10 +92,10 @@ resource "akamai_gtm_property" "test_property" {
         test_object_port = 1
         test_object_username = ""
         timeout_penalty = 0
-	}]
+    }
     depends_on = [
-        "akamai_gtm_domain.test_domain",
-	"akamai_gtm_datacenter.test_datacenter"
+        akamai_gtm_domain.test_domain,
+	akamai_gtm_datacenter.test_datacenter
     ]
 }
 `, gtm_test_domain)
@@ -119,45 +116,45 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_gtm_domain" "test_domain" {
-        name = "${local.domain}"
+        name = local.domain
         type = "weighted"
-        contract = "${data.akamai_contract.contract.id}"
+        contract = data.akamai_contract.contract.id
         comment =  "This is a test domain"
-        group   = "${data.akamai_group.group.id}"
+        group   = data.akamai_group.group.id
         wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "test_datacenter" {
-    domain = "${akamai_gtm_domain.test_domain.name}"
+    domain = akamai_gtm_domain.test_domain.name
     nickname = "test_datacenter"
     wait_on_complete = false
-    default_load_object = [{
+    default_load_object {
         load_object = "test"
         load_object_port = 80
         load_servers = ["1.2.3.4", "1.2.3.5"]
-    }]
+    }
     depends_on = [
-         "akamai_gtm_domain.test_domain"
+         akamai_gtm_domain.test_domain
     ]
 }
 
 resource "akamai_gtm_property" "test_property" {
-    domain = "${akamai_gtm_domain.test_domain.name}"
+    domain = akamai_gtm_domain.test_domain.name
     name = "test_property"
     type = "weighted-round-robin"
     score_aggregation_type = "median"
     handout_limit = 6
     handout_mode = "normal"
-    traffic_targets = [{
-        datacenter_id = "${akamai_gtm_datacenter.test_datacenter.datacenter_id}"
+    traffic_target {
+        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
         enabled = true
         weight = 100
         servers = ["1.2.3.4"]
         // optional
         name = ""
         handout_cname = ""
-        }]
-    liveness_tests = [{
+    }
+    liveness_test {
         name = "lt1"
         test_interval = 30
         test_object_protocol = "HTTP"
@@ -169,7 +166,6 @@ resource "akamai_gtm_property" "test_property" {
         error_penalty = 0
         host_header = ""
         disabled = false
-        http_headers = []
         http_error3xx = false
         http_error4xx = false
         http_error5xx = false
@@ -184,10 +180,10 @@ resource "akamai_gtm_property" "test_property" {
         test_object_port = 1
         test_object_username = ""
         timeout_penalty = 0
-        }]
+    }
     depends_on = [
-        "akamai_gtm_domain.test_domain",
-	"akamai_gtm_datacenter.test_datacenter"
+        akamai_gtm_domain.test_domain,
+	akamai_gtm_datacenter.test_datacenter
     ]    
 }   
 `, gtm_test_domain)

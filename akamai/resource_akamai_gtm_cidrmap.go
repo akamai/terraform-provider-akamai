@@ -92,16 +92,14 @@ func resourceGTMv1CidrMapCreate(d *schema.ResourceData, meta interface{}) error 
 	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New CidrMap: [%v]", newCidr)
 	cStatus, err := newCidr.Create(domain)
 	if err != nil {
-		log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Create failed: %s", err.Error())
-		fmt.Println(err)
+		log.Printf("[ERROR] CidrMapCreate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(cStatus.Status)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] CidrMapCreate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -140,8 +138,7 @@ func resourceGTMv1CidrMapRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	cidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
-		fmt.Println(err)
-		log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Read error: %s", err.Error())
+		log.Printf("[ERROR] CidrMap Read error: %s", err.Error())
 		return err
 	}
 	populateTerraformCidrMapState(d, cidr)
@@ -162,7 +159,7 @@ func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error 
 	// Get existingCidrMap
 	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] CidrMapUpdate failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] CidrMap BEFORE: %v", existCidr)
@@ -170,15 +167,14 @@ func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error 
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] CidrMap PROPOSED: %v", existCidr)
 	uStat, err := existCidr.Update(domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] CidrMapUpdate failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] CidrMapUpdate failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
@@ -234,21 +230,20 @@ func resourceGTMv1CidrMapDelete(d *schema.ResourceData, meta interface{}) error 
 	}
 	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("[ERROR] CidrMapDelete failed: %s", err.Error())
 		return err
 	}
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] CidrMap: %v", existCidr)
 	uStat, err := existCidr.Delete(domain)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] CidrMapDelete failed: %s", err.Error())
 		return err
 	}
 	b, err := json.Marshal(uStat)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[ERROR] CidrMapDelete failed: %s", err.Error())
 		return err
 	}
-	fmt.Println(string(b))
 	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
 
