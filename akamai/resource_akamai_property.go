@@ -749,7 +749,7 @@ func createOrigin(d *schema.ResourceData) (*papi.OptionValue, error) {
 			log.Println("[DEBUG] Setting custom forward hostname")
 
 			originValues["forwardHostHeader"] = "CUSTOM"
-			originValues["customForwardHostHeader"] = "CUSTOM"
+			originValues["customForwardHostHeader"] = forwardHostname
 		}
 
 		ov := papi.OptionValue(originValues)
