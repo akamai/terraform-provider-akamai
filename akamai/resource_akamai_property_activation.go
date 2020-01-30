@@ -10,6 +10,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func resourcePropertyActivation() *schema.Resource {
@@ -33,9 +34,10 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Optional: true,
 	},
 	"network": &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-		Default:  "staging",
+		Type:         schema.TypeString,
+		Optional:     true,
+		Default:      "staging",
+		ValidateFunc: validation.StringInSlice([]string{"staging", "production"}, true),
 	},
 	"activate": &schema.Schema{
 		Type:     schema.TypeBool,
