@@ -49,15 +49,15 @@ resource "akamai_property" "example-property" {
   name        = "example.mydomain.com"
   cp_code     = data.akamai_cp_code.cp_code.id
   contact     = ["me@mydomain.com"]
-  contract = data.akamai_contract.contract.id
-  group = data.akamai_group.group.id
+  contract    = data.akamai_contract.contract.id
+  group       = data.akamai_group.group.id
   product     = "prd_xxxx"
   rule_format = "latest"
-  hostnames    = {
+  hostnames   = {
 		"example.mydomain.com" = "${akamai_edge_hostname.example-property.edge_hostname}",
 		}
   rules       = "${data.template_file.rules.rendered}"
-  is_secure = true
+  is_secure   = true
 }
 
 resource "akamai_property_activation" "example-property" {
