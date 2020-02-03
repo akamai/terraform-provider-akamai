@@ -3,7 +3,6 @@ Akamai Provider for Terraform
 
 This example is a starting point to onboard new Ion configurations via the Akamai Terraform Provider. 
 The example leverages template_file and terraform variables to provide more flexibility and usability as your configuration grows, but this can be optional
-[Terraform](https://www.terraform.io/downloads.html) 0.12.x
 Get Started with [Ion](https://developer.akamai.com/ion)
 
 This template can be used to onboard a basic Ion confiugration, but there are also example snippets included that can be leveraged to contruct a more advanced configuration
