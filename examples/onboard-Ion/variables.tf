@@ -1,4 +1,4 @@
 variable "tdenabled" {
 	type = string
-	default = "true"
+	default = "false"
 }
