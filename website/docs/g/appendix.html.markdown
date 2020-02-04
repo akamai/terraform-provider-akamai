@@ -37,3 +37,5 @@ Leveraging Product IDs in your setup requires you to retrieve the ID for the spe
 | Dynamic Site Accelerator | `prd_Site_Accel` |
 | Rich Media Accelerator   | `prd_Rich_Media_Accel` |
 | Ion Standard             | `prd_Fresca`           |
+
+Note that if you have previously used the Property Manager API or CLI set-prefixes toggle option, you might have to remove the "prd_" prefix
