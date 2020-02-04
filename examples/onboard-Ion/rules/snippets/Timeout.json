@@ -1,0 +1,25 @@
+{
+    "name": "Timeout",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "timeout",
+            "options": {
+                "value": "17s"
+            }
+        }
+    ],
+    "criteria": [
+        {
+            "name": "path",
+            "options": {
+                "matchOperator": "MATCHES_ONE_OF",
+                "values": [
+                    "/shoes1/*"
+                ],
+                "matchCaseSensitive": false
+            }
+        }
+    ],
+    "criteriaMustSatisfy": "all"
+}

@@ -1,0 +1,128 @@
+{
+    "name": "Performance",
+    "children": [
+        {
+            "name": "Compressible Objects",
+            "children": [],
+            "behaviors": [
+                {
+                    "name": "gzipResponse",
+                    "options": {
+                        "behavior": "ALWAYS"
+                    }
+                }
+            ],
+            "criteria": [
+                {
+                    "name": "contentType",
+                    "options": {
+                        "matchCaseSensitive": false,
+                        "matchOperator": "IS_ONE_OF",
+                        "matchWildcard": true,
+                        "values": [
+                            "text/*",
+                            "application/javascript",
+                            "application/x-javascript",
+                            "application/x-javascript*",
+                            "application/json",
+                            "application/x-json",
+                            "application/*+json",
+                            "application/*+xml",
+                            "application/text",
+                            "application/vnd.microsoft.icon",
+                            "application/vnd-ms-fontobject",
+                            "application/x-font-ttf",
+                            "application/x-font-opentype",
+                            "application/x-font-truetype",
+                            "application/xmlfont/eot",
+                            "application/xml",
+                            "font/opentype",
+                            "font/otf",
+                            "font/eot",
+                            "image/svg+xml",
+                            "image/vnd.microsoft.icon"
+                        ]
+                    }
+                }
+            ],
+            "criteriaMustSatisfy": "all",
+            "comments": "Compresses content to improve performance of clients with slow connections. Applies Last Mile Acceleration to requests when the returned object supports gzip compression."
+        }
+    ],
+    "behaviors": [
+        {
+            "name": "enhancedAkamaiProtocol",
+            "options": {
+                "display": ""
+            }
+        },
+        {
+            "name": "http2",
+            "options": {
+                "enabled": ""
+            }
+        },
+        {
+            "name": "allowTransferEncoding",
+            "options": {
+                "enabled": true
+            }
+        },
+        {
+            "name": "removeVary",
+            "options": {
+                "enabled": false
+            }
+        },
+        {
+            "name": "sureRoute",
+            "options": {
+                "enabled": true,
+                "srDownloadLinkTitle": "",
+                "type": "PERFORMANCE",
+                "testObjectUrl": "/favicon.ico",
+                "toHostStatus": "INCOMING_HH",
+                "raceStatTtl": "30m",
+                "forceSslForward": false,
+                "enableCustomKey": false
+            }
+        },
+        {
+            "name": "prefetch",
+            "options": {
+                "enabled": true
+            }
+        },
+        {
+            "name": "scriptManagement",
+            "options": {
+                "enabled": true,
+                "serviceworker": "NO_SERVICE_WORKER"
+            }
+        },
+        {
+            "name": "dnsAsyncRefresh",
+            "options": {
+                "enabled": true,
+                "timeout": "2h"
+            }
+        },
+        {
+            "name": "adaptiveAcceleration",
+            "options": {
+                "source": "mPulse",
+                "titleHttp2ServerPush": "",
+                "enablePush": true,
+                "titlePreconnect": "",
+                "enablePreconnect": true,
+                "titlePreload": "",
+                "preloadEnable": true,
+                "titleRo": "",
+                "enableRo": true
+            }
+        }
+    ],
+    "criteria": [],
+    "criteriaMustSatisfy": "all",
+    "comments": "Improves the performance of delivering objects to end users. Behaviors in this rule are applied to all requests as appropriate."
+}

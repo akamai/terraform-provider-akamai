@@ -1,0 +1,15 @@
+{
+    "name": "DataStream",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "datastream",
+            "options": {
+                "enabled": true,
+                "datastreamIds": "1234"
+            }
+        }
+    ],
+    "criteria": [],
+    "criteriaMustSatisfy": "all"
+}

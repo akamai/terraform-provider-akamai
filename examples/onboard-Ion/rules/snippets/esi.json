@@ -1,0 +1,32 @@
+{
+    "name": "Enable ESI",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "edgeSideIncludes",
+            "options": {
+                "enabled": true,
+                "enableViaHttp": false,
+                "detectInjection": false,
+                "passSetCookie": false,
+                "passClientIp": false,
+                "i18nStatus": false
+            }
+        }
+    ],
+    "criteria": [
+        {
+            "name": "contentType",
+            "options": {
+                "matchOperator": "IS_ONE_OF",
+                "values": [
+                    "text/html*"
+                ],
+                "matchWildcard": true,
+                "matchCaseSensitive": false
+            }
+        }
+    ],
+    "criteriaMustSatisfy": "all",
+    "comments": ""
+}
