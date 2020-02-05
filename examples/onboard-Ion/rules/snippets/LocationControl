@@ -1,0 +1,16 @@
+{
+    "name": "LocationControl",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "denyAccess",
+            "options": {
+                "reason": "deny-by-country",
+                "enabled": true
+            }
+        }
+    ],
+    "criteria": [],
+    "criteriaMustSatisfy": "all",
+    "comments": "List the locations that need to be denied"
+}

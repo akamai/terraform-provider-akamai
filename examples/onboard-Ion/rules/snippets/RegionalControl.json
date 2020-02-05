@@ -1,0 +1,21 @@
+{
+    "name": "RegionalControl",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "redirect",
+            "options": {
+                "queryString": "APPEND",
+                "responseCode": 302,
+                "destinationHostname": "SAME_AS_REQUEST",
+                "destinationPath": "OTHER",
+                "destinationProtocol": "SAME_AS_REQUEST",
+                "mobileDefaultChoice": "DEFAULT",
+                "destinationPathOther": "/asia/"
+            }
+        }
+    ],
+    "criteria": [],
+    "criteriaMustSatisfy": "all",
+    "comments": ""
+}
