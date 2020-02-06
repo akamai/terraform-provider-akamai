@@ -1,0 +1,93 @@
+{
+    "name": "Authentication Logic",
+    "children": [
+        {
+            "name": "Calculate header",
+            "children": [],
+            "behaviors": [
+                {
+                    "name": "setVariable",
+                    "options": {
+                        "transform": "BASE_64_ENCODE",
+                        "valueSource": "EXPRESSION",
+                        "variableName": "PMUSER_ENCODED",
+                        "variableValue": "{{user.PMUSER_USERNAME}}:{{user.PMUSER_PASSWORD}}"
+                    }
+                }
+            ],
+            "criteria": [],
+            "criteriaMustSatisfy": "all"
+        },
+        {
+            "name": "Extract Header",
+            "children": [],
+            "behaviors": [
+                {
+                    "name": "setVariable",
+                    "options": {
+                        "extractLocation": "CLIENT_REQUEST_HEADER",
+                        "headerName": "Authorization",
+                        "transform": "SUBSTITUTE",
+                        "valueSource": "EXTRACT",
+                        "variableName": "PMUSER_SUBMITTED",
+                        "regex": "Basic ([a-z][A-Z][0-9]+)",
+                        "replacement": "$1",
+                        "caseSensitive": true,
+                        "globalSubstitution": false
+                    }
+                }
+            ],
+            "criteria": [],
+            "criteriaMustSatisfy": "all"
+        },
+        {
+            "name": "Authenticate",
+            "children": [],
+            "behaviors": [
+                {
+                    "name": "modifyIncomingResponseHeader",
+                    "options": {
+                        "action": "MODIFY",
+                        "avoidDuplicateHeaders": true,
+                        "customHeaderName": "WWW-Authenticate",
+                        "newHeaderValue": "Basic realm=\"{{builtin.AK_HOST}}\"",
+                        "standardModifyHeaderName": "OTHER"
+                    }
+                },
+                {
+                    "name": "constructResponse",
+                    "options": {
+                        "body": "<html><h1>Unauthorized</h1></html>",
+                        "enabled": true,
+                        "forceEviction": false,
+                        "responseCode": 401
+                    }
+                }
+            ],
+            "criteria": [
+                {
+                    "name": "matchVariable",
+                    "options": {
+                        "matchCaseSensitive": true,
+                        "matchOperator": "IS_NOT",
+                        "matchWildcard": false,
+                        "variableExpression": "{{user.PMUSER_SUBMITTED}}",
+                        "variableName": "PMUSER_ENCODED"
+                    }
+                }
+            ],
+            "criteriaMustSatisfy": "all"
+        }
+    ],
+    "behaviors": [],
+    "criteria": [
+        {
+            "name": "requestType",
+            "options": {
+                "matchOperator": "IS",
+                "value": "CLIENT_REQ"
+            }
+        }
+    ],
+    "criteriaMustSatisfy": "all"
+} 

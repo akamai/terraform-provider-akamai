@@ -1,0 +1,25 @@
+{
+  "accountId": "act_1-6JHGX",
+  "contractId": "ctr_1-1NC95D",
+  "groupId": "grp_91533",
+  "propertyId": "prp_572911",
+  "propertyName": "tfact.wheep.co.uk",
+  "propertyVersion": 23,
+  "etag": "7d3b0bd5a8f999a46632c7ba91ec62fb5dd2f5fe",
+  "rules": {
+    "name": "default",
+    "children": [
+      ${file("${snippets}/compression.json")},
+      ${file("${snippets}/performance.json")},
+      ${file("${snippets}/static.json")},
+      ${file("${snippets}/dynamic.json")},
+      ${file("${snippets}/redirect.json")}
+    ],
+    ${file("${snippets}/default.json")}
+    ],
+    "options": {
+      "is_secure": true
+    }
+  },
+  "ruleFormat": "v2018-02-27"
+}

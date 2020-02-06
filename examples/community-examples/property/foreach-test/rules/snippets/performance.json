@@ -1,0 +1,27 @@
+      {
+        "name": "Performance",
+        "children": [],
+        "behaviors": [
+          {
+            "name": "http2",
+            "options": {
+              "enabled": true
+            }
+          },
+          {
+            "name": "allowTransferEncoding",
+            "options": {
+              "enabled": true
+            }
+          },
+          {
+            "name": "removeVary",
+            "options": {
+              "enabled": true
+            }
+          }
+        ],
+        "criteria": [],
+        "criteriaMustSatisfy": "all",
+        "comments": "Improves the performance of delivering objects to end users. Behaviors in this rule are applied to all requests as appropriate."
+      }
