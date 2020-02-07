@@ -1,0 +1,196 @@
+{
+  "ruleFormat": "latest",
+  "rules": {
+    "name": "default",
+    "behaviors": [
+      {
+        "name": "originCharacteristics",
+        "options": {
+          "authenticationMethod": "AUTOMATIC",
+          "authenticationMethodTitle": "",
+          "country": "GLOBAL_MULTI_GEO"
+        }
+      },
+      {
+        "name": "contentCharacteristicsDD",
+        "options": {
+          "catalogSize": "SMALL",
+          "contentType": "SOFTWARE",
+          "objectSize": "UNKNOWN",
+          "optimizeOption": false,
+          "popularityDistribution": "LONG_TAIL"
+        }
+      },
+      {
+        "name": "clientCharacteristics",
+        "options": {
+          "country": "GLOBAL"
+        }
+      },
+      {
+          "name": "origin",
+          "options": {
+              "originType": "NET_STORAGE",
+              "netStorage": {
+                  "downloadDomainName": "icass2.download.akamai.com",
+                  "cpCode": 350001,
+                  "g2oToken": null
+              }
+          }
+      },
+      {
+        "name": "baseDirectory",
+        "options": {
+          "value": "/{{builtin.AK_HOST}}/"
+        }
+      },
+      {
+        "name": "cacheKeyQueryParams",
+        "options": {
+          "behavior": "IGNORE_ALL"
+        }
+      },
+      {
+        "name": "autoDomainValidation",
+        "options": {
+          "autodv": ""
+        }
+      },
+      {
+        "name": "report",
+        "options": {
+          "logAcceptLanguage": false,
+          "logCookies": "OFF",
+          "logCustomLogField": false,
+          "logHost": true,
+          "logReferer": false,
+          "logUserAgent": false
+        }
+      }
+    ],
+    "children": [
+      {
+        "name": "Authentication Logic",
+        "criteria": [
+          {
+            "name": "requestType",
+            "options": {
+              "matchOperator": "IS",
+              "value": "CLIENT_REQ"
+            }
+          }
+        ],
+        "children": [
+          {
+            "name": "Calculate header",
+            "behaviors": [
+              {
+                "name": "setVariable",
+                "options": {
+                  "transform": "BASE_64_ENCODE",
+                  "valueSource": "EXPRESSION",
+                  "variableName": "PMUSER_ENCODED",
+                  "variableValue": "{{user.PMUSER_USERNAME}}:{{user.PMUSER_PASSWORD}}"
+                }
+              }
+            ],
+            "criteriaMustSatisfy": "all",
+            "options": {}
+          },
+          {
+            "name": "Extract Header",
+            "behaviors": [
+              {
+                "name": "setVariable",
+                "options": {
+                  "caseSensitive": true,
+                  "extractLocation": "CLIENT_REQUEST_HEADER",
+                  "globalSubstitution": false,
+                  "headerName": "Authorization",
+                  "regex": "Basic ([a-z][A-Z][0-9]+)",
+                  "replacement": "$1",
+                  "transform": "SUBSTITUTE",
+                  "valueSource": "EXTRACT",
+                  "variableName": "PMUSER_SUBMITTED"
+                }
+              }
+            ],
+            "criteriaMustSatisfy": "all",
+            "options": {}
+          },
+          {
+            "name": "Authenticate",
+            "criteria": [
+              {
+                "name": "matchVariable",
+                "options": {
+                  "matchCaseSensitive": true,
+                  "matchOperator": "IS_NOT",
+                  "matchWildcard": false,
+                  "variableExpression": "{{user.PMUSER_SUBMITTED}}",
+                  "variableName": "PMUSER_ENCODED"
+                }
+              }
+            ],
+            "behaviors": [
+              {
+                "name": "modifyIncomingResponseHeader",
+                "options": {
+                  "action": "MODIFY",
+                  "avoidDuplicateHeaders": true,
+                  "customHeaderName": "WWW-Authenticate",
+                  "newHeaderValue": "Basic realm=\"{{builtin.AK_HOST}}\"",
+                  "standardModifyHeaderName": "OTHER"
+                }
+              },
+              {
+                "name": "constructResponse",
+                "options": {
+                  "body": "\u003chtml\u003e\u003ch1\u003eUnauthorized\u003c/h1\u003e\u003c/html\u003e",
+                  "enabled": true,
+                  "forceEviction": false,
+                  "responseCode": 401
+                }
+              }
+            ],
+            "criteriaMustSatisfy": "all",
+            "options": {}
+          }
+        ],
+        "criteriaMustSatisfy": "all",
+        "options": {}
+      }
+    ],
+    "variables": [
+      {
+        "name": "PMUSER_USERNAME",
+        "value": "test",
+        "description": "",
+        "hidden": false,
+        "sensitive": true
+      },
+      {
+        "name": "PMUSER_PASSWORD",
+        "value": "test",
+        "description": "",
+        "hidden": false,
+        "sensitive": true
+      },
+      {
+        "name": "PMUSER_ENCODED",
+        "value": "",
+        "description": "work var - do not set",
+        "hidden": false,
+        "sensitive": true
+      },
+      {
+        "name": "PMUSER_SUBMITTED",
+        "value": "",
+        "description": "work var - do not set",
+        "hidden": false,
+        "sensitive": true
+      }
+    ],
+    "options": {}
+  }
+}
