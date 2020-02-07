@@ -1,4 +1,4 @@
-# An example for Saas Providers
+# An example for SaaS Providers
 
 This is an example of how a SaaS service provider would use a single configuration template for many similar configs by using a new Terraform feature called "for_each". The basic function of "for_each" is to allow you to iterate over an array or a map and provision infrastructure for each of them. This is ideal for our use-case. 
 
