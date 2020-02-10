@@ -280,10 +280,6 @@ func resourceGTMv1Property() *schema.Resource {
 							Type:     schema.TypeBool,
 							Optional: true,
 						},
-						"host_header": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
 						"http_header": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -812,7 +808,6 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 			lt.SslClientPrivateKey = v["ssl_client_private_key"].(string)
 			lt.SslClientCertificate = v["ssl_client_certificate"].(string)
 			lt.DisableNonstandardPortWarning = v["disable_nonstandard_port_warning"].(bool)
-			lt.HostHeader = v["host_header"].(string)
 			lt.TestObjectUsername = v["test_object_username"].(string)
 			lt.TimeoutPenalty = v["timeout_penalty"].(int)
 			lt.AnswerRequired = v["answer_required"].(bool)
@@ -859,7 +854,6 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			"ssl_client_private_key":           l.SslClientPrivateKey,
 			"ssl_client_certificate":           l.SslClientCertificate,
 			"disable_nonstandard_port_warning": l.DisableNonstandardPortWarning,
-			"host_header":                      l.HostHeader,
 			"test_object_username":             l.TestObjectUsername,
 			"test_timeout":                     l.TestTimeout,
 			"timeout_penalty":                  l.TimeoutPenalty,

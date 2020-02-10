@@ -76,7 +76,6 @@ resource "akamai_gtm_property" "test_property" {
         answer_required = false
         disable_nonstandard_port_warning = false
         error_penalty = 0
-        host_header = ""
         http_error3xx = false
         http_error4xx = false
         http_error5xx = false
@@ -164,7 +163,6 @@ resource "akamai_gtm_property" "test_property" {
         answer_required = false
         disable_nonstandard_port_warning = false
         error_penalty = 0
-        host_header = ""
         disabled = false
         http_error3xx = false
         http_error4xx = false
