@@ -26,6 +26,8 @@ github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki
 github.com/agl/ed25519 v0.0.0-20150830182803-278e1ec8e8a6/go.mod h1:WPjqKcmVOxf0XSf3YxCJs6N6AOSrOx3obionmG7T0y0=
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.8.0 h1:deI0mtQseP6qmCRJ+/Gk2RkklniIY3Rp2RTB38rPd1M=
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.8.0/go.mod h1:zpDJeKyp9ScW4NNrbdr+Eyxvry3ilGPewKoXw3XGN1k=
+github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.5 h1:6/ofsc2djpS+bsyOG10cDJI1ftigCiulAfIZpxSua6k=
+github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.5/go.mod h1:L3YOfsK9Dzvjxj1/Q5OG58SDCGGOwtzgi734Kpdc03c=
 github.com/aliyun/alibaba-cloud-sdk-go v0.0.0-20190329064014-6e358769c32a h1:APorzFpCcv6wtD5vmRWYqNm4N55kbepL7c7kTq9XI6A=
 github.com/aliyun/alibaba-cloud-sdk-go v0.0.0-20190329064014-6e358769c32a/go.mod h1:T9M45xf79ahXVelWoOBmH0y4aC1t5kXO5BxwyakgIGA=
 github.com/aliyun/aliyun-oss-go-sdk v0.0.0-20190103054945-8205d1f41e70 h1:FrF4uxA24DF3ARNXVbUin3wa5fDLaB1Cy8mKks/LRz4=
