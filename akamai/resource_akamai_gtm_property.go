@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
@@ -55,7 +54,7 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 			},
 			"health_threshold": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Optional: true,
 			},
 			"use_computed_targets": {
@@ -96,7 +95,7 @@ func resourceGTMv1Property() *schema.Resource {
 				},
 			},
 			"unreachable_threshold": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Optional: true,
 			},
 			"min_live_fraction": {
@@ -104,7 +103,7 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 			},
 			"health_multiplier": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Optional: true,
 			},
 			"dynamic_ttl": {
@@ -145,7 +144,7 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 			},
 			"health_max": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Optional: true,
 			},
 			"cname": {
@@ -215,7 +214,7 @@ func resourceGTMv1Property() *schema.Resource {
 							Required: true,
 						},
 						"error_penalty": {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeFloat,
 							Optional: true,
 						},
 						"peer_certificate_verification": {
@@ -305,10 +304,10 @@ func resourceGTMv1Property() *schema.Resource {
 							Required: true,
 						},
 						"timeout_penalty": {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeFloat,
 							Optional: true,
 						},
-						"answer_required": {
+						"answers_required": {
 							Type:     schema.TypeBool,
 							Optional: true,
 						},
@@ -358,14 +357,12 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error
 		log.Printf("[ERROR] PropertyCreate failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(cStatus.Status)
-	if err != nil {
-		log.Printf("[ERROR] PropertyCreate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Create status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
 
+	if cStatus.Status.PropagationStatus == "DENIED" {
+		return errors.New(cStatus.Status.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -434,14 +431,11 @@ func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error
 		log.Printf("[ERROR] PropertyUpdate failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] PropertyUpdate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -503,14 +497,11 @@ func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error
 		log.Printf("[ERROR] PropertyDelete failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] PropertyDelete failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -551,7 +542,6 @@ func populateNewPropertyObject(d *schema.ResourceData) *gtm.Property {
 	propObj := gtm.NewProperty(d.Get("name").(string))
 	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
 	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
-	propObj.MxRecords = make([]*gtm.MxRecord, 0)
 	populatePropertyObject(d, propObj)
 
 	return propObj
@@ -577,31 +567,28 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 		prop.StickinessBonusConstant = v.(int)
 	}
 	if v, ok := d.GetOk("health_threshold"); ok {
-		prop.HealthThreshold = v.(int)
+		prop.HealthThreshold = v.(float64)
 	}
-	if v, ok := d.GetOk("ipv6"); ok {
-		prop.Ipv6 = v.(bool)
-	}
-	if v, ok := d.GetOk("use_computed_targets"); ok {
-		prop.UseComputedTargets = v.(bool)
-	}
+	v := d.Get("ipv6")
+	prop.Ipv6 = v.(bool)
+	v = d.Get("use_computed_targets")
+	prop.UseComputedTargets = v.(bool)
 	if v, ok := d.GetOk("backup_ip"); ok {
 		prop.BackupIp = v.(string)
 	}
-	if v, ok := d.GetOk("balance_by_download_score"); ok {
-		prop.BalanceByDownloadScore = v.(bool)
-	}
+	v = d.Get("balance_by_download_score")
+	prop.BalanceByDownloadScore = v.(bool)
 	if v, ok := d.GetOk("static_ttl"); ok {
 		prop.StaticTTL = v.(int)
 	}
 	if v, ok := d.GetOk("unreachable_threshold"); ok {
-		prop.UnreachableThreshold = v.(int)
+		prop.UnreachableThreshold = v.(float64)
 	}
 	if v, ok := d.GetOk("min_live_fraction"); ok {
 		prop.MinLiveFraction = v.(float64)
 	}
 	if v, ok := d.GetOk("health_multiplier"); ok {
-		prop.HealthMultiplier = v.(int)
+		prop.HealthMultiplier = v.(float64)
 	}
 	if v, ok := d.GetOk("dynamic_ttl"); ok {
 		prop.DynamicTTL = v.(int)
@@ -631,11 +618,10 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 		prop.FailbackDelay = v.(int)
 	}
 	if v, ok := d.GetOk("health_max"); ok {
-		prop.HealthMax = v.(int)
+		prop.HealthMax = v.(float64)
 	}
-	if v, ok := d.GetOk("ghost_demand_reporting"); ok {
-		prop.GhostDemandReporting = v.(bool)
-	}
+	v = d.Get("ghost_demand_reporting")
+	prop.GhostDemandReporting = v.(bool)
 	if v, ok := d.GetOk("weighted_hash_bits_for_ipv4"); ok {
 		prop.WeightedHashBitsForIPv4 = v.(int)
 	}
@@ -794,7 +780,7 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 				v["test_object_protocol"].(string),
 				v["test_interval"].(int),
 				float32(v["test_timeout"].(float64))) // create new object
-			lt.ErrorPenalty = v["error_penalty"].(int)
+			lt.ErrorPenalty = v["error_penalty"].(float64)
 			lt.PeerCertificateVerification = v["peer_certificate_verification"].(bool)
 			lt.TestObject = v["test_object"].(string)
 			lt.RequestString = v["request_string"].(string)
@@ -809,8 +795,8 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 			lt.SslClientCertificate = v["ssl_client_certificate"].(string)
 			lt.DisableNonstandardPortWarning = v["disable_nonstandard_port_warning"].(bool)
 			lt.TestObjectUsername = v["test_object_username"].(string)
-			lt.TimeoutPenalty = v["timeout_penalty"].(int)
-			lt.AnswerRequired = v["answer_required"].(bool)
+			lt.TimeoutPenalty = v["timeout_penalty"].(float64)
+			lt.AnswersRequired = v["answers_required"].(bool)
 			lt.ResourceType = v["resource_type"].(string)
 			lt.RecursionRequested = v["recursion_requested"].(bool)
 			httpHeaderList := v["http_header"].([]interface{})
@@ -857,7 +843,7 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			"test_object_username":             l.TestObjectUsername,
 			"test_timeout":                     l.TestTimeout,
 			"timeout_penalty":                  l.TimeoutPenalty,
-			"answer_required":                  l.AnswerRequired,
+			"answers_required":                 l.AnswersRequired,
 			"resource_type":                    l.ResourceType,
 			"recursion_requested":              l.RecursionRequested,
 		}

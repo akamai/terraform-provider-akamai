@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
@@ -95,14 +94,11 @@ func resourceGTMv1CidrMapCreate(d *schema.ResourceData, meta interface{}) error 
 		log.Printf("[ERROR] CidrMapCreate failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(cStatus.Status)
-	if err != nil {
-		log.Printf("[ERROR] CidrMapCreate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Create status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
+	if cStatus.Status.PropagationStatus == "DENIED" {
+		return errors.New(cStatus.Status.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -170,14 +166,11 @@ func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error 
 		log.Printf("[ERROR] CidrMapUpdate failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] CidrMapUpdate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -239,14 +232,11 @@ func resourceGTMv1CidrMapDelete(d *schema.ResourceData, meta interface{}) error 
 		log.Printf("[ERROR] CidrMapDelete failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] CidrMapDelete failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {

@@ -16,8 +16,8 @@ import (
 type Datacenter struct {
 	City                          string      `json:"city,omitempty"`
 	CloneOf                       int         `json:"cloneOf,omitempty"`
-	CloudServerHostHeaderOverride bool        `json:"cloudServerHostHeaderOverride,omitempty"`
-	CloudServerTargeting          bool        `json:"cloudServerTargeting,omitempty"`
+	CloudServerHostHeaderOverride bool        `json:"cloudServerHostHeaderOverride"`
+	CloudServerTargeting          bool        `json:"cloudServerTargeting"`
 	Continent                     string      `json:"continent,omitempty"`
 	Country                       string      `json:"country,omitempty"`
 	DefaultLoadObject             *LoadObject `json:"defaultLoadObject,omitempty"`
@@ -27,13 +27,13 @@ type Datacenter struct {
 	Nickname                      string      `json:"nickname,omitempty"`
 	PingInterval                  int         `json:"pingInterval,omitempty"`
 	PingPacketSize                int         `json:"pingPacketSize,omitempty"`
-	DatacenterId                  int         `json:"datacenterId,omitempty"`
+	DatacenterId                  int         `json:"datacenterId"`
 	ScorePenalty                  int         `json:"scorePenalty,omitempty"`
 	ServermonitorLivenessCount    int         `json:"servermonitorLivenessCount,omitempty"`
 	ServermonitorLoadCount        int         `json:"servermonitorLoadCount,omitempty"`
 	ServermonitorPool             string      `json:"servermonitorPool,omitempty"`
 	StateOrProvince               string      `json:"stateOrProvince,omitempty"`
-	Virtual                       bool        `json:"virtual,omitempty"`
+	Virtual                       bool        `json:"virtual"`
 }
 
 type DatacenterList struct {

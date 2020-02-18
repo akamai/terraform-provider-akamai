@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -99,7 +98,7 @@ func resourceGTMv1Domain() *schema.Resource {
 				Optional: true,
 			},
 			"default_health_max": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Computed: true,
 			},
 			"map_update_interval": {
@@ -132,7 +131,7 @@ func resourceGTMv1Domain() *schema.Resource {
 				Optional: true,
 			},
 			"default_health_multiplier": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Computed: true,
 			},
 			"servermonitor_pool": {
@@ -152,7 +151,7 @@ func resourceGTMv1Domain() *schema.Resource {
 				Computed: true,
 			},
 			"default_health_threshold": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Computed: true,
 			},
 			"min_test_interval": {
@@ -229,14 +228,11 @@ func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 	}
-	b, err := json.Marshal(cStatus)
-	if err != nil {
-		log.Printf("[ERROR] DomainCreate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Create status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
+	if cStatus.Status.PropagationStatus == "DENIED" {
+		return errors.New(cStatus.Status.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(dname)
 		if done {
@@ -293,14 +289,11 @@ func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[ERROR] DomainUpdate failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] DomainUpdate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Update status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(d.Id())
 		if done {
@@ -353,14 +346,11 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(d.Id())
 		if done {
@@ -456,7 +446,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 		dom.LoadImbalancePercentage = v.(float64)
 	}
 	if v, ok := d.GetOk("default_health_max"); ok {
-		dom.DefaultHealthMax = v.(int)
+		dom.DefaultHealthMax = v.(float64)
 	}
 	if v, ok := d.GetOk("map_update_interval"); ok {
 		dom.MapUpdateInterval = v.(int)
@@ -476,18 +466,16 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 	if v, ok := d.GetOk("max_test_timeout"); ok {
 		dom.MaxTestTimeout = v.(float64)
 	}
-	if v, ok := d.GetOk("cname_coalescing_enabled"); ok {
-		dom.CnameCoalescingEnabled = v.(bool)
-	}
+	v := d.Get("cname_coalescing_enabled")
+	dom.CnameCoalescingEnabled = v.(bool)
 	if v, ok := d.GetOk("default_health_multiplier"); ok {
-		dom.DefaultHealthMultiplier = v.(int)
+		dom.DefaultHealthMultiplier = v.(float64)
 	}
 	if v, ok := d.GetOk("servermonitor_pool"); ok {
 		dom.ServermonitorPool = v.(string)
 	}
-	if v, ok := d.GetOk("load_feedback"); ok {
-		dom.LoadFeedback = v.(bool)
-	}
+	v = d.Get("load_feedback")
+	dom.LoadFeedback = v.(bool)
 	if v, ok := d.GetOk("min_ttl"); ok {
 		dom.MinTTL = int64(v.(int))
 	}
@@ -495,7 +483,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 		dom.DefaultMaxUnreachablePenalty = v.(int)
 	}
 	if v, ok := d.GetOk("default_health_threshold"); ok {
-		dom.DefaultHealthThreshold = v.(int)
+		dom.DefaultHealthThreshold = v.(float64)
 	}
 	// Want??
 	//if v, ok := d.GetOk("last_modified_by"); ok { dom.LastModifiedBy = v.(string) }
@@ -578,20 +566,23 @@ func waitForCompletion(domain string) (bool, error) {
 			return false, err
 		}
 		log.Printf("[DEBUG] [Akamai GTMv1] WAIT: propStat.PropagationStatus [%v]", propStat.PropagationStatus)
-		if propStat.PropagationStatus == "COMPLETE" {
+		switch propStat.PropagationStatus {
+		case "COMPLETE":
 			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return COMPLETE")
 			return true, nil
+		case "DENIED":
+			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return DENIED")
+			return true, errors.New(propStat.Message)
+		case "PENDING":
+			if sleepTimeout <= 0 {
+				log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return TIMED OUT")
+				return false, nil
+			}
+			time.Sleep(sleepInterval)
+			sleepTimeout -= sleepInterval
+			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Time Remaining [%v]", sleepTimeout/time.Second)
+		default:
+			return false, errors.New("Unknown propagationStatus while waiting for change completion") // don't know how/why we would have broken out.
 		}
-		if sleepTimeout <= 0 {
-			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return TIMED OUT")
-			return false, nil
-		}
-		time.Sleep(sleepInterval)
-		sleepTimeout -= sleepInterval
-		log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Time Remaining [%v]", sleepTimeout/time.Second)
-
 	}
-
-	return false, errors.New("Unknown error while waiting for change completion") // don't know how/why we would have broken out.
-
 }

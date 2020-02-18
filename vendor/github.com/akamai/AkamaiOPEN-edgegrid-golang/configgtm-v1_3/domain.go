@@ -22,14 +22,14 @@ type Domain struct {
 	EmailNotificationList        []string        `json:"emailNotificationList,omitempty"`
 	MinPingableRegionFraction    float32         `json:"minPingableRegionFraction,omitempty"`
 	DefaultTimeoutPenalty        int             `json:"defaultTimeoutPenalty,omitempty"`
-	Datacenters                  []*Datacenter   `json:"datacenters"`
+	Datacenters                  []*Datacenter   `json:"datacenters,omitempty"`
 	ServermonitorLivenessCount   int             `json:"servermonitorLivenessCount,omitempty"`
 	RoundRobinPrefix             string          `json:"roundRobinPrefix,omitempty"`
-	ServermonitorLoadCount       int             `json:"servermonitorLoadCount,omitempty"`
-	PingInterval                 int             `json:"pingInterval,omitempty"`
+	ServermonitorLoadCount       int             `json:"servermonitorLoadCount"`
+	PingInterval                 int             `json:"pingInterval"`
 	MaxTTL                       int64           `json:"maxTTL,omitempty"`
 	LoadImbalancePercentage      float64         `json:"loadImbalancePercentage,omitempty"`
-	DefaultHealthMax             int             `json:"defaultHealthMax,omitempty"`
+	DefaultHealthMax             float64         `json:"defaultHealthMax,omitempty"`
 	LastModified                 string          `json:"lastModified,omitempty"`
 	Status                       *ResponseStatus `json:"status,omitempty"`
 	MapUpdateInterval            int             `json:"mapUpdateInterval,omitempty"`
@@ -40,15 +40,15 @@ type Domain struct {
 	Links                        []*Link         `json:"links,omitempty"`
 	Properties                   []*Property     `json:"properties,omitempty"`
 	MaxTestTimeout               float64         `json:"maxTestTimeout,omitempty"`
-	CnameCoalescingEnabled       bool            `json:"cnameCoalescingEnabled,omitempty"`
-	DefaultHealthMultiplier      int             `json:"defaultHealthMultiplier,omitempty"`
+	CnameCoalescingEnabled       bool            `json:"cnameCoalescingEnabled"`
+	DefaultHealthMultiplier      int             `json:"defaultHealthMultiplier"`
 	ServermonitorPool            string          `json:"servermonitorPool,omitempty"`
-	LoadFeedback                 bool            `json:"loadFeedback,omitempty"`
+	LoadFeedback                 bool            `json:"loadFeedback"`
 	MinTTL                       int64           `json:"minTTL,omitempty"`
 	GeographicMaps               []*GeoMap       `json:"geographicMaps,omitempty"`
 	CidrMaps                     []*CidrMap      `json:"cidrMaps,omitempty"`
 	DefaultMaxUnreachablePenalty int             `json:"defaultMaxUnreachablePenalty,omitempty"`
-	DefaultHealthThreshold       int             `json:"defaultHealthThreshold,omitempty"`
+	DefaultHealthThreshold       float64         `json:"defaultHealthThreshold,omitempty"`
 	LastModifiedBy               string          `json:"lastModifiedBy,omitempty"`
 	ModificationComments         string          `json:"modificationComments,omitempty"`
 	MinTestInterval              int             `json:"minTestInterval,omitempty"`

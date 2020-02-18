@@ -16,7 +16,7 @@ import (
 type Datacenter struct {
 	City                       string      `json:"city,omitempty"`
 	CloneOf                    int         `json:"cloneOf,omitempty"`
-	CloudServerTargeting       bool        `json:"cloudServerTargeting,omitempty"`
+	CloudServerTargeting       bool        `json:"cloudServerTargeting"`
 	Continent                  string      `json:"continent,omitempty"`
 	Country                    string      `json:"country,omitempty"`
 	DefaultLoadObject          *LoadObject `json:"defaultLoadObject,omitempty"`
@@ -32,7 +32,7 @@ type Datacenter struct {
 	ServermonitorLoadCount     int         `json:"servermonitorLoadCount,omitempty"`
 	ServermonitorPool          string      `json:"servermonitorPool,omitempty"`
 	StateOrProvince            string      `json:"stateOrProvince,omitempty"`
-	Virtual                    bool        `json:"virtual,omitempty"`
+	Virtual                    bool        `json:"virtual"`
 }
 
 type DatacenterList struct {

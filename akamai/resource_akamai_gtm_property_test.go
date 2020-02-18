@@ -73,7 +73,7 @@ resource "akamai_gtm_property" "test_property" {
         test_timeout = 20
         test_object = "junk"
         //
-        answer_required = false
+        answers_required = false
         disable_nonstandard_port_warning = false
         error_penalty = 0
         http_error3xx = false
@@ -160,7 +160,7 @@ resource "akamai_gtm_property" "test_property" {
         test_timeout = 20
         test_object = "/junk"
 	//
-        answer_required = false
+        answers_required = false
         disable_nonstandard_port_warning = false
         error_penalty = 0
         disabled = false

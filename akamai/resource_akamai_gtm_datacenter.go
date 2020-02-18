@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
@@ -124,8 +123,7 @@ func resourceGTMv1Datacenter() *schema.Resource {
 			},
 			"virtual": {
 				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Computed: true,
 			},
 		},
 	}
@@ -157,14 +155,11 @@ func resourceGTMv1DatacenterCreate(d *schema.ResourceData, meta interface{}) err
 		log.Printf("[ERROR] DatacenterCreate failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(cStatus.Status)
-	if err != nil {
-		log.Printf("[ERROR] DatacenterCreate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Create status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
+	if cStatus.Status.PropagationStatus == "DENIED" {
+		return errors.New(cStatus.Status.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -233,14 +228,11 @@ func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) err
 		log.Printf("[ERROR] DatacenterUpdate failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] DatacenterUpdate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -302,14 +294,11 @@ func resourceGTMv1DatacenterDelete(d *schema.ResourceData, meta interface{}) err
 		log.Printf("[ERROR] DatacenterDelete failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] DatacenterDelete failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -368,12 +357,10 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 	if v, ok := d.GetOk("clone_of"); ok {
 		dc.CloneOf = v.(int)
 	}
-	if v, ok := d.GetOk("cloud_server_host_header_override"); ok {
-		dc.CloudServerHostHeaderOverride = v.(bool)
-	}
-	if v, ok := d.GetOk("cloud_server_targeting"); ok {
-		dc.CloudServerTargeting = v.(bool)
-	}
+	v := d.Get("cloud_server_host_header_override")
+	dc.CloudServerHostHeaderOverride = v.(bool)
+	v = d.Get("cloud_server_targeting")
+	dc.CloudServerTargeting = v.(bool)
 	if v, ok := d.GetOk("continent"); ok {
 		dc.Continent = v.(string)
 	}
@@ -432,10 +419,6 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 	if v, ok := d.GetOk("state_or_province"); ok {
 		dc.StateOrProvince = v.(string)
 	}
-	if v, ok := d.GetOk("virtual"); ok {
-		dc.Virtual = v.(bool)
-	}
-
 }
 
 // Populate Terraform state from provided Datacenter object

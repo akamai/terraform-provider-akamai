@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
@@ -96,14 +95,11 @@ func resourceGTMv1ASmapCreate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[ERROR] [Akamai GTMv1] ASmap Create failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(cStatus.Status)
-	if err != nil {
-		log.Printf("[ERROR] AsMapCreate:  %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Create status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
+	if cStatus.Status.PropagationStatus == "DENIED" {
+		return errors.New(cStatus.Status.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -171,14 +167,11 @@ func resourceGTMv1ASmapUpdate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[ERROR] ASmapUpdate: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] ASmapUpdate: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -241,14 +234,11 @@ func resourceGTMv1ASmapDelete(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[ERROR] ASmapDelete: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] ASmapDelete: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {

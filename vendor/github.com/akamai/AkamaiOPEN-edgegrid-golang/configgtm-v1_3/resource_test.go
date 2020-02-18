@@ -5,10 +5,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 
-	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
-
-	"fmt"
+	"gopkg.in/h2non/gock.v1"
 )
 
 var GtmTestResource = "testResource"
@@ -218,9 +216,7 @@ func TestCreateResource(t *testing.T) {
 
 	// do the create
 
-	fmt.Println("Calling Create!!!")
 	statresp, err := testResource.Create(gtmTestDomain)
-	fmt.Println("Returned")
 	assert.NoError(t, err)
 
 	assert.IsType(t, &Resource{}, statresp.Resource)

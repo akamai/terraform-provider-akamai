@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
@@ -46,7 +45,7 @@ func resourceGTMv1Resource() *schema.Resource {
 				Required: true,
 			},
 			"least_squares_decay": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Optional: true,
 			},
 			"upper_bound": {
@@ -130,14 +129,11 @@ func resourceGTMv1ResourceCreate(d *schema.ResourceData, meta interface{}) error
 		log.Printf("[ERROR] ResourceCreate failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(cStatus.Status)
-	if err != nil {
-		log.Printf("[ERROR] ResourceCreate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Resource Create status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
+	if cStatus.Status.PropagationStatus == "DENIED" {
+		return errors.New(cStatus.Status.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -185,7 +181,6 @@ func resourceGTMv1ResourceRead(d *schema.ResourceData, meta interface{}) error {
 func resourceGTMv1ResourceUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Resource: %s", d.Id())
 	// pull domain and resource out of id
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
@@ -205,14 +200,11 @@ func resourceGTMv1ResourceUpdate(d *schema.ResourceData, meta interface{}) error
 		log.Printf("[ERROR] ResourceUpdate failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] ResourceUpdate failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Resource Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -274,14 +266,11 @@ func resourceGTMv1ResourceDelete(d *schema.ResourceData, meta interface{}) error
 		log.Printf("[ERROR] ResourceDelete failed: %s", err.Error())
 		return err
 	}
-	b, err := json.Marshal(uStat)
-	if err != nil {
-		log.Printf("[ERROR] ResourceDelete failed: %s", err.Error())
-		return err
-	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Resource Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", b)
-
+	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	if uStat.PropagationStatus == "DENIED" {
+		return errors.New(uStat.Message)
+	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -340,7 +329,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource) {
 		rsrc.HostHeader = v.(string)
 	}
 	if v, ok := d.GetOk("least_squares_decay"); ok {
-		rsrc.LeastSquaresDecay = v.(int)
+		rsrc.LeastSquaresDecay = v.(float64)
 	}
 	if v, ok := d.GetOk("upper_bound"); ok {
 		rsrc.UpperBound = v.(int)
@@ -366,8 +355,9 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource) {
 	if v, ok := d.GetOk("decay_rate"); ok {
 		rsrc.DecayRate = v.(float64)
 	}
-	populateResourceInstancesObject(d, rsrc)
-
+	if _, ok := d.GetOk("resource_instance"); ok {
+		populateResourceInstancesObject(d, rsrc)
+	}
 	return
 
 }
@@ -424,19 +414,41 @@ func populateResourceInstancesObject(d *schema.ResourceData, rsrc *gtm.Resource)
 // create and populate Terraform resource_instances schema
 func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.Resource) {
 
-	riListNew := make([]interface{}, len(rsrc.ResourceInstances))
-	for i, ri := range rsrc.ResourceInstances {
-		riNew := make(map[string]interface{})
-		riNew["datacenter_id"] = ri.DatacenterId
-		riNew["use_default_load_object"] = ri.UseDefaultLoadObject
-		riNew["load_object"] = ri.LoadObject.LoadObject
-		riNew["load_object_port"] = ri.LoadObjectPort
-		riNew["load_servers"] = ri.LoadServers
-		riListNew[i] = &riNew
+	riObjectInventory := make(map[int]*gtm.ResourceInstance, len(rsrc.ResourceInstances))
+	if len(rsrc.ResourceInstances) > 0 {
+		for _, riObj := range rsrc.ResourceInstances {
+			riObjectInventory[riObj.DatacenterId] = riObj
+		}
 	}
-	err := d.Set("resource_instance", riListNew)
-	if err != nil {
-		log.Printf("[ERROR] [Akamai GTMv1] Error writing resource_instances: %s", err.Error())
+	riStateList := d.Get("resource_instance").([]interface{})
+	for _, riMap := range riStateList {
+		ri := riMap.(map[string]interface{})
+		objIndex := ri["datacenter_id"].(int)
+		riObject := riObjectInventory[objIndex]
+		if riObject == nil {
+			log.Printf("[WARNING] [Akamai GTMv1] Resource_instance %d NOT FOUND in returned GTM Object", ri["datacenter_id"])
+			continue
+		}
+		ri["use_default_load_object"] = riObject.UseDefaultLoadObject
+		ri["load_object"] = riObject.LoadObject.LoadObject
+		ri["load_object_port"] = riObject.LoadObjectPort
+		ri["load_servers"] = riObject.LoadServers
+		// remove object
+		delete(riObjectInventory, objIndex)
 	}
+	if len(riObjectInventory) > 0 {
+		log.Printf("[DEBUG] [Akamai GTMv1] Resource_instance objects left...")
+		// Objects not in the state yet. Add. Unfortunately, they'll likely not align with instance indices in the config
+		for _, mriObj := range riObjectInventory {
+			riNew := make(map[string]interface{})
+			riNew["datacenter_id"] = mriObj.DatacenterId
+			riNew["use_default_load_object"] = mriObj.UseDefaultLoadObject
+			riNew["load_object"] = mriObj.LoadObject.LoadObject
+			riNew["load_object_port"] = mriObj.LoadObjectPort
+			riNew["load_servers"] = mriObj.LoadServers
+			riStateList = append(riStateList, riNew)
+		}
+	}
+	d.Set("resource_instance", riStateList)
 
 }
