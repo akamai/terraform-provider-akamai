@@ -1,0 +1,15 @@
+{
+    "name": "HTTP2",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "http2",
+            "options": {
+                "enabled": ""
+            }
+        }
+    ],
+    "criteria": [],
+    "criteriaMustSatisfy": "all",
+    "comments": ""
+}

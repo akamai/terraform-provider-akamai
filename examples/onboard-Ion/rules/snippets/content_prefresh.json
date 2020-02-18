@@ -1,0 +1,15 @@
+{
+    "name": "Prefresh",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "prefreshCache",
+            "options": {
+                "enabled": true,
+                "prefreshval": 90
+            }
+        }
+    ],
+    "criteria": [],
+    "criteriaMustSatisfy": "all"
+}

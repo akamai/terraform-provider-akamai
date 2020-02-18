@@ -1,0 +1,14 @@
+{
+    "name": "APIGateway",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "rapid",
+            "options": {
+                "enabled": true
+            }
+        }
+    ],
+    "criteria": [],
+    "criteriaMustSatisfy": "all"
+}

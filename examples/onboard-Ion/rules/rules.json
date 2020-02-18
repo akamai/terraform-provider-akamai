@@ -1,0 +1,11 @@
+{
+    "rules": {
+    "name": "Origin_CommonSettings",
+    "children": [
+   	 	${file("${snippets}/Performance.json")},
+	 	  ${file("${snippets}/Offload.json")}
+        ],
+    	${file("${snippets}/Origin_CommonSettings.json")}
+    ]
+    }
+}

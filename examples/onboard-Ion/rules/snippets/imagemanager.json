@@ -1,0 +1,74 @@
+{
+    "name": "Image Manager",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "caching",
+            "options": {
+                "behavior": "MAX_AGE",
+                "mustRevalidate": false,
+                "ttl": "30d"
+            }
+        },
+        {
+            "name": "imageManager",
+            "options": {
+                "advanced": false,
+                "apiReferenceTitle": "",
+                "applyBestFileType": true,
+                "enabled": true,
+                "policyTokenDefault": "customer_template_fusion",
+                "resize": true,
+                "settingsTitle": "",
+                "superCacheRegion": "US",
+                "trafficTitle": "",
+                "cpCodeOriginal": {
+                    "id": 12345,
+                    "description": "sample-description",
+                    "products": [
+                        "Fresca"
+                    ],
+                    "createdDate": 1552502931000,
+                    "cpCodeLimits": {
+                        "limit": 2000,
+                        "currentCapacity": 1546,
+                        "limitType": "account"
+                    },
+                    "name": "sample-prod"
+                },
+                "cpCodeTransformed": {
+                    "id": 832419,
+                    "description": "sample-prod",
+                    "products": [
+                        "Fresca"
+                    ],
+                    "createdDate": 1552502931000,
+                    "cpCodeLimits": {
+                        "limit": 2000,
+                        "currentCapacity": 1546,
+                        "limitType": "account"
+                    },
+                    "name": "sample-prod"
+                }
+            }
+        }
+    ],
+    "criteria": [
+        {
+            "name": "fileExtension",
+            "options": {
+                "matchCaseSensitive": false,
+                "matchOperator": "IS_ONE_OF",
+                "values": [
+                    "jpg",
+                    "gif",
+                    "jpeg",
+                    "png",
+                    "imviewer"
+                ]
+            }
+        }
+    ],
+    "criteriaMustSatisfy": "all",
+    "comments": "Enable Scale for Mobile to serve the best available size for the requesting device. (Careful testing is highly recommended.) Enable Use Best File Type to serve the image format that works best for the requesting client. To configure breakpoint widths, derivative image quality, and artistic transformations, save and activate this configuration; then, create policies for this policy set via either Image Manager Policy Manager or the OPEN Image Manager API."
+}

@@ -1,0 +1,30 @@
+{
+    "name": "somredirectrule",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "redirect",
+            "options": {
+                "mobileDefaultChoice": "DEFAULT",
+                "destinationProtocol": "HTTPS",
+                "destinationHostname": "OTHER",
+                "destinationPath": "SAME_AS_REQUEST",
+                "queryString": "APPEND",
+                "responseCode": 301,
+                "destinationHostnameOther": "www.prensa.com"
+            }
+        }
+    ],
+    "criteria": [
+        {
+            "name": "hostname",
+            "options": {
+                "matchOperator": "IS_ONE_OF",
+                "values": [
+                    "example.com"
+                ]
+            }
+        }
+    ],
+    "criteriaMustSatisfy": "all"
+}
