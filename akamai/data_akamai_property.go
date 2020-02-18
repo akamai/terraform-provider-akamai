@@ -33,7 +33,7 @@ func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Reading Property")
 
 	property := findProperty(d)
-	if property == nil {
+	if (property == nil) {
 		return fmt.Errorf("Can't find property")
 	}
 
