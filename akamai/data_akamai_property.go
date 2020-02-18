@@ -16,6 +16,10 @@ func dataSourceAkamaiProperty() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"version": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
                         "rules": {
                                 Type:     schema.TypeString,
                                 Computed: true,
@@ -31,6 +35,12 @@ func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
 	property := findProperty(d)
 	if property == nil {
 		return fmt.Errorf("Can't find property")
+	}
+
+        _, ok := d.GetOk("version")
+
+        if ok {
+		property.LatestVersion = d.Get("version").(int)
 	}
 
 	rules, err := property.GetRules();
