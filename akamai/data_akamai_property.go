@@ -5,7 +5,6 @@ import (
 	"log"
         "bytes"
         "encoding/json"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -29,16 +28,14 @@ func dataSourceAkamaiProperty() *schema.Resource {
 func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Reading Property")
 
-	propertyName := d.Get("name").(string)
-
-	property := searchProperty(propertyName)
+	property := findProperty(d)
 	if property == nil {
-		return fmt.Errorf("Can't find property %s", propertyName)
+		return fmt.Errorf("Can't find property")
 	}
 
 	rules, err := property.GetRules();
 	if (err != nil) {
-		return fmt.Errorf("Can't get rules for property %s", propertyName)
+		return fmt.Errorf("Can't get rules for property")
 	}
 
 	jsonBody, err := json.Marshal(rules)
@@ -48,34 +45,5 @@ func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(property.PropertyID)
 	d.Set("rules", buf.String())
 	return nil
-}
-
-
-func searchProperty(name string) *papi.Property {
-        results, err := papi.Search(papi.SearchByPropertyName, name)
-        if err != nil {
-                return nil
-        }
-
-        if err != nil || results == nil {
-                return nil
-        }
-
-        property := &papi.Property{
-                PropertyID: results.Versions.Items[0].PropertyID,
-                Group: &papi.Group{
-                        GroupID: results.Versions.Items[0].GroupID,
-                },
-                Contract: &papi.Contract{
-                        ContractID: results.Versions.Items[0].ContractID,
-                },
-        }
-
-        err = property.GetProperty()
-        if err != nil {
-                return nil
-        }
-
-        return property
 }
 
