@@ -1,0 +1,27 @@
+{
+    "name": "Edgeworker",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "edgeWorker",
+            "options": {
+                "enabled": true,
+                "createEdgeWorker": "",
+                "edgeWorkerId": "3845"
+            }
+        }
+    ],
+    "criteria": [
+        {
+            "name": "path",
+            "options": {
+                "matchOperator": "MATCHES_ONE_OF",
+                "values": [
+                    "/edgeworker"
+                ],
+                "matchCaseSensitive": false
+            }
+        }
+    ],
+    "criteriaMustSatisfy": "all"
+}

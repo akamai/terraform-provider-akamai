@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "name": "default",
+    "children": [
+      ${file("${snippets}/compression.json")},
+      ${file("${snippets}/performance.json")},
+      ${file("${snippets}/static.json")},
+      ${file("${snippets}/dynamic.json")},
+      ${file("${snippets}/redirect.json")},
+      ${file("${snippets}/authenticate.json")}
+    ],
+    ${file("${snippets}/default.json")}
+    ],
+    "options": {
+      "is_secure": true
+    },
+    ${file("${snippets}/variables.json")}
+  },
+  "ruleFormat": "v2018-02-27"
+}

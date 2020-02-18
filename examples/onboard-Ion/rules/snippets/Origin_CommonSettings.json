@@ -1,0 +1,89 @@
+  "behaviors": [
+    {
+       "name": "origin",
+       "options": {
+       "cacheKeyHostname": "REQUEST_HOST_HEADER",
+       "compress": true,
+       "enableTrueClientIp": true,
+       "trueClientIpHeader": "True-Client-IP",
+       "trueClientIpClientSetting": false,
+       "forwardHostHeader": "CUSTOM",
+       "customForwardHostHeader": "example.mydomain.com",
+       "hostname": "origin.mydomain.com",
+       "httpPort": 80,
+       "originType": "CUSTOMER",
+       "verificationMode": "PLATFORM_SETTINGS",
+       "httpsPort": 443,
+       "originSni": true,
+       "originCertificate": "",
+       "ports": ""
+       }
+    },
+      
+    {
+	"name": "allowPost",
+	"options": {
+	    "allowWithoutContentLength": false,
+	    "enabled": true
+	}
+    },
+    {
+	"name": "allowDelete",
+	"options": {
+	    "enabled": true,
+	    "allowBody": false
+	}
+    },
+    {
+	"name": "allowPatch",
+	"options": {
+	    "enabled": true
+	}
+    },
+    {
+	"name": "allowPut",
+	"options": {
+	    "enabled": true
+	}
+    },
+    {
+	"name": "allowOptions",
+	"options": {
+	    "enabled": true
+	}
+    },
+    {
+	"name": "allHttpInCacheHierarchy",
+	"options": {
+	    "enabled": true
+	}
+    },
+    {
+	"name": "mPulse",
+	"options": {
+	    "apiKey": "",
+	    "bufferSize": "",
+	    "configOverride": "",
+	    "enabled": true,
+	    "requirePci": false,
+	    "titleOptional": ""
+	}
+    },
+    {
+	"name": "report",
+	"options": {
+	    "logHost": false,
+	    "logReferer": false,
+	    "logUserAgent": false,
+	    "logAcceptLanguage": false,
+	    "logCookies": "OFF",
+	    "logCustomLogField": false
+	}
+    },            
+            
+   {
+      "name": "tieredDistribution",
+      "options": {
+      "enabled": ${tdenabled}
+      }
+   }

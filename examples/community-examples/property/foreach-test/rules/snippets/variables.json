@@ -1,0 +1,30 @@
+        "variables": [
+            {
+                "name": "PMUSER_USERNAME",
+                "value": "${username}",
+                "description": "",
+                "hidden": true,
+                "sensitive": true
+            },
+            {
+                "name": "PMUSER_PASSWORD",
+                "value": "${password}",
+                "description": "",
+                "hidden": true,
+                "sensitive": true
+            },
+            {
+                "name": "PMUSER_ENCODED",
+                "value": "",
+                "description": "",
+                "hidden": true,
+                "sensitive": true
+            },
+            {
+                "name": "PMUSER_SUBMITTED",
+                "value": "",
+                "description": "",
+                "hidden": true,
+                "sensitive": true
+            }
+        ]

@@ -22,7 +22,7 @@ resource "akamai_cp_code" "cp_code" {
   name = "My CP Code"
   contract = "${akamai_contract.contract.id}"
   group = "${akamai_group.group.id}"
-  product = "prd_SPM"
+  product = "prd_xxx"
 }
 ```
 
