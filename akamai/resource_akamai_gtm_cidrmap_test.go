@@ -39,7 +39,6 @@ resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
     nickname = "test_cidr_datacenter"
     wait_on_complete = false
-    virtual = true
     default_load_object {
         load_object = "test"
         load_object_port = 80
@@ -98,7 +97,6 @@ resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
     nickname = "test_cidr_datacenter"
     wait_on_complete = false
-    virtual = true
     default_load_object {
         load_object = "test"
         load_object_port = 80

@@ -227,25 +227,25 @@ func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("[ERROR] [Akamai GTM] Error creating domain [%s]", err.Error())
 			return err
 		}
-	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Create status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
-	if cStatus.Status.PropagationStatus == "DENIED" {
-		return errors.New(cStatus.Status.Message)
-	}
-	if d.Get("wait_on_complete").(bool) {
-		done, err := waitForCompletion(dname)
-		if done {
-			log.Printf("[INFO] [Akamai GTMv1] Domain Create completed")
-		} else {
-			if err == nil {
-				log.Printf("[INFO] [Akamai GTMv1] Domain Create pending")
+	} else {
+		log.Printf("[DEBUG] [Akamai GTMv1] Create status:")
+		log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
+		if cStatus.Status.PropagationStatus == "DENIED" {
+			return errors.New(cStatus.Status.Message)
+		}
+		if d.Get("wait_on_complete").(bool) {
+			done, err := waitForCompletion(dname)
+			if done {
+				log.Printf("[INFO] [Akamai GTMv1] Domain Create completed")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMv1] Domain Create failed [%s]", err.Error())
-				return err
+				if err == nil {
+					log.Printf("[INFO] [Akamai GTMv1] Domain Create pending")
+				} else {
+					log.Printf("[WARNING] [Akamai GTMv1] Domain Create failed [%s]", err.Error())
+					return err
+				}
 			}
 		}
-
 	}
 	// Give terraform the ID
 	d.SetId(dname)
@@ -345,25 +345,25 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
 			return err
 		}
-	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
-	}
-	if d.Get("wait_on_complete").(bool) {
-		done, err := waitForCompletion(d.Id())
-		if done {
-			log.Printf("[INFO] [Akamai GTMv1] Domain delete completed")
-		} else {
-			if err == nil {
-				log.Printf("[INFO] [Akamai GTMv1] Domain delete pending")
+	} else {
+		log.Printf("[DEBUG] [Akamai GTMv1] Delete status:")
+		log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+		if uStat.PropagationStatus == "DENIED" {
+			return errors.New(uStat.Message)
+		}
+		if d.Get("wait_on_complete").(bool) {
+			done, err := waitForCompletion(d.Id())
+			if done {
+				log.Printf("[INFO] [Akamai GTMv1] Domain delete completed")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMv1] Domain delete failed [%s]", err.Error())
-				return err
+				if err == nil {
+					log.Printf("[INFO] [Akamai GTMv1] Domain delete pending")
+				} else {
+					log.Printf("[WARNING] [Akamai GTMv1] Domain delete failed [%s]", err.Error())
+					return err
+				}
 			}
 		}
-
 	}
 	d.SetId("")
 	return nil
