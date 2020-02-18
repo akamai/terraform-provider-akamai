@@ -42,7 +42,6 @@ resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
     nickname = "test_datacenter"
     continent = "EU"
-    virtual = true
     wait_on_complete = false
     default_load_object {
         load_object = "test"
@@ -84,7 +83,6 @@ resource "akamai_gtm_datacenter" "test_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
     nickname = "test_datacenter"
     continent = "NA"
-    virtual = true
     wait_on_complete = false
     default_load_object {
         load_object = "test"
