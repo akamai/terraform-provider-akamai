@@ -38,7 +38,6 @@ func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
         _, ok := d.GetOk("version")
-
         if ok {
 		property.LatestVersion = d.Get("version").(int)
 	}
