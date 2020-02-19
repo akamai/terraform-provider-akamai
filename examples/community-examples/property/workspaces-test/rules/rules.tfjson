@@ -1,0 +1,13 @@
+{
+    "rules": {
+        "name": "default",
+        "children": [
+            ${file("${template_path}/snippets/cors.tfjson")}
+        ],
+        "behaviors": ${file("${template_path}/snippets/default.tfjson")},
+        "options": {
+            "is_secure": true
+        },
+        "variables": []
+    }
+}

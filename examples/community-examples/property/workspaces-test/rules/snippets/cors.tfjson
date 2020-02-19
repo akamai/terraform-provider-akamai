@@ -1,0 +1,63 @@
+{
+    "name": "Default CORS Policy",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "modifyOutgoingResponseHeader",
+            "options": {
+                "action": "MODIFY",
+                "avoidDuplicateHeaders": false,
+                "newHeaderValue": "*",
+                "standardModifyHeaderName": "ACCESS_CONTROL_ALLOW_ORIGIN"
+            }
+        },
+        {
+            "name": "modifyOutgoingResponseHeader",
+            "options": {
+                "action": "MODIFY",
+                "avoidDuplicateHeaders": false,
+                "newHeaderValue": "GET,POST,OPTIONS",
+                "standardModifyHeaderName": "ACCESS_CONTROL_ALLOW_METHODS"
+            }
+        },
+        {
+            "name": "modifyOutgoingResponseHeader",
+            "options": {
+                "action": "MODIFY",
+                "avoidDuplicateHeaders": false,
+                "newHeaderValue": "origin,range,hdntl,hdnts",
+                "standardModifyHeaderName": "ACCESS_CONTROL_ALLOW_HEADERS"
+            }
+        },
+        {
+            "name": "modifyOutgoingResponseHeader",
+            "options": {
+                "action": "MODIFY",
+                "avoidDuplicateHeaders": false,
+                "newHeaderValue": "Server,range,hdntl,hdnts,Akamai-Mon-Iucid-Ing,Akamai-Mon-Iucid-Del",
+                "standardModifyHeaderName": "ACCESS_CONTROL_EXPOSE_HEADERS"
+            }
+        },
+        {
+            "name": "modifyOutgoingResponseHeader",
+            "options": {
+                "action": "MODIFY",
+                "avoidDuplicateHeaders": false,
+                "newHeaderValue": "true",
+                "standardModifyHeaderName": "ACCESS_CONTROL_ALLOW_CREDENTIALS"
+            }
+        },
+        {
+            "name": "modifyOutgoingResponseHeader",
+            "options": {
+                "action": "MODIFY",
+                "avoidDuplicateHeaders": false,
+                "newHeaderValue": "86400",
+                "standardModifyHeaderName": "ACCESS_CONTROL_MAX_AGE"
+            }
+        }
+    ],
+    "criteria": [],
+    "criteriaMustSatisfy": "all",
+    "comments": ""
+}

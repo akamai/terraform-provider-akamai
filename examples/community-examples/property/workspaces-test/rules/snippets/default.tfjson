@@ -1,0 +1,80 @@
+[
+    {
+        "name": "origin",
+        "options": {
+            "originType": "NET_STORAGE",
+            "netStorage": {
+                "downloadDomainName": "${ns_download_domain}",
+                "cpCode": ${ns_cpcode_id},
+                "g2oToken": null
+            }
+        }
+    },
+    {
+        "name": "cpCode",
+        "options": {
+            "value": {
+                "id": ${cpcode},
+                "name": "${cpcode_name}",
+                "products": [
+                    "Adaptive_Media_Delivery"
+                ]
+            }
+        }
+    },
+    {
+        "name": "segmentedMediaOptimization",
+        "options": {
+            "behavior": "ON_DEMAND"
+        }
+    },
+    {
+        "name": "originCharacteristics",
+        "options": {
+            "authenticationMethod": "AUTOMATIC",
+            "country": "GLOBAL_MULTI_GEO",
+            "authenticationMethodTitle": ""
+        }
+    },
+    {
+        "name": "contentCharacteristicsAMD",
+        "options": {
+            "catalogSize": "SMALL",
+            "contentType": "HD",
+            "dash": true,
+            "hds": true,
+            "hls": true,
+            "popularityDistribution": "UNKNOWN",
+            "segmentDurationDASH": "SEGMENT_DURATION_6S",
+            "segmentDurationHDS": "SEGMENT_DURATION_6S",
+            "segmentDurationHLS": "SEGMENT_DURATION_10S",
+            "segmentDurationSmooth": "SEGMENT_DURATION_2S",
+            "segmentSizeDASH": "UNKNOWN",
+            "segmentSizeHDS": "UNKNOWN",
+            "segmentSizeHLS": "UNKNOWN",
+            "segmentSizeSmooth": "UNKNOWN",
+            "smooth": true
+        }
+    },
+    {
+        "name": "clientCharacteristics",
+        "options": {
+            "country": "GLOBAL"
+        }
+    },
+    {
+        "name": "cacheKeyQueryParams",
+        "options": {
+            "behavior": "IGNORE_ALL"
+        }
+    },
+    {
+        "name": "segmentedContentProtection",
+        "options": {
+            "enabled": false,
+            "hlsMediaEncryption": false,
+            "tokenAuthenticationTitle": "",
+            "mediaEncryptionTitle": ""
+        }
+    }
+]
