@@ -21,6 +21,7 @@ func resourceProperty() *schema.Resource {
 		Update: resourcePropertyUpdate,
 		Delete: resourcePropertyDelete,
 		//Exists: resourcePropertyExists,
+		CustomizeDiff: resourceCustomDiffCustomizeDiff,
 		Importer: &schema.ResourceImporter{
 			State: resourcePropertyImport,
 		},
@@ -143,6 +144,10 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	},
+	"rulessha": &schema.Schema{
+		Type:     schema.TypeString,
+		Computed: true,
+	},
 }
 
 func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
@@ -227,7 +232,9 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] CREATE SHA from Json %s\n", sha1hashAPI)
 	log.Printf("[DEBUG] CREATE Check rules after unmarshal from Json %s\n", string(jsonBody))
 
-	d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
+	d.Set("rulessha", sha1hashAPI)
+	//d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
+	d.SetId(fmt.Sprintf("%s", property.PropertyID))
 
 	if err == nil {
 		d.Set("rules", string(jsonBody))
@@ -235,14 +242,13 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.Partial(false)
 	log.Println("[DEBUG] Done")
-	return resourcePropertyUpdate(d, meta)
+	return resourcePropertyRead(d, meta)
 }
 
 func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group) (*papi.Rules, error) {
 	rules := papi.NewRules()
 	rules.Rule.Name = "default"
-	id := strings.Split(d.Id(), "-")
-	rules.PropertyID = id[0]
+	rules.PropertyID = d.Id()
 	rules.PropertyVersion = property.LatestVersion
 
 	origin, err := createOrigin(d)
@@ -366,8 +372,7 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 		return errors.New("missing group ID")
 	}
 
-	id := strings.Split(d.Id(), "-")
-	propertyID := id[0]
+	propertyID := d.Id()
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
@@ -400,13 +405,12 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	id := strings.Split(d.Id(), "-")
-	resourceID := id[0]
-	propertyID := resourceID
 
-	if !strings.HasPrefix(resourceID, "prp_") {
+	propertyID := d.Id()
+
+	if !strings.HasPrefix(propertyID, "prp_") {
 		for _, searchKey := range []papi.SearchKey{papi.SearchByPropertyName, papi.SearchByHostname, papi.SearchByEdgeHostname} {
-			results, err := papi.Search(searchKey, resourceID)
+			results, err := papi.Search(searchKey, propertyID)
 			if err != nil {
 				continue
 			}
@@ -436,50 +440,10 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 	return []*schema.ResourceData{d}, nil
 }
 
-/*
-func resourcePropertyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	i := strings.Index(d.Id(), "-")
-	log.Printf("[DEBUG] EXISTS check ID %d\n", i)
-	if i == -1 {
-		return false, nil
-	}
-	property := papi.NewProperty(papi.NewProperties())
-	id := strings.Split(d.Id(), "-")
-	property.PropertyID = id[0]
-	e := property.GetProperty()
-	if e != nil {
-		return false, e
-	}
-
-	rulesAPI, err := property.GetRules()
-	rulesAPI.Etag = ""
-	jsonBody, err := jsonhooks.Marshal(rulesAPI)
-	if err != nil {
-		return false, err
-	}
-	sha1hashAPI := getSHAString(string(jsonBody))
-
-	log.Printf("[DEBUG] EXISTS SHA from API Json %s\n", sha1hashAPI)
-	log.Printf("[DEBUG] EXISTS JSON from API Json %s\n", string(jsonBody))
-
-	sha1hash := id[1]
-	log.Printf("[DEBUG] EXISTS SHA from TF Json %s\n", sha1hash)
-
-	if sha1hashAPI == sha1hash {
-		log.Printf("[DEBUG] [Akamai Property] SHA sum from JSON rules Exists matches [%s] vs  [%s] ", sha1hashAPI, sha1hash)
-		return true, nil
-	} else {
-		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordExists mismatch [%s] vs  [%s] ", sha1hashAPI, sha1hash)
-		return false, nil
-	}
-}
-*/
 func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
-	id := strings.Split(d.Id(), "-")
-	property.PropertyID = id[0]
-
+	property.PropertyID = d.Id()
 	err := property.GetProperty()
 	if err != nil {
 		return err
@@ -505,7 +469,10 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] READ Rules from API : %s\n", string(jsonBody))
 		d.Set("rules", string(jsonBody))
 	}
+	d.Set("rulessha", sha1hashAPI)
 
+	//d.Set("rulessha", RandStringBytesMaskImpr(8))
+	d.SetPartial("rulessha")
 	//log.Printf("[DEBUG] READ Check rules after unmarshal from Json %s\n", string(jsonBody))
 
 	if rules.RuleFormat != "" {
@@ -523,9 +490,6 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	if property.ProductionVersion > 0 {
 		d.Set("production_version", property.ProductionVersion)
 	}
-	//d.SetPartial("rule_format")
-
-	//d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
 
 	d.Partial(false)
 	return nil
@@ -544,52 +508,50 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("version", property.LatestVersion)
 
 	rules, err := getRules(d, property, property.Contract, property.Group)
 
-	if d.HasChange("rule_format") {
+	if d.HasChange("rule_format") || d.HasChange("rules") {
 		if ruleFormat, ok := d.GetOk("rule_format"); ok {
 			property.RuleFormat = ruleFormat.(string)
 			rules.RuleFormat = ruleFormat.(string)
 		}
-	}
 
-	jsonBody, err := jsonhooks.Marshal(rules)
-	if err != nil {
-		return err
-	}
-	if err == nil {
-		d.Set("rules", string(jsonBody))
-	}
-	log.Printf("[DEBUG] UPDATE Check rules after unmarshal from Json %s\n", string(jsonBody))
-	e = rules.Save()
-	if e != nil {
-		if e == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
-			var msg string
-			for _, v := range rules.Errors {
-				msg = msg + fmt.Sprintf("\n Rule validation error: %s %s %s %s %s", v.Type, v.Title, v.Detail, v.Instance, v.BehaviorName)
-			}
-			return errors.New("Error - Invalid Property Rules" + msg)
+		jsonBody, err := jsonhooks.Marshal(rules)
+		if err != nil {
+			return err
 		}
-		log.Printf("update rules.Save err: %#v", e)
-		return fmt.Errorf("update rules.Save err: %#v", e)
+		if err == nil {
+			d.Set("rules", string(jsonBody))
+		}
+
+		log.Printf("[DEBUG] UPDATE Check rules after unmarshal from Json %s\n", string(jsonBody))
+		e = rules.Save()
+		if e != nil {
+			if e == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
+				var msg string
+				for _, v := range rules.Errors {
+					msg = msg + fmt.Sprintf("\n Rule validation error: %s %s %s %s %s", v.Type, v.Title, v.Detail, v.Instance, v.BehaviorName)
+				}
+				return errors.New("Error - Invalid Property Rules" + msg)
+			}
+			log.Printf("update rules.Save err: %#v", e)
+			return fmt.Errorf("update rules.Save err: %#v", e)
+		}
+
+		rules, err = property.GetRules()
+		rules.Etag = ""
+		jsonBody, err = jsonhooks.Marshal(rules)
+		if err != nil {
+			return err
+		}
+
+		sha1hashAPI := getSHAString(string(jsonBody))
+		log.Printf("[DEBUG] UPDATE SHA from Json %s\n", sha1hashAPI)
+		d.Set("rulessha", sha1hashAPI)
+		d.SetPartial("rulessha")
 	}
 
-	rules, err = property.GetRules()
-	rules.Etag = ""
-	jsonBody, err = jsonhooks.Marshal(rules)
-	if err != nil {
-		return err
-	}
-
-	sha1hashAPI := getSHAString(string(jsonBody))
-	log.Printf("[DEBUG] UPDATE SHA from Json %s\n", sha1hashAPI)
-
-	/*if err == nil {
-		d.Set("rules", string(jsonBody))
-	}
-	*/
 	d.Set("version", property.LatestVersion)
 	d.SetPartial("default")
 	d.SetPartial("origin")
@@ -609,11 +571,36 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	return resourcePropertyRead(d, meta)
 }
 
+func resourceCustomDiffCustomizeDiff(d *schema.ResourceDiff, meta interface{}) error {
+	log.Println("[DEBUG] resourceCustomDiffCustomizeDiff " + d.Id())
+	// Note that this gets put into state after the update, regardless of whether
+	// or not anything is acted upon in the diff.
+
+	old, new := d.GetChange("rules")
+
+	log.Println("[DEBUG] resourceCustomDiffCustomizeDiff OLD " + old.(string))
+	log.Println("[DEBUG] resourceCustomDiffCustomizeDiff NEW " + new.(string))
+	if !suppressEquivalentJsonPendingDiffs(old.(string), new.(string), d) {
+		log.Println("[DEBUG] resourceCustomDiffCustomizeDiff CHANGED VALUES " + old.(string) + " " + new.(string))
+		d.SetNewComputed("version")
+	}
+
+	return nil
+}
+
 // Helpers
 func getProperty(d *schema.ResourceData) (*papi.Property, error) {
 	log.Println("[DEBUG] Fetching property")
-	id := strings.Split(d.Id(), "-")
-	propertyID := id[0]
+	propertyID := d.Id()
+	property := papi.NewProperty(papi.NewProperties())
+	property.PropertyID = propertyID
+	e := property.GetProperty()
+	return property, e
+}
+
+func getPropertyDiff(d *schema.ResourceDiff) (*papi.Property, error) {
+	log.Println("[DEBUG] Fetching property")
+	propertyID := d.Id()
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
 	e := property.GetProperty()
@@ -687,6 +674,28 @@ func getCPCode(d *schema.ResourceData, contract *papi.Contract, group *papi.Grou
 	return cpCode, nil
 }
 
+func getCPCodeDiff(d *schema.ResourceDiff, contract *papi.Contract, group *papi.Group) (*papi.CpCode, error) {
+	if contract == nil || group == nil {
+		return nil, nil
+	}
+
+	cpCodeID, ok := d.GetOk("cp_code")
+	if !ok {
+		return nil, nil
+	}
+
+	log.Println("[DEBUG] Fetching CP code")
+	cpCode := papi.NewCpCodes(contract, group).NewCpCode()
+	cpCode.CpcodeID = cpCodeID.(string)
+	err := cpCode.GetCpCode()
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("[DEBUG] CP code found: %s\n", cpCode.CpcodeID)
+	return cpCode, nil
+}
+
 func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product, error) {
 	if contract == nil {
 		return nil, nil
@@ -714,6 +723,51 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product,
 }
 
 func createOrigin(d *schema.ResourceData) (*papi.OptionValue, error) {
+	log.Println("[DEBUG] Setting origin")
+	if origin, ok := d.GetOk("origin"); ok {
+		originConfig := origin.(*schema.Set).List()[0].(map[string]interface{})
+
+		forwardHostname, forwardHostnameOk := originConfig["forward_hostname"].(string)
+		originValues := make(map[string]interface{})
+
+		originValues["originType"] = "CUSTOMER"
+		if val, ok := originConfig["hostname"]; ok {
+			originValues["hostname"] = val.(string)
+		}
+
+		if val, ok := originConfig["port"]; ok {
+			originValues["httpPort"] = val.(int)
+		}
+
+		if val, ok := originConfig["cache_key_hostname"]; ok {
+			originValues["cacheKeyHostname"] = val.(string)
+		}
+
+		if val, ok := originConfig["compress"]; ok {
+			originValues["compress"] = val.(bool)
+		}
+
+		if val, ok := originConfig["enable_true_client_ip"]; ok {
+			originValues["enableTrueClientIp"] = val.(bool)
+		}
+
+		if forwardHostnameOk && (forwardHostname == "ORIGIN_HOSTNAME" || forwardHostname == "REQUEST_HOST_HEADER") {
+			log.Println("[DEBUG] Setting non-custom forward hostname")
+
+			originValues["forwardHostHeader"] = forwardHostname
+		} else if forwardHostnameOk {
+			log.Println("[DEBUG] Setting custom forward hostname")
+
+			originValues["forwardHostHeader"] = "CUSTOM"
+			originValues["customForwardHostHeader"] = "CUSTOM"
+		}
+
+		ov := papi.OptionValue(originValues)
+		return &ov, nil
+	}
+	return nil, nil
+}
+func createOriginDiff(d *schema.ResourceDiff) (*papi.OptionValue, error) {
 	log.Println("[DEBUG] Setting origin")
 	if origin, ok := d.GetOk("origin"); ok {
 		originConfig := origin.(*schema.Set).List()[0].(map[string]interface{})
@@ -1108,6 +1162,108 @@ func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule 
 					childRules := gjson.Parse(value.String())
 					//					println("CHILD RULES " + childRules.String())
 					for _, newRule := range extractRulesJSON(d, childRules) {
+						rule.MergeChildRule(newRule)
+					}
+				} //len > 0
+
+				return true
+			}) //Loop Detail
+
+		}
+		rules = append(rules, rule)
+
+		return true
+	})
+
+	return rules
+}
+
+func extractRulesJSONDiff(d *schema.ResourceDiff, drules gjson.Result) []*papi.Rule {
+	var rules []*papi.Rule
+	drules.ForEach(func(key, value gjson.Result) bool {
+		rule := papi.NewRule()
+		vv, ok := value.Value().(map[string]interface{})
+		if ok {
+			rule.Name, _ = vv["name"].(string)
+			rule.Comments, _ = vv["comments"].(string)
+			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
+			if ok {
+				if criteriaMustSatisfy.(string) == "all" {
+					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
+				}
+
+				if criteriaMustSatisfy.(string) == "any" {
+					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
+				}
+			}
+			log.Println("[DEBUG] extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comments)
+
+			ruledetail := gjson.Parse(value.String())
+			//			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
+
+			ruledetail.ForEach(func(key, value gjson.Result) bool {
+
+				if key.String() == "behaviors" {
+					//					log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE ", key.String())
+
+					behaviors := gjson.Parse(value.String())
+					//					log.Println("[DEBUG] BEHAVIORS NAME ", behaviors)
+					behaviors.ForEach(func(key, value gjson.Result) bool {
+						//						log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE LOOP KEY = " + key.String() + " VAL " + value.String())
+						behaviorMap, ok := value.Value().(map[string]interface{})
+						if ok {
+							newBehavior := papi.NewBehavior()
+							newBehavior.Name = behaviorMap["name"].(string)
+							behaviorOptions, ok := behaviorMap["options"]
+							if ok {
+								newBehavior.Options = behaviorOptions.(map[string]interface{})
+							}
+							rule.MergeBehavior(newBehavior)
+						}
+						return true
+					}) //behaviors
+				}
+
+				if key.String() == "criteria" {
+					//					log.Println("[DEBUG] CRITERIA KEY CHILD RULE ", key.String())
+					criterias := gjson.Parse(value.String())
+					criterias.ForEach(func(key, value gjson.Result) bool {
+						criteriaMap, ok := value.Value().(map[string]interface{})
+						if ok {
+							newCriteria := papi.NewCriteria()
+							newCriteria.Name = criteriaMap["name"].(string)
+							criteriaOptions, ok := criteriaMap["options"]
+							if ok {
+								newCriteria.Options = criteriaOptions.(map[string]interface{})
+							}
+							rule.MergeCriteria(newCriteria)
+						}
+						return true
+					}) //criteria
+				}
+
+				if key.String() == "variables" {
+					//					log.Println("[DEBUG] VARIABLES KEY CHILD RULE ", key.String())
+					variables := gjson.Parse(value.String())
+					variables.ForEach(func(key, value gjson.Result) bool {
+						variableMap, ok := value.Value().(map[string]interface{})
+						if ok {
+							newVariable := papi.NewVariable()
+							newVariable.Name = variableMap["name"].(string)
+							newVariable.Description = variableMap["description"].(string)
+							newVariable.Value = variableMap["value"].(string)
+							newVariable.Hidden = variableMap["hidden"].(bool)
+							newVariable.Sensitive = variableMap["sensitive"].(bool)
+							rule.AddVariable(newVariable)
+						}
+						return true
+					}) //variables
+				}
+
+				if key.String() == "children" {
+					childRules := gjson.Parse(value.String())
+					//					println("CHILD RULES " + childRules.String())
+					for _, newRule := range extractRulesJSONDiff(d, childRules) {
 						rule.MergeChildRule(newRule)
 					}
 				} //len > 0
