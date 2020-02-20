@@ -188,7 +188,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.Set("version", property.LatestVersion)
 
 	// The API now has data, so save the partial state
-	d.SetId(property.PropertyID + "-")
+	d.SetId(property.PropertyID)
 	d.SetPartial("name")
 	d.SetPartial("rule_format")
 	d.SetPartial("contract")
