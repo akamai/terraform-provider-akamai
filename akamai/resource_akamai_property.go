@@ -589,18 +589,19 @@ func resourceCustomDiffCustomizeDiff(d *schema.ResourceDiff, meta interface{}) e
 }
 
 // Helpers
-func getProperty(d *schema.ResourceData) (*papi.Property, error) {
+func getProperty(d interface{}) (*papi.Property, error) {
 	log.Println("[DEBUG] Fetching property")
-	propertyID := d.Id()
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyID
-	e := property.GetProperty()
-	return property, e
-}
+	var propertyID string
 
-func getPropertyDiff(d *schema.ResourceDiff) (*papi.Property, error) {
-	log.Println("[DEBUG] Fetching property")
-	propertyID := d.Id()
+	switch d.(type) {
+	case *schema.ResourceData:
+		propertyID = d.(*schema.ResourceData).Id()
+	case *schema.ResourceDiff:
+		propertyID = d.(*schema.ResourceDiff).Id()
+	default:
+		propertyID = d.(*schema.ResourceData).Id()
+	}
+
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
 	e := property.GetProperty()
@@ -652,12 +653,23 @@ func getContract(d *schema.ResourceData) (*papi.Contract, error) {
 	return contract, nil
 }
 
-func getCPCode(d *schema.ResourceData, contract *papi.Contract, group *papi.Group) (*papi.CpCode, error) {
+func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group) (*papi.CpCode, error) {
 	if contract == nil || group == nil {
 		return nil, nil
 	}
+	var cpCodeID interface{}
+	var ok bool
 
-	cpCodeID, ok := d.GetOk("cp_code")
+	switch d.(type) {
+	case *schema.ResourceData:
+		cpCodeID, ok = d.(*schema.ResourceData).GetOk("cp_code")
+	case *schema.ResourceDiff:
+		cpCodeID, ok = d.(*schema.ResourceDiff).GetOk("cp_code")
+	default:
+		cpCodeID, ok = d.(*schema.ResourceData).GetOk("cp_code")
+	}
+
+	//cpCodeID, ok := d.GetOk("cp_code")
 	if !ok {
 		return nil, nil
 	}
@@ -722,54 +734,22 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product,
 	return product, nil
 }
 
-func createOrigin(d *schema.ResourceData) (*papi.OptionValue, error) {
+func createOrigin(d interface{}) (*papi.OptionValue, error) {
 	log.Println("[DEBUG] Setting origin")
-	if origin, ok := d.GetOk("origin"); ok {
-		originConfig := origin.(*schema.Set).List()[0].(map[string]interface{})
+	var origin interface{}
+	var ok bool
 
-		forwardHostname, forwardHostnameOk := originConfig["forward_hostname"].(string)
-		originValues := make(map[string]interface{})
-
-		originValues["originType"] = "CUSTOMER"
-		if val, ok := originConfig["hostname"]; ok {
-			originValues["hostname"] = val.(string)
-		}
-
-		if val, ok := originConfig["port"]; ok {
-			originValues["httpPort"] = val.(int)
-		}
-
-		if val, ok := originConfig["cache_key_hostname"]; ok {
-			originValues["cacheKeyHostname"] = val.(string)
-		}
-
-		if val, ok := originConfig["compress"]; ok {
-			originValues["compress"] = val.(bool)
-		}
-
-		if val, ok := originConfig["enable_true_client_ip"]; ok {
-			originValues["enableTrueClientIp"] = val.(bool)
-		}
-
-		if forwardHostnameOk && (forwardHostname == "ORIGIN_HOSTNAME" || forwardHostname == "REQUEST_HOST_HEADER") {
-			log.Println("[DEBUG] Setting non-custom forward hostname")
-
-			originValues["forwardHostHeader"] = forwardHostname
-		} else if forwardHostnameOk {
-			log.Println("[DEBUG] Setting custom forward hostname")
-
-			originValues["forwardHostHeader"] = "CUSTOM"
-			originValues["customForwardHostHeader"] = "CUSTOM"
-		}
-
-		ov := papi.OptionValue(originValues)
-		return &ov, nil
+	switch d.(type) {
+	case *schema.ResourceData:
+		origin, ok = d.(*schema.ResourceData).GetOk("origin")
+	case *schema.ResourceDiff:
+		origin, ok = d.(*schema.ResourceDiff).GetOk("origin")
+	default:
+		origin, ok = d.(*schema.ResourceData).GetOk("origin")
 	}
-	return nil, nil
-}
-func createOriginDiff(d *schema.ResourceDiff) (*papi.OptionValue, error) {
-	log.Println("[DEBUG] Setting origin")
-	if origin, ok := d.GetOk("origin"); ok {
+
+	//if origin, ok := rd.GetOk("origin"); ok {
+	if ok {
 		originConfig := origin.(*schema.Set).List()[0].(map[string]interface{})
 
 		forwardHostname, forwardHostnameOk := originConfig["forward_hostname"].(string)
@@ -1076,7 +1056,7 @@ func numberify(v string) interface{} {
 	return v
 }
 
-func extractRulesJSON(d *schema.ResourceData, drules gjson.Result) []*papi.Rule {
+func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 	var rules []*papi.Rule
 	drules.ForEach(func(key, value gjson.Result) bool {
 		rule := papi.NewRule()
