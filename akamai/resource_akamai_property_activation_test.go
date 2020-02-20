@@ -47,7 +47,7 @@ resource "akamai_edge_hostname" "test" {
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test1"
+  name = "terraform-test2"
 
   contact = ["user@exampleterraform.io"]
 
@@ -198,7 +198,7 @@ resource "akamai_edge_hostname" "test" {
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test1"
+  name = "terraform-test2"
 
   contact = ["user@exampleterraform.io"]
 
