@@ -68,6 +68,29 @@ You can also inject entire JSON blocks using the same mechanism:
 	}
 }
 ```
+## Migrating a GTM domain (and contained objects) to Terraform
+
+Migrating an existing GTM domain can be done in many ways. Two such methods include:
+
+### Via Command Line Utility
+
+A package, [CLI-Terraform-GTM](https://github.com/akamai/cli-terraform-gtm), for the [Akamai CLI](https://developer.akamai.com/cli) provides a time saving means to collect information about, generate a configuration for, and import an existing GTM domain and its contained objects and attributes. With the package, you can:
+
+1. Generate a json formatted list of all domain objects
+2. Generate a Terraform configuration for the domain and contained objects
+3. Generate a command line script to import all defined resources
+
+It is recommended that the existing domain configuration (using the API or Control Center) be downloaded before hand as a backup and reference.  Additionally, a terraform plan should be executed after importing to validate the generated tfstate. Note: The first time plan is run, an update will be shown for the provider defined domain fields: contract, group and wait_on_complete.
+
+### Via Step By Step Construction
+
+1. Download your existing domain configuration (using the API or Control Center) as a backup and reference.
+2. Using the domain download as a reference, create a terraform configuration representing the the existing domain and all contained GTM objects. Note: In creating each resource block, make note of `required`, `optional` and `computed` fields.
+3. Use the Terraform Import command to import the existing domain and contained objects; singularly and in serial order.
+4. (Optional, Recommended) Review domain download content and created terraform.tfstate to confirm the domain and all objects are represented correctly
+5. Execute a `Terraform Plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the GTM Backend.
+
+Since Terraform assumes it is the de-facto state for any resource it leverages, we strongly recommend staging the domain and objects imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to the existing GTM domain configuration.
 
 ## Leverage template_file and snippets to render your configuration file
 

@@ -169,8 +169,6 @@ func (geo *GeoMap) save(domainName string) (*GeoMapResponse, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -180,6 +178,8 @@ func (geo *GeoMap) save(domainName string) (*GeoMapResponse, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -219,8 +219,6 @@ func (geo *GeoMap) Delete(domainName string) (*ResponseStatus, error) {
 		return nil, err
 	}
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -230,6 +228,8 @@ func (geo *GeoMap) Delete(domainName string) (*ResponseStatus, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {

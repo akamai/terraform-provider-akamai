@@ -14,14 +14,14 @@ import (
 // AsAssignment represents a GTM asmap assignment structure
 type AsAssignment struct {
 	DatacenterBase
-	AsNumbers []int64 `json:"asNumbers"`
+	AsNumbers []int64 `json:"asNumbers,omitempty"`
 }
 
 // AsMap  represents a GTM AsMap
 type AsMap struct {
 	DefaultDatacenter *DatacenterBase `json:"defaultDatacenter"`
 	Assignments       []*AsAssignment `json:"assignments,omitempty"`
-	Name              string          `json:"name,omitempty"`
+	Name              string          `json:"name"`
 	Links             []*Link         `json:"links,omitempty"`
 }
 
@@ -125,8 +125,6 @@ func (as *AsMap) save(domainName string) (*AsMapResponse, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -136,6 +134,8 @@ func (as *AsMap) save(domainName string) (*AsMapResponse, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -175,8 +175,6 @@ func (as *AsMap) Delete(domainName string) (*ResponseStatus, error) {
 		return nil, err
 	}
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -186,6 +184,8 @@ func (as *AsMap) Delete(domainName string) (*ResponseStatus, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {

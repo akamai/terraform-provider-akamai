@@ -40,7 +40,7 @@ resource "akamai_property" "example_property" {
 
 ## Authentication
 
-You must specify credentials for each service used. Currently the provider supports `property` (PAPI) and `dns` services.
+You must specify credentials for each service used. Currently the provider supports `property` (PAPI), `dns` and gtm services.
 
 You may use either a the Akamai standard `.edgerc` file, or you can specify the credentials inline.
 
@@ -57,6 +57,12 @@ To specify credentials inline, use the `property` or `dns` block to define crede
   * `client_secret` — (Required) The credential client_secret
   * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
 * `dns` — (Optional) Provide credentials for the Fast DNS API (config-dns)
+  * `host` — (Required) The credential hostname
+  * `access_token` — (Required) The credential access_token
+  * `client_token` — (Required) The credential client_token
+  * `client_secret` — (Required) The credential client_secret
+  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
+* `gtm` — (Optional) Provide credentials for the GTM Config API (config-gtm)
   * `host` — (Required) The credential hostname
   * `access_token` — (Required) The credential access_token
   * `client_token` — (Required) The credential client_token
@@ -87,6 +93,7 @@ provider "akamai" {
     edgerc = "~/.edgerc" 
     property_section = "papi"
     dns_section = "dns"
+    gtm_section = "gtm"
 }
 ```
 
@@ -97,6 +104,7 @@ The following arguments are supported in the `provider` block:
 * `edgerc` - (Optional) The location of the `.edgerc` file containing credentials. Default: `$HOME/.edgerc`
 * `property_section` — (Optional) The credential section to use for the Property Manager API (PAPI). Default: `default`.
 * `dns_section` — (Optional) The credential section to use for the Config DNS API. Default: `default`.
+* `gtm_section` — (Optional) The credential section to use for the Config GTM API. Default: `default`.
 * `cps_section` — (Optional) The credential section to use for the Config CPS. Default: `default`.
 
 ## Environment Variables

@@ -5,8 +5,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 
-	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 )
 
 func instantiateDomain() *Domain {
@@ -465,9 +466,9 @@ func TestCreateDomain(t *testing.T) {
 
 	defer gock.Off()
 
-	mock := gock.New("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-gtm/v1/domains/" + gtmTestDomain)
+	mock := gock.New("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-gtm/v1/domains/")
 	mock.
-		Put("/config-gtm/v1/domains/"+gtmTestDomain).
+		Post("/config-gtm/v1/domains/").
 		HeaderPresent("Authorization").
 		Reply(200).
 		SetHeader("Content-Type", "application/vnd.config-gtm.v1.3+json;charset=UTF-8").
@@ -566,7 +567,7 @@ func TestCreateDomain(t *testing.T) {
 	qArgs := make(map[string]string)
 
 	statResponse, err := testDomain.Create(qArgs)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, gtmTestDomain, statResponse.Resource.Name)
 
 }
@@ -745,7 +746,7 @@ func TestUpdateDomain(t *testing.T) {
 	//testDomain.MaxResources = 9999
 	qArgs := make(map[string]string)
 	statResp, err := testDomain.Update(qArgs)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, statResp.ChangeId, "df6c04e4-6327-4e0f-8872-bfe9fb2693d2")
 
 }

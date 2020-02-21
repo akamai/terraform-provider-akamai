@@ -14,26 +14,26 @@ import (
 
 // Datacenter represents a GTM datacenter
 type Datacenter struct {
-	City                       	string      `json:"city,omitempty"`
-	CloneOf                    	int         `json:"cloneOf,omitempty"`
-        CloudServerHostHeaderOverride   bool        `json:"cloudServerHostHeaderOverride,omitempty"`
-	CloudServerTargeting       	bool        `json:"cloudServerTargeting,omitempty"`
-	Continent                  	string      `json:"continent,omitempty"`
-	Country                    	string      `json:"country,omitempty"`
-	DefaultLoadObject          	*LoadObject `json:"defaultLoadObject,omitempty"`
-	Latitude                   	float64     `json:"latitude,omitempty"`
-	Links                      	[]*Link     `json:"links,omitempty"`
-	Longitude                  	float64     `json:"longitude,omitempty"`
-	Nickname                   	string      `json:"nickname,omitempty"`
-	PingInterval               	int         `json:"pingInterval,omitempty"`
-	PingPacketSize             	int         `json:"pingPacketSize,omitempty"`
-	DatacenterId               	int         `json:"datacenterId,omitempty"`
-	ScorePenalty               	int         `json:"scorePenalty,omitempty"`
-	ServermonitorLivenessCount 	int         `json:"servermonitorLivenessCount,omitempty"`
-	ServermonitorLoadCount     	int         `json:"servermonitorLoadCount,omitempty"`
-	ServermonitorPool          	string      `json:"servermonitorPool,omitempty"`
-	StateOrProvince            	string      `json:"stateOrProvince,omitempty"`
-	Virtual                    	bool        `json:"virtual,omitempty"`
+	City                          string      `json:"city,omitempty"`
+	CloneOf                       int         `json:"cloneOf,omitempty"`
+	CloudServerHostHeaderOverride bool        `json:"cloudServerHostHeaderOverride"`
+	CloudServerTargeting          bool        `json:"cloudServerTargeting"`
+	Continent                     string      `json:"continent,omitempty"`
+	Country                       string      `json:"country,omitempty"`
+	DefaultLoadObject             *LoadObject `json:"defaultLoadObject,omitempty"`
+	Latitude                      float64     `json:"latitude,omitempty"`
+	Links                         []*Link     `json:"links,omitempty"`
+	Longitude                     float64     `json:"longitude,omitempty"`
+	Nickname                      string      `json:"nickname,omitempty"`
+	PingInterval                  int         `json:"pingInterval,omitempty"`
+	PingPacketSize                int         `json:"pingPacketSize,omitempty"`
+	DatacenterId                  int         `json:"datacenterId"`
+	ScorePenalty                  int         `json:"scorePenalty,omitempty"`
+	ServermonitorLivenessCount    int         `json:"servermonitorLivenessCount,omitempty"`
+	ServermonitorLoadCount        int         `json:"servermonitorLoadCount,omitempty"`
+	ServermonitorPool             string      `json:"servermonitorPool,omitempty"`
+	StateOrProvince               string      `json:"stateOrProvince,omitempty"`
+	Virtual                       bool        `json:"virtual"`
 }
 
 type DatacenterList struct {
@@ -148,8 +148,6 @@ func (dc *Datacenter) Create(domainName string) (*DatacenterResponse, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network
 	if err != nil {
 		return nil, CommonError{
@@ -159,6 +157,8 @@ func (dc *Datacenter) Create(domainName string) (*DatacenterResponse, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -196,8 +196,6 @@ func (dc *Datacenter) Update(domainName string) (*ResponseStatus, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -207,6 +205,8 @@ func (dc *Datacenter) Update(domainName string) (*ResponseStatus, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -246,8 +246,6 @@ func (dc *Datacenter) Delete(domainName string) (*ResponseStatus, error) {
 		return nil, err
 	}
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -257,6 +255,8 @@ func (dc *Datacenter) Delete(domainName string) (*ResponseStatus, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {

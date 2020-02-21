@@ -14,7 +14,7 @@ import (
 //CidrAssignment represents a GTM cidr assignment element
 type CidrAssignment struct {
 	DatacenterBase
-	Blocks []string `json:"blocks"`
+	Blocks []string `json:"blocks,omitempty"`
 }
 
 // CidrMap  represents a GTM cidrMap element
@@ -22,7 +22,7 @@ type CidrMap struct {
 	DefaultDatacenter *DatacenterBase   `json:"defaultDatacenter"`
 	Assignments       []*CidrAssignment `json:"assignments,omitempty"`
 	Name              string            `json:"name"`
-	Links             []*Link           `json:"links, omitempty"`
+	Links             []*Link           `json:"links,omitempty"`
 }
 
 // CidrMapList represents a GTM returned cidrmap list body
@@ -167,8 +167,6 @@ func (cidr *CidrMap) save(domainName string) (*CidrMapResponse, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -178,6 +176,8 @@ func (cidr *CidrMap) save(domainName string) (*CidrMapResponse, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
