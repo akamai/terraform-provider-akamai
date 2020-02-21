@@ -1303,7 +1303,7 @@ func checkSshfpRecord(d *schema.ResourceData) error {
 	return nil
 }
 
-// Resource record types supported by the Akamai FastDNS API
+// Resource record types supported by the Akamai Edge DNS API
 const (
 	RRTypeA          = "A"
 	RRTypeAaaa       = "AAAA"
