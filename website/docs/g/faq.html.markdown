@@ -80,6 +80,10 @@ A package, [CLI-Terraform-GTM](https://github.com/akamai/cli-terraform-gtm), for
 2. Generate a Terraform configuration for the domain and contained objects
 3. Generate a command line script to import all defined resources
 
+Notes:
+1. Terraform limits the characters that can be part of it's resource names. During construction of the resource configurations invalid characters are replaced with underscore , '_'
+2. Terrform does not have any state during import of resources. Discrepencies may be identified in certain field lists during the first plan and/or apply following import as Terraform reconciles configurations and state. These discrepencies will clear following the first apply. 
+  
 It is recommended that the existing domain configuration (using the API or Control Center) be downloaded before hand as a backup and reference.  Additionally, a terraform plan should be executed after importing to validate the generated tfstate. Note: The first time plan is run, an update will be shown for the provider defined domain fields: contract, group and wait_on_complete.
 
 ### Via Step By Step Construction
@@ -91,6 +95,10 @@ It is recommended that the existing domain configuration (using the API or Contr
 5. Execute a `Terraform Plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the GTM Backend.
 
 Since Terraform assumes it is the de-facto state for any resource it leverages, we strongly recommend staging the domain and objects imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to the existing GTM domain configuration.
+
+## GTM Terraform Resource Field Representation During Plan and/or Apply
+
+Terraform presents not only fields defined in the configuration, but all defined resource fields, during a Plan or Apply action. Fields are either required, optional or computed as specified in each resource description. Default values for fields will display if not explicitly configured. In many cases, the default will be zero, empty string or empty list depending on the the type. These default or empty values are informational and not included in resource updates. 
 
 ## Leverage template_file and snippets to render your configuration file
 

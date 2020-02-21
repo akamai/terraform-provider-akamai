@@ -46,7 +46,6 @@ Optional
 * `latitude`
 * `longitude`
 * `state_or_province`
-* `virtual` — (Boolean)
 
 Computed
 
@@ -59,6 +58,7 @@ The following arguments will be found in terraform.tfstate and can be referenced
 * `servermonitor_liveness_count`
 * `servermonitor_load_count`
 * `servermonitor_pool`
+* `virtual` — (Boolean)
 
 ### Backing Schema Reference
 
