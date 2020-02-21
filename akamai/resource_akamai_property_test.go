@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -17,7 +16,7 @@ provider "akamai" {
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test1"
+  name = "terraform-test2"
 
   contact = ["user@exampleterraform.io"]
 
@@ -262,9 +261,7 @@ func testAccCheckAkamaiPropertyExists(s *terraform.State) error {
 		}
 
 		property := papi.NewProperty(papi.NewProperties())
-		id := strings.Split(rs.Primary.ID, "-")
-		property.PropertyID = id[0]
-		//property.PropertyID = rs.Primary.ID
+		property.PropertyID = rs.Primary.ID
 		e := property.GetProperty()
 		if e != nil {
 			return e
