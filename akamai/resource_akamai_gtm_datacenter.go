@@ -8,6 +8,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 func resourceGTMv1Datacenter() *schema.Resource {
@@ -142,8 +143,16 @@ func parseDatacenterResourceId(id string) (string, int, error) {
 
 }
 
+var (
+        datacenterCreateLock sync.Mutex
+)
+
 // Create a new GTM Datacenter
 func resourceGTMv1DatacenterCreate(d *schema.ResourceData, meta interface{}) error {
+
+	// Async GTM DC creation causes issues at this writing. Synchronize as work around.
+	datacenterCreateLock.Lock()
+	defer datacenterCreateLock.Unlock() 
 
 	domain := d.Get("domain").(string)
 
