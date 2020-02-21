@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -57,8 +56,7 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 	d.Partial(true)
 
 	property := papi.NewProperty(papi.NewProperties())
-	id := strings.Split(d.Get("property").(string), "-")
-	property.PropertyID = id[0]
+	property.PropertyID = d.Get("property").(string)
 	err := property.GetProperty()
 	if err != nil {
 		return errors.New("unable to find property")
@@ -66,7 +64,8 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 
 	// The API now has data, so save the partial state
 	d.SetPartial("network")
-	d.Set("property", property.PropertyID+"-"+id[1])
+
+	d.Set("property", property.PropertyID)
 
 	if d.Get("activate").(bool) {
 		activation, err := activateProperty(property, d)
@@ -106,8 +105,7 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[DEBUG] DEACTIVATE PROPERTY")
 
 	property := papi.NewProperty(papi.NewProperties())
-	id := strings.Split(d.Get("property").(string), "-")
-	property.PropertyID = id[0]
+	property.PropertyID = d.Get("property").(string)
 	e := property.GetProperty()
 	if e != nil {
 		return e
@@ -160,8 +158,7 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 
 func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	property := papi.NewProperty(papi.NewProperties())
-	id := strings.Split(d.Get("property").(string), "-")
-	property.PropertyID = id[0]
+	property.PropertyID = d.Get("property").(string)
 	err := property.GetProperty()
 	if err != nil {
 		return false, err
@@ -186,14 +183,13 @@ func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) 
 
 func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) error {
 	property := papi.NewProperty(papi.NewProperties())
-	id := strings.Split(d.Get("property").(string), "-")
-	property.PropertyID = id[0]
+	property.PropertyID = d.Get("property").(string)
 	err := property.GetProperty()
 	if err != nil {
 		return err
 	}
 
-	d.SetId("")
+	//d.SetId("")
 	activations, err := property.GetActivations()
 	if err != nil {
 		// No activations found
@@ -216,9 +212,8 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[DEBUG] UPDATING")
 
 	log.Println("[DEBUG] Fetching property")
-	id := strings.Split(d.Get("property").(string), "-")
 	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = id[0]
+	property.PropertyID = d.Get("property").(string)
 	e := property.GetProperty()
 	if e != nil {
 		return e
@@ -272,7 +267,7 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		d.Set("version", activation.PropertyVersion)
 		d.Set("status", string(activation.Status))
 	} else {
-		return resourcePropertyRead(d, meta)
+		return resourcePropertyActivationRead(d, meta)
 	}
 
 	log.Println("[DEBUG] Done")

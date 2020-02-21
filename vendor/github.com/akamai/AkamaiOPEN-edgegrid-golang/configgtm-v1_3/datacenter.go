@@ -16,7 +16,7 @@ import (
 type Datacenter struct {
 	City                       string      `json:"city,omitempty"`
 	CloneOf                    int         `json:"cloneOf,omitempty"`
-	CloudServerTargeting       bool        `json:"cloudServerTargeting,omitempty"`
+	CloudServerTargeting       bool        `json:"cloudServerTargeting"`
 	Continent                  string      `json:"continent,omitempty"`
 	Country                    string      `json:"country,omitempty"`
 	DefaultLoadObject          *LoadObject `json:"defaultLoadObject,omitempty"`
@@ -32,7 +32,7 @@ type Datacenter struct {
 	ServermonitorLoadCount     int         `json:"servermonitorLoadCount,omitempty"`
 	ServermonitorPool          string      `json:"servermonitorPool,omitempty"`
 	StateOrProvince            string      `json:"stateOrProvince,omitempty"`
-	Virtual                    bool        `json:"virtual,omitempty"`
+	Virtual                    bool        `json:"virtual"`
 }
 
 type DatacenterList struct {
@@ -147,8 +147,6 @@ func (dc *Datacenter) Create(domainName string) (*DatacenterResponse, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network
 	if err != nil {
 		return nil, CommonError{
@@ -158,6 +156,8 @@ func (dc *Datacenter) Create(domainName string) (*DatacenterResponse, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -195,8 +195,6 @@ func (dc *Datacenter) Update(domainName string) (*ResponseStatus, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -206,6 +204,8 @@ func (dc *Datacenter) Update(domainName string) (*ResponseStatus, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {

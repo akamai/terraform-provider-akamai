@@ -1,4 +1,10 @@
 ## 0.2.0 (Unreleased)
+* [FIX] Bug - Origin values customhostheader #93 (`akamai_property`) [GH-93]
+* [FIX] akamai 0.1.5 - err: rpc error: code = Unavailable desc = transport is closing #87 (`akamai_property`) [GH-87]
+* [FIX] Errors in documentation: akamai_contract and akamai_cp_code #52 (`akamai_property`) [GH-52]
+* [FIX] Provider produced inconsistent final plan #88 (`akamai_property`) [GH-88]
+* [FIX] akamai_property_activation creation crashing with Error: rpc error: code = Unavailable desc = transport is closing #102 (`akamai_property`) [GH-102]
+
 ## 0.1.5 (January 06, 2020)
 
 * [FIX] Criteria is always end up using must satisfy "all" (`akamai_property`) ([#81](https://github.com/terraform-providers/terraform-provider-template/issues/81))

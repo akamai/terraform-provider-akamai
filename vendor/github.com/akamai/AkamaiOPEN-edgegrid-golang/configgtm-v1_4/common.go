@@ -43,12 +43,12 @@ func setVersionHeader(req *http.Request, version string) {
 
 // response Status is returned on Create, Update or Delete operations for all entity types
 type ResponseStatus struct {
-	ChangeId              string  `json:"changeId"`
-	Links                 *[]Link `json:"links"`
-	Message               string  `json:"message"`
-	PassingValidation     bool    `json:"passingValidation"`
-	PropagationStatus     string  `json:"propagationStatus"`
-	PropagationStatusDate string  `json:"propagationStatusDate"`
+	ChangeId              string  `json:"changeId,omitempty"`
+	Links                 *[]Link `json:"links,omitempty"`
+	Message               string  `json:"message,omitempty"`
+	PassingValidation     bool    `json:"passingValidation,omitempty"`
+	PropagationStatus     string  `json:"propagationStatus,omitempty"`
+	PropagationStatusDate string  `json:"propagationStatusDate,omitempty"`
 }
 
 // NewResponseStatus returns a new ResponseStatus struct
@@ -108,9 +108,9 @@ type Link struct {
 
 //
 type LoadObject struct {
-	LoadObject     string   `json:"loadObject, omitempty"`
-	LoadObjectPort int      `json:"loadObjectPort, omitempty"`
-	LoadServers    []string `json:"loadServers, omitempty"`
+	LoadObject     string   `json:"loadObject,omitempty"`
+	LoadObjectPort int      `json:"loadObjectPort,omitempty"`
+	LoadServers    []string `json:"loadServers,omitempty"`
 }
 
 // NewLoadObject returns a new LoadObject structure
@@ -119,7 +119,7 @@ func NewLoadObject() *LoadObject {
 }
 
 type DatacenterBase struct {
-	Nickname     string `json:"nickname"`
+	Nickname     string `json:"nickname,omitempty"`
 	DatacenterId int    `json:"datacenterId"`
 }
 

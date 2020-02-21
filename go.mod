@@ -18,4 +18,6 @@ replace (
 	sourcegraph.com/sourcegraph/go-diff => github.com/sourcegraph/go-diff v0.5.1
 )
 
+replace github.com/h2non/gock => gopkg.in/h2non/gock.v1 v1.0.14
+
 go 1.13
