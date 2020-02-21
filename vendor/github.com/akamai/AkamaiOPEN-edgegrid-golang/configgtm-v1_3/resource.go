@@ -14,7 +14,7 @@ import (
 // ResourceInstance
 type ResourceInstance struct {
 	DatacenterId         int  `json:"datacenterId"`
-	UseDefaultLoadObject bool `json:"useDefaultLoadObject,omitempty"`
+	UseDefaultLoadObject bool `json:"useDefaultLoadObject"`
 	LoadObject
 }
 
@@ -22,12 +22,12 @@ type ResourceInstance struct {
 type Resource struct {
 	Type                        string              `json:"type"`
 	HostHeader                  string              `json:"hostHeader,omitempty"`
-	LeastSquaresDecay           int                 `json:"leastSquaresDecay,omitempty"`
+	LeastSquaresDecay           float64             `json:"leastSquaresDecay,omitempty"`
 	Description                 string              `json:"description,omitempty"`
 	LeaderString                string              `json:"leaderString,omitempty"`
 	ConstrainedProperty         string              `json:"constrainedProperty,omitempty"`
 	ResourceInstances           []*ResourceInstance `json:"resourceInstances,omitempty"`
-	AggregationType             string              `json:"aggregationType"`
+	AggregationType             string              `json:"aggregationType,omitempty"`
 	Links                       []*Link             `json:"links,omitempty"`
 	LoadImbalancePercentage     float64             `json:"loadImbalancePercentage,omitempty"`
 	UpperBound                  int                 `json:"upperBound,omitempty"`
@@ -172,8 +172,6 @@ func (rsrc *Resource) save(domainName string) (*ResourceResponse, error) {
 
 	res, err := client.Do(Config, req)
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -183,6 +181,8 @@ func (rsrc *Resource) save(domainName string) (*ResourceResponse, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -223,8 +223,6 @@ func (rsrc *Resource) Delete(domainName string) (*ResponseStatus, error) {
 		return nil, err
 	}
 
-	printHttpResponse(res, true)
-
 	// Network error
 	if err != nil {
 		return nil, CommonError{
@@ -234,6 +232,8 @@ func (rsrc *Resource) Delete(domainName string) (*ResponseStatus, error) {
 			err:              err,
 		}
 	}
+
+	printHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {

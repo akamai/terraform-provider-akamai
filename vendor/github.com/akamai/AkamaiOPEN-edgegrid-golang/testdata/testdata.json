@@ -20,7 +20,7 @@
                     {"Host": "akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net"}
                 ]
             },
-            "expectedAuthorization": "EG1-HMAC-SHA256 client_token=akab-client-token-xxx-xxxxxxxxxxxxxxxx;access_token=akab-access-token-xxx-xxxxxxxxxxxxxxxx;timestamp=20140321T19:34:21+0000;nonce=nonce-xx-xxxx-xxxx-xxxx-xxxxxxxxxxxx;signature=hKDH1UlnQySSHjvIcZpDMbQHihTQ0XyVAKZaApabdeA="
+            "expectedAuthorization": "EG1-HMAC-SHA256 client_token=akab-client-token-xxx-xxxxxxxxxxxxxxxx;access_token=akab-access-token-xxx-xxxxxxxxxxxxxxxx;timestamp=20140321T19:34:21+0000;nonce=nonce-xx-xxxx-xxxx-xxxx-xxxxxxxxxxxx;signature=d6CRM7lMZvSlwqNU9he5VN1ey+gi5QKvrFHemBAfnjk="
         },
         {
             "testName": "POST inside limit",
@@ -83,6 +83,18 @@
             "expectedAuthorization": "EG1-HMAC-SHA256 client_token=akab-client-token-xxx-xxxxxxxxxxxxxxxx;access_token=akab-access-token-xxx-xxxxxxxxxxxxxxxx;timestamp=20140321T19:34:21+0000;nonce=nonce-xx-xxxx-xxxx-xxxx-xxxxxxxxxxxx;signature=8F9AybcRw+PLxnvT+H0JRkjROrrUgsxJTnRXMzqvcwY="
         },
         {
+            "testName": "Simple header signing with GET. Space in Path",
+            "request": {
+                "method": "GET",
+                "path": "/testapi/v1/t 4",
+                "headers": [
+                    {"Host": "akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net"},
+                    {"X-Test1": "test-simple-header"}
+                ]
+            },
+            "expectedAuthorization": "EG1-HMAC-SHA256 client_token=akab-client-token-xxx-xxxxxxxxxxxxxxxx;access_token=akab-access-token-xxx-xxxxxxxxxxxxxxxx;timestamp=20140321T19:34:21+0000;nonce=nonce-xx-xxxx-xxxx-xxxx-xxxxxxxxxxxx;signature=nks5K9Q96uegodgNmzAhLQMgAKaP48dAcKTX+T7Xu8k="
+        },
+	{
             "testName": "Header containing spaces",
             "request": {
                 "method": "GET",
