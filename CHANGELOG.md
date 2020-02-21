@@ -4,6 +4,7 @@
 * [FIX] Errors in documentation: akamai_contract and akamai_cp_code #52 (`akamai_property`) [GH-52]
 * [FIX] Provider produced inconsistent final plan #88 (`akamai_property`) [GH-88]
 * [FIX] akamai_property_activation creation crashing with Error: rpc error: code = Unavailable desc = transport is closing #102 (`akamai_property`) [GH-102]
+* [ADD] Add Support for GTM domains and contained elements (domain, datacenter, property, resource, cidrmap, geographicmap, asmap)
 
 ## 0.1.5 (January 06, 2020)
 
