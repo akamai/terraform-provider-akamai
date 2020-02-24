@@ -36,9 +36,9 @@ resource "akamai_gtm_domain" "test_domain" {
 	wait_on_complete = false
 }
 
-resource "akamai_gtm_datacenter" "test_datacenter" {
+resource "akamai_gtm_datacenter" "test_prop_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_datacenter"
+    nickname = "test_prop_datacenter"
     wait_on_complete = false
     default_load_object {
         load_object = "test"
@@ -58,7 +58,7 @@ resource "akamai_gtm_property" "test_property" {
     handout_limit = 5
     handout_mode = "normal"
     traffic_target {
-        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
+        datacenter_id = akamai_gtm_datacenter.test_prop_datacenter.datacenter_id
         enabled = true
         weight = 100
         servers = ["1.2.3.4"]
@@ -94,7 +94,7 @@ resource "akamai_gtm_property" "test_property" {
     }
     depends_on = [
         akamai_gtm_domain.test_domain,
-	akamai_gtm_datacenter.test_datacenter
+	akamai_gtm_datacenter.test_prop_datacenter
     ]
 }
 `, gtm_test_domain)
@@ -123,9 +123,9 @@ resource "akamai_gtm_domain" "test_domain" {
         wait_on_complete = false
 }
 
-resource "akamai_gtm_datacenter" "test_datacenter" {
+resource "akamai_gtm_datacenter" "test_prop_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_datacenter"
+    nickname = "test_prop_datacenter"
     wait_on_complete = false
     default_load_object {
         load_object = "test"
@@ -145,7 +145,7 @@ resource "akamai_gtm_property" "test_property" {
     handout_limit = 6
     handout_mode = "normal"
     traffic_target {
-        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
+        datacenter_id = akamai_gtm_datacenter.test_prop_datacenter.datacenter_id
         enabled = true
         weight = 100
         servers = ["1.2.3.4"]
@@ -181,7 +181,7 @@ resource "akamai_gtm_property" "test_property" {
     }
     depends_on = [
         akamai_gtm_domain.test_domain,
-	akamai_gtm_datacenter.test_datacenter
+	akamai_gtm_datacenter.test_prop_datacenter
     ]    
 }   
 `, gtm_test_domain)

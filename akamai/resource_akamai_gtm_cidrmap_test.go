@@ -35,7 +35,7 @@ resource "akamai_gtm_domain" "test_domain" {
 	wait_on_complete = false
 }
 
-resource "akamai_gtm_datacenter" "test_datacenter" {
+resource "akamai_gtm_datacenter" "test_cidr_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
     nickname = "test_cidr_datacenter"
     wait_on_complete = false
@@ -57,14 +57,14 @@ resource "akamai_gtm_cidrmap" "test_cidr" {
         nickname = "All Other CIDR Blocks"
     }
     assignment {
-        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_datacenter.nickname
+        datacenter_id = akamai_gtm_datacenter.test_cidr_datacenter.datacenter_id
+        nickname = akamai_gtm_datacenter.test_cidr_datacenter.nickname
         blocks = ["1.2.3.9/24"]
     }
     wait_on_complete = false
     depends_on = [
         akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_datacenter
+        akamai_gtm_datacenter.test_cidr_datacenter
     ]
 }`, gtm_test_domain)
 
@@ -93,7 +93,7 @@ resource "akamai_gtm_domain" "test_domain" {
         wait_on_complete = false
 }
 
-resource "akamai_gtm_datacenter" "test_datacenter" {
+resource "akamai_gtm_datacenter" "test_cidr_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
     nickname = "test_cidr_datacenter"
     wait_on_complete = false
@@ -115,14 +115,14 @@ resource "akamai_gtm_cidrmap" "test_cidr" {
         nickname = "All Other CIDR Blocks"
     }
     assignment {
-        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_datacenter.nickname
+        datacenter_id = akamai_gtm_datacenter.test_cidr_datacenter.datacenter_id
+        nickname = akamai_gtm_datacenter.test_cidr_datacenter.nickname
         blocks = ["1.2.3.9/24"]
     }
     wait_on_complete = false
     depends_on = [
         akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_datacenter
+        akamai_gtm_datacenter.test_cidr_datacenter
     ]
  
 }`, gtm_test_domain)
