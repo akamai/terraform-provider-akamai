@@ -25,12 +25,6 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter_id = 5400
-    nickname = "Default Datacenter"
-}
-
 resource "akamai_gtm_domain" "test_domain" {
         name = local.domain
         type = "weighted"
@@ -59,8 +53,7 @@ resource "akamai_gtm_asmap" "test_as" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_asmap"
     default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
+	datacenter_id = 5400
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_as_datacenter.datacenter_id
@@ -87,12 +80,6 @@ data "akamai_contract" "contract" {
 }
 
 data "akamai_group" "group" {
-}
-
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter_id = 5400
-    nickname = "Default Datacenter"
 }
 
 resource "akamai_gtm_domain" "test_domain" {
@@ -123,8 +110,7 @@ resource "akamai_gtm_asmap" "test_as" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_asmap"
     default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
+	datacenter_id = 5400
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_as_datacenter.datacenter_id

@@ -25,12 +25,6 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter_id = 5400
-    nickname = "Default Datacenter"
-}
-
 resource "akamai_gtm_domain" "test_domain" {
         name = local.domain
         type = "weighted"
@@ -59,8 +53,7 @@ resource "akamai_gtm_geomap" "test_geo" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_geomap"
     default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
+        datacenter_id = 5400
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_geo_datacenter.datacenter_id
@@ -87,12 +80,6 @@ data "akamai_contract" "contract" {
 }
 
 data "akamai_group" "group" {
-}
-
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter_id = 5400
-    nickname = "Default Datacenter"
 }
 
 resource "akamai_gtm_domain" "test_domain" {
@@ -123,8 +110,7 @@ resource "akamai_gtm_geomap" "test_geo" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_geomap"
     default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
+	datacenter_id = 5400
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_geo_datacenter.datacenter_id
@@ -151,7 +137,7 @@ func TestAccAkamaiGTMGeoMap_basic(t *testing.T) {
 					testAccCheckAkamaiGTMGeoMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_geomap.test_geo", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -169,7 +155,7 @@ func TestAccAkamaiGTMGeoMap_update(t *testing.T) {
 					testAccCheckAkamaiGTMGeoMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_geomap.test_geo", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
+				ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccAkamaiGTMGeoMapUpdateConfig,
@@ -177,7 +163,7 @@ func TestAccAkamaiGTMGeoMap_update(t *testing.T) {
 					testAccCheckAkamaiGTMGeoMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_geomap.test_geo", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
