@@ -8,6 +8,10 @@ locals {
   group = "12345"
 }
 
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.tfexample_domain.name
+}
+
 // Mapping API Structure element names to Resource attribute names:
 // Convert camelcase element names to resource attribute names by inserting 
 // an underscore before any uppercase letter and chnaging case to lower, 
@@ -127,10 +131,9 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
 	test_interval = 30
 	test_object_protocol = "HTTP"
 	test_timeout = 20
-	answer_required = false
+	answers_required = false
 	disable_nonstandard_port_warning = false
 	error_penalty = 0
-	host_header = ""
 	http_error3xx = false
 	http_error4xx = false
 	http_error5xx = false
@@ -223,8 +226,8 @@ resource "akamai_gtm_cidrmap" "tfexample_cidr_1" {
     domain = akamai_gtm_domain.tfexample_domain.name
     name = "tfexample_cidr_1"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Other CIDR Blocks"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     //
     // Optional 
@@ -245,8 +248,8 @@ resource "akamai_gtm_cidrmap" "tfexample_cidr_2" {
     domain = akamai_gtm_domain.tfexample_domain.name
     name = "tfexample_cidr_2"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Other CIDR Blocks"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     wait_on_complete = true
     depends_on = [
@@ -262,8 +265,8 @@ resource "akamai_gtm_asmap" "tfexample_as_1" {
     domain = akamai_gtm_domain.tfexample_domain.name
     name = "tfexample_as_1"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Other AS numbers"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id 
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     } 
     //
     // Optional
@@ -293,8 +296,8 @@ resource "akamai_gtm_geomap" "tfexample_geo_2" {
     domain = akamai_gtm_domain.tfexample_domain.name
     name = "tfexample_geo_2"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Others"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
         }
     //
     // Optional
