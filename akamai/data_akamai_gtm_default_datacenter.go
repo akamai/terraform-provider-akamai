@@ -4,7 +4,7 @@ import (
 	"fmt"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/pkg/errors"
+	"errors"
 	"log"
 )
 
@@ -42,7 +42,7 @@ func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, meta interface{}
 		return errors.New("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter does not Exist")
 	}
 	if err != nil {
-		return errors.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter retrieval failed. %s", err.Error())
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter retrieval failed. %v", err)
 	}
 	d.Set("nickname", defaultDC.Nickname)
 	d.Set("datacenter_id", defaultDC.DatacenterId)
