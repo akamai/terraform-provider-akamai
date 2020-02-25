@@ -25,6 +25,12 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter_id = 5400
+    nickname = "Default Datacenter"
+}
+
 resource "akamai_gtm_domain" "test_domain" {
         name = local.domain
         type = "weighted"
@@ -53,8 +59,8 @@ resource "akamai_gtm_geomap" "test_geo" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_geomap"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Others"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_geo_datacenter.datacenter_id
@@ -81,6 +87,12 @@ data "akamai_contract" "contract" {
 }
 
 data "akamai_group" "group" {
+}
+
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter_id = 5400
+    nickname = "Default Datacenter"
 }
 
 resource "akamai_gtm_domain" "test_domain" {
@@ -111,8 +123,8 @@ resource "akamai_gtm_geomap" "test_geo" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_geomap"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Others"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_geo_datacenter.datacenter_id
@@ -129,7 +141,7 @@ resource "akamai_gtm_geomap" "test_geo" {
 
 func TestAccAkamaiGTMGeoMap_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckGeo(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMGeoMapDestroy,
 		Steps: []resource.TestStep{
@@ -147,7 +159,7 @@ func TestAccAkamaiGTMGeoMap_basic(t *testing.T) {
 
 func TestAccAkamaiGTMGeoMap_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckGeo(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMGeoMapDestroy,
 		Steps: []resource.TestStep{
@@ -171,6 +183,32 @@ func TestAccAkamaiGTMGeoMap_update(t *testing.T) {
 	})
 }
 
+func testAccPreCheckGeo(t *testing.T) {
+
+	testAccPreCheckTF(t)
+	testCheckDeleteGeoMap("test_geomap", gtm_test_domain)
+	testAccDeleteDatacenterByNickname("test_geo_datacenter", gtm_test_domain)
+
+}
+
+func testCheckDeleteGeoMap(geoName string, dom string) error {
+
+	geo, err := gtm.GetGeoMap(geoName, dom)
+	if geo == nil {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test geomap [%v]", geoName)
+	_, err = geo.Delete(dom)
+	if err != nil {
+		return fmt.Errorf("geomap was not deleted %s. Error: %s", geoName, err.Error())
+	}
+	return nil
+
+}
+
 func testAccCheckAkamaiGTMGeoMapDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
@@ -179,17 +217,8 @@ func testAccCheckAkamaiGTMGeoMapDestroy(s *terraform.State) error {
 		}
 
 		geoName, dom, _ := parseStringID(rs.Primary.ID)
-		geo, err := gtm.GetGeoMap(geoName, dom)
-		if geo == nil {
-			return nil
-		}
-		if err != nil {
+		if err := testCheckDeleteGeoMap(geoName, dom); err != nil {
 			return err
-		}
-		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test geomap [%v]", geoName)
-		_, err = geo.Delete(dom)
-		if err != nil {
-			return fmt.Errorf("geomap was not deleted %s. Error: %s", rs.Primary.ID, err.Error())
 		}
 	}
 	return nil

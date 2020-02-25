@@ -25,6 +25,12 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter_id = 5400
+    nickname = "Default Datacenter"
+}
+
 resource "akamai_gtm_domain" "test_domain" {
         name = local.domain
         type = "weighted"
@@ -53,8 +59,8 @@ resource "akamai_gtm_asmap" "test_as" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_asmap"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Other AS numbers"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_as_datacenter.datacenter_id
@@ -81,6 +87,12 @@ data "akamai_contract" "contract" {
 }
 
 data "akamai_group" "group" {
+}
+
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter_id = 5400
+    nickname = "Default Datacenter"
 }
 
 resource "akamai_gtm_domain" "test_domain" {
@@ -111,8 +123,8 @@ resource "akamai_gtm_asmap" "test_as" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_asmap"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Other CIDR Blocks"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_as_datacenter.datacenter_id
@@ -131,7 +143,7 @@ var asMap *gtm.AsMap
 
 func TestAccAkamaiGTMAsMap_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckAS(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMAsMapDestroy,
 		Steps: []resource.TestStep{
@@ -150,7 +162,7 @@ func TestAccAkamaiGTMAsMap_basic(t *testing.T) {
 
 func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckAS(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMAsMapDestroy,
 		Steps: []resource.TestStep{
@@ -176,6 +188,32 @@ func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 	})
 }
 
+func testAccPreCheckAS(t *testing.T) {
+
+	testAccPreCheckTF(t)
+	testCheckDeleteAsMap("test_asmap", gtm_test_domain)
+	testAccDeleteDatacenterByNickname("test_as_datacenter", gtm_test_domain)
+
+}
+
+func testCheckDeleteAsMap(asName string, dom string) error {
+
+	as, err := gtm.GetAsMap(asName, dom)
+	if as == nil {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test asmap [%v]", asName)
+	_, err = as.Delete(dom)
+	if err != nil {
+		return fmt.Errorf("asmap was not deleted %s. Error: %s", asName, err.Error())
+	}
+	return nil
+
+}
+
 func testAccCheckAkamaiGTMAsMapDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
@@ -184,17 +222,8 @@ func testAccCheckAkamaiGTMAsMapDestroy(s *terraform.State) error {
 		}
 
 		asName, dom, _ := parseStringID(rs.Primary.ID)
-		as, err := gtm.GetAsMap(asName, dom)
-		if as == nil {
-			return nil
-		}
-		if err != nil {
+		if err := testCheckDeleteAsMap(asName, dom); err != nil {
 			return err
-		}
-		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test asmap [%v]", asName)
-		_, err = as.Delete(dom)
-		if err != nil {
-			return fmt.Errorf("asmap was not deleted %s. Error: %s", rs.Primary.ID, err.Error())
 		}
 	}
 	return nil

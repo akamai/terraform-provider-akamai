@@ -188,7 +188,7 @@ resource "akamai_gtm_property" "test_property" {
 
 func TestAccAkamaiGTMProperty_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckProp(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMPropertyDestroy,
 		Steps: []resource.TestStep{
@@ -206,7 +206,7 @@ func TestAccAkamaiGTMProperty_basic(t *testing.T) {
 
 func TestAccAkamaiGTMProperty_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckProp(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMPropertyDestroy,
 		Steps: []resource.TestStep{
@@ -230,6 +230,32 @@ func TestAccAkamaiGTMProperty_update(t *testing.T) {
 	})
 }
 
+func testAccPreCheckProp(t *testing.T) {
+
+	testAccPreCheckTF(t)
+	testCheckDeleteProperty("test_property", gtm_test_domain)
+	testAccDeleteDatacenterByNickname("test_prop_datacenter", gtm_test_domain)
+
+}
+
+func testCheckDeleteProperty(propName string, dom string) error {
+
+	prop, err := gtm.GetProperty(propName, dom)
+	if prop == nil {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test property [%v]", propName)
+	_, err = prop.Delete(dom)
+	if err != nil {
+		return fmt.Errorf("property was not deleted %s. Error: %s", propName, err.Error())
+	}
+	return nil
+
+}
+
 func testAccCheckAkamaiGTMPropertyDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
@@ -237,18 +263,9 @@ func testAccCheckAkamaiGTMPropertyDestroy(s *terraform.State) error {
 			continue
 		}
 
-		prop, dom, _ := parseStringID(rs.Primary.ID)
-		p, err := gtm.GetProperty(prop, dom)
-		if p == nil {
-			return nil
-		}
-		if err != nil {
+		propName, dom, _ := parseStringID(rs.Primary.ID)
+		if err := testCheckDeleteProperty(propName, dom); err != nil {
 			return err
-		}
-		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test property [%v]", prop)
-		_, err = p.Delete(prop)
-		if err != nil {
-			return fmt.Errorf("property was not deleted %s. Error: %s", rs.Primary.ID, err.Error())
 		}
 	}
 	return nil
