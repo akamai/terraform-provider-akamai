@@ -34,3 +34,12 @@ The following arguments are supported:
 * `contract` — (Required) The Contract ID
 * `group` — (Required) The Group ID
 * `product` — (Required) The Product ID
+
+## Import Command
+
+Import into Terraform state using CP Code ID, Contract ID and Group ID:
+
+```
+terraform import akamai_cp_code.foo cpc_123456:ctr_123456:grp_123456
+```
+All three IDs are required and must be in order delimeted with colons.
