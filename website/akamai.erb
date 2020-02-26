@@ -1,107 +1,138 @@
 <% wrap_layout :inner do %>
-    <% content_for :sidebar do %>
-        <div class="docs-sidebar hidden-print affix-top" role="complementary">
-            <ul class="nav docs-sidenav">
-                <li<%= sidebar_current("docs-home") %>>
-                    <a href="/docs/providers/index.html">All Providers</a>
+  <% content_for :sidebar do %>
+    <div class="docs-sidebar hidden-print affix-top" role="complementary">
+      <ul class="nav docs-sidenav">
+        <li<%= sidebar_current("docs-home") %>>
+          <a href="/docs/providers/index.html">All Providers</a>
+        </li>
+        <li<%= sidebar_current("docs-akamai-index") %>>
+          <a href="/docs/providers/akamai/index.html">Akamai Provider</a>
+        </li>
+        <li<%= sidebar_current("docs-akamai-guides") %>>
+          <a href="#" id="guides">Guides</a>
+          <ul class="nav nav-visible">
+            <li<%= sidebar_current("docs-akamai-guide-get-started-property") %>>
+              <a href="/docs/providers/akamai/g/get_started_property.html">Get Started with Properties</a>
+            </li>
+            <li<%= sidebar_current("docs-akamai-guide-get-started-gtm-domain") %>>
+              <a href="/docs/providers/akamai/g/get_started_gtm_domain.html">Get Started with GTM Domains</a>
+            </li>
+            <li<%= sidebar_current("docs-akamai-guide-faq") %>>
+              <a href="/docs/providers/akamai/g/faq.html">FAQ</a>
+            </li>
+            <li<%= sidebar_current("docs-akamai-guide-appendix") %>>
+              <a href="/docs/providers/akamai/g/appendix.html">Appendix</a>
+            </li>
+          </ul>
+        </li>
+        <li<%= sidebar_current("docs-akamai-common") %>>
+          <a href="#">Common Provider Data Sources</a>
+          <ul class="nav nav-auto-expand">
+            <li<%= sidebar_current("docs-akamai-common-data") %>>
+              <a href="#" id="data">Data Sources</a>
+              <ul class="nav nav-visible">
+                <li<%= sidebar_current("docs-akamai-data-contract") %>>
+                  <a href="/docs/providers/akamai/d/contract.html">akamai_contract</a>
                 </li>
-
-                <li<%= sidebar_current("docs-akamai-index") %>>
-                    <a href="/docs/providers/akamai/index.html">Akamai Provider</a>
+                <li<%= sidebar_current("docs-akamai-data-group") %>>
+                  <a href="/docs/providers/akamai/d/group.html">akamai_group</a>
                 </li>
-
-                <li<%= sidebar_current("docs-akamai-guides") %>>
-                    <a href="#" id="guides">Guides</a>
-                    <ul class="nav nav-visible">
-                        <li<%= sidebar_current("docs-akamai-guide-get-started-property") %>>
-                            <a href="/docs/providers/akamai/g/get_started_property.html">Get Started with Properties</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-guide-get-started-gtm-domain") %>>
-                            <a href="/docs/providers/akamai/g/get_started_gtm_domain.html">Get Started with GTM Domains</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-guide-faq") %>>
-                            <a href="/docs/providers/akamai/g/faq.html">FAQ</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-guide-appendix") %>>
-                            <a href="/docs/providers/akamai/g/appendix.html">Appendix</a>
-                        </li>
-                    </ul>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li<%= sidebar_current("docs-akamai-edgedns") %>>
+          <a href="#">Edge DNS</a>
+          <ul class="nav nav-auto-expand">
+            <li<%= sidebar_current("docs-akamai-edgedns-data") %>>
+              <a href="#" id="data">Data Sources</a>
+              <ul class="nav nav-visible">
+                <li<%= sidebar_current("docs-akamai-data-authorities-set") %>>
+                  <a href="/docs/providers/akamai/d/authorities_set.html">akamai_authorities_set</a>
                 </li>
-
-                <li<%= sidebar_current("docs-akamai-data") %>>
-                    <a href="#" id="data">Data Sources</a>
-                    <ul class="nav nav-visible">
-                        <li<%= sidebar_current("docs-akamai-data-authorities-set") %>>
-                            <a href="/docs/providers/akamai/d/authorities_set.html">akamai_authorities_set</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-data-contract") %>>
-                            <a href="/docs/providers/akamai/d/contract.html">akamai_contract</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-data-cp-code") %>>
-                            <a href="/docs/providers/akamai/d/cp_code.html">akamai_cp_code</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-data-group") %>>
-                            <a href="/docs/providers/akamai/d/group.html">akamai_group</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-data-property-rules") %>>
-                            <a href="/docs/providers/akamai/d/property_rules.html">akamai_property_rules</a>
-                        </li>
-	    		<li<%= sidebar_current("docs-akamai-data-gtm-default-datacenter") %>>
-                            <a href="/docs/providers/akamai/d/gtm_default_datacenter.html">akamai_gtm_default_datacenter</a>
-                        </li>
-		    </ul>
+              </ul>
+            </li>
+            <li<%= sidebar_current("docs-akamai-edgedns-resource") %>>
+              <a href="#" id="resources">Resources</a>
+              <ul class="nav nav-visible">
+                <li<%= sidebar_current("docs-akamai-resource-dns-record") %>>
+                  <a href="/docs/providers/akamai/r/dns_record.html">akamai_dns_record</a>
                 </li>
-
-                <li<%= sidebar_current("docs-akamai-resource") %>>
-                    <a href="#" id="resources">Resources</a>
-                    <ul class="nav nav-visible">
-                        <li<%= sidebar_current("docs-akamai-resource-dns-record") %>>
-                            <a href="/docs/providers/akamai/r/dns_record.html">akamai_dns_record</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-dns-zone") %>>
-                            <a href="/docs/providers/akamai/r/dns_zone.html">akamai_dns_zone</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-edge-hostname") %>>
-                            <a href="/docs/providers/akamai/r/edge_hostname.html">akamai_edge_hostname</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-property-config") %>>
-                            <a href="/docs/providers/akamai/r/property.html">akamai_property</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-data-cp-code") %>>
-                            <a href="/docs/providers/akamai/r/cp_code.html">cp_code</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-property-activation") %>>
-                            <a href="/docs/providers/akamai/r/property_activation.html">akamai_property_activation</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-property-variables") %>>
-                            <a href="/docs/providers/akamai/r/property_variables.html">akamai_property_variables</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-gtm-domain") %>>
-                            <a href="/docs/providers/akamai/r/gtm_domain.html">akamai_gtm_domain</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-gtm-property") %>>
-                            <a href="/docs/providers/akamai/r/gtm_property.html">akamai_gtm_property</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-gtm-datacenter") %>>
-                            <a href="/docs/providers/akamai/r/gtm_datacenter.html">akamai_gtm_datacenter</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-gtm-resource") %>>
-                            <a href="/docs/providers/akamai/r/gtm_resource.html">akamai_gtm_resource</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-gtm-cidrmap") %>>
-                            <a href="/docs/providers/akamai/r/gtm_cidrmap.html">akamai_gtm_cidrmap</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-gtm-asmap") %>>
-                            <a href="/docs/providers/akamai/r/gtm_asmap.html">akamai_gtm_asmap</a>
-                        </li>
-                        <li<%= sidebar_current("docs-akamai-resource-gtm-geomap") %>>
-                            <a href="/docs/providers/akamai/r/gtm_geomap.html">akamai_gtm_geomap</a>
-                        </li>
-                    </ul>
+                <li<%= sidebar_current("docs-akamai-resource-dns-zone") %>>
+                  <a href="/docs/providers/akamai/r/dns_zone.html">akamai_dns_zone</a>
                 </li>
-            </ul>
-        </div>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li<%= sidebar_current("docs-akamai-properties") %>>
+          <a href="#">Properties</a>
+          <ul class="nav nav-auto-expand">
+            <li<%= sidebar_current("docs-akamai-properties-data") %>>
+              <a href="#" id="data">Data Sources</a>
+              <ul class="nav">
+                <li<%= sidebar_current("docs-akamai-data-cp-code") %>>
+                  <a href="/docs/providers/akamai/d/cp_code.html">akamai_cp_code</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-data-property-rules") %>>
+                  <a href="/docs/providers/akamai/d/property_rules.html">akamai_property_rules</a>
+                </li>
+              </ul>
+            </li>
+            <li<%= sidebar_current("docs-akamai-properties-resource") %>>
+              <a href="#" id="resources">Resources</a>
+              <ul class="nav">
+                <li<%= sidebar_current("docs-akamai-resource-edge-hostname") %>>
+                  <a href="/docs/providers/akamai/r/edge_hostname.html">akamai_edge_hostname</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-resource-property-config") %>>
+                  <a href="/docs/providers/akamai/r/property.html">akamai_property</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-data-cp-code") %>>
+                  <a href="/docs/providers/akamai/r/cp_code.html">cp_code</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-resource-property-activation") %>>
+                  <a href="/docs/providers/akamai/r/property_activation.html">akamai_property_activation</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-resource-property-variables") %>>
+                  <a href="/docs/providers/akamai/r/property_variables.html">akamai_property_variables</a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li<%= sidebar_current("docs-akamai-traffic-management") %>>
+          <a href="#">Traffic Management</a>
+          <ul class="nav nav-auto-expand">
+            <li<%= sidebar_current("docs-akamai-resource") %>>
+              <a href="#" id="resources">Resources</a>
+              <ul class="nav">
+                <li<%= sidebar_current("docs-akamai-resource-gtm-domain") %>>
+                  <a href="/docs/providers/akamai/r/gtm_domain.html">akamai_gtm_domain</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-resource-gtm-property") %>>
+                  <a href="/docs/providers/akamai/r/gtm_property.html">akamai_gtm_property</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-resource-gtm-datacenter") %>>
+                  <a href="/docs/providers/akamai/r/gtm_datacenter.html">akamai_gtm_datacenter</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-resource-gtm-resource") %>>
+                  <a href="/docs/providers/akamai/r/gtm_resource.html">akamai_gtm_resource</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-resource-gtm-cidrmap") %>>
+                  <a href="/docs/providers/akamai/r/gtm_cidrmap.html">akamai_gtm_cidrmap</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-resource-gtm-asmap") %>>
+                  <a href="/docs/providers/akamai/r/gtm_asmap.html">akamai_gtm_asmap</a>
+                </li>
+                <li<%= sidebar_current("docs-akamai-resource-gtm-geomap") %>>
+                  <a href="/docs/providers/akamai/r/gtm_geomap.html">akamai_gtm_geomap</a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </div>
     <% end %>
-
     <%= yield %>
-<% end %>
+  <% end %>
