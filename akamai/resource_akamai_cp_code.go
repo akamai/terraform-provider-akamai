@@ -113,6 +113,7 @@ func resourceCPCodePAPINewCPCodes(d *schema.ResourceData, meta interface{}) *pap
 	return papi.NewCpCodes(contract, group)
 }
 
+// resourceCPCodeImport expects that the ID passed in will be CP Code ID, Contract ID and Group ID as a single tring delimited by colons: cpc_12345:ctr_12345:grp_12345
 func resourceCPCodeImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	args, err := splitAndValidateCPCodeImportID(d.Id())
 	if err != nil {
