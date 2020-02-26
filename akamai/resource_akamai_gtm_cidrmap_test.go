@@ -25,17 +25,22 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-	contract = data.akamai_contract.contract.id
-	comment =  "This is a test zone"
-	group  = data.akamai_group.group.id
-        load_imbalance_percentage = 10
-	wait_on_complete = false
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter = 5400
 }
 
-resource "akamai_gtm_datacenter" "test_datacenter" {
+resource "akamai_gtm_domain" "test_domain" {
+    name = local.domain
+    type = "weighted"
+    contract = data.akamai_contract.contract.id
+    comment =  "This is a test zone"
+    group  = data.akamai_group.group.id
+    load_imbalance_percentage = 10
+    wait_on_complete = false
+}
+
+resource "akamai_gtm_datacenter" "test_cidr_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
     nickname = "test_cidr_datacenter"
     wait_on_complete = false
@@ -53,18 +58,18 @@ resource "akamai_gtm_cidrmap" "test_cidr" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_cidrmap"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Other CIDR Blocks"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
-        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_datacenter.nickname
+        datacenter_id = akamai_gtm_datacenter.test_cidr_datacenter.datacenter_id
+        nickname = akamai_gtm_datacenter.test_cidr_datacenter.nickname
         blocks = ["1.2.3.9/24"]
     }
     wait_on_complete = false
     depends_on = [
         akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_datacenter
+        akamai_gtm_datacenter.test_cidr_datacenter
     ]
 }`, gtm_test_domain)
 
@@ -83,17 +88,22 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-        contract = data.akamai_contract.contract.id
-        comment =  "This is a test domain"
-        group  = data.akamai_group.group.id
-        load_imbalance_percentage = 10
-        wait_on_complete = false
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter = 5400
 }
 
-resource "akamai_gtm_datacenter" "test_datacenter" {
+resource "akamai_gtm_domain" "test_domain" {
+    name = local.domain
+    type = "weighted"
+    contract = data.akamai_contract.contract.id
+    comment =  "This is a test domain"
+    group  = data.akamai_group.group.id
+    load_imbalance_percentage = 10
+    wait_on_complete = false
+}
+
+resource "akamai_gtm_datacenter" "test_cidr_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
     nickname = "test_cidr_datacenter"
     wait_on_complete = false
@@ -111,25 +121,25 @@ resource "akamai_gtm_cidrmap" "test_cidr" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_cidrmap"
     default_datacenter {
-        datacenter_id = 5400
-        nickname = "All Other CIDR Blocks"
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
-        datacenter_id = akamai_gtm_datacenter.test_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_datacenter.nickname
+        datacenter_id = akamai_gtm_datacenter.test_cidr_datacenter.datacenter_id
+        nickname = akamai_gtm_datacenter.test_cidr_datacenter.nickname
         blocks = ["1.2.3.9/24"]
     }
     wait_on_complete = false
     depends_on = [
         akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_datacenter
+        akamai_gtm_datacenter.test_cidr_datacenter
     ]
  
 }`, gtm_test_domain)
 
 func TestAccAkamaiGTMCidrMap_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckCidr(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMCidrMapDestroy,
 		Steps: []resource.TestStep{
@@ -147,7 +157,7 @@ func TestAccAkamaiGTMCidrMap_basic(t *testing.T) {
 
 func TestAccAkamaiGTMCidrMap_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckCidr(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMCidrMapDestroy,
 		Steps: []resource.TestStep{
@@ -171,6 +181,32 @@ func TestAccAkamaiGTMCidrMap_update(t *testing.T) {
 	})
 }
 
+func testAccPreCheckCidr(t *testing.T) {
+
+	testAccPreCheckTF(t)
+	testCheckDeleteCidrMap("test_cidrmap", gtm_test_domain)
+	testAccDeleteDatacenterByNickname("test_cidr_datacenter", gtm_test_domain)
+
+}
+
+func testCheckDeleteCidrMap(cidrName string, dom string) error {
+
+	cidr, err := gtm.GetCidrMap(cidrName, dom)
+	if cidr == nil {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test cidrmap [%v]", cidrName)
+	_, err = cidr.Delete(dom)
+	if err != nil {
+		return fmt.Errorf("cidrmap was not deleted %s. Error: %s", cidrName, err.Error())
+	}
+	return nil
+
+}
+
 func testAccCheckAkamaiGTMCidrMapDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
@@ -179,17 +215,8 @@ func testAccCheckAkamaiGTMCidrMapDestroy(s *terraform.State) error {
 		}
 
 		cidrName, dom, _ := parseStringID(rs.Primary.ID)
-		cidr, err := gtm.GetCidrMap(cidrName, dom)
-		if cidr == nil {
-			return nil
-		}
-		if err != nil {
+		if err := testCheckDeleteCidrMap(cidrName, dom); err != nil {
 			return err
-		}
-		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test cidrmap [%v]", cidrName)
-		_, err = cidr.Delete(dom)
-		if err != nil {
-			return fmt.Errorf("cidrmap was not deleted %s. Error: %s", rs.Primary.ID, err.Error())
 		}
 	}
 	return nil

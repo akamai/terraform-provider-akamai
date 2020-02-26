@@ -711,19 +711,46 @@ func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property) {
 // create and populate Terraform traffic_targets schema
 func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Property) {
 
-	traffListNew := make([]interface{}, len(prop.TrafficTargets))
-	for i, tt := range prop.TrafficTargets {
-		traffSvrNew := map[string]interface{}{
-			"datacenter_id": tt.DatacenterId,
-			"enabled":       tt.Enabled,
-			"weight":        tt.Weight,
-			"name":          tt.Name,
-			"handout_cname": tt.HandoutCName,
-			"servers":       tt.Servers,
+	objectInventory := make(map[int]*gtm.TrafficTarget, len(prop.TrafficTargets))
+	if len(prop.TrafficTargets) > 0 {
+		for _, aObj := range prop.TrafficTargets {
+			objectInventory[aObj.DatacenterId] = aObj
 		}
-		traffListNew[i] = traffSvrNew
 	}
-	d.Set("traffic_target", traffListNew)
+	ttStateList := d.Get("traffic_target").([]interface{})
+	for _, ttMap := range ttStateList {
+		tt := ttMap.(map[string]interface{})
+		objIndex := tt["datacenter_id"].(int)
+		ttObject := objectInventory[objIndex]
+		if ttObject == nil {
+			log.Printf("[WARNING] [Akamai GTMv1] Property TrafficTarget %d NOT FOUND in returned GTM Object", tt["datacenter_id"])
+			continue
+		}
+		tt["datacenter_id"] = ttObject.DatacenterId
+		tt["name"] = ttObject.Name
+		tt["enabled"] = ttObject.Enabled
+		tt["weight"] = ttObject.Weight
+		tt["handout_cname"] = ttObject.HandoutCName
+		tt["servers"] = ttObject.Servers
+		// remove object
+		delete(objectInventory, objIndex)
+	}
+	if len(objectInventory) > 0 {
+		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
+		for _, mttObj := range objectInventory {
+			log.Printf("[DEBUG] [Akamai GTMv1] Property TrafficObject NEW State Object: %d", mttObj.DatacenterId)
+			ttNew := map[string]interface{}{
+				"datacenter_id": mttObj.DatacenterId,
+				"enabled":       mttObj.Enabled,
+				"weight":        mttObj.Weight,
+				"name":          mttObj.Name,
+				"handout_cname": mttObj.HandoutCName,
+				"servers":       mttObj.Servers,
+			}
+			ttStateList = append(ttStateList, ttNew)
+		}
+	}
+	d.Set("traffic_target", ttStateList)
 
 }
 
@@ -755,20 +782,44 @@ func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 // create and populate Terraform static_rr_sets schema
 func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Property) {
 
-	recordListNew := make([]interface{}, len(prop.StaticRRSets))
-	for i, r := range prop.StaticRRSets {
-		staticRecordNew := map[string]interface{}{
-			"type":  r.Type,
-			"ttl":   r.TTL,
-			"rdata": r.Rdata,
+	objectInventory := make(map[string]*gtm.StaticRRSet, len(prop.StaticRRSets))
+	if len(prop.StaticRRSets) > 0 {
+		for _, aObj := range prop.StaticRRSets {
+			objectInventory[aObj.Type] = aObj
 		}
-		recordListNew[i] = staticRecordNew
 	}
-	d.Set("static_rr_set", recordListNew)
+	rrStateList := d.Get("static_rr_set").([]interface{})
+	for _, rrMap := range rrStateList {
+		rr := rrMap.(map[string]interface{})
+		objIndex := rr["type"].(string)
+		rrObject := objectInventory[objIndex]
+		if rrObject == nil {
+			log.Printf("[WARNING] [Akamai GTMv1] Property StaticRRSet %s NOT FOUND in returned GTM Object", rr["type"])
+			continue
+		}
+		rr["type"] = rrObject.Type
+		rr["ttl"] = rrObject.TTL
+		rr["rdata"] = rrObject.Rdata
+		// remove object
+		delete(objectInventory, objIndex)
+	}
+	if len(objectInventory) > 0 {
+		log.Printf("[DEBUG] [Akamai GTMv1] Property StaticRRSet objects left...")
+		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
+		for _, mrrObj := range objectInventory {
+			rrNew := map[string]interface{}{
+				"type":  mrrObj.Type,
+				"ttl":   mrrObj.TTL,
+				"rdata": mrrObj.Rdata,
+			}
+			rrStateList = append(rrStateList, rrNew)
+		}
+	}
+	d.Set("static_rr_set", rrStateList)
 
 }
 
-// Populate existing livenesstest  object from resource data
+// Populate existing Livenesstest  object from resource data
 func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	liveTestList := d.Get("liveness_test").([]interface{})
@@ -820,44 +871,97 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 // create and populate Terraform liveness_test schema
 func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Property) {
 
-	livenessListNew := make([]interface{}, len(prop.LivenessTests))
-	for i, l := range prop.LivenessTests {
-		livenessNew := map[string]interface{}{
-			"name":                             l.Name,
-			"error_penalty":                    l.ErrorPenalty,
-			"peer_certificate_verification":    l.PeerCertificateVerification,
-			"test_interval":                    l.TestInterval,
-			"test_object":                      l.TestObject,
-			"request_string":                   l.RequestString,
-			"response_string":                  l.ResponseString,
-			"http_error3xx":                    l.HttpError3xx,
-			"http_error4xx":                    l.HttpError4xx,
-			"http_error5xx":                    l.HttpError5xx,
-			"disabled":                         l.Disabled,
-			"test_object_protocol":             l.TestObjectProtocol,
-			"test_object_password":             l.TestObjectPassword,
-			"test_object_port":                 l.TestObjectPort,
-			"ssl_client_private_key":           l.SslClientPrivateKey,
-			"ssl_client_certificate":           l.SslClientCertificate,
-			"disable_nonstandard_port_warning": l.DisableNonstandardPortWarning,
-			"test_object_username":             l.TestObjectUsername,
-			"test_timeout":                     l.TestTimeout,
-			"timeout_penalty":                  l.TimeoutPenalty,
-			"answers_required":                 l.AnswersRequired,
-			"resource_type":                    l.ResourceType,
-			"recursion_requested":              l.RecursionRequested,
+	objectInventory := make(map[string]*gtm.LivenessTest, len(prop.LivenessTests))
+	if len(prop.LivenessTests) > 0 {
+		for _, aObj := range prop.LivenessTests {
+			objectInventory[aObj.Name] = aObj
 		}
-		httpHeaderListNew := make([]interface{}, len(l.HttpHeaders))
-		for i, r := range l.HttpHeaders {
+	}
+	ltStateList := d.Get("liveness_test").([]interface{})
+	for _, ltMap := range ltStateList {
+		lt := ltMap.(map[string]interface{})
+		objIndex := lt["name"].(string)
+		ltObject := objectInventory[objIndex]
+		if ltObject == nil {
+			log.Printf("[WARNING] [Akamai GTMv1] Property LivenessTest  %s NOT FOUND in returned GTM Object", lt["name"])
+			continue
+		}
+		lt["name"] = ltObject.Name
+		lt["error_penalty"] = ltObject.ErrorPenalty
+		lt["peer_certificate_verification"] = ltObject.PeerCertificateVerification
+		lt["test_interval"] = ltObject.TestInterval
+		lt["test_object"] = ltObject.TestObject
+		lt["request_string"] = ltObject.RequestString
+		lt["response_string"] = ltObject.ResponseString
+		lt["http_error3xx"] = ltObject.HttpError3xx
+		lt["http_error4xx"] = ltObject.HttpError4xx
+		lt["http_error5xx"] = ltObject.HttpError5xx
+		lt["disabled"] = ltObject.Disabled
+		lt["test_object_protocol"] = ltObject.TestObjectProtocol
+		lt["test_object_password"] = ltObject.TestObjectPassword
+		lt["test_object_port"] = ltObject.TestObjectPort
+		lt["ssl_client_private_key"] = ltObject.SslClientPrivateKey
+		lt["ssl_client_certificate"] = ltObject.SslClientCertificate
+		lt["disable_nonstandard_port_warning"] = ltObject.DisableNonstandardPortWarning
+		lt["test_object_username"] = ltObject.TestObjectUsername
+		lt["test_timeout"] = ltObject.TestTimeout
+		lt["timeout_penalty"] = ltObject.TimeoutPenalty
+		lt["answers_required"] = ltObject.AnswersRequired
+		lt["resource_type"] = ltObject.ResourceType
+		lt["recursion_requested"] = ltObject.RecursionRequested
+		httpHeaderListNew := make([]interface{}, len(ltObject.HttpHeaders))
+		for i, r := range ltObject.HttpHeaders {
 			httpHeaderNew := map[string]interface{}{
 				"name":  r.Name,
 				"value": r.Value,
 			}
 			httpHeaderListNew[i] = httpHeaderNew
 		}
-		livenessNew["http_header"] = httpHeaderListNew
-		livenessListNew[i] = livenessNew
+		lt["http_header"] = httpHeaderListNew
+		// remove object
+		delete(objectInventory, objIndex)
 	}
-	d.Set("liveness_test", livenessListNew)
+	if len(objectInventory) > 0 {
+		log.Printf("[DEBUG] [Akamai GTMv1] Property LivenessTest objects left...")
+		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
+		for _, l := range objectInventory {
+			ltNew := map[string]interface{}{
+				"name":                             l.Name,
+				"error_penalty":                    l.ErrorPenalty,
+				"peer_certificate_verification":    l.PeerCertificateVerification,
+				"test_interval":                    l.TestInterval,
+				"test_object":                      l.TestObject,
+				"request_string":                   l.RequestString,
+				"response_string":                  l.ResponseString,
+				"http_error3xx":                    l.HttpError3xx,
+				"http_error4xx":                    l.HttpError4xx,
+				"http_error5xx":                    l.HttpError5xx,
+				"disabled":                         l.Disabled,
+				"test_object_protocol":             l.TestObjectProtocol,
+				"test_object_password":             l.TestObjectPassword,
+				"test_object_port":                 l.TestObjectPort,
+				"ssl_client_private_key":           l.SslClientPrivateKey,
+				"ssl_client_certificate":           l.SslClientCertificate,
+				"disable_nonstandard_port_warning": l.DisableNonstandardPortWarning,
+				"test_object_username":             l.TestObjectUsername,
+				"test_timeout":                     l.TestTimeout,
+				"timeout_penalty":                  l.TimeoutPenalty,
+				"answers_required":                 l.AnswersRequired,
+				"resource_type":                    l.ResourceType,
+				"recursion_requested":              l.RecursionRequested,
+			}
+			httpHeaderListNew := make([]interface{}, len(l.HttpHeaders))
+			for i, r := range l.HttpHeaders {
+				httpHeaderNew := map[string]interface{}{
+					"name":  r.Name,
+					"value": r.Value,
+				}
+				httpHeaderListNew[i] = httpHeaderNew
+			}
+			ltNew["http_header"] = httpHeaderListNew
+			ltStateList = append(ltStateList, ltNew)
+		}
+	}
+	d.Set("liveness_test", ltStateList)
 
 }

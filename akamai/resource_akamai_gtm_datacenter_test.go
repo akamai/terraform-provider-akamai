@@ -97,7 +97,7 @@ resource "akamai_gtm_datacenter" "test_datacenter" {
 
 func TestAccAkamaiGTMDatacenter_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckDC(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMDatacenterDestroy,
 		Steps: []resource.TestStep{
@@ -115,7 +115,7 @@ func TestAccAkamaiGTMDatacenter_basic(t *testing.T) {
 
 func TestAccAkamaiGTMDatacenter_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckDC(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMDatacenterDestroy,
 		Steps: []resource.TestStep{
@@ -139,6 +139,13 @@ func TestAccAkamaiGTMDatacenter_update(t *testing.T) {
 	})
 }
 
+func testAccPreCheckDC(t *testing.T) {
+
+	testAccPreCheckTF(t)
+	testAccDeleteDatacenterByNickname("test_datacenter", gtm_test_domain)
+
+}
+
 func testAccCheckAkamaiGTMDatacenterDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
@@ -147,20 +154,45 @@ func testAccCheckAkamaiGTMDatacenterDestroy(s *terraform.State) error {
 		}
 
 		dcid, dom, _ := parseIntID(rs.Primary.ID)
-		dc, err := gtm.GetDatacenter(dcid, dom)
-		if dc == nil {
-			return nil
-		}
-		if err != nil {
+		if err := testAccDeleteDatacenter(dcid, dom); err != nil {
 			return err
-		}
-		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test datacenter [%v]", dcid)
-		_, err = dc.Delete(dom)
-		if err != nil {
-			return fmt.Errorf("datacenter was not deleted %s. Error: %s", rs.Primary.ID, err.Error())
 		}
 	}
 	return nil
+}
+
+func testAccDeleteDatacenterByNickname(nickname string, dom string) error {
+
+	dcList, err := gtm.ListDatacenters(dom)
+	if dcList == nil || err != nil {
+		return err
+	}
+	for _, dc := range dcList {
+		if dc.Nickname == nickname {
+			_, err := dc.Delete(dom)
+			return err
+		}
+	}
+	return nil
+
+}
+
+func testAccDeleteDatacenter(dcid int, dom string) error {
+
+	dc, err := gtm.GetDatacenter(dcid, dom)
+	if dc == nil {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test datacenter [%v]", dcid)
+	_, err = dc.Delete(dom)
+	if err != nil {
+		return fmt.Errorf("datacenter was not deleted %d. Error: %s", dcid, err.Error())
+	}
+	return nil
+
 }
 
 func parseIntID(id string) (int, string, error) {

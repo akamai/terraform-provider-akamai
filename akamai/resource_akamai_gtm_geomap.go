@@ -335,16 +335,40 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap) {
 // create and populate Terraform geoMap assigments schema
 func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMap) {
 
-	geoListNew := make([]interface{}, len(geo.Assignments))
-	for i, geoa := range geo.Assignments {
-		geoNew := map[string]interface{}{
-			"datacenter_id": geoa.DatacenterId,
-			"nickname":      geoa.Nickname,
-			"countries":     geoa.Countries,
+	objectInventory := make(map[int]*gtm.GeoAssignment, len(geo.Assignments))
+	if len(geo.Assignments) > 0 {
+		for _, aObj := range geo.Assignments {
+			objectInventory[aObj.DatacenterId] = aObj
 		}
-		geoListNew[i] = geoNew
 	}
-	d.Set("assignment", geoListNew)
+	aStateList := d.Get("assignment").([]interface{})
+	for _, aMap := range aStateList {
+		a := aMap.(map[string]interface{})
+		objIndex := a["datacenter_id"].(int)
+		aObject := objectInventory[objIndex]
+		if aObject == nil {
+			log.Printf("[WARNING] [Akamai GTMv1] Geo Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
+			continue
+		}
+		a["datacenter_id"] = aObject.DatacenterId
+		a["nickname"] = aObject.Nickname
+		a["countries"] = aObject.Countries
+		// remove object
+		delete(objectInventory, objIndex)
+	}
+	if len(objectInventory) > 0 {
+		log.Printf("[DEBUG] [Akamai GTMv1] Geo Assignment objects left...")
+		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
+		for _, maObj := range objectInventory {
+			aNew := map[string]interface{}{
+				"datacenter_id": maObj.DatacenterId,
+				"nickname":      maObj.Nickname,
+				"countries":     maObj.Countries,
+			}
+			aStateList = append(aStateList, aNew)
+		}
+	}
+	d.Set("assignment", aStateList)
 
 }
 

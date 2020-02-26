@@ -56,7 +56,7 @@ To specify credentials inline, use the `property` or `dns` block to define crede
   * `client_token` — (Required) The credential client_token
   * `client_secret` — (Required) The credential client_secret
   * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
-* `dns` — (Optional) Provide credentials for the Fast DNS API (config-dns)
+* `dns` — (Optional) Provide credentials for the Edge DNS API (config-dns)
   * `host` — (Required) The credential hostname
   * `access_token` — (Required) The credential access_token
   * `client_token` — (Required) The credential client_token
