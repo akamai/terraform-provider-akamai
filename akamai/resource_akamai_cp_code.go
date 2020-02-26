@@ -1,7 +1,9 @@
 package akamai
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 
@@ -18,6 +20,9 @@ func resourceCPCode() *schema.Resource {
 		Create: resourceCPCodeCreate,
 		Read:   resourceCPCodeRead,
 		Delete: resourceCPCodeDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceCPCodeImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -106,4 +111,53 @@ func resourceCPCodePAPINewCPCodes(d *schema.ResourceData, meta interface{}) *pap
 		GroupID: d.Get("group").(string),
 	}
 	return papi.NewCpCodes(contract, group)
+}
+
+func resourceCPCodeImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	args, err := splitAndValidateCPCodeImportID(d.Id())
+	if err != nil {
+		return nil, err
+	}
+	cpCodeID := args[0]
+	contractID := args[1]
+	groupID := args[2]
+
+	cpCodes, err := papi.GetCpCodes(&papi.Contract{ContractID: contractID}, &papi.Group{GroupID: groupID})
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range cpCodes.CpCodes.Items {
+		if c.CpcodeID == cpCodeID {
+			log.Printf("[DEBUG] Import CP Code: %+v", cpCodeID)
+			d.SetId(c.CpcodeID)
+			d.Set("name", c.CpcodeName)
+			d.Set("contract", contractID)
+			d.Set("group", groupID)
+			d.Set("product", c.ProductID)
+			return []*schema.ResourceData{d}, nil
+		}
+	}
+	return nil, fmt.Errorf("Akamai CP Code import failed. CP Code %s not found in Contract %s / Group %s", cpCodeID, contractID, groupID)
+}
+
+func splitAndValidateCPCodeImportID(id string) ([]string, error) {
+	args := strings.Split(id, ":")
+	if len(args) != 3 {
+		return nil, fmt.Errorf("Akamai CP Code import requires CP Code ID, Contract ID and Group ID delimited by ':'. Received %s", id)
+	}
+	cpCodeID := args[0]
+	contractID := args[1]
+	groupID := args[2]
+
+	if !strings.HasPrefix(cpCodeID, "cpc_") {
+		return nil, fmt.Errorf("Akamai CP Code import requires CP Code ID (cpc_xxxxx) as first ':' delimited argument. Received %s", cpCodeID)
+	}
+	if !strings.HasPrefix(contractID, "ctr_") {
+		return nil, fmt.Errorf("Akamai CP Code import requires Contract ID (ctr_xxxxx) as second ':' delimited argument. Received %s", contractID)
+	}
+	if !strings.HasPrefix(groupID, "grp_") {
+		return nil, fmt.Errorf("Akamai CP Code import requires Group ID (grp_xxxxx) as third ':' delimited argument. Received %s", groupID)
+	}
+
+	return []string{cpCodeID, contractID, groupID}, nil
 }
