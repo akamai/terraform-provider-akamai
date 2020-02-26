@@ -55,11 +55,10 @@ Optional
   * `test_interval`
   * `test_object_protocol`
   * `test_timeout`
-  * `answer_required` — (Boolean)
+  * `answers_required` — (Boolean)
   * `disabled` — (Boolean)
   * `disable_nonstandard_port_warning` — (Boolean)
   * `error_penalty`
-  * `host_header`
   * `http_header` — (multiple allowed)
      `name`
      `value`

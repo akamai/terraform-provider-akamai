@@ -87,7 +87,7 @@ resource "akamai_gtm_resource" "test_resource" {
 
 func TestAccAkamaiGTMResource_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckRsc(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMResourceDestroy,
 		Steps: []resource.TestStep{
@@ -105,7 +105,7 @@ func TestAccAkamaiGTMResource_basic(t *testing.T) {
 
 func TestAccAkamaiGTMResource_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckTF(t) },
+		PreCheck:     func() { testAccPreCheckRsc(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiGTMResourceDestroy,
 		Steps: []resource.TestStep{
@@ -129,6 +129,31 @@ func TestAccAkamaiGTMResource_update(t *testing.T) {
 	})
 }
 
+func testAccPreCheckRsc(t *testing.T) {
+
+	testAccPreCheckTF(t)
+	testCheckDeleteResource("test_resource", gtm_test_domain)
+
+}
+
+func testCheckDeleteResource(rscName string, dom string) error {
+
+	rsc, err := gtm.GetResource(rscName, dom)
+	if rsc == nil {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test resource [%v]", rscName)
+	_, err = rsc.Delete(dom)
+	if err != nil {
+		return fmt.Errorf("resource was not deleted %s. Error: %s", rscName, err.Error())
+	}
+	return nil
+
+}
+
 func testAccCheckAkamaiGTMResourceDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
@@ -136,20 +161,9 @@ func testAccCheckAkamaiGTMResourceDestroy(s *terraform.State) error {
 			continue
 		}
 
-		rname, dom, _ := parseStringID(rs.Primary.ID)
-		rsrc, err := gtm.GetResource(rname, dom)
-		if rsrc == nil {
-			log.Printf("[DEBUG] [Akamai GTM] : Resource %s not found. Ignoring error (Hashicorp).", rname)
-			return nil
-		}
-		if err != nil {
-			log.Printf("[INFO] [Akamai GTM] Resource Destroy: Error reading resource [%s]", err.Error())
+		rscName, dom, _ := parseStringID(rs.Primary.ID)
+		if err := testCheckDeleteResource(rscName, dom); err != nil {
 			return err
-		}
-		log.Printf("[DEBUG] [Akamai GTMv1] Deleting test resource [%v]", rname)
-		_, err = rsrc.Delete(dom)
-		if err != nil {
-			return fmt.Errorf("resource was not deleted %s. Error: %s", rs.Primary.ID, err.Error())
 		}
 	}
 	return nil
