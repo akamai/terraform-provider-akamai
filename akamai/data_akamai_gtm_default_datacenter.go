@@ -16,15 +16,19 @@ func dataSourceGTMDefaultDatacenter() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"datacenter_id": {
+			"datacenter": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  5400,
 			},
+
+			"datacenter_id": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
 			"nickname": {
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "Default Datacenter",
+				Computed: true,
 			},
 		},
 	}
@@ -37,12 +41,12 @@ func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, meta interface{}
 	if !ok {
 		return errors.New("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
 	}
-	defaultDC, err := gtm.GetDatacenter(d.Get("datacenter_id").(int), domain.(string))
-	if defaultDC == nil {
-		return errors.New("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter does not Exist")
-	}
+	defaultDC, err := gtm.GetDatacenter(d.Get("datacenter").(int), domain.(string))
 	if err != nil {
 		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter retrieval failed. %v", err)
+	}
+	if defaultDC == nil {
+		return errors.New("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter does not Exist")
 	}
 	d.Set("nickname", defaultDC.Nickname)
 	d.Set("datacenter_id", defaultDC.DatacenterId)

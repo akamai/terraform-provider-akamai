@@ -25,6 +25,11 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter = 5400
+}
+
 resource "akamai_gtm_domain" "test_domain" {
         name = local.domain
         type = "weighted"
@@ -53,12 +58,13 @@ resource "akamai_gtm_asmap" "test_as" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_asmap"
     default_datacenter {
-	datacenter_id = 5400
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_as_datacenter.datacenter_id
         nickname = akamai_gtm_datacenter.test_as_datacenter.nickname
-        as_numbers = [12222, 16702,17334]
+        as_numbers = [17334]
     }
     wait_on_complete = false
     depends_on = [
@@ -80,6 +86,11 @@ data "akamai_contract" "contract" {
 }
 
 data "akamai_group" "group" {
+}
+
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter = 5400
 }
 
 resource "akamai_gtm_domain" "test_domain" {
@@ -110,12 +121,13 @@ resource "akamai_gtm_asmap" "test_as" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_asmap"
     default_datacenter {
-	datacenter_id = 5400
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_as_datacenter.datacenter_id
         nickname = akamai_gtm_datacenter.test_as_datacenter.nickname
-        as_numbers = [12222, 16702,17334]
+        as_numbers = [17334]
     }
     wait_on_complete = false
     depends_on = [
@@ -140,7 +152,7 @@ func TestAccAkamaiGTMAsMap_basic(t *testing.T) {
 					testAccCheckNumbersValues,
 					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
-				ExpectNonEmptyPlan: true,
+				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -159,7 +171,7 @@ func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 					testAccCheckNumbersValues,
 					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
-				ExpectNonEmptyPlan: true,
+				//ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccAkamaiGTMAsMapUpdateConfig,
@@ -168,7 +180,7 @@ func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 					testAccCheckNumbersValues,
 					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
-				ExpectNonEmptyPlan: true,
+				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})

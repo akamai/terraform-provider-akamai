@@ -10,6 +10,7 @@ locals {
 
 data "akamai_gtm_default_datacenter" "default_datacenter" {
     domain = akamai_gtm_domain.tfexample_domain.name
+    datacenter = 5400
 }
 
 // Mapping API Structure element names to Resource attribute names:

@@ -17,14 +17,14 @@ Basic usage:
 ```hcl
 data "akamai_gtm_default_datacenter" "example_ddc" {
      name = "example_domain.akadns.net"
-     datacenter_id = 5400
-     nickname = "nickname"
+     datacenter = 5400
 }
 
 resource "akamai_gtm_cidrmap" "example_cidrmap" {
     domain = "example_domain.akadns.net"
     default_datacenter {
         datacenter_id = data.akamai_gtm_default_datacenter.example.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.example.nickname
     ...
 }
 ```
@@ -34,11 +34,12 @@ resource "akamai_gtm_cidrmap" "example_cidrmap" {
 The following arguments are supported:
 
 * `domain` — (Required)
-* `datacenter_id` — (Optional) default datacenter Id
-* `nickname` — (Optional) default datacenter nickname
+* `domain` — (Optional. Default 5400)
+* `datacenter_id` — (Computed - do not configure) default datacenter Id
+* `nickname` — (Computed - do not configure) default datacenter nickname
 
 ## Attributes Reference
 
 The following are the return attributes:
 
-* `id` — The data resource id.
+* `id` — The data resource id. Format: <domain>:default_datacenter:<datacenter_id>

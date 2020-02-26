@@ -25,6 +25,11 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter = 5400
+}
+
 resource "akamai_gtm_domain" "test_domain" {
     name = local.domain
     type = "weighted"
@@ -53,7 +58,8 @@ resource "akamai_gtm_cidrmap" "test_cidr" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_cidrmap"
     default_datacenter {
-        datacenter_id = 5400 
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_cidr_datacenter.datacenter_id
@@ -80,6 +86,11 @@ data "akamai_contract" "contract" {
 }
 
 data "akamai_group" "group" {
+}
+
+data "akamai_gtm_default_datacenter" "default_datacenter" {
+    domain = akamai_gtm_domain.test_domain.name
+    datacenter = 5400
 }
 
 resource "akamai_gtm_domain" "test_domain" {
@@ -110,7 +121,8 @@ resource "akamai_gtm_cidrmap" "test_cidr" {
     domain = akamai_gtm_domain.test_domain.name
     name = "test_cidrmap"
     default_datacenter {
-        datacenter_id = 5400 
+        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
+        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
     }
     assignment {
         datacenter_id = akamai_gtm_datacenter.test_cidr_datacenter.datacenter_id
@@ -137,7 +149,7 @@ func TestAccAkamaiGTMCidrMap_basic(t *testing.T) {
 					testAccCheckAkamaiGTMCidrMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_cidrmap.test_cidr", "wait_on_complete", "false"),
 				),
-				ExpectNonEmptyPlan: true,
+				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -155,7 +167,7 @@ func TestAccAkamaiGTMCidrMap_update(t *testing.T) {
 					testAccCheckAkamaiGTMCidrMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_cidrmap.test_cidr", "wait_on_complete", "false"),
 				),
-				ExpectNonEmptyPlan: true,
+				//ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccAkamaiGTMCidrMapUpdateConfig,
@@ -163,7 +175,7 @@ func TestAccAkamaiGTMCidrMap_update(t *testing.T) {
 					testAccCheckAkamaiGTMCidrMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_cidrmap.test_cidr", "wait_on_complete", "false"),
 				),
-				ExpectNonEmptyPlan: true,
+				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
