@@ -334,16 +334,40 @@ func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 // create and populate Terraform cidrMap assigments schema
 func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
-	cidrListNew := make([]interface{}, len(cidr.Assignments))
-	for i, cassign := range cidr.Assignments {
-		cidrNew := map[string]interface{}{
-			"datacenter_id": cassign.DatacenterId,
-			"nickname":      cassign.Nickname,
-			"blocks":        cassign.Blocks,
+	objectInventory := make(map[int]*gtm.CidrAssignment, len(cidr.Assignments))
+	if len(cidr.Assignments) > 0 {
+		for _, aObj := range cidr.Assignments {
+			objectInventory[aObj.DatacenterId] = aObj
 		}
-		cidrListNew[i] = cidrNew
 	}
-	d.Set("assignment", cidrListNew)
+	aStateList := d.Get("assignment").([]interface{})
+	for _, aMap := range aStateList {
+		a := aMap.(map[string]interface{})
+		objIndex := a["datacenter_id"].(int)
+		aObject := objectInventory[objIndex]
+		if aObject == nil {
+			log.Printf("[WARNING] [Akamai GTMv1] Cidr Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
+			continue
+		}
+		a["datacenter_id"] = aObject.DatacenterId
+		a["nickname"] = aObject.Nickname
+		a["blocks"] = aObject.Blocks
+		// remove object
+		delete(objectInventory, objIndex)
+	}
+	if len(objectInventory) > 0 {
+		log.Printf("[DEBUG] [Akamai GTMv1] CIDR Assignment objects left...")
+		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
+		for _, maObj := range objectInventory {
+			aNew := map[string]interface{}{
+				"datacenter_id": maObj.DatacenterId,
+				"nickname":      maObj.Nickname,
+				"blocks":        maObj.Blocks,
+			}
+			aStateList = append(aStateList, aNew)
+		}
+	}
+	d.Set("assignment", aStateList)
 
 }
 

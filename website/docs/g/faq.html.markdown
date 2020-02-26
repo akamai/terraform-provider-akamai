@@ -68,30 +68,6 @@ You can also inject entire JSON blocks using the same mechanism:
 	}
 }
 ```
-## Migrating a GTM domain (and contained objects) to Terraform
-
-Migrating an existing GTM domain can be done in many ways. Two such methods include:
-
-### Via Command Line Utility
-
-A package, [CLI-Terraform-GTM](https://github.com/akamai/cli-terraform-gtm), for the [Akamai CLI](https://developer.akamai.com/cli) provides a time saving means to collect information about, generate a configuration for, and import an existing GTM domain and its contained objects and attributes. With the package, you can:
-
-1. Generate a json formatted list of all domain objects
-2. Generate a Terraform configuration for the domain and contained objects
-3. Generate a command line script to import all defined resources
-
-It is recommended that the existing domain configuration (using the API or Control Center) be downloaded before hand as a backup and reference.  Additionally, a terraform plan should be executed after importing to validate the generated tfstate. Note: The first time plan is run, an update will be shown for the provider defined domain fields: contract, group and wait_on_complete.
-
-### Via Step By Step Construction
-
-1. Download your existing domain configuration (using the API or Control Center) as a backup and reference.
-2. Using the domain download as a reference, create a terraform configuration representing the the existing domain and all contained GTM objects. Note: In creating each resource block, make note of `required`, `optional` and `computed` fields.
-3. Use the Terraform Import command to import the existing domain and contained objects; singularly and in serial order.
-4. (Optional, Recommended) Review domain download content and created terraform.tfstate to confirm the domain and all objects are represented correctly
-5. Execute a `Terraform Plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the GTM Backend.
-
-Since Terraform assumes it is the de-facto state for any resource it leverages, we strongly recommend staging the domain and objects imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to the existing GTM domain configuration.
-
 ## Leverage template_file and snippets to render your configuration file
 
 The ‘rules’ argument within the akamai_property resource enables leveraging the full breadth of the Akamai’s property management capabilities. This requires that a valid json string is passed on as opposed to a filename. Terraform enables this via the "local_file" data source that loads the file.
@@ -187,6 +163,39 @@ resource "akamai_property" "example" {
 rules = "${data.template_file.rules.rendered}"
 }
 ```
+
+## Migrating a GTM domain (and contained objects) to Terraform
+
+Migrating an existing GTM domain can be done in many ways. Two such methods include:
+
+### Via Command Line Utility
+
+A package, [CLI-Terraform-GTM](https://github.com/akamai/cli-terraform-gtm), for the [Akamai CLI](https://developer.akamai.com/cli) provides a time saving means to collect information about, generate a configuration for, and import an existing GTM domain and its contained objects and attributes. With the package, you can:
+
+1. Generate a json formatted list of all domain objects
+2. Generate a Terraform configuration for the domain and contained objects
+3. Generate a command line script to import all defined resources
+
+#### Notes
+1. Terraform limits the characters that can be part of it's resource names. During construction of the resource configurations invalid characters are replaced with underscore , '_'
+2. Terrform does not have any state during import of resources. Discrepencies may be identified in certain field lists during the first plan and/or apply following import as Terraform reconciles configurations and state. These discrepencies will clear following the first apply. 
+3. The first time plan or apply is run, an update will be shown for the provider defined domain fields: contract, group and wait_on_complete.
+
+It is recommended that the existing domain configuration (using the API or Control Center) be downloaded before hand as a backup and reference.  Additionally, a terraform plan should be executed after importing to validate the generated tfstate.
+
+### Via Step By Step Construction
+
+1. Download your existing domain configuration (using the API or Control Center) as a backup and reference.
+2. Using the domain download as a reference, create a terraform configuration representing the the existing domain and all contained GTM objects. Note: In creating each resource block, make note of `required`, `optional` and `computed` fields.
+3. Use the Terraform Import command to import the existing domain and contained objects; singularly and in serial order.
+4. (Optional, Recommended) Review domain download content and created terraform.tfstate to confirm the domain and all objects are represented correctly
+5. Execute a `Terraform Plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the GTM Backend.
+
+Since Terraform assumes it is the de-facto state for any resource it leverages, we strongly recommend staging the domain and objects imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to the existing GTM domain configuration.
+
+## GTM Terraform Resource Field Representation During Plan and/or Apply
+
+Terraform presents not only fields defined in the configuration, but all defined resource fields, during a Plan or Apply action. Fields are either required, optional or computed as specified in each resource description. Default values for fields will display if not explicitly configured. In many cases, the default will be zero, empty string or empty list depending on the the type. These default or empty values are informational and not included in resource updates.
 
 ## How does Terraform handle changes made through other clients (UI, APIs)?
 We recommend that anyone using Terraform should manage all changes through the provider. However in case this isn't true in emergency scenarios, the terraform state tree will become inconsistent. The next 'terraform plan' will warn and suggest changes. In case you make the same change in the UI and terraform, the state will go back to being consistent and the warning will go away.

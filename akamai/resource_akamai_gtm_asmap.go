@@ -336,16 +336,40 @@ func populateAsAssignmentsObject(d *schema.ResourceData, as *gtm.AsMap) {
 // create and populate Terraform asMap assigments schema
 func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtm.AsMap) {
 
-	asListNew := make([]interface{}, len(as.Assignments))
-	for i, assgn := range as.Assignments {
-		asNew := map[string]interface{}{
-			"datacenter_id": assgn.DatacenterId,
-			"nickname":      assgn.Nickname,
-			"as_numbers":    assgn.AsNumbers,
+	objectInventory := make(map[int]*gtm.AsAssignment, len(as.Assignments))
+	if len(as.Assignments) > 0 {
+		for _, aObj := range as.Assignments {
+			objectInventory[aObj.DatacenterId] = aObj
 		}
-		asListNew[i] = asNew
 	}
-	d.Set("assignment", asListNew)
+	aStateList := d.Get("assignment").([]interface{})
+	for _, aMap := range aStateList {
+		a := aMap.(map[string]interface{})
+		objIndex := a["datacenter_id"].(int)
+		aObject := objectInventory[objIndex]
+		if aObject == nil {
+			log.Printf("[WARNING] [Akamai GTMv1] As Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
+			continue
+		}
+		a["datacenter_id"] = aObject.DatacenterId
+		a["nickname"] = aObject.Nickname
+		a["as_numbers"] = aObject.AsNumbers
+		// remove object
+		delete(objectInventory, objIndex)
+	}
+	if len(objectInventory) > 0 {
+		log.Printf("[DEBUG] [Akamai GTMv1] As Assignment objects left...")
+		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
+		for _, maObj := range objectInventory {
+			aNew := map[string]interface{}{
+				"datacenter_id": maObj.DatacenterId,
+				"nickname":      maObj.Nickname,
+				"as_numbers":    maObj.AsNumbers,
+			}
+			aStateList = append(aStateList, aNew)
+		}
+	}
+	d.Set("assignment", aStateList)
 
 }
 
