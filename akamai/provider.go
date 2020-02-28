@@ -3,6 +3,10 @@ package akamai
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"strings"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
@@ -10,9 +14,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	"log"
-	"os"
-	"strings"
 )
 
 const (
@@ -150,6 +151,7 @@ func Provider() terraform.ResourceProvider {
 			"akamai_dns_record_set":         dataSourceDNSRecordSet(),
 			"akamai_group":                  dataSourcePropertyGroups(),
 			"akamai_property_rules":         dataPropertyRules(),
+			"akamai_property":               dataSourceAkamaiProperty(),
 			"akamai_gtm_default_datacenter": dataSourceGTMDefaultDatacenter(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
