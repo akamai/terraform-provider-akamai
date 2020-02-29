@@ -1,9 +1,12 @@
 package papi
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	"github.com/patrickmn/go-cache"
 )
 
 // Groups represents a collection of PAPI groups
@@ -44,30 +47,42 @@ func (groups *Groups) PostUnmarshalJSON() error {
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listgroups
 // Endpoint: GET /papi/v1/groups/
 func (groups *Groups) GetGroups() error {
-	req, err := client.NewRequest(
-		Config,
-		"GET",
-		"/papi/v1/groups",
-		nil,
-	)
-	if err != nil {
-		return err
-	}
+	cachegroups, found := Profilecache.Get("groups")
+	if found {
+		json.Unmarshal(cachegroups.([]byte), groups)
+		log.Printf("[DEBUG] GROUPS from CACHE %#v\n\n\n", groups)
+		//groups = cachegroups.(*Groups)
+		return nil
+	} else {
+		req, err := client.NewRequest(
+			Config,
+			"GET",
+			"/papi/v1/groups",
+			nil,
+		)
+		if err != nil {
+			return err
+		}
 
-	res, err := client.Do(Config, req)
-	if err != nil {
-		return err
-	}
+		res, err := client.Do(Config, req)
+		if err != nil {
+			return err
+		}
 
-	if client.IsError(res) {
-		return client.NewAPIError(res)
-	}
+		if client.IsError(res) {
+			return client.NewAPIError(res)
+		}
 
-	if err = client.BodyJSON(res, groups); err != nil {
-		return err
-	}
+		if err = client.BodyJSON(res, groups); err != nil {
+			return err
+		}
+		byt, _ := json.Marshal(groups)
+		Profilecache.Set("groups", byt, cache.DefaultExpiration)
 
-	return nil
+		log.Printf("[DEBUG] GROUPS ADD to CACHE %#v\n\n\n", groups)
+		return nil
+	}
+	//return nil
 }
 
 // AddGroup adds a group to a Groups collection
@@ -110,7 +125,9 @@ err:
 	return group, nil
 }
 
-// FindGroup finds a specific group by ID
+// FindGroupId finds a specific group by name
+// Deprecated: When there are multiple groups with same name,
+// the first one is returned. Please use FindGroupsByName instead.
 func (groups *Groups) FindGroupId(name string) (*Group, error) {
 	var group *Group
 	var groupFound bool
@@ -132,6 +149,31 @@ err:
 	}
 
 	return group, nil
+}
+
+// FindGroupsByName finds groups by name
+func (groups *Groups) FindGroupsByName(name string) ([]*Group, error) {
+	var group *Group
+	var foundGroups []*Group
+	var groupFound bool
+
+	if name == "" {
+		goto err
+	}
+
+	for _, group = range groups.Groups.Items {
+		if group.GroupName == name {
+			foundGroups = append(foundGroups, group)
+			groupFound = true
+		}
+	}
+
+err:
+	if !groupFound {
+		return nil, fmt.Errorf("Unable to find group: \"%s\"", name)
+	}
+
+	return foundGroups, nil
 }
 
 // Group represents a group resource
