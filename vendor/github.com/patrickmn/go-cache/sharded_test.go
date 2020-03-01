@@ -9,7 +9,6 @@ import (
 
 // func TestDjb33(t *testing.T) {
 // }
-// todo move to go.mod style deps
 
 var shardedKeys = []string{
 	"f",

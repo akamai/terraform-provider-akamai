@@ -16,7 +16,7 @@ import (
 // time of writing, the overhead of selecting buckets results in cache
 // operations being about twice as slow as for the standard cache with small
 // total cache sizes, and faster for larger ones.
-// todo move to go.mod style deps
+//
 // See cache_test.go for a few benchmarks.
 
 type unexportedShardedCache struct {

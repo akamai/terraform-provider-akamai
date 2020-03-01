@@ -29,7 +29,6 @@ const (
 	// For use with functions that take an expiration time. Equivalent to
 	// passing in the same expiration duration as was given to New() or
 	// NewFrom() when the cache was created (e.g. 5 minutes.)
-	// todo move to go.mod style deps
 	DefaultExpiration time.Duration = 0
 )
 
