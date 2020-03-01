@@ -1,9 +1,11 @@
 package papi
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	"github.com/patrickmn/go-cache"
 )
 
 // Contracts represents a collection of property manager contracts
@@ -45,34 +47,43 @@ func (contracts *Contracts) PostUnmarshalJSON() error {
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listcontracts
 // Endpoint: GET /papi/v1/contracts
 func (contracts *Contracts) GetContracts() error {
-	req, err := client.NewRequest(
-		Config,
-		"GET",
-		"/papi/v1/contracts",
-		nil,
-	)
-	if err != nil {
-		return err
-	}
 
-	res, err := client.Do(Config, req)
-	if err != nil {
-		return err
-	}
+	cachecontracts, found := Profilecache.Get("contracts")
+	if found {
+		json.Unmarshal(cachecontracts.([]byte), contracts)
+		return nil
+	} else {
 
-	if client.IsError(res) {
-		return client.NewAPIError(res)
-	}
+		req, err := client.NewRequest(
+			Config,
+			"GET",
+			"/papi/v1/contracts",
+			nil,
+		)
+		if err != nil {
+			return err
+		}
 
-	if err = client.BodyJSON(res, contracts); err != nil {
-		return err
-	}
+		res, err := client.Do(Config, req)
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		return err
-	}
+		if client.IsError(res) {
+			return client.NewAPIError(res)
+		}
 
-	return nil
+		if err = client.BodyJSON(res, contracts); err != nil {
+			return err
+		}
+
+		if err != nil {
+			return err
+		}
+		byt, _ := json.Marshal(contracts)
+		Profilecache.Set("contracts", byt, cache.DefaultExpiration)
+		return nil
+	}
 }
 
 // FindContract finds a specific contract by ID
