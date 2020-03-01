@@ -3,7 +3,7 @@ package papi
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+
 	"strconv"
 	"strings"
 	"time"
@@ -76,7 +76,6 @@ func (cpcodes *CpCodes) GetCpCodes() error {
 	cachecpcodes, found := Profilecache.Get("cpcodes")
 	if found {
 		json.Unmarshal(cachecpcodes.([]byte), cpcodes)
-		log.Printf("[DEBUG] CPCODES from CACHE %#v\n\n\n", cpcodes)
 		return nil
 	} else {
 		if cpcodes.Contract == nil {
@@ -112,20 +111,16 @@ func (cpcodes *CpCodes) GetCpCodes() error {
 		}
 		byt, _ := json.Marshal(cpcodes)
 		Profilecache.Set("cpcodes", byt, cache.DefaultExpiration)
-		log.Printf("[DEBUG] CPCodES ADD to CACHE %#v\n\n\n", cpcodes)
 		return nil
 	}
 }
 
 func (cpcodes *CpCodes) FindCpCode(nameOrId string) (*CpCode, error) {
-	log.Printf("[DEBUG] FindCpCode LOOP TO SEARCH %#v\n\n\n", cpcodes, len(cpcodes.CpCodes.Items))
 	if len(cpcodes.CpCodes.Items) == 0 {
-		log.Printf("[DEBUG] FindCpCode LOOP EMPTY GetCpCodes")
 		err := cpcodes.GetCpCodes()
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("[DEBUG] FindCpCode LOOP TO SEARCH ITEMS %#v\n\n\n", cpcodes.CpCodes.Items)
 		if len(cpcodes.CpCodes.Items) == 0 {
 			return nil, fmt.Errorf("unable to fetch CP codes for group/contract")
 		}

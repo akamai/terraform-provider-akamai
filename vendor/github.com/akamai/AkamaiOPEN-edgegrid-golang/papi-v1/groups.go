@@ -3,7 +3,6 @@ package papi
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/patrickmn/go-cache"
@@ -50,8 +49,6 @@ func (groups *Groups) GetGroups() error {
 	cachegroups, found := Profilecache.Get("groups")
 	if found {
 		json.Unmarshal(cachegroups.([]byte), groups)
-		log.Printf("[DEBUG] GROUPS from CACHE %#v\n\n\n", groups)
-		//groups = cachegroups.(*Groups)
 		return nil
 	} else {
 		req, err := client.NewRequest(
@@ -78,11 +75,8 @@ func (groups *Groups) GetGroups() error {
 		}
 		byt, _ := json.Marshal(groups)
 		Profilecache.Set("groups", byt, cache.DefaultExpiration)
-
-		log.Printf("[DEBUG] GROUPS ADD to CACHE %#v\n\n\n", groups)
 		return nil
 	}
-	//return nil
 }
 
 // AddGroup adds a group to a Groups collection
