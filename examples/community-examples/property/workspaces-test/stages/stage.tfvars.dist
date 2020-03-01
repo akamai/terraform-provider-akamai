@@ -1,0 +1,3 @@
+conf_name = "terraform_workspaces_STAGENAME"
+hostname = "terraform_workspaces_STAGENAME.edgesuite.net"
+edge_hostname = "terraform_workspaces_STAGENAME.edgesuite.net"
