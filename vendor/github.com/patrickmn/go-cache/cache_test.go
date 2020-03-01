@@ -15,6 +15,7 @@ type TestStruct struct {
 	Children []*TestStruct
 }
 
+// todo move to go.mod style deps
 func TestCache(t *testing.T) {
 	tc := New(DefaultExpiration, 0)
 
