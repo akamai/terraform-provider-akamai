@@ -1,4 +1,6 @@
 ## 0.4.0 (Unreleased)
+* [FIX] Release contract group and cpcode caching edge library v0.9.9 (`akamai_property`) 
+
 ## 0.3.0 (March 02, 2020)
 * [FIX] Provider produced inconsistent final plan #88 add contract group and cpcode caching edge library v0.9.9 (`akamai_property`) ([#88](https://github.com/terraform-providers/terraform-provider-template/issues/88))
 
