@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"os"
 	"reflect"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/patrickmn/go-cache"
 )
 
 func getSingleSchemaSetItem(d interface{}) map[string]interface{} {
@@ -89,4 +91,9 @@ func jsonBytesEqual(b1, b2 []byte) bool {
 	}
 
 	return reflect.DeepEqual(o1, o2)
+}
+
+func makeCache() *cache.Cache {
+	profilecache := cache.New(5*time.Minute, 10*time.Minute)
+	return profilecache
 }
