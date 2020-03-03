@@ -1,4 +1,4 @@
-## 0.4.0 (Unreleased)
+## 0.4.0 (March 03, 2020)
 * [FIX] Release contract group and cpcode caching edge library v0.9.9 (`akamai_property`) 
 
 ## 0.3.0 (March 02, 2020)
