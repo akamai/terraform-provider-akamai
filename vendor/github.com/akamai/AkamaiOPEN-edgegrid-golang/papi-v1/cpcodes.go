@@ -1,12 +1,15 @@
 package papi
 
 import (
+	"encoding/json"
 	"fmt"
+
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	"github.com/patrickmn/go-cache"
 )
 
 // CpCodes represents a collection of CP Codes
@@ -70,39 +73,46 @@ func (cpcodes *CpCodes) PostUnmarshalJSON() error {
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listcpcodes
 // Endpoint: GET /papi/v1/cpcodes/{?contractId,groupId}
 func (cpcodes *CpCodes) GetCpCodes() error {
-	if cpcodes.Contract == nil {
-		cpcodes.Contract = NewContract(NewContracts())
-		cpcodes.Contract.ContractID = cpcodes.Group.ContractIDs[0]
-	}
+	cachecpcodes, found := Profilecache.Get("cpcodes")
+	if found {
+		json.Unmarshal(cachecpcodes.([]byte), cpcodes)
+		return nil
+	} else {
+		if cpcodes.Contract == nil {
+			cpcodes.Contract = NewContract(NewContracts())
+			cpcodes.Contract.ContractID = cpcodes.Group.ContractIDs[0]
+		}
 
-	req, err := client.NewRequest(
-		Config,
-		"GET",
-		fmt.Sprintf(
-			"/papi/v1/cpcodes?groupId=%s&contractId=%s",
-			cpcodes.Group.GroupID,
-			cpcodes.Contract.ContractID,
-		),
-		nil,
-	)
-	if err != nil {
-		return err
-	}
+		req, err := client.NewRequest(
+			Config,
+			"GET",
+			fmt.Sprintf(
+				"/papi/v1/cpcodes?groupId=%s&contractId=%s",
+				cpcodes.Group.GroupID,
+				cpcodes.Contract.ContractID,
+			),
+			nil,
+		)
+		if err != nil {
+			return err
+		}
 
-	res, err := client.Do(Config, req)
-	if err != nil {
-		return err
-	}
+		res, err := client.Do(Config, req)
+		if err != nil {
+			return err
+		}
 
-	if client.IsError(res) {
-		return client.NewAPIError(res)
-	}
+		if client.IsError(res) {
+			return client.NewAPIError(res)
+		}
 
-	if err = client.BodyJSON(res, cpcodes); err != nil {
-		return err
+		if err = client.BodyJSON(res, cpcodes); err != nil {
+			return err
+		}
+		byt, _ := json.Marshal(cpcodes)
+		Profilecache.Set("cpcodes", byt, cache.DefaultExpiration)
+		return nil
 	}
-
-	return nil
 }
 
 func (cpcodes *CpCodes) FindCpCode(nameOrId string) (*CpCode, error) {
@@ -111,7 +121,6 @@ func (cpcodes *CpCodes) FindCpCode(nameOrId string) (*CpCode, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		if len(cpcodes.CpCodes.Items) == 0 {
 			return nil, fmt.Errorf("unable to fetch CP codes for group/contract")
 		}

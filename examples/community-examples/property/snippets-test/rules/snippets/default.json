@@ -1,0 +1,57 @@
+    "behaviors": [
+      {
+        "name": "origin",
+        "options": {
+          "cacheKeyHostname": "ORIGIN_HOSTNAME",
+          "compress": false,
+          "enableTrueClientIp": false,
+          "forwardHostHeader": "ORIGIN_HOSTNAME",
+          "hostname": "defender.wheep.co.uk",
+          "httpPort": 80,
+          "httpsPort": 443,
+          "originCertificate": "",
+          "originSni": true,
+          "originType": "CUSTOMER",
+          "ports": "",
+          "verificationMode": "PLATFORM_SETTINGS"
+        }
+      },
+      {
+        "name": "caching",
+        "options": {
+          "behavior": "NO_STORE"
+        }
+      },
+      {
+        "name": "sureRoute",
+        "options": {
+          "enabled": false,
+          "srDownloadLinkTitle": ""
+        }
+      },
+      {
+        "name": "prefetch",
+        "options": {
+          "enabled": true
+        }
+      },
+      {
+        "name": "allowPost",
+        "options": {
+          "enabled": false
+        }
+      },
+      {
+        "name": "tieredDistribution",
+        "options": {
+          "enabled": ${tdenabled}
+        }
+      },
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "id": 874909
+          }
+        }
+      }

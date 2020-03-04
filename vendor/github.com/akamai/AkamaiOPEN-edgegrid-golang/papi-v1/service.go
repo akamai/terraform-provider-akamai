@@ -1,11 +1,15 @@
 package papi
 
 import (
+	"time"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/patrickmn/go-cache"
 )
 
 var (
-	Config edgegrid.Config
+	Config       edgegrid.Config
+	Profilecache = cache.New(5*time.Minute, 10*time.Minute)
 )
 
 // GetGroups retrieves all groups

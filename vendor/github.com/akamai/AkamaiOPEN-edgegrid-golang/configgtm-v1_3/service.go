@@ -1,10 +1,11 @@
 package configgtm
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httputil"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -28,6 +29,9 @@ func Init(config edgegrid.Config) {
 
 // Utility func to print http req
 func printHttpRequest(req *http.Request, body bool) {
+	if req == nil {
+		return
+	}
 
 	b, err := httputil.DumpRequestOut(req, body)
 	if err == nil {
@@ -37,6 +41,9 @@ func printHttpRequest(req *http.Request, body bool) {
 
 // Utility func to print http response
 func printHttpResponse(res *http.Response, body bool) {
+	if res == nil {
+		return
+	}
 
 	b, err := httputil.DumpResponse(res, body)
 	if err == nil {
