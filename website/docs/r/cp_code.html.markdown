@@ -42,4 +42,4 @@ Import into Terraform state using CP Code ID, Contract ID and Group ID:
 ```
 terraform import akamai_cp_code.foo cpc_123456:ctr_123456:grp_123456
 ```
-All three IDs are required and must be in order delimeted with colons.
+All three IDs are required and must be in order delimited with colons.
