@@ -1,7 +1,7 @@
 module github.com/terraform-providers/terraform-provider-akamai
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.9
+	github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.10
 	github.com/go-ini/ini v1.52.0 // indirect
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
 	github.com/hashicorp/terraform v0.12.3

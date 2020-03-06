@@ -1,9 +1,11 @@
 package papi
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	"github.com/patrickmn/go-cache"
 )
 
 // Products represents a collection of products
@@ -45,33 +47,42 @@ func (products *Products) PostUnmarshalJSON() error {
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listproducts
 // Endpoint: GET /papi/v1/products/{?contractId}
 func (products *Products) GetProducts(contract *Contract) error {
-	req, err := client.NewRequest(
-		Config,
-		"GET",
-		fmt.Sprintf(
-			"/papi/v1/products?contractId=%s",
-			contract.ContractID,
-		),
-		nil,
-	)
-	if err != nil {
-		return err
+	cacheproducts, found := Profilecache.Get("products")
+	if found {
+		json.Unmarshal(cacheproducts.([]byte), products)
+		return nil
+	} else {
+		req, err := client.NewRequest(
+			Config,
+			"GET",
+			fmt.Sprintf(
+				"/papi/v1/products?contractId=%s",
+				contract.ContractID,
+			),
+			nil,
+		)
+		if err != nil {
+			return err
+		}
+
+		res, err := client.Do(Config, req)
+		if err != nil {
+			return err
+		}
+
+		if client.IsError(res) {
+			return client.NewAPIError(res)
+		}
+
+		if err = client.BodyJSON(res, products); err != nil {
+			return err
+		}
+
+		byt, _ := json.Marshal(products)
+		Profilecache.Set("products", byt, cache.DefaultExpiration)
+		return nil
 	}
 
-	res, err := client.Do(Config, req)
-	if err != nil {
-		return err
-	}
-
-	if client.IsError(res) {
-		return client.NewAPIError(res)
-	}
-
-	if err = client.BodyJSON(res, products); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // FindProduct finds a specific product by ID
