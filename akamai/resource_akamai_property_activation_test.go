@@ -32,7 +32,7 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_cp_code" "cp_code" {
-	name = "terraform-testing1"
+	name = "terraform-testing3"
 	contract = "${data.akamai_contract.contract.id}"
 	group = "${data.akamai_group.group.id}"
 	product = "prd_SPM"
@@ -42,12 +42,12 @@ resource "akamai_edge_hostname" "test" {
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test1.exampleterraform.io.edgesuite.net"
+    edge_hostname =  "terraform-test3.exampleterraform.io.edgesuite.net"
     ipv6 = true
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test1"
+  name = "terraform-test3"
 
   contact = ["user@exampleterraform.io"]
 
@@ -183,7 +183,7 @@ data "akamai_group" "group" {
 }
 
 resource "akamai_cp_code" "cp_code" {
-	name = "terraform-testing"
+	name = "terraform-testing3"
 	contract = "${data.akamai_contract.contract.id}"
 	group = "${data.akamai_group.group.id}"
 	product = "prd_SPM"
@@ -193,12 +193,12 @@ resource "akamai_edge_hostname" "test" {
     product = "prd_SPM"
     contract = "${data.akamai_contract.contract.id}"
     group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test1.exampleterraform.io.edgesuite.net"
+    edge_hostname =  "terraform-test3.exampleterraform.io.edgesuite.net"
     ipv6 = true
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test1"
+  name = "terraform-test3"
 
   contact = ["user@exampleterraform.io"]
 
@@ -332,8 +332,8 @@ func testAccCheckAkamaiPropertyActivationExists(s *terraform.State) error {
 		if rs.Type != "akamai_property_activation" {
 			continue
 		}
-		id := strings.Split(rs.Primary.Attributes["property"], "-")
-		propertyID := id[0]
+
+		propertyID := rs.Primary.Attributes["property"]
 
 		property := papi.NewProperty(papi.NewProperties())
 		property.PropertyID = propertyID
@@ -367,8 +367,8 @@ func testAccCheckAkamaiPropertyActivationLatest(s *terraform.State) error {
 		if rs.Type != "akamai_property_activation" {
 			continue
 		}
-		id := strings.Split(rs.Primary.Attributes["property"], "-")
-		propertyID := id[0]
+
+		propertyID := rs.Primary.Attributes["property"]
 
 		property := papi.NewProperty(papi.NewProperties())
 		property.PropertyID = propertyID

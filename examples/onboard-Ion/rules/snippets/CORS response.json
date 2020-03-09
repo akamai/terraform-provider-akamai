@@ -1,0 +1,25 @@
+{
+    "name": "CORS Response",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "modifyOutgoingResponseHeader",
+            "options": {
+                "action": "ADD",
+                "standardAddHeaderName": "ACCESS_CONTROL_ALLOW_CREDENTIALS",
+                "headerValue": "true"
+            }
+        }
+    ],
+    "criteria": [
+        {
+            "name": "requestHeader",
+            "options": {
+                "headerName": "origin",
+                "matchOperator": "EXISTS",
+                "matchWildcardName": false
+            }
+        }
+    ],
+    "criteriaMustSatisfy": "all"
+}

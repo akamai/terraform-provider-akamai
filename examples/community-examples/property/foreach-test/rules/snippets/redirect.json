@@ -1,0 +1,34 @@
+      {
+        "name": "redirects",
+        "children": [
+          {
+            "name": "http to https",
+            "children": [],
+            "behaviors": [
+              {
+                "name": "redirect",
+                "options": {
+                  "destinationHostname": "SAME_AS_REQUEST",
+                  "destinationPath": "SAME_AS_REQUEST",
+                  "destinationProtocol": "HTTPS",
+                  "mobileDefaultChoice": "DEFAULT",
+                  "queryString": "APPEND",
+                  "responseCode": 301
+                }
+              }
+            ],
+            "criteria": [
+              {
+                "name": "requestProtocol",
+                "options": {
+                  "value": "HTTP"
+                }
+              }
+            ],
+            "criteriaMustSatisfy": "all"
+          }
+        ],
+        "behaviors": [],
+        "criteria": [],
+        "criteriaMustSatisfy": "all"
+      }

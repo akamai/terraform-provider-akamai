@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -46,7 +45,7 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	}
 	sha1hashOld := getSHAString(string(jsonBody))
 
-	log.Printf("[DEBUG] SHA from OLD Json %s\n", sha1hashOld)
+	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
 
 	rulesNew, err := getRulesForComp(d, new)
 	rulesNew.Etag = ""
@@ -56,17 +55,62 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	}
 	sha1hashNew := getSHAString(string(jsonBodyNew))
 
-	log.Printf("[DEBUG] SHA from NEW Json %s\n", sha1hashNew)
+	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew)
 
 	if sha1hashOld == sha1hashNew {
+		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Equal skip diff \n")
 		return true
 	} else {
+		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
 		return false
 	}
-	//return jsonBytesEqual(ob.Bytes(), nb.Bytes())
+
 }
 
-func getRulesForComp(d *schema.ResourceData, json string) (*papi.Rules, error) {
+func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff) bool {
+	ob := bytes.NewBufferString("")
+	if err := json.Compact(ob, []byte(old)); err != nil {
+		return false
+	}
+
+	nb := bytes.NewBufferString("")
+	if err := json.Compact(nb, []byte(new)); err != nil {
+		return false
+	}
+	log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
+	log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
+
+	rulesOld, err := getRulesForComp(d, old)
+	rulesOld.Etag = ""
+	jsonBody, err := jsonhooks.Marshal(rulesOld)
+	if err != nil {
+		return false
+	}
+	sha1hashOld := getSHAString(string(jsonBody))
+
+	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
+
+	rulesNew, err := getRulesForComp(d, new)
+	rulesNew.Etag = ""
+	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
+	if err != nil {
+		return false
+	}
+	sha1hashNew := getSHAString(string(jsonBodyNew))
+
+	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew)
+
+	if sha1hashOld == sha1hashNew {
+		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Equal skip diff \n")
+		return true
+	} else {
+		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
+		return false
+	}
+
+}
+
+func getRulesForComp(d interface{}, json string) (*papi.Rules, error) {
 
 	property, e := getProperty(d)
 	if e != nil {
@@ -75,8 +119,16 @@ func getRulesForComp(d *schema.ResourceData, json string) (*papi.Rules, error) {
 
 	rules := papi.NewRules()
 	rules.Rule.Name = "default"
-	id := strings.Split(d.Id(), "-")
-	rules.PropertyID = id[0]
+	switch d.(type) {
+	case *schema.ResourceData:
+		rules.PropertyID = d.(*schema.ResourceData).Id()
+	case *schema.ResourceDiff:
+		rules.PropertyID = d.(*schema.ResourceDiff).Id()
+	default:
+		rules.PropertyID = d.(*schema.ResourceData).Id()
+	}
+
+	//rules.PropertyID = d.Id()
 	rules.PropertyVersion = property.LatestVersion
 
 	origin, err := createOrigin(d)
@@ -91,7 +143,20 @@ func getRulesForComp(d *schema.ResourceData, json string) (*papi.Rules, error) {
 	log.Printf("[DEBUG] Unmarshal Rules from JSON")
 	unmarshalRulesFromJSONComp(d, json, rules)
 
-	if ruleFormat, ok := d.GetOk("rule_format"); ok {
+	var ruleFormat interface{}
+	var ok bool
+
+	switch d.(type) {
+	case *schema.ResourceData:
+		ruleFormat, ok = d.(*schema.ResourceData).GetOk("rule_format")
+	case *schema.ResourceDiff:
+		ruleFormat, ok = d.(*schema.ResourceDiff).GetOk("rule_format")
+	default:
+		ruleFormat, ok = d.(*schema.ResourceData).GetOk("rule_format")
+	}
+
+	//if ruleFormat, ok := d.GetOk("rule_format"); ok {
+	if ok {
 		rules.RuleFormat = ruleFormat.(string)
 	} else {
 		ruleFormats := papi.NewRuleFormats()
@@ -101,8 +166,8 @@ func getRulesForComp(d *schema.ResourceData, json string) (*papi.Rules, error) {
 		}
 	}
 
-	if ok := d.HasChange("rule_format"); ok {
-	}
+	//if ok := d.HasChange("rule_format"); ok {
+	//}
 
 	cpCode, err := getCPCode(d, property.Contract, property.Group)
 	if err != nil {
@@ -117,7 +182,7 @@ func getRulesForComp(d *schema.ResourceData, json string) (*papi.Rules, error) {
 	return rules, nil
 }
 
-func unmarshalRulesFromJSONComp(d *schema.ResourceData, rulesComp string, propertyRules *papi.Rules) {
+func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *papi.Rules) {
 	// Default Rules
 
 	propertyRules.Rule = &papi.Rule{Name: "default"}
@@ -234,7 +299,18 @@ func unmarshalRulesFromJSONComp(d *schema.ResourceData, rulesComp string, proper
 	}) // for loop rules
 
 	// ADD vars from variables resource
-	jsonvars, ok := d.GetOk("variables")
+	var jsonvars interface{}
+	var ok bool
+
+	switch d.(type) {
+	case *schema.ResourceData:
+		jsonvars, ok = d.(*schema.ResourceData).GetOk("variables")
+	case *schema.ResourceDiff:
+		jsonvars, ok = d.(*schema.ResourceDiff).GetOk("variables")
+	default:
+		jsonvars, ok = d.(*schema.ResourceData).GetOk("variables")
+	}
+	//jsonvars, ok := d.GetOk("variables")
 	if ok {
 		//	log.Println("unmarshalRulesFromJson VARS from JSON ", jsonvars)
 		variables := gjson.Parse(jsonvars.(string))
@@ -260,7 +336,19 @@ func unmarshalRulesFromJSONComp(d *schema.ResourceData, rulesComp string, proper
 	}
 
 	// ADD is_secure from resource
-	is_secure, set := d.GetOkExists("is_secure")
+	var is_secure interface{}
+	var set bool
+
+	switch d.(type) {
+	case *schema.ResourceData:
+		is_secure, set = d.(*schema.ResourceData).GetOk("is_secure")
+	case *schema.ResourceDiff:
+		is_secure, set = d.(*schema.ResourceDiff).GetOk("is_secure")
+	default:
+		is_secure, set = d.(*schema.ResourceData).GetOk("is_secure")
+	}
+
+	//is_secure, set := d.GetOkExists("is_secure")
 	if set && is_secure.(bool) {
 		propertyRules.Rule.Options.IsSecure = true
 	} else if set && !is_secure.(bool) {
@@ -268,7 +356,18 @@ func unmarshalRulesFromJSONComp(d *schema.ResourceData, rulesComp string, proper
 	}
 
 	// ADD cp_code from resource
-	cp_code, set := d.GetOk("cp_code")
+	var cp_code interface{}
+
+	switch d.(type) {
+	case *schema.ResourceData:
+		cp_code, set = d.(*schema.ResourceData).GetOk("cp_code")
+	case *schema.ResourceDiff:
+		cp_code, set = d.(*schema.ResourceDiff).GetOk("cp_code")
+	default:
+		cp_code, set = d.(*schema.ResourceData).GetOk("cp_code")
+	}
+
+	//cp_code, set := d.GetOk("cp_code")
 	if set {
 		beh := papi.NewBehavior()
 		beh.Name = "cpCode"

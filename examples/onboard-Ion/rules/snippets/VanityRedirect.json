@@ -1,0 +1,31 @@
+{
+    "name": "VanityRedirect",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "redirect",
+            "options": {
+                "queryString": "APPEND",
+                "responseCode": 301,
+                "destinationHostname": "OTHER",
+                "destinationHostnameOther": "www.cool.com",
+                "destinationPath": "SAME_AS_REQUEST",
+                "destinationProtocol": "SAME_AS_REQUEST",
+                "mobileDefaultChoice": "DEFAULT"
+            }
+        }
+    ],
+    "criteria": [
+        {
+            "name": "path",
+            "options": {
+                "matchOperator": "MATCHES_ONE_OF",
+                "values": [
+                    "/marketingapp2/*"
+                ],
+                "matchCaseSensitive": false
+            }
+        }
+    ],
+    "criteriaMustSatisfy": "all"
+}

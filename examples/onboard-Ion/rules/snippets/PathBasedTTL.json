@@ -1,0 +1,27 @@
+{
+    "name": "PathBasedTTL",
+    "children": [],
+    "behaviors": [
+        {
+            "name": "caching",
+            "options": {
+                "behavior": "MAX_AGE",
+                "mustRevalidate": false,
+                "ttl": "11s"
+            }
+        }
+    ],
+    "criteria": [
+        {
+            "name": "path",
+            "options": {
+                "matchOperator": "MATCHES_ONE_OF",
+                "values": [
+                    "/marketing/*"
+                ],
+                "matchCaseSensitive": false
+            }
+        }
+    ],
+    "criteriaMustSatisfy": "all"
+}
