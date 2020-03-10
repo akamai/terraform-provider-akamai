@@ -222,6 +222,7 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 	}
 
 	dnsv2.Init(DNSv2Config)
+	edgegrid.SetupLogging()
 	return &DNSv2Config, nil
 }
 
@@ -240,6 +241,7 @@ func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
 		}
 
 		gtm.Init(GTMv1Config)
+		edgegrid.SetupLogging()
 		return &GTMv1Config, nil
 	}
 
