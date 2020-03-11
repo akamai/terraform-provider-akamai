@@ -58,7 +58,7 @@ func resourceDNSv2Zone() *schema.Resource {
 			},
 			"sign_and_serve": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 			},
 			"sign_and_serve_algorithm": {
 				Type:     schema.TypeString,
@@ -143,17 +143,17 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 			if e != nil {
 				return e
 			}
-
-			// Indirectly create NS and SOA records
-			e = zonecreate.SaveChangelist()
-			if e != nil {
-				return e
+			if zonetype == "PRIMARY" {
+				// Indirectly create NS and SOA records
+				e = zonecreate.SaveChangelist()
+				if e != nil {
+					return e
+				}
+				e = zonecreate.SubmitChangelist()
+				if e != nil {
+					return e
+				}
 			}
-			e = zonecreate.SubmitChangelist()
-			if e != nil {
-				return e
-			}
-
 			zone, e := dnsv2.GetZone(hostname)
 			if e != nil {
 				return e

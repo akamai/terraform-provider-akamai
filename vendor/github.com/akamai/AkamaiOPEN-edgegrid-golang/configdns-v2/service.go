@@ -13,4 +13,6 @@ var (
 // Init sets the DNSv2 edgegrid Config
 func Init(config edgegrid.Config) {
 	Config = config
+	edgegrid.SetupLogging()
+
 }

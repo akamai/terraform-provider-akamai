@@ -123,3 +123,55 @@ func (e *RecordError) Error() string {
 
 	return "<nil>"
 }
+
+type TsigError struct {
+	keyName          string
+	httpErrorMessage string
+	apiErrorMessage  string
+	err              error
+}
+
+func (e *TsigError) Network() bool {
+	if e.httpErrorMessage != "" {
+		return true
+	}
+	return false
+}
+
+func (e *TsigError) NotFound() bool {
+	if e.err == nil && e.httpErrorMessage == "" && e.apiErrorMessage == "" {
+		return true
+	}
+	return false
+}
+
+func (e *TsigError) FailedToSave() bool {
+	return false
+}
+
+func (e *TsigError) ValidationFailed() bool {
+	if e.apiErrorMessage != "" {
+		return true
+	}
+	return false
+}
+
+func (e *TsigError) Error() string {
+	if e.Network() {
+		return fmt.Sprintf("Tsig network error: [%s]", e.httpErrorMessage)
+	}
+
+	if e.NotFound() {
+		return fmt.Sprintf("tsig key not found.")
+	}
+
+	if e.FailedToSave() {
+		return fmt.Sprintf("tsig key failed to save: [%s]", e.err.Error())
+	}
+
+	if e.ValidationFailed() {
+		return fmt.Sprintf("tsig key validation failed: [%s]", e.apiErrorMessage)
+	}
+
+	return "<nil>"
+}

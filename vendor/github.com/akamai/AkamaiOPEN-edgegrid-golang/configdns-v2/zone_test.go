@@ -15,7 +15,7 @@ func TestZone_JSON(t *testing.T) {
     "signAndServe": false
 }`)
 
-	zonecreate := ZoneCreate{"example.com", "PRIMARY", []string{""}, "This is a test zone", false}
+	zonecreate := ZoneCreate{Zone: "example.com", Type: "PRIMARY", Masters: []string{""}, Comment: "This is a test zone", SignAndServe: false}
 	zone := NewZone(zonecreate)
 	err := jsonhooks.Unmarshal(responseBody, zone)
 	assert.NoError(t, err)

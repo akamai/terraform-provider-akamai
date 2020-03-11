@@ -19,15 +19,23 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/sirupsen/logrus"
+        "net/http"
+        "net/http/httputil"
+	log "github.com/sirupsen/logrus"
 )
 
 var logBuffer *bufio.Writer
 var LogFile *os.File
+var EdgegridLog *log.Logger
 
-func SetupLogging(log *logrus.Logger) {
-	log.SetFormatter(&logrus.TextFormatter{
+func SetupLogging() {
+
+	if EdgegridLog != nil {
+		return			// already configured
+	}
+	
+        EdgegridLog = log.New()
+	EdgegridLog.SetFormatter(&log.TextFormatter{
 		DisableLevelTruncation:    true,
 		EnvironmentOverrideColors: true,
 	})
@@ -38,19 +46,21 @@ func SetupLogging(log *logrus.Logger) {
 		if err != nil {
 			log.Fatal(err)
 		}
-                log.SetOutput(LogFile)
+                EdgegridLog.SetOutput(LogFile)
 	}
 
-	log.SetLevel(logrus.PanicLevel)
+	EdgegridLog.SetLevel(log.PanicLevel)
 	if logLevel := os.Getenv("AKAMAI_LOG"); logLevel != "" {
-		level, err := logrus.ParseLevel(logLevel)
+		level, err := log.ParseLevel(logLevel)
 		if err == nil {
-			log.SetLevel(level)
+			EdgegridLog.SetLevel(level)
 		} else {
 			log.Warningln("[WARN] Unknown AKAMAI_LOG value. Allowed values: panic, fatal, error, warn, info, debug, trace")
 
 		}
 	}
+
+	defer LogFile.Close()
 }
 
 func LogMultiline(f func(args ...interface{}), args ...string) {
@@ -71,3 +81,28 @@ func LogMultilinef(f func(formatter string, args ...interface{}), formatter stri
 		f(str)
 	}
 }
+
+// Utility func to print http req
+func PrintHttpRequest(req *http.Request, body bool) {
+
+        if req == nil {
+                return
+        }
+        b, err := httputil.DumpRequestOut(req, body)
+        if err == nil {
+                LogMultiline(EdgegridLog.Traceln, string(b))
+        }
+}
+
+// Utility func to print http response
+func PrintHttpResponse(res *http.Response, body bool) {
+
+        if res == nil {
+                return
+        }
+        b, err := httputil.DumpResponse(res, body)
+        if err == nil {
+                LogMultiline(EdgegridLog.Traceln, string(b))
+        }
+}
+
