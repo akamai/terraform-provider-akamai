@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"sync"
+	"reflect"
 )
 
 var (
@@ -47,13 +48,25 @@ type ZoneCreate struct {
 	Type                  string   `json:"type"`
 	Masters               []string `json:"masters,omitempty"`
 	Comment               string   `json:"comment,omitempty"`
-	SignAndServe          bool     `json:"signAndServe,omitempty"`
+	SignAndServe          bool     `json:"signAndServe"`
 	SignAndServeAlgorithm string   `json:"signAndServeAlgorithm,omitempty"`
 	TsigKey               *TSIGKey `json:"tsigKey,omitempty"`
 	Target                string   `json:"target,omitempty"`
 	EndCustomerId         string   `json:"endCustomerId,omitempty"`
 	ContractId            string   `json:"contractid,omitempty"`
 }
+
+var zoneStructMap map[string]string = map[string]string{
+        						"Zone": "zone",
+        						"Type": "type",
+        						"Masters": "masters",
+        						"Comment": "comment",
+        						"SignAndServe": "signAndServe",
+        						"SignAndServeAlgorithm": "signAndServeAlgorithm",
+        						"TsigKey": "tsigKey",
+        						"Target": "target",
+        						"EndCustomerId": "endCustomerId",
+        						"ContractId": "contractid"}
 
 type ZoneResponse struct {
 	Zone                  string   `json:"zone,omitempty"`
@@ -238,11 +251,12 @@ func (zone *ZoneCreate) Save(zonequerystring ZoneQueryString) error {
 	zoneWriteLock.Lock()
 	defer zoneWriteLock.Unlock()
 
+	zoneMap := filterZoneCreate(zone)
 	req, err := client.NewJSONRequest(
 		Config,
 		"POST",
 		"/config-dns/v2/zones/?contractId="+zonequerystring.Contract+"&gid="+zonequerystring.Group,
-		zone,
+		zoneMap,
 	)
 	if err != nil {
 		return err
@@ -364,11 +378,12 @@ func (zone *ZoneCreate) Update(zonequerystring ZoneQueryString) error {
 	// so we have to save just one request at a time to ensure this is always
 	// incremented properly
 
+        zoneMap := filterZoneCreate(zone)
 	req, err := client.NewJSONRequest(
 		Config,
 		"PUT",
 		"/config-dns/v2/zones/"+zone.Zone,
-		zone,
+		zoneMap,
 	)
 	if err != nil {
 		return err
@@ -434,5 +449,43 @@ func (zone *ZoneCreate) Delete(zonequerystring ZoneQueryString) error {
 	}
 
 	return nil
+
+}
+
+func filterZoneCreate(zone *ZoneCreate) map[string]interface{} {
+
+	filteredZone := make(map[string]interface{})
+	zoneElems := reflect.ValueOf(zone).Elem()
+	for i := 0; i < zoneElems.NumField(); i++ {
+		varName := zoneElems.Type().Field(i).Name
+		varLower := zoneStructMap[varName]
+		varValue := zoneElems.Field(i).Interface()
+		switch varName {
+		case "Target":
+                        if zone.Type == "ALIAS" {
+                                filteredZone[varLower] = varValue
+                        }
+		case "TsigKey":
+			if zone.Type == "SECONDARY" {
+				filteredZone[varLower] = varValue
+			}
+		case "Masters":
+                        if zone.Type == "SECONDARY" {
+                                filteredZone[varLower] = varValue
+                        }
+		case "SignAndServe":
+                        if zone.Type != "ALIAS" {
+                                filteredZone[varLower] = varValue
+                        }
+		case "SignAndServeAlgorithm":
+                        if zone.Type != "ALIAS" {
+                                filteredZone[varLower] = varValue
+                        }
+		default:
+			filteredZone[varLower] = varValue
+		}
+	}
+
+	return filteredZone
 
 }
