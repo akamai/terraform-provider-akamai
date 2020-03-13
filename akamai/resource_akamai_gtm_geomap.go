@@ -88,6 +88,12 @@ func resourceGTMv1GeomapCreate(d *schema.ResourceData, meta interface{}) error {
 	domain := d.Get("domain").(string)
 
 	log.Printf("[INFO] [Akamai GTM] Creating geoMap [%s] in domain [%s]", d.Get("name").(string), domain)
+	// Make sure Default Datacenter exists
+	err := validateDefaultDC(d.Get("default_datacenter").([]interface{}), domain)
+	if err != nil {
+		return err
+	}
+
 	newGeo := populateNewGeoMapObject(d)
 	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New GeoMap: [%v]", newGeo)
 	cStatus, err := newGeo.Create(domain)

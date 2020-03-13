@@ -87,6 +87,12 @@ func resourceGTMv1CidrMapCreate(d *schema.ResourceData, meta interface{}) error 
 	domain := d.Get("domain").(string)
 
 	log.Printf("[INFO] [Akamai GTM] Creating cidrMap [%s] in domain [%s]", d.Get("name").(string), domain)
+	// Make sure Default Datacenter exists
+	err := validateDefaultDC(d.Get("default_datacenter").([]interface{}), domain)
+	if err != nil {
+		return err
+	}
+
 	newCidr := populateNewCidrMapObject(d)
 	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New CidrMap: [%v]", newCidr)
 	cStatus, err := newCidr.Create(domain)
