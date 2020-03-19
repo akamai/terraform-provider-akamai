@@ -572,7 +572,7 @@ func waitForCompletion(domain string) (bool, error) {
 			return true, nil
 		case "DENIED":
 			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return DENIED")
-			return true, errors.New(propStat.Message)
+			return false, errors.New(propStat.Message)
 		case "PENDING":
 			if sleepTimeout <= 0 {
 				log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return TIMED OUT")

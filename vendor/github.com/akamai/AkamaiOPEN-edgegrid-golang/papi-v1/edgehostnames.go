@@ -1,6 +1,7 @@
 package papi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	"github.com/patrickmn/go-cache"
 )
 
 // EdgeHostnames is a collection for PAPI Edge Hostname resources
@@ -59,47 +61,58 @@ func (edgeHostnames *EdgeHostnames) NewEdgeHostname() *EdgeHostname {
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listedgehostnames
 // Endpoint: GET /papi/v1/edgehostnames/{?contractId,groupId,options}
 func (edgeHostnames *EdgeHostnames) GetEdgeHostnames(contract *Contract, group *Group, options string) error {
+
 	if contract == nil && group == nil {
 		return errors.New("function requires at least \"group\" argument")
 	}
-	if contract == nil && group != nil {
-		contract = NewContract(NewContracts())
-		contract.ContractID = group.ContractIDs[0]
-	}
 
-	if options != "" {
-		options = fmt.Sprintf("&options=%s", options)
-	}
+	cacheedgehostnames, found := Profilecache.Get("edgehostnames")
+	if found {
+		json.Unmarshal(cacheedgehostnames.([]byte), edgeHostnames)
+		return nil
+	} else {
 
-	req, err := client.NewRequest(
-		Config,
-		"GET",
-		fmt.Sprintf(
-			"/papi/v1/edgehostnames?groupId=%s&contractId=%s%s",
-			group.GroupID,
-			contract.ContractID,
-			options,
-		),
-		nil,
-	)
-	if err != nil {
-		return err
-	}
+		if contract == nil && group != nil {
+			contract = NewContract(NewContracts())
+			contract.ContractID = group.ContractIDs[0]
+		}
 
-	res, err := client.Do(Config, req)
-	if err != nil {
-		return err
-	}
+		if options != "" {
+			options = fmt.Sprintf("&options=%s", options)
+		}
 
-	if client.IsError(res) {
-		return client.NewAPIError(res)
-	}
+		req, err := client.NewRequest(
+			Config,
+			"GET",
+			fmt.Sprintf(
+				"/papi/v1/edgehostnames?groupId=%s&contractId=%s%s",
+				group.GroupID,
+				contract.ContractID,
+				options,
+			),
+			nil,
+		)
+		if err != nil {
+			return err
+		}
 
-	if err = client.BodyJSON(res, edgeHostnames); err != nil {
-		return err
-	}
+		res, err := client.Do(Config, req)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		if client.IsError(res) {
+			return client.NewAPIError(res)
+		}
+
+		if err = client.BodyJSON(res, edgeHostnames); err != nil {
+			return err
+		}
+
+		byt, _ := json.Marshal(edgeHostnames)
+		Profilecache.Set("edgehostnames", byt, cache.DefaultExpiration)
+		return nil
+	}
 }
 
 func (edgeHostnames *EdgeHostnames) FindEdgeHostname(edgeHostname *EdgeHostname) (*EdgeHostname, error) {

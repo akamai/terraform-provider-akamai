@@ -1,4 +1,7 @@
-## 0.5.0 (Unreleased)
+## 0.6.0 (Unreleased)
+## 0.5.0 (March 06, 2020)
+* [FIX] Release edgehostnames and products caching edge library v0.9.10 (`akamai_property`)
+
 ## 0.4.0 (March 03, 2020)
 * [FIX] Release contract group and cpcode caching edge library v0.9.9 (`akamai_property`) 
 
