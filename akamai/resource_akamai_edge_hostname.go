@@ -3,11 +3,12 @@ package akamai
 import (
 	"errors"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform/helper/schema"
-	"log"
-	"strings"
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
@@ -64,6 +65,10 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:     schema.TypeInt,
 		Optional: true,
 		ForceNew: true,
+	},
+	"slot_number": {
+		Type:     schema.TypeInt,
+		Computed: true,
 	},
 }
 
@@ -300,6 +305,7 @@ func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) er
 
 	d.Set("contract", contract)
 	d.Set("group", group)
+	d.Set("slot_number", defaultEdgeHostname.SlotNumber)
 
 	d.SetId(edgeHostnameID)
 
