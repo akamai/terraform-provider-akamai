@@ -14,7 +14,7 @@ import (
 //CidrAssignment represents a GTM cidr assignment element
 type CidrAssignment struct {
 	DatacenterBase
-	Blocks []string `json:"blocks,omitempty"`
+	Blocks []string `json:"blocks"`
 }
 
 // CidrMap  represents a GTM cidrMap element

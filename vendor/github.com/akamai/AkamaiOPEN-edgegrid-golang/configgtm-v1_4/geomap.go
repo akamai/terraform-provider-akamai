@@ -14,7 +14,7 @@ import (
 // GeoAssigment represents a GTM geo assignment element
 type GeoAssignment struct {
 	DatacenterBase
-	Countries []string `json:"countries,omitempty"`
+	Countries []string `json:"countries"`
 }
 
 // GeoMap  represents a GTM GeoMap

@@ -1,12 +1,13 @@
 package dnsv2
 
 import (
+	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"io/ioutil"
 	"log"
-	"sync"
 	"reflect"
+	"sync"
 )
 
 var (
@@ -57,16 +58,16 @@ type ZoneCreate struct {
 }
 
 var zoneStructMap map[string]string = map[string]string{
-        						"Zone": "zone",
-        						"Type": "type",
-        						"Masters": "masters",
-        						"Comment": "comment",
-        						"SignAndServe": "signAndServe",
-        						"SignAndServeAlgorithm": "signAndServeAlgorithm",
-        						"TsigKey": "tsigKey",
-        						"Target": "target",
-        						"EndCustomerId": "endCustomerId",
-        						"ContractId": "contractid"}
+	"Zone":                  "zone",
+	"Type":                  "type",
+	"Masters":               "masters",
+	"Comment":               "comment",
+	"SignAndServe":          "signAndServe",
+	"SignAndServeAlgorithm": "signAndServeAlgorithm",
+	"TsigKey":               "tsigKey",
+	"Target":                "target",
+	"EndCustomerId":         "endCustomerId",
+	"ContractId":            "contractid"}
 
 type ZoneResponse struct {
 	Zone                  string   `json:"zone,omitempty"`
@@ -95,8 +96,35 @@ type ChangeListResponse struct {
 	Stale            bool   `json:"stale,omitempty"`
 }
 
+// Zones List Response
 type ZoneNameListResponse struct {
 	Zones []string `json:"zones"`
+}
+
+/*
+{
+    "names": [
+        "example.com",
+        "bar.example.com"
+    ]
+}
+*/
+// returned list of Zone Names
+type ZoneNamesResponse struct {
+	Names []string `json:"names"`
+}
+
+/*
+{
+    "types": [
+        "A",
+        "MX"
+    ]
+}
+*/
+// Recordset Types for Zone|Name Response
+type ZoneNameTypesResponse struct {
+	Types []string `json:"types"`
 }
 
 // NewZone creates a new Zone. Supports subset of fields
@@ -378,7 +406,7 @@ func (zone *ZoneCreate) Update(zonequerystring ZoneQueryString) error {
 	// so we have to save just one request at a time to ensure this is always
 	// incremented properly
 
-        zoneMap := filterZoneCreate(zone)
+	zoneMap := filterZoneCreate(zone)
 	req, err := client.NewJSONRequest(
 		Config,
 		"PUT",
@@ -462,25 +490,25 @@ func filterZoneCreate(zone *ZoneCreate) map[string]interface{} {
 		varValue := zoneElems.Field(i).Interface()
 		switch varName {
 		case "Target":
-                        if zone.Type == "ALIAS" {
-                                filteredZone[varLower] = varValue
-                        }
+			if zone.Type == "ALIAS" {
+				filteredZone[varLower] = varValue
+			}
 		case "TsigKey":
 			if zone.Type == "SECONDARY" {
 				filteredZone[varLower] = varValue
 			}
 		case "Masters":
-                        if zone.Type == "SECONDARY" {
-                                filteredZone[varLower] = varValue
-                        }
+			if zone.Type == "SECONDARY" {
+				filteredZone[varLower] = varValue
+			}
 		case "SignAndServe":
-                        if zone.Type != "ALIAS" {
-                                filteredZone[varLower] = varValue
-                        }
+			if zone.Type != "ALIAS" {
+				filteredZone[varLower] = varValue
+			}
 		case "SignAndServeAlgorithm":
-                        if zone.Type != "ALIAS" {
-                                filteredZone[varLower] = varValue
-                        }
+			if zone.Type != "ALIAS" {
+				filteredZone[varLower] = varValue
+			}
 		default:
 			filteredZone[varLower] = varValue
 		}
@@ -488,4 +516,78 @@ func filterZoneCreate(zone *ZoneCreate) map[string]interface{} {
 
 	return filteredZone
 
+}
+
+// Get Zone's Names
+func GetZoneNames(zone string) (*ZoneNamesResponse, error) {
+
+	zoneNameResponse := &ZoneNamesResponse{Names: make([]string, 0)}
+	req, err := client.NewRequest(
+		Config,
+		"GET",
+		fmt.Sprintf("/config-dns/v2/zones/%s/names", zone),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	edge.PrintHttpRequest(req, true)
+
+	res, err := client.Do(Config, req)
+	if err != nil {
+		return nil, err
+	}
+
+	edge.PrintHttpResponse(res, true)
+
+	if client.IsError(res) && res.StatusCode != 404 {
+		return nil, client.NewAPIError(res)
+	} else if res.StatusCode == 404 {
+		return nil, &ZoneError{zoneName: zone}
+	} else {
+		err = client.BodyJSON(res, zoneNameResponse)
+		if err != nil {
+			return nil, err
+		}
+
+		return zoneNameResponse, nil
+	}
+}
+
+// Get Zone Name's record types
+func GetZoneNameTypes(zname string, zone string) (*ZoneNameTypesResponse, error) {
+
+	zoneNameTypesResponse := &ZoneNameTypesResponse{Types: make([]string, 0)}
+	req, err := client.NewRequest(
+		Config,
+		"GET",
+		fmt.Sprintf("/config-dns/v2/zones/%s/names/%s/types", zone, zname),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	edge.PrintHttpRequest(req, true)
+
+	res, err := client.Do(Config, req)
+	if err != nil {
+		return nil, err
+	}
+
+	edge.PrintHttpResponse(res, true)
+
+	if client.IsError(res) && res.StatusCode != 404 {
+		return nil, client.NewAPIError(res)
+	} else if res.StatusCode == 404 {
+		return nil, &ZoneError{zoneName: zone}
+	} else {
+		err = client.BodyJSON(res, zoneNameTypesResponse)
+		if err != nil {
+			return nil, err
+		}
+
+		return zoneNameTypesResponse, nil
+	}
 }

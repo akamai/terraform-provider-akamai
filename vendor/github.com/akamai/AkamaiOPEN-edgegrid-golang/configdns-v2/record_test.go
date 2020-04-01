@@ -2,8 +2,9 @@ package dnsv2
 
 import (
 	"testing"
-
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/h2non/gock.v1"
 )
 
 func TestRecord_ContainsHelper(t *testing.T) {
@@ -146,3 +147,122 @@ func TestRecord_AllRecords_WrongTypes(t *testing.T) {
 	assert.Equal(t, e, &RecordError{fieldName: "name"})
 	*/
 }
+
+func TestGetRecordsetsNoArgs(t *testing.T) {
+
+        dnsTestZone := "testzone.com"
+
+        defer gock.Off()
+
+        mock := gock.New(fmt.Sprintf("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-dns/v2/zones/%s/recordsets", dnsTestZone))
+        mock.
+                Get(fmt.Sprintf("/config-dns/v2/zones/%s/recordsets", dnsTestZone)).
+                HeaderPresent("Authorization").
+                Reply(200).
+                SetHeader("Content-Type", "application/json;charset=UTF-8").
+                BodyString(fmt.Sprintf(`{
+    			"metadata": {
+        			"lastPage": 1, 
+        			"page": 1, 
+        			"pageSize": 25, 
+        			"showAll": false, 
+        			"totalElements": 2
+    			}, 
+    			"recordsets": [
+        			{
+            				"name": "east.testzone.com", 
+            				"rdata": [
+                				"east.testzone.com.edgesuite.net."
+            				], 
+            				"ttl": 600, 
+            				"type": "CNAME"
+        			}, 
+        			{
+            				"name": "easttest.testzone.com", 
+            				"rdata": [
+                				"easttest.testzone.com.edgesuite.net."
+            				], 
+            				"ttl": 600, 
+            				"type": "CNAME"
+        			}] 
+		}`))
+
+        Init(config)
+	recordsets, err := GetRecordsets(dnsTestZone)
+        assert.NoError(t, err)
+        assert.Equal(t, assert.IsType(t, &RecordSetResponse{}, recordsets), true)
+        assert.Equal(t, len(recordsets.Recordsets), 2)
+
+}
+
+func TestGetRecordsets(t *testing.T) {
+
+        dnsTestZone := "testzone.com"
+
+        defer gock.Off()
+
+        mock := gock.New(fmt.Sprintf("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-dns/v2/zones/%s/recordsets", dnsTestZone))
+        mock.
+                Get(fmt.Sprintf("/config-dns/v2/zones/%s/recordsets", dnsTestZone)).
+                HeaderPresent("Authorization").
+                Reply(200).
+                SetHeader("Content-Type", "application/json;charset=UTF-8").
+                BodyString(fmt.Sprintf(`{
+                        "metadata": {
+                                "lastPage": 1,
+                                "page": 1,
+                                "pageSize": 25,
+                                "showAll": false,
+                                "totalElements": 1
+                        },
+                        "recordsets": [
+                                {
+                                        "name": "east.testzone.com",
+                                        "rdata": [
+                                                "east.testzone.com.edgesuite.net."
+                                        ],
+                                        "ttl": 600,
+                                        "type": "CNAME"
+                                }]
+                }`))
+
+        Init(config)
+	qargs := RecordsetQueryArgs{Search: "east.testzone.com", SortBy: "name"}
+        recordsets, err := GetRecordsets(dnsTestZone, qargs)
+        assert.NoError(t, err)
+        assert.Equal(t, assert.IsType(t, &RecordSetResponse{}, recordsets), true)
+        assert.Equal(t, len(recordsets.Recordsets), 1)
+
+}
+
+func TestGetRecord(t *testing.T) {
+
+        dnsTestZone := "testzone.com"
+        dnsTestRecordName := "east.testzone.com"
+        dnsTestRecordType := "CNAME"
+
+        defer gock.Off()
+
+        mock := gock.New(fmt.Sprintf("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-dns/v2/zones/%s/names/%s/types/%s", dnsTestZone, dnsTestRecordName, dnsTestRecordType))
+        mock.
+                Get(fmt.Sprintf("/config-dns/v2/zones/%s/names/%s/types/%s", dnsTestZone, dnsTestRecordName, dnsTestRecordType)).
+                HeaderPresent("Authorization").
+                Reply(200).
+                SetHeader("Content-Type", "application/json;charset=UTF-8").
+                BodyString(fmt.Sprintf(`{
+                        "name": "east.testzone.com",
+                        "rdata": [
+                                 "east.testzone.com.edgesuite.net."
+                        ],
+                        "ttl": 600,
+                        "type": "CNAME"
+                }`))
+
+        Init(config)
+        testrecord, err := GetRecord(dnsTestZone, dnsTestRecordName, "CNAME")
+        assert.NoError(t, err)
+        assert.Equal(t, assert.IsType(t, &RecordBody{}, testrecord), true)
+        assert.Equal(t, testrecord.Name, dnsTestRecordName)
+
+}
+

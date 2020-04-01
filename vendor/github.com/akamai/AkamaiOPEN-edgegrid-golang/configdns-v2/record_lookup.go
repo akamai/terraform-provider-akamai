@@ -2,13 +2,24 @@ package dnsv2
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"net"
 	"strconv"
 	"strings"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 )
+
+// Recordset Query args struct
+type RecordsetQueryArgs struct {
+	Page     int
+	PageSize int
+	Search   string
+	ShowAll  bool
+	SortBy   string
+	Types    string
+}
 
 type Recordset struct {
 	Name  string   `json:"name"`
@@ -18,6 +29,9 @@ type Recordset struct {
 } //`json:"recordsets"`
 
 type MetadataH struct {
+	LastPage      int  `json:"lastPage"`
+	Page          int  `json:"page"`
+	PageSize      int  `json:"pageSize"`
 	ShowAll       bool `json:"showAll"`
 	TotalElements int  `json:"totalElements"`
 } //`json:"metadata"`
@@ -102,7 +116,7 @@ func padvalue(str string) string {
 }
 
 // Used to pad coordinates to x.xxm format
-func padCoordinates(str string) string {
+func PadCoordinates(str string) string {
 
 	s := strings.Split(str, " ")
 	lat_d, lat_m, lat_s, lat_dir, long_d, long_m, long_s, long_dir, altitude, size, horiz_precision, vert_precision := s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]
@@ -115,7 +129,115 @@ func NewRecordSetResponse(name string) *RecordSetResponse {
 	return recordset
 }
 
+// Get RecordSets with Query Args. No formatting of arg values!
+func GetRecordsets(zone string, queryArgs ...RecordsetQueryArgs) (*RecordSetResponse, error) {
+
+	recordsetResp := NewRecordSetResponse("")
+
+	// construct GET url
+	getURL := fmt.Sprintf("/config-dns/v2/zones/%s/recordsets", zone)
+	if len(queryArgs) > 1 {
+		return nil, errors.New("GetRecordsets QueryArgs invalid.")
+	}
+	if len(queryArgs) > 0 {
+		getURL += "?"
+		if queryArgs[0].Page > 0 {
+			getURL += fmt.Sprintf("page=%d", queryArgs[0].Page)
+			getURL += "&"
+		}
+		if queryArgs[0].PageSize > 0 {
+			getURL += fmt.Sprintf("pageSize=%d", queryArgs[0].PageSize)
+			getURL += "&"
+		}
+		if queryArgs[0].Search != "" {
+			getURL += fmt.Sprintf("search=%s", queryArgs[0].Search)
+			getURL += "&"
+		}
+		getURL := fmt.Sprintf("showAll=%t", queryArgs[0].ShowAll)
+		getURL += "&"
+		if queryArgs[0].SortBy != "" {
+			getURL += fmt.Sprintf("sortBy=%s", queryArgs[0].SortBy)
+			getURL += "&"
+		}
+		if queryArgs[0].Types != "" {
+			getURL += fmt.Sprintf("types=%s", queryArgs[0].Types)
+			getURL += "&"
+		}
+		getURL = strings.TrimRight(getURL, "&")
+		getURL = strings.TrimRight(getURL, "?")
+	}
+
+	req, err := client.NewRequest(
+		Config,
+		"GET",
+		getURL,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	edge.PrintHttpRequest(req, true)
+
+	res, err := client.Do(Config, req)
+	if err != nil {
+		return nil, err
+	}
+
+	edge.PrintHttpResponse(res, true)
+
+	if client.IsError(res) && res.StatusCode != 404 {
+		return nil, client.NewAPIError(res)
+	} else if res.StatusCode == 404 {
+		return nil, &ZoneError{zoneName: zone}
+	} else {
+		err = client.BodyJSON(res, recordsetResp)
+		if err != nil {
+			return nil, err
+		}
+		return recordsetResp, nil
+	}
+}
+
+// Get single Recordset. Following convention for other single record CRUD operations, return a RecordBody.
+func GetRecord(zone string, name string, record_type string) (*RecordBody, error) {
+
+	record := &RecordBody{}
+
+	req, err := client.NewRequest(
+		Config,
+		"GET",
+		fmt.Sprintf("/config-dns/v2/zones/%s/names/%s/types/%s", zone, name, record_type),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	edge.PrintHttpRequest(req, true)
+
+	res, err := client.Do(Config, req)
+	if err != nil {
+		return nil, err
+	}
+
+	edge.PrintHttpResponse(res, true)
+
+	if client.IsError(res) && res.StatusCode != 404 {
+		return nil, client.NewAPIError(res)
+	} else if res.StatusCode == 404 {
+		return nil, &ZoneError{zoneName: zone}
+	} else {
+		err = client.BodyJSON(res, record)
+		if err != nil {
+			return nil, err
+		}
+		return record, nil
+	}
+}
+
 func GetRecordList(zone string, name string, record_type string) (*RecordSetResponse, error) {
+
 	records := NewRecordSetResponse(name)
 
 	req, err := client.NewRequest(
@@ -128,10 +250,15 @@ func GetRecordList(zone string, name string, record_type string) (*RecordSetResp
 		return nil, err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return nil, err
 	}
+
+	edge.PrintHttpResponse(res, true)
+
 	if client.IsError(res) && res.StatusCode != 404 {
 		return nil, client.NewAPIError(res)
 	} else if res.StatusCode == 404 {
@@ -170,7 +297,7 @@ func GetRdata(zone string, name string, record_type string) ([]string, error) {
 					result := FullIPv6(addr)
 					str = result
 				} else if record_type == "LOC" {
-					str = padCoordinates(str)
+					str = PadCoordinates(str)
 				}
 				rdata = append(rdata, str)
 			}
