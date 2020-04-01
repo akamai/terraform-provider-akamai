@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/tidwall/gjson"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 func resourceProperty() *schema.Resource {
@@ -202,6 +203,46 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	rulesString, ok := d.GetOk("rules")
+
+	if ok {
+		var ruleFormats *papi.RuleFormats
+		schema, errs := ruleFormats.GetSchema(product.ProductName, rules.RuleFormat)
+
+		if errs != nil {
+			log.Printf("[DEBUG] CREATE Check rules against schema %s\n", errs)
+			return errs
+			//panic(err.Error())
+		}
+		//documentLoader := gojsonschema.NewReferenceLoader("file:///Users/martinstibbe/validate/rules.json")
+		log.Printf("[DEBUG] VALIDATE Rules in JSON file ")
+
+		documentLoader := gojsonschema.NewStringLoader(rulesString.(string))
+		result, err := schema.Validate(documentLoader)
+		if err != nil {
+			log.Printf("[DEBUG] CREATE Check rules against schema failed %s\n", err)
+			return err
+			//panic(err.Error())
+		}
+
+		if result.Valid() {
+			fmt.Printf("The document is valid\n")
+			log.Printf("[DEBUG] CREATE Check rules against schema PASS \n")
+		} else {
+			fmt.Printf("The document is not valid. see errors :\n")
+			var errorList string
+			for _, desc := range result.Errors() {
+				fmt.Printf("- %s\n", desc)
+				errorList = errorList + desc.String()
+			}
+			log.Printf("[DEBUG] CREATE Check rules The document is not valid. see errors :\n " + errorList)
+			return errors.New("The document is not valid. see errors :\n " + errorList)
+
+		}
+
+	}
+
 	err = rules.Save()
 	if err != nil {
 		if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
@@ -510,6 +551,50 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	rules, err := getRules(d, property, property.Contract, property.Group)
+
+	product, err := getProduct(d, property.Contract)
+	if err != nil {
+		return err
+	}
+
+	rulesString, ok := d.GetOk("rules")
+
+	if ok {
+		var ruleFormats *papi.RuleFormats
+		schema, errs := ruleFormats.GetSchema(product.ProductName, rules.RuleFormat)
+
+		if errs != nil {
+			log.Printf("[DEBUG] UPDATE Check rules against schema %s\n", errs)
+			return errs
+			//panic(err.Error())
+		}
+		//documentLoader := gojsonschema.NewReferenceLoader("file:///Users/martinstibbe/validate/rules.json")
+		log.Printf("[DEBUG] UPDATE VALIDATE Rules in JSON file ")
+
+		documentLoader := gojsonschema.NewStringLoader(rulesString.(string))
+		result, err := schema.Validate(documentLoader)
+		if err != nil {
+			log.Printf("[DEBUG] UPDATE Check rules against schema failed %s\n", err)
+			return err
+			//panic(err.Error())
+		}
+
+		if result.Valid() {
+			fmt.Printf("The document is valid\n")
+			log.Printf("[DEBUG] UPDATE Check rules against schema PASS \n")
+		} else {
+			fmt.Printf("The document is not valid. see errors :\n")
+			var errorList string
+			for _, desc := range result.Errors() {
+				fmt.Printf("- %s\n", desc)
+				errorList = errorList + desc.String()
+			}
+			log.Printf("[DEBUG] UPDATE Check rules The document is not valid. see errors :\n " + errorList)
+			return errors.New("The document is not valid. see errors :\n " + errorList)
+
+		}
+
+	}
 
 	if d.HasChange("rule_format") || d.HasChange("rules") {
 		if ruleFormat, ok := d.GetOk("rule_format"); ok {
