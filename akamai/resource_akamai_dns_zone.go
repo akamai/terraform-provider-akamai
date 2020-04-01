@@ -114,6 +114,9 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
 
+	if err := checkDNSv2Zone(d); err != nil {
+		return err
+	}
 	hostname := d.Get("zone").(string)
 	zonetype := d.Get("type").(string)
 	masterlist := d.Get("masters").(*schema.Set).List()
@@ -213,6 +216,9 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
 
+	if err := checkDNSv2Zone(d); err != nil {
+		return err
+	}
 	hostname := d.Get("zone").(string)
 	contract := d.Get("contract").(string)
 	group := d.Get("group").(string)
@@ -357,22 +363,31 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dnsv2.ZoneCreate) {
 			}
 		}
 		zone.Masters = masters
+	} else if d.HasChange("masters") {
+		zone.Masters = make([]string, 0, 0)
 	}
 	if v, ok := d.GetOk("comment"); ok {
+		zone.Comment = v.(string)
+	} else if d.HasChange("comment") {
 		zone.Comment = v.(string)
 	}
 	zone.SignAndServe = d.Get("sign_and_serve").(bool)
 	if v, ok := d.GetOk("sign_and_serve_algorithm"); ok {
 		zone.SignAndServeAlgorithm = v.(string)
+	} else if d.HasChange("sign_and_serve_algorithm") {
+		zone.SignAndServeAlgorithm = v.(string)
 	}
 	if v, ok := d.GetOk("target"); ok {
+		zone.Target = v.(string)
+	} else if d.HasChange("target") {
 		zone.Target = v.(string)
 	}
 	if v, ok := d.GetOk("end_customer_id"); ok {
 		zone.EndCustomerId = v.(string)
+	} else if d.HasChange("end_customer_id") {
+		zone.EndCustomerId = v.(string)
 	}
 	v := d.Get("tsig_key")
-	log.Printf("[DEBUG] [Akamai DNSV2] tsig get [%v]", v)
 	if v != nil && len(v.([]interface{})) > 0 {
 		tsigKeyList := v.([]interface{})
 		tsigKeyMap := tsigKeyList[0].(map[string]interface{})
@@ -385,4 +400,37 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dnsv2.ZoneCreate) {
 	} else {
 		zone.TsigKey = nil
 	}
+}
+
+// utility method to verify zone config fields based on type. not worrying about required fields ....
+func checkDNSv2Zone(d *schema.ResourceData) error {
+
+	zone := d.Get("zone").(string)
+	ztype := d.Get("type").(string)
+	masters := d.Get("masters").(*schema.Set).List()
+	target := d.Get("target").(string)
+	tsig := d.Get("tsig_key").([]interface{})
+	signandserve := d.Get("sign_and_serve").(bool)
+	//signandservealgo := d.Get("sign_and_serve_algorithm").(string)
+	if ztype == "SECONDARY" && len(masters) == 0 {
+		return fmt.Errorf("masters list must be populated in  Secondary zone %s configuration", zone)
+	}
+	if ztype != "SECONDARY" && len(masters) > 0 {
+		return fmt.Errorf("masters list can not be populated  in %s zone %s configuration", ztype, zone)
+	}
+	if ztype == "ALIAS" && target == "" {
+		return fmt.Errorf("target must be populated in Alias zone %s configuration", zone)
+	}
+	if ztype != "ALIAS" && target != "" {
+		return fmt.Errorf("target can not be populated in %s zone %s configuration", ztype, zone)
+	}
+	if signandserve && ztype == "ALIAS" {
+		return fmt.Errorf("sign_and_serve is not valid in %s zone %s configuration", ztype, zone)
+	}
+	if ztype != "SECONDARY" && len(tsig) > 0 {
+		return fmt.Errorf("tsig_key can not be populated in %s zone %s configuration", ztype, zone)
+	}
+
+	return nil
+
 }
