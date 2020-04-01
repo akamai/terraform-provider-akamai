@@ -327,37 +327,58 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource) {
 	}
 	if v, ok := d.GetOk("host_header"); ok {
 		rsrc.HostHeader = v.(string)
+	} else if d.HasChange("host_header") {
+                rsrc.HostHeader = v.(string)
 	}
 	if v, ok := d.GetOk("least_squares_decay"); ok {
 		rsrc.LeastSquaresDecay = v.(float64)
+	} else if d.HasChange("least_squares_decay") {
+                rsrc.LeastSquaresDecay = v.(float64)
 	}
 	if v, ok := d.GetOk("upper_bound"); ok {
 		rsrc.UpperBound = v.(int)
+	} else if d.HasChange("upper_bound") {
+                rsrc.UpperBound = v.(int)
 	}
 	if v, ok := d.GetOk("description"); ok {
 		rsrc.Description = v.(string)
+	} else if d.HasChange("description") {
+                rsrc.Description = v.(string)
 	}
 	if v, ok := d.GetOk("leader_string"); ok {
 		rsrc.LeaderString = v.(string)
+	} else if d.HasChange("leader_string") {
+                rsrc.LeaderString = v.(string)
 	}
 	if v, ok := d.GetOk("constrained_property"); ok {
 		rsrc.ConstrainedProperty = v.(string)
+	} else if d.HasChange("constrained_property") {
+                rsrc.ConstrainedProperty = v.(string)
 	}
 	if v, ok := d.GetOk("aggregation_type"); ok {
 		rsrc.AggregationType = v.(string)
 	}
 	if v, ok := d.GetOk("load_imbalance_percentage"); ok {
 		rsrc.LoadImbalancePercentage = v.(float64)
+	} else if d.HasChange("load_imbalance_percentage") {
+                rsrc.LoadImbalancePercentage = v.(float64)
 	}
 	if v, ok := d.GetOk("max_u_multiplicative_increment"); ok {
 		rsrc.MaxUMultiplicativeIncrement = v.(float64)
+	} else if d.HasChange("max_u_multiplicative_increment") {
+                rsrc.MaxUMultiplicativeIncrement = v.(float64)
 	}
 	if v, ok := d.GetOk("decay_rate"); ok {
 		rsrc.DecayRate = v.(float64)
+	} else if d.HasChange("decay_rate") {
+                rsrc.DecayRate = v.(float64)
 	}
 	if _, ok := d.GetOk("resource_instance"); ok {
 		populateResourceInstancesObject(d, rsrc)
+	} else if d.HasChange("resource_instance") {
+		rsrc.ResourceInstances = make([]*gtm.ResourceInstance, 0)		
 	}
+
 	return
 
 }
@@ -432,7 +453,11 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 		ri["use_default_load_object"] = riObject.UseDefaultLoadObject
 		ri["load_object"] = riObject.LoadObject.LoadObject
 		ri["load_object_port"] = riObject.LoadObjectPort
-		ri["load_servers"] = riObject.LoadServers
+		if ri["load_servers"] != nil {
+			ri["load_servers"] = reconcileTerraformLists(ri["load_servers"].([]interface{}), convertStringToInterfaceList(riObject.LoadServers))
+		} else {
+			ri["load_servers"] = riObject.LoadServers
+		}
 		// remove object
 		delete(riObjectInventory, objIndex)
 	}

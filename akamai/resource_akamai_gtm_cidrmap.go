@@ -357,7 +357,7 @@ func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.Cid
 		}
 		a["datacenter_id"] = aObject.DatacenterId
 		a["nickname"] = aObject.Nickname
-		a["blocks"] = aObject.Blocks
+		a["blocks"] = reconcileTerraformLists(a["blocks"].([]interface{}), convertStringToInterfaceList(aObject.Blocks))
 		// remove object
 		delete(objectInventory, objIndex)
 	}

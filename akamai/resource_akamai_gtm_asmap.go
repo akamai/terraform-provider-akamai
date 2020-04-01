@@ -82,6 +82,7 @@ func parseResourceASmapId(id string) (string, string, error) {
 
 }
 
+// Util method to validate default datacenter and create if necc
 func validateDefaultDC(ddcField []interface{}, domain string) error {
 
 	if len(ddcField) == 0 {
@@ -96,7 +97,7 @@ func validateDefaultDC(ddcField []interface{}, domain string) error {
 		if err != nil {
 			_, ok := err.(gtm.CommonError)
 			if !ok {
-				return fmt.Errorf("[ERROR] AsMapCreate Unexpected error verifying Default Datacenter exists: %s", err.Error())
+				return fmt.Errorf("[ERROR] MapCreate Unexpected error verifying Default Datacenter exists: %s", err.Error())
 			}
 		}
 		// ddc doesn't exist
@@ -105,7 +106,7 @@ func validateDefaultDC(ddcField []interface{}, domain string) error {
 		}
 		ddc, err := gtm.CreateMapsDefaultDatacenter(domain) // create if not already.
 		if ddc == nil {
-			return fmt.Errorf("[ERROR] AsMapCreate failed on Default Datacenter check: %s", err.Error())
+			return fmt.Errorf("[ERROR] MapCreate failed on Default Datacenter check: %s", err.Error())
 		}
 	}
 
@@ -390,7 +391,7 @@ func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtm.AsMap) 
 		}
 		a["datacenter_id"] = aObject.DatacenterId
 		a["nickname"] = aObject.Nickname
-		a["as_numbers"] = aObject.AsNumbers
+		a["as_numbers"] = reconcileTerraformLists(a["as_numbers"].([]interface{}), convertInt64ToInterfaceList(aObject.AsNumbers))
 		// remove object
 		delete(objectInventory, objIndex)
 	}

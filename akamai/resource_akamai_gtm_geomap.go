@@ -358,7 +358,7 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 		}
 		a["datacenter_id"] = aObject.DatacenterId
 		a["nickname"] = aObject.Nickname
-		a["countries"] = aObject.Countries
+		a["countries"] = reconcileTerraformLists(a["countries"].([]interface{}), convertStringToInterfaceList(aObject.Countries))
 		// remove object
 		delete(objectInventory, objIndex)
 	}
