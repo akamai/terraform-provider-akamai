@@ -62,6 +62,7 @@ func resourceDNSv2Record() *schema.Resource {
 					RRTypeRrsig,
 					RRTypeSrv,
 					RRTypeSshfp,
+					RRTypeAkamaiCdn,
 				}, false),
 			},
 			"ttl": {
@@ -646,7 +647,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 
 	emptyrecordcreate := dnsv2.RecordBody{}
 
-	simplerecord := map[string]bool{"A": true, "AAAA": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "TXT": true}
+	simplerecord := map[string]bool{"A": true, "AAAA": true, "AKAMAICDN": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "TXT": true}
 	if simplerecord[recordtype] {
 		sort.Strings(records)
 
@@ -893,7 +894,7 @@ func validateRecord(d *schema.ResourceData) error {
 	}
 
 	switch recordtype {
-	case RRTypeA, RRTypeAaaa, RRTypeCname, RRTypeLoc, RRTypeNs, RRTypePtr, RRTypeSpf, RRTypeTxt:
+	case RRTypeA, RRTypeAaaa, RRTypeAkamaiCdn, RRTypeCname, RRTypeLoc, RRTypeNs, RRTypePtr, RRTypeSpf, RRTypeTxt:
 		if err := checkBasicRecordTypes(d); err != nil {
 			return err
 		}
