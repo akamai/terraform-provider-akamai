@@ -72,7 +72,7 @@ func resourceGTMv1Property() *schema.Resource {
 			"static_ttl": {
 				Type:     schema.TypeInt,
 				Optional: true,
-                                Default:  300,
+				Default:  300,
 			},
 			"static_rr_set": &schema.Schema{
 				Type:     schema.TypeList,
@@ -564,17 +564,17 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	if v, ok := d.GetOk("stickiness_bonus_percentage"); ok {
 		prop.StickinessBonusPercentage = v.(int)
 	} else if d.HasChange("stickiness_bonus_percentage") {
-                prop.StickinessBonusPercentage = v.(int)
+		prop.StickinessBonusPercentage = v.(int)
 	}
 	if v, ok := d.GetOk("stickiness_bonus_constant"); ok {
 		prop.StickinessBonusConstant = v.(int)
 	} else if d.HasChange("stickiness_bonus_constant") {
-                prop.StickinessBonusConstant = v.(int)
+		prop.StickinessBonusConstant = v.(int)
 	}
 	if v, ok := d.GetOk("health_threshold"); ok {
 		prop.HealthThreshold = v.(float64)
 	} else if d.HasChange("health_threshold") {
-                prop.HealthThreshold = v.(float64)
+		prop.HealthThreshold = v.(float64)
 	}
 	v := d.Get("ipv6")
 	prop.Ipv6 = v.(bool)
@@ -583,7 +583,7 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	if v, ok := d.GetOk("backup_ip"); ok {
 		prop.BackupIp = v.(string)
 	} else if d.HasChange("backup_ip") {
-                prop.BackupIp = v.(string)
+		prop.BackupIp = v.(string)
 	}
 	v = d.Get("balance_by_download_score")
 	prop.BalanceByDownloadScore = v.(bool)
@@ -593,17 +593,17 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	if v, ok := d.GetOk("unreachable_threshold"); ok {
 		prop.UnreachableThreshold = v.(float64)
 	} else if d.HasChange("unreachable_threshold") {
-                prop.UnreachableThreshold = v.(float64)
+		prop.UnreachableThreshold = v.(float64)
 	}
 	if v, ok := d.GetOk("min_live_fraction"); ok {
 		prop.MinLiveFraction = v.(float64)
 	} else if d.HasChange("min_live_fraction") {
-                prop.MinLiveFraction = v.(float64)
+		prop.MinLiveFraction = v.(float64)
 	}
 	if v, ok := d.GetOk("health_multiplier"); ok {
 		prop.HealthMultiplier = v.(float64)
 	} else if d.HasChange("health_multiplier") {
-                prop.HealthMultiplier = v.(float64)
+		prop.HealthMultiplier = v.(float64)
 	}
 	if v, ok := d.GetOk("dynamic_ttl"); ok {
 		prop.DynamicTTL = v.(int)
@@ -611,17 +611,17 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	if v, ok := d.GetOk("max_unreachable_penalty"); ok {
 		prop.MaxUnreachablePenalty = v.(int)
 	} else if d.HasChange("max_unreachable_penalty") {
-                prop.MaxUnreachablePenalty = v.(int)
+		prop.MaxUnreachablePenalty = v.(int)
 	}
 	if v, ok := d.GetOk("map_name"); ok {
 		prop.MapName = v.(string)
 	} else if d.HasChange("map_name") {
-                prop.MapName = v.(string)
+		prop.MapName = v.(string)
 	}
 	if v, ok := d.GetOk("handout_limit"); ok {
 		prop.HandoutLimit = v.(int)
 	} else if d.HasChange("handout_limit") {
-                prop.HandoutLimit = v.(int)
+		prop.HandoutLimit = v.(int)
 	}
 	if v, ok := d.GetOk("handout_mode"); ok {
 		prop.HandoutMode = v.(string)
@@ -629,12 +629,12 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	if v, ok := d.GetOk("load_imbalance_percentage"); ok {
 		prop.LoadImbalancePercentage = v.(float64)
 	} else if d.HasChange("load_imbalance_percentage") {
-                prop.LoadImbalancePercentage = v.(float64)
+		prop.LoadImbalancePercentage = v.(float64)
 	}
 	if v, ok := d.GetOk("failover_delay"); ok {
 		prop.FailoverDelay = v.(int)
 	} else if d.HasChange("failover_delay") {
-                prop.FailoverDelay = v.(int)
+		prop.FailoverDelay = v.(int)
 	}
 	if v, ok := d.GetOk("backup_cname"); ok {
 		prop.BackupCName = v.(string)
@@ -644,12 +644,12 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	if v, ok := d.GetOk("failback_delay"); ok {
 		prop.FailbackDelay = v.(int)
 	} else if d.HasChange("failback_delay") {
-                prop.FailbackDelay = v.(int)
+		prop.FailbackDelay = v.(int)
 	}
 	if v, ok := d.GetOk("health_max"); ok {
 		prop.HealthMax = v.(float64)
 	} else if d.HasChange("health_max") {
-                prop.HealthMax = v.(float64)
+		prop.HealthMax = v.(float64)
 	}
 	v = d.Get("ghost_demand_reporting")
 	prop.GhostDemandReporting = v.(bool)
@@ -662,12 +662,12 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	if v, ok := d.GetOk("cname"); ok {
 		prop.CName = v.(string)
 	} else if d.HasChange("cname") {
-                prop.CName = v.(string)
+		prop.CName = v.(string)
 	}
 	if v, ok := d.GetOk("comments"); ok {
 		prop.Comments = v.(string)
 	} else if d.HasChange("comments") {
-                prop.Comments = v.(string)
+		prop.Comments = v.(string)
 	}
 	populateTrafficTargetObject(d, prop)
 	populateStaticRRSetObject(d, prop)
@@ -1002,8 +1002,8 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 }
 
 func convertStringToInterfaceList(stringList []string) []interface{} {
-	
-        log.Printf("[DEBUG] [Akamai GTMv1] String List: %v", stringList)
+
+	log.Printf("[DEBUG] [Akamai GTMv1] String List: %v", stringList)
 	retList := make([]interface{}, 0, len(stringList))
 	for _, v := range stringList {
 		retList = append(retList, v)
@@ -1011,29 +1011,29 @@ func convertStringToInterfaceList(stringList []string) []interface{} {
 
 	return retList
 
-} 
+}
 
 func convertIntToInterfaceList(intList []int) []interface{} {
 
-        log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
-        retList := make([]interface{}, 0, len(intList))
-        for _, v := range intList {
-                retList = append(retList, v)
-        }
+	log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
+	retList := make([]interface{}, 0, len(intList))
+	for _, v := range intList {
+		retList = append(retList, v)
+	}
 
-        return retList
+	return retList
 
 }
 
 func convertInt64ToInterfaceList(intList []int64) []interface{} {
 
-        log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
-        retList := make([]interface{}, 0, len(intList))
-        for _, v := range intList {
-                retList = append(retList, v)
-        }
+	log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
+	retList := make([]interface{}, 0, len(intList))
+	for _, v := range intList {
+		retList = append(retList, v)
+	}
 
-        return retList
+	return retList
 
 }
 
@@ -1041,7 +1041,7 @@ func convertInt64ToInterfaceList(intList []int64) []interface{} {
 func reconcileTerraformLists(terraList []interface{}, newList []interface{}) []interface{} {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Existing Terra List: %v", terraList)
-        log.Printf("[DEBUG] [Akamai GTMv1] Read List: %v", newList)
+	log.Printf("[DEBUG] [Akamai GTMv1] Read List: %v", newList)
 	newMap := make(map[string]interface{}, len(newList))
 	updatedList := make([]interface{}, 0, len(newList))
 	for _, newelem := range newList {
@@ -1059,7 +1059,7 @@ func reconcileTerraformLists(terraList []interface{}, newList []interface{}) []i
 		updatedList = append(updatedList, newVal)
 	}
 
-        log.Printf("[DEBUG] [Akamai GTMv1] Updated Terra List: %v", updatedList)
+	log.Printf("[DEBUG] [Akamai GTMv1] Updated Terra List: %v", updatedList)
 	return updatedList
 
-} 
+}

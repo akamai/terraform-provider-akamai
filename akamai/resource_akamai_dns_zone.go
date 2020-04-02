@@ -261,15 +261,9 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	return resourceDNSv2ZoneRead(d, meta)
 }
 
+// Import Zone. Id is the zone
 func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	hostname := d.Id()
-	/*
-		idParts := strings.Split(d.Id(), "-")
-		if len(idParts) != 3 {
-			errors.New(fmt.Sprintf("Invalid Id for Zone Import: %s", d.Id()))
-		}
-		hostname := idParts[2]
-	*/
 	// find the zone first
 	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
 	zone, err := dnsv2.GetZone(hostname)

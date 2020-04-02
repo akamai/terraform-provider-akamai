@@ -62,7 +62,9 @@ func resourceDNSv2Record() *schema.Resource {
 					RRTypeRrsig,
 					RRTypeSrv,
 					RRTypeSshfp,
+					RRTypeSoa,
 					RRTypeAkamaiCdn,
+					RRTypeAkamaiTlc,
 				}, false),
 			},
 			"ttl": {
@@ -71,7 +73,7 @@ func resourceDNSv2Record() *schema.Resource {
 			},
 			"active": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 			},
 			"target": {
 				Type:     schema.TypeSet,
@@ -216,6 +218,42 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 			},
 			"priority_increment": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"dns_name": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"answer_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"name_server": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"email_address": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"serial": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"refresh": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"retry": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"expiry": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"nxdomain_ttl": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
@@ -454,10 +492,41 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	hostname := d.Id()
 
-	// find the zone first
-	log.Printf("[INFO] [Akamai DNS] Searching for zone Records [%s]", hostname)
+	idParts := strings.Split(d.Id(), "-")
+	if len(idParts) != 3 {
+		fmt.Errorf("Invalid Id for Zone Import: %s", d.Id())
+	}
+	zone := idParts[0]
+	recordname := idParts[1]
+	recordtype := idParts[2]
+
+	// Get recordset
+	log.Printf("[INFO] [Akamai DNS] Searching for zone Recordset [%v]", idParts)
+	recordset, err := dnsv2.GetRecord(zone, recordname, recordtype)
+	if err != nil {
+		log.Printf("[DEBUG] [Akamai DNSv2] IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordname, recordtype)
+		d.SetId("")
+		return []*schema.ResourceData{d}, err
+	}
+	d.Set("zone", zone)
+	d.Set("name", recordset.Name)
+	d.Set("recordtype", recordset.RecordType)
+	d.Set("ttl", recordset.TTL)
+	// Parse Rdata
+	rdataFieldMap := dnsv2.ParseRData(recordset.RecordType, recordset.Target) // returns map[string]interface{}
+	for fname, fvalue := range rdataFieldMap {
+		d.Set(fname, fvalue)
+	}
+	targets := recordset.Target
+	importTargetString := "no rdata"
+	if len(targets) > 0 {
+		sort.Strings(targets)
+		importTargetString = strings.Join(targets, " ")
+	}
+
+	sha1hash := getSHAString(importTargetString)
+	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, recordname, recordtype, sha1hash))
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -883,6 +952,31 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
+		if recordtype == "SOA" {
+
+			records := make([]string, 0, len(target))
+			nameserver := d.Get("name_server").(string)
+			emailaddr := d.Get("email_address").(string)
+			serial := d.Get("serial").(int)
+			refresh := d.Get("refresh").(int)
+			retry := d.Get("retry").(int)
+			expiry := d.Get("expiry").(int)
+			nxdomainttl := d.Get("nxdomain_ttl").(int)
+
+			records = append(records, nameserver+" "+emailaddr+" "+strconv.Itoa(serial)+" "+strconv.Itoa(refresh)+" "+strconv.Itoa(retry)+" "+strconv.Itoa(expiry)+" "+strconv.Itoa(nxdomainttl))
+			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
+			return recordcreate
+		}
+		if recordtype == "AKAMAITLC" {
+
+			records := make([]string, 0, len(target))
+			dnsname := d.Get("dns_name").(string)
+			answtype := d.Get("answer_type").(string)
+
+			records = append(records, answtype+" "+dnsname)
+			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
+			return recordcreate
+		}
 	}
 	return emptyrecordcreate
 }
@@ -923,6 +1017,10 @@ func validateRecord(d *schema.ResourceData) error {
 		return checkSrvRecord(d)
 	case RRTypeSshfp:
 		return checkSshfpRecord(d)
+	case RRTypeAkamaiTlc:
+		return checkAkamaiTlcRecord(d)
+	case RRTypeSoa:
+		return checkSoaRecord(d)
 	default:
 		return fmt.Errorf("Invalid recordtype %v", recordtype)
 	}
@@ -1304,6 +1402,62 @@ func checkSshfpRecord(d *schema.ResourceData) error {
 	return nil
 }
 
+func checkSoaRecord(d *schema.ResourceData) error {
+
+	nameserver := d.Get("name_server").(string)
+	emailaddr := d.Get("email_address").(string)
+	serial := d.Get("serial").(int)
+	refresh := d.Get("refresh").(int)
+	retry := d.Get("retry").(int)
+	expiry := d.Get("expiry").(int)
+	nxdomainttl := d.Get("nxdomain_ttl").(int)
+
+	if nameserver == "" {
+		return fmt.Errorf("Key %s must ne specified in SOA record", nameserver)
+	}
+
+	if emailaddr == "" {
+		return fmt.Errorf("Key %s must ne specified in SOA record", emailaddr)
+	}
+
+	if serial == 0 {
+		return fmt.Errorf("Key %s must ne specified in SOA record", serial)
+	}
+
+	if refresh == 0 {
+		return fmt.Errorf("Key %s must ne specified in SOA record", refresh)
+	}
+
+	if retry == 0 {
+		return fmt.Errorf("Key %s must ne specified in SOA record", retry)
+	}
+
+	if expiry == 0 {
+		return fmt.Errorf("Key %s must ne specified in SOA record", expiry)
+	}
+
+	if nxdomainttl == 0 {
+		return fmt.Errorf("Key %s must ne specified in SOA record", nxdomainttl)
+	}
+
+	return nil
+}
+
+func checkAkamaiTlcRecord(d *schema.ResourceData) error {
+	dnsname := d.Get("dns_name").(string)
+	answertype := d.Get("answer_type").(string)
+
+	if dnsname != "" {
+		return fmt.Errorf("dnsname key is computed. It must not be set in AKAMAITLC.")
+	}
+
+	if answertype != "" {
+		return fmt.Errorf("answertype key is computed. It must not be set in AKAMAITLC.")
+	}
+
+	return nil
+}
+
 // Resource record types supported by the Akamai Edge DNS API
 const (
 	RRTypeA          = "A"
@@ -1320,6 +1474,7 @@ const (
 	RRTypeNs         = "NS"
 	RRTypePtr        = "PTR"
 	RRTypeRp         = "RP"
+	RRTypeSoa        = "SOA"
 	RRTypeSrv        = "SRV"
 	RRTypeSpf        = "SPF"
 	RRTypeSshfp      = "SSHFP"

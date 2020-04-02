@@ -464,12 +464,12 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 	if v, ok := d.GetOk("default_ssl_client_private_key"); ok {
 		dom.DefaultSslClientPrivateKey = v.(string)
 	} else if d.HasChange("default_ssl_client_private_key") {
-                dom.DefaultSslClientPrivateKey = v.(string)
+		dom.DefaultSslClientPrivateKey = v.(string)
 	}
 	if v, ok := d.GetOk("default_error_penalty"); ok {
 		dom.DefaultErrorPenalty = v.(int)
 	} else if d.HasChange("default_error_penalty") {
-                dom.DefaultErrorPenalty = v.(int)
+		dom.DefaultErrorPenalty = v.(int)
 	}
 	if v, ok := d.GetOk("max_test_timeout"); ok {
 		dom.MaxTestTimeout = v.(float64)
@@ -508,7 +508,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 	if v, ok := d.GetOk("default_ssl_client_certificate"); ok {
 		dom.DefaultSslClientCertificate = v.(string)
 	} else if d.HasChange("default_ssl_client_certificate") {
-                dom.DefaultSslClientCertificate = v.(string)
+		dom.DefaultSslClientCertificate = v.(string)
 	}
 	if v, ok := d.GetOk("end_user_mapping_enabled"); ok {
 		dom.EndUserMappingEnabled = v.(bool)
