@@ -161,7 +161,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 			if e != nil {
 				return e
 			}
-			d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+			d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
 			return resourceDNSv2ZoneRead(d, meta)
 		} else {
 			return e
@@ -171,7 +171,11 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	// Save the zone to the API
 	log.Printf("[DEBUG] [Akamai DNSv2] Updating zone %v", zonecreate)
 	// Give terraform the ID
-	d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+	if d.Id() == "" || strings.Contains(d.Id(), ":") {
+		d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
+	} else {
+		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+	}
 	return resourceDNSv2ZoneRead(d, meta)
 
 }
@@ -206,11 +210,15 @@ func resourceDNSv2ZoneRead(d *schema.ResourceData, meta interface{}) error {
 	populateDNSv2ZoneState(d, zone)
 
 	log.Printf("[DEBUG] [Akamai DNSv2] READ %v", zone)
-	d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+	if strings.Contains(d.Id(), ":") {
+		d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
+	} else {
+		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+	}
 	return nil
 }
 
-// Create a new DNS Record
+// Update DNS Zone
 func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	// only allow one record to be created at a time
 	// this prevents lost data if you are using a counter/dynamic variables
@@ -257,7 +265,11 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Give terraform the ID
-	d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+	if strings.Contains(d.Id(), ":") {
+		d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
+	} else {
+		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+	}
 	return resourceDNSv2ZoneRead(d, meta)
 }
 
@@ -276,7 +288,7 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	populateDNSv2ZoneState(d, zone)
 
 	// Give terraform the ID
-	d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+	d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
 
 	return []*schema.ResourceData{d}, nil
 }

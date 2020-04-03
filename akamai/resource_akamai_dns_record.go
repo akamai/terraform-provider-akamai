@@ -337,12 +337,16 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Give terraform the ID
-	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
+	if d.Id() == "" || strings.Contains(d.Id(), ":") {
+		d.SetId(fmt.Sprintf("%s:%s:%s:%s", zone, host, recordtype, sha1hash))
+	} else {
+		d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
+	}
 
 	return resourceDNSRecordUpdate(d, meta)
 }
 
-// Create a new DNS Record
+// Update DNS Record
 func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	// only allow one record to be created at a time
 	// this prevents lost data if you are using a counter/dynamic variables
@@ -414,10 +418,13 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 
 		}
-		d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
+		// Give terraform the ID
+		if d.Id() == "" || strings.Contains(d.Id(), ":") {
+			d.SetId(fmt.Sprintf("%s:%s:%s:%s", zone, host, recordtype, sha1hash))
+		} else {
+			d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
+		}
 	}
-
-	// Give terraform the ID
 
 	return resourceDNSRecordRead(d, meta)
 }
@@ -476,7 +483,12 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 
 		if sha1hashtest == sha1hash {
 			log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
-			d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
+			// Give terraform the ID
+			if strings.Contains(d.Id(), ":") {
+				d.SetId(fmt.Sprintf("%s:%s:%s:%s", zone, host, recordtype, sha1hash))
+			} else {
+				d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
+			}
 			return nil
 		} else {
 			log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
@@ -493,9 +505,10 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
-	idParts := strings.Split(d.Id(), "-")
+	idParts := strings.Split(d.Id(), ":")
+	fmt.Println("idParts: ", idParts)
 	if len(idParts) != 3 {
-		fmt.Errorf("Invalid Id for Zone Import: %s", d.Id())
+		return []*schema.ResourceData{d}, fmt.Errorf("Invalid Id for Zone Import: %s", d.Id())
 	}
 	zone := idParts[0]
 	recordname := idParts[1]
@@ -526,7 +539,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	}
 
 	sha1hash := getSHAString(importTargetString)
-	d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, recordname, recordtype, sha1hash))
+	d.SetId(fmt.Sprintf("%s:%s:%s:%s", zone, recordname, recordtype, sha1hash))
 
 	return []*schema.ResourceData{d}, nil
 }
