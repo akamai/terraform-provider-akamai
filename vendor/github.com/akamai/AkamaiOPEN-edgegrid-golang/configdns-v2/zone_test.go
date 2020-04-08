@@ -1,11 +1,11 @@
 package dnsv2
 
 import (
-	"testing"
 	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
+	"testing"
 )
 
 func TestZone_JSON(t *testing.T) {
@@ -52,27 +52,25 @@ func TestGetZoneNames(t *testing.T) {
 
 func TestGetZoneNameTypes(t *testing.T) {
 
-        dnsTestZone := "testzone.com"
+	dnsTestZone := "testzone.com"
 	dnsTestRecordName := "test.testzone.com"
 
-        defer gock.Off()
+	defer gock.Off()
 
-        mock := gock.New(fmt.Sprintf("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-dns/v2/zones/%s/names/%s/types", dnsTestZone, dnsTestRecordName))
-        mock.
-                Get(fmt.Sprintf("/config-dns/v2/zones/%s/names/%s/types", dnsTestZone, dnsTestRecordName)).
-                HeaderPresent("Authorization").
-                Reply(200).
-                SetHeader("Content-Type", "application/json;charset=UTF-8").
-                BodyString(fmt.Sprintf(`{
+	mock := gock.New(fmt.Sprintf("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-dns/v2/zones/%s/names/%s/types", dnsTestZone, dnsTestRecordName))
+	mock.
+		Get(fmt.Sprintf("/config-dns/v2/zones/%s/names/%s/types", dnsTestZone, dnsTestRecordName)).
+		HeaderPresent("Authorization").
+		Reply(200).
+		SetHeader("Content-Type", "application/json;charset=UTF-8").
+		BodyString(fmt.Sprintf(`{
                         "types":["CNAME", "AKAMAICDN"]
                 }`))
 
-        Init(config)
-        typeList, err := GetZoneNameTypes(dnsTestRecordName, dnsTestZone)
-        assert.NoError(t, err)
-        assert.Equal(t, assert.IsType(t, &ZoneNameTypesResponse{}, typeList), true)
-        assert.Equal(t, len(typeList.Types), 2)
+	Init(config)
+	typeList, err := GetZoneNameTypes(dnsTestRecordName, dnsTestZone)
+	assert.NoError(t, err)
+	assert.Equal(t, assert.IsType(t, &ZoneNameTypesResponse{}, typeList), true)
+	assert.Equal(t, len(typeList.Types), 2)
 
 }
-
-

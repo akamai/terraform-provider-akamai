@@ -161,7 +161,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 			if e != nil {
 				return e
 			}
-			d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
+			d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
 			return resourceDNSv2ZoneRead(d, meta)
 		} else {
 			return e
@@ -171,8 +171,8 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	// Save the zone to the API
 	log.Printf("[DEBUG] [Akamai DNSv2] Updating zone %v", zonecreate)
 	// Give terraform the ID
-	if d.Id() == "" || strings.Contains(d.Id(), ":") {
-		d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
+	if d.Id() == "" || strings.Contains(d.Id(), "#") {
+		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
 	} else {
 		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
 	}
@@ -210,8 +210,8 @@ func resourceDNSv2ZoneRead(d *schema.ResourceData, meta interface{}) error {
 	populateDNSv2ZoneState(d, zone)
 
 	log.Printf("[DEBUG] [Akamai DNSv2] READ %v", zone)
-	if strings.Contains(d.Id(), ":") {
-		d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
+	if strings.Contains(d.Id(), "#") {
+		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
 	} else {
 		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
 	}
@@ -265,8 +265,8 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Give terraform the ID
-	if strings.Contains(d.Id(), ":") {
-		d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
+	if strings.Contains(d.Id(), "#") {
+		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
 	} else {
 		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
 	}

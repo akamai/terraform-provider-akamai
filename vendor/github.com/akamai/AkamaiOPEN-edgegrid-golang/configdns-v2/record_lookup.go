@@ -7,9 +7,9 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 )
 
 // Recordset Query args struct
@@ -140,33 +140,6 @@ func GetRecordsets(zone string, queryArgs ...RecordsetQueryArgs) (*RecordSetResp
 	if len(queryArgs) > 1 {
 		return nil, errors.New("GetRecordsets QueryArgs invalid.")
 	}
-	if len(queryArgs) > 0 {
-		getURL += "?"
-		if queryArgs[0].Page > 0 {
-			getURL += fmt.Sprintf("page=%d", queryArgs[0].Page)
-			getURL += "&"
-		}
-		if queryArgs[0].PageSize > 0 {
-			getURL += fmt.Sprintf("pageSize=%d", queryArgs[0].PageSize)
-			getURL += "&"
-		}
-		if queryArgs[0].Search != "" {
-			getURL += fmt.Sprintf("search=%s", queryArgs[0].Search)
-			getURL += "&"
-		}
-		getURL := fmt.Sprintf("showAll=%t", queryArgs[0].ShowAll)
-		getURL += "&"
-		if queryArgs[0].SortBy != "" {
-			getURL += fmt.Sprintf("sortBy=%s", queryArgs[0].SortBy)
-			getURL += "&"
-		}
-		if queryArgs[0].Types != "" {
-			getURL += fmt.Sprintf("types=%s", queryArgs[0].Types)
-			getURL += "&"
-		}
-		getURL = strings.TrimRight(getURL, "&")
-		getURL = strings.TrimRight(getURL, "?")
-	}
 
 	req, err := client.NewRequest(
 		Config,
@@ -176,6 +149,27 @@ func GetRecordsets(zone string, queryArgs ...RecordsetQueryArgs) (*RecordSetResp
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	q := req.URL.Query()
+	if len(queryArgs) > 0 {
+		if queryArgs[0].Page > 0 {
+			q.Add("page", strconv.Itoa(queryArgs[0].Page))
+		}
+		if queryArgs[0].PageSize > 0 {
+			q.Add("pageSize", strconv.Itoa(queryArgs[0].PageSize))
+		}
+		if queryArgs[0].Search != "" {
+			q.Add("search", queryArgs[0].Search)
+		}
+		q.Add("showAll", strconv.FormatBool(queryArgs[0].ShowAll))
+		if queryArgs[0].SortBy != "" {
+			q.Add("sortBy", queryArgs[0].SortBy)
+		}
+		if queryArgs[0].Types != "" {
+			q.Add("types", queryArgs[0].Types)
+		}
+		req.URL.RawQuery = q.Encode()
 	}
 
 	edge.PrintHttpRequest(req, true)
@@ -332,7 +326,15 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			fieldMap["flags"], _ = strconv.Atoi(parts[0])
 			fieldMap["protocol"], _ = strconv.Atoi(parts[1])
 			fieldMap["algorithm"], _ = strconv.Atoi(parts[2])
-			fieldMap["key"] = parts[3]
+			key := parts[3]
+                        // key can have whitespace
+                        if len(parts) > 4 {
+                                i := 4
+                                for i < len(parts) {
+                                        key += " " + parts[i]
+                                }
+                        }
+                        fieldMap["key"] = key
 			break
 		}
 
@@ -340,14 +342,23 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 		for _, rcontent := range rdata {
 			parts := strings.Split(rcontent, " ")
 			fieldMap["keytag"], _ = strconv.Atoi(parts[0])
-			fieldMap["digest_type"], _ = strconv.Atoi(parts[1])
-			fieldMap["algorithm"], _ = strconv.Atoi(parts[2])
-			fieldMap["digest"] = parts[3]
+			fieldMap["digest_type"], _ = strconv.Atoi(parts[2])
+			fieldMap["algorithm"], _ = strconv.Atoi(parts[1])
+			dig := parts[3]
+                        // digest can have whitespace
+                        if len(parts) > 4 {
+                                i := 4
+                                for i < len(parts) {
+                                        dig += " " + parts[i]
+                                }
+                        }
+                        fieldMap["digest"] = dig
 			break
 		}
 
 	case "HINFO":
 		for _, rcontent := range rdata {
+			rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
 			parts := strings.Split(rcontent, " ")
 			fieldMap["hardware"] = parts[0]
 			fieldMap["software"] = parts[1]
@@ -372,21 +383,22 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 
 	case "NAPTR":
 		for _, rcontent := range rdata {
+                        rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
 			parts := strings.Split(rcontent, " ")
 			fieldMap["order"], _ = strconv.Atoi(parts[0])
 			fieldMap["preference"], _ = strconv.Atoi(parts[1])
 			fieldMap["flagsnaptr"] = parts[2]
-			fieldMap["regexp"] = parts[3]
-			fieldMap["replacement"] = parts[4]
-			fieldMap["service"] = parts[5]
+                        fieldMap["service"] = parts[3]
+			fieldMap["regexp"] = parts[4]
+			fieldMap["replacement"] = parts[5]
 			break
 		}
 
 	case "NSEC3":
 		for _, rcontent := range rdata {
 			parts := strings.Split(rcontent, " ")
-			fieldMap["flags"], _ = strconv.Atoi(parts[0])
-			fieldMap["algorithm"], _ = strconv.Atoi(parts[1])
+			fieldMap["flags"], _ = strconv.Atoi(parts[1])
+			fieldMap["algorithm"], _ = strconv.Atoi(parts[0])
 			fieldMap["iterations"], _ = strconv.Atoi(parts[2])
 			fieldMap["salt"] = parts[3]
 			fieldMap["next_hashed_owner_name"] = parts[4]
@@ -397,8 +409,8 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 	case "NSEC3PARAM":
 		for _, rcontent := range rdata {
 			parts := strings.Split(rcontent, " ")
-			fieldMap["flags"], _ = strconv.Atoi(parts[0])
-			fieldMap["algorithm"], _ = strconv.Atoi(parts[1])
+			fieldMap["flags"], _ = strconv.Atoi(parts[1])
+			fieldMap["algorithm"], _ = strconv.Atoi(parts[0])
 			fieldMap["iterations"], _ = strconv.Atoi(parts[2])
 			fieldMap["salt"] = parts[3]
 			break
@@ -421,9 +433,17 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			fieldMap["original_ttl"], _ = strconv.Atoi(parts[3])
 			fieldMap["expiration"] = parts[4]
 			fieldMap["inception"] = parts[5]
-			fieldMap["signature"] = parts[6]
 			fieldMap["signer"] = parts[7]
-			fieldMap["keytag"], _ = strconv.Atoi(parts[8])
+			fieldMap["keytag"], _ = strconv.Atoi(parts[6])
+                        sig := parts[8]
+			// sig can have whitespace
+			if len(parts) > 9 {
+				i := 9
+				for i < len(parts) { 
+                        		sig += " " + parts[i]
+				}
+			}
+                        fieldMap["signature"] = sig
 			break
 		}
 
@@ -470,14 +490,27 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 		fieldMap["answer_type"] = parts[0]
 		fieldMap["dns_name"] = parts[1]
 
-	default:
-                for _, rcontent := range rdata {
+	case "SPF":
+		for _, rcontent := range rdata {
+                        rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
                         newrdata = append(newrdata, rcontent)
                 }
+                fieldMap["target"] = newrdata
+
+        case "TXT":
+                for _, rcontent := range rdata {
+                        rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
+                        newrdata = append(newrdata, rcontent)
+                }
+                fieldMap["target"] = newrdata
+			
+	default:
+		for _, rcontent := range rdata {
+			newrdata = append(newrdata, rcontent)
+		}
 		fieldMap["target"] = newrdata
 	}
 
 	return fieldMap
 
 }
-

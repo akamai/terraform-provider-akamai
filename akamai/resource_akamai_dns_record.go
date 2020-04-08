@@ -337,8 +337,8 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Give terraform the ID
-	if d.Id() == "" || strings.Contains(d.Id(), ":") {
-		d.SetId(fmt.Sprintf("%s:%s:%s:%s", zone, host, recordtype, sha1hash))
+	if d.Id() == "" || strings.Contains(d.Id(), "#") {
+		d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, host, recordtype, sha1hash))
 	} else {
 		d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 	}
@@ -419,8 +419,8 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 
 		}
 		// Give terraform the ID
-		if d.Id() == "" || strings.Contains(d.Id(), ":") {
-			d.SetId(fmt.Sprintf("%s:%s:%s:%s", zone, host, recordtype, sha1hash))
+		if d.Id() == "" || strings.Contains(d.Id(), "#") {
+			d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, host, recordtype, sha1hash))
 		} else {
 			d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 		}
@@ -484,8 +484,8 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		if sha1hashtest == sha1hash {
 			log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
 			// Give terraform the ID
-			if strings.Contains(d.Id(), ":") {
-				d.SetId(fmt.Sprintf("%s:%s:%s:%s", zone, host, recordtype, sha1hash))
+			if strings.Contains(d.Id(), "#") {
+				d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, host, recordtype, sha1hash))
 			} else {
 				d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 			}
@@ -505,7 +505,7 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
-	idParts := strings.Split(d.Id(), ":")
+	idParts := strings.Split(d.Id(), "#")
 	fmt.Println("idParts: ", idParts)
 	if len(idParts) != 3 {
 		return []*schema.ResourceData{d}, fmt.Errorf("Invalid Id for Zone Import: %s", d.Id())
@@ -539,7 +539,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	}
 
 	sha1hash := getSHAString(importTargetString)
-	d.SetId(fmt.Sprintf("%s:%s:%s:%s", zone, recordname, recordtype, sha1hash))
+	d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, recordname, recordtype, sha1hash))
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -700,7 +700,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 	target := d.Get("target").(*schema.Set).List()
 	records := make([]string, 0, len(target))
 
-	simplerecordtarget := map[string]bool{"AAAA": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "SRV": true}
+	simplerecordtarget := map[string]bool{"AAAA": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "SRV": true, "TXT": true}
 
 	for _, recContent := range target {
 		if simplerecordtarget[recordtype] {
@@ -713,6 +713,26 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			} else if recordtype == "LOC" {
 				log.Printf("[DEBUG] [Akamai DNSv2] LOC code format %s", recContent.(string))
 				str := padCoordinates(recContent.(string))
+				records = append(records, str)
+			} else if recordtype == "SPF" {
+				str := recContent.(string)
+				// Fields may have embedded backslash
+				if strings.HasPrefix(str, "\\\"") {
+					str = "\"" + strings.TrimLeft(str, "\\\"")
+					str = strings.TrimRight(str, "\\\"") + "\""
+				} else {
+					str = "\"" + str + "\""
+				}
+				records = append(records, str)
+			} else if recordtype == "TXT" {
+				str := recContent.(string)
+				// Fields may have embedded backslash
+				if strings.HasPrefix(str, "\\\"") {
+					str = strings.TrimLeft(str, "\\\"")
+					str = strings.TrimRight(str, "\\\"")
+				}
+				str = strings.ReplaceAll(str, "\\\\\"", "\\\"")
+				str = "\"" + str + "\""
 				records = append(records, str)
 			} else {
 				checktarget := recContent.(string)[len(recContent.(string))-1:]
@@ -773,7 +793,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			algorithm := d.Get("algorithm").(int)
 			digest := d.Get("digest").(string)
 
-			records = append(records, strconv.Itoa(keytag)+" "+strconv.Itoa(digestType)+" "+strconv.Itoa(algorithm)+" "+digest)
+			records = append(records, strconv.Itoa(keytag)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(digestType)+" "+digest)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
@@ -783,6 +803,13 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records := make([]string, 0, len(target))
 			hardware := d.Get("hardware").(string)
 			software := d.Get("software").(string)
+			// Fields may have embedded backslash. Quotes optional
+			if strings.Contains(hardware, "\\\"") {
+				hardware = strings.ReplaceAll(hardware, "\\\"", "\"")
+			}
+			if strings.Contains(software, "\\\"") {
+				software = strings.ReplaceAll(software, "\\\"", "\"")
+			}
 
 			records = append(records, hardware+" "+software)
 
@@ -855,13 +882,29 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			preference := d.Get("preference").(int)
 			regexp := d.Get("regexp").(string)
 			replacement := d.Get("replacement").(string)
+			// Following three fields may have embedded backslash
 			service := d.Get("service").(string)
-			checktarget := service[len(service)-1:]
-			if !(checktarget == ".") {
-				service = service + "."
+			if strings.Contains(service, "\\\"") {
+				service = strings.ReplaceAll(service, "\\\"", "")
+			}
+			//checktarget := service[len(service)-1:]
+			//if !(checktarget == ".") {
+			//	service = service + "."
+			//}
+			service = "\"" + service + "\""
+			// Fields may have embedded backslash
+			if strings.Contains(regexp, "\\\"") {
+				regexp = strings.ReplaceAll(regexp, "\\\"", "\"")
+			} else if !strings.Contains(regexp, "\"") {
+				regexp = "\"" + regexp + "\""
+			}
+			if strings.Contains(flagsnaptr, "\\\"") {
+				flagsnaptr = strings.ReplaceAll(flagsnaptr, "\\\"", "\"")
+			} else if !strings.Contains(flagsnaptr, "\"") {
+				flagsnaptr = "\"" + flagsnaptr + "\""
 			}
 
-			records = append(records, strconv.Itoa(order)+" "+strconv.Itoa(preference)+" "+flagsnaptr+" "+regexp+" "+replacement+" "+service)
+			records = append(records, strconv.Itoa(order)+" "+strconv.Itoa(preference)+" "+flagsnaptr+" "+service+" "+regexp+" "+replacement)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
@@ -876,7 +919,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			salt := d.Get("salt").(string)
 			typeBitmaps := d.Get("type_bitmaps").(string)
 
-			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(iterations)+" "+salt+" "+nextHashedOwnerName+" "+typeBitmaps)
+			records = append(records, strconv.Itoa(algorithm)+" "+strconv.Itoa(flags)+" "+strconv.Itoa(iterations)+" "+salt+" "+nextHashedOwnerName+" "+typeBitmaps)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
@@ -891,7 +934,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 
 			saltbase32 := salt
 
-			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(iterations)+" "+saltbase32)
+			records = append(records, strconv.Itoa(algorithm)+" "+strconv.Itoa(flags)+" "+strconv.Itoa(iterations)+" "+saltbase32)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
@@ -915,7 +958,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
-		if recordtype == "RRSIG" { //TODO FIX
+		if recordtype == "RRSIG" {
 
 			records := make([]string, 0, len(target))
 			expiration := d.Get("expiration").(string)
@@ -928,7 +971,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			signer := d.Get("signer").(string)
 			typeCovered := d.Get("type_covered").(string)
 
-			records = append(records, typeCovered+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(labels)+" "+strconv.Itoa(originalTTL)+" "+expiration+" "+inception+" "+signature+" "+signer+" "+strconv.Itoa(keytag))
+			records = append(records, typeCovered+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(labels)+" "+strconv.Itoa(originalTTL)+" "+expiration+" "+inception+" "+strconv.Itoa(keytag)+" "+signer+" "+signature)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
