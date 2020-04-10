@@ -9,7 +9,7 @@ import (
 
 	client "github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 // Hack for Hashicorp Acceptance Tests

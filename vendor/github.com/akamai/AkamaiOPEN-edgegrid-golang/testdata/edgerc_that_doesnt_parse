@@ -1,4 +1,0 @@
-[default]
-client_token = xxxx-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx
-access_token = xxxx-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx
-max_body = 131072
