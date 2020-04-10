@@ -301,6 +301,24 @@ func GetRdata(zone string, name string, record_type string) ([]string, error) {
 	return rdata, nil
 }
 
+func ProcessRdata(rdata []string, rtype string) []string {
+
+        newrdata := make([]string, 0, len(rdata))
+        for _, i := range rdata {
+        	str := i
+                if rtype == "AAAA" {
+                        addr := net.ParseIP(str)
+                        result := FullIPv6(addr)
+                         str = result
+                } else if rtype == "LOC" {
+                         str = PadCoordinates(str)
+                }
+                rdata = append(rdata, str)
+        }
+        return newrdata
+
+}
+
 // Utility method to parse RData in context of type. Return map of fields and values
 func ParseRData(rtype string, rdata []string) map[string]interface{} {
 
@@ -309,6 +327,7 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 		return fieldMap
 	}
 	newrdata := make([]string, 0, len(rdata))
+	fieldMap["target"] = newrdata
 
 	switch rtype {
 	case "AFSDB":
@@ -327,14 +346,14 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			fieldMap["protocol"], _ = strconv.Atoi(parts[1])
 			fieldMap["algorithm"], _ = strconv.Atoi(parts[2])
 			key := parts[3]
-                        // key can have whitespace
-                        if len(parts) > 4 {
-                                i := 4
-                                for i < len(parts) {
-                                        key += " " + parts[i]
-                                }
-                        }
-                        fieldMap["key"] = key
+			// key can have whitespace
+			if len(parts) > 4 {
+				i := 4
+				for i < len(parts) {
+					key += " " + parts[i]
+				}
+			}
+			fieldMap["key"] = key
 			break
 		}
 
@@ -345,20 +364,20 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			fieldMap["digest_type"], _ = strconv.Atoi(parts[2])
 			fieldMap["algorithm"], _ = strconv.Atoi(parts[1])
 			dig := parts[3]
-                        // digest can have whitespace
-                        if len(parts) > 4 {
-                                i := 4
-                                for i < len(parts) {
-                                        dig += " " + parts[i]
-                                }
-                        }
-                        fieldMap["digest"] = dig
+			// digest can have whitespace
+			if len(parts) > 4 {
+				i := 4
+				for i < len(parts) {
+					dig += " " + parts[i]
+				}
+			}
+			fieldMap["digest"] = dig
 			break
 		}
 
 	case "HINFO":
 		for _, rcontent := range rdata {
-			rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
+			//rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
 			parts := strings.Split(rcontent, " ")
 			fieldMap["hardware"] = parts[0]
 			fieldMap["software"] = parts[1]
@@ -383,13 +402,15 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 
 	case "NAPTR":
 		for _, rcontent := range rdata {
-                        rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
 			parts := strings.Split(rcontent, " ")
 			fieldMap["order"], _ = strconv.Atoi(parts[0])
 			fieldMap["preference"], _ = strconv.Atoi(parts[1])
-			fieldMap["flagsnaptr"] = parts[2]
+			//fieldMap["flagsnaptr"] = strings.Trim(parts[2], "\"")
+                        fieldMap["flagsnaptr"] = parts[2]
+			//fieldMap["service"] = strings.Trim(parts[3], "\"")
                         fieldMap["service"] = parts[3]
-			fieldMap["regexp"] = parts[4]
+			//fieldMap["regexp"] = strings.Trim(parts[4], "\"")
+                        fieldMap["regexp"] = parts[4]
 			fieldMap["replacement"] = parts[5]
 			break
 		}
@@ -435,15 +456,15 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			fieldMap["inception"] = parts[5]
 			fieldMap["signer"] = parts[7]
 			fieldMap["keytag"], _ = strconv.Atoi(parts[6])
-                        sig := parts[8]
+			sig := parts[8]
 			// sig can have whitespace
 			if len(parts) > 9 {
 				i := 9
-				for i < len(parts) { 
-                        		sig += " " + parts[i]
+				for i < len(parts) {
+					sig += " " + parts[i]
 				}
 			}
-                        fieldMap["signature"] = sig
+			fieldMap["signature"] = sig
 			break
 		}
 
@@ -489,21 +510,40 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 		parts := strings.Split(rdata[0], " ")
 		fieldMap["answer_type"] = parts[0]
 		fieldMap["dns_name"] = parts[1]
-
+	
 	case "SPF":
 		for _, rcontent := range rdata {
-                        rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
+			//newrdata = append(newrdata, strings.Trim(rcontent, "\""))
                         newrdata = append(newrdata, rcontent)
-                }
+		}
+		fieldMap["target"] = newrdata
+
+	case "TXT":
+		for _, rcontent := range rdata {
+			//rcontent = strings.Trim(rcontent, "\"")
+			//rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
+			newrdata = append(newrdata, rcontent)
+		}
+		fieldMap["target"] = newrdata
+
+        case "AAAA":
+                for _, i := range rdata {
+                        str := i
+                        addr := net.ParseIP(str)
+                        result := FullIPv6(addr)
+                        str = result
+			newrdata = append(newrdata, str)
+		}
                 fieldMap["target"] = newrdata
 
-        case "TXT":
-                for _, rcontent := range rdata {
-                        rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
-                        newrdata = append(newrdata, rcontent)
+        case "LOC":
+                for _, i := range rdata {
+                        str := i
+                        str = PadCoordinates(str)
+                        newrdata = append(newrdata, str)
                 }
                 fieldMap["target"] = newrdata
-			
+	
 	default:
 		for _, rcontent := range rdata {
 			newrdata = append(newrdata, rcontent)

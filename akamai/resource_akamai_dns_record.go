@@ -12,6 +12,7 @@ import (
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
+	//"github.com/hashicorp/terraform/helper/customdiff"
 	"github.com/hashicorp/terraform/helper/validation"
 )
 
@@ -21,7 +22,7 @@ func resourceDNSv2Record() *schema.Resource {
 		Read:   resourceDNSRecordRead,
 		Update: resourceDNSRecordUpdate,
 		Delete: resourceDNSRecordDelete,
-		Exists: resourceDNSRecordExists,
+		//Exists: resourceDNSRecordExists,
 		Importer: &schema.ResourceImporter{
 			State: resourceDNSRecordImport,
 		},
@@ -116,10 +117,26 @@ func resourceDNSv2Record() *schema.Resource {
 			"hardware": {
 				Type:     schema.TypeString,
 				Optional: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					oldold := strings.Trim(old, "\\\"")
+					newnew := strings.Trim(new, "\"")
+					if oldold == newnew {
+						return true
+					}
+					return false
+				},
 			},
 			"software": {
 				Type:     schema.TypeString,
 				Optional: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					oldold := strings.Trim(old, "\\\"")
+					newnew := strings.Trim(new, "\"")
+					if oldold == newnew {
+						return true
+					}
+					return false
+				},
 			},
 			"priority": {
 				Type:     schema.TypeInt,
@@ -239,7 +256,7 @@ func resourceDNSv2Record() *schema.Resource {
 			},
 			"serial": {
 				Type:     schema.TypeInt,
-				Optional: true,
+				Computed: true,
 			},
 			"refresh": {
 				Type:     schema.TypeInt,
@@ -261,6 +278,25 @@ func resourceDNSv2Record() *schema.Resource {
 	}
 }
 
+/*
+   CustomizeDiff: customdiff.All(
+           customdiff.ForceNewIfChange("target", func (old, new, meta interface{}) bool {
+                   log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET. Old: [%v]. New: [%v]", old, new)
+                   oldTargetList := old.(*schema.Set).List()
+                   newTargetList := new.(*schema.Set).List()
+                   log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET Lengths. Old: [%d]. New: [%d]", len(oldTargetList), len(newTargetList))
+                   for i, rcontent := range oldTargetList {
+                           log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET ITEM. Old: [%s]. New: [%s]", rcontent.(string), newTargetList[i].(string))
+                           updateditem := strings.ReplaceAll(rcontent.(string), "\\\"", "\"")
+                           log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET Updated ITEM: [%s]", updateditem)
+                           if updateditem != newTargetList[i].(string) {
+                                   return false
+                           }
+                   }
+                   return true
+           }),
+   ),
+*/
 // Create a new DNS Record
 func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	// only allow one record to be created at a time
@@ -370,11 +406,12 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	_, ok = d.GetOk("target")
 	if ok {
 		target := d.Get("target").(*schema.Set).List()
-
+		log.Printf("[DEBUG] [Akamai DNSv2] UPDATE RECORD Target [%v]", target)
 		records := make([]string, 0, len(target))
 		for _, recContent := range target {
 			records = append(records, recContent.(string))
 		}
+		log.Printf("[DEBUG] [Akamai DNSv2] UPDATE RECORD Records [%v]", records)
 	}
 
 	err := validateRecord(d)
@@ -457,29 +494,58 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] READ record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
 	//sort.Strings(recordcreate.Target)
 	extractString := strings.Join(recordcreate.Target, " ")
+	log.Printf("[DEBUG] [Akamai DNSv2] READ RECORD Bound Extract Target %s", extractString)
 	sha1hash := getSHAString(extractString)
 	log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum for Existing SHA test %s %s", extractString, sha1hash)
 
 	// try to get the zone from the API
 	log.Printf("[INFO] [Akamai DNSv2] READ Searching for zone records %s %s %s", zone, host, recordtype)
-	targets, e := dnsv2.GetRdata(zone, host, recordtype)
+	record, e := dnsv2.GetRecord(zone, host, recordtype)
 	if e != nil {
-		//return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e,e)
+		log.Printf("[ERROR] [Akamai DNSv2] RECORD READ. error looking up "+recordtype+" records for %q: %s", host, e.Error())
 		d.SetId("")
 		return nil
-
 	}
-	b1, err := json.Marshal(targets)
+	log.Printf("[DEBUG] [Akamai DNSv2] RECORD READ [%v] [%s] [%s] [%s] ", record, zone, host, recordtype)
+	b1, err := json.Marshal(record.Target)
 	if err != nil {
 		fmt.Println(err)
 	}
+	// Check if type with quotes in RDATA
+	log.Printf("[DEBUG] [Akamai DNSv2] READ %s RECORD Read RDATA: %s", recordtype, strings.Join(record.Target, " "))
+	log.Printf("[DEBUG] [Akamai DNSv2] READ %s RECORD Bound Extract Target %s", recordtype, extractString)
 
 	log.Printf("[DEBUG] [Akamai DNSv2] READ record data read JSON %s", string(b1))
+
+	// Parse Rdata
+	rdataFieldMap := dnsv2.ParseRData(recordtype, record.Target) // returns map[string]interface{}
+	for fname, fvalue := range rdataFieldMap {
+		d.Set(fname, fvalue)
+	}
+
+	//targets := dnsv2.ProcessRdata(record.Target, recordtype)
+	targets, err := dnsv2.GetRdata(zone, host, recordtype)
+	if err != nil {
+		log.Printf("[DEBUG] [Akamai DNSv2] READ Record read failed for record [%s] [%s] [%s] ", zone, host, recordtype)
+		return nil
+	}
 
 	if len(targets) > 0 {
 		sort.Strings(targets)
 		extractStringTest := strings.Join(targets, " ")
 		sha1hashtest := getSHAString(extractStringTest)
+
+		if recordtype == "SOA" {
+			log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD CHANGE ")
+			if rdataFieldMap["serial"].(int) >= d.Get("serial").(int) {
+				log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD CHANGE: SOA OK ")
+				if _, ok := validateSOARecord(d); ok {
+					log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD CHANGE: SOA OK ")
+					d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, host, recordtype, sha1hashtest))
+					return nil
+				}
+			}
+		}
 
 		if sha1hashtest == sha1hash {
 			log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
@@ -501,6 +567,36 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 	return nil
+}
+
+func validateSOARecord(d *schema.ResourceData) (int, bool) {
+
+	oldserial, newser := d.GetChange("serial")
+	newserial := newser.(int)
+	if oldserial.(int) > newserial {
+		return newserial, false
+	}
+	if d.HasChange("name_server") {
+		return newserial, false
+	}
+	if d.HasChange("email_address") {
+		return newserial, false
+	}
+	if d.HasChange("refresh") {
+		return newserial, false
+	}
+	if d.HasChange("retry") {
+		return newserial, false
+	}
+	if d.HasChange("expiry") {
+		return newserial, false
+	}
+	if d.HasChange("nxdomain_ttl") {
+		return newserial, false
+	}
+
+	return newserial, true
+
 }
 
 func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
@@ -531,15 +627,24 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	for fname, fvalue := range rdataFieldMap {
 		d.Set(fname, fvalue)
 	}
-	targets := recordset.Target
-	importTargetString := "no rdata"
+	targets, err := dnsv2.GetRdata(zone, recordname, recordtype)
+	if err != nil {
+		log.Printf("[DEBUG] [Akamai DNSv2] IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordname, recordtype)
+		d.SetId("")
+		return []*schema.ResourceData{d}, err
+	}
+
+	//targets := dnsv2.ProcessRdata(recordset.Target, recordtype)
+	importTargetString := ""
 	if len(targets) > 0 {
 		sort.Strings(targets)
 		importTargetString = strings.Join(targets, " ")
+		sha1hash := getSHAString(importTargetString)
+		d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, recordname, recordtype, sha1hash))
+	} else {
+		log.Printf("[DEBUG] [Akamai DNSv2] IMPORT Invalid Record. No target returned  [%s] [%s] [%s] ", zone, recordname, recordtype)
+		d.SetId("")
 	}
-
-	sha1hash := getSHAString(importTargetString)
-	d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, recordname, recordtype, sha1hash))
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -573,6 +678,7 @@ func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+/*
 func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
 	var zone string
@@ -636,6 +742,7 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 		return false, nil
 	}
 }
+*/
 
 func contains(s []string, e string) bool {
 	for _, a := range s {
@@ -716,23 +823,22 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 				records = append(records, str)
 			} else if recordtype == "SPF" {
 				str := recContent.(string)
-				// Fields may have embedded backslash
-				if strings.HasPrefix(str, "\\\"") {
-					str = "\"" + strings.TrimLeft(str, "\\\"")
-					str = strings.TrimRight(str, "\\\"") + "\""
-				} else {
+				if !strings.HasPrefix(str, "\"") {
 					str = "\"" + str + "\""
 				}
 				records = append(records, str)
 			} else if recordtype == "TXT" {
 				str := recContent.(string)
-				// Fields may have embedded backslash
-				if strings.HasPrefix(str, "\\\"") {
-					str = strings.TrimLeft(str, "\\\"")
-					str = strings.TrimRight(str, "\\\"")
+				log.Printf("[DEBUG] [Akamai DNSv2] Bind TXT Data IN: [%s]", str)
+				if !strings.HasPrefix(str, "\"") {
+					str = "\"" + str + "\""
+					//str = strings.Trim(str, "\"")
 				}
-				str = strings.ReplaceAll(str, "\\\\\"", "\\\"")
-				str = "\"" + str + "\""
+				log.Printf("[DEBUG] [Akamai DNSv2] Bind TXT Data %s", str)
+				if strings.Contains(str, "\\\"") {
+					//str = strings.ReplaceAll(str, "\\\"", "\"")
+				}
+				log.Printf("[DEBUG] [Akamai DNSv2] Bind TXT Data OUT: [%s]", str)
 				records = append(records, str)
 			} else {
 				checktarget := recContent.(string)[len(recContent.(string))-1:]
@@ -803,12 +909,17 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records := make([]string, 0, len(target))
 			hardware := d.Get("hardware").(string)
 			software := d.Get("software").(string)
+
 			// Fields may have embedded backslash. Quotes optional
-			if strings.Contains(hardware, "\\\"") {
-				hardware = strings.ReplaceAll(hardware, "\\\"", "\"")
+			if strings.HasPrefix(hardware, "\\\"") {
+				hardware = strings.TrimLeft(hardware, "\\\"")
+				hardware = strings.TrimRight(hardware, "\\\"")
+				hardware = "\"" + hardware + "\""
 			}
-			if strings.Contains(software, "\\\"") {
-				software = strings.ReplaceAll(software, "\\\"", "\"")
+			if strings.HasPrefix(software, "\\\"") {
+				software = strings.TrimLeft(software, "\\\"")
+				software = strings.TrimRight(software, "\\\"")
+				software = "\"" + software + "\""
 			}
 
 			records = append(records, hardware+" "+software)
@@ -884,26 +995,15 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			replacement := d.Get("replacement").(string)
 			// Following three fields may have embedded backslash
 			service := d.Get("service").(string)
-			if strings.Contains(service, "\\\"") {
-				service = strings.ReplaceAll(service, "\\\"", "")
+			if !strings.HasPrefix(service, "\"") {
+				service = "\"" + service + "\""
 			}
-			//checktarget := service[len(service)-1:]
-			//if !(checktarget == ".") {
-			//	service = service + "."
-			//}
-			service = "\"" + service + "\""
-			// Fields may have embedded backslash
-			if strings.Contains(regexp, "\\\"") {
-				regexp = strings.ReplaceAll(regexp, "\\\"", "\"")
-			} else if !strings.Contains(regexp, "\"") {
+			if !strings.HasPrefix(regexp, "\"") {
 				regexp = "\"" + regexp + "\""
 			}
-			if strings.Contains(flagsnaptr, "\\\"") {
-				flagsnaptr = strings.ReplaceAll(flagsnaptr, "\\\"", "\"")
-			} else if !strings.Contains(flagsnaptr, "\"") {
+			if !strings.HasPrefix(flagsnaptr, "\"") {
 				flagsnaptr = "\"" + flagsnaptr + "\""
 			}
-
 			records = append(records, strconv.Itoa(order)+" "+strconv.Itoa(preference)+" "+flagsnaptr+" "+service+" "+regexp+" "+replacement)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
