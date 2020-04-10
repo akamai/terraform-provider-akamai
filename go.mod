@@ -4,10 +4,10 @@ require (
 	github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.10
 	github.com/go-ini/ini v1.52.0 // indirect
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
-	github.com/hashicorp/terraform v0.12.3
+	github.com/hashicorp/terraform v0.12.7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pkg/errors v0.0.0-20170505043639-c605e284fe17
+	github.com/pkg/errors v0.8.0
 	github.com/tidwall/gjson v1.2.1
 	github.com/tidwall/match v1.0.1 // indirect
 	github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 // indirect
