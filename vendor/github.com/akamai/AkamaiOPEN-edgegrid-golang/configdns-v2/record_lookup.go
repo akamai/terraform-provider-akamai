@@ -303,19 +303,19 @@ func GetRdata(zone string, name string, record_type string) ([]string, error) {
 
 func ProcessRdata(rdata []string, rtype string) []string {
 
-        newrdata := make([]string, 0, len(rdata))
-        for _, i := range rdata {
-        	str := i
-                if rtype == "AAAA" {
-                        addr := net.ParseIP(str)
-                        result := FullIPv6(addr)
-                         str = result
-                } else if rtype == "LOC" {
-                         str = PadCoordinates(str)
-                }
-                rdata = append(rdata, str)
-        }
-        return newrdata
+	newrdata := make([]string, 0, len(rdata))
+	for _, i := range rdata {
+		str := i
+		if rtype == "AAAA" {
+			addr := net.ParseIP(str)
+			result := FullIPv6(addr)
+			str = result
+		} else if rtype == "LOC" {
+			str = PadCoordinates(str)
+		}
+		newrdata = append(newrdata, str)
+	}
+	return newrdata
 
 }
 
@@ -406,11 +406,11 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			fieldMap["order"], _ = strconv.Atoi(parts[0])
 			fieldMap["preference"], _ = strconv.Atoi(parts[1])
 			//fieldMap["flagsnaptr"] = strings.Trim(parts[2], "\"")
-                        fieldMap["flagsnaptr"] = parts[2]
+			fieldMap["flagsnaptr"] = parts[2]
 			//fieldMap["service"] = strings.Trim(parts[3], "\"")
-                        fieldMap["service"] = parts[3]
+			fieldMap["service"] = parts[3]
 			//fieldMap["regexp"] = strings.Trim(parts[4], "\"")
-                        fieldMap["regexp"] = parts[4]
+			fieldMap["regexp"] = parts[4]
 			fieldMap["replacement"] = parts[5]
 			break
 		}
@@ -510,11 +510,11 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 		parts := strings.Split(rdata[0], " ")
 		fieldMap["answer_type"] = parts[0]
 		fieldMap["dns_name"] = parts[1]
-	
+
 	case "SPF":
 		for _, rcontent := range rdata {
 			//newrdata = append(newrdata, strings.Trim(rcontent, "\""))
-                        newrdata = append(newrdata, rcontent)
+			newrdata = append(newrdata, rcontent)
 		}
 		fieldMap["target"] = newrdata
 
@@ -526,24 +526,24 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 		}
 		fieldMap["target"] = newrdata
 
-        case "AAAA":
-                for _, i := range rdata {
-                        str := i
-                        addr := net.ParseIP(str)
-                        result := FullIPv6(addr)
-                        str = result
+	case "AAAA":
+		for _, i := range rdata {
+			str := i
+			addr := net.ParseIP(str)
+			result := FullIPv6(addr)
+			str = result
 			newrdata = append(newrdata, str)
 		}
-                fieldMap["target"] = newrdata
+		fieldMap["target"] = newrdata
 
-        case "LOC":
-                for _, i := range rdata {
-                        str := i
-                        str = PadCoordinates(str)
-                        newrdata = append(newrdata, str)
-                }
-                fieldMap["target"] = newrdata
-	
+	case "LOC":
+		for _, i := range rdata {
+			str := i
+			str = PadCoordinates(str)
+			newrdata = append(newrdata, str)
+		}
+		fieldMap["target"] = newrdata
+
 	default:
 		for _, rcontent := range rdata {
 			newrdata = append(newrdata, rcontent)

@@ -23,6 +23,7 @@ func resourceDNSv2Record() *schema.Resource {
 		Update: resourceDNSRecordUpdate,
 		Delete: resourceDNSRecordDelete,
 		//Exists: resourceDNSRecordExists,
+		CustomizeDiff: dnsRecordCustomDiffCustomizeDiff,
 		Importer: &schema.ResourceImporter{
 			State: resourceDNSRecordImport,
 		},
@@ -278,25 +279,65 @@ func resourceDNSv2Record() *schema.Resource {
 	}
 }
 
-/*
-   CustomizeDiff: customdiff.All(
-           customdiff.ForceNewIfChange("target", func (old, new, meta interface{}) bool {
-                   log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET. Old: [%v]. New: [%v]", old, new)
-                   oldTargetList := old.(*schema.Set).List()
-                   newTargetList := new.(*schema.Set).List()
-                   log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET Lengths. Old: [%d]. New: [%d]", len(oldTargetList), len(newTargetList))
-                   for i, rcontent := range oldTargetList {
-                           log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET ITEM. Old: [%s]. New: [%s]", rcontent.(string), newTargetList[i].(string))
-                           updateditem := strings.ReplaceAll(rcontent.(string), "\\\"", "\"")
-                           log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET Updated ITEM: [%s]", updateditem)
-                           if updateditem != newTargetList[i].(string) {
-                                   return false
-                           }
-                   }
-                   return true
-           }),
-   ),
-*/
+func dnsRecordCustomDiffCustomizeDiff(d *schema.ResourceDiff, meta interface{}) error {
+
+        log.Println("[DEBUG] dnsRecordCustomDiffCustomizeDiff " + d.Id())
+
+	if d.Get("recordtype").(string) != "TXT" {
+		return nil
+	}
+
+        old, new := d.GetChange("target")
+        log.Printf("[DEBUG] dnsRecordCustomDiffCustomizeDiff OLD: %v", old)
+        log.Printf("[DEBUG] dnsRecordCustomDiffCustomizeDiff NEW: %v", new)
+        var oldTargetList []interface{}
+	if len(old.(*schema.Set).List()) != len(new.(*schema.Set).List()) {
+		// escaped quotes?
+		if len(old.(*schema.Set).List()) == 1 {
+			tempOldList := strings.Split(old.(*schema.Set).List()[0].(string), " ")
+                        if len(tempOldList) != len(new.(*schema.Set).List()) {
+                                return fmt.Errorf("TXT target old and new don't match")
+                        }
+			tol := make([]interface{}, 0, len(tempOldList))
+			for _, c := range tempOldList {
+				if !strings.HasPrefix(c, "\"") {
+					c = "\"" + c
+				}
+                                if !strings.HasSuffix(c, "\"") {
+                                        c = c + "\""
+                                }
+				tol = append(tol, c)
+			}
+			oldTargetList = tol
+		} else {
+			return fmt.Errorf("TXT target old and new don't match")
+		}
+	}
+	if len(oldTargetList) == 0 {
+		// assume MT list means we didn't take a detour ...
+        	oldTargetList = old.(*schema.Set).List()
+	}
+        newTargetList := new.(*schema.Set).List()
+        //updatedTargetList := make([]string, 0, len(newTargetList))
+        log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff Old [%v] and new [%v] target values differ", oldTargetList, newTargetList)
+        log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET Lengths. Old: [%d]. New: [%d]", len(oldTargetList), len(newTargetList))
+	/*
+        for i, rcontent := range oldTargetList {
+                log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET ITEM. Old: [%s]. New: [%s]", rcontent.(string), newTargetList[i].(string))
+                updateditem := strings.ReplaceAll(rcontent.(string), "\\\"", "\"")
+                log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET Updated ITEM: [%s]", updateditem)
+                if updateditem != newTargetList[i].(string) {
+                	return fmt.Errorf("Custom diff Target old [%] and new [%s] mismatch", updateditem, newTargetList[i].(string)) 
+                }
+		log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET. Old and New MATCH")
+		updatedTargetList = append(updatedTargetList, newTargetList[i].(string))
+        }
+	*/
+	d.SetNew("target", old)
+	log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff - RETURNING NIL")
+        return nil
+}
+
 // Create a new DNS Record
 func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	// only allow one record to be created at a time
@@ -520,6 +561,17 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	// Parse Rdata
 	rdataFieldMap := dnsv2.ParseRData(recordtype, record.Target) // returns map[string]interface{}
 	for fname, fvalue := range rdataFieldMap {
+                if recordtype == "TXT" && fname == "target" {
+                        for i, targcontent := range fvalue.([]string) {
+                                // look for embedded escaped quotes
+                                log.Printf("[DEBUG] [Akamai DNSv2] READ TXT Record Target: [%s]", targcontent)
+                                if strings.Contains(targcontent[1:len(targcontent)-2], "\\\"") {
+                                        targcontent = targcontent[:0] + strings.ReplaceAll(targcontent[1:len(targcontent)-1], "\\\"", "\\\\\\\"") + targcontent[len(targcontent)-1:]
+                                        fvalue.([]string)[i] = targcontent
+                                        log.Printf("[DEBUG] [Akamai DNSv2] READ TXT Record ESCAPED Target: [%s]", targcontent)
+                                }
+                        }
+                }
 		d.Set(fname, fvalue)
 	}
 
@@ -625,16 +677,20 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	// Parse Rdata
 	rdataFieldMap := dnsv2.ParseRData(recordset.RecordType, recordset.Target) // returns map[string]interface{}
 	for fname, fvalue := range rdataFieldMap {
+		if recordtype == "TXT" && fname == "target" {
+			for i, targcontent := range fvalue.([]string) {
+				// look for embedded escaped quotes
+				log.Printf("[DEBUG] [Akamai DNSv2] IMPORT TXT Record Target: [%s]", targcontent)
+				if strings.Contains(targcontent[1:len(targcontent)-2], "\\\"") {
+					targcontent = targcontent[0:0] + strings.ReplaceAll(targcontent[1:len(targcontent)-1], "\\\"", "\\\\\\\"") + targcontent[len(targcontent)-1:]
+					fvalue.([]string)[i] = targcontent
+					log.Printf("[DEBUG] [Akamai DNSv2] IMPORT TXT Record ESCAPED Target: [%s]", targcontent)
+				}
+			}
+		}
 		d.Set(fname, fvalue)
 	}
-	targets, err := dnsv2.GetRdata(zone, recordname, recordtype)
-	if err != nil {
-		log.Printf("[DEBUG] [Akamai DNSv2] IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordname, recordtype)
-		d.SetId("")
-		return []*schema.ResourceData{d}, err
-	}
-
-	//targets := dnsv2.ProcessRdata(recordset.Target, recordtype)
+	targets := dnsv2.ProcessRdata(recordset.Target, recordtype)
 	importTargetString := ""
 	if len(targets) > 0 {
 		sort.Strings(targets)
@@ -830,10 +886,19 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			} else if recordtype == "TXT" {
 				str := recContent.(string)
 				log.Printf("[DEBUG] [Akamai DNSv2] Bind TXT Data IN: [%s]", str)
-				if !strings.HasPrefix(str, "\"") {
-					str = "\"" + str + "\""
-					//str = strings.Trim(str, "\"")
+				if strings.HasPrefix(str, "\"") {
+                                        str = strings.TrimLeft(str, "\"")
 				}
+                                if strings.HasSuffix(str, "\"") {
+                                        str = strings.TrimRight(str, "\"")
+                                }				
+                                log.Printf("[DEBUG] [Akamai DNSv2] Bind TXT Data IN AFTER TRIM: [%s]", str)
+				if strings.Contains(str, "\\\\\\\"") {
+					// look for and replace escaped embedded quotes
+					str = strings.ReplaceAll(str, "\\\\\\\"", "\\\"")
+				}
+				str = "\"" + str + "\""
+
 				log.Printf("[DEBUG] [Akamai DNSv2] Bind TXT Data %s", str)
 				if strings.Contains(str, "\\\"") {
 					//str = strings.ReplaceAll(str, "\\\"", "\"")

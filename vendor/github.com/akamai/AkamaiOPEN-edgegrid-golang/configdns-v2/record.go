@@ -2,7 +2,7 @@ package dnsv2
 
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 
 	"sync"
 )
@@ -92,8 +92,7 @@ func (record *RecordBody) Save(zone string) error {
 		return err
 	}
 
-        edge.PrintHttpRequest(req, true)
-
+	edge.PrintHttpRequest(req, true)
 
 	res, err := client.Do(Config, req)
 
@@ -106,7 +105,7 @@ func (record *RecordBody) Save(zone string) error {
 		}
 	}
 
-        edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -136,7 +135,7 @@ func (record *RecordBody) Update(zone string) error {
 		return err
 	}
 
-        edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequest(req, true)
 
 	res, err := client.Do(Config, req)
 
@@ -149,7 +148,7 @@ func (record *RecordBody) Update(zone string) error {
 		}
 	}
 
-        edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
@@ -178,7 +177,7 @@ func (record *RecordBody) Delete(zone string) error {
 		return err
 	}
 
-        edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequest(req, true)
 
 	res, err := client.Do(Config, req)
 
@@ -191,7 +190,7 @@ func (record *RecordBody) Delete(zone string) error {
 		}
 	}
 
-        edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponse(res, true)
 
 	// API error
 	if client.IsError(res) {
