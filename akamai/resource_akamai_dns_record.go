@@ -12,7 +12,6 @@ import (
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
-	//"github.com/hashicorp/terraform/helper/customdiff"
 	"github.com/hashicorp/terraform/helper/validation"
 )
 
@@ -21,9 +20,8 @@ func resourceDNSv2Record() *schema.Resource {
 		Create: resourceDNSRecordCreate,
 		Read:   resourceDNSRecordRead,
 		Update: resourceDNSRecordUpdate,
+		Exists: resourceDNSRecordExists,
 		Delete: resourceDNSRecordDelete,
-		//Exists: resourceDNSRecordExists,
-		CustomizeDiff: dnsRecordCustomDiffCustomizeDiff,
 		Importer: &schema.ResourceImporter{
 			State: resourceDNSRecordImport,
 		},
@@ -78,10 +76,11 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 			},
 			"target": {
-				Type:     schema.TypeSet,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
-				Set:      schema.HashString,
+				Type:             schema.TypeSet,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				Optional:         true,
+				DiffSuppressFunc: dnsRecordTargetSuppress,
+				Set:              schema.HashString,
 			},
 			"subtype": {
 				Type:     schema.TypeInt,
@@ -275,67 +274,71 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
+			"record_sha": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
 
-func dnsRecordCustomDiffCustomizeDiff(d *schema.ResourceDiff, meta interface{}) error {
+// DiffSuppresFunc to handle quoted TXT Rdata strings possibly containining escaped quotes
+func dnsRecordTargetSuppress(k, old, new string, d *schema.ResourceData) bool {
 
-        log.Println("[DEBUG] dnsRecordCustomDiffCustomizeDiff " + d.Id())
+	// Function invocation behavior is not obvious for Sets. Called for each entry in a set
+	// May call with values in both old and new or in one or the other.
+	// Seems if different, get one invocation with old val and null new as well as
+	// invocation with new val and null old. In all cases, we retrieve old and new sets
+	// from ResourceData and validate thru those.
+	// Function only validates TXT records.
 
-	if d.Get("recordtype").(string) != "TXT" {
-		return nil
+	oldset, newset := d.GetChange("target")
+	oldTargetList := oldset.(*schema.Set).List()
+	newTargetList := newset.(*schema.Set).List()
+	if len(oldTargetList) != len(newTargetList) {
+		return false
 	}
-
-        old, new := d.GetChange("target")
-        log.Printf("[DEBUG] dnsRecordCustomDiffCustomizeDiff OLD: %v", old)
-        log.Printf("[DEBUG] dnsRecordCustomDiffCustomizeDiff NEW: %v", new)
-        var oldTargetList []interface{}
-	if len(old.(*schema.Set).List()) != len(new.(*schema.Set).List()) {
-		// escaped quotes?
-		if len(old.(*schema.Set).List()) == 1 {
-			tempOldList := strings.Split(old.(*schema.Set).List()[0].(string), " ")
-                        if len(tempOldList) != len(new.(*schema.Set).List()) {
-                                return fmt.Errorf("TXT target old and new don't match")
-                        }
-			tol := make([]interface{}, 0, len(tempOldList))
-			for _, c := range tempOldList {
-				if !strings.HasPrefix(c, "\"") {
-					c = "\"" + c
-				}
-                                if !strings.HasSuffix(c, "\"") {
-                                        c = c + "\""
-                                }
-				tol = append(tol, c)
-			}
-			oldTargetList = tol
-		} else {
-			return fmt.Errorf("TXT target old and new don't match")
+	//var baseList []interface{}
+	var compList []interface{}
+	var baseVal = ""
+	var compTrim = ""
+	// one or both must have value
+	if old != "" && new != "" {
+		baseVal = old
+		compTrim = "\""
+		baseVal = strings.Trim(baseVal, "\\\"")
+		if strings.Contains(baseVal, "\\\"") {
+			baseVal = strings.ReplaceAll(baseVal, "\\\"", "\"")
+		}
+		//baseList = oldTargetList
+		compList = newTargetList
+	} else if old == "" {
+		baseVal = new
+		compTrim = "\\\""
+		baseVal = strings.Trim(baseVal, "\"")
+		//baseList = newTargetList
+		compList = oldTargetList
+	} else if new == "" {
+		baseVal = old
+		compTrim = "\""
+		baseVal = strings.Trim(baseVal, "\\\"")
+		if strings.Contains(baseVal, "\\\"") {
+			baseVal = strings.ReplaceAll(baseVal, "\\\"", "\"")
+		}
+		//baseList = oldTargetList
+		compList = newTargetList
+	}
+	for _, compval := range compList {
+		if compTrim == "\\\"" && strings.Contains(compval.(string), "\\\"") {
+			compval = strings.ReplaceAll(compval.(string), "\\\"", "\"")
+		}
+		if baseVal == strings.Trim(compval.(string), "\"") {
+			return true
 		}
 	}
-	if len(oldTargetList) == 0 {
-		// assume MT list means we didn't take a detour ...
-        	oldTargetList = old.(*schema.Set).List()
-	}
-        newTargetList := new.(*schema.Set).List()
-        //updatedTargetList := make([]string, 0, len(newTargetList))
-        log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff Old [%v] and new [%v] target values differ", oldTargetList, newTargetList)
-        log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET Lengths. Old: [%d]. New: [%d]", len(oldTargetList), len(newTargetList))
-	/*
-        for i, rcontent := range oldTargetList {
-                log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET ITEM. Old: [%s]. New: [%s]", rcontent.(string), newTargetList[i].(string))
-                updateditem := strings.ReplaceAll(rcontent.(string), "\\\"", "\"")
-                log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET Updated ITEM: [%s]", updateditem)
-                if updateditem != newTargetList[i].(string) {
-                	return fmt.Errorf("Custom diff Target old [%] and new [%s] mismatch", updateditem, newTargetList[i].(string)) 
-                }
-		log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff TARGET. Old and New MATCH")
-		updatedTargetList = append(updatedTargetList, newTargetList[i].(string))
-        }
-	*/
-	d.SetNew("target", old)
-	log.Printf("[DEBUG] [Akamai DNSv2] Custom Diff - RETURNING NIL")
-        return nil
+
+	return false
+
 }
 
 // Create a new DNS Record
@@ -377,14 +380,6 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	if e != nil {
 		return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e)
 	}
-
-	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records LEN %d", len(rdata))
-	if len(rdata) > 0 {
-		extractString := strings.Join(rdata, " ")
-		sha1hashtest := getSHAString(extractString)
-
-		log.Printf("[DEBUG] [Akamai DNSv2] SHA sum from recordread [%s]", sha1hashtest)
-	}
 	// If there's no existing record we'll create a blank one
 	if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
 		// if the record is not found/404 we will create a new
@@ -412,11 +407,13 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 	}
-
+	// save hash
+	d.Set("record_sha", sha1hash)
 	// Give terraform the ID
 	if d.Id() == "" || strings.Contains(d.Id(), "#") {
-		d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, host, recordtype, sha1hash))
+		d.SetId(fmt.Sprintf("%s#%s#%s", zone, host, recordtype))
 	} else {
+		// Backwards compatibility
 		d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 	}
 
@@ -460,6 +457,28 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("DNS record validation failure on zone %v: %v", zone, err)
 	}
 
+	if recordtype == "SOA" {
+		// need to get current serial and increment as part of update
+		record, e := dnsv2.GetRecord(zone, host, recordtype)
+		if e != nil {
+			log.Printf("[ERROR] [Akamai DNSv2] RECORD READ. error looking up "+recordtype+" records for %q: %s", host, e.Error())
+			d.SetId("")
+			return e
+		}
+		if dnsv2.IsConfigDNSError(e) {
+			if e.(dnsv2.ConfigDNSError).NotFound() == true {
+				// record doesn't exist
+				log.Printf("[DEBUG] [Akamai DNSv2] READ [ERROR] %s", e.Error())
+				return fmt.Errorf("Record not found")
+			} else {
+				log.Printf("[DEBUG] [Akamai DNSv2] READ [ERROR] %s", e.Error())
+				return e
+			}
+		}
+		// Parse Rdata
+		d.Set("serial", dnsv2.ParseRData(recordtype, record.Target)["serial"].(int)+1)
+	}
+
 	recordcreate := bindRecord(d)
 	extractString := strings.Join(recordcreate.Target, " ")
 	sha1hash := getSHAString(extractString)
@@ -476,7 +495,7 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Searching for records LEN %d", len(rdata))
 	if len(rdata) > 0 {
 		sort.Strings(rdata)
-		extractString := strings.Join(recordcreate.Target, " ")
+		extractString := strings.Join(rdata, " ")
 		sha1hashtest := getSHAString(extractString)
 		log.Printf("[DEBUG] [Akamai DNSv2] UPDATE SHA sum from recordread [%s]", sha1hashtest)
 		// If there's no existing record we'll create a blank one
@@ -487,7 +506,6 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 			// Save the zone to the API
 			log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Updating record")
 			e = recordcreate.Save(zone)
-
 		} else {
 			log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Updating record")
 			e = recordcreate.Update(zone)
@@ -496,9 +514,11 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 
 		}
+		// save hash
+		d.Set("record_sha", sha1hash)
 		// Give terraform the ID
 		if d.Id() == "" || strings.Contains(d.Id(), "#") {
-			d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, host, recordtype, sha1hash))
+			d.SetId(fmt.Sprintf("%s#%s#%s", zone, host, recordtype))
 		} else {
 			d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 		}
@@ -535,7 +555,6 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] READ record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
 	//sort.Strings(recordcreate.Target)
 	extractString := strings.Join(recordcreate.Target, " ")
-	log.Printf("[DEBUG] [Akamai DNSv2] READ RECORD Bound Extract Target %s", extractString)
 	sha1hash := getSHAString(extractString)
 	log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum for Existing SHA test %s %s", extractString, sha1hash)
 
@@ -544,81 +563,54 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	record, e := dnsv2.GetRecord(zone, host, recordtype)
 	if e != nil {
 		log.Printf("[ERROR] [Akamai DNSv2] RECORD READ. error looking up "+recordtype+" records for %q: %s", host, e.Error())
-		d.SetId("")
-		return nil
+		return e
+	}
+	if dnsv2.IsConfigDNSError(e) {
+		if e.(dnsv2.ConfigDNSError).NotFound() == true {
+			// record doesn't exist
+			log.Printf("[DEBUG] [Akamai DNSv2] READ [ERROR] %s", e.Error())
+			return fmt.Errorf("Record not found")
+		} else {
+			log.Printf("[DEBUG] [Akamai DNSv2] READ [ERROR] %s", e.Error())
+			return e
+		}
 	}
 	log.Printf("[DEBUG] [Akamai DNSv2] RECORD READ [%v] [%s] [%s] [%s] ", record, zone, host, recordtype)
 	b1, err := json.Marshal(record.Target)
 	if err != nil {
 		fmt.Println(err)
 	}
-	// Check if type with quotes in RDATA
-	log.Printf("[DEBUG] [Akamai DNSv2] READ %s RECORD Read RDATA: %s", recordtype, strings.Join(record.Target, " "))
-	log.Printf("[DEBUG] [Akamai DNSv2] READ %s RECORD Bound Extract Target %s", recordtype, extractString)
-
 	log.Printf("[DEBUG] [Akamai DNSv2] READ record data read JSON %s", string(b1))
-
 	// Parse Rdata
 	rdataFieldMap := dnsv2.ParseRData(recordtype, record.Target) // returns map[string]interface{}
 	for fname, fvalue := range rdataFieldMap {
-                if recordtype == "TXT" && fname == "target" {
-                        for i, targcontent := range fvalue.([]string) {
-                                // look for embedded escaped quotes
-                                log.Printf("[DEBUG] [Akamai DNSv2] READ TXT Record Target: [%s]", targcontent)
-                                if strings.Contains(targcontent[1:len(targcontent)-2], "\\\"") {
-                                        targcontent = targcontent[:0] + strings.ReplaceAll(targcontent[1:len(targcontent)-1], "\\\"", "\\\\\\\"") + targcontent[len(targcontent)-1:]
-                                        fvalue.([]string)[i] = targcontent
-                                        log.Printf("[DEBUG] [Akamai DNSv2] READ TXT Record ESCAPED Target: [%s]", targcontent)
-                                }
-                        }
-                }
 		d.Set(fname, fvalue)
 	}
 
-	//targets := dnsv2.ProcessRdata(record.Target, recordtype)
-	targets, err := dnsv2.GetRdata(zone, host, recordtype)
-	if err != nil {
-		log.Printf("[DEBUG] [Akamai DNSv2] READ Record read failed for record [%s] [%s] [%s] ", zone, host, recordtype)
-		return nil
-	}
-
+	targets := dnsv2.ProcessRdata(record.Target, recordtype)
 	if len(targets) > 0 {
 		sort.Strings(targets)
-		extractStringTest := strings.Join(targets, " ")
-		sha1hashtest := getSHAString(extractStringTest)
-
 		if recordtype == "SOA" {
-			log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD CHANGE ")
+			log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD")
 			if rdataFieldMap["serial"].(int) >= d.Get("serial").(int) {
 				log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD CHANGE: SOA OK ")
 				if _, ok := validateSOARecord(d); ok {
+					extractSoaString := strings.Join(targets, " ")
+					sha1hash = getSHAString(extractSoaString)
 					log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD CHANGE: SOA OK ")
-					d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, host, recordtype, sha1hashtest))
-					return nil
 				}
 			}
 		}
-
-		if sha1hashtest == sha1hash {
-			log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
-			// Give terraform the ID
-			if strings.Contains(d.Id(), "#") {
-				d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, host, recordtype, sha1hash))
-			} else {
-				d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
-			}
-			return nil
+		d.Set("record_sha", sha1hash)
+		// Give terraform the ID
+		if strings.Contains(d.Id(), "#") {
+			d.SetId(fmt.Sprintf("%s#%s#s", zone, host, recordtype))
 		} else {
-			log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
-			d.SetId("")
-			return nil
+			d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 		}
-	} else {
-		log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum from recordExists mismatch no target returned  [%s] [%s] [%s] ", zone, host, recordtype)
-		d.SetId("")
 		return nil
 	}
-	return nil
+	return fmt.Errorf("[ERROR] [Akamai DNSv2] READ -  Invalid RData Returned", zone, host, recordtype)
 }
 
 func validateSOARecord(d *schema.ResourceData) (int, bool) {
@@ -654,10 +646,10 @@ func validateSOARecord(d *schema.ResourceData) (int, bool) {
 func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	idParts := strings.Split(d.Id(), "#")
-	fmt.Println("idParts: ", idParts)
 	if len(idParts) != 3 {
 		return []*schema.ResourceData{d}, fmt.Errorf("Invalid Id for Zone Import: %s", d.Id())
 	}
+	log.Printf("[INFO] [Akamai DNS] Importing Record %s", d.Id())
 	zone := idParts[0]
 	recordname := idParts[1]
 	recordtype := idParts[2]
@@ -670,6 +662,19 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 		d.SetId("")
 		return []*schema.ResourceData{d}, err
 	}
+	if dnsv2.IsConfigDNSError(err) {
+		if err.(dnsv2.ConfigDNSError).NotFound() == true {
+			// record doesn't exist
+			d.SetId("")
+			log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", "Record not found")
+			return nil, fmt.Errorf("Record not found")
+		} else {
+			d.SetId("")
+			log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", err.Error())
+			return nil, err
+		}
+	}
+
 	d.Set("zone", zone)
 	d.Set("name", recordset.Name)
 	d.Set("recordtype", recordset.RecordType)
@@ -677,26 +682,19 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	// Parse Rdata
 	rdataFieldMap := dnsv2.ParseRData(recordset.RecordType, recordset.Target) // returns map[string]interface{}
 	for fname, fvalue := range rdataFieldMap {
-		if recordtype == "TXT" && fname == "target" {
-			for i, targcontent := range fvalue.([]string) {
-				// look for embedded escaped quotes
-				log.Printf("[DEBUG] [Akamai DNSv2] IMPORT TXT Record Target: [%s]", targcontent)
-				if strings.Contains(targcontent[1:len(targcontent)-2], "\\\"") {
-					targcontent = targcontent[0:0] + strings.ReplaceAll(targcontent[1:len(targcontent)-1], "\\\"", "\\\\\\\"") + targcontent[len(targcontent)-1:]
-					fvalue.([]string)[i] = targcontent
-					log.Printf("[DEBUG] [Akamai DNSv2] IMPORT TXT Record ESCAPED Target: [%s]", targcontent)
-				}
-			}
-		}
 		d.Set(fname, fvalue)
 	}
 	targets := dnsv2.ProcessRdata(recordset.Target, recordtype)
 	importTargetString := ""
 	if len(targets) > 0 {
-		sort.Strings(targets)
+		if recordtype != "MX" {
+			// MX Target Order important
+			sort.Strings(targets)
+		}
 		importTargetString = strings.Join(targets, " ")
 		sha1hash := getSHAString(importTargetString)
-		d.SetId(fmt.Sprintf("%s#%s#%s#%s", zone, recordname, recordtype, sha1hash))
+		d.Set("record_sha", sha1hash)
+		d.SetId(fmt.Sprintf("%s#%s#%s", zone, recordname, recordtype))
 	} else {
 		log.Printf("[DEBUG] [Akamai DNSv2] IMPORT Invalid Record. No target returned  [%s] [%s] [%s] ", zone, recordname, recordtype)
 		d.SetId("")
@@ -734,7 +732,6 @@ func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-/*
 func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
 	var zone string
@@ -754,51 +751,31 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 		recordtype = d.Get("recordtype").(string)
 	}
 
-	recordcreate := bindRecord(d)
+	log.Printf("[INFO] [Akamai DNS] Record Exists Check: %s %s %s", zone, host, recordtype)
 
-	b, err := json.Marshal(recordcreate.Target)
+	// Get recordset
+	recordset, err := dnsv2.GetRecord(zone, host, recordtype)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("[DEBUG] [Akamai DNSv2] IMPORT Record read failed for record [%s] [%s] [%s] ", zone, host, recordtype)
+		d.SetId("")
+		return false, err
 	}
-
-	log.Printf("[DEBUG] [Akamai DNSv2] EXISTS record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
-	//sort.Strings(recordcreate.Target)
-	extractString := strings.Join(recordcreate.Target, " ")
-	sha1hash := getSHAString(extractString)
-	log.Printf("[DEBUG] [Akamai DNSv2] EXISTS SHA sum for Existing SHA test %s %s", extractString, sha1hash)
-
-	// try to get the zone from the API
-	log.Printf("[INFO] [Akamai DNSv2] EXISTS Searching for zone records %s %s %s", zone, host, recordtype)
-	targets, e := dnsv2.GetRdata(zone, host, recordtype)
-	if e != nil {
-		//return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e,e)
-		return false, nil
-	}
-	b1, err := json.Marshal(targets)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	log.Printf("[DEBUG] [Akamai DNSv2] EXISTS record data read JSON %s", string(b1))
-
-	if len(targets) > 0 {
-		sort.Strings(targets)
-		extractStringTest := strings.Join(targets, " ")
-		sha1hashtest := getSHAString(extractStringTest)
-
-		if sha1hashtest == sha1hash {
-			log.Printf("[DEBUG] [Akamai DNSv2] EXISTS SHA sum from recordExists matches [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
-			return true, nil
+	if dnsv2.IsConfigDNSError(err) {
+		if err.(dnsv2.ConfigDNSError).NotFound() == true {
+			// record doesn't exist
+			d.SetId("")
+			log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", "Record not found")
+			return false, fmt.Errorf("Record not found")
 		} else {
-			log.Printf("[DEBUG] [Akamai DNSv2] EXISTS SHA sum from recordExists mismatch [%s] vs  [%s] [%s] [%s] [%s] ", sha1hashtest, sha1hash, zone, host, recordtype)
-			return false, nil
+			d.SetId("")
+			log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", err.Error())
+			return false, err
 		}
-	} else {
-		log.Printf("[DEBUG] [Akamai DNSv2] EXISTS SHA sum from recordExists msimatch no target retunred  [%s] [%s] [%s] ", zone, host, recordtype)
-		return false, nil
 	}
+
+	return recordset != nil, nil
+
 }
-*/
 
 func contains(s []string, e string) bool {
 	for _, a := range s {
@@ -887,12 +864,11 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 				str := recContent.(string)
 				log.Printf("[DEBUG] [Akamai DNSv2] Bind TXT Data IN: [%s]", str)
 				if strings.HasPrefix(str, "\"") {
-                                        str = strings.TrimLeft(str, "\"")
+					str = strings.TrimLeft(str, "\"")
 				}
-                                if strings.HasSuffix(str, "\"") {
-                                        str = strings.TrimRight(str, "\"")
-                                }				
-                                log.Printf("[DEBUG] [Akamai DNSv2] Bind TXT Data IN AFTER TRIM: [%s]", str)
+				if strings.HasSuffix(str, "\"") {
+					str = strings.TrimRight(str, "\"")
+				}
 				if strings.Contains(str, "\\\\\\\"") {
 					// look for and replace escaped embedded quotes
 					str = strings.ReplaceAll(str, "\\\\\\\"", "\\\"")
@@ -1014,39 +990,51 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			log.Printf("[DEBUG] [Akamai DNSv2] Searching for existing MX records to append to target LEN %d", len(rdata))
 
 			records := make([]string, 0, len(target)+len(rdata))
+
 			priority := d.Get("priority").(int)
 
 			increment := d.Get("priority_increment").(int)
 
-			for _, recContent := range target {
-				checktarget := recContent.(string)[len(recContent.(string))-1:]
-				if checktarget != "." {
-					records = append(records, strconv.Itoa(priority)+" "+recContent.(string)+".")
-
-				} else {
-					records = append(records, strconv.Itoa(priority)+" "+recContent.(string))
-				}
-				if increment > 0 {
-					priority = priority + increment
-				}
-			}
 			log.Printf("[DEBUG] [Akamai DNSv2] Appended new target to target array LEN %d %v", len(records), records)
-
+			// map to keep track of processed targets
+			targetmap := make(map[string]bool, len(target))
+			for _, e := range target {
+				entry := strings.TrimRight(e.(string), ".")
+				targetmap[entry] = false
+			}
+			lastPriority := priority
 			if len(rdata) > 0 {
+				sort.Strings(rdata) // make sure sorted
+				log.Printf("BIND MX RECORDS BEFORE: [%s]", records)
 				log.Printf("[DEBUG] [Akamai DNSv2] rdata Exists MX records to append to target LEN %d", len(rdata))
 				for _, r := range rdata {
+					entryparts := strings.Split(r, " ")
+					lastPriority, _ = strconv.Atoi(entryparts[0])
+					entryindex := strings.TrimRight(entryparts[1], ".")
 					checktarget := r[len(r)-1:]
 					if checktarget != "." {
 						r = r + "."
 					}
-					if !(contains(records, r)) {
+					if _, ok := targetmap[entryindex]; ok {
+						targetmap[entryindex] = true
 						records = append(records, r)
+					} else {
+						// Removed from TF target
+						log.Printf("[ERROR] [Akamai DNSv2]  MX records Bind. Entry %s removed from Record target", entryparts[1])
+						continue
 					}
 				}
-				log.Printf("[DEBUG] [Akamai DNSv2] Existing MX records to append to target before schema data LEN %d %v", len(rdata), records)
-
+				for tentry, processed := range targetmap {
+					if !processed {
+						lastPriority += increment
+						records = append(records, strconv.Itoa(lastPriority)+" "+tentry+".")
+						// Need to blow up!
+						log.Printf("[ERROR] [Akamai DNSv2]  MX records Bind. Target %s missing from retrieved RData", tentry)
+					}
+				}
 			}
-			sort.Strings(records)
+			log.Printf("BIND MX RECORDS AFTER: [%s]", records)
+			//sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 			return recordcreate
 		}
