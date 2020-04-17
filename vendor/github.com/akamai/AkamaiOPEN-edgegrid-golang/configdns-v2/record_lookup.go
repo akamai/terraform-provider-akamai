@@ -377,7 +377,6 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 
 	case "HINFO":
 		for _, rcontent := range rdata {
-			//rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
 			parts := strings.Split(rcontent, " ")
 			fieldMap["hardware"] = parts[0]
 			fieldMap["software"] = parts[1]
@@ -397,7 +396,6 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			parts := strings.Split(rcontent, " ")
 			newrdata = append(newrdata, parts[1])
 		}
-		sort.Strings(newrdata)
 		fieldMap["target"] = newrdata
 
 	case "NAPTR":
@@ -405,11 +403,8 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			parts := strings.Split(rcontent, " ")
 			fieldMap["order"], _ = strconv.Atoi(parts[0])
 			fieldMap["preference"], _ = strconv.Atoi(parts[1])
-			//fieldMap["flagsnaptr"] = strings.Trim(parts[2], "\"")
 			fieldMap["flagsnaptr"] = parts[2]
-			//fieldMap["service"] = strings.Trim(parts[3], "\"")
 			fieldMap["service"] = parts[3]
-			//fieldMap["regexp"] = strings.Trim(parts[4], "\"")
 			fieldMap["regexp"] = parts[4]
 			fieldMap["replacement"] = parts[5]
 			break
@@ -513,15 +508,12 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 
 	case "SPF":
 		for _, rcontent := range rdata {
-			//newrdata = append(newrdata, strings.Trim(rcontent, "\""))
 			newrdata = append(newrdata, rcontent)
 		}
 		fieldMap["target"] = newrdata
 
 	case "TXT":
 		for _, rcontent := range rdata {
-			//rcontent = strings.Trim(rcontent, "\"")
-			//rcontent = strings.ReplaceAll(rcontent, "\"", "\\\"")
 			newrdata = append(newrdata, rcontent)
 		}
 		fieldMap["target"] = newrdata
