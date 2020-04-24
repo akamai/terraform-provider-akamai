@@ -213,9 +213,8 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 		if errs != nil {
 			log.Printf("[DEBUG] CREATE Check rules against schema %s\n", errs)
 			return errs
-			//panic(err.Error())
 		}
-		//documentLoader := gojsonschema.NewReferenceLoader("file:///Users/martinstibbe/validate/rules.json")
+
 		log.Printf("[DEBUG] VALIDATE Rules in JSON file ")
 
 		documentLoader := gojsonschema.NewStringLoader(rulesString.(string))
@@ -223,11 +222,10 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			log.Printf("[DEBUG] CREATE Check rules against schema failed %s\n", err)
 			return err
-			//panic(err.Error())
 		}
 
 		if result.Valid() {
-			fmt.Printf("The document is valid\n")
+			fmt.Printf("The document is valid \n")
 			log.Printf("[DEBUG] CREATE Check rules against schema PASS \n")
 		} else {
 			fmt.Printf("The document is not valid. see errors :\n")
@@ -566,9 +564,8 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 		if errs != nil {
 			log.Printf("[DEBUG] UPDATE Check rules against schema %s\n", errs)
 			return errs
-			//panic(err.Error())
 		}
-		//documentLoader := gojsonschema.NewReferenceLoader("file:///Users/martinstibbe/validate/rules.json")
+
 		log.Printf("[DEBUG] UPDATE VALIDATE Rules in JSON file ")
 
 		documentLoader := gojsonschema.NewStringLoader(rulesString.(string))
@@ -576,7 +573,6 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			log.Printf("[DEBUG] UPDATE Check rules against schema failed %s\n", err)
 			return err
-			//panic(err.Error())
 		}
 
 		if result.Valid() {
