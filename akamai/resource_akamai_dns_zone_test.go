@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-var testAccAkamaiDNSZoneConfig = fmt.Sprintf(`
+var testAccAkamaiDNSPrimaryZoneConfig = fmt.Sprintf(`
 provider "akamai" {
   dns_section = "dns"
 }
@@ -26,18 +26,39 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
-resource "akamai_dns_zone" "test_zone" {
+resource "akamai_dns_zone" "primary_test_zone" {
 	contract = "${data.akamai_contract.contract.id}"
-	zone = "exampleterraform.io"
-	masters = ["1.2.3.4" , "1.2.3.5"]
+	zone = "primaryexampleterraform.io"
 	type = "primary"
-	comment =  "This is a test zone"
+	comment =  "This is a test primary zone"
 	group     = "${data.akamai_group.group.id}"
 	sign_and_serve = false
 }
 `)
 
-var testAccAkamaiDNSZoneConfigWithCounter = fmt.Sprintf(`
+var testAccAkamaiDNSSecondaryZoneConfig = fmt.Sprintf(`
+provider "akamai" {
+  dns_section = "dns"
+}
+locals {
+  zone = "akavdev.net"
+}
+data "akamai_contract" "contract" {
+}
+data "akamai_group" "group" {
+}
+resource "akamai_dns_zone" "test_secondary_zone" {
+	contract = "${data.akamai_contract.contract.id}"
+	zone = "secondaryexampleterraform.io"
+	masters = ["1.2.3.4" , "1.2.3.5"]
+	type = "secondary"
+	comment =  "This is a secondary test zone"
+	group     = "${data.akamai_group.group.id}"
+	sign_and_serve = false
+}
+`)
+
+var testAccAkamaiDNSPrimaryZoneConfigWithCounter = fmt.Sprintf(`
 provider "akamai" {
   papi_section = "dns"
   dns_section = "dns"
@@ -49,25 +70,24 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 
-resource "akamai_dns_zone" "test_zone" {
+resource "akamai_dns_zone" "primary_test_zone" {
 	contract = "${data.akamai_contract.contract.id}"
-	zone = "exampleterraform.io"
-	masters = ["1.2.3.4" , "1.2.3.5"]
+	zone = "primaryexampleterraform.io"
 	type = "primary"
-	comment =  "This is a test zone"
+	comment =  "This is a test primary zone"
 	group     = "${data.akamai_group.group.id}"
 	sign_and_serve = false
 }
 `)
 
-func TestAccAkamaiDNSZone_basic(t *testing.T) {
+func TestAccAkamaiDNSPrimaryZone_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiDNSZoneDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiDNSZoneConfig,
+				Config: testAccAkamaiDNSPrimaryZoneConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAkamaiDNSZoneExists,
 				),
@@ -76,14 +96,30 @@ func TestAccAkamaiDNSZone_basic(t *testing.T) {
 	})
 }
 
-func TestAccAkamaiDNSZone_counter(t *testing.T) {
+func TestAccAkamaiDNSSecondaryZone_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAkamaiDNSZoneDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiDNSZoneConfigWithCounter,
+				Config: testAccAkamaiDNSSecondaryZoneConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAkamaiDNSZoneExists,
+				),
+			},
+		},
+	})
+}
+
+func TestAccAkamaiDNSPrimaryZone_counter(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAkamaiDNSZoneDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAkamaiDNSPrimaryZoneConfigWithCounter,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAkamaiDNSZoneExists,
 				),

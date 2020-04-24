@@ -221,7 +221,7 @@ func GetRecord(zone string, name string, record_type string) (*RecordBody, error
 	if client.IsError(res) && res.StatusCode != 404 {
 		return nil, client.NewAPIError(res)
 	} else if res.StatusCode == 404 {
-		return nil, &ZoneError{zoneName: zone}
+		return nil, &RecordError{fieldName: name}
 	} else {
 		err = client.BodyJSON(res, record)
 		if err != nil {
@@ -257,7 +257,7 @@ func GetRecordList(zone string, name string, record_type string) (*RecordSetResp
 	if client.IsError(res) && res.StatusCode != 404 {
 		return nil, client.NewAPIError(res)
 	} else if res.StatusCode == 404 {
-		return nil, &ZoneError{zoneName: name}
+		return nil, &RecordError{fieldName: name}
 	} else {
 		err = client.BodyJSON(res, records)
 		if err != nil {

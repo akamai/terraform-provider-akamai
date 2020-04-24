@@ -9,11 +9,15 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 )
+
+// Retry count for save, update and delete
+const opRetryCount = 3
 
 func resourceDNSv2Record() *schema.Resource {
 	return &schema.Resource{
@@ -341,11 +345,125 @@ func dnsRecordTargetSuppress(k, old, new string, d *schema.ResourceData) bool {
 
 }
 
+// Lock per record type
+var recordCreateLock = map[string]*sync.Mutex{
+	"A":          &sync.Mutex{},
+	"AAAA":       &sync.Mutex{},
+	"AFSDB":      &sync.Mutex{},
+	"AKAMAICDN":  &sync.Mutex{},
+	"AKAMAITLC":  &sync.Mutex{},
+	"CAA":        &sync.Mutex{},
+	"CNAME":      &sync.Mutex{},
+	"HINFO":      &sync.Mutex{},
+	"LOC":        &sync.Mutex{},
+	"MX":         &sync.Mutex{},
+	"NAPTR":      &sync.Mutex{},
+	"NS":         &sync.Mutex{},
+	"PTR":        &sync.Mutex{},
+	"RP":         &sync.Mutex{},
+	"SOA":        &sync.Mutex{},
+	"SRV":        &sync.Mutex{},
+	"SPF":        &sync.Mutex{},
+	"SSHFP":      &sync.Mutex{},
+	"TLSA":       &sync.Mutex{},
+	"TXT":        &sync.Mutex{},
+	"DNSKEY":     &sync.Mutex{},
+	"DS":         &sync.Mutex{},
+	"NSEC3":      &sync.Mutex{},
+	"NSEC3PARAM": &sync.Mutex{},
+	"RRSIG":      &sync.Mutex{}}
+
+/*
+// Following  supports Lock by Recordset. Not clear dnsv2 API would be able to handle for very large zones
+
+var zoneRecordCreateLock = make(sync.Map[string]*sync.Mutex)
+
+
+var recordTypeMapLock = &sync.Map{
+        "A":            &sync.Map{},
+        "AAAA":         &sync.Map{},
+        "AFSDB":        &sync.Map{},
+        "AKAMAICDN":    &sync.Map{},
+        "AKAMAITLC":    &sync.Map{},
+        "CAA":          &sync.Map{},
+        "CNAME":        &sync.Map{},
+        "HINFO":        &sync.Map{},
+        "LOC":          &sync.Map{},
+        "MX":           &sync.Map{},
+        "NAPTR":        &sync.Map{},
+        "NS":           &sync.Map{},
+        "PTR":          &sync.Map{},
+        "RP":           &sync.Map{},
+        "SOA":          &sync.Map{},
+        "SRV":          &sync.Map{},
+        "SPF":          &sync.Map{},
+        "SSHFP":        &sync.Map{},
+        "TLSA":         &sync.Map{},
+        "TXT":          &sync.Map{},
+        "DNSKEY":       &sync.Map{},
+        "DS":           &sync.Map{},
+        "NSEC3":        &sync.Map{},
+        "NSEC3PARAM":   &sync.Map{},
+        "RRSIG":        &sync.Map{}}
+
+// Retrieves record lock per recordset
+func getRecordLock(zone, host, recordtype string) *sync.Mutex {
+
+	typeMap, _ := recordTypeMapLock.LoadOrStore(recordtype, &sync.Map{})
+        lockindex := zone + "_" + host + "_" + recordtype
+        recordLock, _ := typeMap.(*sync.Map).LoadOrStore(lockindex, &sync.Mutex{})
+
+        return recordLock.(*sync.Mutex)
+}
+*/
+
+// Retrieves record lock per record type
+func getRecordLock(zone, host, recordtype string) *sync.Mutex {
+
+	return recordCreateLock[recordtype]
+
+}
+
+// Record function signature
+type recordFunction func(string, ...bool) error
+
+func executeRecordFunction(name string, d *schema.ResourceData, fn recordFunction, zone string, host string, recordtype string, rlock bool) error {
+
+	// DNS API can have Concurrency issues
+	opRetry := opRetryCount
+	e := fn(zone, false)
+	for e != nil && opRetry > 0 {
+		if dnsv2.IsConfigDNSError(e) {
+			if e.(*dnsv2.RecordError).ConcurrencyConflict() {
+				opRetry -= 1
+				e = fn(zone, false)
+				continue
+			} else if name == "DELETE" && e.(dnsv2.ConfigDNSError).NotFound() == true {
+				// record doesn't exist
+				d.SetId("")
+				log.Printf("[DEBUG] [Akamai DNSv2] %s [WARNING] %s", name, "Record not found")
+				break
+			} else {
+				log.Printf("[DEBUG] [Akamai DNSv2] %s [ERROR] %s", name, e.Error())
+				return e
+			}
+		} else {
+			log.Printf("[DEBUG] [Akamai DNSv2] %s Record failed for record [%s] [%s] [%s] ", name, zone, host, recordtype)
+			return e
+		}
+		break
+	}
+
+	return nil
+
+}
+
 // Create a new DNS Record
 func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
-	// only allow one record to be created at a time
+	// only allow one record per record type to be created at a time
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
+
 	var zone string
 	var host string
 	var recordtype string
@@ -368,7 +486,17 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("DNS record validation failure on zone %v: %v", zone, err)
 	}
 
-	recordcreate := bindRecord(d)
+	// serialize record creates of same type
+	getRecordLock(zone, host, recordtype).Lock()
+	defer getRecordLock(zone, host, recordtype).Unlock()
+
+	recordcreate, err := bindRecord(d)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[DEBUG] [Akamai DNSv2] Record Create Bind object  [%v]", recordcreate)
+
 	extractString := strings.Join(recordcreate.Target, " ")
 	sha1hash := getSHAString(extractString)
 
@@ -377,7 +505,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records [%s]", zone)
 
 	rdata, e := dnsv2.GetRdata(zone, host, recordtype)
-	if e != nil {
+	if e != nil && !dnsv2.IsConfigDNSError(e) {
 		return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e)
 	}
 	// If there's no existing record we'll create a blank one
@@ -386,26 +514,24 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] [Akamai DNSv2] [ERROR] %s", e.Error())
 		log.Printf("[DEBUG] [Akamai DNSv2] Creating new record")
 		// Save the zone to the API
-		e = recordcreate.Save(zone)
-
+		e = executeRecordFunction("CREATE", d, recordcreate.Save, zone, host, recordtype, false)
 		if e != nil {
 			return e
 		}
 	} else {
 		log.Printf("[DEBUG] [Akamai DNSv2] Updating record")
 		if len(rdata) > 0 {
-			e = recordcreate.Update(zone)
+			e = executeRecordFunction("CREATE", d, recordcreate.Update, zone, host, recordtype, false)
 			if e != nil {
 				return e
 			}
 		} else {
 			log.Printf("[DEBUG] [Akamai DNSv2] Saving record")
-			e = recordcreate.Save(zone)
+			e = executeRecordFunction("CREATE", d, recordcreate.Save, zone, host, recordtype, false)
 			if e != nil {
 				return e
 			}
 		}
-
 	}
 	// save hash
 	d.Set("record_sha", sha1hash)
@@ -416,15 +542,17 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 		// Backwards compatibility
 		d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 	}
+	// Lock won't be release til after Read ...
+	return resourceDNSRecordRead(d, meta)
 
-	return resourceDNSRecordUpdate(d, meta)
 }
 
 // Update DNS Record
 func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
-	// only allow one record to be created at a time
+	// only allow one record per record type to be updated at a time
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
+
 	var zone string
 	var host string
 	var recordtype string
@@ -444,12 +572,11 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	_, ok = d.GetOk("target")
 	if ok {
 		target := d.Get("target").(*schema.Set).List()
-		log.Printf("[DEBUG] [Akamai DNSv2] UPDATE RECORD Target [%v]", target)
 		records := make([]string, 0, len(target))
 		for _, recContent := range target {
 			records = append(records, recContent.(string))
 		}
-		log.Printf("[DEBUG] [Akamai DNSv2] UPDATE RECORD Records [%v]", records)
+		log.Printf("[DEBUG] [Akamai DNSv2] Update Records [%v]", records)
 	}
 
 	err := validateRecord(d)
@@ -457,29 +584,33 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("DNS record validation failure on zone %v: %v", zone, err)
 	}
 
+	// serialize record updates of same type
+	getRecordLock(zone, host, recordtype).Lock()
+	defer getRecordLock(zone, host, recordtype).Unlock()
+
 	if recordtype == "SOA" {
 		// need to get current serial and increment as part of update
 		record, e := dnsv2.GetRecord(zone, host, recordtype)
 		if e != nil {
-			log.Printf("[ERROR] [Akamai DNSv2] RECORD READ. error looking up "+recordtype+" records for %q: %s", host, e.Error())
-			d.SetId("")
-			return e
-		}
-		if dnsv2.IsConfigDNSError(e) {
-			if e.(dnsv2.ConfigDNSError).NotFound() == true {
-				// record doesn't exist
-				log.Printf("[DEBUG] [Akamai DNSv2] READ [ERROR] %s", e.Error())
-				return fmt.Errorf("Record not found")
+			if dnsv2.IsConfigDNSError(e) {
+				if !e.(dnsv2.ConfigDNSError).NotFound() {
+					log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Read [ERROR] %s", e.Error())
+					return e
+				}
 			} else {
-				log.Printf("[DEBUG] [Akamai DNSv2] READ [ERROR] %s", e.Error())
+				log.Printf("[ERROR] [Akamai DNSv2] UPDATE Record Read. error looking up "+recordtype+" records for %q: %s", host, e.Error())
 				return e
 			}
+		} else {
+			// Parse Rdata
+			d.Set("serial", dnsv2.ParseRData(recordtype, record.Target)["serial"].(int)+1)
 		}
-		// Parse Rdata
-		d.Set("serial", dnsv2.ParseRData(recordtype, record.Target)["serial"].(int)+1)
 	}
 
-	recordcreate := bindRecord(d)
+	recordcreate, err := bindRecord(d)
+	if err != nil {
+		return err
+	}
 	extractString := strings.Join(recordcreate.Target, " ")
 	sha1hash := getSHAString(extractString)
 
@@ -488,7 +619,7 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Searching for records [%s]", zone)
 
 	rdata, e := dnsv2.GetRdata(zone, host, recordtype)
-	if e != nil {
+	if e != nil && !dnsv2.IsConfigDNSError(e) {
 		return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e)
 	}
 
@@ -505,10 +636,13 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Creating new record")
 			// Save the zone to the API
 			log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Updating record")
-			e = recordcreate.Save(zone)
+			e = executeRecordFunction("UPDATE", d, recordcreate.Save, zone, host, recordtype, false)
+			if e != nil {
+				return e
+			}
 		} else {
 			log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Updating record")
-			e = recordcreate.Update(zone)
+			e = executeRecordFunction("UPDATE", d, recordcreate.Update, zone, host, recordtype, false)
 			if e != nil {
 				return e
 			}
@@ -523,7 +657,7 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 			d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 		}
 	}
-
+	// Lock not released until after Read ...
 	return resourceDNSRecordRead(d, meta)
 }
 
@@ -545,8 +679,10 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		recordtype = d.Get("recordtype").(string)
 	}
 
-	recordcreate := bindRecord(d)
-
+	recordcreate, err := bindRecord(d)
+	if err != nil {
+		return err
+	}
 	b, err := json.Marshal(recordcreate.Target)
 	if err != nil {
 		fmt.Println(err)
@@ -561,14 +697,15 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	// try to get the zone from the API
 	log.Printf("[INFO] [Akamai DNSv2] READ Searching for zone records %s %s %s", zone, host, recordtype)
 	record, e := dnsv2.GetRecord(zone, host, recordtype)
-	if e != nil {
+	if e != nil && !dnsv2.IsConfigDNSError(e) {
 		log.Printf("[ERROR] [Akamai DNSv2] RECORD READ. error looking up "+recordtype+" records for %q: %s", host, e.Error())
 		return e
 	}
 	if dnsv2.IsConfigDNSError(e) {
 		if e.(dnsv2.ConfigDNSError).NotFound() == true {
 			// record doesn't exist
-			log.Printf("[DEBUG] [Akamai DNSv2] READ [ERROR] %s", e.Error())
+			log.Printf("[DEBUG] [Akamai DNSv2] READ Record Not Found [ERROR] %s", e.Error())
+			d.SetId("")
 			return fmt.Errorf("Record not found")
 		} else {
 			log.Printf("[DEBUG] [Akamai DNSv2] READ [ERROR] %s", e.Error())
@@ -581,10 +718,12 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		fmt.Println(err)
 	}
 	log.Printf("[DEBUG] [Akamai DNSv2] READ record data read JSON %s", string(b1))
-	// Parse Rdata
 	rdataFieldMap := dnsv2.ParseRData(recordtype, record.Target) // returns map[string]interface{}
-	for fname, fvalue := range rdataFieldMap {
-		d.Set(fname, fvalue)
+	if recordtype != "MX" {
+		// Parse Rdata. MX special
+		for fname, fvalue := range rdataFieldMap {
+			d.Set(fname, fvalue)
+		}
 	}
 
 	targets := dnsv2.ProcessRdata(record.Target, recordtype)
@@ -604,13 +743,13 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("record_sha", sha1hash)
 		// Give terraform the ID
 		if strings.Contains(d.Id(), "#") {
-			d.SetId(fmt.Sprintf("%s#%s#s", zone, host, recordtype))
+			d.SetId(fmt.Sprintf("%s#%s#%s", zone, host, recordtype))
 		} else {
 			d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 		}
 		return nil
 	}
-	return fmt.Errorf("[ERROR] [Akamai DNSv2] READ -  Invalid RData Returned", zone, host, recordtype)
+	return fmt.Errorf("[ERROR] [Akamai DNSv2] READ -  Invalid RData Returned for Recordset %s %s %s", zone, host, recordtype)
 }
 
 func validateSOARecord(d *schema.ResourceData) (int, bool) {
@@ -656,22 +795,23 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 
 	// Get recordset
 	log.Printf("[INFO] [Akamai DNS] Searching for zone Recordset [%v]", idParts)
-	recordset, err := dnsv2.GetRecord(zone, recordname, recordtype)
-	if err != nil {
-		log.Printf("[DEBUG] [Akamai DNSv2] IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordname, recordtype)
-		d.SetId("")
-		return []*schema.ResourceData{d}, err
-	}
-	if dnsv2.IsConfigDNSError(err) {
-		if err.(dnsv2.ConfigDNSError).NotFound() == true {
-			// record doesn't exist
-			d.SetId("")
-			log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", "Record not found")
-			return nil, fmt.Errorf("Record not found")
+	recordset, e := dnsv2.GetRecord(zone, recordname, recordtype)
+	if e != nil {
+		if dnsv2.IsConfigDNSError(e) {
+			if e.(dnsv2.ConfigDNSError).NotFound() == true {
+				// record doesn't exist
+				d.SetId("")
+				log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", "Record not found")
+				return nil, fmt.Errorf("Record not found")
+			} else {
+				d.SetId("")
+				log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", e.Error())
+				return nil, e
+			}
 		} else {
+			log.Printf("[DEBUG] [Akamai DNSv2] IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordname, recordtype)
 			d.SetId("")
-			log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", err.Error())
-			return nil, err
+			return []*schema.ResourceData{d}, e
 		}
 	}
 
@@ -710,6 +850,10 @@ func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	recordtype := d.Get("recordtype").(string)
 	ttl := d.Get("ttl").(int)
 
+	// serialize record updates of same type
+	getRecordLock(zone, host, recordtype).Lock()
+	defer getRecordLock(zone, host, recordtype).Unlock()
+
 	target := d.Get("target").(*schema.Set).List()
 
 	records := make([]string, 0, len(target))
@@ -720,16 +864,8 @@ func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] [Akamai DNS] Delete zone Records %v", records)
 	recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
 
-	recordcreate.Delete(zone)
-
-	targets, e := dnsv2.GetRdata(zone, host, recordtype)
-	if len(targets) > 0 {
-		log.Printf("[INFO] [Akamai DNS] Delete zone Records record still exists %v %s", targets, e)
-		return nil
-	} else {
-		d.SetId("")
-	}
-	return nil
+	// Warning: Delete will expunge the ENTIRE Recordset regardless of whether user thought they were removing an instance
+	return executeRecordFunction("DELETE", d, recordcreate.Delete, zone, host, recordtype, false)
 }
 
 func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, error) {
@@ -754,22 +890,14 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 	log.Printf("[INFO] [Akamai DNS] Record Exists Check: %s %s %s", zone, host, recordtype)
 
 	// Get recordset
-	recordset, err := dnsv2.GetRecord(zone, host, recordtype)
-	if err != nil {
-		log.Printf("[DEBUG] [Akamai DNSv2] IMPORT Record read failed for record [%s] [%s] [%s] ", zone, host, recordtype)
-		d.SetId("")
-		return false, err
-	}
-	if dnsv2.IsConfigDNSError(err) {
-		if err.(dnsv2.ConfigDNSError).NotFound() == true {
-			// record doesn't exist
+	recordset, e := dnsv2.GetRecord(zone, host, recordtype)
+	if e != nil {
+		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() {
 			d.SetId("")
-			log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", "Record not found")
-			return false, fmt.Errorf("Record not found")
+			return false, nil
 		} else {
-			d.SetId("")
-			log.Printf("[DEBUG] [Akamai DNSv2] IMPORT [ERROR] %s", err.Error())
-			return false, err
+			log.Printf("[DEBUG] [Akamai DNSv2] EXISTS Record read failed for record [%s] [%s] [%s] ", zone, host, recordtype)
+			return false, e
 		}
 	}
 
@@ -780,6 +908,15 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 func contains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+func containsPriority(m map[string]int, p int) bool {
+	for _, e := range m {
+		if p == e {
 			return true
 		}
 	}
@@ -822,7 +959,7 @@ func padCoordinates(str string) string {
 
 }
 
-func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
+func bindRecord(d *schema.ResourceData) (dnsv2.RecordBody, error) {
 
 	var host string
 	var recordtype string
@@ -901,7 +1038,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 		sort.Strings(records)
 
 		recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-		return recordcreate
+		return recordcreate, nil
 	} else {
 		if recordtype == "AFSDB" {
 
@@ -917,7 +1054,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			}
 			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "DNSKEY" {
 
@@ -930,7 +1067,8 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records = append(records, strconv.Itoa(flags)+" "+strconv.Itoa(protocol)+" "+strconv.Itoa(algorithm)+" "+key)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
+
 		}
 		if recordtype == "DS" {
 
@@ -943,7 +1081,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records = append(records, strconv.Itoa(keytag)+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(digestType)+" "+digest)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "HINFO" {
 
@@ -966,7 +1104,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records = append(records, hardware+" "+software)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "LOC" {
 
@@ -977,66 +1115,71 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			}
 			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "MX" {
 
 			zone := d.Get("zone").(string)
 
+			log.Printf("[DEBUG] [Akamai DNSv2] MX record targets to process: %v", target)
+
 			rdata, e := dnsv2.GetRdata(zone, host, recordtype)
 			if e != nil {
 				log.Printf("[DEBUG] [Akamai DNSv2] Searching for existing MX records no prexisting targets found LEN %d", len(rdata))
 			}
-			log.Printf("[DEBUG] [Akamai DNSv2] Searching for existing MX records to append to target LEN %d", len(rdata))
+			log.Printf("[DEBUG] [Akamai DNSv2] Existing MX records to append to target %v", rdata)
 
 			records := make([]string, 0, len(target)+len(rdata))
 
 			priority := d.Get("priority").(int)
-
 			increment := d.Get("priority_increment").(int)
+			log.Printf("[DEBUG] [Akamai DNSv2] MX BIND Priority: %d ; Increment: %d", priority, increment)
 
-			log.Printf("[DEBUG] [Akamai DNSv2] Appended new target to target array LEN %d %v", len(records), records)
-			// map to keep track of processed targets
-			targetmap := make(map[string]bool, len(target))
-			for _, e := range target {
-				entry := strings.TrimRight(e.(string), ".")
-				targetmap[entry] = false
+			rdataTargetMap := make(map[string]int, len(rdata))
+			for _, r := range rdata {
+				entryparts := strings.Split(r, " ")
+				rn := entryparts[1]
+				if rn[len(rn)-1:] != "." {
+					rn = rn + "."
+				}
+				rdataTargetMap[rn], _ = strconv.Atoi(entryparts[0])
 			}
-			lastPriority := priority
-			if len(rdata) > 0 {
-				sort.Strings(rdata) // make sure sorted
-				log.Printf("BIND MX RECORDS BEFORE: [%s]", records)
-				log.Printf("[DEBUG] [Akamai DNSv2] rdata Exists MX records to append to target LEN %d", len(rdata))
-				for _, r := range rdata {
-					entryparts := strings.Split(r, " ")
-					lastPriority, _ = strconv.Atoi(entryparts[0])
-					entryindex := strings.TrimRight(entryparts[1], ".")
-					checktarget := r[len(r)-1:]
-					if checktarget != "." {
-						r = r + "."
-					}
-					if _, ok := targetmap[entryindex]; ok {
-						targetmap[entryindex] = true
-						records = append(records, r)
+
+			for _, recContent := range target {
+				targentry := recContent.(string)
+				if targentry[len(recContent.(string))-1:] != "." {
+					targentry += "."
+				}
+				if pri, ok := rdataTargetMap[targentry]; ok {
+					log.Printf("MX BIND. %s in existing map", targentry)
+					// target already in rdata
+					if pri != priority {
+						return dnsv2.RecordBody{}, fmt.Errorf("MX Record Priority Mismatch. Target order must align with EdgeDNS")
 					} else {
-						// Removed from TF target
-						log.Printf("[ERROR] [Akamai DNSv2]  MX records Bind. Entry %s removed from Record target", entryparts[1])
+						// already in rdata
 						continue
 					}
+				} else if containsPriority(rdataTargetMap, priority) {
+					log.Printf("MX BIND. %d already in RDATA", priority)
+					// already an rdata record with same priority
+					return dnsv2.RecordBody{}, fmt.Errorf("MX Record Priority Duplication. Target order and priority must align with EdgeDNS")
 				}
-				for tentry, processed := range targetmap {
-					if !processed {
-						lastPriority += increment
-						records = append(records, strconv.Itoa(lastPriority)+" "+tentry+".")
-						// Need to blow up!
-						log.Printf("[ERROR] [Akamai DNSv2]  MX records Bind. Target %s missing from retrieved RData", tentry)
-					}
+				records = append(records, strconv.Itoa(priority)+" "+targentry)
+
+				if increment > 0 {
+					priority = priority + increment
 				}
 			}
-			log.Printf("BIND MX RECORDS AFTER: [%s]", records)
-			//sort.Strings(records)
+			log.Printf("[DEBUG] [Akamai DNSv2] Appended new target to target array LEN %d %v", len(records), records)
+
+			for targname, tpri := range rdataTargetMap {
+				records = append(records, strconv.Itoa(tpri)+" "+targname)
+			}
+			log.Printf("[DEBUG] [Akamai DNSv2] Existing MX records to append to target before schema data LEN %d %v", len(rdata), records)
+
+			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "NAPTR" {
 
@@ -1060,7 +1203,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records = append(records, strconv.Itoa(order)+" "+strconv.Itoa(preference)+" "+flagsnaptr+" "+service+" "+regexp+" "+replacement)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "NSEC3" {
 
@@ -1075,7 +1218,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records = append(records, strconv.Itoa(algorithm)+" "+strconv.Itoa(flags)+" "+strconv.Itoa(iterations)+" "+salt+" "+nextHashedOwnerName+" "+typeBitmaps)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "NSEC3PARAM" {
 
@@ -1090,7 +1233,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records = append(records, strconv.Itoa(algorithm)+" "+strconv.Itoa(flags)+" "+strconv.Itoa(iterations)+" "+saltbase32)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "RP" {
 
@@ -1109,7 +1252,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records = append(records, mailbox+" "+txt)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "RRSIG" {
 
@@ -1127,7 +1270,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records = append(records, typeCovered+" "+strconv.Itoa(algorithm)+" "+strconv.Itoa(labels)+" "+strconv.Itoa(originalTTL)+" "+expiration+" "+inception+" "+strconv.Itoa(keytag)+" "+signer+" "+signature)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "SRV" {
 
@@ -1147,7 +1290,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			}
 			sort.Strings(records)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "SSHFP" {
 
@@ -1159,7 +1302,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 			records = append(records, strconv.Itoa(algorithm)+" "+strconv.Itoa(fingerprintType)+" "+fingerprint)
 
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "SOA" {
 
@@ -1174,7 +1317,7 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 
 			records = append(records, nameserver+" "+emailaddr+" "+strconv.Itoa(serial)+" "+strconv.Itoa(refresh)+" "+strconv.Itoa(retry)+" "+strconv.Itoa(expiry)+" "+strconv.Itoa(nxdomainttl))
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 		if recordtype == "AKAMAITLC" {
 
@@ -1184,10 +1327,11 @@ func bindRecord(d *schema.ResourceData) dnsv2.RecordBody {
 
 			records = append(records, answtype+" "+dnsname)
 			recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordtype, TTL: ttl, Target: records}
-			return recordcreate
+			return recordcreate, nil
 		}
 	}
-	return emptyrecordcreate
+	return emptyrecordcreate, fmt.Errorf("Unable to create a Record Body for %s : %s", host, recordtype)
+
 }
 
 func validateRecord(d *schema.ResourceData) error {
@@ -1622,31 +1766,31 @@ func checkSoaRecord(d *schema.ResourceData) error {
 	nxdomainttl := d.Get("nxdomain_ttl").(int)
 
 	if nameserver == "" {
-		return fmt.Errorf("Key %s must ne specified in SOA record", nameserver)
+		return fmt.Errorf("Key %s must be specified in SOA record", nameserver)
 	}
 
 	if emailaddr == "" {
-		return fmt.Errorf("Key %s must ne specified in SOA record", emailaddr)
+		return fmt.Errorf("Key %s must be specified in SOA record", emailaddr)
 	}
 
 	if serial == 0 {
-		return fmt.Errorf("Key %s must ne specified in SOA record", serial)
+		return fmt.Errorf("Key %d must be specified in SOA record", serial)
 	}
 
 	if refresh == 0 {
-		return fmt.Errorf("Key %s must ne specified in SOA record", refresh)
+		return fmt.Errorf("Key %d must be specified in SOA record", refresh)
 	}
 
 	if retry == 0 {
-		return fmt.Errorf("Key %s must ne specified in SOA record", retry)
+		return fmt.Errorf("Key %d must be specified in SOA record", retry)
 	}
 
 	if expiry == 0 {
-		return fmt.Errorf("Key %s must ne specified in SOA record", expiry)
+		return fmt.Errorf("Key %d must be specified in SOA record", expiry)
 	}
 
 	if nxdomainttl == 0 {
-		return fmt.Errorf("Key %s must ne specified in SOA record", nxdomainttl)
+		return fmt.Errorf("Key %d must be specified in SOA record", nxdomainttl)
 	}
 
 	return nil

@@ -17,9 +17,10 @@ func dataSourceGTMDefaultDatacenter() *schema.Resource {
 				Required: true,
 			},
 			"datacenter": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  5400,
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      5400,
+				ValidateFunc: validateDCValue,
 			},
 
 			"datacenter_id": {
@@ -34,6 +35,15 @@ func dataSourceGTMDefaultDatacenter() *schema.Resource {
 	}
 }
 
+// validateDCValue is a SchemaValidateFunc to validate the DC value.
+func validateDCValue(v interface{}, k string) (ws []string, es []error) {
+	value := v.(int)
+	if value != gtm.MapDefaultDC && value != gtm.Ipv4DefaultDC && value != gtm.Ipv6DefaultDC {
+		es = append(es, fmt.Errorf("Datacenter value must be %d, %d, or %d", gtm.MapDefaultDC, gtm.Ipv4DefaultDC, gtm.Ipv6DefaultDC))
+	}
+	return
+}
+
 func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] dataSourceDefaultDatacenter Read")
 
@@ -41,7 +51,20 @@ func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, meta interface{}
 	if !ok {
 		return errors.New("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
 	}
-	defaultDC, err := gtm.GetDatacenter(d.Get("datacenter").(int), domain.(string))
+	// get or create default dc
+	var err error
+	dcid := d.Get("datacenter").(int)
+	defaultDC := gtm.NewDatacenter()
+	if dcid == gtm.MapDefaultDC {
+		defaultDC, err = gtm.CreateMapsDefaultDatacenter(domain.(string))
+	} else if dcid == gtm.Ipv4DefaultDC {
+		defaultDC, err = gtm.CreateIPv4DefaultDatacenter(domain.(string))
+	} else if dcid == gtm.Ipv6DefaultDC {
+		defaultDC, err = gtm.CreateIPv6DefaultDatacenter(domain.(string))
+	} else {
+		// shouldn't be reachable
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Invalid Default Datacenter %d in configuration", dcid)
+	}
 	if err != nil {
 		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter retrieval failed. %v", err)
 	}

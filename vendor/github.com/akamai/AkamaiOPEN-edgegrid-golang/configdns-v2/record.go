@@ -73,14 +73,29 @@ func NewRecordBody(params RecordBody) *RecordBody {
 	return recordbody
 }
 
-func (record *RecordBody) Save(zone string) error {
+// Eval option lock arg passed into writable endpoints. Default is true, e.g. lock
+func localLock(lockArg []bool) bool {
+
+	for _, lock := range lockArg {
+		// should only be one entry
+		return lock
+	}
+
+	return true
+
+}
+
+func (record *RecordBody) Save(zone string, recLock ...bool) error {
 	// This lock will restrict the concurrency of API calls
 	// to 1 save request at a time. This is needed for the Soa.Serial value which
 	// is required to be incremented for every subsequent update to a zone
 	// so we have to save just one request at a time to ensure this is always
 	// incremented properly
-	zoneRecordWriteLock.Lock()
-	defer zoneRecordWriteLock.Unlock()
+
+	if localLock(recLock) {
+		zoneRecordWriteLock.Lock()
+		defer zoneRecordWriteLock.Unlock()
+	}
 
 	req, err := client.NewJSONRequest(
 		Config,
@@ -98,8 +113,8 @@ func (record *RecordBody) Save(zone string) error {
 
 	// Network error
 	if err != nil {
-		return &ZoneError{
-			zoneName:         zone,
+		return &RecordError{
+			fieldName:         record.Name,
 			httpErrorMessage: err.Error(),
 			err:              err,
 		}
@@ -110,20 +125,23 @@ func (record *RecordBody) Save(zone string) error {
 	// API error
 	if client.IsError(res) {
 		err := client.NewAPIError(res)
-		return &ZoneError{zoneName: zone, apiErrorMessage: err.Detail, err: err}
+		return &RecordError{fieldName: record.Name, apiErrorMessage: err.Detail, err: err}
 	}
 
 	return nil
 }
 
-func (record *RecordBody) Update(zone string) error {
+func (record *RecordBody) Update(zone string, recLock ...bool) error {
 	// This lock will restrict the concurrency of API calls
 	// to 1 save request at a time. This is needed for the Soa.Serial value which
 	// is required to be incremented for every subsequent update to a zone
 	// so we have to save just one request at a time to ensure this is always
 	// incremented properly
-	zoneRecordWriteLock.Lock()
-	defer zoneRecordWriteLock.Unlock()
+
+	if localLock(recLock) {
+		zoneRecordWriteLock.Lock()
+		defer zoneRecordWriteLock.Unlock()
+	}
 
 	req, err := client.NewJSONRequest(
 		Config,
@@ -141,8 +159,8 @@ func (record *RecordBody) Update(zone string) error {
 
 	// Network error
 	if err != nil {
-		return &ZoneError{
-			zoneName:         zone,
+		return &RecordError{
+			fieldName:         record.Name,
 			httpErrorMessage: err.Error(),
 			err:              err,
 		}
@@ -153,25 +171,29 @@ func (record *RecordBody) Update(zone string) error {
 	// API error
 	if client.IsError(res) {
 		err := client.NewAPIError(res)
-		return &ZoneError{zoneName: zone, apiErrorMessage: err.Detail, err: err}
+		return &RecordError{fieldName: record.Name, apiErrorMessage: err.Detail, err: err}
 	}
 
 	return nil
 }
 
-func (record *RecordBody) Delete(zone string) error {
+func (record *RecordBody) Delete(zone string, recLock ...bool) error {
 	// This lock will restrict the concurrency of API calls
 	// to 1 save request at a time. This is needed for the Soa.Serial value which
 	// is required to be incremented for every subsequent update to a zone
 	// so we have to save just one request at a time to ensure this is always
 	// incremented properly
-	zoneRecordWriteLock.Lock()
-	defer zoneRecordWriteLock.Unlock()
+
+	if localLock(recLock) {
+		zoneRecordWriteLock.Lock()
+		defer zoneRecordWriteLock.Unlock()
+	}
+
 	req, err := client.NewJSONRequest(
 		Config,
 		"DELETE",
 		"/config-dns/v2/zones/"+zone+"/names/"+record.Name+"/types/"+record.RecordType,
-		record,
+		nil,
 	)
 	if err != nil {
 		return err
@@ -183,8 +205,8 @@ func (record *RecordBody) Delete(zone string) error {
 
 	// Network error
 	if err != nil {
-		return &ZoneError{
-			zoneName:         zone,
+		return &RecordError{
+			fieldName:        record.Name,
 			httpErrorMessage: err.Error(),
 			err:              err,
 		}
@@ -195,7 +217,7 @@ func (record *RecordBody) Delete(zone string) error {
 	// API error
 	if client.IsError(res) {
 		err := client.NewAPIError(res)
-		return &ZoneError{zoneName: zone, apiErrorMessage: err.Detail, err: err}
+		return &RecordError{fieldName: record.Name, apiErrorMessage: err.Detail, err: err}
 	}
 
 	return nil

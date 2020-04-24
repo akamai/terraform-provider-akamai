@@ -1,37 +1,36 @@
 language: go
 sudo: false
-go:
-  - 1.6
-  - 1.7
-  - 1.8
-  - 1.9
-  - "1.10"
-  - "1.11.x"
-  - tip
-env:
-  # Install dependencies based on the glide.lock
-  #- DEPS=''
-  # Upgrade to the latest dependencies
-  #- DEPS='-update'
-  - GO111MODULE=on
+
+# Fix patching for forks
+go_import_path: github.com/akamai/AkamaiOPEN-edgegrid-golang
+
+cache:
+  directories:
+    - $GOPATH/pkg/mod
+
 matrix:
   fast_finish: true
+  include:
+    - go: 1.12.x
+    - go: 1.13.x
+    - go: 1.x
+    - go: tip
   allow_failures:
-  # Allow Go 1.6, and tip to fail, as well as whenever we use upgraded dependencies
-  - go: 1.6
-  - go: 1.7
-  - go: 1.8
-  - go: tip
-  - env: DEPS='-update'
-before_install:
-  # Fix pathing for forks
-  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-  - mkdir -p $HOME/gopath/src/github.com/akamai/AkamaiOPEN-edgegrid-golang
-  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/akamai/AkamaiOPEN-edgegrid-golang/
-  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/akamai/AkamaiOPEN-edgegrid-golang
-  - cd $HOME/gopath/src/github.com/akamai/AkamaiOPEN-edgegrid-golang
+    - go: tip
+
+env:
+  global:
+    - GO111MODULE=on
+
+install:
+  - go mod tidy
+  - git diff --exit-code go.mod
+  - git diff --exit-code go.sum
+  - go mod download
+
 script:
-  - ls -d */ | grep -vE '(examples|testdata|vendor)' | xargs -I {package} go test -v ./{package}
+  - go test -v ./...
+
 notifications:
   slack:
     secure: sf5CrgPZ2UjTmGFg1hbSdEB3GXyBybeoZQDOI/pk1ywId4mjN1HgAFooDaZx9Qn+orhdQny3jMcdx1qyLe9YtV7WhIRGRQWgJiZ7H+6YRCWYNnSopsSDJ91Q/PaQrgsPSIHL+vfSkyW9iDXrT09SK0IOlWHTrrYMcJiiOCkx2QZgIBMASXWzCRFMSxfqDBuZ8FuNMhcYTIEz4xBLO7seAl9+FvQTzpSXXyEwoKeZjLx2J2+9J1onx9ccnb5ioPeICRuiIKlSvu7VfFkDgc8k8luoktKSG+ZRpwcdae8VoQCzyt7OPzI1kSoZZw20gp2oYQcRkwpLBM007JkW2+KQraF5tZ9Ok8C1vG97lsByhd23r022joyTGpD+TZqWfXUX7K461GJJpohWoFlHshOaAwNj37XWKD8REpb0Qj7vABIfH+gXQhlJHBRCfKMRf12ILzU2yUbbQftwcPkcivNHGknEAkHIjWKk5lDH9uC2is5nWJHDCt/h/xa/AfvNbt28Kol+8yexRypnmorTzG9CBHq+pKrm48cBEGUxREiUjN7v5RGgJH+DB5nKkV4nH3P7mvWV+mkDcAXZPhDprplFl1Q7YV56OyjAY+dlpY6xyGopDz9DmmZifqLxR6mP9eSCIeIM9VsDJUwhfnnwyxRuuzZWFa+Adu8kuaBR8RqjcdE=

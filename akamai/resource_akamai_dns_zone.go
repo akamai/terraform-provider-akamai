@@ -199,9 +199,12 @@ func resourceDNSv2ZoneRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	// find the zone first
 	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
-	zone, err := dnsv2.GetZone(hostname)
-	if err != nil {
-		return err
+	zone, e := dnsv2.GetZone(hostname)
+	if e != nil {
+		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() {
+			d.SetId("")
+		}
+		return e
 	}
 	// Populate state with returned field values ... except zone and type
 	if zone.Type != d.Get("type").(string) {
@@ -412,7 +415,7 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dnsv2.ZoneCreate) {
 func checkDNSv2Zone(d *schema.ResourceData) error {
 
 	zone := d.Get("zone").(string)
-	ztype := d.Get("type").(string)
+	ztype := strings.ToUpper(d.Get("type").(string))
 	masters := d.Get("masters").(*schema.Set).List()
 	target := d.Get("target").(string)
 	tsig := d.Get("tsig_key").([]interface{})
