@@ -21,4 +21,4 @@ replace (
 	sourcegraph.com/sourcegraph/go-diff => github.com/sourcegraph/go-diff v0.5.1
 )
 
-go 1.13
+go 1.11
