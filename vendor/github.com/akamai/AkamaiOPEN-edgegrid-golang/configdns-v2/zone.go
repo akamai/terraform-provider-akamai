@@ -8,6 +8,7 @@ import (
 	"log"
 	"reflect"
 	"sync"
+	"strings"
 )
 
 var (
@@ -482,6 +483,7 @@ func (zone *ZoneCreate) Delete(zonequerystring ZoneQueryString) error {
 
 func filterZoneCreate(zone *ZoneCreate) map[string]interface{} {
 
+	zoneType := strings.ToUpper(zone.Type)
 	filteredZone := make(map[string]interface{})
 	zoneElems := reflect.ValueOf(zone).Elem()
 	for i := 0; i < zoneElems.NumField(); i++ {
@@ -490,23 +492,23 @@ func filterZoneCreate(zone *ZoneCreate) map[string]interface{} {
 		varValue := zoneElems.Field(i).Interface()
 		switch varName {
 		case "Target":
-			if zone.Type == "ALIAS" {
+			if zoneType == "ALIAS" {
 				filteredZone[varLower] = varValue
 			}
 		case "TsigKey":
-			if zone.Type == "SECONDARY" {
+			if zoneType == "SECONDARY" {
 				filteredZone[varLower] = varValue
 			}
 		case "Masters":
-			if zone.Type == "SECONDARY" {
+			if zoneType == "SECONDARY" {
 				filteredZone[varLower] = varValue
 			}
 		case "SignAndServe":
-			if zone.Type != "ALIAS" {
+			if zoneType != "ALIAS" {
 				filteredZone[varLower] = varValue
 			}
 		case "SignAndServeAlgorithm":
-			if zone.Type != "ALIAS" {
+			if zoneType != "ALIAS" {
 				filteredZone[varLower] = varValue
 			}
 		default:

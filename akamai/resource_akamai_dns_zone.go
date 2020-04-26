@@ -141,7 +141,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 			// if the zone is not found/404 we will create a new
 			// blank zone for the records to be added to and continue
 			log.Printf("[DEBUG] [Akamai DNS] [ERROR] %s", e.Error())
-			log.Printf("[DEBUG] [Akamai DNS] Creating new zone")
+			log.Printf("[DEBUG] [Akamai DNS] Creating new zone: %v", zonecreate)
 			e = zonecreate.Save(zonequerystring)
 			if e != nil {
 				return e
@@ -207,7 +207,7 @@ func resourceDNSv2ZoneRead(d *schema.ResourceData, meta interface{}) error {
 		return e
 	}
 	// Populate state with returned field values ... except zone and type
-	if zone.Type != d.Get("type").(string) {
+	if strings.ToUpper(zone.Type) != strings.ToUpper(d.Get("type").(string)) {
 		return errors.New(fmt.Sprintf("Zone type has changed from %s to %s", d.Get("type").(string), zone.Type))
 	}
 	populateDNSv2ZoneState(d, zone)
@@ -363,18 +363,13 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dnsv2.ZoneResponse
 // populate zone object based on current config.
 func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dnsv2.ZoneCreate) {
 
-	if v, ok := d.GetOk("masters"); ok {
-		masterlist := v.(*schema.Set).List()
-		masters := make([]string, 0, len(masterlist))
-		if len(masterlist) > 0 {
-			for _, master := range masterlist {
-				masters = append(masters, master.(string))
-			}
-		}
-		zone.Masters = masters
-	} else if d.HasChange("masters") {
-		zone.Masters = make([]string, 0, 0)
+	v := d.Get("masters")
+	masterlist := v.(*schema.Set).List()
+	masters := make([]string, 0, len(masterlist))
+	for _, master := range masterlist {
+		masters = append(masters, master.(string))
 	}
+	zone.Masters = masters
 	if v, ok := d.GetOk("comment"); ok {
 		zone.Comment = v.(string)
 	} else if d.HasChange("comment") {
@@ -396,7 +391,7 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dnsv2.ZoneCreate) {
 	} else if d.HasChange("end_customer_id") {
 		zone.EndCustomerId = v.(string)
 	}
-	v := d.Get("tsig_key")
+	v = d.Get("tsig_key")
 	if v != nil && len(v.([]interface{})) > 0 {
 		tsigKeyList := v.([]interface{})
 		tsigKeyMap := tsigKeyList[0].(map[string]interface{})
