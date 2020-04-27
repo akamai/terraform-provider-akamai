@@ -116,7 +116,7 @@ func testAccCheckAkamaiDNSv2RecordDestroy(s *terraform.State) error {
 
 		log.Printf("[DEBUG] [Akamai DNSv2] Searching for zone [%v]", rs.Type)
 		//request := &
-		//hostname := strings.Split(rs.Primary.ID, "-")[2]
+		//hostname := strings.Split(rs.Primary.ID, "#")[2]
 		//zone, err := dnsv2.GetZone(hostname)
 		//if err != nil {
 		//		return err

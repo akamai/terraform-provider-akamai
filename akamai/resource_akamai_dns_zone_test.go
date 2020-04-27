@@ -134,7 +134,7 @@ func testAccCheckAkamaiDNSZoneDestroy(s *terraform.State) error {
 			continue
 		}
 
-		hostname := strings.Split(rs.Primary.ID, "-")[5]
+		hostname := strings.Split(rs.Primary.ID, "#")[1]
 		zone, err := dnsv2.GetZone(hostname)
 		if err != nil {
 			return err
@@ -175,7 +175,7 @@ func testAccCheckAkamaiDNSZoneExists(s *terraform.State) error {
 			continue
 		}
 
-		hostname := strings.Split(rs.Primary.ID, "-")[5]
+		hostname := strings.Split(rs.Primary.ID, "#")[1]
 		_, err := dnsv2.GetZone(hostname)
 		if err != nil {
 			return err
