@@ -14,7 +14,7 @@ import (
 // AsAssignment represents a GTM asmap assignment structure
 type AsAssignment struct {
 	DatacenterBase
-	AsNumbers []int64 `json:"asNumbers,omitempty"`
+	AsNumbers []int64 `json:"asNumbers"`
 }
 
 // AsMap  represents a GTM AsMap

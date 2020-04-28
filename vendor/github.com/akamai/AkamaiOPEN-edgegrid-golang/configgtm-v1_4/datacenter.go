@@ -3,8 +3,10 @@ package configgtm
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 
+	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 //
@@ -174,6 +176,93 @@ func (dc *Datacenter) Create(domainName string) (*DatacenterResponse, error) {
 	}
 
 	return responseBody, nil
+
+}
+
+var MapDefaultDC int = 5400
+var Ipv4DefaultDC int = 5401
+var Ipv6DefaultDC int = 5402
+
+// Create Default Datacenter for Maps
+func CreateMapsDefaultDatacenter(domainName string) (*Datacenter, error) {
+
+	return createDefaultDC(MapDefaultDC, domainName)
+
+}
+
+// Create Default Datacenter for IPv4 Selector
+func CreateIPv4DefaultDatacenter(domainName string) (*Datacenter, error) {
+
+	return createDefaultDC(Ipv4DefaultDC, domainName)
+
+}
+
+// Create Default Datacenter for IPv6 Selector
+func CreateIPv6DefaultDatacenter(domainName string) (*Datacenter, error) {
+
+	return createDefaultDC(Ipv6DefaultDC, domainName)
+
+}
+
+// Worker function to create Default Datacenter identified id in the specified domain.
+func createDefaultDC(defaultID int, domainName string) (*Datacenter, error) {
+
+	if defaultID != MapDefaultDC && defaultID != Ipv4DefaultDC && defaultID != Ipv6DefaultDC {
+		return nil, errors.New("Invalid default datacenter id provided for creation")
+	}
+	// check if already exists
+	dc, err := GetDatacenter(defaultID, domainName)
+	if err == nil {
+		return dc, err
+	} else {
+		if !strings.Contains(err.Error(), "not found") || !strings.Contains(err.Error(), "Datacenter") {
+			return nil, err
+		}
+	}
+	defaultURL := fmt.Sprintf("/config-gtm/v1/domains/%s/datacenters/", domainName)
+	switch defaultID {
+	case MapDefaultDC:
+		defaultURL += "default-datacenter-for-maps"
+	case Ipv4DefaultDC:
+		defaultURL += "datacenter-for-ip-version-selector-ipv4"
+	case Ipv6DefaultDC:
+		defaultURL += "datacenter-for-ip-version-selector-ipv6"
+	}
+	req, err := client.NewJSONRequest(
+		Config,
+		"POST",
+		defaultURL,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	setVersionHeader(req, schemaVersion)
+	printHttpRequest(req, true)
+	res, err := client.Do(Config, req)
+	// Network
+	if err != nil {
+		return nil, CommonError{
+			entityName:       "Domain",
+			name:             domainName,
+			httpErrorMessage: err.Error(),
+			err:              err,
+		}
+	}
+	printHttpResponse(res, true)
+	// API error
+	if client.IsError(res) {
+		err := client.NewAPIError(res)
+		return nil, CommonError{entityName: "Domain", name: domainName, apiErrorMessage: err.Detail, err: err}
+	}
+	responseBody := NewDatacenterResponse()
+	// Unmarshall whole response body for updated DC and in case want status
+	err = client.BodyJSON(res, responseBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return responseBody.Resource, nil
 
 }
 

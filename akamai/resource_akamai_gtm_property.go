@@ -72,6 +72,7 @@ func resourceGTMv1Property() *schema.Resource {
 			"static_ttl": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				Default:  300,
 			},
 			"static_rr_set": &schema.Schema{
 				Type:     schema.TypeList,
@@ -562,11 +563,17 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	}
 	if v, ok := d.GetOk("stickiness_bonus_percentage"); ok {
 		prop.StickinessBonusPercentage = v.(int)
+	} else if d.HasChange("stickiness_bonus_percentage") {
+		prop.StickinessBonusPercentage = v.(int)
 	}
 	if v, ok := d.GetOk("stickiness_bonus_constant"); ok {
 		prop.StickinessBonusConstant = v.(int)
+	} else if d.HasChange("stickiness_bonus_constant") {
+		prop.StickinessBonusConstant = v.(int)
 	}
 	if v, ok := d.GetOk("health_threshold"); ok {
+		prop.HealthThreshold = v.(float64)
+	} else if d.HasChange("health_threshold") {
 		prop.HealthThreshold = v.(float64)
 	}
 	v := d.Get("ipv6")
@@ -574,6 +581,8 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	v = d.Get("use_computed_targets")
 	prop.UseComputedTargets = v.(bool)
 	if v, ok := d.GetOk("backup_ip"); ok {
+		prop.BackupIp = v.(string)
+	} else if d.HasChange("backup_ip") {
 		prop.BackupIp = v.(string)
 	}
 	v = d.Get("balance_by_download_score")
@@ -583,11 +592,17 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	}
 	if v, ok := d.GetOk("unreachable_threshold"); ok {
 		prop.UnreachableThreshold = v.(float64)
+	} else if d.HasChange("unreachable_threshold") {
+		prop.UnreachableThreshold = v.(float64)
 	}
 	if v, ok := d.GetOk("min_live_fraction"); ok {
 		prop.MinLiveFraction = v.(float64)
+	} else if d.HasChange("min_live_fraction") {
+		prop.MinLiveFraction = v.(float64)
 	}
 	if v, ok := d.GetOk("health_multiplier"); ok {
+		prop.HealthMultiplier = v.(float64)
+	} else if d.HasChange("health_multiplier") {
 		prop.HealthMultiplier = v.(float64)
 	}
 	if v, ok := d.GetOk("dynamic_ttl"); ok {
@@ -595,11 +610,17 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	}
 	if v, ok := d.GetOk("max_unreachable_penalty"); ok {
 		prop.MaxUnreachablePenalty = v.(int)
+	} else if d.HasChange("max_unreachable_penalty") {
+		prop.MaxUnreachablePenalty = v.(int)
 	}
 	if v, ok := d.GetOk("map_name"); ok {
 		prop.MapName = v.(string)
+	} else if d.HasChange("map_name") {
+		prop.MapName = v.(string)
 	}
 	if v, ok := d.GetOk("handout_limit"); ok {
+		prop.HandoutLimit = v.(int)
+	} else if d.HasChange("handout_limit") {
 		prop.HandoutLimit = v.(int)
 	}
 	if v, ok := d.GetOk("handout_mode"); ok {
@@ -607,17 +628,27 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	}
 	if v, ok := d.GetOk("load_imbalance_percentage"); ok {
 		prop.LoadImbalancePercentage = v.(float64)
+	} else if d.HasChange("load_imbalance_percentage") {
+		prop.LoadImbalancePercentage = v.(float64)
 	}
 	if v, ok := d.GetOk("failover_delay"); ok {
+		prop.FailoverDelay = v.(int)
+	} else if d.HasChange("failover_delay") {
 		prop.FailoverDelay = v.(int)
 	}
 	if v, ok := d.GetOk("backup_cname"); ok {
 		prop.BackupCName = v.(string)
+	} else if d.HasChange("backup_cname") {
+		prop.BackupCName = v.(string)
 	}
 	if v, ok := d.GetOk("failback_delay"); ok {
 		prop.FailbackDelay = v.(int)
+	} else if d.HasChange("failback_delay") {
+		prop.FailbackDelay = v.(int)
 	}
 	if v, ok := d.GetOk("health_max"); ok {
+		prop.HealthMax = v.(float64)
+	} else if d.HasChange("health_max") {
 		prop.HealthMax = v.(float64)
 	}
 	v = d.Get("ghost_demand_reporting")
@@ -630,8 +661,12 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 	}
 	if v, ok := d.GetOk("cname"); ok {
 		prop.CName = v.(string)
+	} else if d.HasChange("cname") {
+		prop.CName = v.(string)
 	}
 	if v, ok := d.GetOk("comments"); ok {
+		prop.Comments = v.(string)
+	} else if d.HasChange("comments") {
 		prop.Comments = v.(string)
 	}
 	populateTrafficTargetObject(d, prop)
@@ -731,7 +766,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		tt["enabled"] = ttObject.Enabled
 		tt["weight"] = ttObject.Weight
 		tt["handout_cname"] = ttObject.HandoutCName
-		tt["servers"] = ttObject.Servers
+		tt["servers"] = reconcileTerraformLists(tt["servers"].([]interface{}), convertStringToInterfaceList(ttObject.Servers))
 		// remove object
 		delete(objectInventory, objIndex)
 	}
@@ -799,7 +834,7 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 		}
 		rr["type"] = rrObject.Type
 		rr["ttl"] = rrObject.TTL
-		rr["rdata"] = rrObject.Rdata
+		rr["rdata"] = reconcileTerraformLists(rr["rdata"].([]interface{}), convertStringToInterfaceList(rrObject.Rdata))
 		// remove object
 		delete(objectInventory, objIndex)
 	}
@@ -963,5 +998,68 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 		}
 	}
 	d.Set("liveness_test", ltStateList)
+
+}
+
+func convertStringToInterfaceList(stringList []string) []interface{} {
+
+	log.Printf("[DEBUG] [Akamai GTMv1] String List: %v", stringList)
+	retList := make([]interface{}, 0, len(stringList))
+	for _, v := range stringList {
+		retList = append(retList, v)
+	}
+
+	return retList
+
+}
+
+func convertIntToInterfaceList(intList []int) []interface{} {
+
+	log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
+	retList := make([]interface{}, 0, len(intList))
+	for _, v := range intList {
+		retList = append(retList, v)
+	}
+
+	return retList
+
+}
+
+func convertInt64ToInterfaceList(intList []int64) []interface{} {
+
+	log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
+	retList := make([]interface{}, 0, len(intList))
+	for _, v := range intList {
+		retList = append(retList, v)
+	}
+
+	return retList
+
+}
+
+// Util method to reconcile list configs. Type agnostic. Goal: maintain order of tf list config
+func reconcileTerraformLists(terraList []interface{}, newList []interface{}) []interface{} {
+
+	log.Printf("[DEBUG] [Akamai GTMv1] Existing Terra List: %v", terraList)
+	log.Printf("[DEBUG] [Akamai GTMv1] Read List: %v", newList)
+	newMap := make(map[string]interface{}, len(newList))
+	updatedList := make([]interface{}, 0, len(newList))
+	for _, newelem := range newList {
+		newMap[fmt.Sprintf("%v", newelem)] = newelem
+	}
+	// walk existing terra list and check new.
+	for _, v := range terraList {
+		vindex := fmt.Sprintf("%v", v)
+		if _, ok := newMap[vindex]; ok {
+			updatedList = append(updatedList, v)
+			delete(newMap, vindex)
+		}
+	}
+	for _, newVal := range newMap {
+		updatedList = append(updatedList, newVal)
+	}
+
+	log.Printf("[DEBUG] [Akamai GTMv1] Updated Terra List: %v", updatedList)
+	return updatedList
 
 }

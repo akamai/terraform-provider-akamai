@@ -179,9 +179,6 @@ func createContentHash(config Config, req *http.Request) string {
 // but including the ; right before the signature field).
 func signingData(config Config, req *http.Request, authHeader string) string {
 
-        log.Debugf("Path: [%s]", req.URL.Path)
-        log.Debugf("Escaped Path: [%s]", req.URL.EscapedPath())
-
 	dataSign := []string{
 		req.Method,
 		req.URL.Scheme,

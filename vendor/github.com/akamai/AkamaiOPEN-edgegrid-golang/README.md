@@ -9,14 +9,6 @@ This library implements an Authentication handler for [net/http](https://golang.
 that provides the [Akamai OPEN Edgegrid Authentication](https://developer.akamai.com/introduction/Client_Auth.html) 
 scheme. For more information visit the [Akamai OPEN Developer Community](https://developer.akamai.com).
 
-## Installation
-
-This package uses `dep` to manage to dependencies and installation. To install `dep`, see the [`dep` install documentation](https://github.com/golang/dep#installation)
-
-```bash
-$ dep ensure -add github.com/akamai/AkamaiOPEN-edgegrid-golang
-```
-
 ## Usage
 
 GET Example:

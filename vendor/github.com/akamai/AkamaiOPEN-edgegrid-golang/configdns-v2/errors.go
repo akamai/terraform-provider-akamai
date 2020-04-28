@@ -2,6 +2,7 @@ package dnsv2
 
 import (
 	"fmt"
+	client "github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 )
 
 type ConfigDNSError interface {
@@ -76,6 +77,7 @@ func (e *ZoneError) Error() string {
 type RecordError struct {
 	fieldName        string
 	httpErrorMessage string
+        apiErrorMessage  string
 	err              error
 }
 
@@ -87,7 +89,10 @@ func (e *RecordError) Network() bool {
 }
 
 func (e *RecordError) NotFound() bool {
-	return false
+        if e.err == nil && e.httpErrorMessage == "" && e.apiErrorMessage == "" {
+                return true
+        }
+        return false
 }
 
 func (e *RecordError) FailedToSave() bool {
@@ -98,16 +103,40 @@ func (e *RecordError) FailedToSave() bool {
 }
 
 func (e *RecordError) ValidationFailed() bool {
-	if e.fieldName != "" {
+	if e.fieldName != "" && e.err == nil {
 		return true
 	}
 	return false
+}
+
+func (e *RecordError) ConcurrencyConflict() bool {
+	_, ok := e.err.(client.APIError)
+	if ok && e.err.(client.APIError).Status == 409 {
+		return true
+	}
+	return false 
+}
+
+func (e *RecordError) BadRequest() bool {
+        _, ok := e.err.(client.APIError)
+        if ok && e.err.(client.APIError).Status == 400 {
+                return true
+        }
+        return false
 }
 
 func (e *RecordError) Error() string {
 	if e.Network() {
 		return fmt.Sprintf("Record network error: [%s]", e.httpErrorMessage)
 	}
+
+	if e.ConcurrencyConflict() {
+		return fmt.Sprintf("Modification Confict: [%s]", e.apiErrorMessage)
+	} 
+
+        if e.BadRequest() {
+                return fmt.Sprintf("Invalid Operation: [%s]", e.apiErrorMessage)
+        }       
 
 	if e.NotFound() {
 		return fmt.Sprintf("Record not found.")
@@ -119,6 +148,62 @@ func (e *RecordError) Error() string {
 
 	if e.ValidationFailed() {
 		return fmt.Sprintf("Record validation failed for field [%s]", e.fieldName)
+	}
+
+	if e.err != nil {
+		return fmt.Sprintf("%s", e.err.Error())
+	}
+
+	return "<nil>"
+}
+
+type TsigError struct {
+	keyName          string
+	httpErrorMessage string
+	apiErrorMessage  string
+	err              error
+}
+
+func (e *TsigError) Network() bool {
+	if e.httpErrorMessage != "" {
+		return true
+	}
+	return false
+}
+
+func (e *TsigError) NotFound() bool {
+	if e.err == nil && e.httpErrorMessage == "" && e.apiErrorMessage == "" {
+		return true
+	}
+	return false
+}
+
+func (e *TsigError) FailedToSave() bool {
+	return false
+}
+
+func (e *TsigError) ValidationFailed() bool {
+	if e.apiErrorMessage != "" {
+		return true
+	}
+	return false
+}
+
+func (e *TsigError) Error() string {
+	if e.Network() {
+		return fmt.Sprintf("Tsig network error: [%s]", e.httpErrorMessage)
+	}
+
+	if e.NotFound() {
+		return fmt.Sprintf("tsig key not found.")
+	}
+
+	if e.FailedToSave() {
+		return fmt.Sprintf("tsig key failed to save: [%s]", e.err.Error())
+	}
+
+	if e.ValidationFailed() {
+		return fmt.Sprintf("tsig key validation failed: [%s]", e.apiErrorMessage)
 	}
 
 	return "<nil>"

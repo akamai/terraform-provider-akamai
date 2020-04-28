@@ -18,10 +18,10 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/go-ini/ini"
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/ini.v1"
 )
 
 const defaultSection = "DEFAULT"

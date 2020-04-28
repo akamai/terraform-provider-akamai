@@ -82,12 +82,50 @@ func parseResourceASmapId(id string) (string, string, error) {
 
 }
 
+// Util method to validate default datacenter and create if necc
+func validateDefaultDC(ddcField []interface{}, domain string) error {
+
+	if len(ddcField) == 0 {
+		return errors.New("Default Datacenter invalid")
+	}
+	ddc := ddcField[0].(map[string]interface{})
+	if ddc["datacenter_id"].(int) == 0 {
+		return errors.New("Default Datacenter ID invalid")
+	}
+	dc, err := gtm.GetDatacenter(ddc["datacenter_id"].(int), domain)
+	if dc == nil {
+		if err != nil {
+			_, ok := err.(gtm.CommonError)
+			if !ok {
+				return fmt.Errorf("[ERROR] MapCreate Unexpected error verifying Default Datacenter exists: %s", err.Error())
+			}
+		}
+		// ddc doesn't exist
+		if ddc["datacenter_id"].(int) != gtm.MapDefaultDC {
+			return errors.New(fmt.Sprintf("Default Datacenter %d does not exist", ddc["datacenter_id"].(int)))
+		}
+		ddc, err := gtm.CreateMapsDefaultDatacenter(domain) // create if not already.
+		if ddc == nil {
+			return fmt.Errorf("[ERROR] MapCreate failed on Default Datacenter check: %s", err.Error())
+		}
+	}
+
+	return nil
+
+}
+
 // Create a new GTM ASmap
 func resourceGTMv1ASmapCreate(d *schema.ResourceData, meta interface{}) error {
 
 	domain := d.Get("domain").(string)
 
 	log.Printf("[INFO] [Akamai GTM] Creating asMap [%s] in domain [%s]", d.Get("name").(string), domain)
+	// Make sure Default Datacenter exists
+	err := validateDefaultDC(d.Get("default_datacenter").([]interface{}), domain)
+	if err != nil {
+		return err
+	}
+
 	newAS := populateNewASmapObject(d)
 	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New ASmap: [%v]", newAS)
 	cStatus, err := newAS.Create(domain)
@@ -353,7 +391,7 @@ func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtm.AsMap) 
 		}
 		a["datacenter_id"] = aObject.DatacenterId
 		a["nickname"] = aObject.Nickname
-		a["as_numbers"] = aObject.AsNumbers
+		a["as_numbers"] = reconcileTerraformLists(a["as_numbers"].([]interface{}), convertInt64ToInterfaceList(aObject.AsNumbers))
 		// remove object
 		delete(objectInventory, objIndex)
 	}
