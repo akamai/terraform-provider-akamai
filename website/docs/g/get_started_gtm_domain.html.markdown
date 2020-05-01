@@ -10,6 +10,11 @@ description: |-
 
 The Akamai Provider for Terraform provides you the ability to automate the creation, deployment, and management of GTM domain configuration and administration; as well as importing existing domains and contained objects.  
 
+To get more information about Global Traffic Management, see:
+
+* [API documentation](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html)
+* How-to Guides
+    * [Official Documentation](https://learn.akamai.com/en-us/webhelp/global-traffic-management/global-traffic-management-user-guide/GUID-05D70D31-6F3E-4766-ACD9-FA71A964A17A.html)
 
 ## Configure the Terraform Provider
 
@@ -89,7 +94,7 @@ To define the entire configuration, we start by opening the resource block and g
 
 Next, we set the required (domain, type) and optional (group ID, contract ID, email list, comment) arguments.
 
-Once you’re done, your domain should look like this:
+Once you’re done, your domain configuration should look like this:
 
 ```hcl
 resource "akamai_gtm_domain" "example" {
@@ -111,7 +116,7 @@ To define the entire configuration, we start by opening the resource block and g
 
 Next, we set the required (domain name) and optional (nickname) arguments.
 
-Once you’re done, your property should look like this:
+Once you’re done, your datacenter configuration should look like this:
 
 ```hcl
 resource "akamai_gtm_datacenter" "example_dc" {
@@ -129,7 +134,7 @@ To define the entire configuration, we start by opening the resource block and g
 
 Next, we set the required (domain name, property name, property type, traffic_targets, liveness_tests, score_aggregation_type, handout_limit, handout_mode) and optional (failover_delay, failback_delay) arguments.
 
-Once you’re done, your property should look like this:
+Once you’re done, your property configuration should look like this:
 
 ```hcl
 resource "akamai_gtm_property" "example_prop" {
@@ -210,5 +215,21 @@ To actually create our domain, datacenter and property;, we need to instruct ter
 $ terraform apply
 ```
 
-Once this completes your domain, daatcenter and property will have been created. You can verify this in [Akamai Control Center](https://control.akamai.com) or via the [Akamai CLI](https://developer.akamai.com/cli).
+Once this completes your domain, datacenter and property will have been created. You can verify this in [Akamai Control Center](https://control.akamai.com) or via the [Akamai CLI](https://developer.akamai.com/cli).
+
+## Import
+
+Existing GTM resources may be imported using the following formats:
+
+```
+$ terraform import akamai_gtm_domain.{{domain resource name}} {{gtm domain name}}
+$ terraform import akamai_gtm_datacenter.{{datacenter resource name}} {{gtm domain name}}:{{gtm datacener id}}
+$ terraform import akamai_gtm_property.{{property resource name}} {{gtm domain name}}:{{gtm property name}}
+$ terraform import akamai_gtm_resource.{{resource resource name}} {{gtm domain name}}:{{gtm resource name}}
+$ terraform import akamai_gtm_cidrmap.{{cidrmap resource name}} {{gtm domain name}}:{{gtm cidrmap name}}
+$ terraform import akamai_gtm_geomap.{{geomap resource name}} {{gtm domain name}}:{{gtm geographicmap name}}
+$ terraform import akamai_gtm_asmap.{{asmap resource name}} {{gtm domain name}}:{{gtm asmap name}}
+```
+
+[Migrating A GTM Domain](https://www.terraform.io/docs/providers/akamai/g/faq.html#migrating-a-gtm-domain-and-contained-objects-to-terraform) discusses GTM resource import in more detail.
 
