@@ -362,8 +362,12 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 	}
 	if v, ok := d.GetOk("city"); ok {
 		dc.City = v.(string)
+	} else if d.HasChange("city") {
+		dc.City = v.(string)
 	}
 	if v, ok := d.GetOk("clone_of"); ok {
+		dc.CloneOf = v.(int)
+	} else if d.HasChange("clone_of") {
 		dc.CloneOf = v.(int)
 	}
 	v := d.Get("cloud_server_host_header_override")
@@ -372,13 +376,19 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 	dc.CloudServerTargeting = v.(bool)
 	if v, ok := d.GetOk("continent"); ok {
 		dc.Continent = v.(string)
+	} else if d.HasChange("continent") {
+		dc.Continent = v.(string)
 	}
 	if v, ok := d.GetOk("country"); ok {
+		dc.Country = v.(string)
+	} else if d.HasChange("country") {
 		dc.Country = v.(string)
 	}
 	// pull apart Set
 	dloList := d.Get("default_load_object").([]interface{})
-	if dloList != nil {
+	if dloList == nil || len(dloList) == 0 {
+		dc.DefaultLoadObject = nil
+	} else {
 		dloObject := gtm.NewLoadObject()
 		for _, v := range dloList {
 			dloMap := v.(map[string]interface{})
@@ -388,8 +398,8 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 				ls := make([]string, len(dloMap["load_servers"].([]interface{})))
 				for i, sl := range dloMap["load_servers"].([]interface{}) {
 					ls[i] = sl.(string)
-					dloObject.LoadServers = ls
 				}
+				dloObject.LoadServers = ls
 			}
 			dc.DefaultLoadObject = dloObject
 			break
@@ -397,8 +407,12 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 	}
 	if v, ok := d.GetOk("latitude"); ok {
 		dc.Latitude = v.(float64)
+	} else if d.HasChange("latitude") {
+		dc.Latitude = v.(float64)
 	}
 	if v, ok := d.GetOk("longitude"); ok {
+		dc.Longitude = v.(float64)
+	} else if d.HasChange("longitude") {
 		dc.Longitude = v.(float64)
 	}
 	if v, ok := d.GetOk("nickname"); ok {
@@ -418,14 +432,22 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 	}
 	if v, ok := d.GetOk("servermonitor_liveness_count"); ok {
 		dc.ServermonitorLivenessCount = v.(int)
+	} else if d.HasChange("servermonitor_liveness_count") {
+		dc.ServermonitorLivenessCount = v.(int)
 	}
 	if v, ok := d.GetOk("servermonitor_load_count"); ok {
+		dc.ServermonitorLoadCount = v.(int)
+	} else if d.HasChange("servermonitor_load_count") {
 		dc.ServermonitorLoadCount = v.(int)
 	}
 	if v, ok := d.GetOk("servermonitor_pool"); ok {
 		dc.ServermonitorPool = v.(string)
+	} else if d.HasChange("servermonitor_pool") {
+		dc.ServermonitorPool = v.(string)
 	}
 	if v, ok := d.GetOk("state_or_province"); ok {
+		dc.StateOrProvince = v.(string)
+	} else if d.HasChange("state_or_province") {
 		dc.StateOrProvince = v.(string)
 	}
 }
@@ -442,18 +464,33 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 	d.Set("cloud_server_targeting", dc.CloudServerTargeting)
 	d.Set("continent", dc.Continent)
 	d.Set("country", dc.Country)
-	dloNewList := make([]interface{}, 0)
-	if dc.DefaultLoadObject != nil {
-		if dc.DefaultLoadObject.LoadObject != "" || len(dc.DefaultLoadObject.LoadServers) != 0 || dc.DefaultLoadObject.LoadObjectPort > 0 {
-			// We can't distinguish a null object so hack to see if there are any non zero values
-			dloNew := make(map[string]interface{})
-			dloNew["load_object"] = dc.DefaultLoadObject.LoadObject
-			dloNew["load_object_port"] = dc.DefaultLoadObject.LoadObjectPort
-			dloNew["load_servers"] = dc.DefaultLoadObject.LoadServers
-			dloNewList = append(dloNewList, dloNew)
+	dloStateList := d.Get("default_load_object").([]interface{})
+	if dloStateList == nil {
+		dloStateList = make([]interface{}, 0, 1)
+	}
+	if len(dloStateList) == 0 && dc.DefaultLoadObject != nil && (dc.DefaultLoadObject.LoadObject != "" || len(dc.DefaultLoadObject.LoadServers) != 0 || dc.DefaultLoadObject.LoadObjectPort > 0) {
+		// create MT object
+		newDLO := make(map[string]interface{}, 3)
+		newDLO["load_object"] = ""
+		newDLO["load_object_port"] = 0
+		newDLO["load_servers"] = make([]interface{}, 0, len(dc.DefaultLoadObject.LoadServers))
+		dloStateList = append(dloStateList, newDLO)
+	}
+	for _, dloMap := range dloStateList {
+		if dc.DefaultLoadObject != nil && (dc.DefaultLoadObject.LoadObject != "" || len(dc.DefaultLoadObject.LoadServers) != 0 || dc.DefaultLoadObject.LoadObjectPort > 0) {
+			dlo := dloMap.(map[string]interface{})
+			dlo["load_object"] = dc.DefaultLoadObject.LoadObject
+			dlo["load_object_port"] = dc.DefaultLoadObject.LoadObjectPort
+			if dlo["load_servers"] != nil && len(dlo["load_servers"].([]interface{})) > 0 {
+				dlo["load_servers"] = reconcileTerraformLists(dlo["load_servers"].([]interface{}), convertStringToInterfaceList(dc.DefaultLoadObject.LoadServers))
+			} else {
+				dlo["load_servers"] = dc.DefaultLoadObject.LoadServers
+			}
+		} else {
+			dloStateList = make([]interface{}, 0, 1)
 		}
 	}
-	d.Set("default_load_object", dloNewList)
+	d.Set("default_load_object", dloStateList)
 	d.Set("latitude", dc.Latitude)
 	d.Set("longitude", dc.Longitude)
 	d.Set("ping_interval", dc.PingInterval)

@@ -59,7 +59,7 @@ The following arguments are supported:
 
 In addition the specifying the rule tree in it's entirety, you can also set the default CP Code and Origin explicitly. *This will override your JSON configuration*.
 
-* `cp_code` — (Required) The CP Code id or name to use (or create).
+* `cp_code` — (Optional) The CP Code id or name to use (or create). Required unless a [cpCode behavior](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#cpcode) is present in the default rule.
 * `origin` — (Optional) The property origin (an origin must be specified to activate a property, but may be defined in your rules block).
   * `hostname` — (Required) The origin hostname.
   * `port` — (Optional) The origin port to connect to (default: 80).

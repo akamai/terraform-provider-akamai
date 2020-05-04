@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
-
+	//edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
 
@@ -314,5 +314,68 @@ func TestDeleteDatacenter(t *testing.T) {
 	testDC := instantiateDatacenter()
 	_, err := testDC.Delete(gtmTestDomain)
 	assert.NoError(t, err)
+
+}
+
+func TestCreateMapsDefaultDatacenter(t *testing.T) {
+
+	defer gock.Off()
+
+	mock1 := gock.New("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-gtm/v1/domains/" + gtmTestDomain + "/datacenters/5400")
+	mock1.
+		Get("/config-gtm/v1/domains/"+gtmTestDomain+"/datacenters/5400").
+		HeaderPresent("Authorization").
+		Reply(404).
+		SetHeader("Content-Type", "application/vnd.config-gtm.v1.4+json;charset=UTF-8")
+
+	mock := gock.New("https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-gtm/v1/domains/" + gtmTestDomain + "/datacenters/default-datacenter-for-maps")
+	mock.
+		Post("/config-gtm/v1/domains/"+gtmTestDomain+"/datacenters/default-datacenter-for-maps").
+		HeaderPresent("Authorization").
+		Reply(200).
+		SetHeader("Content-Type", "application/vnd.config-gtm.v1.4+json;charset=UTF-8").
+		BodyString(`{
+                        "resource" : {
+                                "datacenterId" : 5400,
+                                "nickname" : "Default Datacenter",
+                                "scorePenalty" : 0,
+                                "city" : null,
+                                "stateOrProvince" : null,
+                                "country" : null,
+                                "latitude" : null,
+                                "longitude" : null,
+                                "cloneOf" : null,
+                                "virtual" : true,
+                                "defaultLoadObject" : null,
+                                "continent" : null,
+                                "servermonitorPool" : null,
+                                "servermonitorLivenessCount" : null,
+                                "servermonitorLoadCount" : null,
+                                "pingInterval" : null,
+                                "pingPacketSize" : null,
+                                "cloudServerTargeting" : false,
+                                "cloudServerHostHeaderOverride" : false,
+                                "links" : [ {
+                                        "rel" : "self",
+                                        "href" : "https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/datacenters/5400"
+                                } ]
+                        },
+                        "status" : {
+                                "message" : "Change Pending",
+                                "changeId" : "4c7e6466-84e1-4895-bdf5-e3608d708d69",
+                                "propagationStatus" : "PENDING",
+                                "propagationStatusDate" : "2019-05-30T17:47:02.831+00:00",
+                                "passingValidation" : true,
+                                "links" : [ {
+                                        "rel" : "self",
+                                        "href" : "https://akaa-baseurl-xxxxxxxxxxx-xxxxxxxxxxxxx.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current"
+                                } ]
+                        }
+                }`)
+
+	Init(config)
+	defDC, err := CreateMapsDefaultDatacenter(gtmTestDomain)
+	assert.NoError(t, err)
+	assert.Equal(t, defDC.DatacenterId, 5400)
 
 }

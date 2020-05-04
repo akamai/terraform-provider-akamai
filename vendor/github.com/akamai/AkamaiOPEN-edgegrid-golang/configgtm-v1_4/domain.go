@@ -265,7 +265,7 @@ func (domain *Domain) Create(queryArgs map[string]string) (*DomainResponse, erro
 
 // Update is a method applied to a domain object resulting in an update.
 func (domain *Domain) Update(queryArgs map[string]string) (*ResponseStatus, error) {
-	
+
 	// Any validation to do?
 	req, err := client.NewJSONRequest(
 		Config,

@@ -34,8 +34,12 @@ fmtcheck:
 errcheck:
 	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
 
-lint:
-	@echo "==> Checking source code against linters..."
+#lint:
+#	@echo "==> Checking source code against linters..."
+#	@golangci-lint run ./$(PKG_NAME)
+
+lint: tools.golangci-lint
+	@echo "==> Checking source code againse golangci-lint"
 	@golangci-lint run ./$(PKG_NAME)
 
 tools:

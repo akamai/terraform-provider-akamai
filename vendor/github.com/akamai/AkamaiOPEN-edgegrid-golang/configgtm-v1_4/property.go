@@ -50,7 +50,7 @@ type LivenessTest struct {
 	TestObjectUsername            string        `json:"testObjectUsername,omitempty"`
 	TestTimeout                   float32       `json:"testTimeout,omitempty"`
 	TimeoutPenalty                float64       `json:"timeoutPenalty,omitempty"`
-	AnswersRequired                bool         `json:"answersRequired"`
+	AnswersRequired               bool          `json:"answersRequired"`
 	ResourceType                  string        `json:"resourceType,omitempty"`
 	RecursionRequested            bool          `json:"recursionRequested"`
 }

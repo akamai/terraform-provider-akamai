@@ -420,11 +420,15 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 			ls[i] = sl.(string)
 		}
 		dom.EmailNotificationList = ls
+	} else if d.HasChange("email_notification_list") {
+		dom.EmailNotificationList = make([]string, 0, 0)
 	}
 	if v, ok := d.GetOk("min_pingable_region_fraction"); ok {
 		dom.MinPingableRegionFraction = v.(float32)
 	}
 	if v, ok := d.GetOk("default_timeout_penalty"); ok {
+		dom.DefaultTimeoutPenalty = v.(int)
+	} else if d.HasChange("default_timeout_penalty") {
 		dom.DefaultTimeoutPenalty = v.(int)
 	}
 	if v, ok := d.GetOk("servermonitor_liveness_count"); ok {
@@ -459,8 +463,12 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 	}
 	if v, ok := d.GetOk("default_ssl_client_private_key"); ok {
 		dom.DefaultSslClientPrivateKey = v.(string)
+	} else if d.HasChange("default_ssl_client_private_key") {
+		dom.DefaultSslClientPrivateKey = v.(string)
 	}
 	if v, ok := d.GetOk("default_error_penalty"); ok {
+		dom.DefaultErrorPenalty = v.(int)
+	} else if d.HasChange("default_error_penalty") {
 		dom.DefaultErrorPenalty = v.(int)
 	}
 	if v, ok := d.GetOk("max_test_timeout"); ok {
@@ -498,6 +506,8 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 		dom.PingPacketSize = v.(int)
 	}
 	if v, ok := d.GetOk("default_ssl_client_certificate"); ok {
+		dom.DefaultSslClientCertificate = v.(string)
+	} else if d.HasChange("default_ssl_client_certificate") {
 		dom.DefaultSslClientCertificate = v.(string)
 	}
 	if v, ok := d.GetOk("end_user_mapping_enabled"); ok {
