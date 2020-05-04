@@ -44,9 +44,8 @@ lint: tools.golangci-lint
 
 tools:
 	@echo "==> installing required tooling..."
-#	GO111MODULE=off go get -u github.com/client9/misspell/cmd/misspell
-#	GO111MODULE=off go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-	#GO111MODULE=on go get github.com/golangci/golangci-lint/cmd/golangci-lint
+	#GO111MODULE=off go get -u github.com/client9/misspell/cmd/misspell
+	#GO111MODULE=off go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 
 test-compile:
 	go test -c ./akamai $(TESTARGS)
@@ -65,7 +64,7 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build build-docker test test-docker testacc vet fmt fmtcheck errcheck lint test-compile website website-test
+.PHONY: build build-docker test test-docker testacc vet fmt fmtcheck errcheck tools test-compile website website-test
 
 .PHONY: tools.golangci-lint
 
