@@ -15,7 +15,7 @@ To get more information about Edge DNS, see:
 
 * [API documentation](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html)
 * How-to Guides
-    * [Official Documentation](https://learn.akamai.com/en-us/webhelp/edge-dns/edge-dns-user-guide/GUID-0E0AC1A7-26D0-41BF-B628-D28FD70C404C.html)
+    * [Official Documentation](https://learn.akamai.com/en-us/products/cloud_security/edge_dns.html)
 
 ## Configure the Terraform Provider
 

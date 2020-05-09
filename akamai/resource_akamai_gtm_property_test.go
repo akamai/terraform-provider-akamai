@@ -125,7 +125,7 @@ resource "akamai_gtm_domain" "test_domain" {
 
 resource "akamai_gtm_datacenter" "test_prop_datacenter" {
     domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_prop_datacenter1"
+    nickname = "test_prop_datacenter"
     wait_on_complete = false
     default_load_object {
         load_object = "test"

@@ -10,6 +10,11 @@ description: |-
 
 The Akamai Provider for Terraform provides you the ability to automate the creation, deployment, and management of property configuration and activation, edge hostnames, and CP Codes.  
 
+To get more information about Property Management, see:
+
+* [API documentation](https://developer.akamai.com/api/core_features/property_manager/v1.html)
+* How-to Guides
+    * [Official Documentation](https://learn.akamai.com/en-us/products/core_features/property_manager.html)
 
 ## Configure the Terraform Provider
 

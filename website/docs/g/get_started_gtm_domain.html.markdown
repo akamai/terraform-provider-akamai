@@ -14,7 +14,7 @@ To get more information about Global Traffic Management, see:
 
 * [API documentation](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html)
 * How-to Guides
-    * [Official Documentation](https://learn.akamai.com/en-us/webhelp/global-traffic-management/global-traffic-management-user-guide/GUID-05D70D31-6F3E-4766-ACD9-FA71A964A17A.html)
+    * [Official Documentation](https://learn.akamai.com/en-us/products/web_performance/global_traffic_management.html)
 
 ## Configure the Terraform Provider
 

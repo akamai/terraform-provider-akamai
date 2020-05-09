@@ -819,12 +819,17 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	d.Set("name", recordset.Name)
 	d.Set("recordtype", recordset.RecordType)
 	d.Set("ttl", recordset.TTL)
-	// Parse Rdata
-	rdataFieldMap := dnsv2.ParseRData(recordset.RecordType, recordset.Target) // returns map[string]interface{}
-	for fname, fvalue := range rdataFieldMap {
-		d.Set(fname, fvalue)
-	}
 	targets := dnsv2.ProcessRdata(recordset.Target, recordtype)
+	if recordset.RecordType == "MX" {
+		// can't guarantee order of MX records. Forced to set pri, incr to 0 and targets as is
+		d.Set("target", targets)
+	} else {
+		// Parse Rdata
+		rdataFieldMap := dnsv2.ParseRData(recordset.RecordType, recordset.Target) // returns map[string]interface{}
+		for fname, fvalue := range rdataFieldMap {
+			d.Set(fname, fvalue)
+		}
+	}
 	importTargetString := ""
 	if len(targets) > 0 {
 		if recordtype != "MX" {
@@ -1129,12 +1134,7 @@ func bindRecord(d *schema.ResourceData) (dnsv2.RecordBody, error) {
 			}
 			log.Printf("[DEBUG] [Akamai DNSv2] Existing MX records to append to target %v", rdata)
 
-			records := make([]string, 0, len(target)+len(rdata))
-
-			priority := d.Get("priority").(int)
-			increment := d.Get("priority_increment").(int)
-			log.Printf("[DEBUG] [Akamai DNSv2] MX BIND Priority: %d ; Increment: %d", priority, increment)
-
+			//create map from rdata
 			rdataTargetMap := make(map[string]int, len(rdata))
 			for _, r := range rdata {
 				entryparts := strings.Split(r, " ")
@@ -1145,33 +1145,72 @@ func bindRecord(d *schema.ResourceData) (dnsv2.RecordBody, error) {
 				rdataTargetMap[rn], _ = strconv.Atoi(entryparts[0])
 			}
 
+			// see if any entry was deleted. If so, remove from rdata map.
+			oldset, newset := d.GetChange("target")
+			oldTargetList := oldset.(*schema.Set).List()
+			newTargetList := newset.(*schema.Set).List()
+			for _, oldtarg := range oldTargetList {
+				for _, newtarg := range newTargetList {
+					if oldtarg.(string) == newtarg.(string) {
+						break
+					}
+				}
+				// not there. remove
+				log.Printf("[DEBUG] [Akamai DNSv2] MX BIND target %v deleted", oldtarg)
+				deltarg := oldtarg.(string)
+				rdtparts := strings.Split(oldtarg.(string), " ")
+				if len(rdtparts) > 1 {
+					deltarg = rdtparts[1]
+				}
+				delete(rdataTargetMap, deltarg)
+			}
+			records := make([]string, 0, len(target)+len(rdata))
+
+			priority := d.Get("priority").(int)
+			increment := d.Get("priority_increment").(int)
+			log.Printf("[DEBUG] [Akamai DNSv2] MX BIND Priority: %d ; Increment: %d", priority, increment)
+			// walk thru target first
 			for _, recContent := range target {
 				targentry := recContent.(string)
 				if targentry[len(recContent.(string))-1:] != "." {
 					targentry += "."
 				}
-				if pri, ok := rdataTargetMap[targentry]; ok {
+				log.Printf("[DEBUG] [Akamai DNSv2] MX BIND Processing Target %s", targentry)
+				targhost := targentry
+				targpri := 0
+				targparts := strings.Split(targentry, " ") // need to support target entry with/without priority
+				if len(targparts) > 1 {
+					if len(targparts) > 2 {
+						return dnsv2.RecordBody{}, fmt.Errorf("Invalid MX Record format")
+					}
+					targhost = targparts[1]
+					var err error
+					targpri, err = strconv.Atoi(targparts[0])
+					if err != nil {
+						return dnsv2.RecordBody{}, fmt.Errorf("Invalid MX Record format")
+					}
+				} else {
+					targpri = priority
+				}
+				if pri, ok := rdataTargetMap[targhost]; ok {
 					log.Printf("MX BIND. %s in existing map", targentry)
 					// target already in rdata
-					if pri != priority {
+					if pri != targpri {
 						return dnsv2.RecordBody{}, fmt.Errorf("MX Record Priority Mismatch. Target order must align with EdgeDNS")
-					} else {
-						// already in rdata
-						continue
 					}
-				} else if containsPriority(rdataTargetMap, priority) {
-					log.Printf("MX BIND. %d already in RDATA", priority)
-					// already an rdata record with same priority
-					return dnsv2.RecordBody{}, fmt.Errorf("MX Record Priority Duplication. Target order and priority must align with EdgeDNS")
+					delete(rdataTargetMap, targhost)
 				}
-				records = append(records, strconv.Itoa(priority)+" "+targentry)
-
+				if len(targparts) == 1 {
+					records = append(records, strconv.Itoa(priority)+" "+targentry)
+				} else {
+					records = append(records, targentry)
+				}
 				if increment > 0 {
 					priority = priority + increment
 				}
 			}
 			log.Printf("[DEBUG] [Akamai DNSv2] Appended new target to target array LEN %d %v", len(records), records)
-
+			// append what ever is left ...
 			for targname, tpri := range rdataTargetMap {
 				records = append(records, strconv.Itoa(tpri)+" "+targname)
 			}
