@@ -9,17 +9,17 @@ locals {
 
 resource "akamai_dnsv2_zone" "test_zone" {
     contractid = "C-1FRYVV3"
-    zone = "${local.zone}"
+    zone = local.zone
     #type = "SECONDARY"
     masters = ["1.2.3.4" , "1.2.3.5"]
     type = "PRIMARY"
     comment =  "This is a test zone"
     gid     = "64867"
-    signandserve = false
+    sign_and_serve = false
 }
 
 resource "akamai_dnsv2_record" "a_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "akavaiodeveloper.net"
     recordtype =  "A"
     active = true
@@ -29,7 +29,7 @@ resource "akamai_dnsv2_record" "a_record" {
 }
 
 resource "akamai_dnsv2_record" "aaaa_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "ipv6record.akavaiodeveloper.net"
     recordtype =  "AAAA"
     active = true
@@ -39,7 +39,7 @@ resource "akamai_dnsv2_record" "aaaa_record" {
 }
 
 resource "akamai_dnsv2_record" "afsdb_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "afsdb.akavaiodeveloper.net"
     recordtype =  "AFSDB"
     active = true
@@ -52,7 +52,7 @@ resource "akamai_dnsv2_record" "afsdb_record" {
 
 
 resource "akamai_dnsv2_record" "cname_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "www.akavaiodeveloper.net"
     recordtype =  "CNAME"
     active = true
@@ -62,7 +62,7 @@ resource "akamai_dnsv2_record" "cname_record" {
 }
 
 resource "akamai_dnsv2_record" "dnskey_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "dnskey.akavaiodeveloper.net"
     recordtype =  "DNSKEY"
     active = true
@@ -76,7 +76,7 @@ resource "akamai_dnsv2_record" "dnskey_record" {
 }
 
 resource "akamai_dnsv2_record" "ds_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "ds.akavaiodeveloper.net"
     recordtype =  "DS"
     active = true
@@ -90,7 +90,7 @@ resource "akamai_dnsv2_record" "ds_record" {
 }
 
 resource "akamai_dnsv2_record" "hinfo_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "hinfo.akavaiodeveloper.net"
     recordtype =  "HINFO"
     active = true
@@ -102,7 +102,7 @@ resource "akamai_dnsv2_record" "hinfo_record" {
 }
 
 resource "akamai_dnsv2_record" "loc_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "location.akavaiodeveloper.net"
     recordtype =  "LOC"
     active = true
@@ -114,7 +114,7 @@ resource "akamai_dnsv2_record" "loc_record" {
 
 resource "akamai_dnsv2_record" "mx_record" {
     count = 3
-    zone = "${local.zone}"
+    zone = local.zone
     name = "akavaiodeveloper.net"
     recordtype =  "MX"
     active = true
@@ -125,7 +125,7 @@ resource "akamai_dnsv2_record" "mx_record" {
 }
 
 resource "akamai_dnsv2_record" "naptr_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "naptrrecord.akavaiodeveloper.net"
     recordtype =  "NAPTR"
     active = true
@@ -141,7 +141,7 @@ resource "akamai_dnsv2_record" "naptr_record" {
 }
 
 resource "akamai_dnsv2_record" "ns_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "ns.akavaiodeveloper.net"
     recordtype =  "NS"
     active = true
@@ -151,7 +151,7 @@ resource "akamai_dnsv2_record" "ns_record" {
 }
 
 resource "akamai_dnsv2_record" "nsec3_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "qdeo8lqu4l81uo67oolpo9h0nv9l13dh.akavaiodeveloper.net"
     recordtype =  "NSEC3"
     active = true
@@ -167,7 +167,7 @@ resource "akamai_dnsv2_record" "nsec3_record" {
 }
 
 resource "akamai_dnsv2_record" "nsec3param_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "qnsec3param.akavaiodeveloper.net"
     recordtype =  "NSEC3PARAM"
     active = true
@@ -182,7 +182,7 @@ resource "akamai_dnsv2_record" "nsec3param_record" {
 }
 
 resource "akamai_dnsv2_record" "ptr_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "ptr.akavaiodeveloper.net"
     recordtype =  "PTR"
     active = true
@@ -193,7 +193,7 @@ resource "akamai_dnsv2_record" "ptr_record" {
 
 
 resource "akamai_dnsv2_record" "rp_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "rp.akavaiodeveloper.net"
     recordtype =  "RP"
     active = true
@@ -206,7 +206,7 @@ resource "akamai_dnsv2_record" "rp_record" {
 
 /*
 resource "akamai_dnsv2_record" "rrsig_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "rrsig.akavaiodeveloper.net"
     recordtype =  "RRSIG"
     expiration = "20120318104101"
@@ -226,7 +226,7 @@ resource "akamai_dnsv2_record" "rrsig_record" {
 */
 
 resource "akamai_dnsv2_record" "spf_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "spf.akavaiodeveloper.net"
     recordtype =  "PTR"
     active = true
@@ -236,7 +236,7 @@ resource "akamai_dnsv2_record" "spf_record" {
 }
 
 resource "akamai_dnsv2_record" "srv_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "srv.akavaiodeveloper.net"
     recordtype =  "SRV"
     active = true
@@ -249,7 +249,7 @@ resource "akamai_dnsv2_record" "srv_record" {
 }
 
 resource "akamai_dnsv2_record" "sshfp_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "sshfp.akavaiodeveloper.net"
     recordtype =  "SSHFP"
     active = true
@@ -263,7 +263,7 @@ resource "akamai_dnsv2_record" "sshfp_record" {
 
 
 resource "akamai_dnsv2_record" "txt_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "text.akavaiodeveloper.net"
     recordtype =  "TXT"
     active = true
@@ -274,7 +274,7 @@ resource "akamai_dnsv2_record" "txt_record" {
 
 /*
 resource "akamai_dnsv2_record" "ns_record" {
-    zone = "${local.zone}"
+    zone = local.zone
     name = "akavaiodeveloper.net"
     recordtype =  "NS"
     active = true

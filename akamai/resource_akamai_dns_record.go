@@ -4,20 +4,20 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	"log"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
-
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	"time"
 )
 
 // Retry count for save, update and delete
-const opRetryCount = 3
+const opRetryCount = 5
 
 func resourceDNSv2Record() *schema.Resource {
 	return &schema.Resource{
@@ -80,11 +80,10 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 			},
 			"target": {
-				Type:             schema.TypeSet,
+				Type:             schema.TypeList,
 				Elem:             &schema.Schema{Type: schema.TypeString},
 				Optional:         true,
 				DiffSuppressFunc: dnsRecordTargetSuppress,
-				Set:              schema.HashString,
 			},
 			"subtype": {
 				Type:     schema.TypeInt,
@@ -294,15 +293,13 @@ func dnsRecordTargetSuppress(k, old, new string, d *schema.ResourceData) bool {
 	// Seems if different, get one invocation with old val and null new as well as
 	// invocation with new val and null old. In all cases, we retrieve old and new sets
 	// from ResourceData and validate thru those.
-	// Function only validates TXT records.
 
-	oldset, newset := d.GetChange("target")
-	oldTargetList := oldset.(*schema.Set).List()
-	newTargetList := newset.(*schema.Set).List()
+	oldlist, newlist := d.GetChange("target")
+	oldTargetList := oldlist.([]interface{})
+	newTargetList := newlist.([]interface{})
 	if len(oldTargetList) != len(newTargetList) {
 		return false
 	}
-	//var baseList []interface{}
 	var compList []interface{}
 	var baseVal = ""
 	var compTrim = ""
@@ -314,13 +311,11 @@ func dnsRecordTargetSuppress(k, old, new string, d *schema.ResourceData) bool {
 		if strings.Contains(baseVal, "\\\"") {
 			baseVal = strings.ReplaceAll(baseVal, "\\\"", "\"")
 		}
-		//baseList = oldTargetList
 		compList = newTargetList
 	} else if old == "" {
 		baseVal = new
 		compTrim = "\\\""
 		baseVal = strings.Trim(baseVal, "\"")
-		//baseList = newTargetList
 		compList = oldTargetList
 	} else if new == "" {
 		baseVal = old
@@ -329,7 +324,6 @@ func dnsRecordTargetSuppress(k, old, new string, d *schema.ResourceData) bool {
 		if strings.Contains(baseVal, "\\\"") {
 			baseVal = strings.ReplaceAll(baseVal, "\\\"", "\"")
 		}
-		//baseList = oldTargetList
 		compList = newTargetList
 	}
 	for _, compval := range compList {
@@ -431,12 +425,14 @@ func executeRecordFunction(name string, d *schema.ResourceData, fn recordFunctio
 
 	// DNS API can have Concurrency issues
 	opRetry := opRetryCount
-	e := fn(zone, false)
+	e := fn(zone, rlock)
 	for e != nil && opRetry > 0 {
 		if dnsv2.IsConfigDNSError(e) {
-			if e.(*dnsv2.RecordError).ConcurrencyConflict() {
+			if e.(dnsv2.ConfigDNSError).ConcurrencyConflict() {
+				log.Printf("[WARNING] [Akamai DNSv2] Concurrency Conflict")
 				opRetry -= 1
-				e = fn(zone, false)
+				time.Sleep(100 * time.Millisecond)
+				e = fn(zone, rlock)
 				continue
 			} else if name == "DELETE" && e.(dnsv2.ConfigDNSError).NotFound() == true {
 				// record doesn't exist
@@ -467,6 +463,8 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	var zone string
 	var host string
 	var recordtype string
+
+	log.Printf("[INFO] [Akamai DNS] Record Create")
 
 	_, ok := d.GetOk("zone")
 	if ok {
@@ -503,10 +501,13 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for recordcreate [%s]", sha1hash)
 	// First try to get the zone from the API
 	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records [%s]", zone)
-
-	rdata, e := dnsv2.GetRdata(zone, host, recordtype)
+	rdata := make([]string, 0, 0)
+	recordset, e := dnsv2.GetRecord(zone, host, recordtype)
 	if e != nil && !dnsv2.IsConfigDNSError(e) {
 		return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e)
+	}
+	if recordset != nil {
+		rdata = dnsv2.ProcessRdata(recordset.Target, recordtype)
 	}
 	// If there's no existing record we'll create a blank one
 	if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
@@ -553,6 +554,8 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
 
+	log.Printf("[INFO] [Akamai DNS] Record Update")
+
 	var zone string
 	var host string
 	var recordtype string
@@ -571,7 +574,7 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	_, ok = d.GetOk("target")
 	if ok {
-		target := d.Get("target").(*schema.Set).List()
+		target := d.Get("target").([]interface{})
 		records := make([]string, 0, len(target))
 		for _, recContent := range target {
 			records = append(records, recContent.(string))
@@ -617,12 +620,14 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] UPDATE SHA sum for recordupdate [%s]", sha1hash)
 	// First try to get the zone from the API
 	log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Searching for records [%s]", zone)
-
-	rdata, e := dnsv2.GetRdata(zone, host, recordtype)
+	rdata := make([]string, 0, 0)
+	recordset, e := dnsv2.GetRecord(zone, host, recordtype)
 	if e != nil && !dnsv2.IsConfigDNSError(e) {
 		return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, e)
 	}
-
+	if recordset != nil {
+		rdata = dnsv2.ProcessRdata(recordset.Target, recordtype)
+	}
 	log.Printf("[DEBUG] [Akamai DNSv2] UPDATE Searching for records LEN %d", len(rdata))
 	if len(rdata) > 0 {
 		sort.Strings(rdata)
@@ -666,6 +671,8 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	var host string
 	var recordtype string
 
+	log.Printf("[INFO] [Akamai DNS] Record Read")
+
 	_, ok := d.GetOk("zone")
 	if ok {
 		zone = d.Get("zone").(string)
@@ -689,7 +696,7 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] [Akamai DNSv2] READ record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
-	//sort.Strings(recordcreate.Target)
+	sort.Strings(recordcreate.Target)
 	extractString := strings.Join(recordcreate.Target, " ")
 	sha1hash := getSHAString(extractString)
 	log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum for Existing SHA test %s %s", extractString, sha1hash)
@@ -719,7 +726,31 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("[DEBUG] [Akamai DNSv2] READ record data read JSON %s", string(b1))
 	rdataFieldMap := dnsv2.ParseRData(recordtype, record.Target) // returns map[string]interface{}
-	if recordtype != "MX" {
+	if recordtype == "MX" {
+		// calc rdata sha from read record
+		sort.Strings(record.Target)
+		rdataString := strings.Join(record.Target, " ")
+		shaRdata := getSHAString(rdataString)
+		if d.HasChange("target") {
+			log.Printf("MX READ. TARGET HAS CHANGED")
+			// has remote changed independently of TF?
+			if d.Get("record_sha").(string) != shaRdata {
+				return fmt.Errorf("Recordset [%s %s]: Remote has diverged from TF Config. Manual intervention required.", host, recordtype)
+			} else {
+				log.Printf("MX READ. Remote static")
+				d.SetId("")
+			}
+		} else {
+			log.Printf("MX READ. TARGET HAS NOT CHANGED")
+			// has remote changed independently of TF?
+			if d.Get("record_sha").(string) != shaRdata {
+				// another special case ... for instances record sha might not be representative of full resource
+				if len(d.Get("target").([]interface{})) != 1 || sha1hash != shaRdata {
+					return fmt.Errorf("Recordset [%s %s]: Remote has diverged from TF Config. Manual intervention required.", host, recordtype)
+				}
+			}
+		}
+	} else {
 		// Parse Rdata. MX special
 		for fname, fvalue := range rdataFieldMap {
 			d.Set(fname, fvalue)
@@ -850,6 +881,8 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 
 func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 
+	log.Printf("[INFO] [Akamai DNS] Record Delete")
+
 	zone := d.Get("zone").(string)
 	host := d.Get("name").(string)
 	recordtype := d.Get("recordtype").(string)
@@ -859,7 +892,7 @@ func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	getRecordLock(zone, host, recordtype).Lock()
 	defer getRecordLock(zone, host, recordtype).Unlock()
 
-	target := d.Get("target").(*schema.Set).List()
+	target := d.Get("target").([]interface{})
 
 	records := make([]string, 0, len(target))
 	for _, recContent := range target {
@@ -878,6 +911,8 @@ func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, er
 	var zone string
 	var host string
 	var recordtype string
+
+	log.Printf("[INFO] [Akamai DNS] Record Exists")
 
 	_, ok := d.GetOk("zone")
 	if ok {
@@ -979,7 +1014,7 @@ func bindRecord(d *schema.ResourceData) (dnsv2.RecordBody, error) {
 	}
 
 	ttl := d.Get("ttl").(int)
-	target := d.Get("target").(*schema.Set).List()
+	target := d.Get("target").([]interface{})
 	records := make([]string, 0, len(target))
 
 	simplerecordtarget := map[string]bool{"AAAA": true, "CNAME": true, "LOC": true, "NS": true, "PTR": true, "SPF": true, "SRV": true, "TXT": true}
@@ -1127,10 +1162,17 @@ func bindRecord(d *schema.ResourceData) (dnsv2.RecordBody, error) {
 			zone := d.Get("zone").(string)
 
 			log.Printf("[DEBUG] [Akamai DNSv2] MX record targets to process: %v", target)
-
-			rdata, e := dnsv2.GetRdata(zone, host, recordtype)
+			recordset, e := dnsv2.GetRecord(zone, host, recordtype)
+			rdata := make([]string, 0, 0)
 			if e != nil {
-				log.Printf("[DEBUG] [Akamai DNSv2] Searching for existing MX records no prexisting targets found LEN %d", len(rdata))
+				if !dnsv2.IsConfigDNSError(e) || !e.(dnsv2.ConfigDNSError).NotFound() {
+					// failure other than not found
+					return dnsv2.RecordBody{}, fmt.Errorf(e.Error())
+				} else {
+					log.Printf("[DEBUG] [Akamai DNSv2] Searching for existing MX records no prexisting targets found")
+				}
+			} else {
+				rdata = dnsv2.ProcessRdata(recordset.Target, recordtype)
 			}
 			log.Printf("[DEBUG] [Akamai DNSv2] Existing MX records to append to target %v", rdata)
 
@@ -1144,25 +1186,26 @@ func bindRecord(d *schema.ResourceData) (dnsv2.RecordBody, error) {
 				}
 				rdataTargetMap[rn], _ = strconv.Atoi(entryparts[0])
 			}
-
-			// see if any entry was deleted. If so, remove from rdata map.
-			oldset, newset := d.GetChange("target")
-			oldTargetList := oldset.(*schema.Set).List()
-			newTargetList := newset.(*schema.Set).List()
-			for _, oldtarg := range oldTargetList {
-				for _, newtarg := range newTargetList {
-					if oldtarg.(string) == newtarg.(string) {
-						break
+			if d.HasChange("target") {
+				// see if any entry was deleted. If so, remove from rdata map.
+				oldlist, newlist := d.GetChange("target")
+				oldTargetList := oldlist.([]interface{})
+				newTargetList := newlist.([]interface{})
+				for _, oldtarg := range oldTargetList {
+					for _, newtarg := range newTargetList {
+						if oldtarg.(string) == newtarg.(string) {
+							break
+						}
 					}
+					// not there. remove
+					log.Printf("[DEBUG] [Akamai DNSv2] MX BIND target %v deleted", oldtarg)
+					deltarg := oldtarg.(string)
+					rdtparts := strings.Split(oldtarg.(string), " ")
+					if len(rdtparts) > 1 {
+						deltarg = rdtparts[1]
+					}
+					delete(rdataTargetMap, deltarg)
 				}
-				// not there. remove
-				log.Printf("[DEBUG] [Akamai DNSv2] MX BIND target %v deleted", oldtarg)
-				deltarg := oldtarg.(string)
-				rdtparts := strings.Split(oldtarg.(string), " ")
-				if len(rdtparts) > 1 {
-					deltarg = rdtparts[1]
-				}
-				delete(rdataTargetMap, deltarg)
 			}
 			records := make([]string, 0, len(target)+len(rdata))
 
@@ -1439,7 +1482,7 @@ func checkBasicRecordTypes(d *schema.ResourceData) error {
 }
 
 func checkTargets(d *schema.ResourceData) error {
-	target := d.Get("target").(*schema.Set).List()
+	target := d.Get("target").([]interface{})
 	records := make([]string, 0, len(target))
 
 	for _, recContent := range target {
