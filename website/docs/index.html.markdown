@@ -105,7 +105,6 @@ The following arguments are supported in the `provider` block:
 * `property_section` — (Optional) The credential section to use for the Property Manager API (PAPI). Default: `default`.
 * `dns_section` — (Optional) The credential section to use for the Config DNS API. Default: `default`.
 * `gtm_section` — (Optional) The credential section to use for the Config GTM API. Default: `default`.
-* `cps_section` — (Optional) The credential section to use for the Config CPS. Default: `default`.
 
 ## Environment Variables
 
