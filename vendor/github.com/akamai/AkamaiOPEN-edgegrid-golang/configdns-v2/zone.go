@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"reflect"
-	"sync"
 	"strings"
+	"sync"
 )
 
 var (
@@ -473,8 +473,10 @@ func (zone *ZoneCreate) Delete(zonequerystring ZoneQueryString) error {
 
 	// API error
 	if client.IsError(res) {
-		err := client.NewAPIError(res)
-		return &ZoneError{zoneName: zone.Zone, apiErrorMessage: err.Detail, err: err}
+		if res.StatusCode != 404 {
+			err := client.NewAPIError(res)
+			return &ZoneError{zoneName: zone.Zone, apiErrorMessage: err.Detail, err: err}
+		}
 	}
 
 	return nil

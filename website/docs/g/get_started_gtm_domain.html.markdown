@@ -14,7 +14,7 @@ To get more information about Global Traffic Management, see:
 
 * [API documentation](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html)
 * How-to Guides
-    * [Official Documentation](https://learn.akamai.com/en-us/webhelp/global-traffic-management/global-traffic-management-user-guide/GUID-05D70D31-6F3E-4766-ACD9-FA71A964A17A.html)
+    * [Official Documentation](https://learn.akamai.com/en-us/products/web_performance/global_traffic_management.html)
 
 ## Configure the Terraform Provider
 
@@ -231,5 +231,5 @@ $ terraform import akamai_gtm_geomap.{{geomap resource name}} {{gtm domain name}
 $ terraform import akamai_gtm_asmap.{{asmap resource name}} {{gtm domain name}}:{{gtm asmap name}}
 ```
 
-[Migrating A GTM Domain](https://www.terraform.io/docs/providers/akamai/g/faq.html#migrating-a-gtm-domain-and-contained-objects-to-terraform) discusses GTM resource import in more detail.
+[Migrating A GTM Domain](/docs/providers/akamai/g/faq.html#migrating-a-gtm-domain-and-contained-objects-to-terraform) discusses GTM resource import in more detail.
 

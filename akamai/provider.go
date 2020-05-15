@@ -181,7 +181,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	gtmConfig, gtmErr := getConfigGTMV1Service(d)
 
 	if dnsErr != nil && papiErr != nil && gtmErr != nil || dnsv2Config == nil && papiConfig == nil && gtmConfig == nil {
-		return nil, fmt.Errorf("at least one configuration must be defined")
+		return nil, fmt.Errorf("One or more Akamai Edgegrid provider configurations must be defined")
 	}
 
 	return &Config{}, nil

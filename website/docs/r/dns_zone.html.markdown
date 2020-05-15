@@ -18,16 +18,14 @@ Basic usage:
 resource "akamai_dns_zone" "demozone" {
     contract = "ctr_XXX"
     group = 100
-    
     zone = "example.com"
-    type =  "primary"
+    type =  "secondary"
     masters = [
       "1.2.3.4",
       "1.2.3.5"
     ] 
-    
     comment =  "some comment"
-    signandserve = true
+    sign_and_serve = false
 }
 ```
 

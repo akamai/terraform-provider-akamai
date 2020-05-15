@@ -7,7 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"net"
-	"sort"
+	//"sort"
 	"strconv"
 	"strings"
 )
@@ -382,21 +382,23 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			fieldMap["software"] = parts[1]
 			break
 		}
-
-	case "MX":
-		sort.Strings(rdata)
-		parts := strings.Split(rdata[0], " ")
-		fieldMap["priority"], _ = strconv.Atoi(parts[0])
-		if len(rdata) > 1 {
-			parts = strings.Split(rdata[1], " ")
-			tpri, _ := strconv.Atoi(parts[0])
-			fieldMap["priority_increment"] = tpri - fieldMap["priority"].(int)
-		}
-		for _, rcontent := range rdata {
-			parts := strings.Split(rcontent, " ")
-			newrdata = append(newrdata, parts[1])
-		}
-		fieldMap["target"] = newrdata
+	/*
+		// too many variations to calculate pri and increment
+		case "MX":
+			sort.Strings(rdata)
+			parts := strings.Split(rdata[0], " ")
+			fieldMap["priority"], _ = strconv.Atoi(parts[0])
+			if len(rdata) > 1 {
+				parts = strings.Split(rdata[1], " ")
+				tpri, _ := strconv.Atoi(parts[0])
+				fieldMap["priority_increment"] = tpri - fieldMap["priority"].(int)
+			}
+			for _, rcontent := range rdata {
+				parts := strings.Split(rcontent, " ")
+				newrdata = append(newrdata, parts[1])
+			}
+			fieldMap["target"] = newrdata
+	*/
 
 	case "NAPTR":
 		for _, rcontent := range rdata {
@@ -535,6 +537,31 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			newrdata = append(newrdata, str)
 		}
 		fieldMap["target"] = newrdata
+
+	case "CERT":
+		for _, rcontent := range rdata {
+			parts := strings.Split(rcontent, " ")
+			val, err := strconv.Atoi(parts[0])
+			if err == nil {
+				fieldMap["type_value"] = val
+			} else {
+				fieldMap["type_mnemonic"] = parts[0]
+			}
+			fieldMap["keytag"], _ = strconv.Atoi(parts[1])
+			fieldMap["algorithm"], _ = strconv.Atoi(parts[2])
+			fieldMap["certificate"] = parts[3]
+			break
+		}
+
+	case "TLSA":
+		for _, rcontent := range rdata {
+			parts := strings.Split(rcontent, " ")
+			fieldMap["usage"], _ = strconv.Atoi(parts[0])
+			fieldMap["selector"], _ = strconv.Atoi(parts[1])
+			fieldMap["match_type"], _ = strconv.Atoi(parts[2])
+			fieldMap["certificate"] = parts[3]
+			break
+		}
 
 	default:
 		for _, rcontent := range rdata {

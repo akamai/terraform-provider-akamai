@@ -10,6 +10,7 @@
 * [FIX] Inverted Parameters - DNS Record Type NSEC3PARAM (`akamai_dns`) [GH-132]
 * [FIX] Inverted Parameters - DNS Record Type RRSIG (`akamai_dns`) [GH-133]
 * [FIX] Inverted Parameters - DNS Record Type DS (`akamai_dns`) [GH-134]
+* [ADD] DNS CAA, TLSA, CERT Record Support (`akamai_dns`) [GH-148]
 
 ## 0.5.0 (March 06, 2020)
 * [FIX] Release edgehostnames and products caching edge library v0.9.10 (`akamai_property`)
