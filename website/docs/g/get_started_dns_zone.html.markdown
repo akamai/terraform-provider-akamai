@@ -114,7 +114,7 @@ The recordset itself is represented by a [`akamai_dns_record` resource](/docs/pr
 
 To define the entire configuration, we start by opening the resource block and give it a name. In this case we’re going to use the name "example_a_record".
 
-Next, we set the required (zone, recordtype, ttl) and any optional/required arguments based on recordtype.
+Next, we set the required (zone, recordtype, ttl) and any optional/required arguments based on recordtype. Required fields for each record type are itemized in [`akamai_dns_record` resource](/docs/providers/akamai/r/dns_record.html).
 
 Once you’re done, your record configuration should look like this:
 
@@ -167,7 +167,7 @@ $ terraform import akamai_dns_zone.{{zone resource name}} {{edge dns zone name}}
 $ terraform import akamai_dns_record.{{record resource name}} {{edge dns zone name}}#{{edge dns recordset name}}#{{record type}}
 ```
 
-[Migrating A DNS Zone](https://www.terraform.io/docs/providers/akamai/g/faq.html#migrating-an-edge-dns-zone-and-records-to-terraform) discusses DNS resource import in more detail.
+[Migrating A DNS Zone](/docs/providers/akamai/g/faq.html#migrating-an-edge-dns-zone-and-records-to-terraform) discusses DNS resource import in more detail.
 
 ## Working With MX Records
 

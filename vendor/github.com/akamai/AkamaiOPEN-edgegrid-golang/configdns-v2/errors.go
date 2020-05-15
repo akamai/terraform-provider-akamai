@@ -36,12 +36,12 @@ func (e *ZoneError) Network() bool {
 func (e *ZoneError) NotFound() bool {
 	if e.err == nil && e.httpErrorMessage == "" && e.apiErrorMessage == "" {
 		return true
-        } else if e.err != nil {
-                _, ok := e.err.(client.APIError)
-                if ok && e.err.(client.APIError).Response.StatusCode == 404 {
-                        return true
-                }
-        }
+	} else if e.err != nil {
+		_, ok := e.err.(client.APIError)
+		if ok && e.err.(client.APIError).Response.StatusCode == 404 {
+			return true
+		}
+	}
 	return false
 }
 
@@ -57,13 +57,12 @@ func (e *ZoneError) ValidationFailed() bool {
 }
 
 func (e *ZoneError) ConcurrencyConflict() bool {
-        _, ok := e.err.(client.APIError)
-        if ok && e.err.(client.APIError).Response.StatusCode == 409 {
-                return true
-        }
-        return false
+	_, ok := e.err.(client.APIError)
+	if ok && e.err.(client.APIError).Response.StatusCode == 409 {
+		return true
+	}
+	return false
 }
-
 
 func (e *ZoneError) Error() string {
 	if e.Network() {
@@ -74,9 +73,9 @@ func (e *ZoneError) Error() string {
 		return fmt.Sprintf("Zone \"%s\" not found.", e.zoneName)
 	}
 
-        if e.ConcurrencyConflict() {
-                return fmt.Sprintf("Modification Confict: [%s]", e.apiErrorMessage)
-        }
+	if e.ConcurrencyConflict() {
+		return fmt.Sprintf("Modification Confict: [%s]", e.apiErrorMessage)
+	}
 
 	if e.FailedToSave() {
 		return fmt.Sprintf("Zone \"%s\" failed to save: [%s]", e.zoneName, e.err.Error())

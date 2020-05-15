@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"reflect"
-	"sync"
 	"strings"
+	"sync"
 )
 
 var (
