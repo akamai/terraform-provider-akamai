@@ -7,11 +7,11 @@ require (
 	github.com/hashicorp/terraform v0.12.3
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pkg/errors v0.0.0-20170505043639-c605e284fe17
+	github.com/pkg/errors v0.0.0-20170505043639-c605e284fe17 // indirect
 	github.com/tidwall/gjson v1.2.1
 	github.com/tidwall/match v1.0.1 // indirect
 	github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 // indirect
-	github.com/xeipuuv/gojsonschema v1.2.0
+	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 )
 
 replace (
