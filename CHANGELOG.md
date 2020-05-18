@@ -1,16 +1,16 @@
-## 0.6.0 (Unreleased)
-* [ADD] Support the creation of DNS records of type AKAMAICDN (`akamai_dns`) [GH-53]
-* [ADD] Support akamai_dns_record Import (`akamai_dns`) [GH-69]
-* [FIX] Cannot remove a backup_cname from GTM property (`akamai_gtm`) [GH-124]
-* [ADD] DNS Alias Zone Support (`akamai_dns`) [GH-125]
-* [ADD] DNS TSIG Key support (`akamai_dns`) [GH-126]
-* [ADD] DNS SOA, AKAMAITLC Record Support (`akamai_dns`) [GH-127]
-* [FIX] Inverted Parameters - DNS Record Type NAPTR (`akamai_dns`) [GH-130]
-* [FIX] Inverted Parameters - DNS Record Type NSEC3 (`akamai_dns`) [GH-131]
-* [FIX] Inverted Parameters - DNS Record Type NSEC3PARAM (`akamai_dns`) [GH-132]
-* [FIX] Inverted Parameters - DNS Record Type RRSIG (`akamai_dns`) [GH-133]
-* [FIX] Inverted Parameters - DNS Record Type DS (`akamai_dns`) [GH-134]
-* [ADD] DNS CAA, TLSA, CERT Record Support (`akamai_dns`) [GH-148]
+## 0.6.0 (May 18, 2020)
+* [ADD] Support the creation of DNS records of type AKAMAICDN (`akamai_dns`) ([#53](https://github.com/terraform-providers/terraform-provider-template/issues/53))
+* [ADD] Support akamai_dns_record Import (`akamai_dns`) ([#69](https://github.com/terraform-providers/terraform-provider-template/issues/69))
+* [FIX] Cannot remove a backup_cname from GTM property (`akamai_gtm`) ([#124](https://github.com/terraform-providers/terraform-provider-template/issues/124))
+* [ADD] DNS Alias Zone Support (`akamai_dns`) ([#125](https://github.com/terraform-providers/terraform-provider-template/issues/125))
+* [ADD] DNS TSIG Key support (`akamai_dns`) ([#126](https://github.com/terraform-providers/terraform-provider-template/issues/126))
+* [ADD] DNS SOA, AKAMAITLC Record Support (`akamai_dns`) ([#127](https://github.com/terraform-providers/terraform-provider-template/issues/127))
+* [FIX] Inverted Parameters - DNS Record Type NAPTR (`akamai_dns`) ([#130](https://github.com/terraform-providers/terraform-provider-template/issues/130))
+* [FIX] Inverted Parameters - DNS Record Type NSEC3 (`akamai_dns`) ([#131](https://github.com/terraform-providers/terraform-provider-template/issues/131))
+* [FIX] Inverted Parameters - DNS Record Type NSEC3PARAM (`akamai_dns`) ([#132](https://github.com/terraform-providers/terraform-provider-template/issues/132))
+* [FIX] Inverted Parameters - DNS Record Type RRSIG (`akamai_dns`) ([#133](https://github.com/terraform-providers/terraform-provider-template/issues/133))
+* [FIX] Inverted Parameters - DNS Record Type DS (`akamai_dns`) ([#134](https://github.com/terraform-providers/terraform-provider-template/issues/134))
+* [ADD] DNS CAA, TLSA, CERT Record Support (`akamai_dns`) ([#148](https://github.com/terraform-providers/terraform-provider-template/issues/148))
 
 ## 0.5.0 (March 06, 2020)
 * [FIX] Release edgehostnames and products caching edge library v0.9.10 (`akamai_property`)
