@@ -1,4 +1,5 @@
 ## 0.7.0 (Unreleased)
+* [ADD] User Agent support for Terraform version and provider version and SDK update 
 ## 0.6.0 (May 18, 2020)
 * [ADD] Support the creation of DNS records of type AKAMAICDN (`akamai_dns`) ([#53](https://github.com/terraform-providers/terraform-provider-template/issues/53))
 * [ADD] Support akamai_dns_record Import (`akamai_dns`) ([#69](https://github.com/terraform-providers/terraform-provider-template/issues/69))

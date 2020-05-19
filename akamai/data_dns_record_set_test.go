@@ -3,7 +3,7 @@ package akamai
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
 func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
