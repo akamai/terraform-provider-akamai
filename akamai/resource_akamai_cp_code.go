@@ -6,7 +6,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 // PAPI CP Code

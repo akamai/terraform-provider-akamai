@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 var dnsWriteLock sync.Mutex
@@ -146,7 +146,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 			if e != nil {
 				return e
 			}
-			if zonetype == "PRIMARY" {
+			if strings.ToUpper(zonetype) == "PRIMARY" {
 				// Indirectly create NS and SOA records
 				e = zonecreate.SaveChangelist()
 				if e != nil {
@@ -323,6 +323,9 @@ func resourceDNSv2ZoneExists(d *schema.ResourceData, meta interface{}) (bool, er
 	// try to get the zone from the API
 	log.Printf("[INFO] [Akamai DNSV2] Searching for zone [%s]", hostname)
 	zone, err := dnsv2.GetZone(hostname)
+	if dnsv2.IsConfigDNSError(err) && err.(dnsv2.ConfigDNSError).NotFound() == true {
+		return false, nil
+	}
 	log.Printf("[DEBUG] [Akamai DNSV2] Searching for Existing zone result [%v]", zone)
 	return zone != nil, err
 }
