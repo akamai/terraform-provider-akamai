@@ -16,7 +16,7 @@ provider "akamai" {
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test2"
+  name = "terraform-test4"
 
   contact = ["user@exampleterraform.io"]
 
