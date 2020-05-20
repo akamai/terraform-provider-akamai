@@ -36,6 +36,8 @@ github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.10 h1:WcJnISZ8/jX/+Jkiyfsy3AH4
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.10/go.mod h1:L+HB2uBoDgi3+r1pJEJcbGwyyHhd2QXaGsKLbDwtm8Q=
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.13 h1:4TBWOJynmCczvd3Z+wldGFoIdpmvwLI92uPtU8KFH+c=
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.13/go.mod h1:L+HB2uBoDgi3+r1pJEJcbGwyyHhd2QXaGsKLbDwtm8Q=
+github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.15 h1:FdtlU+hxR2XpPhLIUllG5LzLWUhKe/L0C4EFoWqWa5A=
+github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.15/go.mod h1:L+HB2uBoDgi3+r1pJEJcbGwyyHhd2QXaGsKLbDwtm8Q=
 github.com/akamai/terraform-provider-akamai v0.0.0-20190627162730-30bcc4ef7369 h1:y2z7/2O5D54+pgYiHoxbLkEgNW/V+Zxt6kibb9dWmxQ=
 github.com/aliyun/alibaba-cloud-sdk-go v0.0.0-20190329064014-6e358769c32a h1:APorzFpCcv6wtD5vmRWYqNm4N55kbepL7c7kTq9XI6A=
 github.com/aliyun/alibaba-cloud-sdk-go v0.0.0-20190329064014-6e358769c32a/go.mod h1:T9M45xf79ahXVelWoOBmH0y4aC1t5kXO5BxwyakgIGA=
