@@ -1,3 +1,4 @@
+## 0.8.0 (Unreleased)
 ## 0.7.0 (May 21, 2020)
 * [ADD] User Agent support for Terraform version and provider version and SDK update
 * [FIX] Bugs in Zone Create and Exists (`akamai_dns`) ([#151](https://github.com/terraform-providers/terraform-provider-template/issues/151))
