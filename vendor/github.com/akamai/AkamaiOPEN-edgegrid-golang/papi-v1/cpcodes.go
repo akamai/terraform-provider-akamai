@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/patrickmn/go-cache"
 )
@@ -97,10 +98,14 @@ func (cpcodes *CpCodes) GetCpCodes() error {
 			return err
 		}
 
+		edge.PrintHttpRequest(req, true)
+
 		res, err := client.Do(Config, req)
 		if err != nil {
 			return err
 		}
+
+		edge.PrintHttpResponse(res, true)
 
 		if client.IsError(res) {
 			return client.NewAPIError(res)
@@ -195,7 +200,15 @@ func (cpcode *CpCode) GetCpCode() error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
+
+	if err != nil {
+		return err
+	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -252,10 +265,14 @@ func (cpcode *CpCode) Save() error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -276,10 +293,14 @@ func (cpcode *CpCode) Save() error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err = client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)

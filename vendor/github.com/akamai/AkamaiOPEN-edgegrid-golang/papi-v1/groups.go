@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/patrickmn/go-cache"
 )
@@ -61,10 +62,14 @@ func (groups *Groups) GetGroups() error {
 			return err
 		}
 
+		edge.PrintHttpRequest(req, true)
+
 		res, err := client.Do(Config, req)
 		if err != nil {
 			return err
 		}
+
+		edge.PrintHttpResponse(res, true)
 
 		if client.IsError(res) {
 			return client.NewAPIError(res)

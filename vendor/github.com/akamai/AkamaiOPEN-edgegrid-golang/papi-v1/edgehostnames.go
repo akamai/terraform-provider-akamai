@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/patrickmn/go-cache"
 )
@@ -96,10 +97,14 @@ func (edgeHostnames *EdgeHostnames) GetEdgeHostnames(contract *Contract, group *
 			return err
 		}
 
+		edge.PrintHttpRequest(req, true)
+
 		res, err := client.Do(Config, req)
 		if err != nil {
 			return err
 		}
+
+		edge.PrintHttpResponse(res, true)
 
 		if client.IsError(res) {
 			return client.NewAPIError(res)
@@ -210,10 +215,14 @@ func (edgeHostname *EdgeHostname) GetEdgeHostname(options string) error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		if res.StatusCode == 404 {
@@ -290,10 +299,15 @@ func (edgeHostname *EdgeHostname) Save(options string) error {
 		return err
 	}
 
+
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)

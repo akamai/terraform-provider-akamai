@@ -5,5 +5,7 @@ import "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 
 // Init sets the PAPI edgegrid Config
 func Init(config edgegrid.Config) {
+
 	Config = config
+	edgegrid.SetupLogging()
 }

@@ -1,6 +1,9 @@
 package papi
 
-import "github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+import (
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+)
 
 // ClientSettings represents the PAPI client settings resource
 type ClientSettings struct {
@@ -26,10 +29,14 @@ func (clientSettings *ClientSettings) GetClientSettings() error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -57,10 +64,14 @@ func (clientSettings *ClientSettings) Save() error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)

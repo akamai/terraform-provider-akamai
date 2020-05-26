@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 )
 
@@ -58,10 +59,14 @@ func (overrides *CustomOverrides) GetCustomOverrides() error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -121,7 +126,14 @@ func (override *CustomOverride) GetCustomOverride() error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
+	if err != nil {
+		return err
+	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)

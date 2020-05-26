@@ -3,6 +3,7 @@ package papi
 import (
 	"fmt"
 
+        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 )
 
@@ -84,10 +85,14 @@ func (hostnames *Hostnames) GetHostnames(version *Version) error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -125,10 +130,14 @@ func (hostnames *Hostnames) Save() error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)

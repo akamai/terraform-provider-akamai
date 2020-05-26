@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+
 )
 
 // Activations is a collection of property activations
@@ -49,11 +51,15 @@ func (activations *Activations) GetActivations(property *Property) error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -169,10 +175,14 @@ func (activation *Activation) GetActivation(property *Property) (time.Duration, 
 		return 0, err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return 0, err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return 0, client.NewAPIError(res)
@@ -236,7 +246,15 @@ func (activation *Activation) Save(property *Property, acknowledgeWarnings bool)
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
+
+	if err != nil {
+		return err
+	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) && (!acknowledgeWarnings || (acknowledgeWarnings && res.StatusCode != 400)) {
 		return client.NewAPIError(res)
@@ -294,7 +312,16 @@ func (activation *Activation) Save(property *Property, acknowledgeWarnings bool)
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err = client.Do(Config, req)
+
+	if err != nil {
+		return err
+	}
+
+
+	edge.PrintHttpResponse(res, true)
 
 	activations := NewActivations()
 	if err := client.BodyJSON(res, activations); err != nil {
@@ -395,7 +422,15 @@ func (activation *Activation) Cancel(property *Property) error {
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
+
+	if err != nil {
+		return err
+	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
