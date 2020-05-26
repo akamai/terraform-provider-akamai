@@ -12,16 +12,19 @@ import (
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/httpclient"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/terraform-providers/terraform-provider-akamai/version"
 )
 
-const (
-	Version = "0.2.0"
-)
+//const (
+//	Version = "0.2.0"
+//)
 
 // Config contains the Akamai provider configuration (unused).
 type Config struct {
+	terraformVersion string
 }
 
 func getConfigOptions(section string) *schema.Resource {
@@ -100,9 +103,9 @@ func getConfigOptions(section string) *schema.Resource {
 
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() terraform.ResourceProvider {
-	client.UserAgent = client.UserAgent + " terraform/" + Version
+	//client.UserAgent = client.UserAgent + " terraform/" + Version
 
-	return &schema.Provider{
+	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"edgerc": &schema.Schema{
 				Optional: true,
@@ -171,11 +174,22 @@ func Provider() terraform.ResourceProvider {
 			"akamai_gtm_geomap":          resourceGTMv1Geomap(),
 			"akamai_gtm_asmap":           resourceGTMv1ASmap(),
 		},
-		ConfigureFunc: providerConfigure,
 	}
+	//ConfigureFunc: providerConfigure,
+	provider.ConfigureFunc = func(d *schema.ResourceData) (interface{}, error) {
+		terraformVersion := provider.TerraformVersion
+		if terraformVersion == "" {
+			// Terraform 0.12 introduced this field to the protocol
+			// We can therefore assume that if it's missing it's 0.10 or 0.11
+			terraformVersion = "0.11+compatible"
+		}
+		return providerConfigure(d, terraformVersion)
+	}
+	return provider
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+func providerConfigure(d *schema.ResourceData, terraformVersion string) (interface{}, error) {
+	log.Printf("[DEBUG] START providerConfigure  %s\n", terraformVersion)
 	dnsv2Config, dnsErr := getConfigDNSV2Service(d)
 	papiConfig, papiErr := getPAPIV1Service(d)
 	gtmConfig, gtmErr := getConfigGTMV1Service(d)
@@ -184,7 +198,23 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return nil, fmt.Errorf("One or more Akamai Edgegrid provider configurations must be defined")
 	}
 
-	return &Config{}, nil
+	config := Config{
+		terraformVersion: terraformVersion,
+	}
+
+	tfUserAgent := httpclient.TerraformUserAgent(config.terraformVersion)
+	log.Printf("[DEBUG] tfUserAgent  %s\n", tfUserAgent)
+	providerVersion := fmt.Sprintf("terraform-provider-akamai/%s", version.ProviderVersion)
+	log.Printf("[DEBUG] providerVersion  %s\n", providerVersion)
+	//userAgent := fmt.Sprintf("%s %s", tfUserAgent, providerVersion)
+	client.UserAgent = fmt.Sprintf("%s %s", tfUserAgent, providerVersion)
+
+	log.Printf("[DEBUG] CLIENT UserAgent  %s\n", client.UserAgent)
+
+	//client.UserAgent = client.UserAgent + " terraform/" + Version
+
+	//return &Config{}, nil
+	return &config, nil
 }
 
 type resourceData interface {

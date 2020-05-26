@@ -3,11 +3,11 @@ package akamai
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 var testAccAkamaiPropertyConfig = `
@@ -16,7 +16,7 @@ provider "akamai" {
 }
 
 resource "akamai_property" "property" {
-  name = "terraform-test2"
+  name = "terraform-test4"
 
   contact = ["user@exampleterraform.io"]
 

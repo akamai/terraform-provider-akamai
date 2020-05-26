@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	//"strings"
 	"testing"
 )
