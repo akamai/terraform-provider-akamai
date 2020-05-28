@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -52,10 +53,14 @@ func (availableCriteria *AvailableCriteria) GetAvailableCriteria(property *Prope
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -125,10 +130,14 @@ func (availableBehaviors *AvailableBehaviors) GetAvailableBehaviors(property *Pr
 		return err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)

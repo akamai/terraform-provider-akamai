@@ -3,6 +3,7 @@ package papi
 import (
 	"time"
 
+        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 )
 
@@ -48,7 +49,14 @@ func Search(searchBy SearchKey, propertyName string) (*SearchResult, error) {
 		return nil, err
 	}
 
+	edge.PrintHttpRequest(req, true)
+
 	res, err := client.Do(Config, req)
+	if err != nil {
+		return nil, err
+	}
+
+	edge.PrintHttpResponse(res, true)
 
 	if client.IsError(res) {
 		return nil, client.NewAPIError(res)
