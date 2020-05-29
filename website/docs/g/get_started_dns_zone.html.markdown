@@ -239,4 +239,12 @@ will produce three distinct resource instances, each with a single target and pr
 
 * Concurrrent modifications thru the Terraform provider and the UI may result in configuration drift and require manual intervention to reconcile. This issue is particularly a concern for MX records.
 * Deletion of a record resource with multiple instances or deletion of a single instance, will result in the entire remote recordset resource being removed.
- 
+* Record configurations and state include a computed record_sha field. This field is used represent the current resource state as well as to compare local MX record configuration with the remote configuration. This field will not exist in upgraded configurations. As such, doing a plan on an existing MX record may result in the  following informational message which can be ignored.
+
+```
+No changes. Infrastructure is up-to-date.
+
+This means that Terraform did not detect any differences between your
+configuration and real physical resources that exist. As a result, no
+actions need to be performed.
+```
