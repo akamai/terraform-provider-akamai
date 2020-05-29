@@ -260,6 +260,14 @@ func resourceDNSv2Record() *schema.Resource {
 			"email_address": {
 				Type:     schema.TypeString,
 				Optional: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					oldold := strings.TrimRight(old, ".")
+					newnew := strings.TrimRight(new, ".")
+					if oldold == newnew {
+						return true
+					}
+					return false
+				},
 			},
 			"serial": {
 				Type:     schema.TypeInt,
@@ -596,6 +604,18 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	getRecordLock(zone, host, recordtype).Lock()
 	defer getRecordLock(zone, host, recordtype).Unlock()
 
+	if recordtype == "SOA" {
+		// A default SOA is created automagically when the primary zone is created ...
+		err := resourceDNSRecordRead(d, meta)
+		if err == nil {
+			// Record exists
+			serial := d.Get("serial").(int) + 1
+			d.Set("serial", serial)
+		} else if dnsv2.IsConfigDNSError(err) && err.(dnsv2.ConfigDNSError).NotFound() == true {
+			d.Set("serial", 1)
+		}
+	}
+
 	recordcreate, err := bindRecord(d)
 	if err != nil {
 		return err
@@ -843,7 +863,10 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("MX READ. TARGET HAS CHANGED")
 			// has remote changed independently of TF?
 			if d.Get("record_sha").(string) != shaRdata {
-				return fmt.Errorf("Recordset [%s %s]: Remote has diverged from TF Config. Manual intervention required.", host, recordtype)
+				if len(d.Get("record_sha").(string)) > 0 {
+					return fmt.Errorf("Recordset [%s %s]: Remote has diverged from TF Config. Manual intervention required.", host, recordtype)
+				}
+				log.Printf("MX READ. record_sha ull. Refresh")
 			} else {
 				log.Printf("MX READ. Remote static")
 				d.SetId("")
@@ -851,7 +874,7 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		} else {
 			log.Printf("MX READ. TARGET HAS NOT CHANGED")
 			// has remote changed independently of TF?
-			if d.Get("record_sha").(string) != shaRdata {
+			if d.Get("record_sha").(string) != shaRdata && len(d.Get("record_sha").(string)) > 0 {
 				// another special case ... for instances record sha might not be representative of full resource
 				if len(d.Get("target").([]interface{})) != 1 || sha1hash != shaRdata {
 					return fmt.Errorf("Recordset [%s %s]: Remote has diverged from TF Config. Manual intervention required.", host, recordtype)
@@ -1504,6 +1527,9 @@ func bindRecord(d *schema.ResourceData) (dnsv2.RecordBody, error) {
 			records := make([]string, 0, len(target))
 			nameserver := d.Get("name_server").(string)
 			emailaddr := d.Get("email_address").(string)
+			if emailaddr[len(emailaddr)-1:] != "." {
+				emailaddr += "."
+			}
 			serial := d.Get("serial").(int)
 			refresh := d.Get("refresh").(int)
 			retry := d.Get("retry").(int)
