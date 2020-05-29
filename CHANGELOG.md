@@ -1,4 +1,3 @@
-## 0.8.0 (Unreleased)
 ## 0.7.1 (Unreleased)
 * [FIX] Error after upgrading to 0.7.0 regarding MX records (`akamai-dns`) [GH-154]
 * [FIX]Error 422 on SOA Record Apply After Creating a Primary Zone (`akamai-dns`) [GH-155]
