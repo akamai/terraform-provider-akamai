@@ -3,7 +3,7 @@ module github.com/terraform-providers/terraform-provider-akamai
 require (
 	github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.16
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
-	github.com/hashicorp/terraform v0.12.25
+	github.com/hashicorp/terraform v0.12.25 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.7.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
