@@ -1,6 +1,6 @@
-## 0.7.1 (Unreleased)
-* [FIX] Error after upgrading to 0.7.0 regarding MX records (`akamai-dns`) [GH-154]
-* [FIX]Error 422 on SOA Record Apply After Creating a Primary Zone (`akamai-dns`) [GH-155]
+## 0.7.1 (June 01, 2020)
+* [FIX] Error after upgrading to 0.7.0 regarding MX records (`akamai-dns`) ([#154](https://github.com/terraform-providers/terraform-provider-template/issues/154))
+* [FIX]Error 422 on SOA Record Apply After Creating a Primary Zone (`akamai-dns`) ([#155](https://github.com/terraform-providers/terraform-provider-template/issues/155))
 ## 0.7.0 (May 21, 2020)
 * [ADD] User Agent support for Terraform version and provider version and SDK update
 * [FIX] Bugs in Zone Create and Exists (`akamai_dns`) ([#151](https://github.com/terraform-providers/terraform-provider-template/issues/151))
