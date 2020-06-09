@@ -2079,7 +2079,7 @@ func checkSoaRecord(d *schema.ResourceData) error {
 
 func checkAkamaiTlcRecord(d *schema.ResourceData) error {
 
-	return nil
+	return fmt.Errorf("AKAMAITLC is a READ ONLY record.")
 }
 
 func checkCaaRecord(d *schema.ResourceData) error {
