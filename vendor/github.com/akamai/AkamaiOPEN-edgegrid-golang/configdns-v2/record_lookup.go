@@ -2,7 +2,6 @@ package dnsv2
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
@@ -11,51 +10,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-// Recordset Query args struct
-type RecordsetQueryArgs struct {
-	Page     int
-	PageSize int
-	Search   string
-	ShowAll  bool
-	SortBy   string
-	Types    string
-}
-
-type Recordset struct {
-	Name  string   `json:"name"`
-	Type  string   `json:"type"`
-	TTL   int      `json:"ttl"`
-	Rdata []string `json:"rdata"`
-} //`json:"recordsets"`
-
-type MetadataH struct {
-	LastPage      int  `json:"lastPage"`
-	Page          int  `json:"page"`
-	PageSize      int  `json:"pageSize"`
-	ShowAll       bool `json:"showAll"`
-	TotalElements int  `json:"totalElements"`
-} //`json:"metadata"`
-
-type RecordSetResponse struct {
-	Metadata   MetadataH   `json:"metadata"`
-	Recordsets []Recordset `json:"recordsets"`
-}
-
-/*
-type RecordSetResponse struct {
-	Metadata struct {
-		ShowAll       bool `json:"showAll"`
-		TotalElements int  `json:"totalElements"`
-	} `json:"metadata"`
-	Recordsets []struct {
-		Name  string   `json:"name"`
-		Type  string   `json:"type"`
-		TTL   int      `json:"ttl"`
-		Rdata []string `json:"rdata"`
-	} `json:"recordsets"`
-}
-*/
 
 /*
 {
@@ -123,75 +77,6 @@ func PadCoordinates(str string) string {
 	lat_d, lat_m, lat_s, lat_dir, long_d, long_m, long_s, long_dir, altitude, size, horiz_precision, vert_precision := s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]
 	return lat_d + " " + lat_m + " " + lat_s + " " + lat_dir + " " + long_d + " " + long_m + " " + long_s + " " + long_dir + " " + padvalue(altitude) + "m " + padvalue(size) + "m " + padvalue(horiz_precision) + "m " + padvalue(vert_precision) + "m"
 
-}
-
-func NewRecordSetResponse(name string) *RecordSetResponse {
-	recordset := &RecordSetResponse{}
-	return recordset
-}
-
-// Get RecordSets with Query Args. No formatting of arg values!
-func GetRecordsets(zone string, queryArgs ...RecordsetQueryArgs) (*RecordSetResponse, error) {
-
-	recordsetResp := NewRecordSetResponse("")
-
-	// construct GET url
-	getURL := fmt.Sprintf("/config-dns/v2/zones/%s/recordsets", zone)
-	if len(queryArgs) > 1 {
-		return nil, errors.New("GetRecordsets QueryArgs invalid.")
-	}
-
-	req, err := client.NewRequest(
-		Config,
-		"GET",
-		getURL,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	q := req.URL.Query()
-	if len(queryArgs) > 0 {
-		if queryArgs[0].Page > 0 {
-			q.Add("page", strconv.Itoa(queryArgs[0].Page))
-		}
-		if queryArgs[0].PageSize > 0 {
-			q.Add("pageSize", strconv.Itoa(queryArgs[0].PageSize))
-		}
-		if queryArgs[0].Search != "" {
-			q.Add("search", queryArgs[0].Search)
-		}
-		q.Add("showAll", strconv.FormatBool(queryArgs[0].ShowAll))
-		if queryArgs[0].SortBy != "" {
-			q.Add("sortBy", queryArgs[0].SortBy)
-		}
-		if queryArgs[0].Types != "" {
-			q.Add("types", queryArgs[0].Types)
-		}
-		req.URL.RawQuery = q.Encode()
-	}
-
-	edge.PrintHttpRequest(req, true)
-
-	res, err := client.Do(Config, req)
-	if err != nil {
-		return nil, err
-	}
-
-	edge.PrintHttpResponse(res, true)
-
-	if client.IsError(res) && res.StatusCode != 404 {
-		return nil, client.NewAPIError(res)
-	} else if res.StatusCode == 404 {
-		return nil, &ZoneError{zoneName: zone}
-	} else {
-		err = client.BodyJSON(res, recordsetResp)
-		if err != nil {
-			return nil, err
-		}
-		return recordsetResp, nil
-	}
 }
 
 // Get single Recordset. Following convention for other single record CRUD operations, return a RecordBody.
@@ -499,9 +384,6 @@ func ParseRData(rtype string, rdata []string) map[string]interface{} {
 			fieldMap["nxdomain_ttl"], _ = strconv.Atoi(parts[6])
 			break
 		}
-
-	case "AKAMAICDN":
-		fieldMap["edge_hostname"] = rdata[0]
 
 	case "AKAMAITLC":
 		parts := strings.Split(rdata[0], " ")

@@ -425,6 +425,19 @@ func dnsRecordTargetSuppress(k, old, new string, d *schema.ResourceData) bool {
 		compList = newTargetList
 	}
 
+	if recordtype == "AAAA" {
+		log.Printf("AAAA Suppress. baseval: [%v]", baseVal)
+		fullBaseval := FullIPv6(net.ParseIP(baseVal))
+		for _, compval := range compList {
+			log.Printf("AAAA Suppress. compval: [%v]", compval)
+			fullCompval := FullIPv6(net.ParseIP(compval.(string)))
+			if fullBaseval == fullCompval {
+				return true
+			}
+		}
+		return false
+	}
+
 	if recordtype == "CAA" {
 		basevalsplit := strings.Split(strings.Trim(baseVal, "\""), "\"")
 		baseVal = strings.Join(basevalsplit, "")
@@ -854,6 +867,7 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("[DEBUG] [Akamai DNSv2] READ record data read JSON %s", string(b1))
 	rdataFieldMap := dnsv2.ParseRData(recordtype, record.Target) // returns map[string]interface{}
+	targets := dnsv2.ProcessRdata(record.Target, recordtype)
 	if recordtype == "MX" {
 		// calc rdata sha from read record
 		sort.Strings(record.Target)
@@ -881,14 +895,28 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 				}
 			}
 		}
+	} else if recordtype == "AAAA" {
+		sort.Strings(record.Target)
+		rdataString := strings.Join(record.Target, " ")
+		shaRdata := getSHAString(rdataString)
+		if sha1hash == shaRdata {
+			// don't care if short or long notation
+			return nil
+		} else {
+			// could be either short or long notation
+			newrdata := make([]string, 0, len(record.Target))
+			for _, rcontent := range record.Target {
+				newrdata = append(newrdata, rcontent)
+			}
+			d.Set("target", newrdata)
+			targets = newrdata
+		}
 	} else {
 		// Parse Rdata. MX special
 		for fname, fvalue := range rdataFieldMap {
 			d.Set(fname, fvalue)
 		}
 	}
-
-	targets := dnsv2.ProcessRdata(record.Target, recordtype)
 	if len(targets) > 0 {
 		sort.Strings(targets)
 		if recordtype == "SOA" {
@@ -901,6 +929,9 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 					log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD CHANGE: SOA OK ")
 				}
 			}
+		} else if recordtype == "AKAMAITLC" {
+			extractTlcString := strings.Join(targets, " ")
+			sha1hash = getSHAString(extractTlcString)
 		}
 		d.Set("record_sha", sha1hash)
 		// Give terraform the ID
@@ -2047,18 +2078,8 @@ func checkSoaRecord(d *schema.ResourceData) error {
 }
 
 func checkAkamaiTlcRecord(d *schema.ResourceData) error {
-	dnsname := d.Get("dns_name").(string)
-	answertype := d.Get("answer_type").(string)
 
-	if dnsname != "" {
-		return fmt.Errorf("Configuration argument dnsname is computed. It must not be set in AKAMAITLC.")
-	}
-
-	if answertype != "" {
-		return fmt.Errorf("Configuration argument answertype is computed. It must not be set in AKAMAITLC.")
-	}
-
-	return nil
+	return fmt.Errorf("AKAMAITLC is a READ ONLY record.")
 }
 
 func checkCaaRecord(d *schema.ResourceData) error {
