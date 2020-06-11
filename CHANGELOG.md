@@ -1,3 +1,4 @@
+## 0.8.0 (Unreleased)
 ## 0.7.2 (June 11, 2020)
 * [FIX] Corrected AAAA record handling of short and long IPv6 notation (`akamai-dns`)
 ## 0.7.1 (June 01, 2020)
