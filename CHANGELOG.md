@@ -1,4 +1,4 @@
-## 0.7.2 (Unreleased)
+## 0.7.2 (June 11, 2020)
 * [FIX] Corrected AAAA record handling of short and long IPv6 notation (`akamai-dns`)
 ## 0.7.1 (June 01, 2020)
 * [FIX] Error after upgrading to 0.7.0 regarding MX records (`akamai-dns`) ([#154](https://github.com/terraform-providers/terraform-provider-template/issues/154))
