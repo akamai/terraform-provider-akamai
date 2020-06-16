@@ -2,9 +2,10 @@ package akamai
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"log"
 )
 
 func dataSourceCPCode() *schema.Resource {
@@ -30,6 +31,8 @@ func dataSourceCPCode() *schema.Resource {
 }
 
 func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
+	setCorrelationID("dataSourceCPCodeRead-" + CreateNonce())
+	PrintLogHeader()
 	log.Printf("[DEBUG] Reading CP Code")
 
 	cpCodeName := d.Get("name").(string)
@@ -49,6 +52,7 @@ func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(cpCode.CpcodeID)
 
 	log.Printf("[DEBUG] Read CP Code: %+v", cpCode)
+	PrintLogFooter()
 	return nil
 }
 

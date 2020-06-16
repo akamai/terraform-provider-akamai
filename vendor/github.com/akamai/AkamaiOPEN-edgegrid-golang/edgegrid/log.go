@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package edgegrid 
+package edgegrid
 
 import (
 	"bufio"
 	"fmt"
+	"net/http"
+	"net/http/httputil"
 	"os"
 	"strings"
-        "net/http"
-        "net/http/httputil"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,25 +29,28 @@ var logBuffer *bufio.Writer
 var LogFile *os.File
 var EdgegridLog *log.Logger
 
+// LogCorrelationID ID for header and footer of log file outputs
+var LogCorrelationID *string
+
 func SetupLogging() {
 
 	if EdgegridLog != nil {
-		return			// already configured
+		return // already configured
 	}
-	
-        EdgegridLog = log.New()
+
+	EdgegridLog = log.New()
 	EdgegridLog.SetFormatter(&log.TextFormatter{
 		DisableLevelTruncation:    true,
 		EnvironmentOverrideColors: true,
 	})
-        // Log file destination specified? If not, use default stdout
-        if logFileName := os.Getenv("AKAMAI_LOG_FILE"); logFileName != "" {
+	// Log file destination specified? If not, use default stdout
+	if logFileName := os.Getenv("AKAMAI_LOG_FILE"); logFileName != "" {
 		// If the file doesn't exist, create it, or append to the file
 		LogFile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
-                EdgegridLog.SetOutput(LogFile)
+		EdgegridLog.SetOutput(LogFile)
 	}
 
 	EdgegridLog.SetLevel(log.PanicLevel)
@@ -82,27 +86,51 @@ func LogMultilinef(f func(formatter string, args ...interface{}), formatter stri
 	}
 }
 
+func PrintLogHeader() {
+	if LogCorrelationID != nil {
+		strLogCorrelationIDValue := *LogCorrelationID
+		LogMultiline(EdgegridLog.Traceln, "START CORRELATION ID "+strLogCorrelationIDValue)
+
+	}
+}
+
+func PrintLogFooter() {
+	if LogCorrelationID != nil {
+		strLogCorrelationIDValue := *LogCorrelationID
+		LogMultiline(EdgegridLog.Traceln, "END CORRELATION ID "+strLogCorrelationIDValue)
+		LogCorrelationID = nil
+	}
+}
+
 // Utility func to print http req
 func PrintHttpRequest(req *http.Request, body bool) {
 
-        if req == nil {
-                return
-        }
-        b, err := httputil.DumpRequestOut(req, body)
-        if err == nil {
-                LogMultiline(EdgegridLog.Traceln, string(b))
-        }
+	if req == nil {
+		return
+	}
+	b, err := httputil.DumpRequestOut(req, body)
+	if err == nil {
+		PrintLogHeader()
+		LogMultiline(EdgegridLog.Traceln, string(b))
+		PrintLogFooter()
+	}
 }
 
 // Utility func to print http response
 func PrintHttpResponse(res *http.Response, body bool) {
 
-        if res == nil {
-                return
-        }
-        b, err := httputil.DumpResponse(res, body)
-        if err == nil {
-                LogMultiline(EdgegridLog.Traceln, string(b))
-        }
+	if res == nil {
+		return
+	}
+	b, err := httputil.DumpResponse(res, body)
+	if err == nil {
+		PrintLogHeader()
+		LogMultiline(EdgegridLog.Traceln, string(b))
+		PrintLogFooter()
+	}
 }
 
+// Utility func to set correlationid
+func SetLogCorrelationId(logCorrelationID string) {
+	LogCorrelationID = &logCorrelationID
+}
