@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"time"
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -147,11 +148,13 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 				return e
 			}
 			if strings.ToUpper(zonetype) == "PRIMARY" {
+				time.Sleep(time.Second)
 				// Indirectly create NS and SOA records
 				e = zonecreate.SaveChangelist()
 				if e != nil {
 					return e
 				}
+				time.Sleep(time.Second)
 				e = zonecreate.SubmitChangelist()
 				if e != nil {
 					return e

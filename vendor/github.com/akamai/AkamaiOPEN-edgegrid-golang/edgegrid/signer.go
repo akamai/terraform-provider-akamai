@@ -23,8 +23,12 @@ const defaultSection = "DEFAULT"
 
 // AddRequestHeader sets the Authorization header to use Akamai Open API
 func AddRequestHeader(config Config, req *http.Request) *http.Request {
-	if config.Debug {
-		log.SetLevel(log.DebugLevel)
+
+	if EdgegridLog == nil {
+		SetupLogging()
+		if config.Debug {
+			EdgegridLog.SetLevel(log.DebugLevel)
+		}
 	}
 	timestamp := makeEdgeTimeStamp()
 	nonce := createNonce()
@@ -52,6 +56,10 @@ func AddRequestHeader(config Config, req *http.Request) *http.Request {
 			req.Header.Set("User-Agent", "AkamaiCLI-"+AkamaiCliCommandEnv+"/"+AkamaiCliCommandVersionEnv)
 		}
 	}
+	EdgegridLog.Debugf("Timestamp: %s", timestamp)
+        EdgegridLog.Debugf("Nonce: %s", nonce)
+        EdgegridLog.Debugf("Req: %v", req)
+        EdgegridLog.Debugf("Config: %v", config)
 
 	req.Header.Set("Authorization", createAuthHeader(config, req, timestamp, nonce))
 	return req
@@ -72,7 +80,10 @@ func makeEdgeTimeStamp() string {
 func createNonce() string {
 	uuid, err := uuid.NewRandom()
 	if err != nil {
-		log.Errorf(errorMap[ErrUUIDGenerateFailed], err)
+		if EdgegridLog != nil {
+			EdgegridLog.Errorf(errorMap[ErrUUIDGenerateFailed], err)
+		}
+		EdgegridLog.Errorf(errorMap[ErrUUIDGenerateFailed], err)
 		return ""
 	}
 	return uuid.String()
@@ -158,19 +169,19 @@ func createContentHash(config Config, req *http.Request) string {
 		preparedBody = string(bodyBytes)
 	}
 
-	log.Debugf("Body is %s", preparedBody)
+	EdgegridLog.Debugf("Body is %s", preparedBody)
 	if req.Method == "POST" && len(preparedBody) > 0 {
-		log.Debugf("Signing content: %s", preparedBody)
+		EdgegridLog.Debugf("Signing content: %s", preparedBody)
 		if len(preparedBody) > config.MaxBody {
-			log.Debugf("Data length %d is larger than maximum %d",
+			EdgegridLog.Debugf("Data length %d is larger than maximum %d",
 				len(preparedBody), config.MaxBody)
 
 			preparedBody = preparedBody[0:config.MaxBody]
-			log.Debugf("Data truncated to %d for computing the hash", len(preparedBody))
+			EdgegridLog.Debugf("Data truncated to %d for computing the hash", len(preparedBody))
 		}
 		contentHash = createHash(preparedBody)
 	}
-	log.Debugf("Content hash is '%s'", contentHash)
+	EdgegridLog.Debugf("Content hash is '%s'", contentHash)
 	return contentHash
 }
 
@@ -188,7 +199,7 @@ func signingData(config Config, req *http.Request, authHeader string) string {
 		createContentHash(config, req),
 		authHeader,
 	}
-	log.Debugf("Data to sign %s", strings.Join(dataSign, "\t"))
+	EdgegridLog.Debugf("Data to sign %s", strings.Join(dataSign, "\t"))
 	return strings.Join(dataSign, "\t")
 }
 
@@ -207,10 +218,10 @@ func createAuthHeader(config Config, req *http.Request, timestamp string, nonce 
 		timestamp,
 		nonce,
 	)
-	log.Debugf("Unsigned authorization header: '%s'", authHeader)
+	EdgegridLog.Debugf("Unsigned authorization header: '%s'", authHeader)
 
 	signedAuthHeader := fmt.Sprintf("%ssignature=%s", authHeader, signingRequest(config, req, authHeader, timestamp))
 
-	log.Debugf("Signed authorization header: '%s'", signedAuthHeader)
+	EdgegridLog.Debugf("Signed authorization header: '%s'", signedAuthHeader)
 	return signedAuthHeader
 }
