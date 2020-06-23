@@ -143,12 +143,12 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 			// blank zone for the records to be added to and continue
 			log.Printf("[DEBUG] [Akamai DNS] [ERROR] %s", e.Error())
 			log.Printf("[DEBUG] [Akamai DNS] Creating new zone: %v", zonecreate)
-			e = zonecreate.Save(zonequerystring)
+			e = zonecreate.Save(zonequerystring, true)
 			if e != nil {
 				return e
 			}
 			if strings.ToUpper(zonetype) == "PRIMARY" {
-				time.Sleep(time.Second)
+				time.Sleep(2 * time.Second)
 				// Indirectly create NS and SOA records
 				e = zonecreate.SaveChangelist()
 				if e != nil {
