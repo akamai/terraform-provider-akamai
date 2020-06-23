@@ -16,7 +16,7 @@ import (
 	"unicode"
 
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const defaultSection = "DEFAULT"
@@ -26,12 +26,14 @@ func AddRequestHeader(config Config, req *http.Request) *http.Request {
 
 	if EdgegridLog == nil {
 		SetupLogging()
-		if config.Debug {
-			EdgegridLog.SetLevel(log.DebugLevel)
+		if  config.Debug {
+			EdgegridLog.SetLevel(logrus.DebugLevel)
 		}
 	}
 	timestamp := makeEdgeTimeStamp()
+	EdgegridLog.Debugf("Timestamp: '%s'", timestamp)
 	nonce := createNonce()
+	EdgegridLog.Debugf("Nonce: '%s'", nonce)
 
 	if req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", "application/json")
@@ -56,10 +58,6 @@ func AddRequestHeader(config Config, req *http.Request) *http.Request {
 			req.Header.Set("User-Agent", "AkamaiCLI-"+AkamaiCliCommandEnv+"/"+AkamaiCliCommandVersionEnv)
 		}
 	}
-	EdgegridLog.Debugf("Timestamp: %s", timestamp)
-        EdgegridLog.Debugf("Nonce: %s", nonce)
-        EdgegridLog.Debugf("Req: %v", req)
-        EdgegridLog.Debugf("Config: %v", config)
 
 	req.Header.Set("Authorization", createAuthHeader(config, req, timestamp, nonce))
 	return req
@@ -80,9 +78,6 @@ func makeEdgeTimeStamp() string {
 func createNonce() string {
 	uuid, err := uuid.NewRandom()
 	if err != nil {
-		if EdgegridLog != nil {
-			EdgegridLog.Errorf(errorMap[ErrUUIDGenerateFailed], err)
-		}
 		EdgegridLog.Errorf(errorMap[ErrUUIDGenerateFailed], err)
 		return ""
 	}
