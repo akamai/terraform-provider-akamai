@@ -95,18 +95,176 @@ To define the entire configuration, we start by opening the resource block and g
 
 Next, we set the required (zone, type, group, contract) and optional (comment) arguments.
 
-Once you’re done, your zone configuration should look like this:
+Once you’re done, your zone configuration file should look like this:
 
 ```hcl
+locals {
+  section     = "default"
+}
+
+provider "akamai" {
+  edgerc = "~/.edgerc"
+  dns_section = local.section
+  property_section = local.section
+}
+
+data "akamai_contract" "default" { }
+
+data "akamai_group" "default" {
+}
+
 resource "akamai_dns_zone" "example" {
         zone = "examplezone.com"                        # Zone Name
-        type = "primary"				# Zone type
+        type = "secondary"				# Zone type
+        master = [ "1.2.3.4" ]				# Zone master(s)
         group    = data.akamai_group.default.id         # Group ID variable
         contract = data.akamai_contract.default.id      # Contract ID variable
 	comment = "example zone demo"
 }
 ```
 > **Note:** Notice that we’re using variables from the previous section to reference the group and contract IDs. These will automatically be replaced at runtime by Terraform with the actual values.
+
+### Primary Zones
+
+Creating primary zones through Terraform is best performed through the following multi step process. In addition to the Terraform provider, you will need to download and install the Akamai CLI and CLI-Terraform package. 
+
+#### Configure Zone
+
+Create the zone configuration in a new zone configuration file. For this example, use example_primary_zone_com.tf
+
+Note: Subsequent steps will require the zone config file be named `<zone>.tf` with dots replaced by underscores.
+
+Example configuration:
+
+```hcl
+locals {
+  section     = "default"
+  zone        = "example_primary_zone.com"
+}
+
+provider "akamai" {
+  edgerc = "~/.edgerc"
+  dns_section = local.section
+  property_section = local.section
+}
+
+data "akamai_contract" "default" { }
+
+data "akamai_group" "default" {
+}
+
+resource "akamai_dns_zone" "primary_example" {
+        zone = local.zone
+        type = "primary"
+        group    = data.akamai_group.default.id
+        contract = data.akamai_contract.default.id
+        comment = "example primary zone and records"
+}
+```
+
+Run Terraform Apply
+
+Note: Creating a primary zone has the side effect of creating both initial SOA and NS records. Without these two records, the zone can not be managed.
+
+#### Adding Zone SOA and NS Records To TF Configuration
+
+The zone's top level SOA and NS records now need to be added to the Terraform configuration. These records have been created and pre populated in the Akamai DNS Infrastructure.
+
+Use CLI-Terraform to add the SOA and NS records by performing the following steps:
+
+First, create a list of the zone's current recordsets.
+
+```
+$ akamai terraform create-zone example_primary_zone.com --resources
+```
+
+The file, example_primary_zone_com_resources.json, will be generated with the following content:
+
+```
+{
+  "Zone": "example_primary_zone.com",
+  "Recordsets": {
+    "example_primary_zone.com": [
+      "NS",
+      "SOA"
+    ]
+  }
+}
+```
+
+Next, update the Terraform Zone configuration file using the previously generated json as input.
+
+```
+$ akamai terraform create-zone example_primary_zone.com --createconfig
+```
+
+The zone configuration file, example_primary_zone_com.tf, will be updated with the resulting content:
+
+```
+resource "akamai_dns_zone" "primary_example" {
+        zone = "local.zone
+        type = "primary"
+        group    = data.akamai_group.default.id
+        contract = data.akamai_contract.default.id
+        comment = "example primary zone and records"
+}
+
+resource "akamai_dns_record" "example_primary_zone_com_example_primary_zone_com_NS" {
+    zone = local.zone
+    recordtype = "NS"
+    ttl = 86400
+    target = ["ax-xx.akam.net.", "axx-xx.akam.net.", "axx-xx.akam.net.", "ax-xx.akam.net.", "ax-xx.akam.net.", "ax-xx.akam.net."]
+    name = "example_primary_zone.com"
+}
+
+resource "akamai_dns_record" "example_primary_zone_com_example_primary_zone_com_SOA" {
+    zone = local.zone
+    expiry = 604800
+    nxdomain_ttl = 300
+    name = "example_primary_zone.com"
+    target = []
+    name_server = "ax-xx.akam.net."
+    email_address = "hostmaster.example_primary_zone.com."
+    refresh = 3600
+    retry = 600
+    recordtype = "SOA"
+    ttl = 86400
+}
+```
+Note: Name server targets have been masked. Also, a default dnsvars.tf file is generated. It can be ignored, deleted or used.
+
+Next, generate zone resources import script using previously generated output.
+
+```
+$ akamai terraform create-zone example_primary_zone.com --importscript
+```
+
+The file example_primary_zone.com_resource_import.script is generated with the following content:
+
+```hcl
+form init
+terraform import akamai_dns_zone.egl_clidns_primary_test_com egl_clidns_primary_test.com
+terraform import akamai_dns_record.egl_clidns_primary_test_com_egl_clidns_primary_test_com_NS egl_clidns_primary_test.com#egl_clidns_primary_test.com#NS
+terraform import akamai_dns_record.egl_clidns_primary_test_com_egl_clidns_primary_test_com_SOA egl_clidns_primary_test.com#egl_clidns_primary_test.com#SOA
+```
+
+Next, edit the script file and remove the line `terraform import akamai_dns_zone.egl_clidns_primary_test_com egl_clidns_primary_test.com` as the zone does not need to be imported.
+
+#### Import Zone Recordsets
+
+Perform the following command to import the recordsets into Terraform.
+
+```
+$ ./example_primary_zone.com_resource_import.script
+```
+
+The Terraform configuration and state will now contain the zone's SOA and NS Records with values consistent with the Akamai DNS Infrastructure.
+
+#### Validate Terraform Zone Configuration and State
+
+```
+$ terraform plan
+```
 
 ## Creating a DNS Record
 
