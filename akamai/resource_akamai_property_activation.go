@@ -53,11 +53,12 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 }
 
 func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + CreateNonce() + "]"
 	d.Partial(true)
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Get("property").(string)
-	err := property.GetProperty()
+	err := property.GetProperty(CorrelationID)
 	if err != nil {
 		return errors.New("unable to find property")
 	}
@@ -68,7 +69,7 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 	d.Set("property", property.PropertyID)
 
 	if d.Get("activate").(bool) {
-		activation, err := activateProperty(property, d)
+		activation, err := activateProperty(property, d, CorrelationID)
 		if err != nil {
 			return err
 		}
@@ -82,13 +83,13 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 		for activation.Status != papi.StatusActive {
 			select {
 			case statusChanged := <-activation.StatusChange:
-				log.Printf("[DEBUG] Property Status: %s\n", activation.Status)
+				log.Printf("[DEBUG]"+CorrelationID+"  Property Status: %s\n", activation.Status)
 				if statusChanged == false {
 					break polling
 				}
 				continue polling
 			case <-time.After(time.Minute * 90):
-				log.Println("[DEBUG] Activation Timeout (90 minutes)")
+				log.Println("[DEBUG]" + CorrelationID + "  Activation Timeout (90 minutes)")
 				break polling
 			}
 		}
@@ -102,16 +103,17 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] DEACTIVATE PROPERTY")
+	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + CreateNonce() + "]"
+	log.Printf("[DEBUG]" + CorrelationID + "  DEACTIVATE PROPERTY")
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Get("property").(string)
-	e := property.GetProperty()
+	e := property.GetProperty(CorrelationID)
 	if e != nil {
 		return e
 	}
 
-	log.Printf("[DEBUG] DEACTIVE PROPERTY %v", property)
+	log.Printf("[DEBUG]"+CorrelationID+"  DEACTIVE PROPERTY %v", property)
 
 	network := papi.NetworkValue(d.Get("network").(string))
 	propertyVersion := property.ProductionVersion
@@ -123,8 +125,8 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 
 	if propertyVersion == version {
 		// The current active version is the one we need to deactivate
-		log.Printf("[DEBUG] Deactivating %s version %d \n", network, version)
-		activation, err := deactivateProperty(property, d, papi.NetworkValue(d.Get("network").(string)))
+		log.Printf("[DEBUG]"+CorrelationID+"  Deactivating %s version %d \n", network, version)
+		activation, err := deactivateProperty(property, d, papi.NetworkValue(d.Get("network").(string)), CorrelationID)
 		if err != nil {
 			return err
 		}
@@ -135,7 +137,7 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 		for activation.Status != papi.StatusActive {
 			select {
 			case statusChanged := <-activation.StatusChange:
-				log.Printf("[DEBUG] Property Status: %s\n", activation.Status)
+				log.Printf("[DEBUG]"+CorrelationID+"  Property Status: %s\n", activation.Status)
 				if statusChanged == false {
 					break polling
 				}
@@ -157,9 +159,10 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	CorrelationID := "[PAPI][resourcePropertyActivationExists-" + CreateNonce() + "]"
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Get("property").(string)
-	err := property.GetProperty()
+	err := property.GetProperty(CorrelationID)
 	if err != nil {
 		return false, err
 	}
@@ -182,9 +185,10 @@ func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + CreateNonce() + "]"
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Get("property").(string)
-	err := property.GetProperty()
+	err := property.GetProperty(CorrelationID)
 	if err != nil {
 		return err
 	}
@@ -209,17 +213,18 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] UPDATING")
+	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + CreateNonce() + "]"
+	log.Printf("[DEBUG]" + CorrelationID + "  UPDATING")
 
 	log.Println("[DEBUG] Fetching property")
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Get("property").(string)
-	e := property.GetProperty()
+	e := property.GetProperty(CorrelationID)
 	if e != nil {
 		return e
 	}
 
-	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)))
+	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)), CorrelationID)
 	if err != nil {
 		return err
 	}
@@ -238,7 +243,7 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		*/
 		// No activation in progress, create a new one
 		if a == nil {
-			activation, err = activateProperty(property, d)
+			activation, err = activateProperty(property, d, CorrelationID)
 			if err != nil {
 				return err
 			}
@@ -254,7 +259,7 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		for activation.Status != papi.StatusActive {
 			select {
 			case statusChanged := <-activation.StatusChange:
-				log.Printf("[DEBUG] Property Status: %s\n", activation.Status)
+				log.Printf("[DEBUG]"+CorrelationID+"  Property Status: %s\n", activation.Status)
 				if statusChanged == false {
 					break polling
 				}
@@ -274,8 +279,8 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
-func activateProperty(property *papi.Property, d *schema.ResourceData) (*papi.Activation, error) {
-	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)))
+func activateProperty(property *papi.Property, d *schema.ResourceData, correlationid string) (*papi.Activation, error) {
+	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)), correlationid)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +292,7 @@ func activateProperty(property *papi.Property, d *schema.ResourceData) (*papi.Ac
 	err = activation.Save(property, true)
 	if err != nil {
 		body, _ := json.Marshal(activation)
-		log.Printf("[DEBUG] API Request Body: %s\n", string(body))
+		log.Printf("[DEBUG]"+correlationid+"  API Request Body: %s\n", string(body))
 		return nil, err
 	}
 	log.Println("[DEBUG] Activation submitted successfully")
@@ -295,14 +300,14 @@ func activateProperty(property *papi.Property, d *schema.ResourceData) (*papi.Ac
 	return activation, nil
 }
 
-func deactivateProperty(property *papi.Property, d *schema.ResourceData, network papi.NetworkValue) (*papi.Activation, error) {
-	version, err := property.GetLatestVersion(network)
+func deactivateProperty(property *papi.Property, d *schema.ResourceData, network papi.NetworkValue, correlationid string) (*papi.Activation, error) {
+	version, err := property.GetLatestVersion(network, correlationid)
 	if err != nil || version == nil {
 		// Not active
 		return nil, nil
 	}
 
-	activation, err := getActivation(d, property, papi.ActivationTypeDeactivate, network)
+	activation, err := getActivation(d, property, papi.ActivationTypeDeactivate, network, correlationid)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +319,7 @@ func deactivateProperty(property *papi.Property, d *schema.ResourceData, network
 	err = activation.Save(property, true)
 	if err != nil {
 		body, _ := json.Marshal(activation)
-		log.Printf("[DEBUG] API Request Body: %s\n", string(body))
+		log.Printf("[DEBUG]"+correlationid+"  API Request Body: %s\n", string(body))
 		return nil, err
 	}
 	log.Println("[DEBUG] Deactivation submitted successfully")
@@ -322,13 +327,13 @@ func deactivateProperty(property *papi.Property, d *schema.ResourceData, network
 	return activation, nil
 }
 
-func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue) (*papi.Activation, error) {
+func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue, correlationid string) (*papi.Activation, error) {
 	log.Println("[DEBUG] Creating new activation")
 	activation := papi.NewActivation(papi.NewActivations())
 	if version, ok := d.GetOk("version"); ok && version.(int) != 0 {
 		activation.PropertyVersion = version.(int)
 	} else {
-		version, err := property.GetLatestVersion("")
+		version, err := property.GetLatestVersion("", correlationid)
 		if err != nil {
 			return nil, err
 		}

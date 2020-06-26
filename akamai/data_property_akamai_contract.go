@@ -21,12 +21,13 @@ func dataSourcePropertyContract() *schema.Resource {
 }
 
 func dataSourcePropertyContractRead(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[PAPI][dataSourcePropertyContractRead-" + CreateNonce() + "]"
 	_, groupOk := d.GetOk("group")
 	group := d.Get("group").(string)
 	contracts := papi.NewContracts()
 	// If no group, just return the first contract
 	if !groupOk {
-		err := contracts.GetContracts()
+		err := contracts.GetContracts(CorrelationID)
 		if err != nil {
 			return fmt.Errorf("error looking up Contracts for group %q: %s", group, err)
 		}

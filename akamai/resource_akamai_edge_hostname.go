@@ -3,11 +3,12 @@ package akamai
 import (
 	"errors"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"log"
-	"strings"
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
@@ -69,19 +70,19 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 
 func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) error {
 	d.Partial(true)
-
-	group, e := getGroup(d)
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + CreateNonce() + "]"
+	group, e := getGroup(d, CorrelationID)
 	if e != nil {
 		return e
 	}
 	log.Println("[DEBUG] Edgehostnames GROUP = ", group)
-	contract, e := getContract(d)
+	contract, e := getContract(d, CorrelationID)
 	if e != nil {
 		return e
 	}
 	log.Println("[DEBUG] Edgehostnames CONTRACT = ", contract)
 
-	product, e := getProduct(d, contract)
+	product, e := getProduct(d, contract, CorrelationID)
 	if e != nil {
 		return e
 	}
@@ -162,7 +163,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 		d.SetId(ehnFound.EdgeHostnameID)
 	} else {
 		log.Printf("[DEBUG] Creating new edge hostname: %#v\n\n", ehn)
-		err = ehn.Save("")
+		err = ehn.Save("", CorrelationID)
 		if err != nil {
 			return err
 		}
@@ -191,7 +192,7 @@ func resourceSecureEdgeHostNameImport(d *schema.ResourceData, meta interface{}) 
 
 	if !strings.HasPrefix(resourceID, "prp_") {
 		for _, searchKey := range []papi.SearchKey{papi.SearchByPropertyName, papi.SearchByHostname, papi.SearchByEdgeHostname} {
-			results, err := papi.Search(searchKey, resourceID)
+			results, err := papi.Search(searchKey, resourceID, "") //<--correlationid
 			if err != nil {
 				continue
 			}
@@ -205,7 +206,7 @@ func resourceSecureEdgeHostNameImport(d *schema.ResourceData, meta interface{}) 
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
-	e := property.GetProperty()
+	e := property.GetProperty("")
 	if e != nil {
 		return nil, e
 	}
@@ -223,12 +224,13 @@ func resourceSecureEdgeHostNameImport(d *schema.ResourceData, meta interface{}) 
 
 func resourceSecureEdgeHostNameExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
-	group, e := getGroup(d)
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + CreateNonce() + "]"
+	group, e := getGroup(d, CorrelationID)
 	if e != nil {
 		return false, e
 	}
 	log.Println("[DEBUG] Figuring out edgehostnames GROUP = ", group)
-	contract, e := getContract(d)
+	contract, e := getContract(d, CorrelationID)
 	if e != nil {
 		return false, e
 	}
@@ -240,7 +242,7 @@ func resourceSecureEdgeHostNameExists(d *schema.ResourceData, meta interface{}) 
 	log.Println("[DEBUG] Figuring out edgehostnames ", d.Id())
 	edgeHostnames := papi.NewEdgeHostnames()
 	log.Println("[DEBUG] NewEdgeHostnames empty struct  ", edgeHostnames.ContractID)
-	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, d.Id())
+	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, d.Id(), CorrelationID)
 	if err != nil {
 		return false, err
 	}
@@ -250,15 +252,15 @@ func resourceSecureEdgeHostNameExists(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) error {
-
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + CreateNonce() + "]"
 	d.Partial(true)
 
-	group, e := getGroup(d)
+	group, e := getGroup(d, CorrelationID)
 	if e != nil {
 		return e
 	}
 	log.Println("[DEBUG] Figuring out edgehostnames GROUP = ", group)
-	contract, e := getContract(d)
+	contract, e := getContract(d, CorrelationID)
 	if e != nil {
 		return e
 	}
@@ -272,7 +274,7 @@ func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) er
 	log.Println("[DEBUG] Figuring out edgehostnames ", d.Id())
 	edgeHostnames := papi.NewEdgeHostnames()
 	log.Println("[DEBUG] NewEdgeHostnames empty struct  ", edgeHostnames.ContractID)
-	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "")
+	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "", CorrelationID)
 	if err != nil {
 		return err
 	}

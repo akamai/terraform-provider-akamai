@@ -27,6 +27,7 @@ func dataSourcePropertyGroups() *schema.Resource {
 }
 
 func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + CreateNonce() + "]"
 	var name string
 	_, ok := d.GetOk("name")
 	getDefault := false
@@ -37,10 +38,10 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 		name = d.Get("name").(string)
 	}
 
-	log.Printf("[DEBUG] [Akamai Property Groups] Start Searching for property group records %s ", name)
+	log.Printf("[DEBUG]"+CorrelationID+"  [Akamai Property Groups] Start Searching for property group records %s ", name)
 
 	groups := papi.NewGroups()
-	err := groups.GetGroups()
+	err := groups.GetGroups(CorrelationID)
 	if err != nil {
 		return fmt.Errorf("error looking up Groups for %q: %s", name, err)
 	}
@@ -81,7 +82,7 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error looking up Group for %q: %s", name, err)
 	}
 
-	log.Printf("[DEBUG] [Akamai Property Groups] Searching for records [%v]", group)
+	log.Printf("[DEBUG]"+CorrelationID+"  [Akamai Property Groups] Searching for records [%v]", group)
 
 groupFound:
 	d.Set("id", group.GroupID)

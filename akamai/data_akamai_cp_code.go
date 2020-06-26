@@ -31,13 +31,13 @@ func dataSourceCPCode() *schema.Resource {
 }
 
 func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("dataSourceCPCodeRead-" + CreateNonce())
-	PrintLogHeader()
-	log.Printf("[DEBUG] Reading CP Code")
+	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + CreateNonce() + "]"
+	//PrintLogHeader()
+	log.Printf("[DEBUG]" + CorrelationID + "  Reading CP Code")
 
 	cpCodeName := d.Get("name").(string)
 
-	cpCode, err := datasourceCPCodePAPINewCPCodes(d, meta).FindCpCode(cpCodeName)
+	cpCode, err := datasourceCPCodePAPINewCPCodes(d, meta).FindCpCode(cpCodeName, CorrelationID)
 
 	if err != nil {
 		return err
@@ -51,8 +51,8 @@ func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("id", cpCode.CpcodeID)
 	d.SetId(cpCode.CpcodeID)
 
-	log.Printf("[DEBUG] Read CP Code: %+v", cpCode)
-	PrintLogFooter()
+	log.Printf("[DEBUG]"+CorrelationID+"  Read CP Code: %+v", cpCode)
+	//PrintLogFooter()
 	return nil
 }
 

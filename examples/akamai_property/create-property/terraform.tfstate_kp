@@ -1,0 +1,298 @@
+{
+  "version": 4,
+  "terraform_version": "0.12.5",
+  "serial": 17,
+  "lineage": "a5508dc4-bd17-5fc0-54b5-512d92f184c5",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "data",
+      "type": "akamai_contract",
+      "name": "contract",
+      "provider": "provider.akamai",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "group": null,
+            "id": "ctr_C-1FRYVV3"
+          }
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "akamai_group",
+      "name": "group",
+      "provider": "provider.akamai",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "contract": null,
+            "id": "grp_64867",
+            "name": null
+          }
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "akamai_property_rules",
+      "name": "rules",
+      "provider": "provider.akamai",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "c6d9441cc0560f847636730e1ed6abeebce23468",
+            "json": "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"caching\",\"options\":{\"behavior\":\"MAX_AGE\",\"mustRevalidate\":false,\"ttl\":\"1d\"}},{\"name\":\"cacheRedirect\",\"options\":{\"enabled\":\"true1\"}},{\"name\":\"origin\",\"options\":{\"cacheKeyHostname\":\"ORIGIN_HOSTNAME\",\"compress\":true,\"enableTrueClientIp\":false,\"forwardHostHeader\":\"REQUEST_HOST_HEADER\",\"hostname\":\"exampleakavadeveloper.io\",\"httpPort\":80,\"httpsPort\":443,\"originCertificate\":\"\",\"originSni\":true,\"originType\":\"CUSTOMER\",\"ports\":\"\",\"verificationMode\":\"PLATFORM_SETTINGS\"}},{\"name\":\"cpCode\",\"options\":{\"value\":{\"id\":860373}}}],\"options\":{}}}",
+            "rules": [
+              {
+                "behavior": [
+                  {
+                    "name": "cacheRedirect",
+                    "option": [
+                      {
+                        "key": "enabled",
+                        "value": "true1",
+                        "values": []
+                      }
+                    ]
+                  },
+                  {
+                    "name": "caching",
+                    "option": [
+                      {
+                        "key": "behavior",
+                        "value": "MAX_AGE",
+                        "values": []
+                      },
+                      {
+                        "key": "mustRevalidate",
+                        "value": "false",
+                        "values": []
+                      },
+                      {
+                        "key": "ttl",
+                        "value": "1d",
+                        "values": []
+                      }
+                    ]
+                  },
+                  {
+                    "name": "cpCode",
+                    "option": [
+                      {
+                        "key": "id",
+                        "value": "cpc_860373",
+                        "values": []
+                      },
+                      {
+                        "key": "name",
+                        "value": "terraform-testing",
+                        "values": []
+                      }
+                    ]
+                  },
+                  {
+                    "name": "origin",
+                    "option": [
+                      {
+                        "key": "cacheKeyHostname",
+                        "value": "ORIGIN_HOSTNAME",
+                        "values": []
+                      },
+                      {
+                        "key": "compress",
+                        "value": "true",
+                        "values": []
+                      },
+                      {
+                        "key": "enableTrueClientIp",
+                        "value": "false",
+                        "values": []
+                      },
+                      {
+                        "key": "forwardHostHeader",
+                        "value": "REQUEST_HOST_HEADER",
+                        "values": []
+                      },
+                      {
+                        "key": "hostname",
+                        "value": "exampleakavadeveloper.io",
+                        "values": []
+                      },
+                      {
+                        "key": "httpPort",
+                        "value": "80",
+                        "values": []
+                      },
+                      {
+                        "key": "httpsPort",
+                        "value": "443",
+                        "values": []
+                      },
+                      {
+                        "key": "originCertificate",
+                        "value": "",
+                        "values": []
+                      },
+                      {
+                        "key": "originSni",
+                        "value": "true",
+                        "values": []
+                      },
+                      {
+                        "key": "originType",
+                        "value": "CUSTOMER",
+                        "values": []
+                      },
+                      {
+                        "key": "ports",
+                        "value": "",
+                        "values": []
+                      },
+                      {
+                        "key": "verificationMode",
+                        "value": "PLATFORM_SETTINGS",
+                        "values": []
+                      }
+                    ]
+                  }
+                ],
+                "criteria_match": "all",
+                "is_secure": false,
+                "rule": [],
+                "variable": []
+              }
+            ],
+            "variables": null
+          },
+          "depends_on": [
+            "akamai_cp_code.cp_code"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "data",
+      "type": "template_file",
+      "name": "rules",
+      "provider": "provider.template",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "filename": null,
+            "id": "cf64c814e6ad4285b805634fe27fd8e6ccf1eab322c20bc66f9f571dd5c50fcb",
+            "rendered": "{\n  \"accountId\": \"act_B-C-1FRYVMN\",\n  \"contractId\": \"ctr_C-1FRYVV3\",\n  \"groupId\": \"grp_64867\",\n  \"propertyId\": \"prp_625352\",\n  \"propertyName\": \"akavadev\",\n  \"propertyVersion\": 1,\n  \"etag\": \"b1fc31f4095a9483518a72c156306dde1a075573\",\n  \"rules\": {\n    \"name\": \"default\",\n    \"children\": [],\n    \"behaviors\": [\n      {\n        \"name\": \"caching\",\n        \"options\": {\n          \"behavior\": \"MAX_AGE\",\n          \"mustRevalidate\": false,\n          \"ttl\": \"1d\"\n        }\n      },\n      {\"name\":\"cacheRedirect\",\"options\":{\"enabled\":\"true\"}},\n      {\n        \"name\": \"origin\",\n        \"options\": {\n          \"cacheKeyHostname\": \"ORIGIN_HOSTNAME\",\n          \"compress\": true,\n          \"enableTrueClientIp\": false,\n          \"forwardHostHeader\": \"REQUEST_HOST_HEADER\",\n          \"hostname\": \"exampleakavadeveloper.io\",\n          \"httpPort\": 80,\n          \"httpsPort\": 443,\n          \"originCertificate\": \"\",\n          \"originSni\": true,\n          \"originType\": \"CUSTOMER\",\n          \"ports\": \"\",\n          \"verificationMode\": \"PLATFORM_SETTINGS\"\n        }\n      },\n      {\n        \"name\": \"cpCode\",\n        \"options\": {\n          \"value\": {\n            \"id\": \"cpc_860373\"\n          }\n        }\n      }\n    ],\n    \"options\": {}\n  },\n  \"warnings\": [\n    {\n      \"type\": \"https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ssl_delegate_warning_intro\",\n      \"errorLocation\": \"#/rules/behaviors/1\",\n      \"detail\": \"Akamai enhanced the `Origin Server` behavior. Before configuring any settings, click the \u003cstrong\u003eVerification Settings\u003c/strong\u003e drop-down menu and read the context-sensitive information that appears.\"\n    },\n    {\n      \"type\": \"https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ssl_delegate_warning_rotate\",\n      \"errorLocation\": \"#/rules/behaviors/1\",\n      \"detail\": \"If your `Origin Server` uses HTTPS, make sure to follow \u003ca href=\\\"/dl/property-manager/property-manager-help/csh_lookup.html?id=PM_0034\\\" target=\\\"_blank\\\"\u003ethis procedure\u003c/a\u003e to avoid a service outage or a security breach when you rotate your origin's certificate.\"\n    }\n  ],\n  \"ruleFormat\": \"v2016-11-15\"\n}\n",
+            "template": "{\n  \"accountId\": \"act_B-C-1FRYVMN\",\n  \"contractId\": \"ctr_C-1FRYVV3\",\n  \"groupId\": \"grp_64867\",\n  \"propertyId\": \"prp_625352\",\n  \"propertyName\": \"akavadev\",\n  \"propertyVersion\": 1,\n  \"etag\": \"b1fc31f4095a9483518a72c156306dde1a075573\",\n  \"rules\": {\n    \"name\": \"default\",\n    \"children\": [],\n    \"behaviors\": [\n      {\n        \"name\": \"caching\",\n        \"options\": {\n          \"behavior\": \"MAX_AGE\",\n          \"mustRevalidate\": false,\n          \"ttl\": \"1d\"\n        }\n      },\n      {\"name\":\"cacheRedirect\",\"options\":{\"enabled\":\"true\"}},\n      {\n        \"name\": \"origin\",\n        \"options\": {\n          \"cacheKeyHostname\": \"ORIGIN_HOSTNAME\",\n          \"compress\": true,\n          \"enableTrueClientIp\": false,\n          \"forwardHostHeader\": \"REQUEST_HOST_HEADER\",\n          \"hostname\": \"exampleakavadeveloper.io\",\n          \"httpPort\": 80,\n          \"httpsPort\": 443,\n          \"originCertificate\": \"\",\n          \"originSni\": true,\n          \"originType\": \"CUSTOMER\",\n          \"ports\": \"\",\n          \"verificationMode\": \"PLATFORM_SETTINGS\"\n        }\n      },\n      {\n        \"name\": \"cpCode\",\n        \"options\": {\n          \"value\": {\n            \"id\": \"${cpcode_id}\"\n          }\n        }\n      }\n    ],\n    \"options\": {}\n  },\n  \"warnings\": [\n    {\n      \"type\": \"https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ssl_delegate_warning_intro\",\n      \"errorLocation\": \"#/rules/behaviors/1\",\n      \"detail\": \"Akamai enhanced the `Origin Server` behavior. Before configuring any settings, click the \u003cstrong\u003eVerification Settings\u003c/strong\u003e drop-down menu and read the context-sensitive information that appears.\"\n    },\n    {\n      \"type\": \"https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ssl_delegate_warning_rotate\",\n      \"errorLocation\": \"#/rules/behaviors/1\",\n      \"detail\": \"If your `Origin Server` uses HTTPS, make sure to follow \u003ca href=\\\"/dl/property-manager/property-manager-help/csh_lookup.html?id=PM_0034\\\" target=\\\"_blank\\\"\u003ethis procedure\u003c/a\u003e to avoid a service outage or a security breach when you rotate your origin's certificate.\"\n    }\n  ],\n  \"ruleFormat\": \"v2016-11-15\"\n}\n",
+            "vars": {
+              "cpcode_id": "cpc_860373"
+            }
+          },
+          "depends_on": [
+            "akamai_cp_code.cp_code"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "akamai_cp_code",
+      "name": "cp_code",
+      "provider": "provider.akamai",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "contract": "ctr_C-1FRYVV3",
+            "group": "grp_64867",
+            "id": "cpc_860373",
+            "name": "terraform-testing",
+            "product": "prd_SPM"
+          },
+          "private": "bnVsbA==",
+          "depends_on": [
+            "data.akamai_contract.contract",
+            "data.akamai_group.group"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "akamai_edge_hostname",
+      "name": "test",
+      "provider": "provider.akamai",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "certificate": null,
+            "contract": "ctr_C-1FRYVV3",
+            "edge_hostname": "tform-test.akavadeveloper.io.edgesuite.net",
+            "group": "grp_64867",
+            "id": "ehn_4518235",
+            "ip_behavior": "IPV6_COMPLIANCE",
+            "ipv4": true,
+            "ipv6": true,
+            "product": "prd_SPM"
+          },
+          "private": "bnVsbA==",
+          "depends_on": [
+            "data.akamai_contract.contract",
+            "data.akamai_group.group"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "akamai_property",
+      "name": "property",
+      "provider": "provider.akamai",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "account": "act_B-C-1FRYVMN",
+            "contact": [
+              "user@akavadeveloper.io"
+            ],
+            "contract": "ctr_C-1FRYVV3",
+            "cp_code": "cpc_860373",
+            "edge_hostnames": {
+              "terraform.example1.org": "tform-test.akavadeveloper.io.edgesuite.net"
+            },
+            "group": "grp_64867",
+            "hostnames": {
+              "terraform.example1.org": "tform-test.akavadeveloper.io.edgesuite.net"
+            },
+            "id": "prp_625352",
+            "is_secure": null,
+            "name": "akavadev",
+            "origin": [],
+            "product": "prd_SPM",
+            "production_version": null,
+            "rule_format": "v2016-11-15",
+            "rules": "{\"accountId\":\"act_B-C-1FRYVMN\",\"contractId\":\"ctr_C-1FRYVV3\",\"groupId\":\"grp_64867\",\"propertyId\":\"prp_625352\",\"propertyVersion\":1,\"etag\":\"\",\"ruleFormat\":\"v2016-11-15\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"caching\",\"options\":{\"behavior\":\"MAX_AGE\",\"mustRevalidate\":false,\"ttl\":\"1d\"}},{\"name\":\"cacheRedirect\",\"options\":{\"enabled\":\"true\"}},{\"name\":\"origin\",\"options\":{\"cacheKeyHostname\":\"ORIGIN_HOSTNAME\",\"compress\":true,\"enableTrueClientIp\":false,\"forwardHostHeader\":\"REQUEST_HOST_HEADER\",\"hostname\":\"exampleakavadeveloper.io\",\"httpPort\":80,\"httpsPort\":443,\"originCertificate\":\"\",\"originSni\":true,\"originType\":\"CUSTOMER\",\"ports\":\"\",\"verificationMode\":\"PLATFORM_SETTINGS\"}},{\"name\":\"cpCode\",\"options\":{\"value\":{\"id\":860373}}}],\"options\":{}}}",
+            "rulessha": "ba327cddbf96c4ef172852e443930120ab39e668",
+            "staging_version": null,
+            "variables": null,
+            "version": 1
+          },
+          "private": "bnVsbA==",
+          "depends_on": [
+            "akamai_cp_code.cp_code",
+            "akamai_edge_hostname.test",
+            "data.akamai_contract.contract",
+            "data.akamai_group.group",
+            "data.akamai_property_rules.rules"
+          ]
+        }
+      ]
+    }
+  ]
+}

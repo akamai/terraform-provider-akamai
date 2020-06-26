@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func dataSourceAkamaiProperty() *schema.Resource {
@@ -29,9 +30,10 @@ func dataSourceAkamaiProperty() *schema.Resource {
 }
 
 func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] Reading Property")
+	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + CreateNonce() + "]"
+	log.Printf("[DEBUG]" + CorrelationID + "  Reading Property")
 
-	property := findProperty(d)
+	property := findProperty(d, CorrelationID)
 	if property == nil {
 		return fmt.Errorf("Can't find property")
 	}
@@ -41,7 +43,7 @@ func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
 		property.LatestVersion = d.Get("version").(int)
 	}
 
-	rules, err := property.GetRules()
+	rules, err := property.GetRules(CorrelationID)
 	if err != nil {
 		return fmt.Errorf("Can't get rules for property")
 	}

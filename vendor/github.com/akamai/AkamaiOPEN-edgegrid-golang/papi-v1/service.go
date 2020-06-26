@@ -15,7 +15,7 @@ var (
 // GetGroups retrieves all groups
 func GetGroups() (*Groups, error) {
 	groups := NewGroups()
-	if err := groups.GetGroups(); err != nil {
+	if err := groups.GetGroups(""); err != nil {
 		return nil, err
 	}
 
@@ -25,7 +25,7 @@ func GetGroups() (*Groups, error) {
 // GetContracts retrieves all contracts
 func GetContracts() (*Contracts, error) {
 	contracts := NewContracts()
-	if err := contracts.GetContracts(); err != nil {
+	if err := contracts.GetContracts(""); err != nil {
 		return nil, err
 	}
 
@@ -35,7 +35,7 @@ func GetContracts() (*Contracts, error) {
 // GetProducts retrieves all products
 func GetProducts(contract *Contract) (*Products, error) {
 	products := NewProducts()
-	if err := products.GetProducts(contract); err != nil {
+	if err := products.GetProducts(contract, ""); err != nil {
 		return nil, err
 	}
 
@@ -45,7 +45,7 @@ func GetProducts(contract *Contract) (*Products, error) {
 // GetEdgeHostnames retrieves all edge hostnames
 func GetEdgeHostnames(contract *Contract, group *Group, options string) (*EdgeHostnames, error) {
 	edgeHostnames := NewEdgeHostnames()
-	if err := edgeHostnames.GetEdgeHostnames(contract, group, options); err != nil {
+	if err := edgeHostnames.GetEdgeHostnames(contract, group, options, ""); err != nil {
 		return nil, err
 	}
 
@@ -57,7 +57,7 @@ func GetEdgeHostnames(contract *Contract, group *Group, options string) (*EdgeHo
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listcpcodes
 func GetCpCodes(contract *Contract, group *Group) (*CpCodes, error) {
 	cpcodes := NewCpCodes(contract, group)
-	if err := cpcodes.GetCpCodes(); err != nil {
+	if err := cpcodes.GetCpCodes(""); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +67,7 @@ func GetCpCodes(contract *Contract, group *Group) (*CpCodes, error) {
 // GetProperties retrieves all properties for a given contract/group
 func GetProperties(contract *Contract, group *Group) (*Properties, error) {
 	properties := NewProperties()
-	if err := properties.GetProperties(contract, group); err != nil {
+	if err := properties.GetProperties(contract, group, ""); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +77,7 @@ func GetProperties(contract *Contract, group *Group) (*Properties, error) {
 // GetVersions retrieves all versions for a given property
 func GetVersions(property *Property) (*Versions, error) {
 	versions := NewVersions()
-	if err := versions.GetVersions(property); err != nil {
+	if err := versions.GetVersions(property, ""); err != nil {
 		return nil, err
 	}
 

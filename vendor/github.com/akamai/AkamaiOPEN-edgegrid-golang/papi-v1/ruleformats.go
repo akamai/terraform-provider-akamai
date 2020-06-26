@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"sort"
 
-        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -30,7 +30,7 @@ func NewRuleFormats() *RuleFormats {
 //
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listruleformats
 // Endpoint: GET /papi/v1/rule-formats
-func (ruleFormats *RuleFormats) GetRuleFormats() error {
+func (ruleFormats *RuleFormats) GetRuleFormats(correlationid string) error {
 	req, err := client.NewRequest(
 		Config,
 		"GET",
@@ -41,15 +41,15 @@ func (ruleFormats *RuleFormats) GetRuleFormats() error {
 		return err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
 
-	edge.PrintHttpResponse(res, true)
-	
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
+
 	if client.IsError(res) {
 		return client.NewAPIError(res)
 	}
@@ -63,9 +63,9 @@ func (ruleFormats *RuleFormats) GetRuleFormats() error {
 	return nil
 }
 
-func (ruleFormats *RuleFormats) GetLatest() (string, error) {
+func (ruleFormats *RuleFormats) GetLatest(correlationid string) (string, error) {
 	if len(ruleFormats.RuleFormats.Items) == 0 {
-		err := ruleFormats.GetRuleFormats()
+		err := ruleFormats.GetRuleFormats(correlationid)
 		if err != nil {
 			return "", err
 		}
@@ -78,7 +78,7 @@ func (ruleFormats *RuleFormats) GetLatest() (string, error) {
 //
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#getaruleformatsschema
 // Endpoint: /papi/v1/schemas/products/{productId}/{ruleFormat}
-func (ruleFormats *RuleFormats) GetSchema(product string, ruleFormat string) (*gojsonschema.Schema, error) {
+func (ruleFormats *RuleFormats) GetSchema(product string, ruleFormat string, correlationid string) (*gojsonschema.Schema, error) {
 	req, err := client.NewRequest(
 		Config,
 		"GET",
@@ -93,14 +93,14 @@ func (ruleFormats *RuleFormats) GetSchema(product string, ruleFormat string) (*g
 		return nil, err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return nil, err
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if client.IsError(res) {
 		return nil, client.NewAPIError(res)

@@ -1,11 +1,12 @@
 package akamai
 
 import (
+	"log"
+	"strings"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"log"
-	"strings"
 )
 
 func resourcePropertyVariables() *schema.Resource {
@@ -135,7 +136,7 @@ func resourcePropertyVariablesImport(d *schema.ResourceData, meta interface{}) (
 
 	if !strings.HasPrefix(resourceID, "prp_") {
 		for _, searchKey := range []papi.SearchKey{papi.SearchByPropertyName, papi.SearchByHostname, papi.SearchByEdgeHostname} {
-			results, err := papi.Search(searchKey, resourceID)
+			results, err := papi.Search(searchKey, resourceID, "") //<--correlationid
 			if err != nil {
 				continue
 			}
@@ -149,7 +150,7 @@ func resourcePropertyVariablesImport(d *schema.ResourceData, meta interface{}) (
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
-	e := property.GetProperty()
+	e := property.GetProperty("")
 	if e != nil {
 		return nil, e
 	}

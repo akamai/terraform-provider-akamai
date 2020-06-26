@@ -3,8 +3,8 @@ package papi
 import (
 	"fmt"
 
-        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 )
 
 // Hostnames is a collection of Property Hostnames
@@ -54,16 +54,16 @@ func (hostnames *Hostnames) PostUnmarshalJSON() error {
 // See: Property.GetHostnames()
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listapropertyshostnames
 // Endpoint: GET /papi/v1/properties/{propertyId}/versions/{propertyVersion}/hostnames/{?contractId,groupId}
-func (hostnames *Hostnames) GetHostnames(version *Version) error {
+func (hostnames *Hostnames) GetHostnames(version *Version, correlationid string) error {
 	if version == nil {
 		property := NewProperty(NewProperties())
 		property.PropertyID = hostnames.PropertyID
-		err := property.GetProperty()
+		err := property.GetProperty(correlationid)
 		if err != nil {
 			return err
 		}
 
-		version, err = property.GetLatestVersion("")
+		version, err = property.GetLatestVersion("", correlationid)
 		if err != nil {
 			return err
 		}
@@ -85,14 +85,14 @@ func (hostnames *Hostnames) GetHostnames(version *Version) error {
 		return err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)

@@ -37,7 +37,7 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
 	log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
 
-	rulesOld, err := getRulesForComp(d, old)
+	rulesOld, err := getRulesForComp(d, old, "")
 	rulesOld.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rulesOld)
 	if err != nil {
@@ -47,7 +47,7 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 
 	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
 
-	rulesNew, err := getRulesForComp(d, new)
+	rulesNew, err := getRulesForComp(d, new, "")
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
 	if err != nil {
@@ -80,7 +80,7 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 	log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
 	log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
 
-	rulesOld, err := getRulesForComp(d, old)
+	rulesOld, err := getRulesForComp(d, old, "")
 	rulesOld.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rulesOld)
 	if err != nil {
@@ -90,7 +90,7 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 
 	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
 
-	rulesNew, err := getRulesForComp(d, new)
+	rulesNew, err := getRulesForComp(d, new, "")
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
 	if err != nil {
@@ -110,9 +110,9 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 
 }
 
-func getRulesForComp(d interface{}, json string) (*papi.Rules, error) {
+func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Rules, error) {
 
-	property, e := getProperty(d)
+	property, e := getProperty(d, correlationid)
 	if e != nil {
 		return nil, e
 	}
@@ -160,7 +160,7 @@ func getRulesForComp(d interface{}, json string) (*papi.Rules, error) {
 		rules.RuleFormat = ruleFormat.(string)
 	} else {
 		ruleFormats := papi.NewRuleFormats()
-		rules.RuleFormat, err = ruleFormats.GetLatest()
+		rules.RuleFormat, err = ruleFormats.GetLatest(correlationid)
 		if err != nil {
 			return nil, err
 		}

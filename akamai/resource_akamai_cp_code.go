@@ -45,19 +45,19 @@ func resourceCPCode() *schema.Resource {
 }
 
 func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourceCPCodeCreate-" + CreateNonce())
-	PrintLogHeader()
-	log.Printf("[DEBUG] Creating CP Code")
+	CorrelationID := "[PAPI][resourceCPCodeCreate-" + CreateNonce() + "]"
+
+	log.Printf("[DEBUG]" + CorrelationID + "  Creating CP Code")
 
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
 	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
-	cpCode, err := cpCodes.FindCpCode(d.Get("name").(string))
+	cpCode, err := cpCodes.FindCpCode(d.Get("name").(string), CorrelationID)
 	if cpCode == nil || err != nil {
 		cpCode = cpCodes.NewCpCode()
 		cpCode.ProductID = d.Get("product").(string)
 		cpCode.CpcodeName = d.Get("name").(string)
-		log.Printf("[DEBUG] CPCode: %#v", cpCode)
-		err := cpCode.Save()
+		log.Printf("[DEBUG]"+CorrelationID+"  CPCode: %#v", cpCode)
+		err := cpCode.Save(CorrelationID)
 		if err != nil {
 			log.Print("[DEBUG] Error saving")
 			log.Printf("%s", err.(client.APIError).RawBody)
@@ -65,9 +65,9 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	log.Printf("[DEBUG] Resulting CP Code: %#v\n\n\n", cpCode)
+	log.Printf("[DEBUG]"+CorrelationID+"  Resulting CP Code: %#v\n\n\n", cpCode)
 	d.SetId(cpCode.CpcodeID)
-	PrintLogFooter()
+	//PrintLogFooter()
 	return resourceCPCodeRead(d, meta)
 }
 
@@ -80,14 +80,14 @@ func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourceCPCodeRead-" + CreateNonce())
-	PrintLogHeader()
+	CorrelationID := "[PAPI][resourceCPCodeRead-" + CreateNonce() + "]"
+	//PrintLogHeader()
 	log.Printf("[DEBUG] Reading CP Code")
 
 	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
-	cpCode, err := cpCodes.FindCpCode(d.Id())
+	cpCode, err := cpCodes.FindCpCode(d.Id(), CorrelationID)
 	if cpCode == nil || err != nil {
-		cpCode, err = cpCodes.FindCpCode(d.Get("name").(string))
+		cpCode, err = cpCodes.FindCpCode(d.Get("name").(string), CorrelationID)
 		if err != nil {
 			return err
 		}
@@ -98,9 +98,9 @@ func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(cpCode.CpcodeID)
-	log.Printf("[DEBUG] Read CP Code: %+v", cpCode)
+	log.Printf("[DEBUG]"+CorrelationID+"  Read CP Code: %+v", cpCode)
 
-	PrintLogFooter()
+	//PrintLogFooter()
 	return nil
 }
 

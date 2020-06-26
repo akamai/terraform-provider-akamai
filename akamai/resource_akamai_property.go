@@ -3,9 +3,10 @@ package akamai
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -151,40 +152,43 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 }
 
 func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourcePropertyCreate-" + CreateNonce())
+	CorrelationID := "[PAPI][resourcePropertyCreate-" + CreateNonce() + "]"
+	//log..SetPrefix("resourcePropertyCreate-" + CreateNonce())
 
-	PrintLogHeader()
+	//log.WithField("GUID", getCorrelationID)
+	//log.Printf("[DEBUG] CREATE HEADER GUID %s\n", getCorrelationID)
+	//PrintLogHeader()
 
 	d.Partial(true)
 
-	group, err := getGroup(d)
+	group, err := getGroup(d, CorrelationID)
 	if err != nil {
 		return err
 	}
 
-	contract, err := getContract(d)
+	contract, err := getContract(d, CorrelationID)
 	if err != nil {
 		return err
 	}
 
-	product, err := getProduct(d, contract)
+	product, err := getProduct(d, contract, CorrelationID)
 	if err != nil {
 		return err
 	}
 
 	var property *papi.Property
-	if property = findProperty(d); property == nil {
+	if property = findProperty(d, CorrelationID); property == nil {
 		if product == nil {
 			return errors.New("product must be specified to create a new property")
 		}
 
-		property, err = createProperty(contract, group, product, d)
+		property, err = createProperty(contract, group, product, d, CorrelationID)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = ensureEditableVersion(property)
+	err = ensureEditableVersion(property, CorrelationID)
 	if err != nil {
 		return err
 	}
@@ -202,11 +206,11 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("network")
 	d.SetPartial("cp_code")
 
-	rules, err := getRules(d, property, contract, group)
+	rules, err := getRules(d, property, contract, group, CorrelationID)
 	if err != nil {
 		return err
 	}
-	err = rules.Save()
+	err = rules.Save(CorrelationID)
 	if err != nil {
 		if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
 			var msg string
@@ -225,7 +229,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("ipv6")
 	d.Set("edge_hostnames", ehnMap)
 
-	rulesAPI, err := property.GetRules()
+	rulesAPI, err := property.GetRules(CorrelationID)
 	rulesAPI.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rulesAPI)
 	if err != nil {
@@ -233,8 +237,8 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	sha1hashAPI := getSHAString(string(jsonBody))
-	log.Printf("[DEBUG] CREATE SHA from Json %s\n", sha1hashAPI)
-	log.Printf("[DEBUG] CREATE Check rules after unmarshal from Json %s\n", string(jsonBody))
+	log.Printf("[DEBUG]"+CorrelationID+" CREATE SHA from Json %s\n", sha1hashAPI)
+	log.Printf("[DEBUG]"+CorrelationID+" CREATE Check rules after unmarshal from Json %s\n", string(jsonBody))
 
 	d.Set("rulessha", sha1hashAPI)
 	//d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
@@ -246,11 +250,11 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.Partial(false)
 	log.Println("[DEBUG] Done")
-	PrintLogFooter()
+	//PrintLogFooter()
 	return resourcePropertyRead(d, meta)
 }
 
-func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group) (*papi.Rules, error) {
+func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group, correlationid string) (*papi.Rules, error) {
 	rules := papi.NewRules()
 	rules.Rule.Name = "default"
 	rules.PropertyID = d.Id()
@@ -267,7 +271,7 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 	_, ok := d.GetOk("rules")
 
 	if ok {
-		log.Printf("[DEBUG] Unmarshal Rules from JSON")
+		log.Printf("[DEBUG]" + correlationid + "  Unmarshal Rules from JSON")
 		unmarshalRulesFromJSON(d, rules)
 	}
 
@@ -275,7 +279,7 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 		rules.RuleFormat = ruleFormat.(string)
 	} else {
 		ruleFormats := papi.NewRuleFormats()
-		rules.RuleFormat, err = ruleFormats.GetLatest()
+		rules.RuleFormat, err = ruleFormats.GetLatest(correlationid)
 		if err != nil {
 			return nil, err
 		}
@@ -289,9 +293,9 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] updateStandardBehaviors")
+	log.Printf("[DEBUG]" + correlationid + "  updateStandardBehaviors")
 	updateStandardBehaviors(rules, cpCode, origin)
-	log.Printf("[DEBUG] fixupPerformanceBehaviors")
+	log.Printf("[DEBUG]" + correlationid + "  fixupPerformanceBehaviors")
 	fixupPerformanceBehaviors(rules)
 
 	return rules, nil
@@ -336,7 +340,7 @@ func setHostnames(property *papi.Property, d *schema.ResourceData) (map[string]s
 	return ehnMap, nil
 }
 
-func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Product, d *schema.ResourceData) (*papi.Property, error) {
+func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Product, d *schema.ResourceData, correlationid string) (*papi.Property, error) {
 	log.Println("[DEBUG] Creating property")
 
 	property, err := group.NewProperty(contract)
@@ -351,13 +355,13 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 		property.RuleFormat = ruleFormat.(string)
 	} else {
 		ruleFormats := papi.NewRuleFormats()
-		property.RuleFormat, err = ruleFormats.GetLatest()
+		property.RuleFormat, err = ruleFormats.GetLatest(correlationid)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = property.Save()
+	err = property.Save(correlationid)
 	if err != nil {
 		return nil, err
 	}
@@ -367,8 +371,8 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 }
 
 func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourcePropertyDelete-" + CreateNonce())
-	PrintLogHeader()
+	CorrelationID := "[PAPI][resourcePropertyDelete-" + CreateNonce() + "]"
+	//PrintLogHeader()
 	log.Printf("[DEBUG] DELETING")
 	contractID, ok := d.GetOk("contract")
 	if !ok {
@@ -386,7 +390,7 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	property.Contract = &papi.Contract{ContractID: contractID.(string)}
 	property.Group = &papi.Group{GroupID: groupID.(string)}
 
-	e := property.GetProperty()
+	e := property.GetProperty(CorrelationID)
 	if e != nil {
 		return e
 	}
@@ -399,7 +403,7 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkProduction)
 	}
 
-	e = property.Delete()
+	e = property.Delete(CorrelationID)
 	if e != nil {
 		return e
 	}
@@ -407,7 +411,7 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	d.SetId("")
 
 	log.Println("[DEBUG] Done")
-	PrintLogFooter()
+	//PrintLogFooter()
 	return nil
 }
 
@@ -417,7 +421,7 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 
 	if !strings.HasPrefix(propertyID, "prp_") {
 		for _, searchKey := range []papi.SearchKey{papi.SearchByPropertyName, papi.SearchByHostname, papi.SearchByEdgeHostname} {
-			results, err := papi.Search(searchKey, propertyID)
+			results, err := papi.Search(searchKey, propertyID, "") //<--correlationid
 			if err != nil {
 				continue
 			}
@@ -431,7 +435,7 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
-	e := property.GetProperty()
+	e := property.GetProperty("")
 	if e != nil {
 		return nil, e
 	}
@@ -448,12 +452,12 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 }
 
 func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourcePropertyRead-" + CreateNonce())
-	PrintLogHeader()
+	CorrelationID := "[PAPI][resourcePropertyRead-" + CreateNonce() + "]"
+	//PrintLogHeader()
 	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
-	err := property.GetProperty()
+	err := property.GetProperty(CorrelationID)
 	if err != nil {
 		return err
 	}
@@ -464,7 +468,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("name", property.PropertyName)
 	d.Set("note", property.Note)
 
-	rules, err := property.GetRules()
+	rules, err := property.GetRules(CorrelationID)
 	rules.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rules)
 	if err != nil {
@@ -472,10 +476,10 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	sha1hashAPI := getSHAString(string(jsonBody))
-	log.Printf("[DEBUG] READ SHA from Json %s\n", sha1hashAPI)
+	log.Printf("[DEBUG]"+CorrelationID+"  READ SHA from Json %s\n", sha1hashAPI)
 
 	if err == nil {
-		log.Printf("[DEBUG] READ Rules from API : %s\n", string(jsonBody))
+		log.Printf("[DEBUG]"+CorrelationID+"  READ Rules from API : %s\n", string(jsonBody))
 		d.Set("rules", string(jsonBody))
 	}
 	d.Set("rulessha", sha1hashAPI)
@@ -490,9 +494,9 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("rule_format", property.RuleFormat)
 	}
 
-	log.Printf("[DEBUG] Property RuleFormat from API : %s\n", property.RuleFormat)
+	log.Printf("[DEBUG]"+CorrelationID+"  Property RuleFormat from API : %s\n", property.RuleFormat)
 	d.Set("version", property.LatestVersion)
-	log.Printf("[DEBUG] Property Version from API : %d\n", property.LatestVersion)
+	log.Printf("[DEBUG]"+CorrelationID+"  Property Version from API : %d\n", property.LatestVersion)
 	if property.StagingVersion > 0 {
 		d.Set("staging_version", property.StagingVersion)
 	}
@@ -501,27 +505,27 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Partial(false)
-	PrintLogFooter()
+	//PrintLogFooter()
 	return nil
 }
 
 func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourcePropertyUpdate-" + CreateNonce())
-	PrintLogHeader()
-	log.Printf("[DEBUG] UPDATING")
+	CorrelationID := "[PAPI][resourcePropertyUpdate-" + CreateNonce() + "]"
+	//PrintLogHeader()
+	log.Printf("[DEBUG]" + CorrelationID + "  UPDATING")
 	d.Partial(true)
 
-	property, e := getProperty(d)
+	property, e := getProperty(d, CorrelationID)
 	if e != nil {
 		return e
 	}
 
-	err := ensureEditableVersion(property)
+	err := ensureEditableVersion(property, CorrelationID)
 	if err != nil {
 		return err
 	}
 
-	rules, err := getRules(d, property, property.Contract, property.Group)
+	rules, err := getRules(d, property, property.Contract, property.Group, CorrelationID)
 
 	if d.HasChange("rule_format") || d.HasChange("rules") {
 		if ruleFormat, ok := d.GetOk("rule_format"); ok {
@@ -537,8 +541,8 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 			d.Set("rules", string(jsonBody))
 		}
 
-		log.Printf("[DEBUG] UPDATE Check rules after unmarshal from Json %s\n", string(jsonBody))
-		e = rules.Save()
+		log.Printf("[DEBUG]"+CorrelationID+"  UPDATE Check rules after unmarshal from Json %s\n", string(jsonBody))
+		e = rules.Save(CorrelationID)
 		if e != nil {
 			if e == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
 				var msg string
@@ -551,7 +555,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("update rules.Save err: %#v", e)
 		}
 
-		rules, err = property.GetRules()
+		rules, err = property.GetRules(CorrelationID)
 		rules.Etag = ""
 		jsonBody, err = jsonhooks.Marshal(rules)
 		if err != nil {
@@ -559,7 +563,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		sha1hashAPI := getSHAString(string(jsonBody))
-		log.Printf("[DEBUG] UPDATE SHA from Json %s\n", sha1hashAPI)
+		log.Printf("[DEBUG]"+CorrelationID+"  UPDATE SHA from Json %s\n", sha1hashAPI)
 		d.Set("rulessha", sha1hashAPI)
 		d.SetPartial("rulessha")
 	}
@@ -579,8 +583,8 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	d.Partial(false)
 
-	log.Println("[DEBUG] Done")
-	PrintLogFooter()
+	log.Println("[DEBUG]" + CorrelationID + "  Done")
+	//PrintLogFooter()
 	return resourcePropertyRead(d, meta)
 }
 
@@ -602,7 +606,7 @@ func resourceCustomDiffCustomizeDiff(d *schema.ResourceDiff, meta interface{}) e
 }
 
 // Helpers
-func getProperty(d interface{}) (*papi.Property, error) {
+func getProperty(d interface{}, correlationid string) (*papi.Property, error) {
 	log.Println("[DEBUG] Fetching property")
 	var propertyID string
 
@@ -617,11 +621,11 @@ func getProperty(d interface{}) (*papi.Property, error) {
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
-	e := property.GetProperty()
+	e := property.GetProperty(correlationid)
 	return property, e
 }
 
-func getGroup(d *schema.ResourceData) (*papi.Group, error) {
+func getGroup(d *schema.ResourceData, correlationid string) (*papi.Group, error) {
 	log.Println("[DEBUG] Fetching groups")
 	groupID, ok := d.GetOk("group")
 
@@ -630,7 +634,7 @@ func getGroup(d *schema.ResourceData) (*papi.Group, error) {
 	}
 
 	groups := papi.NewGroups()
-	e := groups.GetGroups()
+	e := groups.GetGroups(correlationid)
 	if e != nil {
 		return nil, e
 	}
@@ -640,19 +644,19 @@ func getGroup(d *schema.ResourceData) (*papi.Group, error) {
 		return nil, e
 	}
 
-	log.Printf("[DEBUG] Group found: %s\n", group.GroupID)
+	log.Printf("[DEBUG]"+correlationid+"  Group found: %s\n", group.GroupID)
 	return group, nil
 }
 
-func getContract(d *schema.ResourceData) (*papi.Contract, error) {
-	log.Println("[DEBUG] Fetching contract")
+func getContract(d *schema.ResourceData, correlationid string) (*papi.Contract, error) {
+	log.Println("[DEBUG]" + correlationid + "  Fetching contract")
 	contractID, ok := d.GetOk("contract")
 	if !ok {
 		return nil, nil
 	}
 
 	contracts := papi.NewContracts()
-	e := contracts.GetContracts()
+	e := contracts.GetContracts(correlationid)
 	if e != nil {
 		return nil, e
 	}
@@ -721,7 +725,7 @@ func getCPCodeDiff(d *schema.ResourceDiff, contract *papi.Contract, group *papi.
 	return cpCode, nil
 }
 
-func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product, error) {
+func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid string) (*papi.Product, error) {
 	if contract == nil {
 		return nil, nil
 	}
@@ -733,7 +737,7 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product,
 	}
 
 	products := papi.NewProducts()
-	e := products.GetProducts(contract)
+	e := products.GetProducts(contract, correlationid)
 	if e != nil {
 		return nil, e
 	}
@@ -1354,8 +1358,8 @@ func extractRules(drules *schema.Set) []*papi.Rule {
 	return rules
 }
 
-func findProperty(d *schema.ResourceData) *papi.Property {
-	results, err := papi.Search(papi.SearchByPropertyName, d.Get("name").(string))
+func findProperty(d *schema.ResourceData, correlationid string) *papi.Property {
+	results, err := papi.Search(papi.SearchByPropertyName, d.Get("name").(string), correlationid)
 	if err != nil {
 		return nil
 	}
@@ -1374,7 +1378,7 @@ func findProperty(d *schema.ResourceData) *papi.Property {
 		},
 	}
 
-	err = property.GetProperty()
+	err = property.GetProperty(correlationid)
 	if err != nil {
 		return nil
 	}
@@ -1382,25 +1386,25 @@ func findProperty(d *schema.ResourceData) *papi.Property {
 	return property
 }
 
-func ensureEditableVersion(property *papi.Property) error {
-	latestVersion, err := property.GetLatestVersion("")
+func ensureEditableVersion(property *papi.Property, correlationid string) error {
+	latestVersion, err := property.GetLatestVersion("", correlationid)
 	if err != nil {
 		return err
 	}
 
-	versions, err := property.GetVersions()
+	versions, err := property.GetVersions(correlationid)
 	if err != nil {
 		return err
 	}
 
 	if latestVersion.ProductionStatus != papi.StatusInactive || latestVersion.StagingStatus != papi.StatusInactive {
 		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
-		newVersion := versions.NewVersion(latestVersion, false)
-		err = newVersion.Save()
+		newVersion := versions.NewVersion(latestVersion, false, correlationid)
+		err = newVersion.Save(correlationid)
 		if err != nil {
 			return err
 		}
 	}
 
-	return property.GetProperty()
+	return property.GetProperty(correlationid)
 }
