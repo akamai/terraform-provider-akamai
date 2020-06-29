@@ -18,9 +18,7 @@ To get more information about Property Management, see:
 
 ## Configure the Terraform Provider
 
-Set up your credential files as described in [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started), and include authorization for the Property Manager API 
-
-Next, we need to configure the provider with our credentials. This is done using a provider configuration block.
+Set up your .edgerc credential files as described in [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started), and include read-write permissions for the Property Manager API. 
 
 1. Create a new folder called `terraform`
 1. Inside the new folder, create a new file called `akamai.tf`.
@@ -28,23 +26,10 @@ Next, we need to configure the provider with our credentials. This is done using
 
 ```hcl
 provider "akamai" {
-    property {
-      host = "..."
-        access_token = "..."
-        client_token = "..."
-        client_secret = "..."
-    }
-    
-    dns {
-        host = "..."
-        access_token = "..."
-        client_token = "..."
-        client_secret = "..."
-    }
+    edgerc = "~/.edgerc"
+    papi_section = "papi"
 }
 ```
-
-> **Note:** You only need to specify one of the property or dns blocks. The values correspond to the Akamai EdgeGrid API credential parts of the same names, and can be set using any mechanism through which you can input strings, such as Terraform input variables, which can use the environment, or from another provider such as Vault. 
 
 ## Prerequisites
 
