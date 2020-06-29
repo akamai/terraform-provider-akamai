@@ -17,13 +17,9 @@ Last updated: July 2020.
 
 In order to get started with the Akamai Terraform Provider, the following is required:
 
-* Either install the Akamai Development Environment or install Terraform.
-  * Install the Akamai Development Environment: Both Terraform and the Akamai Terraform CLI package come pre-installed in the Akamai Development Environment. Get more details in our [installation Instructions](https://developer.akamai.com/blog/2020/05/26/set-development-environment).
-  * Install Terraform: Installing Terraform as a stand-alone installation. 
-
 * Create an Akamai API Client with the right permissions and valid credentials to authenticate your Akamai Terraform files. Your Akamai API Client will require read-write permissions to either the Property Manager API, DNS API and/or Traffic Management API depending on your use-case for using the Akamai Terraform Provider.
 
-* Either import existing configurations with the [Akamai Terraform CLI](https://github.com/akamai/cli-terraform) or start from scratch with code examples.
+* Either import existing configurations with the [Akamai Terraform CLI](https://github.com/akamai/cli-terraform) or start from scratch with code examples. Note: Both Terraform and the Akamai Terraform CLI package come pre-installed in the Akamai Development Environment. Get more details in our [installation Instructions](https://developer.akamai.com/blog/2020/05/26/set-development-environment).
 
 * Run the terraform init command to load the Akamai Terraform Provider.
 
