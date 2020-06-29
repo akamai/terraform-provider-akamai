@@ -2,8 +2,8 @@ package akamai
 
 import (
 	"fmt"
-	"log"
 
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -33,8 +33,8 @@ func dataSourceCPCode() *schema.Resource {
 func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + CreateNonce() + "]"
 	//PrintLogHeader()
-	log.Printf("[DEBUG]" + CorrelationID + "  Reading CP Code")
-
+	//log.Printf("[DEBUG]" + CorrelationID + "  Reading CP Code")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CP Code")
 	cpCodeName := d.Get("name").(string)
 
 	cpCode, err := datasourceCPCodePAPINewCPCodes(d, meta).FindCpCode(cpCodeName, CorrelationID)
@@ -51,7 +51,7 @@ func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("id", cpCode.CpcodeID)
 	d.SetId(cpCode.CpcodeID)
 
-	log.Printf("[DEBUG]"+CorrelationID+"  Read CP Code: %+v", cpCode)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Read CP Code: %+v", cpCode))
 	//PrintLogFooter()
 	return nil
 }

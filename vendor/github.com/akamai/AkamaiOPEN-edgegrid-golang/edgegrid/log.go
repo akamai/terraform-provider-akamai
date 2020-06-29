@@ -162,3 +162,7 @@ func PrintHttpResponseCorrelation(res *http.Response, body bool, correlationid s
 		logstd.Printf("[DEBUG]%v RESPONSE %s\n", correlationid, string(b))
 	}
 }
+
+func PrintfCorrelation(level string, correlationid string, msg string) {
+	logstd.Printf("%s%v  %s\n", level, correlationid, msg)
+}

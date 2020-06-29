@@ -3,9 +3,9 @@ package akamai
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -38,8 +38,8 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 		name = d.Get("name").(string)
 	}
 
-	log.Printf("[DEBUG]"+CorrelationID+"  [Akamai Property Groups] Start Searching for property group records %s ", name)
-
+	//log.Printf("[DEBUG]"+CorrelationID+"  [Akamai Property Groups] Start Searching for property group records %s ", name)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  [Akamai Property Groups] Start Searching for property group records %s ", name))
 	groups := papi.NewGroups()
 	err := groups.GetGroups(CorrelationID)
 	if err != nil {
@@ -82,7 +82,8 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error looking up Group for %q: %s", name, err)
 	}
 
-	log.Printf("[DEBUG]"+CorrelationID+"  [Akamai Property Groups] Searching for records [%v]", group)
+	//log.Printf("[DEBUG]"+CorrelationID+"  [Akamai Property Groups] Searching for records [%v]", group)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Searching for records [%v]", group))
 
 groupFound:
 	d.Set("id", group.GroupID)

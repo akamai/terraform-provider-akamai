@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -31,8 +31,8 @@ func dataSourceAkamaiProperty() *schema.Resource {
 
 func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + CreateNonce() + "]"
-	log.Printf("[DEBUG]" + CorrelationID + "  Reading Property")
-
+	//log.Printf("[DEBUG]" + CorrelationID + "  Reading Property")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Reading Property")
 	property := findProperty(d, CorrelationID)
 	if property == nil {
 		return fmt.Errorf("Can't find property")

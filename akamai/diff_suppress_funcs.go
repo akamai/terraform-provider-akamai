@@ -3,8 +3,10 @@ package akamai
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -25,6 +27,7 @@ func suppressEquivalentTypeStringBoolean(k, old, new string, d *schema.ResourceD
 }
 
 func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) bool {
+	CorrelationID := "[PAPI][suppressEquivalentJsonDiffs-" + CreateNonce() + "]"
 	ob := bytes.NewBufferString("")
 	if err := json.Compact(ob, []byte(old)); err != nil {
 		return false
@@ -34,8 +37,10 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	if err := json.Compact(nb, []byte(new)); err != nil {
 		return false
 	}
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
+	//log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes())))
+	//log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes())))
 
 	rulesOld, err := getRulesForComp(d, old, "")
 	rulesOld.Etag = ""
@@ -45,7 +50,8 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	}
 	sha1hashOld := getSHAString(string(jsonBody))
 
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
+	//log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld))
 
 	rulesNew, err := getRulesForComp(d, new, "")
 	rulesNew.Etag = ""
@@ -55,13 +61,16 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	}
 	sha1hashNew := getSHAString(string(jsonBodyNew))
 
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew)
+	//log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew))
 
 	if sha1hashOld == sha1hashNew {
-		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Equal skip diff \n")
+		//log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Equal skip diff \n")
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Equal skip diff \n")
 		return true
 	} else {
-		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
+		//log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
 		return false
 	}
 
@@ -131,7 +140,7 @@ func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Ru
 	//rules.PropertyID = d.Id()
 	rules.PropertyVersion = property.LatestVersion
 
-	origin, err := createOrigin(d)
+	origin, err := createOrigin(d, correlationid)
 	if err != nil {
 		return nil, err
 	}
@@ -169,15 +178,15 @@ func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Ru
 	//if ok := d.HasChange("rule_format"); ok {
 	//}
 
-	cpCode, err := getCPCode(d, property.Contract, property.Group)
+	cpCode, err := getCPCode(d, property.Contract, property.Group, correlationid)
 	if err != nil {
 		return nil, err
 	}
 
 	log.Printf("[DEBUG] updateStandardBehaviors")
-	updateStandardBehaviors(rules, cpCode, origin)
+	updateStandardBehaviors(rules, cpCode, origin, correlationid)
 	log.Printf("[DEBUG] fixupPerformanceBehaviors")
-	fixupPerformanceBehaviors(rules)
+	fixupPerformanceBehaviors(rules, correlationid)
 
 	return rules, nil
 }
