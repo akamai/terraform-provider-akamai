@@ -56,7 +56,7 @@ type ZoneCreate struct {
 	TsigKey               *TSIGKey `json:"tsigKey,omitempty"`
 	Target                string   `json:"target,omitempty"`
 	EndCustomerId         string   `json:"endCustomerId,omitempty"`
-	ContractId            string   `json:"contractid,omitempty"`
+	ContractId            string   `json:"contractId,omitempty"`
 }
 
 var zoneStructMap map[string]string = map[string]string{
@@ -69,7 +69,7 @@ var zoneStructMap map[string]string = map[string]string{
 	"TsigKey":               "tsigKey",
 	"Target":                "target",
 	"EndCustomerId":         "endCustomerId",
-	"ContractId":            "contractid"}
+	"ContractId":            "contractId"}
 
 type ZoneResponse struct {
 	Zone                  string   `json:"zone,omitempty"`
@@ -81,13 +81,13 @@ type ZoneResponse struct {
 	TsigKey               *TSIGKey `json:"tsigKey,omitempty"`
 	Target                string   `json:"target,omitempty"`
 	EndCustomerId         string   `json:"endCustomerId,omitempty"`
-	ContractId            string   `json:"contractid,omitempty"`
+	ContractId            string   `json:"contractId,omitempty"`
 	AliasCount            int64    `json:"aliasCount,omitempty"`
-	ActivationState       string   `json:"activationstate,omitempty"`
-	LastActivationDate    string   `json:"lastactivationdate,omitempty"`
-	LastModifiedBy        string   `json:"lastmodifiedby,omitempty"`
-	LastModifiedDate      string   `json:"lastmodifieddate,omitempty"`
-	VersionId             string   `json:"versionid,omitempty"`
+	ActivationState       string   `json:"activationState,omitempty"`
+	LastActivationDate    string   `json:"lastActivationDate,omitempty"`
+	LastModifiedBy        string   `json:"lastModifiedBy,omitempty"`
+	LastModifiedDate      string   `json:"lastModifiedDate,omitempty"`
+	VersionId             string   `json:"versionId,omitempty"`
 }
 
 // Zone List Query args struct
@@ -361,7 +361,7 @@ func GetMasterZoneFile(zone string) (string, error) {
 }
 
 // Create a Zone
-func (zone *ZoneCreate) Save(zonequerystring ZoneQueryString) error {
+func (zone *ZoneCreate) Save(zonequerystring ZoneQueryString, clearConn ...bool) error {
 	// This lock will restrict the concurrency of API calls
 	// to 1 save request at a time. This is needed for the Soa.Serial value which
 	// is required to be incremented for every subsequent update to a zone
@@ -404,6 +404,17 @@ func (zone *ZoneCreate) Save(zonequerystring ZoneQueryString) error {
 	if client.IsError(res) {
 		err := client.NewAPIError(res)
 		return &ZoneError{zoneName: zone.Zone, apiErrorMessage: err.Detail, err: err}
+	}
+
+	if strings.ToUpper(zone.Type) == "PRIMARY" {
+		// Timing issue with Create immediately followed by SaveChangelist
+		for _, clear := range clearConn {
+			// should only be one entry
+			if clear {
+				edge.LogMultiline(edge.EdgegridLog.Traceln, "Clearing Idle Connections")
+				client.Client.CloseIdleConnections()
+			}
+		}
 	}
 
 	return nil

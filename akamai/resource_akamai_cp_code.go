@@ -45,6 +45,8 @@ func resourceCPCode() *schema.Resource {
 }
 
 func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
+	setCorrelationID("resourceCPCodeCreate-" + CreateNonce())
+	PrintLogHeader()
 	log.Printf("[DEBUG] Creating CP Code")
 
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
@@ -65,7 +67,7 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] Resulting CP Code: %#v\n\n\n", cpCode)
 	d.SetId(cpCode.CpcodeID)
-
+	PrintLogFooter()
 	return resourceCPCodeRead(d, meta)
 }
 
@@ -78,6 +80,8 @@ func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
+	setCorrelationID("resourceCPCodeRead-" + CreateNonce())
+	PrintLogHeader()
 	log.Printf("[DEBUG] Reading CP Code")
 
 	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
@@ -95,6 +99,8 @@ func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(cpCode.CpcodeID)
 	log.Printf("[DEBUG] Read CP Code: %+v", cpCode)
+
+	PrintLogFooter()
 	return nil
 }
 

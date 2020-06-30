@@ -170,6 +170,12 @@ rules = "${data.template_file.rules.rendered}"
 }
 ```
 
+## Primary Zone Partially Created
+
+In the rare instance, a primary zone may be only partially created on the Akamai backend; for example in the case of a network error. In this situation, the zone may have been created but not the SOA and NS records. Hence forth, any attempt to manage or administer recordsets in the zone will fail. The SOA and NS records must be manually created in order to continue to manage the configuration.
+
+The records can be created either thru the [Akamai Control Center](https://control.akamai.com) or via the [CLI-DNS](https://github.com/akamai/cli-dns) package for the [Akamai CLI](https://developer.akamai.com/cli).
+ 
 ## Migrating an Edge DNS Zone and Records to Terraform
 
 Migrating an existing Edge DNS Zone can be done in many ways. Two such methods include:
