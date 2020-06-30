@@ -1,9 +1,10 @@
 package akamai
 
 import (
-	"log"
+	"fmt"
 	"strings"
 
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -69,11 +70,12 @@ var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
 }
 
 func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[PAPI][resourcePropertyVariablesCreate-" + CreateNonce() + "]"
 	rule := papi.NewRule()
-	log.Printf("[DEBUG] START Check for variables")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, ": START Check for variables")
 	variables, ok := d.GetOk("variables")
 	if ok {
-		log.Printf("[DEBUG] Check for variables  %s\n", variables)
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables  %s\n", variables))
 	}
 
 	for _, r := range variables.(*schema.Set).List() {
@@ -84,12 +86,12 @@ func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) e
 				for _, v := range vv.(*schema.Set).List() {
 					variableMap, ok := v.(map[string]interface{})
 					if ok {
-						log.Printf("[DEBUG] Check for variables LOOP  name %s\n", variableMap["name"])
-						log.Printf("[DEBUG] Check for variables LOOP  value %s\n", variableMap["value"])
-						log.Printf("[DEBUG] Check for variables LOOP  description%s\n", variableMap["description"])
-						log.Printf("[DEBUG] Check for variables LOOP  hidden%s\n", variableMap["hidden"])
-						log.Printf("[DEBUG] Check for variables LOOP  sensitive%s\n", variableMap["sensitive"])
-						log.Printf("[DEBUG] Check for variables LOOP  fqname%s\n", variableMap["fqname"])
+						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  name %s\n", variableMap["name"]))
+						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  value %s\n", variableMap["value"]))
+						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  description%s\n", variableMap["description"]))
+						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  hidden%s\n", variableMap["hidden"]))
+						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  sensitive%s\n", variableMap["sensitive"]))
+						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  fqname%s\n", variableMap["fqname"]))
 						newVariable := papi.NewVariable()
 						newVariable.Name = variableMap["name"].(string)
 						newVariable.Description = variableMap["description"].(string)
@@ -109,23 +111,23 @@ func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) e
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Json result  %s\n", string(jsonBody))
 
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Json result  %s\n", string(jsonBody)))
 	sha := getSHAString(string(jsonBody))
 	d.Set("json", string(jsonBody))
 
 	d.SetId(sha)
-	log.Println("[DEBUG] Done")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Done")
 
 	return resourcePropertyVariablesRead(d, meta)
 }
 
 func resourcePropertyVariablesDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] DELETING")
-
+	CorrelationID := "[PAPI][resourcePropertyVariablesDelete-" + CreateNonce() + "]"
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "DELETING")
 	d.SetId("")
 
-	log.Println("[DEBUG] Done")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Done")
 
 	return nil
 }
@@ -167,10 +169,10 @@ func resourcePropertyVariablesImport(d *schema.ResourceData, meta interface{}) (
 }
 
 func resourcePropertyVariablesExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-
+	CorrelationID := "[PAPI][resourcePropertyVariablesExists-" + CreateNonce() + "]"
 	variables := d.Id()
 	if variables != "" {
-		log.Printf("[DEBUG] Check for variables  %s\n", variables)
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables  %s\n", variables))
 		return true, nil
 	} else {
 		return true, nil
@@ -185,12 +187,13 @@ func resourcePropertyVariablesRead(d *schema.ResourceData, meta interface{}) err
 }
 
 func resourcePropertyVariablesUpdate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] UPDATING")
+	CorrelationID := "[PAPI][resourcePropertyVariablesUpdate-" + CreateNonce() + "]"
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "UPDATING")
 	rule := papi.NewRule()
-	log.Printf("[DEBUG] START Check for variables")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " START Check for variables")
 	variables, ok := d.GetOk("variables")
 	if ok {
-		log.Printf("[DEBUG] Check for variables  %s\n", variables)
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables  %s\n", variables))
 		//}
 
 		for _, r := range variables.(*schema.Set).List() {
@@ -220,13 +223,14 @@ func resourcePropertyVariablesUpdate(d *schema.ResourceData, meta interface{}) e
 		if err != nil {
 			return err
 		}
-		log.Printf("[DEBUG] Json result  %s\n", string(jsonBody))
+
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Json result  %s\n", string(jsonBody)))
 
 		sha := getSHAString(string(jsonBody))
 		d.Set("json", string(jsonBody))
 
 		d.SetId(sha)
 	}
-	log.Println("[DEBUG] Done")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Done")
 	return nil
 }

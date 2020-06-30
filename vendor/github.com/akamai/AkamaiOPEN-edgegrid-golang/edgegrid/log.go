@@ -95,23 +95,6 @@ func LogMultilinef(f func(formatter string, args ...interface{}), formatter stri
 	}
 }
 
-/*func PrintLogHeader() {
-	if LogCorrelationID != nil {
-		strLogCorrelationIDValue := *LogCorrelationID
-		LogMultiline(EdgegridLog.Traceln, "START CORRELATION ID "+strLogCorrelationIDValue)
-
-	}
-}
-
-func PrintLogFooter() {
-	if LogCorrelationID != nil {
-		strLogCorrelationIDValue := *LogCorrelationID
-		LogMultiline(EdgegridLog.Traceln, "END CORRELATION ID "+strLogCorrelationIDValue)
-		LogCorrelationID = nil
-	}
-}
-*/
-
 // Utility func to print http req
 func PrintHttpRequest(req *http.Request, body bool) {
 
@@ -145,7 +128,6 @@ func PrintHttpResponse(res *http.Response, body bool) {
 	}
 	b, err := httputil.DumpResponse(res, body)
 	if err == nil {
-		//PrintLogHeader()
 		LogMultiline(EdgegridLog.Traceln, string(b))
 		logstd.Printf("[DEBUG] RESPONSE %s\n", string(b))
 	}

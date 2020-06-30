@@ -32,8 +32,7 @@ func dataSourceCPCode() *schema.Resource {
 
 func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + CreateNonce() + "]"
-	//PrintLogHeader()
-	//log.Printf("[DEBUG]" + CorrelationID + "  Reading CP Code")
+
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CP Code")
 	cpCodeName := d.Get("name").(string)
 
@@ -52,7 +51,6 @@ func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(cpCode.CpcodeID)
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Read CP Code: %+v", cpCode))
-	//PrintLogFooter()
 	return nil
 }
 

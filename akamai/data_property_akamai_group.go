@@ -38,7 +38,6 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 		name = d.Get("name").(string)
 	}
 
-	//log.Printf("[DEBUG]"+CorrelationID+"  [Akamai Property Groups] Start Searching for property group records %s ", name)
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  [Akamai Property Groups] Start Searching for property group records %s ", name))
 	groups := papi.NewGroups()
 	err := groups.GetGroups(CorrelationID)
@@ -82,7 +81,6 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error looking up Group for %q: %s", name, err)
 	}
 
-	//log.Printf("[DEBUG]"+CorrelationID+"  [Akamai Property Groups] Searching for records [%v]", group)
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Searching for records [%v]", group))
 
 groupFound:

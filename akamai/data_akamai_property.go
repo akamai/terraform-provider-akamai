@@ -31,7 +31,7 @@ func dataSourceAkamaiProperty() *schema.Resource {
 
 func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + CreateNonce() + "]"
-	//log.Printf("[DEBUG]" + CorrelationID + "  Reading Property")
+
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Reading Property")
 	property := findProperty(d, CorrelationID)
 	if property == nil {

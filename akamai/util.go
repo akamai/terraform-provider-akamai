@@ -103,35 +103,6 @@ func makeCache() *cache.Cache {
 	return profilecache
 }
 
-/*
-func getCorrelationID() (result *string) {
-	//log.Printf("[DEBUG] getCorrelationID %s\n", LocalLogCorrelationID)
-	//LocalLogCorrelationID = edge.LogCorrelationID
-	result = edge.LogCorrelationID
-	return result
-}
-*/
-/*
-func PrintLogHeader() {
-	//log.Printf("[DEBUG] START PrintLogHeader %s\n", LocalLogCorrelationID)
-	if edge.LogCorrelationID != nil {
-		strLogCorrelationIDValue := *edge.LogCorrelationID
-		log.Printf("[DEBUG] START CORRELATION ID %s\n", strLogCorrelationIDValue)
-		//edge.LogCorrelationID = nil
-		KeepLogCorrelationID = edge.LogCorrelationID
-	}
-}
-
-func PrintLogFooter() {
-	edge.LogCorrelationID = KeepLogCorrelationID
-	if edge.LogCorrelationID != nil {
-		strLogCorrelationIDValue := *edge.LogCorrelationID
-		log.Printf("[DEBUG] END CORRELATION ID %s\n", strLogCorrelationIDValue)
-		edge.LogCorrelationID = nil
-	}
-}
-*/
-
 func CreateNonce() string {
 	uuid, err := uuid.NewRandom()
 	if err != nil {

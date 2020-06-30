@@ -37,9 +37,8 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	if err := json.Compact(nb, []byte(new)); err != nil {
 		return false
 	}
-	//log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
+
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes())))
-	//log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes())))
 
 	rulesOld, err := getRulesForComp(d, old, "")
@@ -50,7 +49,6 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	}
 	sha1hashOld := getSHAString(string(jsonBody))
 
-	//log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld))
 
 	rulesNew, err := getRulesForComp(d, new, "")
@@ -61,15 +59,12 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	}
 	sha1hashNew := getSHAString(string(jsonBodyNew))
 
-	//log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew)
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew))
 
 	if sha1hashOld == sha1hashNew {
-		//log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Equal skip diff \n")
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Equal skip diff \n")
 		return true
 	} else {
-		//log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
 		return false
 	}
@@ -77,6 +72,7 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 }
 
 func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff) bool {
+	CorrelationID := "[PAPI][suppressEquivalentJsonPendingDiffs-" + CreateNonce() + "]"
 	ob := bytes.NewBufferString("")
 	if err := json.Compact(ob, []byte(old)); err != nil {
 		return false
@@ -86,8 +82,9 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 	if err := json.Compact(nb, []byte(new)); err != nil {
 		return false
 	}
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
+
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes())))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes())))
 
 	rulesOld, err := getRulesForComp(d, old, "")
 	rulesOld.Etag = ""
@@ -97,7 +94,7 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 	}
 	sha1hashOld := getSHAString(string(jsonBody))
 
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld))
 
 	rulesNew, err := getRulesForComp(d, new, "")
 	rulesNew.Etag = ""
@@ -107,13 +104,13 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 	}
 	sha1hashNew := getSHAString(string(jsonBodyNew))
 
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew))
 
 	if sha1hashOld == sha1hashNew {
-		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Equal skip diff \n")
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Equal skip diff \n")
 		return true
 	} else {
-		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
 		return false
 	}
 
@@ -149,7 +146,7 @@ func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Ru
 
 	//rulecheck
 
-	log.Printf("[DEBUG] Unmarshal Rules from JSON")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, "  Unmarshal Rules from JSON")
 	unmarshalRulesFromJSONComp(d, json, rules)
 
 	var ruleFormat interface{}
@@ -183,9 +180,7 @@ func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Ru
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] updateStandardBehaviors")
 	updateStandardBehaviors(rules, cpCode, origin, correlationid)
-	log.Printf("[DEBUG] fixupPerformanceBehaviors")
 	fixupPerformanceBehaviors(rules, correlationid)
 
 	return rules, nil

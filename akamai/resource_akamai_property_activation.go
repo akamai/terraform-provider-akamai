@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -83,13 +84,13 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 		for activation.Status != papi.StatusActive {
 			select {
 			case statusChanged := <-activation.StatusChange:
-				log.Printf("[DEBUG]"+CorrelationID+"  Property Status: %s\n", activation.Status)
+				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Property Status: %s\n", activation.Status))
 				if statusChanged == false {
 					break polling
 				}
 				continue polling
 			case <-time.After(time.Minute * 90):
-				log.Println("[DEBUG]" + CorrelationID + "  Activation Timeout (90 minutes)")
+				edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Activation Timeout (90 minutes)")
 				break polling
 			}
 		}
@@ -98,14 +99,14 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	d.Partial(false)
-	log.Println("[DEBUG] Done")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
 	return nil
 }
 
 func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + CreateNonce() + "]"
-	log.Printf("[DEBUG]" + CorrelationID + "  DEACTIVATE PROPERTY")
 
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  DEACTIVATE PROPERTY")
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Get("property").(string)
 	e := property.GetProperty(CorrelationID)
@@ -113,19 +114,17 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 		return e
 	}
 
-	log.Printf("[DEBUG]"+CorrelationID+"  DEACTIVE PROPERTY %v", property)
-
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  DEACTIVE PROPERTY %v", property))
 	network := papi.NetworkValue(d.Get("network").(string))
 	propertyVersion := property.ProductionVersion
 	if network == "STAGING" {
 		propertyVersion = property.StagingVersion
 	}
 	version := d.Get("version").(int)
-	log.Printf("[DEBUG] Version to deactivate is %d and current active %s version is %d\n", version, network, propertyVersion)
-
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Version to deactivate is %d and current active %s version is %d\n", version, network, propertyVersion))
 	if propertyVersion == version {
 		// The current active version is the one we need to deactivate
-		log.Printf("[DEBUG]"+CorrelationID+"  Deactivating %s version %d \n", network, version)
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Deactivating %s version %d \n", network, version))
 		activation, err := deactivateProperty(property, d, papi.NetworkValue(d.Get("network").(string)), CorrelationID)
 		if err != nil {
 			return err
@@ -137,13 +136,13 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 		for activation.Status != papi.StatusActive {
 			select {
 			case statusChanged := <-activation.StatusChange:
-				log.Printf("[DEBUG]"+CorrelationID+"  Property Status: %s\n", activation.Status)
+				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Property Status: %s\n", activation.Status))
 				if statusChanged == false {
 					break polling
 				}
 				continue polling
 			case <-time.After(time.Minute * 90):
-				log.Println("[DEBUG] Activation Timeout (90 minutes)")
+				edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Activation Timeout (90 minutes)")
 				break polling
 			}
 		}
@@ -214,9 +213,9 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 
 func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + CreateNonce() + "]"
-	log.Printf("[DEBUG]" + CorrelationID + "  UPDATING")
 
-	log.Println("[DEBUG] Fetching property")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " UPDATING")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Fetching property")
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Get("property").(string)
 	e := property.GetProperty(CorrelationID)
@@ -229,7 +228,7 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
-	a, err := findExistingActivation(property, activation)
+	a, err := findExistingActivation(property, activation, CorrelationID)
 	if err == nil {
 		activation = a
 	}
@@ -259,13 +258,13 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		for activation.Status != papi.StatusActive {
 			select {
 			case statusChanged := <-activation.StatusChange:
-				log.Printf("[DEBUG]"+CorrelationID+"  Property Status: %s\n", activation.Status)
+				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Property Status: %s\n", activation.Status))
 				if statusChanged == false {
 					break polling
 				}
 				continue polling
 			case <-time.After(time.Minute * 90):
-				log.Println("[DEBUG] Activation Timeout (90 minutes)")
+				edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Activation Timeout (90 minutes)")
 				break polling
 			}
 		}
@@ -275,7 +274,7 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 		return resourcePropertyActivationRead(d, meta)
 	}
 
-	log.Println("[DEBUG] Done")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Done")
 	return nil
 }
 
@@ -285,18 +284,17 @@ func activateProperty(property *papi.Property, d *schema.ResourceData, correlati
 		return nil, err
 	}
 
-	if a, err := findExistingActivation(property, activation); err == nil && a != nil {
+	if a, err := findExistingActivation(property, activation, correlationid); err == nil && a != nil {
 		return a, nil
 	}
 
 	err = activation.Save(property, true)
 	if err != nil {
 		body, _ := json.Marshal(activation)
-		log.Printf("[DEBUG]"+correlationid+"  API Request Body: %s\n", string(body))
+		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  API Request Body: %s\n", string(body)))
 		return nil, err
 	}
-	log.Println("[DEBUG] Activation submitted successfully")
-
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Activation submitted successfully")
 	return activation, nil
 }
 
@@ -312,23 +310,23 @@ func deactivateProperty(property *papi.Property, d *schema.ResourceData, network
 		return nil, err
 	}
 
-	if a, err := findExistingActivation(property, activation); err == nil && a != nil {
+	if a, err := findExistingActivation(property, activation, correlationid); err == nil && a != nil {
 		return a, nil
 	}
 
 	err = activation.Save(property, true)
 	if err != nil {
 		body, _ := json.Marshal(activation)
-		log.Printf("[DEBUG]"+correlationid+"  API Request Body: %s\n", string(body))
+		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  API Request Body: %s\n", string(body)))
 		return nil, err
 	}
-	log.Println("[DEBUG] Deactivation submitted successfully")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Deactivation submitted successfully")
 
 	return activation, nil
 }
 
 func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue, correlationid string) (*papi.Activation, error) {
-	log.Println("[DEBUG] Creating new activation")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Creating new activation")
 	activation := papi.NewActivation(papi.NewActivations())
 	if version, ok := d.GetOk("version"); ok && version.(int) != 0 {
 		activation.PropertyVersion = version.(int)
@@ -337,7 +335,7 @@ func getActivation(d *schema.ResourceData, property *papi.Property, activationTy
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("[DEBUG] Using latest version: %d\n", version.PropertyVersion)
+		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Using latest version: %d\n", version.PropertyVersion))
 		activation.PropertyVersion = version.PropertyVersion
 	}
 	activation.Network = network
@@ -348,11 +346,11 @@ func getActivation(d *schema.ResourceData, property *papi.Property, activationTy
 
 	activation.ActivationType = activationType
 
-	log.Println("[DEBUG] Activating")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Activating")
 	return activation, nil
 }
 
-func findExistingActivation(property *papi.Property, activation *papi.Activation) (*papi.Activation, error) {
+func findExistingActivation(property *papi.Property, activation *papi.Activation, correlationid string) (*papi.Activation, error) {
 	activations, err := property.GetActivations()
 	if err != nil {
 		return nil, err
@@ -377,7 +375,8 @@ func findExistingActivation(property *papi.Property, activation *papi.Activation
 			return nil, fmt.Errorf("%s already in progress: v%d on %s", activation.ActivationType, activation.PropertyVersion, activation.Network)
 		}
 
-		log.Println("[DEBUG] Existing activation found")
+		//log.Println("[DEBUG] Existing activation found")
+		edge.PrintfCorrelation("[DEBUG]", correlationid, " AExisting activation found")
 		return a, nil
 	}
 
