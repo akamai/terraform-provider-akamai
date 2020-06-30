@@ -32,10 +32,18 @@ Leveraging Product IDs in your setup requires you to retrieve the ID for the spe
 
 | Product | Code |
 |---|---|
-| Ion/Ion Premier          | `prd_SPM`        |
-| Ion Standard             | `prd_Fresca`     |
+| Web Performance Solutions                   |
 | Dynamic Site Accelerator | `prd_Site_Accel` |
+| Ion Standard             | `prd_Fresca`     |
+| Ion Premier          | `prd_SPM`        |
+| Dynamic Site Delivery | `prd_Site_Del` |
 | Rich Media Accelerator   | `prd_Rich_Media_Accel` |
-| Ion Standard             | `prd_Fresca`           |
+| IoT Edge Connect | `prd_IoT` |
+| Security Solutions          |         |
+| Kona Site Defender | `prd_Site_Defender` |
+| Media Delivery Solutions          |         |
+| Download Delivery | `prd_Download_Delivery` |
+| Object Delivery | `prd_Object_Delivery` |
+| Adaptive Media Delivery | `prd_Adaptive_Media_Delivery` |
 
 Note that if you have previously used the Property Manager API or CLI set-prefixes toggle option, you might have to remove the "prd_" prefix
