@@ -2044,7 +2044,7 @@ func checkSrvRecord(d *schema.ResourceData) error {
 		return err
 	}
 
-	if priority == 0 {
+	if priority < 0 || priority > 65535 {
 		return fmt.Errorf("Configuration argument priority must be set for SRV.")
 	}
 
