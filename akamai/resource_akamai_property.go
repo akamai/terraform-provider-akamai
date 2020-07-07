@@ -151,6 +151,10 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 }
 
 func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
+	setCorrelationID("resourcePropertyCreate-" + CreateNonce())
+
+	PrintLogHeader()
+
 	d.Partial(true)
 
 	group, err := getGroup(d)
@@ -242,6 +246,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.Partial(false)
 	log.Println("[DEBUG] Done")
+	PrintLogFooter()
 	return resourcePropertyRead(d, meta)
 }
 
@@ -362,6 +367,8 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 }
 
 func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
+	setCorrelationID("resourcePropertyDelete-" + CreateNonce())
+	PrintLogHeader()
 	log.Printf("[DEBUG] DELETING")
 	contractID, ok := d.GetOk("contract")
 	if !ok {
@@ -400,7 +407,7 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	d.SetId("")
 
 	log.Println("[DEBUG] Done")
-
+	PrintLogFooter()
 	return nil
 }
 
@@ -441,6 +448,8 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 }
 
 func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
+	setCorrelationID("resourcePropertyRead-" + CreateNonce())
+	PrintLogHeader()
 	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
@@ -492,10 +501,13 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Partial(false)
+	PrintLogFooter()
 	return nil
 }
 
 func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
+	setCorrelationID("resourcePropertyUpdate-" + CreateNonce())
+	PrintLogHeader()
 	log.Printf("[DEBUG] UPDATING")
 	d.Partial(true)
 
@@ -568,6 +580,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	d.Partial(false)
 
 	log.Println("[DEBUG] Done")
+	PrintLogFooter()
 	return resourcePropertyRead(d, meta)
 }
 
