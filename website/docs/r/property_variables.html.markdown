@@ -46,5 +46,5 @@ The `variables` block may contain many `variable` blocks which support the follo
 * `name` — (Required) The name of the variable.
 * `value` — (Required) The default value to assign to the variable
 * `description` — (Optional) A human-readable description
-* `hidden` — (Optional) Whether to hide the variable when debugging requests
-* `sensitive` — (Optional) Whether to obscure the value when debugging requests
+* `hidden` — (Required) Whether to hide the variable when debugging requests
+* `sensitive` — (Required) Whether to obscure the value when debugging requests
