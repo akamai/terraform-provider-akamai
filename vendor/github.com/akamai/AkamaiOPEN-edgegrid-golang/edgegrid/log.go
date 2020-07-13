@@ -16,6 +16,8 @@ package edgegrid
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -106,7 +108,8 @@ func PrintHttpRequestCorrelation(req *http.Request, body bool, correlationid str
 	b, err := httputil.DumpRequestOut(req, body)
 	if err == nil {
 		LogMultiline(EdgegridLog.Traceln, string(b))
-		logstd.Printf("[DEBUG]%v REQUEST  %s\n", correlationid, string(b))
+		//logstd.Printf("[DEBUG]%v REQUEST  %s\n", correlationid, prettyPrintJsonLines(b))
+		PrintfCorrelation("[DEBUG] REQUEST", correlationid, prettyPrintJsonLines(b))
 	}
 }
 
@@ -131,7 +134,8 @@ func PrintHttpResponseCorrelation(res *http.Response, body bool, correlationid s
 	b, err := httputil.DumpResponse(res, body)
 	if err == nil {
 		LogMultiline(EdgegridLog.Traceln, string(b))
-		logstd.Printf("[DEBUG]%v RESPONSE %s\n", correlationid, string(b))
+		//logstd.Printf("[DEBUG]%v RESPONSE %s\n", correlationid, prettyPrintJsonLines(b))
+		PrintfCorrelation("[DEBUG] RESPONSE ", correlationid, prettyPrintJsonLines(b))
 	}
 }
 
@@ -145,4 +149,18 @@ func PrintfCorrelation(level string, correlationid string, msg string) {
 		logstd.Printf("%v %s\n", correlationid, msg)
 	}
 
+}
+
+// prettyPrintJsonLines iterates through a []byte line-by-line,
+// transforming any lines that are complete json into pretty-printed json.
+func prettyPrintJsonLines(b []byte) string {
+	parts := strings.Split(string(b), "\n")
+	for i, p := range parts {
+		if b := []byte(p); json.Valid(b) {
+			var out bytes.Buffer
+			json.Indent(&out, b, "", " ")
+			parts[i] = out.String()
+		}
+	}
+	return strings.Join(parts, "\n")
 }
