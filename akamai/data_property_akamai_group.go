@@ -63,13 +63,17 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 			}
 		}
 	} else {
-		group, err = groups.FindGroupId(name)
+		var foundGroups []*papi.Group
+		foundGroups, err := groups.FindGroupsByName(name)
 
 		// Make sure the group belongs to the specified contract
 		if err == nil && contractOk {
-			for _, c := range group.ContractIDs {
-				if c == contract.(string) || c == "ctr_"+contract.(string) {
-					goto groupFound
+			for _, foundGroup := range foundGroups {
+				for _, c := range foundGroup.ContractIDs {
+					if c == contract.(string) || c == "ctr_"+contract.(string) {
+						group = foundGroup
+						goto groupFound
+					}
 				}
 			}
 

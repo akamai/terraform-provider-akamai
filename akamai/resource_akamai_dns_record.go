@@ -547,6 +547,29 @@ func getRecordLock(zone, host, recordtype string) *sync.Mutex {
 
 }
 
+func bumpSoaSerial(name string, d *schema.ResourceData, zone string, host string) (recordFunction, error) {
+	// Get SOA Record
+	recordset, e := dnsv2.GetRecord(zone, host, "SOA")
+	if e != nil {
+		return nil, fmt.Errorf("error looking up SOA record for %s: %s", host, e.Error())
+	}
+	rdataFieldMap := dnsv2.ParseRData("SOA", recordset.Target)
+	serial := rdataFieldMap["serial"].(int) + 1
+	d.Set("serial", serial)
+	newrecord, err := bindRecord(d)
+	if err != nil {
+		return nil, err
+	}
+	if name == "CREATE" {
+		return newrecord.Save, nil
+	} else if name == "UPDATE" {
+		return newrecord.Update, nil
+	}
+
+	return nil, fmt.Errorf("Bad Function")
+
+}
+
 // Record function signature
 type recordFunction func(string, ...bool) error
 
@@ -561,6 +584,16 @@ func executeRecordFunction(name string, d *schema.ResourceData, fn recordFunctio
 				log.Printf("[WARNING] [Akamai DNSv2] Concurrency Conflict")
 				opRetry -= 1
 				time.Sleep(100 * time.Millisecond)
+				e = fn(zone, rlock)
+				continue
+			} else if (name == "CREATE" || name == "UPDATE") && strings.Contains(e.(*dnsv2.RecordError).Error(), "SOA serial number must be incremented") {
+				log.Printf("[WARNING] [Akamai DNSv2] SOA Serial Number needs incrementing")
+				opRetry -= 1
+				time.Sleep(5 * time.Second) // let things quiesce
+				fn, err := bumpSoaSerial(name, d, zone, host)
+				if err != nil {
+					return err
+				}
 				e = fn(zone, rlock)
 				continue
 			} else if name == "DELETE" && e.(dnsv2.ConfigDNSError).NotFound() == true {
@@ -616,6 +649,15 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	// serialize record creates of same type
 	getRecordLock(zone, host, recordtype).Lock()
 	defer getRecordLock(zone, host, recordtype).Unlock()
+
+	/*
+		// works but serializes all recordset creates and updates per host
+		if recordtype != "SOA" {
+			// TF is multi threaded. Can't update SOA concurrently with other records
+			getRecordLock(zone, zone, "SOA").Lock()
+			defer getRecordLock(zone, zone, "SOA").Unlock()
+		}
+	*/
 
 	if recordtype == "SOA" {
 		// A default SOA is created automagically when the primary zone is created ...
@@ -2002,7 +2044,7 @@ func checkSrvRecord(d *schema.ResourceData) error {
 		return err
 	}
 
-	if priority == 0 {
+	if priority < 0 || priority > 65535 {
 		return fmt.Errorf("Configuration argument priority must be set for SRV.")
 	}
 
