@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+
 	//"strings"
 	"testing"
 )
@@ -67,7 +68,7 @@ func testAccCheckAkamaiSecureEdgeHostNameExists(s *terraform.State) error {
 		hostname := rs.Primary.Attributes["edge_hostname"]
 
 		groups := papi.NewGroups()
-		e := groups.GetGroups()
+		e := groups.GetGroups("CORRELATIONID")
 		if e != nil {
 			return e
 		}
@@ -81,7 +82,7 @@ func testAccCheckAkamaiSecureEdgeHostNameExists(s *terraform.State) error {
 
 		contracts := papi.NewContracts()
 
-		e = contracts.GetContracts()
+		e = contracts.GetContracts("CORRELATIONID")
 		if e != nil {
 			return e
 		}
@@ -100,7 +101,7 @@ func testAccCheckAkamaiSecureEdgeHostNameExists(s *terraform.State) error {
 		log.Println("[DEBUG] Figuring out edgehostnames ", rs.Primary.ID)
 		edgeHostnames := papi.NewEdgeHostnames()
 		log.Println("[DEBUG] NewEdgeHostnames empty struct  ", edgeHostnames.ContractID)
-		err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "")
+		err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "", "CORRELATIONID")
 		if err != nil {
 			return err
 		}

@@ -76,13 +76,13 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 		return e
 	}
 	//	log.Println("[DEBUG] Edgehostnames GROUP = ", group)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Edgehostnames GROUP = ", group))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Edgehostnames GROUP = %v", group))
 	contract, e := getContract(d, CorrelationID)
 	if e != nil {
 		return e
 	}
 	//log.Println("[DEBUG] Edgehostnames CONTRACT = ", contract)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Edgehostnames CONTRACT = ", contract))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Edgehostnames CONTRACT = %v", contract))
 	product, e := getProduct(d, contract, CorrelationID)
 	if e != nil {
 		return e
@@ -160,7 +160,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 			return fmt.Errorf("existing edge hostname found with incompatible IP version (%s vs %s). You must use the same settings, or try a different edge hostname", ehnFound.IPVersionBehavior, ehn.IPVersionBehavior)
 		}
 
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Existing edge hostname FOUND = ", ehnFound.EdgeHostnameID))
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Existing edge hostname FOUND = %s", ehnFound.EdgeHostnameID))
 		d.SetId(ehnFound.EdgeHostnameID)
 	} else {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Creating new edge hostname: %#v\n\n", ehn))
@@ -229,19 +229,19 @@ func resourceSecureEdgeHostNameExists(d *schema.ResourceData, meta interface{}) 
 	if e != nil {
 		return false, e
 	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames GROUP = ", group))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames GROUP = %v", group))
 	contract, e := getContract(d, CorrelationID)
 	if e != nil {
 		return false, e
 	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames CONTRACT = ", contract))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames CONTRACT = %v", contract))
 	property := papi.NewProperty(papi.NewProperties())
 	property.Group = group
 	property.Contract = contract
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames ", d.Id()))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames %v", d.Id()))
 	edgeHostnames := papi.NewEdgeHostnames()
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("NewEdgeHostnames empty struct  ", edgeHostnames.ContractID))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("NewEdgeHostnames empty struct  %s", edgeHostnames.ContractID))
 	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, d.Id(), CorrelationID)
 	if err != nil {
 		return false, err
@@ -259,27 +259,27 @@ func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) er
 	if e != nil {
 		return e
 	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames GROUP = ", group))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames GROUP = %v", group))
 	contract, e := getContract(d, CorrelationID)
 	if e != nil {
 		return e
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames CONTRACT = ", contract))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames CONTRACT = %v", contract))
 	property := papi.NewProperty(papi.NewProperties())
 	property.Group = group
 	property.Contract = contract
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames ", d.Id()))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames %v", d.Id()))
 	edgeHostnames := papi.NewEdgeHostnames()
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("NewEdgeHostnames empty struct  ", edgeHostnames.ContractID))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("NewEdgeHostnames empty struct %v ", edgeHostnames.ContractID))
 	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "", CorrelationID)
 	if err != nil {
 		return err
 	}
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "EdgeHostnames exist in contract  ")
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Edgehostnames Default host ", edgeHostnames.EdgeHostnames.Items[0]))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Edgehostnames Default host %v", edgeHostnames.EdgeHostnames.Items[0]))
 	defaultEdgeHostname := edgeHostnames.EdgeHostnames.Items[0]
 
 	foundEdgeHostname := false
@@ -295,8 +295,8 @@ func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) er
 				edgeHostnameID = eHn.EdgeHostnameID
 			}
 		}
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Found EdgeHostname ", foundEdgeHostname))
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Default EdgeHostname ", defaultEdgeHostname))
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Found EdgeHostname %v", foundEdgeHostname))
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Default EdgeHostname %v", defaultEdgeHostname))
 	}
 
 	d.Set("contract", contract)

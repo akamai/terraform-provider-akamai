@@ -818,7 +818,7 @@ func fixupPerformanceBehaviors(rules *papi.Rules, correlationid string) {
 func fixupAdaptiveImageCompression(rules *papi.Rules, correlationid string) {
 	edge.PrintfCorrelation("[DEBUG]", correlationid, " Start Fixing Up adaptiveImageCompression Behavior")
 	behavior, err := rules.FindBehavior("/Performance/JPEG Images/adaptiveImageCompression")
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Start Fixing Up adaptiveImageCompression Behavior ", behavior, err))
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Start Fixing Up adaptiveImageCompression Behavior %v %v", behavior, err))
 	if err != nil || behavior == nil { //} || (behavior != nil && behavior.Options["compressMobile"] != "") {
 		edge.PrintfCorrelation("[DEBUG]", correlationid, "  Fixing Up adaptiveImageCompression Behavior Leave early")
 		return
@@ -829,7 +829,7 @@ func fixupAdaptiveImageCompression(rules *papi.Rules, correlationid string) {
 		"excellentConnectionOption": "Adapt Images",
 		"goodConnectionOption":      "Adapt Images",
 	})
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  tart Fixing Up adaptiveImageCompression Behavior  ", behavior))
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  tart Fixing Up adaptiveImageCompression Behavior %v ", behavior))
 }
 
 func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *papi.OptionValue, correlationid string) {

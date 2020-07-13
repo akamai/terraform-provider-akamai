@@ -340,7 +340,7 @@ func testAccCheckAkamaiPropertyActivationExists(s *terraform.State) error {
 		property.Contract = &papi.Contract{ContractID: rs.Primary.Attributes["contract"]}
 		property.Group = &papi.Group{GroupID: rs.Primary.Attributes["group"]}
 
-		e := property.GetProperty()
+		e := property.GetProperty("CORRELATIONID")
 		if e != nil {
 			return e
 		}
@@ -375,7 +375,7 @@ func testAccCheckAkamaiPropertyActivationLatest(s *terraform.State) error {
 		property.Contract = &papi.Contract{ContractID: rs.Primary.Attributes["contract"]}
 		property.Group = &papi.Group{GroupID: rs.Primary.Attributes["group"]}
 
-		e := property.GetProperty()
+		e := property.GetProperty("CORRELATIONID")
 		if e != nil {
 			return e
 		}
