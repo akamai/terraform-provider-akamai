@@ -16,7 +16,6 @@ package edgegrid
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -31,17 +30,8 @@ import (
 var logBuffer *bufio.Writer
 var LogFile *os.File
 var EdgegridLog *log.Logger
-var ctx context.Context
-
-type SomeContextKey string
-
-// LogCorrelationID ID for header and footer of log file outputs
-//var LogCorrelationID *string
 
 func SetupLogging() {
-	keyA := SomeContextKey("LogCorrelationID")
-	ctx = context.Background()
-	ctx = context.WithValue(ctx, keyA, "foo")
 
 	if EdgegridLog != nil {
 		return // already configured
@@ -151,6 +141,7 @@ func PrintfCorrelation(level string, correlationid string, msg string) {
 		logstd.Printf("%s  %s\n", level, msg)
 	} else {
 		logstd.SetFlags(0)
+		//LogMultiline(logstd.Debugf, msg)
 		logstd.Printf("%v %s\n", correlationid, msg)
 	}
 
