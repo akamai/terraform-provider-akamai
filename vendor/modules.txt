@@ -8,7 +8,7 @@ cloud.google.com/go/internal/version
 cloud.google.com/go/storage
 # github.com/agext/levenshtein v1.2.2
 github.com/agext/levenshtein
-# github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.17
+# github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.18
 github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1
 github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2
 github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4

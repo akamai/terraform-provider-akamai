@@ -96,7 +96,6 @@ func PrintHttpRequest(req *http.Request, body bool) {
 	b, err := httputil.DumpRequestOut(req, body)
 	if err == nil {
 		LogMultiline(EdgegridLog.Traceln, string(b))
-		logstd.Printf("[DEBUG]  REQUEST  %s\n", string(b))
 	}
 }
 
@@ -108,7 +107,6 @@ func PrintHttpRequestCorrelation(req *http.Request, body bool, correlationid str
 	b, err := httputil.DumpRequestOut(req, body)
 	if err == nil {
 		LogMultiline(EdgegridLog.Traceln, string(b))
-		//logstd.Printf("[DEBUG]%v REQUEST  %s\n", correlationid, prettyPrintJsonLines(b))
 		PrintfCorrelation("[DEBUG] REQUEST", correlationid, prettyPrintJsonLines(b))
 	}
 }
@@ -122,7 +120,6 @@ func PrintHttpResponse(res *http.Response, body bool) {
 	b, err := httputil.DumpResponse(res, body)
 	if err == nil {
 		LogMultiline(EdgegridLog.Traceln, string(b))
-		logstd.Printf("[DEBUG] RESPONSE %s\n", string(b))
 	}
 }
 
@@ -134,7 +131,6 @@ func PrintHttpResponseCorrelation(res *http.Response, body bool, correlationid s
 	b, err := httputil.DumpResponse(res, body)
 	if err == nil {
 		LogMultiline(EdgegridLog.Traceln, string(b))
-		//logstd.Printf("[DEBUG]%v RESPONSE %s\n", correlationid, prettyPrintJsonLines(b))
 		PrintfCorrelation("[DEBUG] RESPONSE ", correlationid, prettyPrintJsonLines(b))
 	}
 }
@@ -145,7 +141,6 @@ func PrintfCorrelation(level string, correlationid string, msg string) {
 		logstd.Printf("%s  %s\n", level, msg)
 	} else {
 		logstd.SetFlags(0)
-		//LogMultiline(logstd.Debugf, msg)
 		logstd.Printf("%v %s\n", correlationid, msg)
 	}
 

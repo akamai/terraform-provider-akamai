@@ -1,14 +1,14 @@
 module github.com/terraform-providers/terraform-provider-akamai
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.17
+	github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.18
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
 	github.com/hashicorp/terraform v0.12.25 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.7.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/tidwall/gjson v1.2.1
 	github.com/tidwall/match v1.0.1 // indirect
 	github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 // indirect
