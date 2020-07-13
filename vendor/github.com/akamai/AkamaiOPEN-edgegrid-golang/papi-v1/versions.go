@@ -3,9 +3,10 @@ package papi
 import (
 	"errors"
 	"fmt"
-        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"time"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 )
 
 // Versions contains a collection of Property Versions
@@ -63,7 +64,7 @@ func (versions *Versions) AddVersion(version *Version) {
 // See: Property.GetVersions()
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listversions
 // Endpoint: GET /papi/v1/properties/{propertyId}/versions/{?contractId,groupId}
-func (versions *Versions) GetVersions(property *Property) error {
+func (versions *Versions) GetVersions(property *Property, correlationid string) error {
 	if property == nil {
 		return errors.New("You must provide a property")
 	}
@@ -81,14 +82,14 @@ func (versions *Versions) GetVersions(property *Property) error {
 		return err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if err = client.BodyJSON(res, versions); err != nil {
 		return err
@@ -102,7 +103,7 @@ func (versions *Versions) GetVersions(property *Property) error {
 // See: Property.GetLatestVersion()
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#getthelatestversion
 // Endpoint: GET /papi/v1/properties/{propertyId}/versions/latest{?contractId,groupId,activatedOn}
-func (versions *Versions) GetLatestVersion(activatedOn NetworkValue) (*Version, error) {
+func (versions *Versions) GetLatestVersion(activatedOn NetworkValue, correlationid string) (*Version, error) {
 	if activatedOn != "" {
 		activatedOn = "?activatedOn=" + activatedOn
 	}
@@ -121,14 +122,14 @@ func (versions *Versions) GetLatestVersion(activatedOn NetworkValue) (*Version, 
 		return nil, err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return nil, err
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if client.IsError(res) {
 		return nil, client.NewAPIError(res)
@@ -143,10 +144,10 @@ func (versions *Versions) GetLatestVersion(activatedOn NetworkValue) (*Version, 
 }
 
 // NewVersion creates a new version associated with the Versions collection
-func (versions *Versions) NewVersion(createFromVersion *Version, useEtagStrict bool) *Version {
+func (versions *Versions) NewVersion(createFromVersion *Version, useEtagStrict bool, correlationid string) *Version {
 	if createFromVersion == nil {
 		var err error
-		createFromVersion, err = versions.GetLatestVersion("")
+		createFromVersion, err = versions.GetLatestVersion("", correlationid)
 		if err != nil {
 			return nil
 		}
@@ -274,7 +275,7 @@ func (version *Version) HasBeenActivated(activatedOn NetworkValue) (bool, error)
 //
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#createanewversion
 // Endpoint: POST /papi/v1/properties/{propertyId}/versions/{?contractId,groupId}
-func (version *Version) Save() error {
+func (version *Version) Save(correlationid string) error {
 	if version.PropertyVersion != 0 {
 		return fmt.Errorf("version (%d) already exists", version.PropertyVersion)
 	}
@@ -292,14 +293,14 @@ func (version *Version) Save() error {
 		return err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)

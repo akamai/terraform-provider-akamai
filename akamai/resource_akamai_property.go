@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	//log "github.com/sirupsen/logrus"
+
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -151,40 +154,38 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 }
 
 func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourcePropertyCreate-" + CreateNonce())
-
-	PrintLogHeader()
+	CorrelationID := "[PAPI][resourcePropertyCreate-" + CreateNonce() + "]"
 
 	d.Partial(true)
 
-	group, err := getGroup(d)
+	group, err := getGroup(d, CorrelationID)
 	if err != nil {
 		return err
 	}
 
-	contract, err := getContract(d)
+	contract, err := getContract(d, CorrelationID)
 	if err != nil {
 		return err
 	}
 
-	product, err := getProduct(d, contract)
+	product, err := getProduct(d, contract, CorrelationID)
 	if err != nil {
 		return err
 	}
 
 	var property *papi.Property
-	if property = findProperty(d); property == nil {
+	if property = findProperty(d, CorrelationID); property == nil {
 		if product == nil {
 			return errors.New("product must be specified to create a new property")
 		}
 
-		property, err = createProperty(contract, group, product, d)
+		property, err = createProperty(contract, group, product, d, CorrelationID)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = ensureEditableVersion(property)
+	err = ensureEditableVersion(property, CorrelationID)
 	if err != nil {
 		return err
 	}
@@ -202,11 +203,11 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("network")
 	d.SetPartial("cp_code")
 
-	rules, err := getRules(d, property, contract, group)
+	rules, err := getRules(d, property, contract, group, CorrelationID)
 	if err != nil {
 		return err
 	}
-	err = rules.Save()
+	err = rules.Save(CorrelationID)
 	if err != nil {
 		if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
 			var msg string
@@ -220,12 +221,12 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("default")
 	d.SetPartial("origin")
 
-	ehnMap, err := setHostnames(property, d)
+	ehnMap, err := setHostnames(property, d, CorrelationID)
 
 	d.SetPartial("ipv6")
 	d.Set("edge_hostnames", ehnMap)
 
-	rulesAPI, err := property.GetRules()
+	rulesAPI, err := property.GetRules(CorrelationID)
 	rulesAPI.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rulesAPI)
 	if err != nil {
@@ -233,8 +234,8 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	sha1hashAPI := getSHAString(string(jsonBody))
-	log.Printf("[DEBUG] CREATE SHA from Json %s\n", sha1hashAPI)
-	log.Printf("[DEBUG] CREATE Check rules after unmarshal from Json %s\n", string(jsonBody))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CREATE SHA from Json %s\n", sha1hashAPI))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CREATE Check rules after unmarshal from Json %s\n", string(jsonBody)))
 
 	d.Set("rulessha", sha1hashAPI)
 	//d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
@@ -245,18 +246,17 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Partial(false)
-	log.Println("[DEBUG] Done")
-	PrintLogFooter()
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
 	return resourcePropertyRead(d, meta)
 }
 
-func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group) (*papi.Rules, error) {
+func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group, correlationid string) (*papi.Rules, error) {
 	rules := papi.NewRules()
 	rules.Rule.Name = "default"
 	rules.PropertyID = d.Id()
 	rules.PropertyVersion = property.LatestVersion
 
-	origin, err := createOrigin(d)
+	origin, err := createOrigin(d, correlationid)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 	_, ok := d.GetOk("rules")
 
 	if ok {
-		log.Printf("[DEBUG] Unmarshal Rules from JSON")
+		edge.PrintfCorrelation("[DEBUG]", correlationid, "Unmarshal Rules from JSON")
 		unmarshalRulesFromJSON(d, rules)
 	}
 
@@ -275,7 +275,7 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 		rules.RuleFormat = ruleFormat.(string)
 	} else {
 		ruleFormats := papi.NewRuleFormats()
-		rules.RuleFormat, err = ruleFormats.GetLatest()
+		rules.RuleFormat, err = ruleFormats.GetLatest(correlationid)
 		if err != nil {
 			return nil, err
 		}
@@ -284,20 +284,20 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 	if ok := d.HasChange("rule_format"); ok {
 	}
 
-	cpCode, err := getCPCode(d, contract, group)
+	cpCode, err := getCPCode(d, contract, group, correlationid)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] updateStandardBehaviors")
-	updateStandardBehaviors(rules, cpCode, origin)
-	log.Printf("[DEBUG] fixupPerformanceBehaviors")
-	fixupPerformanceBehaviors(rules)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, "updateStandardBehaviors")
+	updateStandardBehaviors(rules, cpCode, origin, correlationid)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, "fixupPerformanceBehaviors")
+	fixupPerformanceBehaviors(rules, correlationid)
 
 	return rules, nil
 }
 
-func setHostnames(property *papi.Property, d *schema.ResourceData) (map[string]string, error) {
+func setHostnames(property *papi.Property, d *schema.ResourceData, correlationid string) (map[string]string, error) {
 	hostnameEdgeHostnames := d.Get("hostnames").(map[string]interface{})
 
 	ehns, err := papi.GetEdgeHostnames(property.Contract, property.Group, "")
@@ -313,9 +313,9 @@ func setHostnames(property *papi.Property, d *schema.ResourceData) (map[string]s
 	for public, edgeHostname := range hostnameEdgeHostnames {
 		ehn := ehns.NewEdgeHostname()
 		ehn.EdgeHostnameDomain = edgeHostname.(string)
-		log.Printf("[DEBUG] Searching for edge hostname: %s, for hostname: %s", edgeHostname.(string), public)
+		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" Searching for edge hostname: %s, for hostname: %s", edgeHostname.(string), public))
 		ehn, err = ehns.FindEdgeHostname(ehn)
-		log.Printf("[DEBUG] Found edge hostname: %s", ehn.EdgeHostnameDomain)
+		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" Found edge hostname: %s", ehn.EdgeHostnameDomain))
 		if err != nil {
 			return nil, fmt.Errorf("edge hostname not found: %s", ehn.EdgeHostnameDomain)
 		}
@@ -336,8 +336,8 @@ func setHostnames(property *papi.Property, d *schema.ResourceData) (map[string]s
 	return ehnMap, nil
 }
 
-func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Product, d *schema.ResourceData) (*papi.Property, error) {
-	log.Println("[DEBUG] Creating property")
+func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Product, d *schema.ResourceData, correlationid string) (*papi.Property, error) {
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Creating property")
 
 	property, err := group.NewProperty(contract)
 	if err != nil {
@@ -351,25 +351,24 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 		property.RuleFormat = ruleFormat.(string)
 	} else {
 		ruleFormats := papi.NewRuleFormats()
-		property.RuleFormat, err = ruleFormats.GetLatest()
+		property.RuleFormat, err = ruleFormats.GetLatest(correlationid)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = property.Save()
+	err = property.Save(correlationid)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] Property created: %s\n", property.PropertyID)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("Property created: %s\n", property.PropertyID))
 	return property, nil
 }
 
 func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourcePropertyDelete-" + CreateNonce())
-	PrintLogHeader()
-	log.Printf("[DEBUG] DELETING")
+	CorrelationID := "[PAPI][resourcePropertyDelete-" + CreateNonce() + "]"
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "DELETING")
 	contractID, ok := d.GetOk("contract")
 	if !ok {
 		return errors.New("missing contract ID")
@@ -386,7 +385,7 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 	property.Contract = &papi.Contract{ContractID: contractID.(string)}
 	property.Group = &papi.Group{GroupID: groupID.(string)}
 
-	e := property.GetProperty()
+	e := property.GetProperty(CorrelationID)
 	if e != nil {
 		return e
 	}
@@ -399,15 +398,14 @@ func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkProduction)
 	}
 
-	e = property.Delete()
+	e = property.Delete(CorrelationID)
 	if e != nil {
 		return e
 	}
 
 	d.SetId("")
 
-	log.Println("[DEBUG] Done")
-	PrintLogFooter()
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
 	return nil
 }
 
@@ -417,7 +415,7 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 
 	if !strings.HasPrefix(propertyID, "prp_") {
 		for _, searchKey := range []papi.SearchKey{papi.SearchByPropertyName, papi.SearchByHostname, papi.SearchByEdgeHostname} {
-			results, err := papi.Search(searchKey, propertyID)
+			results, err := papi.Search(searchKey, propertyID, "") //<--correlationid
 			if err != nil {
 				continue
 			}
@@ -431,7 +429,7 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
-	e := property.GetProperty()
+	e := property.GetProperty("")
 	if e != nil {
 		return nil, e
 	}
@@ -448,12 +446,11 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 }
 
 func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourcePropertyRead-" + CreateNonce())
-	PrintLogHeader()
+	CorrelationID := "[PAPI][resourcePropertyRead-" + CreateNonce() + "]"
 	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
-	err := property.GetProperty()
+	err := property.GetProperty(CorrelationID)
 	if err != nil {
 		return err
 	}
@@ -464,7 +461,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("name", property.PropertyName)
 	d.Set("note", property.Note)
 
-	rules, err := property.GetRules()
+	rules, err := property.GetRules(CorrelationID)
 	rules.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rules)
 	if err != nil {
@@ -472,17 +469,15 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	sha1hashAPI := getSHAString(string(jsonBody))
-	log.Printf("[DEBUG] READ SHA from Json %s\n", sha1hashAPI)
-
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("READ SHA from Json %s\n", sha1hashAPI))
 	if err == nil {
-		log.Printf("[DEBUG] READ Rules from API : %s\n", string(jsonBody))
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" READ Rules from API : %s\n", string(jsonBody)))
 		d.Set("rules", string(jsonBody))
 	}
 	d.Set("rulessha", sha1hashAPI)
 
 	//d.Set("rulessha", RandStringBytesMaskImpr(8))
 	d.SetPartial("rulessha")
-	//log.Printf("[DEBUG] READ Check rules after unmarshal from Json %s\n", string(jsonBody))
 
 	if rules.RuleFormat != "" {
 		d.Set("rule_format", rules.RuleFormat)
@@ -490,9 +485,8 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("rule_format", property.RuleFormat)
 	}
 
-	log.Printf("[DEBUG] Property RuleFormat from API : %s\n", property.RuleFormat)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Property RuleFormat from API : %s\n", property.RuleFormat))
 	d.Set("version", property.LatestVersion)
-	log.Printf("[DEBUG] Property Version from API : %d\n", property.LatestVersion)
 	if property.StagingVersion > 0 {
 		d.Set("staging_version", property.StagingVersion)
 	}
@@ -501,27 +495,25 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Partial(false)
-	PrintLogFooter()
 	return nil
 }
 
 func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourcePropertyUpdate-" + CreateNonce())
-	PrintLogHeader()
-	log.Printf("[DEBUG] UPDATING")
+	CorrelationID := "[PAPI][resourcePropertyUpdate-" + CreateNonce() + "]"
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "   UPDATING")
 	d.Partial(true)
 
-	property, e := getProperty(d)
+	property, e := getProperty(d, CorrelationID)
 	if e != nil {
 		return e
 	}
 
-	err := ensureEditableVersion(property)
+	err := ensureEditableVersion(property, CorrelationID)
 	if err != nil {
 		return err
 	}
 
-	rules, err := getRules(d, property, property.Contract, property.Group)
+	rules, err := getRules(d, property, property.Contract, property.Group, CorrelationID)
 
 	if d.HasChange("rule_format") || d.HasChange("rules") {
 		if ruleFormat, ok := d.GetOk("rule_format"); ok {
@@ -537,8 +529,8 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 			d.Set("rules", string(jsonBody))
 		}
 
-		log.Printf("[DEBUG] UPDATE Check rules after unmarshal from Json %s\n", string(jsonBody))
-		e = rules.Save()
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  UPDATE Check rules after unmarshal from Json %s\n", string(jsonBody)))
+		e = rules.Save(CorrelationID)
 		if e != nil {
 			if e == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
 				var msg string
@@ -547,11 +539,11 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 				}
 				return errors.New("Error - Invalid Property Rules" + msg)
 			}
-			log.Printf("update rules.Save err: %#v", e)
+			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("update rules.Save err: %#v", e))
 			return fmt.Errorf("update rules.Save err: %#v", e)
 		}
 
-		rules, err = property.GetRules()
+		rules, err = property.GetRules(CorrelationID)
 		rules.Etag = ""
 		jsonBody, err = jsonhooks.Marshal(rules)
 		if err != nil {
@@ -559,7 +551,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		sha1hashAPI := getSHAString(string(jsonBody))
-		log.Printf("[DEBUG] UPDATE SHA from Json %s\n", sha1hashAPI)
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  UPDATE SHA from Json %s\n", sha1hashAPI))
 		d.Set("rulessha", sha1hashAPI)
 		d.SetPartial("rulessha")
 	}
@@ -569,7 +561,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 	d.SetPartial("origin")
 
 	if d.HasChange("hostnames") {
-		ehnMap, err := setHostnames(property, d)
+		ehnMap, err := setHostnames(property, d, CorrelationID)
 		if err != nil {
 			return fmt.Errorf("setHostnames err: %#v", err)
 		}
@@ -579,22 +571,23 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	d.Partial(false)
 
-	log.Println("[DEBUG] Done")
-	PrintLogFooter()
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
 	return resourcePropertyRead(d, meta)
 }
 
 func resourceCustomDiffCustomizeDiff(d *schema.ResourceDiff, meta interface{}) error {
-	log.Println("[DEBUG] resourceCustomDiffCustomizeDiff " + d.Id())
+	CorrelationID := "[PAPI][resourcePropertyUpdate-" + CreateNonce() + "]"
+	//Println("[DEBUG] resourceCustomDiffCustomizeDiff " + d.Id())
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  resourceCustomDiffCustomizeDiff "+d.Id()))
 	// Note that this gets put into state after the update, regardless of whether
 	// or not anything is acted upon in the diff.
 
 	old, new := d.GetChange("rules")
 
-	log.Println("[DEBUG] resourceCustomDiffCustomizeDiff OLD " + old.(string))
-	log.Println("[DEBUG] resourceCustomDiffCustomizeDiff NEW " + new.(string))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  resourceCustomDiffCustomizeDiff OLD "+old.(string)))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  resourceCustomDiffCustomizeDiff NEW "+new.(string)))
 	if !suppressEquivalentJsonPendingDiffs(old.(string), new.(string), d) {
-		log.Println("[DEBUG] resourceCustomDiffCustomizeDiff CHANGED VALUES " + old.(string) + " " + new.(string))
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  resourceCustomDiffCustomizeDiff CHANGED VALUES "+old.(string)+" "+new.(string)))
 		d.SetNewComputed("version")
 	}
 
@@ -602,8 +595,9 @@ func resourceCustomDiffCustomizeDiff(d *schema.ResourceDiff, meta interface{}) e
 }
 
 // Helpers
-func getProperty(d interface{}) (*papi.Property, error) {
-	log.Println("[DEBUG] Fetching property")
+func getProperty(d interface{}, correlationid string) (*papi.Property, error) {
+	//	log.Println("[DEBUG] Fetching property")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, "Fetching property")
 	var propertyID string
 
 	switch d.(type) {
@@ -617,12 +611,13 @@ func getProperty(d interface{}) (*papi.Property, error) {
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
-	e := property.GetProperty()
+	e := property.GetProperty(correlationid)
 	return property, e
 }
 
-func getGroup(d *schema.ResourceData) (*papi.Group, error) {
-	log.Println("[DEBUG] Fetching groups")
+func getGroup(d *schema.ResourceData, correlationid string) (*papi.Group, error) {
+	//log.Println("[DEBUG] Fetching groups")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, "Fetching groups")
 	groupID, ok := d.GetOk("group")
 
 	if !ok {
@@ -630,7 +625,7 @@ func getGroup(d *schema.ResourceData) (*papi.Group, error) {
 	}
 
 	groups := papi.NewGroups()
-	e := groups.GetGroups()
+	e := groups.GetGroups(correlationid)
 	if e != nil {
 		return nil, e
 	}
@@ -640,19 +635,19 @@ func getGroup(d *schema.ResourceData) (*papi.Group, error) {
 		return nil, e
 	}
 
-	log.Printf("[DEBUG] Group found: %s\n", group.GroupID)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" Group found: %s\n", group.GroupID))
 	return group, nil
 }
 
-func getContract(d *schema.ResourceData) (*papi.Contract, error) {
-	log.Println("[DEBUG] Fetching contract")
+func getContract(d *schema.ResourceData, correlationid string) (*papi.Contract, error) {
+	edge.PrintfCorrelation("[DEBUG]", correlationid, "  Fetching contract")
 	contractID, ok := d.GetOk("contract")
 	if !ok {
 		return nil, nil
 	}
 
 	contracts := papi.NewContracts()
-	e := contracts.GetContracts()
+	e := contracts.GetContracts(correlationid)
 	if e != nil {
 		return nil, e
 	}
@@ -662,11 +657,11 @@ func getContract(d *schema.ResourceData) (*papi.Contract, error) {
 		return nil, e
 	}
 
-	log.Printf("[DEBUG] Contract found: %s\n", contract.ContractID)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Contract found: %s\n", contract.ContractID))
 	return contract, nil
 }
 
-func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group) (*papi.CpCode, error) {
+func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, correlationid string) (*papi.CpCode, error) {
 	if contract == nil || group == nil {
 		return nil, nil
 	}
@@ -687,7 +682,7 @@ func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group) (*papi
 		return nil, nil
 	}
 
-	log.Println("[DEBUG] Fetching CP code")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Fetching CP code")
 	cpCode := papi.NewCpCodes(contract, group).NewCpCode()
 	cpCode.CpcodeID = cpCodeID.(string)
 	err := cpCode.GetCpCode()
@@ -695,11 +690,11 @@ func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group) (*papi
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] CP code found: %s\n", cpCode.CpcodeID)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  CP code found: %s\n", cpCode.CpcodeID))
 	return cpCode, nil
 }
 
-func getCPCodeDiff(d *schema.ResourceDiff, contract *papi.Contract, group *papi.Group) (*papi.CpCode, error) {
+func getCPCodeDiff(d *schema.ResourceDiff, contract *papi.Contract, group *papi.Group, correlationid string) (*papi.CpCode, error) {
 	if contract == nil || group == nil {
 		return nil, nil
 	}
@@ -709,7 +704,7 @@ func getCPCodeDiff(d *schema.ResourceDiff, contract *papi.Contract, group *papi.
 		return nil, nil
 	}
 
-	log.Println("[DEBUG] Fetching CP code")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Fetching CP code")
 	cpCode := papi.NewCpCodes(contract, group).NewCpCode()
 	cpCode.CpcodeID = cpCodeID.(string)
 	err := cpCode.GetCpCode()
@@ -717,23 +712,23 @@ func getCPCodeDiff(d *schema.ResourceDiff, contract *papi.Contract, group *papi.
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] CP code found: %s\n", cpCode.CpcodeID)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  CP code found: %s\n", cpCode.CpcodeID))
 	return cpCode, nil
 }
 
-func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product, error) {
+func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid string) (*papi.Product, error) {
 	if contract == nil {
 		return nil, nil
 	}
 
-	log.Println("[DEBUG] Fetching product")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Fetching product")
 	productID, ok := d.GetOk("product")
 	if !ok {
 		return nil, nil
 	}
 
 	products := papi.NewProducts()
-	e := products.GetProducts(contract)
+	e := products.GetProducts(contract, correlationid)
 	if e != nil {
 		return nil, e
 	}
@@ -743,12 +738,12 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract) (*papi.Product,
 		return nil, e
 	}
 
-	log.Printf("[DEBUG] Product found: %s\n", product.ProductID)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Product found: %s\n", product.ProductID))
 	return product, nil
 }
 
-func createOrigin(d interface{}) (*papi.OptionValue, error) {
-	log.Println("[DEBUG] Setting origin")
+func createOrigin(d interface{}, correlationid string) (*papi.OptionValue, error) {
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Setting origin")
 	var origin interface{}
 	var ok bool
 
@@ -790,11 +785,11 @@ func createOrigin(d interface{}) (*papi.OptionValue, error) {
 		}
 
 		if forwardHostnameOk && (forwardHostname == "ORIGIN_HOSTNAME" || forwardHostname == "REQUEST_HOST_HEADER") {
-			log.Println("[DEBUG] Setting non-custom forward hostname")
+			edge.PrintfCorrelation("[DEBUG]", correlationid, " Setting non-custom forward hostname")
 
 			originValues["forwardHostHeader"] = forwardHostname
 		} else if forwardHostnameOk {
-			log.Println("[DEBUG] Setting custom forward hostname")
+			edge.PrintfCorrelation("[DEBUG]", correlationid, " Setting custom forward hostname")
 
 			originValues["forwardHostHeader"] = "CUSTOM"
 			originValues["customForwardHostHeader"] = forwardHostname
@@ -806,13 +801,13 @@ func createOrigin(d interface{}) (*papi.OptionValue, error) {
 	return nil, nil
 }
 
-func fixupPerformanceBehaviors(rules *papi.Rules) {
+func fixupPerformanceBehaviors(rules *papi.Rules, correlationid string) {
 	behavior, err := rules.FindBehavior("/Performance/sureRoute")
 	if err != nil || behavior == nil || (behavior != nil && behavior.Options["testObjectUrl"] != "") {
 		return
 	}
 
-	log.Println("[DEBUG] Fixing Up SureRoute Behavior")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Fixing Up SureRoute Behavior")
 	behavior.MergeOptions(papi.OptionValue{
 		"testObjectUrl":   "/akamai/sureroute-testobject.html",
 		"enableCustomKey": false,
@@ -820,25 +815,26 @@ func fixupPerformanceBehaviors(rules *papi.Rules) {
 	})
 }
 
-func fixupAdaptiveImageCompression(rules *papi.Rules) {
-	log.Println("[DEBUG] Start Fixing Up adaptiveImageCompression Behavior")
+func fixupAdaptiveImageCompression(rules *papi.Rules, correlationid string) {
+	edge.PrintfCorrelation("[DEBUG]", correlationid, " Start Fixing Up adaptiveImageCompression Behavior")
 	behavior, err := rules.FindBehavior("/Performance/JPEG Images/adaptiveImageCompression")
-	log.Println("[DEBUG] Start Fixing Up adaptiveImageCompression Behavior ", behavior, err)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Start Fixing Up adaptiveImageCompression Behavior %v %v", behavior, err))
 	if err != nil || behavior == nil { //} || (behavior != nil && behavior.Options["compressMobile"] != "") {
-		log.Println("[DEBUG] Fixing Up adaptiveImageCompression Behavior Leave early")
+		edge.PrintfCorrelation("[DEBUG]", correlationid, "  Fixing Up adaptiveImageCompression Behavior Leave early")
 		return
 	}
 
-	log.Println("[DEBUG] Fixing Up adaptiveImageCompression Behavior")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, "Fixing Up adaptiveImageCompression Behavior")
 	behavior.MergeOptions(papi.OptionValue{
 		"excellentConnectionOption": "Adapt Images",
 		"goodConnectionOption":      "Adapt Images",
 	})
-	log.Println("[DEBUG] Start Fixing Up adaptiveImageCompression Behavior  ", behavior)
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  tart Fixing Up adaptiveImageCompression Behavior %v ", behavior))
 }
 
-func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *papi.OptionValue) {
-	log.Printf("[DEBUG] cpCode: %#v", cpCode)
+func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *papi.OptionValue, correlationid string) {
+	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" cpCode: %#v", cpCode))
+
 	if cpCode != nil {
 		b := papi.NewBehavior()
 		b.Name = "cpCode"
@@ -1189,7 +1185,7 @@ func extractRulesJSONDiff(d *schema.ResourceDiff, drules gjson.Result) []*papi.R
 					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
 				}
 			}
-			log.Println("[DEBUG] extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comments)
+			//log.Println("[DEBUG] extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comments)
 
 			ruledetail := gjson.Parse(value.String())
 			//			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
@@ -1354,8 +1350,8 @@ func extractRules(drules *schema.Set) []*papi.Rule {
 	return rules
 }
 
-func findProperty(d *schema.ResourceData) *papi.Property {
-	results, err := papi.Search(papi.SearchByPropertyName, d.Get("name").(string))
+func findProperty(d *schema.ResourceData, correlationid string) *papi.Property {
+	results, err := papi.Search(papi.SearchByPropertyName, d.Get("name").(string), correlationid)
 	if err != nil {
 		return nil
 	}
@@ -1374,7 +1370,7 @@ func findProperty(d *schema.ResourceData) *papi.Property {
 		},
 	}
 
-	err = property.GetProperty()
+	err = property.GetProperty(correlationid)
 	if err != nil {
 		return nil
 	}
@@ -1382,25 +1378,25 @@ func findProperty(d *schema.ResourceData) *papi.Property {
 	return property
 }
 
-func ensureEditableVersion(property *papi.Property) error {
-	latestVersion, err := property.GetLatestVersion("")
+func ensureEditableVersion(property *papi.Property, correlationid string) error {
+	latestVersion, err := property.GetLatestVersion("", correlationid)
 	if err != nil {
 		return err
 	}
 
-	versions, err := property.GetVersions()
+	versions, err := property.GetVersions(correlationid)
 	if err != nil {
 		return err
 	}
 
 	if latestVersion.ProductionStatus != papi.StatusInactive || latestVersion.StagingStatus != papi.StatusInactive {
 		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
-		newVersion := versions.NewVersion(latestVersion, false)
-		err = newVersion.Save()
+		newVersion := versions.NewVersion(latestVersion, false, correlationid)
+		err = newVersion.Save(correlationid)
 		if err != nil {
 			return err
 		}
 	}
 
-	return property.GetProperty()
+	return property.GetProperty(correlationid)
 }

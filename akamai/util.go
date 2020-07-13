@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"time"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/patrickmn/go-cache"
@@ -102,39 +101,6 @@ func jsonBytesEqual(b1, b2 []byte) bool {
 func makeCache() *cache.Cache {
 	profilecache := cache.New(5*time.Minute, 10*time.Minute)
 	return profilecache
-}
-
-func setCorrelationID(correlationid string) {
-	//edge.SetupLogging()
-	//log.Printf("[DEBUG] setCorrelationID %s\n", correlationid)
-	edge.SetLogCorrelationId(correlationid)
-
-}
-
-func getCorrelationID() (result *string) {
-	//log.Printf("[DEBUG] getCorrelationID %s\n", LocalLogCorrelationID)
-	//LocalLogCorrelationID = edge.LogCorrelationID
-	result = edge.LogCorrelationID
-	return result
-}
-
-func PrintLogHeader() {
-	//log.Printf("[DEBUG] START PrintLogHeader %s\n", LocalLogCorrelationID)
-	if edge.LogCorrelationID != nil {
-		strLogCorrelationIDValue := *edge.LogCorrelationID
-		log.Printf("[DEBUG] START CORRELATION ID %s\n", strLogCorrelationIDValue)
-		//edge.LogCorrelationID = nil
-		KeepLogCorrelationID = edge.LogCorrelationID
-	}
-}
-
-func PrintLogFooter() {
-	edge.LogCorrelationID = KeepLogCorrelationID
-	if edge.LogCorrelationID != nil {
-		strLogCorrelationIDValue := *edge.LogCorrelationID
-		log.Printf("[DEBUG] END CORRELATION ID %s\n", strLogCorrelationIDValue)
-		edge.LogCorrelationID = nil
-	}
 }
 
 func CreateNonce() string {

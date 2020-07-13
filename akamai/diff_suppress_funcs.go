@@ -3,8 +3,10 @@ package akamai
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -25,6 +27,7 @@ func suppressEquivalentTypeStringBoolean(k, old, new string, d *schema.ResourceD
 }
 
 func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) bool {
+	CorrelationID := "[PAPI][suppressEquivalentJsonDiffs-" + CreateNonce() + "]"
 	ob := bytes.NewBufferString("")
 	if err := json.Compact(ob, []byte(old)); err != nil {
 		return false
@@ -34,10 +37,11 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	if err := json.Compact(nb, []byte(new)); err != nil {
 		return false
 	}
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
 
-	rulesOld, err := getRulesForComp(d, old)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes())))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes())))
+
+	rulesOld, err := getRulesForComp(d, old, "")
 	rulesOld.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rulesOld)
 	if err != nil {
@@ -45,9 +49,9 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	}
 	sha1hashOld := getSHAString(string(jsonBody))
 
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld))
 
-	rulesNew, err := getRulesForComp(d, new)
+	rulesNew, err := getRulesForComp(d, new, "")
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
 	if err != nil {
@@ -55,19 +59,20 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	}
 	sha1hashNew := getSHAString(string(jsonBodyNew))
 
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew))
 
 	if sha1hashOld == sha1hashNew {
-		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Equal skip diff \n")
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Equal skip diff \n")
 		return true
 	} else {
-		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
 		return false
 	}
 
 }
 
 func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff) bool {
+	CorrelationID := "[PAPI][suppressEquivalentJsonPendingDiffs-" + CreateNonce() + "]"
 	ob := bytes.NewBufferString("")
 	if err := json.Compact(ob, []byte(old)); err != nil {
 		return false
@@ -77,10 +82,11 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 	if err := json.Compact(nb, []byte(new)); err != nil {
 		return false
 	}
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes()))
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes()))
 
-	rulesOld, err := getRulesForComp(d, old)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes())))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes())))
+
+	rulesOld, err := getRulesForComp(d, old, "")
 	rulesOld.Etag = ""
 	jsonBody, err := jsonhooks.Marshal(rulesOld)
 	if err != nil {
@@ -88,9 +94,9 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 	}
 	sha1hashOld := getSHAString(string(jsonBody))
 
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld))
 
-	rulesNew, err := getRulesForComp(d, new)
+	rulesNew, err := getRulesForComp(d, new, "")
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
 	if err != nil {
@@ -98,21 +104,21 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 	}
 	sha1hashNew := getSHAString(string(jsonBodyNew))
 
-	log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew))
 
 	if sha1hashOld == sha1hashNew {
-		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Equal skip diff \n")
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Equal skip diff \n")
 		return true
 	} else {
-		log.Printf("[DEBUG] suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
 		return false
 	}
 
 }
 
-func getRulesForComp(d interface{}, json string) (*papi.Rules, error) {
+func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Rules, error) {
 
-	property, e := getProperty(d)
+	property, e := getProperty(d, correlationid)
 	if e != nil {
 		return nil, e
 	}
@@ -131,7 +137,7 @@ func getRulesForComp(d interface{}, json string) (*papi.Rules, error) {
 	//rules.PropertyID = d.Id()
 	rules.PropertyVersion = property.LatestVersion
 
-	origin, err := createOrigin(d)
+	origin, err := createOrigin(d, correlationid)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +146,7 @@ func getRulesForComp(d interface{}, json string) (*papi.Rules, error) {
 
 	//rulecheck
 
-	log.Printf("[DEBUG] Unmarshal Rules from JSON")
+	edge.PrintfCorrelation("[DEBUG]", correlationid, "  Unmarshal Rules from JSON")
 	unmarshalRulesFromJSONComp(d, json, rules)
 
 	var ruleFormat interface{}
@@ -160,7 +166,7 @@ func getRulesForComp(d interface{}, json string) (*papi.Rules, error) {
 		rules.RuleFormat = ruleFormat.(string)
 	} else {
 		ruleFormats := papi.NewRuleFormats()
-		rules.RuleFormat, err = ruleFormats.GetLatest()
+		rules.RuleFormat, err = ruleFormats.GetLatest(correlationid)
 		if err != nil {
 			return nil, err
 		}
@@ -169,15 +175,13 @@ func getRulesForComp(d interface{}, json string) (*papi.Rules, error) {
 	//if ok := d.HasChange("rule_format"); ok {
 	//}
 
-	cpCode, err := getCPCode(d, property.Contract, property.Group)
+	cpCode, err := getCPCode(d, property.Contract, property.Group, correlationid)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] updateStandardBehaviors")
-	updateStandardBehaviors(rules, cpCode, origin)
-	log.Printf("[DEBUG] fixupPerformanceBehaviors")
-	fixupPerformanceBehaviors(rules)
+	updateStandardBehaviors(rules, cpCode, origin, correlationid)
+	fixupPerformanceBehaviors(rules, correlationid)
 
 	return rules, nil
 }

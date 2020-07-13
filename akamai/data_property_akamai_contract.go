@@ -2,8 +2,8 @@ package akamai
 
 import (
 	"fmt"
-	"log"
 
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -21,12 +21,13 @@ func dataSourcePropertyContract() *schema.Resource {
 }
 
 func dataSourcePropertyContractRead(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[PAPI][dataSourcePropertyContractRead-" + CreateNonce() + "]"
 	_, groupOk := d.GetOk("group")
 	group := d.Get("group").(string)
 	contracts := papi.NewContracts()
 	// If no group, just return the first contract
 	if !groupOk {
-		err := contracts.GetContracts()
+		err := contracts.GetContracts(CorrelationID)
 		if err != nil {
 			return fmt.Errorf("error looking up Contracts for group %q: %s", group, err)
 		}
@@ -36,8 +37,8 @@ func dataSourcePropertyContractRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	// Otherwise find the group and return it's first contract
-	log.Print("[DEBUG] [Akamai Property Contract] Start Searching for property contract by group")
-
+	///log.Print("[DEBUG] [Akamai Property Contract] Start Searching for property contract by group")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " [Akamai Property Contract] Start Searching for property contract by group")
 	groups, err := papi.GetGroups()
 	if err != nil {
 		return fmt.Errorf("error looking up Group Contract for %q: %s", group, err)

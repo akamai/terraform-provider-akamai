@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -47,7 +47,7 @@ func (contracts *Contracts) PostUnmarshalJSON() error {
 //
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listcontracts
 // Endpoint: GET /papi/v1/contracts
-func (contracts *Contracts) GetContracts() error {
+func (contracts *Contracts) GetContracts(correlationid string) error {
 
 	cachecontracts, found := Profilecache.Get("contracts")
 	if found {
@@ -65,14 +65,14 @@ func (contracts *Contracts) GetContracts() error {
 			return err
 		}
 
-		edge.PrintHttpRequest(req, true)
+		edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 		res, err := client.Do(Config, req)
 		if err != nil {
 			return err
 		}
 
-		edge.PrintHttpResponse(res, true)
+		edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 		if client.IsError(res) {
 			return client.NewAPIError(res)

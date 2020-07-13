@@ -26,7 +26,7 @@ func AddRequestHeader(config Config, req *http.Request) *http.Request {
 
 	if EdgegridLog == nil {
 		SetupLogging()
-		if  config.Debug {
+		if config.Debug {
 			EdgegridLog.SetLevel(logrus.DebugLevel)
 		}
 	}

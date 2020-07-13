@@ -11,6 +11,7 @@ import (
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/httpclient"
@@ -203,13 +204,13 @@ func providerConfigure(d *schema.ResourceData, terraformVersion string) (interfa
 	}
 
 	tfUserAgent := httpclient.TerraformUserAgent(config.terraformVersion)
-	log.Printf("[DEBUG] tfUserAgent  %s\n", tfUserAgent)
+	//og.Printf("[DEBUG] tfUserAgent  %s\n", tfUserAgent)
 	providerVersion := fmt.Sprintf("terraform-provider-akamai/%s", version.ProviderVersion)
-	log.Printf("[DEBUG] providerVersion  %s\n", providerVersion)
+	//log.Printf("[DEBUG] providerVersion  %s\n", providerVersion)
 	//userAgent := fmt.Sprintf("%s %s", tfUserAgent, providerVersion)
 	client.UserAgent = fmt.Sprintf("%s %s", tfUserAgent, providerVersion)
 
-	log.Printf("[DEBUG] CLIENT UserAgent  %s\n", client.UserAgent)
+	//log.Printf("[DEBUG] CLIENT UserAgent  %s\n", client.UserAgent)
 
 	//client.UserAgent = client.UserAgent + " terraform/" + Version
 

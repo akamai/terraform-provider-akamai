@@ -3,8 +3,8 @@ package papi
 import (
 	"time"
 
-        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 )
 
 type SearchKey string
@@ -37,7 +37,7 @@ type SearchResult struct {
 //
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#postfindbyvalue
 // Endpoint: POST /papi/v1/search/find-by-value
-func Search(searchBy SearchKey, propertyName string) (*SearchResult, error) {
+func Search(searchBy SearchKey, propertyName string, correlationid string) (*SearchResult, error) {
 	req, err := client.NewJSONRequest(
 		Config,
 		"POST",
@@ -49,14 +49,14 @@ func Search(searchBy SearchKey, propertyName string) (*SearchResult, error) {
 		return nil, err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return nil, err
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if client.IsError(res) {
 		return nil, client.NewAPIError(res)

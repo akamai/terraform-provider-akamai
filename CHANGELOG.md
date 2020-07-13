@@ -2,6 +2,7 @@
 * [FIX] Corrected Error 401 [Signature does not match] during  new primary zone creation (`akamai-dns`) [GH-163]
 * [ADD] Updated Getting Started Primary Zone creation description. Added FAQ for Primary zone (`akamai-dns`)
 * [FIX] SRV record priority value of 0 not allowed (`akamai-dns`) [GH-165]
+* [ADD] Initial support for correlation ID in logging (`akamai-property`)
 
 ## 0.7.2 (June 11, 2020)
 * [FIX] Corrected AAAA record handling of short and long IPv6 notation (`akamai-dns`)

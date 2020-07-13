@@ -1,9 +1,10 @@
 package akamai
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -45,49 +46,46 @@ func resourceCPCode() *schema.Resource {
 }
 
 func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourceCPCodeCreate-" + CreateNonce())
-	PrintLogHeader()
-	log.Printf("[DEBUG] Creating CP Code")
+	CorrelationID := "[PAPI][resourceCPCodeCreate-" + CreateNonce() + "]"
 
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating CP Code")
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
 	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
-	cpCode, err := cpCodes.FindCpCode(d.Get("name").(string))
+	cpCode, err := cpCodes.FindCpCode(d.Get("name").(string), CorrelationID)
 	if cpCode == nil || err != nil {
 		cpCode = cpCodes.NewCpCode()
 		cpCode.ProductID = d.Get("product").(string)
 		cpCode.CpcodeName = d.Get("name").(string)
-		log.Printf("[DEBUG] CPCode: %#v", cpCode)
-		err := cpCode.Save()
+
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  CPCode: %+v", cpCode))
+		err := cpCode.Save(CorrelationID)
 		if err != nil {
-			log.Print("[DEBUG] Error saving")
-			log.Printf("%s", err.(client.APIError).RawBody)
+			edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Error saving")
+			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("%s", err.(client.APIError).RawBody))
 			return err
 		}
 	}
 
-	log.Printf("[DEBUG] Resulting CP Code: %#v\n\n\n", cpCode)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Resulting CP Code: %#v\n\n\n", cpCode))
 	d.SetId(cpCode.CpcodeID)
-	PrintLogFooter()
 	return resourceCPCodeRead(d, meta)
 }
 
 func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] Deleting CP Code")
-
+	CorrelationID := "[PAPI][resourceCPCodeCreate-" + CreateNonce() + "]"
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting CP Code")
 	// No PAPI CP Code delete operation exists.
 	// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
 	return schema.Noop(d, meta)
 }
 
 func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
-	setCorrelationID("resourceCPCodeRead-" + CreateNonce())
-	PrintLogHeader()
-	log.Printf("[DEBUG] Reading CP Code")
-
+	CorrelationID := "[PAPI][resourceCPCodeRead-" + CreateNonce() + "]"
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CP Code")
 	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
-	cpCode, err := cpCodes.FindCpCode(d.Id())
+	cpCode, err := cpCodes.FindCpCode(d.Id(), CorrelationID)
 	if cpCode == nil || err != nil {
-		cpCode, err = cpCodes.FindCpCode(d.Get("name").(string))
+		cpCode, err = cpCodes.FindCpCode(d.Get("name").(string), CorrelationID)
 		if err != nil {
 			return err
 		}
@@ -98,9 +96,7 @@ func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(cpCode.CpcodeID)
-	log.Printf("[DEBUG] Read CP Code: %+v", cpCode)
-
-	PrintLogFooter()
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Read CP Code: %+v", cpCode))
 	return nil
 }
 

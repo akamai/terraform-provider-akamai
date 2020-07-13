@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-        edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 )
 
 // Properties is a collection of PAPI Property resources
@@ -46,7 +45,7 @@ func (properties *Properties) PostUnmarshalJSON() error {
 //
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listproperties
 // Endpoint: GET /papi/v1/properties/{?contractId,groupId}
-func (properties *Properties) GetProperties(contract *Contract, group *Group) error {
+func (properties *Properties) GetProperties(contract *Contract, group *Group, correlationid string) error {
 	if contract == nil {
 		contract = NewContract(NewContracts())
 		contract.ContractID = group.ContractIDs[0]
@@ -67,7 +66,7 @@ func (properties *Properties) GetProperties(contract *Contract, group *Group) er
 		return err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 
@@ -75,7 +74,7 @@ func (properties *Properties) GetProperties(contract *Contract, group *Group) er
 		return nil
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -182,7 +181,7 @@ func (property *Property) PreMarshalJSON() error {
 //
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#getaproperty
 // Endpoint: GET /papi/v1/properties/{propertyId}{?contractId,groupId}
-func (property *Property) GetProperty() error {
+func (property *Property) GetProperty(correlationid string) error {
 	req, err := client.NewRequest(
 		Config,
 		"GET",
@@ -196,14 +195,14 @@ func (property *Property) GetProperty() error {
 		return err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -266,10 +265,10 @@ func (property *Property) GetAvailableBehaviors() (*AvailableBehaviors, error) {
 // See: Rules.GetRules
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#getaruletree
 // Endpoint: GET /papi/v1/properties/{propertyId}/versions/{propertyVersion}/rules/{?contractId,groupId}
-func (property *Property) GetRules() (*Rules, error) {
+func (property *Property) GetRules(correlationid string) (*Rules, error) {
 	rules := NewRules()
 
-	if err := rules.GetRules(property); err != nil {
+	if err := rules.GetRules(property, correlationid); err != nil {
 		return nil, err
 	}
 
@@ -281,9 +280,9 @@ func (property *Property) GetRules() (*Rules, error) {
 // See: Rules.GetRulesDigest()
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#getaruletreesdigest
 // Endpoint: HEAD /papi/v1/properties/{propertyId}/versions/{propertyVersion}/rules/{?contractId,groupId}
-func (property *Property) GetRulesDigest() (string, error) {
+func (property *Property) GetRulesDigest(correlationid string) (string, error) {
 	rules := NewRules()
-	return rules.GetRulesDigest(property)
+	return rules.GetRulesDigest(property, correlationid)
 }
 
 // GetVersions retrieves all versions for a a given property
@@ -291,9 +290,9 @@ func (property *Property) GetRulesDigest() (string, error) {
 // See: Versions.GetVersions()
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#listversions
 // Endpoint: GET /papi/v1/properties/{propertyId}/versions/{?contractId,groupId}
-func (property *Property) GetVersions() (*Versions, error) {
+func (property *Property) GetVersions(correlationid string) (*Versions, error) {
 	versions := NewVersions()
-	err := versions.GetVersions(property)
+	err := versions.GetVersions(property, correlationid)
 	if err != nil {
 		return nil, err
 	}
@@ -306,11 +305,11 @@ func (property *Property) GetVersions() (*Versions, error) {
 // See: Versions.GetLatestVersion()
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#getthelatestversion
 // Endpoint: GET /papi/v1/properties/{propertyId}/versions/latest{?contractId,groupId,activatedOn}
-func (property *Property) GetLatestVersion(activatedOn NetworkValue) (*Version, error) {
+func (property *Property) GetLatestVersion(activatedOn NetworkValue, correlationid string) (*Version, error) {
 	versions := NewVersions()
 	versions.PropertyID = property.PropertyID
 
-	return versions.GetLatestVersion(activatedOn)
+	return versions.GetLatestVersion(activatedOn, correlationid)
 }
 
 // GetHostnames retrieves hostnames assigned to a given property
@@ -320,7 +319,7 @@ func (property *Property) GetLatestVersion(activatedOn NetworkValue) (*Version, 
 // See: Hostnames.GetHostnames()
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#getpropertyversionhostnames
 // Endpoint: GET /papi/v1/properties/{propertyId}/versions/{propertyVersion}/hostnames/{?contractId,groupId}
-func (property *Property) GetHostnames(version *Version) (*Hostnames, error) {
+func (property *Property) GetHostnames(version *Version, correlationid string) (*Hostnames, error) {
 	hostnames := NewHostnames()
 	hostnames.PropertyID = property.PropertyID
 	hostnames.ContractID = property.Contract.ContractID
@@ -328,12 +327,12 @@ func (property *Property) GetHostnames(version *Version) (*Hostnames, error) {
 
 	if version == nil {
 		var err error
-		version, err = property.GetLatestVersion("")
+		version, err = property.GetLatestVersion("", correlationid)
 		if err != nil {
 			return nil, err
 		}
 	}
-	err := hostnames.GetHostnames(version)
+	err := hostnames.GetHostnames(version, correlationid)
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +368,7 @@ func (property *Property) PostUnmarshalJSON() error {
 //
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#createorcloneaproperty
 // Endpoint: POST /papi/v1/properties/{?contractId,groupId}
-func (property *Property) Save() error {
+func (property *Property) Save(correlationid string) error {
 	req, err := client.NewJSONRequest(
 		Config,
 		"POST",
@@ -384,14 +383,14 @@ func (property *Property) Save() error {
 		return err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)
@@ -463,7 +462,7 @@ func (property *Property) Activate(activation *Activation, acknowledgeWarnings b
 //
 // API Docs: https://developer.akamai.com/api/luna/papi/resources.html#removeaproperty
 // Endpoint: DELETE /papi/v1/properties/{propertyId}{?contractId,groupId}
-func (property *Property) Delete() error {
+func (property *Property) Delete(correlationid string) error {
 	// /papi/v1/properties/{propertyId}{?contractId,groupId}
 	req, err := client.NewRequest(
 		Config,
@@ -478,14 +477,14 @@ func (property *Property) Delete() error {
 		return err
 	}
 
-	edge.PrintHttpRequest(req, true)
+	edge.PrintHttpRequestCorrelation(req, true, correlationid)
 
 	res, err := client.Do(Config, req)
 	if err != nil {
 		return err
 	}
 
-	edge.PrintHttpResponse(res, true)
+	edge.PrintHttpResponseCorrelation(res, true, correlationid)
 
 	if client.IsError(res) {
 		return client.NewAPIError(res)

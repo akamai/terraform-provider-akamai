@@ -262,7 +262,7 @@ func testAccCheckAkamaiPropertyExists(s *terraform.State) error {
 
 		property := papi.NewProperty(papi.NewProperties())
 		property.PropertyID = rs.Primary.ID
-		e := property.GetProperty()
+		e := property.GetProperty("CORRELATIONID")
 		if e != nil {
 			return e
 		}
