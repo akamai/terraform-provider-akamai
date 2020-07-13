@@ -146,5 +146,12 @@ func PrintHttpResponseCorrelation(res *http.Response, body bool, correlationid s
 }
 
 func PrintfCorrelation(level string, correlationid string, msg string) {
-	logstd.Printf("%s%v  %s\n", level, correlationid, msg)
+
+	if correlationid == "" {
+		logstd.Printf("%s  %s\n", level, msg)
+	} else {
+		logstd.SetFlags(0)
+		logstd.Printf("%v %s\n", correlationid, msg)
+	}
+
 }
