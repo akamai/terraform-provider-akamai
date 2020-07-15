@@ -78,6 +78,8 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 			}
 
 			err = fmt.Errorf("group does not belong to contract %s", contract)
+		} else {
+			group, err = groups.FindGroupId(name)
 		}
 	}
 
