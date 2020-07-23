@@ -1,5 +1,17 @@
-crash.log
-terraform.tfstate
-terraform.tfstate.backup
+# testing and custom build code
 .terraform/
 terraform-provider-akamai
+terraform.tfstate
+terraform.tfstate.backup
+*.log
+
+# eclipse
+.classpath
+.project
+.settings
+
+# IntelliJ
+/.idea/
+*.ipr
+*.iws
+*.iml
