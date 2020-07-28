@@ -89,7 +89,6 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 					group = foundGroups[0]
 					goto groupFound
 				} else {
-					//err = fmt.Errorf("There is more then one group with name %s, please add contractId to data source definition to select one.", name)
 					return fmt.Errorf("There is more then one group with name %s, please add contractId to data source definition to select one.", name)
 				}
 			}

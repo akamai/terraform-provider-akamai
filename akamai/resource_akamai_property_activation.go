@@ -175,14 +175,6 @@ func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) 
 	network := papi.NetworkValue(d.Get("network").(string))
 	version := d.Get("version").(int)
 
-	/*_, ok := d.GetOk("version")
-	if !ok {
-		la, _ := activations.GetLatestActivation(papi.NetworkValue(strings.ToUpper(d.Get("network").(string))), papi.StatusActive)
-		version = la.PropertyVersion
-	}
-	*/
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  After GetActivations %s version %d \n", network, version))
 	for _, activation := range activations.Activations.Items {
 		if activation.Network == network && activation.PropertyVersion == version {
 			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Found Existing Activation %s version %d \n", network, version))
@@ -211,22 +203,13 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 
 	network := papi.NetworkValue(d.Get("network").(string))
 	version := d.Get("version").(int)
-	/*
-		_, ok := d.GetOk("version")
-		if !ok {
-			la, _ := activations.GetLatestActivation(papi.NetworkValue(strings.ToUpper(d.Get("network").(string))), papi.StatusActive)
-			version = la.PropertyVersion
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" SET VERSION READ Found Latest Activation %s version %d \n", la.Network, la.PropertyVersion))
-		}
-	*/
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  READ Found Existing Activation %s version %d \n", network, version))
+
 	for _, activation := range activations.Activations.Items {
 		if activation.Network == network && activation.PropertyVersion == version {
 			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Found Existing Activation %s version %d \n", network, version))
 			d.SetId(activation.ActivationID)
 			d.Set("status", string(activation.Status))
 			d.Set("version", activation.PropertyVersion)
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" SET VERSION READ Found Existing Activation %s version %d \n", activation.Network, activation.PropertyVersion))
 		}
 	}
 
@@ -249,13 +232,13 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return err
 	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" SET VERSION UPDATE GetActivation %s version %d \n", activation.Network, activation.PropertyVersion))
+
 	a, err := findExistingActivation(property, activation, CorrelationID)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" SET VERSION UPDATE GetActivation %s version %d ERR = %v \n", activation.Network, activation.PropertyVersion, err))
+
 	if err == nil {
 		activation = a
 	}
-	//edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" SET VERSION UPDATE Find Existing Activation %s version %d \n", activation.Network, activation.PropertyVersion))
+
 	if d.Get("activate").(bool) {
 		/*old, new := d.GetChange("network")
 		if old.(string) != new.(string) {
@@ -292,7 +275,6 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 			}
 		}
 		d.Set("version", activation.PropertyVersion)
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" SET VERSION UPDATE Found Existing Activation %s version %d \n", activation.Network, activation.PropertyVersion))
 		d.Set("status", string(activation.Status))
 	} else {
 		return resourcePropertyActivationRead(d, meta)
@@ -389,29 +371,18 @@ func findExistingActivation(property *papi.Property, activation *papi.Activation
 		papi.StatusZone2:               true,
 		papi.StatusZone3:               true,
 	}
-	for _, a := range activations.Activations.Items {
-		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" SET VERSION UPDATE LOOP TEST loop values %s version %d Activationpassed in  %s version %d  \n", a.Network, a.PropertyVersion, activation.Network, activation.PropertyVersion))
-	}
-	for _, a := range activations.Activations.Items {
 
-		edge.PrintfCorrelation("[DEBUG]", correlationid, " AExisting activation search loop")
-		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" AExisting activation search loop inProgressStates %v Activations loop values %s version %d Activationpassed in  %s version %d  \n", inProgressStates[a.Status], a.Network, a.PropertyVersion, activation.Network, activation.PropertyVersion))
+	for _, a := range activations.Activations.Items {
 
 		if _, ok := inProgressStates[a.Status]; !ok {
-			edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" AExisting activation search IF inProgressStates %v Activations loop values %s version %d Activationpassed in  %s version %d  \n", inProgressStates[a.Status], a.Network, a.PropertyVersion, activation.Network, activation.PropertyVersion))
 			continue
 		}
 
 		// There is an activation in progress, if it's for the same version/network/type we can re-use it
-		/*if !(a.PropertyVersion != activation.PropertyVersion || a.ActivationType != activation.ActivationType || a.Network != activation.Network) {
-			return nil, fmt.Errorf("%s already in progress: v%d on %s", activation.ActivationType, activation.PropertyVersion, activation.Network)
-		}
-		*/
+
 		//log.Println("[DEBUG] Existing activation found")
 		if a.PropertyVersion == activation.PropertyVersion && a.ActivationType == activation.ActivationType && a.Network == activation.Network {
-			edge.PrintfCorrelation("[DEBUG]", correlationid, " AExisting activation found")
-			edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" AExisting activation found %v Activations values %s version %d Activationpassed in  %s version %d  \n", inProgressStates[a.Status], a.Network, a.PropertyVersion, activation.Network, activation.PropertyVersion))
-			edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" GetActivation Activations IF REUSE values %s version %d Activationpassed in  %s version %d  \n", a.Network, a.PropertyVersion, activation.Network, activation.PropertyVersion))
+			edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" An Existing activation found %v Activations values %s version %d Activationpassed in  %s version %d  \n", inProgressStates[a.Status], a.Network, a.PropertyVersion, activation.Network, activation.PropertyVersion))
 			return a, nil
 		}
 
