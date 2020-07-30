@@ -63,21 +63,35 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 			}
 		}
 	} else {
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Searching for records NON DEFAULT [%s]", name))
 		var foundGroups []*papi.Group
 		foundGroups, err := groups.FindGroupsByName(name)
-
-		// Make sure the group belongs to the specified contract
-		if err == nil && contractOk {
-			for _, foundGroup := range foundGroups {
-				for _, c := range foundGroup.ContractIDs {
-					if c == contract.(string) || c == "ctr_"+contract.(string) {
-						group = foundGroup
-						goto groupFound
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Searching for records NON DEFAULT ERR=[%v]", err))
+		if err == nil {
+			if contractOk {
+				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Searching for records NON DEFAULT CONTRACT SUPPLIED=[%s]", contract.(string)))
+				// if contract is specified make sure the group belongs to the specified contract
+				for _, foundGroup := range foundGroups {
+					for _, c := range foundGroup.ContractIDs {
+						if c == contract.(string) || c == "ctr_"+contract.(string) {
+							group = foundGroup
+							goto groupFound
+						}
 					}
 				}
-			}
 
-			err = fmt.Errorf("group does not belong to contract %s", contract)
+				err = fmt.Errorf("group does not belong to contract %s", contract)
+			} else {
+				// contract is unspecified. if there is only one group return it, if more return an error
+				var groupCount = len(foundGroups)
+				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Searching for records NON DEFAULT CONTRACT BLANK=[%d]", groupCount))
+				if groupCount == 1 {
+					group = foundGroups[0]
+					goto groupFound
+				} else {
+					return fmt.Errorf("There is more then one group with name %s, please add contractId to data source definition to select one.", name)
+				}
+			}
 		}
 	}
 
