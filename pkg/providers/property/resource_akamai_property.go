@@ -9,7 +9,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	//log "github.com/sirupsen/logrus"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/tidwall/gjson"
@@ -1124,7 +1124,7 @@ func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 		if ok {
 			rule.Name, _ = vv["name"].(string)
 			rule.Comments, _ = vv["comments"].(string)
-			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
+			criteriaMustSatisfy, ok := vv["criteria_match"]
 			if ok {
 				if criteriaMustSatisfy.(string) == "all" {
 					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
@@ -1228,7 +1228,7 @@ func extractRules(drules *schema.Set) ([]*papi.Rule, error) {
 			rule.Name = vv["name"].(string)
 			rule.Comments = vv["comment"].(string)
 
-			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
+			criteriaMustSatisfy, ok := vv["criteria_match"]
 			if ok {
 				if criteriaMustSatisfy.(string) == "all" {
 					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll

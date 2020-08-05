@@ -75,10 +75,19 @@ func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("unable to find property: %w", err))
 	}
 
-	defer logger.Debugf("Done")
+	rulesAPI, err := property.GetRules(CorrelationID)
+	if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rulesAPI.Errors) > 0 {
+		var msg string
+		for _, v := range rulesAPI.Errors {
+			msg = msg + fmt.Sprintf("\n Rule validation error: %s %s %s %s %s", v.Type, v.Title, v.Detail, v.Instance, v.BehaviorName)
+		}
+		return diag.FromErr(errors.New("Error Activation Not permitted - Invalid Property Rules" + msg))
+	}
+
 	if err := d.Set("property", property.PropertyID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
+
 	activate, err := tools.GetBoolValue("activate", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -86,9 +95,9 @@ func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData,
 	if !activate {
 		d.SetId("none")
 		logger.Debugf("Done")
-		return nil
+		return diag.Diagnostics{}
 	}
-	activation, err := activateProperty(property, d, CorrelationID, logger)
+	activation, err := activateProperty(property, d, logger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -308,20 +317,28 @@ func resourcePropertyActivationUpdate(_ context.Context, d *schema.ResourceData,
 	}
 	property.PropertyID = propertyID
 	err = property.GetProperty(CorrelationID)
-	if err != nil {
-		return diag.FromErr(err)
+
+	rulesAPI, err := property.GetRules(CorrelationID)
+	if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rulesAPI.Errors) > 0 {
+		var msg string
+		for _, v := range rulesAPI.Errors {
+			msg = msg + fmt.Sprintf("\n Rule validation error: %s %s %s %s %s", v.Type, v.Title, v.Detail, v.Instance, v.BehaviorName)
+		}
+		logger.Errorf("Error Activation Not permitted - Invalid Property Rules: %s\n", msg)
+		return diag.FromErr(errors.New("Error Activation Not permitted - Invalid Property Rules" + msg))
 	}
+
 	network, err := tools.GetStringValue("network", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(network), CorrelationID, logger)
+	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(network), logger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	foundActivation, err := findExistingActivation(property, activation, CorrelationID, logger)
+	foundActivation, err := findExistingActivation(property, activation, logger)
 	if err == nil {
 		activation = foundActivation
 	}
@@ -336,7 +353,7 @@ func resourcePropertyActivationUpdate(_ context.Context, d *schema.ResourceData,
 	}
 	// No activation in progress, create a new one
 	if foundActivation == nil {
-		activation, err = activateProperty(property, d, CorrelationID, logger)
+		activation, err = activateProperty(property, d, logger)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -370,17 +387,17 @@ polling:
 	return nil
 }
 
-func activateProperty(property *papi.Property, d *schema.ResourceData, correlationid string, logger log.Interface) (*papi.Activation, error) {
+func activateProperty(property *papi.Property, d *schema.ResourceData, logger log.Interface) (*papi.Activation, error) {
 	network, err := tools.GetStringValue("network", d)
 	if err != nil {
 		return nil, err
 	}
-	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(network), correlationid, logger)
+	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(network), logger)
 	if err != nil {
 		return nil, err
 	}
 
-	if foundActivation, err := findExistingActivation(property, activation, correlationid, logger); err == nil && foundActivation != nil {
+	if foundActivation, err := findExistingActivation(property, activation, logger); err == nil && foundActivation != nil {
 		return foundActivation, nil
 	}
 	if err = activation.Save(property, true); err != nil {
@@ -402,12 +419,12 @@ func deactivateProperty(property *papi.Property, d *schema.ResourceData, network
 		return nil, nil
 	}
 
-	activation, err := getActivation(d, property, papi.ActivationTypeDeactivate, network, correlationid, logger)
+	activation, err := getActivation(d, property, papi.ActivationTypeDeactivate, network, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	if foundActivation, err := findExistingActivation(property, activation, correlationid, logger); err == nil && foundActivation != nil {
+	if foundActivation, err := findExistingActivation(property, activation, logger); err == nil && foundActivation != nil {
 		return foundActivation, nil
 	}
 
@@ -423,8 +440,9 @@ func deactivateProperty(property *papi.Property, d *schema.ResourceData, network
 	return activation, nil
 }
 
-func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue, correlationid string, logger log.Interface) (*papi.Activation, error) {
+func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue, logger log.Interface) (*papi.Activation, error) {
 	logger.Debugf("Creating new activation")
+	correlationid := ""
 	activation := papi.NewActivation(papi.NewActivations())
 	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -459,7 +477,7 @@ func getActivation(d *schema.ResourceData, property *papi.Property, activationTy
 	return activation, nil
 }
 
-func findExistingActivation(property *papi.Property, activation *papi.Activation, _ string, logger log.Interface) (*papi.Activation, error) {
+func findExistingActivation(property *papi.Property, activation *papi.Activation, logger log.Interface) (*papi.Activation, error) {
 	activations, err := property.GetActivations()
 	if err != nil {
 		return nil, err
