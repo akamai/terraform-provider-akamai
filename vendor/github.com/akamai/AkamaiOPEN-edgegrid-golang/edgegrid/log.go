@@ -33,9 +33,6 @@ var logBuffer *bufio.Writer
 var LogFile *os.File
 var EdgegridLog *log.Logger
 
-// LogCorrelationID ID for header and footer of log file outputs
-var LogCorrelationID *string
-
 func SetupLogging() {
 
 	if EdgegridLog != nil {
@@ -87,22 +84,6 @@ func LogMultilinef(f func(formatter string, args ...interface{}), formatter stri
 	str := fmt.Sprintf(formatter, args...)
 	for _, str := range strings.Split(strings.Trim(str, "\n"), "\n") {
 		f(str)
-	}
-}
-
-func PrintLogHeader() {
-	if LogCorrelationID != nil {
-		strLogCorrelationIDValue := *LogCorrelationID
-		LogMultiline(EdgegridLog.Traceln, "START CORRELATION ID "+strLogCorrelationIDValue)
-
-	}
-}
-
-func PrintLogFooter() {
-	if LogCorrelationID != nil {
-		strLogCorrelationIDValue := *LogCorrelationID
-		LogMultiline(EdgegridLog.Traceln, "END CORRELATION ID "+strLogCorrelationIDValue)
-		LogCorrelationID = nil
 	}
 }
 
