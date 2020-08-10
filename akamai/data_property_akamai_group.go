@@ -26,11 +26,11 @@ func dataSourcePropertyGroups() *schema.Resource {
 	}
 }
 
-func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourcePropertyGroupsRead(d *schema.ResourceData, _ interface{}) error {
 	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + CreateNonce() + "]"
 	var name string
 	_, ok := d.GetOk("name")
-	getDefault := false
+	var getDefault bool
 	if !ok {
 		name = "default"
 		getDefault = true
@@ -42,54 +42,81 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, meta interface{}) erro
 	groups := papi.NewGroups()
 	err := groups.GetGroups(CorrelationID)
 	if err != nil {
-		return fmt.Errorf("error looking up Groups for %q: %s", name, err)
+		return fmt.Errorf("looking up Groups for %q: %s", name, err)
 	}
-
-	var group *papi.Group
 	contract, contractOk := d.GetOk("contract")
-
-	if getDefault {
-		name = groups.AccountName
-		if contractOk {
-			name += "-" + strings.TrimPrefix(contract.(string), "ctr_")
-			group, err = groups.FindGroup(name)
-		} else {
-			// Find the first one
-			if len(groups.Groups.Items) > 0 {
-				group = groups.Groups.Items[0]
-				goto groupFound
-			} else {
-				err = errors.New("no groups found")
-			}
-		}
-	} else {
-		var foundGroups []*papi.Group
-		foundGroups, err := groups.FindGroupsByName(name)
-
-		// Make sure the group belongs to the specified contract
-		if err == nil && contractOk {
-			for _, foundGroup := range foundGroups {
-				for _, c := range foundGroup.ContractIDs {
-					if c == contract.(string) || c == "ctr_"+contract.(string) {
-						group = foundGroup
-						goto groupFound
-					}
-				}
-			}
-
-			err = fmt.Errorf("group does not belong to contract %s", contract)
-		}
+	var contractStr string
+	if contractOk {
+		contractStr, ok = contract.(string)
 	}
 
+	group, err := findGroupByName(name, contractStr, groups, getDefault)
 	if err != nil {
-		return fmt.Errorf("error looking up Group for %q: %s", name, err)
+		return fmt.Errorf("looking up Group for %q: %s", name, err)
 	}
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Searching for records [%v]", group))
-
-groupFound:
-	d.Set("id", group.GroupID)
 	d.SetId(group.GroupID)
-
 	return nil
+}
+
+var (
+	ErrNoGroupsFound       = errors.New("no groups found")
+	ErrGroupNotFound       = errors.New("could not find group for given group ID")
+	ErrFindingGroupsByName = errors.New("could not find groups for given name")
+	ErrNoContractProvided  = errors.New("contract ID is required for non-default name")
+	ErrGroupNotInContract  = errors.New("group does not belong to contract")
+)
+
+/*
+findGroupByName returns Group struct based on provided name, contract and default name provided
+for default name, either a group is returned based on provided contract, or in case of empty contract, first group is returned
+TODO: we should decide whether returning first group from slice of groups is proper business behaviour
+
+for non-default name, if contract was provided, a group with matching contract ID should be returned
+in case of non-default name, contract is mandatory
+*/
+func findGroupByName(name string, contract string, groups *papi.Groups, isDefault bool) (*papi.Group, error) {
+	var group *papi.Group
+	var err error
+	if isDefault {
+		name = groups.AccountName
+		if contract != "" {
+			name += "-" + strings.TrimPrefix(contract, "ctr_")
+			group, err = groups.FindGroup(name)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", err.Error(), ErrGroupNotFound)
+			}
+		} else {
+			// Find the first one
+			if len(groups.Groups.Items) == 0 {
+				return nil, ErrNoGroupsFound
+			}
+			group = groups.Groups.Items[0]
+		}
+	} else {
+		// for non-default name, contract is required
+		if contract == "" {
+			return nil, fmt.Errorf("%w: %s", ErrNoContractProvided, name)
+		}
+		var foundGroups []*papi.Group
+		foundGroups, err := groups.FindGroupsByName(name)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", err.Error(), ErrFindingGroupsByName)
+		}
+		// Make sure the group belongs to the specified contract
+	FoundGroupsLoop:
+		for _, foundGroup := range foundGroups {
+			for _, c := range foundGroup.ContractIDs {
+				if c == contract || c == "ctr_"+contract {
+					group = foundGroup
+					break FoundGroupsLoop
+				}
+			}
+		}
+		if group == nil {
+			return nil, fmt.Errorf("%w: %s", ErrGroupNotInContract, contract)
+		}
+	}
+	return group, nil
 }
