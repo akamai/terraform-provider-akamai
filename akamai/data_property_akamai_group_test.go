@@ -87,7 +87,7 @@ func TestFindGroupByName(t *testing.T) {
 			givenGroups:            nil,
 			givenGroupsAccountName: "",
 			isDefault:              true,
-			withError:              ErrNoGroupsFound,
+			withError:              ErrPapiNoGroupsFound,
 		},
 		"with default and contract provided, return matching group": {
 			givenName:     "any name",
@@ -120,7 +120,7 @@ func TestFindGroupByName(t *testing.T) {
 			},
 			givenGroupsAccountName: "Account1",
 			isDefault:              true,
-			withError:              ErrGroupNotFound,
+			withError:              ErrPapiGroupNotFound,
 		},
 		"not default and no contract provided, return error": {
 			givenName:     "any name",
@@ -133,7 +133,7 @@ func TestFindGroupByName(t *testing.T) {
 			},
 			givenGroupsAccountName: "",
 			isDefault:              false,
-			withError:              ErrNoContractProvided,
+			withError:              ErrPapiNoContractProvided,
 		},
 		"not default and contract provided, return matching group": {
 			givenName:     "Group A",
@@ -168,7 +168,7 @@ func TestFindGroupByName(t *testing.T) {
 			},
 			givenGroupsAccountName: "",
 			isDefault:              false,
-			withError:              ErrGroupNotInContract,
+			withError:              ErrPapiGroupNotInContract,
 		},
 		"not default and contract provided, no groups found by name": {
 			givenName:              "Group A",
@@ -176,7 +176,7 @@ func TestFindGroupByName(t *testing.T) {
 			givenGroups:            []*papi.Group{},
 			givenGroupsAccountName: "",
 			isDefault:              false,
-			withError:              ErrFindingGroupsByName,
+			withError:              ErrPapiFindingGroupsByName,
 		},
 	}
 

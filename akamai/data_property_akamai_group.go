@@ -1,7 +1,6 @@
 package akamai
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -42,7 +41,7 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, _ interface{}) error {
 	groups := papi.NewGroups()
 	err := groups.GetGroups(CorrelationID)
 	if err != nil {
-		return fmt.Errorf("looking up Groups for %q: %s", name, err)
+		return fmt.Errorf("%w: %q: %s", ErrPapiLookingUpGroupByName, name, err)
 	}
 	contract, contractOk := d.GetOk("contract")
 	var contractStr string
@@ -52,21 +51,13 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, _ interface{}) error {
 
 	group, err := findGroupByName(name, contractStr, groups, getDefault)
 	if err != nil {
-		return fmt.Errorf("looking up Group for %q: %s", name, err)
+		return fmt.Errorf("%w: %q: %s", ErrPapiLookingUpGroupByName, name, err)
 	}
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Searching for records [%v]", group))
 	d.SetId(group.GroupID)
 	return nil
 }
-
-var (
-	ErrNoGroupsFound       = errors.New("no groups found")
-	ErrGroupNotFound       = errors.New("could not find group for given group ID")
-	ErrFindingGroupsByName = errors.New("could not find groups for given name")
-	ErrNoContractProvided  = errors.New("contract ID is required for non-default name")
-	ErrGroupNotInContract  = errors.New("group does not belong to contract")
-)
 
 /*
 findGroupByName returns Group struct based on provided name, contract and default name provided
@@ -85,24 +76,24 @@ func findGroupByName(name string, contract string, groups *papi.Groups, isDefaul
 			name += "-" + strings.TrimPrefix(contract, "ctr_")
 			group, err = groups.FindGroup(name)
 			if err != nil {
-				return nil, fmt.Errorf("%s: %w", err.Error(), ErrGroupNotFound)
+				return nil, fmt.Errorf("%s: %w", err.Error(), ErrPapiGroupNotFound)
 			}
 		} else {
 			// Find the first one
 			if len(groups.Groups.Items) == 0 {
-				return nil, ErrNoGroupsFound
+				return nil, ErrPapiNoGroupsFound
 			}
 			group = groups.Groups.Items[0]
 		}
 	} else {
 		// for non-default name, contract is required
 		if contract == "" {
-			return nil, fmt.Errorf("%w: %s", ErrNoContractProvided, name)
+			return nil, fmt.Errorf("%w: %s", ErrPapiNoContractProvided, name)
 		}
 		var foundGroups []*papi.Group
 		foundGroups, err := groups.FindGroupsByName(name)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", err.Error(), ErrFindingGroupsByName)
+			return nil, fmt.Errorf("%s: %w", err.Error(), ErrPapiFindingGroupsByName)
 		}
 		// Make sure the group belongs to the specified contract
 	FoundGroupsLoop:
@@ -115,7 +106,7 @@ func findGroupByName(name string, contract string, groups *papi.Groups, isDefaul
 			}
 		}
 		if group == nil {
-			return nil, fmt.Errorf("%w: %s", ErrGroupNotInContract, contract)
+			return nil, fmt.Errorf("%w: %s", ErrPapiGroupNotInContract, contract)
 		}
 	}
 	return group, nil
