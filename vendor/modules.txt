@@ -220,6 +220,8 @@ github.com/mitchellh/reflectwalk
 github.com/oklog/run
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
 # github.com/posener/complete v1.2.1
 github.com/posener/complete
 github.com/posener/complete/cmd
@@ -230,6 +232,9 @@ github.com/sirupsen/logrus
 # github.com/spf13/afero v1.2.2
 github.com/spf13/afero
 github.com/spf13/afero/mem
+# github.com/stretchr/testify v1.6.1
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # github.com/tidwall/gjson v1.2.1
 github.com/tidwall/gjson
 # github.com/tidwall/match v1.0.1
@@ -380,3 +385,5 @@ google.golang.org/grpc/tap
 google.golang.org/grpc/test/bufconn
 # gopkg.in/ini.v1 v1.51.1
 gopkg.in/ini.v1
+# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+gopkg.in/yaml.v3
