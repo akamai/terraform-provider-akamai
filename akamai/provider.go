@@ -109,8 +109,9 @@ func Provider() terraform.ResourceProvider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"edgerc": &schema.Schema{
-				Optional: true,
-				Type:     schema.TypeString,
+				Optional:    true,
+				Type:        schema.TypeString,
+				DefaultFunc: schema.EnvDefaultFunc("EDGERC", nil),
 			},
 			"dns_section": &schema.Schema{
 				Optional: true,
@@ -128,9 +129,9 @@ func Provider() terraform.ResourceProvider {
 				Default:  "default",
 			},
 			"property_section": &schema.Schema{
-				Optional: true,
-				Type:     schema.TypeString,
-				Default:  "default",
+				Optional:    true,
+				Type:        schema.TypeString,
+				DefaultFunc: schema.EnvDefaultFunc("EDGERC_ENVIRONMENT", "default"),
 			},
 			"property": &schema.Schema{
 				Optional: true,

@@ -32,7 +32,12 @@ func TestProvider(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
-
+	if v := os.Getenv("EDGERC"); v == "" {
+		t.Fatal("EDGERC must be set for acceptance tests")
+	}
+	if v := os.Getenv("EDGERC_ENVIRONMENT"); v == "" {
+		t.Fatal("EDGERC_ENVIRONMENT must be set for acceptance tests")
+	}
 }
 
 type data struct {
