@@ -19,27 +19,25 @@ func resourceCPCode() *schema.Resource {
 		Create: resourceCPCodeCreate,
 		Read:   resourceCPCodeRead,
 		Delete: resourceCPCodeDelete,
+		Update: resourceCPCodeUpdate,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"contract": &schema.Schema{
+			"contract": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
-			"group": &schema.Schema{
+			"group": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
-			"product": &schema.Schema{
+			"product": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 		},
 	}
@@ -47,15 +45,32 @@ func resourceCPCode() *schema.Resource {
 
 func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[PAPI][resourceCPCodeCreate-" + CreateNonce() + "]"
-
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating CP Code")
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
-	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
-	cpCode, err := cpCodes.FindCpCode(d.Get("name").(string), CorrelationID)
+	name, ok := d.Get("name").(string)
+	if !ok {
+		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "name", "string")
+	}
+	product, ok := d.Get("product").(string)
+	if !ok {
+		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "product", "string")
+	}
+	group, ok := d.Get("group").(string)
+	if !ok {
+		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "group", "string")
+	}
+	contract, ok := d.Get("contract").(string)
+	if !ok {
+		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "contract", "string")
+	}
+	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
+	cpCode, err := cpCodes.FindCpCode(name, CorrelationID)
+	// TODO: err can indicate that either error was returned while fetching CP Codes from PAPI or no CP Codes were found for provided group and contract
+	// this should be modified in client library as currently we do not know whether there was an actual error (in which case err should be returned immediately without proceeding to create the resource)
 	if cpCode == nil || err != nil {
 		cpCode = cpCodes.NewCpCode()
-		cpCode.ProductID = d.Get("product").(string)
-		cpCode.CpcodeName = d.Get("name").(string)
+		cpCode.ProductID = product
+		cpCode.CpcodeName = name
 
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  CPCode: %+v", cpCode))
 		err := cpCode.Save(CorrelationID)
@@ -65,7 +80,16 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 	}
-
+	var found bool
+	for _, id := range cpCode.ProductIDs {
+		if id == product {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("attempting to modify product ID: %w", ErrPAPICPCodeModify)
+	}
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Resulting CP Code: %#v\n\n\n", cpCode))
 	d.SetId(cpCode.CpcodeID)
 	return resourceCPCodeRead(d, meta)
@@ -79,13 +103,25 @@ func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
 	return schema.Noop(d, meta)
 }
 
-func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
+func resourceCPCodeRead(d *schema.ResourceData, _ interface{}) error {
 	CorrelationID := "[PAPI][resourceCPCodeRead-" + CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CP Code")
-	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
+	name, ok := d.Get("name").(string)
+	if !ok {
+		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "name", "string")
+	}
+	group, ok := d.Get("group").(string)
+	if !ok {
+		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "group", "string")
+	}
+	contract, ok := d.Get("contract").(string)
+	if !ok {
+		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "contract", "string")
+	}
+	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
 	cpCode, err := cpCodes.FindCpCode(d.Id(), CorrelationID)
 	if cpCode == nil || err != nil {
-		cpCode, err = cpCodes.FindCpCode(d.Get("name").(string), CorrelationID)
+		cpCode, err = cpCodes.FindCpCode(name, CorrelationID)
 		if err != nil {
 			return err
 		}
@@ -100,12 +136,25 @@ func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceCPCodePAPINewCPCodes(d *schema.ResourceData, meta interface{}) *papi.CpCodes {
+func resourceCPCodeUpdate(d *schema.ResourceData, meta interface{}) error {
+	if d.HasChange("contract") {
+		return fmt.Errorf("attempting to modify contract ID: %w", ErrPAPICPCodeModify)
+	}
+	if d.HasChange("product") {
+		return fmt.Errorf("attempting to modify product ID: %w", ErrPAPICPCodeModify)
+	}
+	if d.HasChange("group") {
+		return fmt.Errorf("attempting to modify group ID: %w", ErrPAPICPCodeModify)
+	}
+	return resourceCPCodeRead(d, meta)
+}
+
+func resourceCPCodePAPINewCPCodes(contractID, groupID string) *papi.CpCodes {
 	contract := &papi.Contract{
-		ContractID: d.Get("contract").(string),
+		ContractID: contractID,
 	}
 	group := &papi.Group{
-		GroupID: d.Get("group").(string),
+		GroupID: groupID,
 	}
 	return papi.NewCpCodes(contract, group)
 }
