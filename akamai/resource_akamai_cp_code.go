@@ -52,7 +52,10 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
 	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
 	cpCode, err := cpCodes.FindCpCode(d.Get("name").(string), CorrelationID)
-	if cpCode == nil || err != nil {
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrPapiFetchingCPCode, err.Error())
+	}
+	if cpCode == nil {
 		cpCode = cpCodes.NewCpCode()
 		cpCode.ProductID = d.Get("product").(string)
 		cpCode.CpcodeName = d.Get("name").(string)

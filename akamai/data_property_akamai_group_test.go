@@ -32,16 +32,16 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 
 func testAccDataSourceGroup_basic() string {
 	return `
-provider "akamai" {
-  papi_section = "papi"
-}
-
-data "akamai_group" "test" {
-}
-
-output "groupid" {
-value = "${data.akamai_group.test.id}"
-}
+		provider "akamai" {
+			papi_section = "papi"
+		}
+		
+		data "akamai_group" "test" {
+		}
+		
+		output "groupid" {
+			value = "${data.akamai_group.test.id}"
+		}
 `
 }
 

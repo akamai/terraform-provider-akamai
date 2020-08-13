@@ -9,4 +9,5 @@ var (
 	ErrPapiFindingGroupsByName  = errors.New("could not find groups for given name")
 	ErrPapiNoContractProvided   = errors.New("contract ID is required for non-default name")
 	ErrPapiGroupNotInContract   = errors.New("group does not belong to contract")
+	ErrPapiFetchingCPCode       = errors.New("finding CP Code with provided name")
 )
