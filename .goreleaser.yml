@@ -16,7 +16,6 @@ builds:
   ldflags:
     - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
   goos:
-    - freebsd
     - windows
     - linux
     - darwin
@@ -50,5 +49,5 @@ signs:
 release:
   # Visit your project's GitHub Releases page to publish this release.
   draft: true
-changelog:
-  skip: true
+#changelog:
+#  skip: true
