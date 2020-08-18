@@ -1,6 +1,6 @@
 module github.com/akamai/terraform-provider-akamai/v2
 
-replace github.com/akamai/AkamaiOPEN-edgegrid-golang => ../AkamaiOPEN-edgegrid-golang
+// replace github.com/akamai/AkamaiOPEN-edgegrid-golang => ../AkamaiOPEN-edgegrid-golang
 
 require (
 	github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.18
