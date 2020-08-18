@@ -2,7 +2,6 @@ package gtm
 
 import (
 	"context"
-	"log"
 	"sync"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
@@ -65,27 +64,8 @@ func Provider() *schema.Provider {
 			"akamai_gtm_asmap":      resourceGTMv1ASmap(),
 		},
 	}
-	//ConfigureFunc: providerConfigure,
-	provider.ConfigureFunc = func(d *schema.ResourceData) (interface{}, error) {
-		terraformVersion := provider.TerraformVersion
-		if terraformVersion == "" {
-			// Terraform 0.12 introduced this field to the protocol
-			// We can therefore assume that if it's missing it's 0.10 or 0.11
-			terraformVersion = "0.11+compatible"
-		}
-		return providerConfigure(d, terraformVersion)
-	}
+
 	return provider
-}
-
-func providerConfigure(d *schema.ResourceData, terraformVersion string) (interface{}, error) {
-	log.Printf("[DEBUG] START providerConfigure  %s\n", terraformVersion)
-	cfg, err := getConfigGTMV1Service(d)
-	if err != nil {
-		return nil, nil
-	}
-
-	return cfg, nil
 }
 
 type resourceData interface {
@@ -151,10 +131,12 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 }
 
 func (p *provider) Configure(ctx context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	state, err := p.ConfigureFunc(d)
+	log.Named(p.Name()).Debug("START Configure")
+
+	cfg, err := getConfigGTMV1Service(d)
 	if err != nil {
-		return nil, diag.FromErr(err)
+		return nil, nil
 	}
 
-	return state, nil
+	return cfg, nil
 }

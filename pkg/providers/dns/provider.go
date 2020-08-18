@@ -2,7 +2,6 @@ package dns
 
 import (
 	"context"
-	"log"
 	"sync"
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
@@ -61,26 +60,7 @@ func Provider() *schema.Provider {
 			"akamai_dns_record": resourceDNSv2Record(),
 		},
 	}
-	//ConfigureFunc: providerConfigure,
-	provider.ConfigureFunc = func(d *schema.ResourceData) (interface{}, error) {
-		terraformVersion := provider.TerraformVersion
-		if terraformVersion == "" {
-			// Terraform 0.12 introduced this field to the protocol
-			// We can therefore assume that if it's missing it's 0.10 or 0.11
-			terraformVersion = "0.11+compatible"
-		}
-		return providerConfigure(d, terraformVersion)
-	}
 	return provider
-}
-
-func providerConfigure(d *schema.ResourceData, terraformVersion string) (interface{}, error) {
-	log.Printf("[DEBUG] START providerConfigure  %s\n", terraformVersion)
-	cfg, err := getConfigDNSV2Service(d)
-	if err != nil {
-		return nil, nil
-	}
-	return cfg, nil
 }
 
 type resourceData interface {
@@ -146,10 +126,11 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 }
 
 func (p *provider) Configure(ctx context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	state, err := p.ConfigureFunc(d)
-	if err != nil {
-		return nil, diag.FromErr(err)
-	}
+	log.Named(p.Name()).Debug("START Configure")
 
-	return state, nil
+	cfg, err := getConfigDNSV2Service(d)
+	if err != nil {
+		return nil, nil
+	}
+	return cfg, nil
 }
