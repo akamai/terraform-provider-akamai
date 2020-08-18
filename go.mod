@@ -12,7 +12,6 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mr-tron/base58 v1.2.0
-	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/gjson v1.2.1

@@ -1,3 +1,5 @@
+## 1.0.0 (Unreleased)
+* [CHANGE] The individual settings for edgerc file sections (i.e., `property_section`, `dns_section`) has been deprecated in favor a common `config_section` used in conjuction with provider aliases ([See: Multiple Provider Configurations](https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations))
 ## 0.9.0 (Unreleased)
 ## 0.8.0 (July 13, 2020)
 * [FIX] Corrected Error 401 [Signature does not match] during  new primary zone creation (`akamai-dns`) ([#163](https://github.com/terraform-providers/terraform-provider-template/issues/163))
