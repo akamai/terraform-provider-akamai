@@ -133,7 +133,7 @@ func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
 	} else if section, ok := d.GetOk("papi_section"); ok && section != "default" {
 		papiConfig, err = edgegrid.Init(edgerc, section.(string))
 	} else {
-		papiConfig, err = edgegrid.Init(edgerc, d.Get("section").(string))
+		papiConfig, err = edgegrid.Init(edgerc, d.Get("config_section").(string))
 	}
 
 	if err != nil {

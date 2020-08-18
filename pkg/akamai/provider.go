@@ -93,7 +93,7 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 						Type:        schema.TypeString,
 						DefaultFunc: schema.EnvDefaultFunc("EDGERC", nil),
 					},
-					"section": {
+					"config_section": {
 						Description: "The section of the edgerc file to use for configuration",
 						Optional:    true,
 						Type:        schema.TypeString,

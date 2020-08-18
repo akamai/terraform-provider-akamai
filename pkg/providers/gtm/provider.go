@@ -119,7 +119,7 @@ func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
 	edgerc := d.Get("edgerc").(string)
 	section := d.Get("gtm_section").(string)
 	if section == "" {
-		section = d.Get("section").(string)
+		section = d.Get("config_section").(string)
 	}
 	GTMv1Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {

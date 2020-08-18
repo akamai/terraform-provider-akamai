@@ -113,7 +113,7 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 	edgerc := d.Get("edgerc").(string)
 	section := d.Get("dns_section").(string)
 	if section == "" {
-		section = d.Get("section").(string)
+		section = d.Get("config_section").(string)
 	}
 	DNSv2Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
