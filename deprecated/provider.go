@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/dns"
+	gtm2 "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/gtm"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/property"
 	"log"
 	"os"
@@ -110,31 +112,31 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_authorities_set":        dataSourceAuthoritiesSet(),
+			"akamai_authorities_set":        dns.dataSourceAuthoritiesSet(),
 			"akamai_contract":               property.dataSourcePropertyContract(),
 			"akamai_cp_code":                property.dataSourceCPCode(),
-			"akamai_dns_record_set":         dataSourceDNSRecordSet(),
+			"akamai_dns_record_set":         dns.dataSourceDNSRecordSet(),
 			"akamai_group":                  property.dataSourcePropertyGroups(),
 			"akamai_property_rules":         property.dataPropertyRules(),
 			"akamai_property":               property.dataSourceAkamaiProperty(),
-			"akamai_gtm_default_datacenter": dataSourceGTMDefaultDatacenter(),
+			"akamai_gtm_default_datacenter": gtm2.dataSourceGTMDefaultDatacenter(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_cp_code":             property.resourceCPCode(),
-			"akamai_dns_zone":            resourceDNSv2Zone(),
-			"akamai_dns_record":          resourceDNSv2Record(),
+			"akamai_dns_zone":            dns.resourceDNSv2Zone(),
+			"akamai_dns_record":          dns.resourceDNSv2Record(),
 			"akamai_edge_hostname":       property.resourceSecureEdgeHostName(),
 			"akamai_property":            property.resourceProperty(),
 			"akamai_property_rules":      property.resourcePropertyRules(),
 			"akamai_property_variables":  property.resourcePropertyVariables(),
 			"akamai_property_activation": property.resourcePropertyActivation(),
-			"akamai_gtm_domain":          resourceGTMv1Domain(),
-			"akamai_gtm_datacenter":      resourceGTMv1Datacenter(),
-			"akamai_gtm_property":        resourceGTMv1Property(),
-			"akamai_gtm_resource":        resourceGTMv1Resource(),
-			"akamai_gtm_cidrmap":         resourceGTMv1Cidrmap(),
-			"akamai_gtm_geomap":          resourceGTMv1Geomap(),
-			"akamai_gtm_asmap":           resourceGTMv1ASmap(),
+			"akamai_gtm_domain":          gtm2.resourceGTMv1Domain(),
+			"akamai_gtm_datacenter":      gtm2.resourceGTMv1Datacenter(),
+			"akamai_gtm_property":        gtm2.resourceGTMv1Property(),
+			"akamai_gtm_resource":        gtm2.resourceGTMv1Resource(),
+			"akamai_gtm_cidrmap":         gtm2.resourceGTMv1Cidrmap(),
+			"akamai_gtm_geomap":          gtm2.resourceGTMv1Geomap(),
+			"akamai_gtm_asmap":           gtm2.resourceGTMv1ASmap(),
 		},
 	}
 	//ConfigureFunc: providerConfigure,

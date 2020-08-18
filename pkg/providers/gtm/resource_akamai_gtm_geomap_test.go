@@ -1,4 +1,4 @@
-package deprecated
+package gtm
 
 import (
 	"fmt"

@@ -1,7 +1,8 @@
-package deprecated
+package dns
 
 import (
 	"errors"
+	"github.com/akamai/terraform-provider-akamai/v2/deprecated"
 	"io/ioutil"
 	"os"
 	"path"
@@ -18,14 +19,14 @@ var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	testAccProvider = Provider()
+	testAccProvider = deprecated.Provider()
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testAccProvider,
 	}
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := deprecated.Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -58,7 +59,7 @@ func (d *data) List() []interface{} {
 
 func Test_getConfigDNSV2Service(t *testing.T) {
 	type args struct {
-		schema resourceData
+		schema deprecated.resourceData
 	}
 
 	tests := []struct {
@@ -72,7 +73,7 @@ func Test_getConfigDNSV2Service(t *testing.T) {
 		{
 			name: "no valid config",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{}),
 			},
 			edgerc:  ``,
 			wantErr: errors.New("Unable to create instance using environment or .edgerc file"),
@@ -80,7 +81,7 @@ func Test_getConfigDNSV2Service(t *testing.T) {
 		{
 			name: "undefined .edgerc, undefined section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{}),
 			},
 			edgerc: `[default]
 host = default
@@ -99,7 +100,7 @@ max_body = 1`,
 		{
 			name: "undefined .edgerc, default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"dns_section": "default",
 				}),
 			},
@@ -127,7 +128,7 @@ max_body = 2`,
 		{
 			name: "undefined .edgerc, not_default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"dns_section": "not_default",
 				}),
 			},
@@ -155,7 +156,7 @@ max_body = 2`,
 		{
 			name: "no edgerc dns section with env",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"dns_section": "dns",
 				}),
 			},
@@ -224,7 +225,7 @@ max_body = 2`,
 				}
 			}
 
-			got, err := getConfigDNSV2Service(tt.args.schema)
+			got, err := deprecated.getConfigDNSV2Service(tt.args.schema)
 			if err != nil {
 				if reflect.DeepEqual(err, tt.wantErr) {
 					return
@@ -241,7 +242,7 @@ max_body = 2`,
 
 func Test_getPAPIV1Service(t *testing.T) {
 	type args struct {
-		schema resourceData
+		schema deprecated.resourceData
 	}
 
 	tests := []struct {
@@ -255,7 +256,7 @@ func Test_getPAPIV1Service(t *testing.T) {
 		{
 			name: "no valid config",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{}),
 			},
 			edgerc:  ``,
 			wantErr: errors.New("Unable to create instance using environment or .edgerc file"),
@@ -263,7 +264,7 @@ func Test_getPAPIV1Service(t *testing.T) {
 		{
 			name: "undefined .edgerc, undefined section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{}),
 			},
 			edgerc: `[default]
 host = default
@@ -282,7 +283,7 @@ max_body = 1`,
 		{
 			name: "undefined .edgerc, property default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"property_section": "default",
 				}),
 			},
@@ -310,7 +311,7 @@ max_body = 2`,
 		{
 			name: "undefined .edgerc, papi default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"papi_section": "default",
 				}),
 			},
@@ -338,7 +339,7 @@ max_body = 2`,
 		{
 			name: "undefined .edgerc, property not_default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"property_section": "not_default",
 				}),
 			},
@@ -366,7 +367,7 @@ max_body = 2`,
 		{
 			name: "undefined .edgerc, papi not_default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"papi_section": "not_default",
 				}),
 			},
@@ -394,7 +395,7 @@ max_body = 2`,
 		{
 			name: "no edgerc property section with env",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"property_section": "property",
 				}),
 			},
@@ -416,7 +417,7 @@ max_body = 2`,
 		{
 			name: "no edgerc papi section with env",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"papi_section": "papi",
 				}),
 			},
@@ -485,7 +486,7 @@ max_body = 2`,
 				}
 			}
 
-			got, err := getPAPIV1Service(tt.args.schema)
+			got, err := deprecated.getPAPIV1Service(tt.args.schema)
 
 			if err != nil {
 				if reflect.DeepEqual(err, tt.wantErr) {
@@ -502,7 +503,7 @@ max_body = 2`,
 }
 
 type args struct {
-	schema resourceData
+	schema deprecated.resourceData
 }
 
 func Test_getGTMV1_3Service(t *testing.T) {
@@ -511,7 +512,7 @@ func Test_getGTMV1_3Service(t *testing.T) {
 		testsStruct{
 			name: "no valid config",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{}),
 			},
 			edgerc:  ``,
 			wantErr: errors.New("Unable to create instance using environment or .edgerc file"),
@@ -519,7 +520,7 @@ func Test_getGTMV1_3Service(t *testing.T) {
 		testsStruct{
 			name: "undefined .edgerc, undefined section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{}),
 			},
 			edgerc: `[default]
 host = default
@@ -539,7 +540,7 @@ max_body = 1`,
 		testsStruct{
 			name: "undefined .edgerc, default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"gtm_section": "default",
 				}),
 			},
@@ -567,7 +568,7 @@ max_body = 2`,
 		testsStruct{
 			name: "undefined .edgerc, not_default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"gtm_section": "not_default",
 				}),
 			},
@@ -595,7 +596,7 @@ max_body = 2`,
 		testsStruct{
 			name: "no edgerc gtm section with env",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, deprecated.Provider().Schema, map[string]interface{}{
 					"gtm_section": "gtm",
 				}),
 			},
@@ -644,7 +645,7 @@ max_body = 2`,
 	}
 
 	// Invoke tests
-	testGetConfigServiceExec(t, tests, getConfigGTMV1Service)
+	testGetConfigServiceExec(t, tests, deprecated.getConfigGTMV1Service)
 
 }
 
@@ -657,7 +658,7 @@ type testsStruct struct {
 	env     map[string]string
 }
 
-type getConfigServiceSig func(resourceData) (*edgegrid.Config, error)
+type getConfigServiceSig func(deprecated.resourceData) (*edgegrid.Config, error)
 
 func testGetConfigServiceExec(t *testing.T, tests []testsStruct, configService getConfigServiceSig) {
 
