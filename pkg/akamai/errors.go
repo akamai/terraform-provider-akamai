@@ -23,6 +23,14 @@ var (
 
 	// ErrCacheEntryNotFound returns a cache entry error
 	ErrCacheEntryNotFound = func(key string) error { return &Error{fmt.Sprintf("cache entry %q not found", key), true} }
+
+	// NoticeDeprecatedUseAlias is returned for schema configurations that are deprecated
+	// Terraform now supports section aliases
+	// TODO: Add alias example to the examples directory
+	NoticeDeprecatedUseAlias = func(n string) string {
+		return fmt.Sprintf(`The setting %q has been deprecated. See:
+	https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations`, n)
+	}
 )
 
 // Diagnostic converts the error a diagnostic

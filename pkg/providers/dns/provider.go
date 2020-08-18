@@ -2,7 +2,9 @@ package dns
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"sync"
+
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -10,8 +12,6 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
-	"sync"
 )
 
 type (
@@ -21,14 +21,6 @@ type (
 )
 
 var (
-	// DeprecatedSectionNotice is returned for schema configurations that are deprecated
-	// Terraform now supports section aliases
-	// TODO: Add alias example to the examples directory
-	DeprecatedSectionNotice = func(n string) string {
-		return fmt.Sprintf(`The setting %q has been deprecated. See:
-https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations`, n)
-	}
-
 	once sync.Once
 
 	inst *provider
@@ -38,9 +30,6 @@ https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provid
 func Subprovider() akamai.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
-
-		// HACK: fixing this up to remove it when we use the subprovider entry
-		delete(inst.Provider.Schema, "edgerc")
 	})
 
 	return inst
@@ -55,7 +44,7 @@ func Provider() *schema.Provider {
 				Optional:   true,
 				Type:       schema.TypeString,
 				Default:    "default",
-				Deprecated: DeprecatedSectionNotice("dns_section"),
+				Deprecated: akamai.NoticeDeprecatedUseAlias("dns_section"),
 			},
 			"dns": {
 				Optional: true,
@@ -123,6 +112,9 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 
 	edgerc := d.Get("edgerc").(string)
 	section := d.Get("dns_section").(string)
+	if section == "" {
+		section = d.Get("section").(string)
+	}
 	DNSv2Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err

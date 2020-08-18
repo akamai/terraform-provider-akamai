@@ -155,16 +155,6 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 				return nil, ErrNoConfiguredProviders.Diagnostics()
 			}
 
-			var stateSet bool
-			for _, s := range instance.states {
-				if s != nil {
-					stateSet = true
-					break
-				}
-			}
-			if !stateSet {
-				return nil, ErrNoConfiguredProviders.Diagnostics()
-			}
 			// TODO: once the client is update this will be done elsewhere
 			client.UserAgent = instance.UserAgent("terraform-provider-akamai", instance.TerraformVersion)
 

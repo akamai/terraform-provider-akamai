@@ -7,6 +7,7 @@ terraform.tfstate.backup
 
 # vscode
 .vscode/
+_debug_bin
 
 # eclipse
 .classpath

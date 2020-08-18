@@ -2,7 +2,9 @@ package property
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"sync"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -10,8 +12,6 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
-	"sync"
 )
 
 type (
@@ -21,14 +21,6 @@ type (
 )
 
 var (
-	// DeprecatedSectionNotice is returned for schema configurations that are deprecated
-	// Terraform now supports section aliases
-	// TODO: Add alias example to the examples directory
-	DeprecatedSectionNotice = func(n string) string {
-		return fmt.Sprintf(`The setting %q has been  See:
-https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations`, n)
-	}
-
 	once sync.Once
 
 	inst *provider
@@ -38,9 +30,6 @@ https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provid
 func Subprovider() akamai.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
-
-		// HACK: fixing this up to remove it when we use the subprovider entry
-		delete(inst.Provider.Schema, "edgerc")
 	})
 
 	return inst
@@ -55,13 +44,13 @@ func Provider() *schema.Provider {
 				Optional:   true,
 				Type:       schema.TypeString,
 				Default:    "default",
-				Deprecated: DeprecatedSectionNotice("papi_section"),
+				Deprecated: akamai.NoticeDeprecatedUseAlias("papi_section"),
 			},
 			"property_section": {
 				Optional:   true,
 				Type:       schema.TypeString,
 				Default:    "default",
-				Deprecated: DeprecatedSectionNotice("property_section"),
+				Deprecated: akamai.NoticeDeprecatedUseAlias("property_section"),
 			},
 			"property": {
 				Optional: true,
@@ -136,13 +125,15 @@ func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
 	}
 
 	var err error
+
 	edgerc := d.Get("edgerc").(string)
+
 	if section, ok := d.GetOk("property_section"); ok && section != "default" {
 		papiConfig, err = edgegrid.Init(edgerc, section.(string))
 	} else if section, ok := d.GetOk("papi_section"); ok && section != "default" {
 		papiConfig, err = edgegrid.Init(edgerc, section.(string))
 	} else {
-		papiConfig, err = edgegrid.Init(edgerc, "default")
+		papiConfig, err = edgegrid.Init(edgerc, d.Get("section").(string))
 	}
 
 	if err != nil {
