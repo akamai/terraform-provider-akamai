@@ -5,6 +5,9 @@ terraform.tfstate
 terraform.tfstate.backup
 *.log
 
+# vscode
+.vscode/
+
 # eclipse
 .classpath
 .project

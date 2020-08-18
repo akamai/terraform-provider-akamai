@@ -1,13 +1,46 @@
 package main
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/plugin"
-	"github.com/terraform-providers/terraform-provider-akamai/pkg/providers"
-	"github.com/terraform-providers/terraform-provider-akamai/pkg/providers/papi"
+	"context"
+	"flag"
+	"log"
+	"os"
+
+	"github.com/akamai/terraform-provider-akamai/v2/deprecated"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 
 func main() {
-	plugin.Serve(&plugin.ServeOpts{
-		ProviderFunc: providers.Provider(papi.Provider{}),
+	var debugMode bool
+
+	flag.BoolVar(&debugMode, "debug", false, "set to true to run the provider with support for debuggers like delve")
+	flag.Parse()
+
+	// init the standard logger here so we can pass it to the provider
+	logger := hclog.New(&hclog.LoggerOptions{
+		Level:      hclog.Trace,
+		Output:     os.Stderr,
+		JSONFormat: true,
 	})
+
+	prov := akamai.Provider(logger, deprecated.Subprovider())
+
+	if debugMode {
+		err := plugin.Debug(context.Background(), "registry.terraform.io/akamai/akamai",
+			&plugin.ServeOpts{
+				ProviderFunc: prov,
+				Logger:       logger,
+			})
+		if err != nil {
+			log.Println(err.Error())
+		}
+	} else {
+		plugin.Serve(&plugin.ServeOpts{
+			ProviderFunc: prov,
+			Logger:       logger,
+		})
+	}
+
 }
