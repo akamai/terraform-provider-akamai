@@ -3,6 +3,7 @@ package akamai
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -156,7 +157,7 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 func mergeSchema(from, to map[string]*schema.Schema) (map[string]*schema.Schema, error) {
 	for k, v := range from {
 		if _, ok := to[k]; ok {
-			return nil, ErrDuplicateSchemaKey
+			return nil, fmt.Errorf("%w: %s", ErrDuplicateSchemaKey, k)
 		}
 		to[k] = v
 	}
@@ -166,7 +167,7 @@ func mergeSchema(from, to map[string]*schema.Schema) (map[string]*schema.Schema,
 func mergeResource(from, to map[string]*schema.Resource) (map[string]*schema.Resource, error) {
 	for k, v := range from {
 		if _, ok := to[k]; ok {
-			return nil, ErrDuplicateSchemaKey
+			return nil, fmt.Errorf("%w: %s", ErrDuplicateSchemaKey, k)
 		}
 		to[k] = v
 	}

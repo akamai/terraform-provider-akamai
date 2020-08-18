@@ -1,8 +1,7 @@
-package deprecated
+package property
 
 import (
 	"fmt"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 

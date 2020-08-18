@@ -1,10 +1,9 @@
-package deprecated
+package property
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

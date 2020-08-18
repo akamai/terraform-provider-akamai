@@ -1,4 +1,4 @@
-package deprecated
+package property
 
 import (
 	"context"

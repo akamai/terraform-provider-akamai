@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/property"
 	"log"
 	"os"
 	"strings"
@@ -110,23 +111,23 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_authorities_set":        dataSourceAuthoritiesSet(),
-			"akamai_contract":               dataSourcePropertyContract(),
-			"akamai_cp_code":                dataSourceCPCode(),
+			"akamai_contract":               property.dataSourcePropertyContract(),
+			"akamai_cp_code":                property.dataSourceCPCode(),
 			"akamai_dns_record_set":         dataSourceDNSRecordSet(),
-			"akamai_group":                  dataSourcePropertyGroups(),
-			"akamai_property_rules":         dataPropertyRules(),
-			"akamai_property":               dataSourceAkamaiProperty(),
+			"akamai_group":                  property.dataSourcePropertyGroups(),
+			"akamai_property_rules":         property.dataPropertyRules(),
+			"akamai_property":               property.dataSourceAkamaiProperty(),
 			"akamai_gtm_default_datacenter": dataSourceGTMDefaultDatacenter(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cp_code":             resourceCPCode(),
+			"akamai_cp_code":             property.resourceCPCode(),
 			"akamai_dns_zone":            resourceDNSv2Zone(),
 			"akamai_dns_record":          resourceDNSv2Record(),
-			"akamai_edge_hostname":       resourceSecureEdgeHostName(),
-			"akamai_property":            resourceProperty(),
-			"akamai_property_rules":      resourcePropertyRules(),
-			"akamai_property_variables":  resourcePropertyVariables(),
-			"akamai_property_activation": resourcePropertyActivation(),
+			"akamai_edge_hostname":       property.resourceSecureEdgeHostName(),
+			"akamai_property":            property.resourceProperty(),
+			"akamai_property_rules":      property.resourcePropertyRules(),
+			"akamai_property_variables":  property.resourcePropertyVariables(),
+			"akamai_property_activation": property.resourcePropertyActivation(),
 			"akamai_gtm_domain":          resourceGTMv1Domain(),
 			"akamai_gtm_datacenter":      resourceGTMv1Datacenter(),
 			"akamai_gtm_property":        resourceGTMv1Property(),
