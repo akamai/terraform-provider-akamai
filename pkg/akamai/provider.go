@@ -132,20 +132,16 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 		instance.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 			log.Debug("START providerConfigure  %s", instance.TerraformVersion)
 
+			stateSet := false
 			for _, p := range instance.subs {
 				state, err := p.Configure(ctx, log, d)
 				if err != nil {
 					return nil, err
 				}
 
-				instance.states[p.Name()] = state
-			}
-
-			stateSet := false
-			for _, s := range instance.states {
-				if s != nil {
+				if state != nil {
 					stateSet = true
-					break
+					instance.states[p.Name()] = state
 				}
 			}
 
