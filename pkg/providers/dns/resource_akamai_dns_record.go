@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"log"
 	"net"
 	"regexp"
@@ -680,7 +681,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] Record Create Bind object  [%v]", recordcreate)
 
 	extractString := strings.Join(recordcreate.Target, " ")
-	sha1hash := getSHAString(extractString)
+	sha1hash := tools.GetSHAString(extractString)
 
 	log.Printf("[DEBUG] [Akamai DNSv2] SHA sum for recordcreate [%s]", sha1hash)
 	// First try to get the zone from the API
@@ -799,7 +800,7 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	extractString := strings.Join(recordcreate.Target, " ")
-	sha1hash := getSHAString(extractString)
+	sha1hash := tools.GetSHAString(extractString)
 
 	log.Printf("[DEBUG] [Akamai DNSv2] UPDATE SHA sum for recordupdate [%s]", sha1hash)
 	// First try to get the zone from the API
@@ -816,7 +817,7 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	if len(rdata) > 0 {
 		sort.Strings(rdata)
 		extractString := strings.Join(rdata, " ")
-		sha1hashtest := getSHAString(extractString)
+		sha1hashtest := tools.GetSHAString(extractString)
 		log.Printf("[DEBUG] [Akamai DNSv2] UPDATE SHA sum from recordread [%s]", sha1hashtest)
 		// If there's no existing record we'll create a blank one
 		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
@@ -882,7 +883,7 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] READ record JSON from bind records %s %s %s %s", string(b), zone, host, recordtype)
 	sort.Strings(recordcreate.Target)
 	extractString := strings.Join(recordcreate.Target, " ")
-	sha1hash := getSHAString(extractString)
+	sha1hash := tools.GetSHAString(extractString)
 	log.Printf("[DEBUG] [Akamai DNSv2] READ SHA sum for Existing SHA test %s %s", extractString, sha1hash)
 
 	// try to get the zone from the API
@@ -915,7 +916,7 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 		// calc rdata sha from read record
 		sort.Strings(record.Target)
 		rdataString := strings.Join(record.Target, " ")
-		shaRdata := getSHAString(rdataString)
+		shaRdata := tools.GetSHAString(rdataString)
 		if d.HasChange("target") {
 			log.Printf("MX READ. TARGET HAS CHANGED")
 			// has remote changed independently of TF?
@@ -941,7 +942,7 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	} else if recordtype == "AAAA" {
 		sort.Strings(record.Target)
 		rdataString := strings.Join(record.Target, " ")
-		shaRdata := getSHAString(rdataString)
+		shaRdata := tools.GetSHAString(rdataString)
 		if sha1hash == shaRdata {
 			// don't care if short or long notation
 			return nil
@@ -968,13 +969,13 @@ func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 				log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD CHANGE: SOA OK ")
 				if _, ok := validateSOARecord(d); ok {
 					extractSoaString := strings.Join(targets, " ")
-					sha1hash = getSHAString(extractSoaString)
+					sha1hash = tools.GetSHAString(extractSoaString)
 					log.Printf("[DEBUG] [Akamai DNSv2] READ SOA RECORD CHANGE: SOA OK ")
 				}
 			}
 		} else if recordtype == "AKAMAITLC" {
 			extractTlcString := strings.Join(targets, " ")
-			sha1hash = getSHAString(extractTlcString)
+			sha1hash = tools.GetSHAString(extractTlcString)
 		}
 		d.Set("record_sha", sha1hash)
 		// Give terraform the ID
@@ -1073,7 +1074,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 			sort.Strings(targets)
 		}
 		importTargetString = strings.Join(targets, " ")
-		sha1hash := getSHAString(importTargetString)
+		sha1hash := tools.GetSHAString(importTargetString)
 		d.Set("record_sha", sha1hash)
 		d.SetId(fmt.Sprintf("%s#%s#%s", zone, recordname, recordtype))
 	} else {

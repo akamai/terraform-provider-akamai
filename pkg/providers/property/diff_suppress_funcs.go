@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"log"
 
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
@@ -27,7 +28,7 @@ func suppressEquivalentTypeStringBoolean(k, old, new string, d *schema.ResourceD
 }
 
 func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) bool {
-	CorrelationID := "[PAPI][suppressEquivalentJsonDiffs-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][suppressEquivalentJsonDiffs-" + tools.CreateNonce() + "]"
 	ob := bytes.NewBufferString("")
 	if err := json.Compact(ob, []byte(old)); err != nil {
 		return false
@@ -47,7 +48,7 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	if err != nil {
 		return false
 	}
-	sha1hashOld := getSHAString(string(jsonBody))
+	sha1hashOld := tools.GetSHAString(string(jsonBody))
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld))
 
@@ -57,7 +58,7 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 	if err != nil {
 		return false
 	}
-	sha1hashNew := getSHAString(string(jsonBodyNew))
+	sha1hashNew := tools.GetSHAString(string(jsonBodyNew))
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew))
 
@@ -72,7 +73,7 @@ func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) boo
 }
 
 func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff) bool {
-	CorrelationID := "[PAPI][suppressEquivalentJsonPendingDiffs-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][suppressEquivalentJsonPendingDiffs-" + tools.CreateNonce() + "]"
 	ob := bytes.NewBufferString("")
 	if err := json.Compact(ob, []byte(old)); err != nil {
 		return false
@@ -92,7 +93,7 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 	if err != nil {
 		return false
 	}
-	sha1hashOld := getSHAString(string(jsonBody))
+	sha1hashOld := tools.GetSHAString(string(jsonBody))
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld))
 
@@ -102,7 +103,7 @@ func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff)
 	if err != nil {
 		return false
 	}
-	sha1hashNew := getSHAString(string(jsonBodyNew))
+	sha1hashNew := tools.GetSHAString(string(jsonBodyNew))
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew))
 

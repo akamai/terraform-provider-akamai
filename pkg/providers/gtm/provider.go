@@ -2,17 +2,15 @@ package gtm
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
-	"os"
-	"strings"
 	"sync"
 )
 
@@ -62,7 +60,7 @@ func Provider() *schema.Provider {
 			"gtm": {
 				Optional: true,
 				Type:     schema.TypeSet,
-				Elem:     getConfigOptions("gtm"),
+				Elem:     config.Options("gtm"),
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -93,13 +91,12 @@ func Provider() *schema.Provider {
 
 func providerConfigure(d *schema.ResourceData, terraformVersion string) (interface{}, error) {
 	log.Printf("[DEBUG] START providerConfigure  %s\n", terraformVersion)
-	gtmConfig, gtmErr := getConfigGTMV1Service(d)
-
-	if gtmErr != nil || gtmConfig == nil {
-		return nil, fmt.Errorf("One or more Akamai Edgegrid provider configurations must be defined")
+	cfg, err := getConfigGTMV1Service(d)
+	if err != nil {
+		return nil, nil
 	}
 
-	return nil, nil
+	return cfg, nil
 }
 
 type resourceData interface {
@@ -141,82 +138,8 @@ func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
 	return &GTMv1Config, nil
 }
 
-func getConfigOptions(section string) *schema.Resource {
-	section = strings.ToUpper(section)
-
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"host": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_HOST"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_HOST"); v != "" {
-						return v, nil
-					}
-
-					return nil, errors.New("host not set")
-				},
-			},
-			"access_token": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_ACCESS_TOKEN"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_ACCESS_TOKEN"); v != "" {
-						return v, nil
-					}
-
-					return nil, errors.New("access_token not set")
-				},
-			},
-			"client_token": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_CLIENT_TOKEN"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_CLIENT_TOKEN"); v != "" {
-						return v, nil
-					}
-
-					return nil, errors.New("client_token not set")
-				},
-			},
-			"client_secret": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_CLIENT_SECRET"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_CLIENT_SECRET"); v != "" {
-						return v, nil
-					}
-
-					return nil, errors.New("client_secret not set")
-				},
-			},
-			"max_body": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_MAX_SIZE"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_MAX_SIZE"); v != "" {
-						return v, nil
-					}
-
-					return 131072, nil
-				},
-			},
-		},
-	}
-}
-
 func (p *provider) Name() string {
-	return "deprecated"
+	return "gtm"
 }
 
 func (p *provider) Version() string {

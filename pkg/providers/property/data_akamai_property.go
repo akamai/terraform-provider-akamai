@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -29,7 +30,7 @@ func dataSourceAkamaiProperty() *schema.Resource {
 }
 
 func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + tools.CreateNonce() + "]"
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Reading Property")
 	property := findProperty(d, CorrelationID)

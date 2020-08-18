@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"log"
 	"strconv"
 	"strings"
@@ -155,7 +156,7 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 }
 
 func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyCreate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyCreate-" + tools.CreateNonce() + "]"
 
 	d.Partial(true)
 
@@ -223,7 +224,7 @@ func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	sha1hashAPI := getSHAString(string(jsonBody))
+	sha1hashAPI := tools.GetSHAString(string(jsonBody))
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CREATE SHA from Json %s\n", sha1hashAPI))
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CREATE Check rules after unmarshal from Json %s\n", string(jsonBody)))
 
@@ -357,7 +358,7 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 }
 
 func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyDelete-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyDelete-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "DELETING")
 	contractID, ok := d.GetOk("contract")
 	if !ok {
@@ -436,7 +437,7 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 }
 
 func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyRead-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyRead-" + tools.CreateNonce() + "]"
 	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
@@ -458,7 +459,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	sha1hashAPI := getSHAString(string(jsonBody))
+	sha1hashAPI := tools.GetSHAString(string(jsonBody))
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("READ SHA from Json %s\n", sha1hashAPI))
 	if err == nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" READ Rules from API : %s\n", string(jsonBody)))
@@ -486,7 +487,7 @@ func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyUpdate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyUpdate-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "   UPDATING")
 	d.Partial(true)
 
@@ -537,7 +538,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 
-		sha1hashAPI := getSHAString(string(jsonBody))
+		sha1hashAPI := tools.GetSHAString(string(jsonBody))
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  UPDATE SHA from Json %s\n", sha1hashAPI))
 		d.Set("rulessha", sha1hashAPI)
 
@@ -561,7 +562,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceCustomDiffCustomizeDiff(_ context.Context, d *schema.ResourceDiff, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyUpdate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyUpdate-" + tools.CreateNonce() + "]"
 	//Println("[DEBUG] resourceCustomDiffCustomizeDiff " + d.Id())
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  resourceCustomDiffCustomizeDiff "+d.Id()))
 	// Note that this gets put into state after the update, regardless of whether

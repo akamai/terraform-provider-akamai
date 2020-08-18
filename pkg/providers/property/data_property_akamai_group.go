@@ -2,6 +2,7 @@ package property
 
 import (
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"strings"
 
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
@@ -26,7 +27,7 @@ func dataSourcePropertyGroups() *schema.Resource {
 }
 
 func dataSourcePropertyGroupsRead(d *schema.ResourceData, _ interface{}) error {
-	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + tools.CreateNonce() + "]"
 	var name string
 	_, ok := d.GetOk("name")
 	var getDefault bool

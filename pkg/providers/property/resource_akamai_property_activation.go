@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"log"
 	"time"
 
@@ -54,7 +55,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 }
 
 func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + tools.CreateNonce() + "]"
 	d.Partial(true)
 
 	property := papi.NewProperty(papi.NewProperties())
@@ -105,7 +106,7 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + tools.CreateNonce() + "]"
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  DEACTIVATE PROPERTY")
 	property := papi.NewProperty(papi.NewProperties())
@@ -159,7 +160,7 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	CorrelationID := "[PAPI][resourcePropertyActivationExists-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyActivationExists-" + tools.CreateNonce() + "]"
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Get("property").(string)
 	err := property.GetProperty(CorrelationID)
@@ -185,7 +186,7 @@ func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + tools.CreateNonce() + "]"
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Get("property").(string)
 	err := property.GetProperty(CorrelationID)
@@ -213,7 +214,7 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + tools.CreateNonce() + "]"
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " UPDATING")
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Fetching property")

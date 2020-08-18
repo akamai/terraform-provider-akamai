@@ -44,5 +44,4 @@ func main() {
 			Logger:       logger,
 		})
 	}
-
 }

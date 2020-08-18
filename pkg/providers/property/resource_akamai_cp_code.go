@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -45,7 +46,7 @@ func resourceCPCode() *schema.Resource {
 }
 
 func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeCreate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourceCPCodeCreate-" + tools.CreateNonce() + "]"
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating CP Code")
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
@@ -71,7 +72,7 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeCreate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourceCPCodeCreate-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting CP Code")
 	// No PAPI CP Code delete operation exists.
 	// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
@@ -79,7 +80,7 @@ func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeRead-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourceCPCodeRead-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CP Code")
 	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
 	cpCode, err := cpCodes.FindCpCode(d.Id(), CorrelationID)

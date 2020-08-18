@@ -1,6 +1,7 @@
 package property
 
 import (
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
@@ -230,7 +231,7 @@ func dataPropertyRulesRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	sha := getSHAString(string(jsonBody))
+	sha := tools.GetSHAString(string(jsonBody))
 	d.Set("json", string(jsonBody))
 
 	d.SetId(sha)

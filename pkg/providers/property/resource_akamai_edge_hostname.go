@@ -3,6 +3,7 @@ package property
 import (
 	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"strings"
 
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
@@ -70,7 +71,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 
 func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) error {
 	d.Partial(true)
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + tools.CreateNonce() + "]"
 	group, e := getGroup(d, CorrelationID)
 	if e != nil {
 		return e
@@ -178,7 +179,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceSecureEdgeHostNameDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameDelete-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameDelete-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "DELETING")
 	d.SetId("")
 
@@ -224,7 +225,7 @@ func resourceSecureEdgeHostNameImport(d *schema.ResourceData, meta interface{}) 
 
 func resourceSecureEdgeHostNameExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + tools.CreateNonce() + "]"
 	group, e := getGroup(d, CorrelationID)
 	if e != nil {
 		return false, e
@@ -252,7 +253,7 @@ func resourceSecureEdgeHostNameExists(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + tools.CreateNonce() + "]"
 	d.Partial(true)
 
 	group, e := getGroup(d, CorrelationID)

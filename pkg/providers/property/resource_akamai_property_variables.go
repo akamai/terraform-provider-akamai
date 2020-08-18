@@ -2,6 +2,7 @@ package property
 
 import (
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"strings"
 
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
@@ -70,7 +71,7 @@ var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
 }
 
 func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyVariablesCreate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyVariablesCreate-" + tools.CreateNonce() + "]"
 	rule := papi.NewRule()
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, ": START Check for variables")
 	variables, ok := d.GetOk("variables")
@@ -113,7 +114,7 @@ func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Json result  %s\n", string(jsonBody)))
-	sha := getSHAString(string(jsonBody))
+	sha := tools.GetSHAString(string(jsonBody))
 	d.Set("json", string(jsonBody))
 
 	d.SetId(sha)
@@ -123,7 +124,7 @@ func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourcePropertyVariablesDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyVariablesDelete-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyVariablesDelete-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "DELETING")
 	d.SetId("")
 
@@ -169,7 +170,7 @@ func resourcePropertyVariablesImport(d *schema.ResourceData, meta interface{}) (
 }
 
 func resourcePropertyVariablesExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	CorrelationID := "[PAPI][resourcePropertyVariablesExists-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyVariablesExists-" + tools.CreateNonce() + "]"
 	variables := d.Id()
 	if variables != "" {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables  %s\n", variables))
@@ -187,7 +188,7 @@ func resourcePropertyVariablesRead(d *schema.ResourceData, meta interface{}) err
 }
 
 func resourcePropertyVariablesUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyVariablesUpdate-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourcePropertyVariablesUpdate-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "UPDATING")
 	rule := papi.NewRule()
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " START Check for variables")
@@ -226,7 +227,7 @@ func resourcePropertyVariablesUpdate(d *schema.ResourceData, meta interface{}) e
 
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Json result  %s\n", string(jsonBody)))
 
-		sha := getSHAString(string(jsonBody))
+		sha := tools.GetSHAString(string(jsonBody))
 		d.Set("json", string(jsonBody))
 
 		d.SetId(sha)

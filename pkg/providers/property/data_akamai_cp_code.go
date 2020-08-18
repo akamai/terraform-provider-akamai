@@ -4,6 +4,7 @@ import (
 	"fmt"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -30,7 +31,7 @@ func dataSourceCPCode() *schema.Resource {
 }
 
 func dataSourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + tools.CreateNonce() + "]"
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CP Code")
 	cpCodeName := d.Get("name").(string)
