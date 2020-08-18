@@ -1,10 +1,10 @@
-package property
+package dns
 
 import (
 	"context"
 	"fmt"
+	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/hashicorp/go-hclog"
@@ -25,7 +25,7 @@ var (
 	// Terraform now supports section aliases
 	// TODO: Add alias example to the examples directory
 	DeprecatedSectionNotice = func(n string) string {
-		return fmt.Sprintf(`The setting %q has been  See:
+		return fmt.Sprintf(`The setting %q has been deprecated. See:
 https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations`, n)
 	}
 
@@ -51,38 +51,25 @@ func Provider() *schema.Provider {
 
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"papi_section": {
+			"dns_section": {
 				Optional:   true,
 				Type:       schema.TypeString,
 				Default:    "default",
-				Deprecated: DeprecatedSectionNotice("papi_section"),
+				Deprecated: DeprecatedSectionNotice("dns_section"),
 			},
-			"property_section": {
-				Optional:   true,
-				Type:       schema.TypeString,
-				Default:    "default",
-				Deprecated: DeprecatedSectionNotice("property_section"),
-			},
-			"property": {
+			"dns": {
 				Optional: true,
 				Type:     schema.TypeSet,
-				Elem:     config.Options("property"),
+				Elem:     config.Options("dns"),
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_contract":       dataSourcePropertyContract(),
-			"akamai_cp_code":        dataSourceCPCode(),
-			"akamai_group":          dataSourcePropertyGroups(),
-			"akamai_property_rules": dataPropertyRules(),
-			"akamai_property":       dataSourceAkamaiProperty(),
+			"akamai_authorities_set": dataSourceAuthoritiesSet(),
+			"akamai_dns_record_set":  dataSourceDNSRecordSet(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cp_code":             resourceCPCode(),
-			"akamai_edge_hostname":       resourceSecureEdgeHostName(),
-			"akamai_property":            resourceProperty(),
-			"akamai_property_rules":      resourcePropertyRules(),
-			"akamai_property_variables":  resourcePropertyVariables(),
-			"akamai_property_activation": resourcePropertyActivation(),
+			"akamai_dns_zone":   resourceDNSv2Zone(),
+			"akamai_dns_record": resourceDNSv2Record(),
 		},
 	}
 	//ConfigureFunc: providerConfigure,
@@ -100,11 +87,10 @@ func Provider() *schema.Provider {
 
 func providerConfigure(d *schema.ResourceData, terraformVersion string) (interface{}, error) {
 	log.Printf("[DEBUG] START providerConfigure  %s\n", terraformVersion)
-	cfg, err := getPAPIV1Service(d)
+	cfg, err := getConfigDNSV2Service(d)
 	if err != nil {
 		return nil, nil
 	}
-
 	return cfg, nil
 }
 
@@ -117,13 +103,13 @@ type set interface {
 	List() []interface{}
 }
 
-func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
-	var papiConfig edgegrid.Config
-	if _, ok := d.GetOk("property"); ok {
-		log.Printf("[DEBUG] Setting property config via HCL")
-		config := d.Get("property").(set).List()[0].(map[string]interface{})
+func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
+	var DNSv2Config edgegrid.Config
+	var err error
+	if _, ok := d.GetOk("dns"); ok {
+		config := d.Get("dns").(set).List()[0].(map[string]interface{})
 
-		papiConfig = edgegrid.Config{
+		DNSv2Config = edgegrid.Config{
 			Host:         config["host"].(string),
 			AccessToken:  config["access_token"].(string),
 			ClientToken:  config["client_token"].(string),
@@ -131,30 +117,24 @@ func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
 			MaxBody:      config["max_body"].(int),
 		}
 
-		papi.Init(papiConfig)
-		return &papiConfig, nil
+		dnsv2.Init(DNSv2Config)
+		return &DNSv2Config, nil
 	}
 
-	var err error
 	edgerc := d.Get("edgerc").(string)
-	if section, ok := d.GetOk("property_section"); ok && section != "default" {
-		papiConfig, err = edgegrid.Init(edgerc, section.(string))
-	} else if section, ok := d.GetOk("papi_section"); ok && section != "default" {
-		papiConfig, err = edgegrid.Init(edgerc, section.(string))
-	} else {
-		papiConfig, err = edgegrid.Init(edgerc, "default")
-	}
-
+	section := d.Get("dns_section").(string)
+	DNSv2Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
 
-	papi.Init(papiConfig)
-	return &papiConfig, nil
+	dnsv2.Init(DNSv2Config)
+	edgegrid.SetupLogging()
+	return &DNSv2Config, nil
 }
 
 func (p *provider) Name() string {
-	return "property"
+	return "dns"
 }
 
 func (p *provider) Version() string {

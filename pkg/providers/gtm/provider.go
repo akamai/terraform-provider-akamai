@@ -1,10 +1,10 @@
-package property
+package gtm
 
 import (
 	"context"
 	"fmt"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/hashicorp/go-hclog"
@@ -25,7 +25,7 @@ var (
 	// Terraform now supports section aliases
 	// TODO: Add alias example to the examples directory
 	DeprecatedSectionNotice = func(n string) string {
-		return fmt.Sprintf(`The setting %q has been  See:
+		return fmt.Sprintf(`The setting %q has been deprecated. See:
 https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations`, n)
 	}
 
@@ -51,38 +51,29 @@ func Provider() *schema.Provider {
 
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"papi_section": {
+			"gtm_section": {
 				Optional:   true,
 				Type:       schema.TypeString,
 				Default:    "default",
-				Deprecated: DeprecatedSectionNotice("papi_section"),
+				Deprecated: DeprecatedSectionNotice("gtm_section"),
 			},
-			"property_section": {
-				Optional:   true,
-				Type:       schema.TypeString,
-				Default:    "default",
-				Deprecated: DeprecatedSectionNotice("property_section"),
-			},
-			"property": {
+			"gtm": {
 				Optional: true,
 				Type:     schema.TypeSet,
-				Elem:     config.Options("property"),
+				Elem:     config.Options("gtm"),
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_contract":       dataSourcePropertyContract(),
-			"akamai_cp_code":        dataSourceCPCode(),
-			"akamai_group":          dataSourcePropertyGroups(),
-			"akamai_property_rules": dataPropertyRules(),
-			"akamai_property":       dataSourceAkamaiProperty(),
+			"akamai_gtm_default_datacenter": dataSourceGTMDefaultDatacenter(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cp_code":             resourceCPCode(),
-			"akamai_edge_hostname":       resourceSecureEdgeHostName(),
-			"akamai_property":            resourceProperty(),
-			"akamai_property_rules":      resourcePropertyRules(),
-			"akamai_property_variables":  resourcePropertyVariables(),
-			"akamai_property_activation": resourcePropertyActivation(),
+			"akamai_gtm_domain":     resourceGTMv1Domain(),
+			"akamai_gtm_datacenter": resourceGTMv1Datacenter(),
+			"akamai_gtm_property":   resourceGTMv1Property(),
+			"akamai_gtm_resource":   resourceGTMv1Resource(),
+			"akamai_gtm_cidrmap":    resourceGTMv1Cidrmap(),
+			"akamai_gtm_geomap":     resourceGTMv1Geomap(),
+			"akamai_gtm_asmap":      resourceGTMv1ASmap(),
 		},
 	}
 	//ConfigureFunc: providerConfigure,
@@ -100,7 +91,7 @@ func Provider() *schema.Provider {
 
 func providerConfigure(d *schema.ResourceData, terraformVersion string) (interface{}, error) {
 	log.Printf("[DEBUG] START providerConfigure  %s\n", terraformVersion)
-	cfg, err := getPAPIV1Service(d)
+	cfg, err := getConfigGTMV1Service(d)
 	if err != nil {
 		return nil, nil
 	}
@@ -117,13 +108,13 @@ type set interface {
 	List() []interface{}
 }
 
-func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
-	var papiConfig edgegrid.Config
-	if _, ok := d.GetOk("property"); ok {
-		log.Printf("[DEBUG] Setting property config via HCL")
-		config := d.Get("property").(set).List()[0].(map[string]interface{})
+func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
+	var GTMv1Config edgegrid.Config
+	var err error
+	if _, ok := d.GetOk("gtm"); ok {
+		config := d.Get("gtm").(set).List()[0].(map[string]interface{})
 
-		papiConfig = edgegrid.Config{
+		GTMv1Config = edgegrid.Config{
 			Host:         config["host"].(string),
 			AccessToken:  config["access_token"].(string),
 			ClientToken:  config["client_token"].(string),
@@ -131,30 +122,24 @@ func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
 			MaxBody:      config["max_body"].(int),
 		}
 
-		papi.Init(papiConfig)
-		return &papiConfig, nil
+		gtm.Init(GTMv1Config)
+		edgegrid.SetupLogging()
+		return &GTMv1Config, nil
 	}
 
-	var err error
 	edgerc := d.Get("edgerc").(string)
-	if section, ok := d.GetOk("property_section"); ok && section != "default" {
-		papiConfig, err = edgegrid.Init(edgerc, section.(string))
-	} else if section, ok := d.GetOk("papi_section"); ok && section != "default" {
-		papiConfig, err = edgegrid.Init(edgerc, section.(string))
-	} else {
-		papiConfig, err = edgegrid.Init(edgerc, "default")
-	}
-
+	section := d.Get("gtm_section").(string)
+	GTMv1Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
 
-	papi.Init(papiConfig)
-	return &papiConfig, nil
+	gtm.Init(GTMv1Config)
+	return &GTMv1Config, nil
 }
 
 func (p *provider) Name() string {
-	return "property"
+	return "gtm"
 }
 
 func (p *provider) Version() string {

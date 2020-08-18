@@ -3,6 +3,7 @@ package akamai
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -92,6 +93,12 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 						Type:        schema.TypeString,
 						DefaultFunc: schema.EnvDefaultFunc("EDGERC", nil),
 					},
+					"section": {
+						Description: "The section of the edgerc file to use for configuration",
+						Optional:    true,
+						Type:        schema.TypeString,
+						Default:     "default",
+					},
 				},
 				ResourcesMap:       make(map[string]*schema.Resource),
 				DataSourcesMap:     make(map[string]*schema.Resource),
@@ -148,6 +155,16 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 				return nil, ErrNoConfiguredProviders.Diagnostics()
 			}
 
+			var stateSet bool
+			for _, s := range instance.states {
+				if s != nil {
+					stateSet = true
+					break
+				}
+			}
+			if !stateSet {
+				return nil, ErrNoConfiguredProviders.Diagnostics()
+			}
 			// TODO: once the client is update this will be done elsewhere
 			client.UserAgent = instance.UserAgent("terraform-provider-akamai", instance.TerraformVersion)
 
@@ -163,7 +180,7 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 func mergeSchema(from, to map[string]*schema.Schema) (map[string]*schema.Schema, error) {
 	for k, v := range from {
 		if _, ok := to[k]; ok {
-			return nil, ErrDuplicateSchemaKey
+			return nil, fmt.Errorf("%w: %s", ErrDuplicateSchemaKey, k)
 		}
 		to[k] = v
 	}
@@ -173,7 +190,7 @@ func mergeSchema(from, to map[string]*schema.Schema) (map[string]*schema.Schema,
 func mergeResource(from, to map[string]*schema.Resource) (map[string]*schema.Resource, error) {
 	for k, v := range from {
 		if _, ok := to[k]; ok {
-			return nil, ErrDuplicateSchemaKey
+			return nil, fmt.Errorf("%w: %s", ErrDuplicateSchemaKey, k)
 		}
 		to[k] = v
 	}
