@@ -3,11 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/dns"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/gtm"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/property"
-	"log"
 	"os"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/go-hclog"
@@ -27,16 +25,19 @@ func main() {
 		JSONFormat: true,
 	})
 
-	prov := akamai.Provider(logger, property.Subprovider(), dns.Subprovider(), gtm.Subprovider())
+	prov := akamai.Provider(
+		logger,
+		providers.AllProviders...,
+	)
 
 	if debugMode {
-		err := plugin.Debug(context.Background(), "registry.terraform.io/akamai/akamai",
+		err := plugin.Debug(context.Background(), akamai.ProviderRegistryPath,
 			&plugin.ServeOpts{
 				ProviderFunc: prov,
 				Logger:       logger,
 			})
 		if err != nil {
-			log.Println(err.Error())
+			panic(err)
 		}
 	} else {
 		plugin.Serve(&plugin.ServeOpts{

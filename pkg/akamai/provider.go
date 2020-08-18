@@ -18,6 +18,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 
+const (
+	// ProviderRegistryPath is the path for the provider in the terraform registry
+	ProviderRegistryPath = "registry.terraform.io/akamai/akamai"
+
+	// ProviderName is the legacy name of the provider
+	// Deprecated: terrform now uses registry paths, the shortest of which would be akamai/akamai"
+	ProviderName = "terraform-provider-akamai"
+)
+
 type (
 	// Subprovider is the interface implemented by the sub providers
 	Subprovider interface {
@@ -156,7 +165,7 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 			}
 
 			// TODO: once the client is update this will be done elsewhere
-			client.UserAgent = instance.UserAgent("terraform-provider-akamai", instance.TerraformVersion)
+			client.UserAgent = instance.UserAgent(ProviderName, instance.TerraformVersion)
 
 			return &instance, nil
 		}
