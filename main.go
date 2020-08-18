@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/dns"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/gtm"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/property"
 	"log"
 	"os"
 
-	"github.com/akamai/terraform-provider-akamai/v2/deprecated"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
@@ -25,7 +27,7 @@ func main() {
 		JSONFormat: true,
 	})
 
-	prov := akamai.Provider(logger, deprecated.Subprovider())
+	prov := akamai.Provider(logger, property.Subprovider(), dns.Subprovider(), gtm.Subprovider())
 
 	if debugMode {
 		err := plugin.Debug(context.Background(), "registry.terraform.io/akamai/akamai",
