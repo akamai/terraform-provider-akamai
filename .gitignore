@@ -5,6 +5,10 @@ terraform.tfstate
 terraform.tfstate.backup
 *.log
 
+# local files
+.DS_Store
+/dist
+
 # vscode
 .vscode/
 _debug_bin
