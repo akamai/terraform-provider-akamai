@@ -5,7 +5,10 @@ import (
 	"flag"
 	"os"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers"
+	// Load the providers
+	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/registry"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/go-hclog"
@@ -27,7 +30,7 @@ func main() {
 
 	prov := akamai.Provider(
 		logger,
-		providers.AllProviders...,
+		registry.AllProviders()...,
 	)
 
 	if debugMode {
