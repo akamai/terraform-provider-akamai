@@ -1,4 +1,6 @@
 ## 0.9.0 (Unreleased)
+## 0.8.2 (August 13, 2020)
+* Initial release via the Terraform Registry. Otherwise identical to 0.8.1 release
 ## 0.8.1 (July 30, 2020)
 * [FIX] Activation is executed, even without changes #139 (`akamai-property-activation`) ([#139](https://github.com/terraform-providers/terraform-provider-template/issues/139))
 * [FIX] Cannot find group when there are groups with the same name under multiple contract. #168 (`akamai-property-group`) ([#168](https://github.com/terraform-providers/terraform-provider-template/issues/168))
