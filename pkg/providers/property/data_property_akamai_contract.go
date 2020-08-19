@@ -2,6 +2,7 @@ package property
 
 import (
 	"fmt"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,7 +21,7 @@ func dataSourcePropertyContract() *schema.Resource {
 }
 
 func dataSourcePropertyContractRead(d *schema.ResourceData, _ interface{}) error {
-	akactx, _ := akamai.ContextGet(inst.Name())
+	akactx := akamai.ContextGet(inst.Name())
 
 	// demonstrate the context logger
 	log := akactx.Log("PAPI", "dataSourcePropertyContractRead")

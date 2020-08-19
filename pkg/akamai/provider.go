@@ -45,7 +45,7 @@ type (
 		// DataSources returns the datasources for the subprovider
 		DataSources() map[string]*schema.Resource
 
-		// Configure returns the subprovider opqaue state object
+		// Configure returns the subprovider opaque state object
 		Configure(context.Context, hclog.Logger, *schema.ResourceData) (interface{}, diag.Diagnostics)
 	}
 
@@ -197,10 +197,10 @@ func mergeResource(from, to map[string]*schema.Resource) (map[string]*schema.Res
 }
 
 // ContextGet returns the context object from the passed interface
-func ContextGet(name string) (Context, bool) {
+func ContextGet(name string) Context {
 	sub, ok := instance.subs[name]
 	if !ok {
-		return nil, false
+		panic(ErrProviderNotLoaded(name))
 	}
 
 	coid := uuid.Must(uuid.NewRandom())
@@ -214,7 +214,7 @@ func ContextGet(name string) (Context, bool) {
 		m.meta = state
 	}
 
-	return &m, true
+	return &m
 }
 
 func (c *akaContext) Log(prefix ...string) hclog.Logger {

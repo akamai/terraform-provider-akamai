@@ -24,6 +24,10 @@ var (
 	// ErrCacheEntryNotFound returns a cache entry error
 	ErrCacheEntryNotFound = func(key string) error { return &Error{fmt.Sprintf("cache entry %q not found", key), true} }
 
+	// ErrProviderNotLoaded returned and panic'd when a requested provider is not loaded
+	// Users should never see this, unit tests and sanity checks should pick this up
+	ErrProviderNotLoaded = func(name string) error { return &Error{fmt.Sprintf("Provider %q not loaded", name), false} }
+
 	// NoticeDeprecatedUseAlias is returned for schema configurations that are deprecated
 	// Terraform now supports section aliases
 	// TODO: Add alias example to the examples directory
