@@ -10,5 +10,5 @@ var (
 	ErrPapiNoContractProvided   = errors.New("contract ID is required for non-default name")
 	ErrPapiGroupNotInContract   = errors.New("group does not belong to contract")
 	ErrPAPICPCodeModify         = errors.New("CP Code with provided name already exists for provided group and contract IDs and it cannot be managed through this API - please contact Customer Support")
-	ErrInvalidPropertyType      = errors.New("provided parameter is of value")
+	ErrInvalidPropertyType      = errors.New("property must be of the specified type")
 )
