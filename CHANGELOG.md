@@ -1,6 +1,12 @@
 ## 1.0.0 (Unreleased)
 * [CHANGE] The individual settings for edgerc file sections (i.e., `property_section`, `dns_section`) has been deprecated in favor a common `config_section` used in conjuction with provider aliases ([See: Multiple Provider Configurations](https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations))
 ## 0.9.0 (Unreleased)
+## 0.8.2 (August 13, 2020)
+* Initial release via the Terraform Registry. Otherwise identical to 0.8.1 release
+## 0.8.1 (July 30, 2020)
+* [FIX] Activation is executed, even without changes #139 (`akamai-property-activation`) ([#139](https://github.com/terraform-providers/terraform-provider-template/issues/139))
+* [FIX] Cannot find group when there are groups with the same name under multiple contract. #168 (`akamai-property-group`) ([#168](https://github.com/terraform-providers/terraform-provider-template/issues/168))
+
 ## 0.8.0 (July 13, 2020)
 * [FIX] Corrected Error 401 [Signature does not match] during  new primary zone creation (`akamai-dns`) ([#163](https://github.com/terraform-providers/terraform-provider-template/issues/163))
 * [ADD] Updated Getting Started Primary Zone creation description. Added FAQ for Primary zone (`akamai-dns`)
