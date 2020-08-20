@@ -128,8 +128,11 @@ func (p *provider) Name() string {
 	return "property"
 }
 
+// ProviderVersion update version string anytime provider adds new features
+const ProviderVersion string = "v0.8.3"
+
 func (p *provider) Version() string {
-	return "v0.8.3"
+    return ProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
