@@ -9,6 +9,10 @@ terraform.tfstate.backup
 .DS_Store
 /dist
 
+# vscode
+.vscode/
+_debug_bin
+
 # eclipse
 .classpath
 .project
