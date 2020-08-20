@@ -109,8 +109,11 @@ func (p *provider) Name() string {
 	return "dns"
 }
 
+// DnsProviderVersion update version string anytime provider adds new features
+const DnsProviderVersion string = "v0.8.3"
+
 func (p *provider) Version() string {
-	return "v0.8.3"
+    return DnsProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
