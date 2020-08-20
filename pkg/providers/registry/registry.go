@@ -22,5 +22,12 @@ func RegisterProvider(p akamai.Subprovider) {
 
 // AllProviders returns all of the registered providers
 func AllProviders() []akamai.Subprovider {
-	return allProviders
+	lock.Lock()
+	defer lock.Unlock()
+
+	out := make([]akamai.Subprovider, len(allProviders))
+
+	copy(out, allProviders)
+
+	return out
 }
