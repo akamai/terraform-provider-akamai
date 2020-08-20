@@ -114,8 +114,11 @@ func (p *provider) Name() string {
 	return "gtm"
 }
 
+// GtmProviderVersion update version string anytime provider adds new features
+const GtmProviderVersion string = "v0.8.3"
+
 func (p *provider) Version() string {
-	return "v0.8.3"
+    return GtmProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
