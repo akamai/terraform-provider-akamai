@@ -2,9 +2,9 @@ package property
 
 import (
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -45,25 +45,27 @@ func resourceCPCode() *schema.Resource {
 }
 
 func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeCreate-" + tools.CreateNonce() + "]"
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourceCPCodeCreate")
+	CorrelationID := "[PAPI][resourceCPCodeCreate-" + akactx.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating CP Code")
+	logger.Debug("Creating CP Code")
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
 	name, ok := d.Get("name").(string)
 	if !ok {
-		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "name", "string")
+		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string")
 	}
 	product, ok := d.Get("product").(string)
 	if !ok {
-		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "product", "string")
+		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "product", "string")
 	}
 	group, ok := d.Get("group").(string)
 	if !ok {
-		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "group", "string")
+		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "group", "string")
 	}
 	contract, ok := d.Get("contract").(string)
 	if !ok {
-		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "contract", "string")
+		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "contract", "string")
 	}
 	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
 	cpCode, err := cpCodes.FindCpCode(name, CorrelationID)
@@ -74,11 +76,11 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 		cpCode.ProductID = product
 		cpCode.CpcodeName = name
 
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  CPCode: %+v", cpCode))
+		logger.Debug("CPCode: %+v")
 		err := cpCode.Save(CorrelationID)
 		if err != nil {
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Error saving")
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("%s", err.(client.APIError).RawBody))
+			logger.Debug("Error saving")
+			logger.Debug("%s", err.(client.APIError).RawBody)
 			return err
 		}
 	}
@@ -92,34 +94,37 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 	if !found {
 		return fmt.Errorf("attempting to modify product ID: %w", ErrPAPICPCodeModify)
 	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Resulting CP Code: %#v\n\n\n", cpCode))
+	logger.Debug("Resulting CP Code: %#v", cpCode)
 	d.SetId(cpCode.CpcodeID)
 	return resourceCPCodeRead(d, meta)
 }
 
 func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeCreate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting CP Code")
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourceCPCodeDelete")
+	logger.Debug("Deleting CP Code")
 	// No PAPI CP Code delete operation exists.
 	// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
 	return schema.Noop(d, meta)
 }
 
 func resourceCPCodeRead(d *schema.ResourceData, _ interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeRead-" + tools.CreateNonce() + "]"
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourceCPCodeRead")
+	CorrelationID := "[PAPI][resourceCPCodeRead-" + akactx.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CP Code")
+	logger.Debug("Read CP Code")
 	name, ok := d.Get("name").(string)
 	if !ok {
-		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "name", "string")
+		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string")
 	}
 	group, ok := d.Get("group").(string)
 	if !ok {
-		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "group", "string")
+		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "group", "string")
 	}
 	contract, ok := d.Get("contract").(string)
 	if !ok {
-		return fmt.Errorf("%w: %s, %q", ErrInvalidPropertyType, "contract", "string")
+		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "contract", "string")
 	}
 	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
 	cpCode, err := cpCodes.FindCpCode(d.Id(), CorrelationID)
@@ -135,7 +140,7 @@ func resourceCPCodeRead(d *schema.ResourceData, _ interface{}) error {
 	}
 
 	d.SetId(cpCode.CpcodeID)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Read CP Code: %+v", cpCode))
+	logger.Debug("Read CP Code: %+v", cpCode)
 	return nil
 }
 

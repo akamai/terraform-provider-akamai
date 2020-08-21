@@ -4,124 +4,122 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/go-hclog"
 	"log"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tidwall/gjson"
 )
 
-// suppressEquivalentTypeStringBoolean provides custom difference suppression for TypeString booleans
-// Some arguments require three values: true, false, and "" (unspecified), but
-// confusing behavior exists when converting bare true/false values with state.
-func suppressEquivalentTypeStringBoolean(k, old, new string, d *schema.ResourceData) bool {
-	if old == "false" && new == "0" {
+// FIXME this function is identical to suppressEquivalentJSONPendingDiffs
+func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) bool {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "suppressEquivalentJSONDiffs")
+	oldBuf := bytes.NewBuffer([]byte{})
+	if err := json.Compact(oldBuf, []byte(old)); err != nil {
+		logger.Error("converting to compact json: %s", old)
+		return false
+	}
+	newBuf := bytes.NewBuffer([]byte{})
+	if err := json.Compact(newBuf, []byte(new)); err != nil {
+		logger.Error("converting to compact json: %s", old)
+		return false
+	}
+	logger.Debug("old json: %s", string(oldBuf.Bytes()))
+	logger.Debug("new json: %s", string(newBuf.Bytes()))
+	rulesOld, err := getRulesForComp(d, old, "", logger)
+	if err != nil {
+		// todo not sure what to do with this error
+		logger.Error("calling 'getRulesForComp': %s", err.Error())
+	}
+	rulesOld.Etag = ""
+	body, err := jsonhooks.Marshal(rulesOld)
+	if err != nil {
+		logger.Error("marshaling rules: %s", err.Error())
+		return false
+	}
+	sha1hashOld := tools.GetSHAString(string(body))
+	logger.Debug("SHA from OLD Json %s", sha1hashOld)
+	rulesNew, err := getRulesForComp(d, new, "", logger)
+	if err != nil {
+		// todo not sure what to do with this error
+		logger.Error("calling 'getRulesForComp': %s", err.Error())
+	}
+	rulesNew.Etag = ""
+	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
+	if err != nil {
+		logger.Error("marshaling rules: %s", err.Error())
+		return false
+	}
+	sha1hashNew := tools.GetSHAString(string(jsonBodyNew))
+	logger.Debug("SHA from NEW Json %s", sha1hashNew)
+	if sha1hashOld == sha1hashNew {
+		logger.Debug("SHA Equal skip diff")
 		return true
 	}
-	if old == "true" && new == "1" {
-		return true
-	}
+	logger.Debug("SHA Not Equal diff applies")
 	return false
 }
 
-func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) bool {
-	CorrelationID := "[PAPI][suppressEquivalentJsonDiffs-" + tools.CreateNonce() + "]"
-	ob := bytes.NewBufferString("")
-	if err := json.Compact(ob, []byte(old)); err != nil {
+func suppressEquivalentJSONPendingDiffs(old, new string, d *schema.ResourceDiff) bool {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "suppressEquivalentJSONPendingDiffs")
+	oldBuf := bytes.NewBuffer([]byte{})
+	if err := json.Compact(oldBuf, []byte(old)); err != nil {
+		logger.Error("converting to compact json: %s", old)
 		return false
 	}
-
-	nb := bytes.NewBufferString("")
-	if err := json.Compact(nb, []byte(new)); err != nil {
+	newBuf := bytes.NewBuffer([]byte{})
+	if err := json.Compact(newBuf, []byte(new)); err != nil {
+		logger.Error("converting to compact json: %s", old)
 		return false
 	}
+	logger.Debug("old json: %s", string(oldBuf.Bytes()))
+	logger.Debug("new json: %s", string(newBuf.Bytes()))
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes())))
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes())))
-
-	rulesOld, err := getRulesForComp(d, old, "")
-	rulesOld.Etag = ""
-	jsonBody, err := jsonhooks.Marshal(rulesOld)
+	rulesOld, err := getRulesForComp(d, old, "", logger)
 	if err != nil {
+		// todo not sure what to do with this error
+		logger.Error("calling 'getRulesForComp': %s", err.Error())
+	}
+	rulesOld.Etag = ""
+	body, err := jsonhooks.Marshal(rulesOld)
+	if err != nil {
+		logger.Error("marshaling rules: %s", err.Error())
 		return false
 	}
-	sha1hashOld := tools.GetSHAString(string(jsonBody))
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld))
-
-	rulesNew, err := getRulesForComp(d, new, "")
+	sha1hashOld := tools.GetSHAString(string(body))
+	logger.Debug("SHA from OLD Json %s", sha1hashOld)
+	rulesNew, err := getRulesForComp(d, new, "", logger)
+	if err != nil {
+		// todo not sure what to do with this error
+		logger.Error("calling 'getRulesForComp': %s", err.Error())
+	}
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
 	if err != nil {
+		logger.Error("marshaling rules: %s", err.Error())
 		return false
 	}
 	sha1hashNew := tools.GetSHAString(string(jsonBodyNew))
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew))
-
+	logger.Debug("SHA from NEW Json %s", sha1hashNew)
 	if sha1hashOld == sha1hashNew {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Equal skip diff \n")
+		logger.Debug("SHA Equal skip diff")
 		return true
-	} else {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
-		return false
 	}
-
+	logger.Debug("SHA Not Equal diff applies")
+	return false
 }
 
-func suppressEquivalentJsonPendingDiffs(old, new string, d *schema.ResourceDiff) bool {
-	CorrelationID := "[PAPI][suppressEquivalentJsonPendingDiffs-" + tools.CreateNonce() + "]"
-	ob := bytes.NewBufferString("")
-	if err := json.Compact(ob, []byte(old)); err != nil {
-		return false
-	}
-
-	nb := bytes.NewBufferString("")
-	if err := json.Compact(nb, []byte(new)); err != nil {
-		return false
-	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs OB %s\n", string(ob.Bytes())))
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs NB %s\n", string(nb.Bytes())))
-
-	rulesOld, err := getRulesForComp(d, old, "")
-	rulesOld.Etag = ""
-	jsonBody, err := jsonhooks.Marshal(rulesOld)
+// TODO: discuss how property rules should be handled
+func getRulesForComp(d interface{}, json string, correlationid string, logger hclog.Logger) (*papi.Rules, error) {
+	property, err := getProperty(d, correlationid, logger)
 	if err != nil {
-		return false
-	}
-	sha1hashOld := tools.GetSHAString(string(jsonBody))
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from OLD Json %s\n", sha1hashOld))
-
-	rulesNew, err := getRulesForComp(d, new, "")
-	rulesNew.Etag = ""
-	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
-	if err != nil {
-		return false
-	}
-	sha1hashNew := tools.GetSHAString(string(jsonBodyNew))
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  suppressEquivalentJsonDiffs SHA from NEW Json %s\n", sha1hashNew))
-
-	if sha1hashOld == sha1hashNew {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Equal skip diff \n")
-		return true
-	} else {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  suppressEquivalentJsonDiffs SHA Not Equal diff applies \n")
-		return false
-	}
-
-}
-
-func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Rules, error) {
-
-	property, e := getProperty(d, correlationid)
-	if e != nil {
-		return nil, e
+		return nil, err
 	}
 
 	rules := papi.NewRules()
@@ -132,22 +130,15 @@ func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Ru
 	case *schema.ResourceDiff:
 		rules.PropertyID = d.(*schema.ResourceDiff).Id()
 	default:
-		rules.PropertyID = d.(*schema.ResourceData).Id()
+		return nil, fmt.Errorf("resource is of invalid type; should be '*schema.ResourceDiff' or '*schema.ResourceData'")
 	}
-
-	//rules.PropertyID = d.Id()
 	rules.PropertyVersion = property.LatestVersion
-
-	origin, err := createOrigin(d, correlationid)
+	origin, err := createOrigin(d, correlationid, logger)
 	if err != nil {
 		return nil, err
 	}
-
 	// get rules from the TF config
-
-	//rulecheck
-
-	edge.PrintfCorrelation("[DEBUG]", correlationid, "  Unmarshal Rules from JSON")
+	logger.Debug("Unmarshal Rules from JSON")
 	unmarshalRulesFromJSONComp(d, json, rules)
 
 	var ruleFormat interface{}
@@ -159,12 +150,14 @@ func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Ru
 	case *schema.ResourceDiff:
 		ruleFormat, ok = d.(*schema.ResourceDiff).GetOk("rule_format")
 	default:
-		ruleFormat, ok = d.(*schema.ResourceData).GetOk("rule_format")
+		return nil, fmt.Errorf("resource is of invalid type; should be '*schema.ResourceDiff' or '*schema.ResourceData'")
 	}
 
-	//if ruleFormat, ok := d.GetOk("rule_format"); ok {
 	if ok {
-		rules.RuleFormat = ruleFormat.(string)
+		rules.RuleFormat, ok = ruleFormat.(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "rule_format", "string")
+		}
 	} else {
 		ruleFormats := papi.NewRuleFormats()
 		rules.RuleFormat, err = ruleFormats.GetLatest(correlationid)
@@ -173,41 +166,29 @@ func getRulesForComp(d interface{}, json string, correlationid string) (*papi.Ru
 		}
 	}
 
-	//if ok := d.HasChange("rule_format"); ok {
-	//}
-
-	cpCode, err := getCPCode(d, property.Contract, property.Group, correlationid)
+	cpCode, err := getCPCode(d, property.Contract, property.Group, correlationid, logger)
 	if err != nil {
 		return nil, err
 	}
-
-	updateStandardBehaviors(rules, cpCode, origin, correlationid)
-	fixupPerformanceBehaviors(rules, correlationid)
+	updateStandardBehaviors(rules, cpCode, origin, correlationid, logger)
+	fixupPerformanceBehaviors(rules, correlationid, logger)
 
 	return rules, nil
 }
 
+// TODO: discuss how property rules should be handled
 func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *papi.Rules) {
-	// Default Rules
-
 	propertyRules.Rule = &papi.Rule{Name: "default"}
-	//log.Println("[DEBUG] RulesJson")
-
 	rulesJSON := gjson.Parse(rulesComp).Get("rules")
 	rulesJSON.ForEach(func(key, value gjson.Result) bool {
-		//	log.Println("[DEBUG] unmarshalRulesFromJson KEY RULES KEY = " + key.String() + " VAL " + value.String())
-
 		if key.String() == "behaviors" {
 			behavior := gjson.Parse(value.String())
-			//		log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR " + behavior.String())
 			if gjson.Get(behavior.String(), "#.name").Exists() {
 
 				behavior.ForEach(func(key, value gjson.Result) bool {
-					//				log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR LOOP KEY =" + key.String() + " VAL " + value.String())
 
 					bb, ok := value.Value().(map[string]interface{})
 					if ok {
-						//					log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR MAP  ", bb)
 						for k, v := range bb {
 							log.Println("k:", k, "v:", v)
 						}
@@ -216,10 +197,8 @@ func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *
 
 						beh.Name = bb["name"].(string)
 						boptions, ok := bb["options"]
-						//					log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR BOPTIONS ", boptions)
 						if ok {
 							beh.Options = boptions.(map[string]interface{})
-							//						log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR EXTRACT BOPTIONS ", beh.Options)
 						}
 
 						propertyRules.Rule.MergeBehavior(beh)
@@ -234,11 +213,9 @@ func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *
 				criteria := gjson.Parse(value.String())
 
 				criteria.ForEach(func(key, value gjson.Result) bool {
-					//				log.Println("[DEBUG] unmarshalRulesFromJson KEY CRITERIA " + key.String() + " VAL " + value.String())
 
 					cc, ok := value.Value().(map[string]interface{})
 					if ok {
-						//					log.Println("[DEBUG] unmarshalRulesFromJson CRITERIA MAP  ", cc)
 						newCriteria := papi.NewCriteria()
 						newCriteria.Name = cc["name"].(string)
 
@@ -256,7 +233,6 @@ func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *
 
 		if key.String() == "children" {
 			childRules := gjson.Parse(value.String())
-			//		println("CHILD RULES " + childRules.String())
 
 			for _, rule := range extractRulesJSON(d, childRules) {
 				propertyRules.Rule.MergeChildRule(rule)
@@ -265,14 +241,10 @@ func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *
 
 		if key.String() == "variables" {
 
-			//		log.Println("unmarshalRulesFromJson VARS from JSON ", value.String())
 			variables := gjson.Parse(value.String())
 
 			variables.ForEach(func(key, value gjson.Result) bool {
-				//			log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
 				variableMap, ok := value.Value().(map[string]interface{})
-				//			log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
-				//			log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
 				if ok {
 					newVariable := papi.NewVariable()
 					newVariable.Name = variableMap["name"].(string)
@@ -288,7 +260,6 @@ func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *
 		}
 
 		if key.String() == "options" {
-			//		log.Println("unmarshalRulesFromJson OPTIONS from JSON", value.String())
 			options := gjson.Parse(value.String())
 			options.ForEach(func(key, value gjson.Result) bool {
 				switch {
@@ -317,16 +288,11 @@ func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *
 	}
 	//jsonvars, ok := d.GetOk("variables")
 	if ok {
-		//	log.Println("unmarshalRulesFromJson VARS from JSON ", jsonvars)
 		variables := gjson.Parse(jsonvars.(string))
 		result := gjson.Get(variables.String(), "variables")
-		//	log.Println("unmarshalRulesFromJson VARS from JSON VARIABLES ", result)
 
 		result.ForEach(func(key, value gjson.Result) bool {
-			//		log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
 			variableMap, ok := value.Value().(map[string]interface{})
-			//		log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
-			//		log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
 			if ok {
 				newVariable := papi.NewVariable()
 				newVariable.Name = variableMap["name"].(string)
@@ -340,45 +306,43 @@ func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *
 		}) //variables
 	}
 
-	// ADD is_secure from resource
-	var is_secure interface{}
+	// ADD isSecure from resource
+	var isSecure interface{}
 	var set bool
 
 	switch d.(type) {
 	case *schema.ResourceData:
-		is_secure, set = d.(*schema.ResourceData).GetOk("is_secure")
+		isSecure, set = d.(*schema.ResourceData).GetOk("is_secure")
 	case *schema.ResourceDiff:
-		is_secure, set = d.(*schema.ResourceDiff).GetOk("is_secure")
+		isSecure, set = d.(*schema.ResourceDiff).GetOk("is_secure")
 	default:
-		is_secure, set = d.(*schema.ResourceData).GetOk("is_secure")
+		isSecure, set = d.(*schema.ResourceData).GetOk("is_secure")
 	}
 
-	//is_secure, set := d.GetOkExists("is_secure")
-	if set && is_secure.(bool) {
+	if set && isSecure.(bool) {
 		propertyRules.Rule.Options.IsSecure = true
-	} else if set && !is_secure.(bool) {
+	} else if set && !isSecure.(bool) {
 		propertyRules.Rule.Options.IsSecure = false
 	}
 
-	// ADD cp_code from resource
-	var cp_code interface{}
+	// ADD cpCode from resource
+	var cpCode interface{}
 
 	switch d.(type) {
 	case *schema.ResourceData:
-		cp_code, set = d.(*schema.ResourceData).GetOk("cp_code")
+		cpCode, set = d.(*schema.ResourceData).GetOk("cp_code")
 	case *schema.ResourceDiff:
-		cp_code, set = d.(*schema.ResourceDiff).GetOk("cp_code")
+		cpCode, set = d.(*schema.ResourceDiff).GetOk("cp_code")
 	default:
-		cp_code, set = d.(*schema.ResourceData).GetOk("cp_code")
+		cpCode, set = d.(*schema.ResourceData).GetOk("cp_code")
 	}
 
-	//cp_code, set := d.GetOk("cp_code")
 	if set {
 		beh := papi.NewBehavior()
 		beh.Name = "cpCode"
 		beh.Options = papi.OptionValue{
 			"value": papi.OptionValue{
-				"id": cp_code.(string),
+				"id": cpCode.(string),
 			},
 		}
 		propertyRules.Rule.MergeBehavior(beh)

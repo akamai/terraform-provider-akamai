@@ -1,6 +1,7 @@
 package property
 
 import (
+	"fmt"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"log"
 
@@ -73,7 +74,7 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	},
-	"rules": &schema.Schema{
+	"rules": {
 		Type:     schema.TypeSet,
 		Optional: true,
 		Elem: &schema.Resource{
@@ -84,12 +85,12 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 					Default:  "all",
 				},
 				"behavior": akpsBehavior,
-				"is_secure": &schema.Schema{
+				"is_secure": {
 					Type:     schema.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
-				"rule": &schema.Schema{
+				"rule": {
 					Type:     schema.TypeSet,
 					Optional: true,
 					Elem: &schema.Resource{
@@ -109,7 +110,7 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 							},
 							"criteria": akpsCriteria,
 							"behavior": akpsBehavior,
-							"rule": &schema.Schema{
+							"rule": {
 								Type:     schema.TypeSet,
 								Optional: true,
 								Elem: &schema.Resource{
@@ -129,7 +130,7 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 										},
 										"criteria": akpsCriteria,
 										"behavior": akpsBehavior,
-										"rule": &schema.Schema{
+										"rule": {
 											Type:     schema.TypeSet,
 											Optional: true,
 											Elem: &schema.Resource{
@@ -149,7 +150,7 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 													},
 													"criteria": akpsCriteria,
 													"behavior": akpsBehavior,
-													"rule": &schema.Schema{
+													"rule": {
 														Type:     schema.TypeSet,
 														Optional: true,
 														Elem: &schema.Resource{
@@ -181,7 +182,7 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 						},
 					},
 				},
-				"variable": &schema.Schema{
+				"variable": {
 					Type:     schema.TypeSet,
 					Optional: true,
 					Elem: &schema.Resource{
@@ -220,19 +221,23 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 	},
 }
 
-func dataPropertyRulesRead(d *schema.ResourceData, meta interface{}) error {
+func dataPropertyRulesRead(d *schema.ResourceData, _ interface{}) error {
 	rules := papi.NewRules()
 
 	// get rules from the TF config
-	unmarshalRules(d, rules)
-
+	err := unmarshalRules(d, rules)
+	if err != nil {
+		return err
+	}
 	jsonBody, err := jsonhooks.Marshal(rules)
 	if err != nil {
 		return err
 	}
 
 	sha := tools.GetSHAString(string(jsonBody))
-	d.Set("json", string(jsonBody))
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error())
+	}
 
 	d.SetId(sha)
 
@@ -240,7 +245,7 @@ func dataPropertyRulesRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) {
+func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) error {
 	// Default Rules
 	rules, ok := d.GetOk("rules")
 	if ok {
@@ -256,7 +261,11 @@ func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) {
 							beh.Name = bb["name"].(string)
 							boptions, ok := bb["option"]
 							if ok {
-								beh.Options = extractOptions(boptions.(*schema.Set))
+								opts, err := extractOptions(boptions.(*schema.Set))
+								if err != nil {
+									return err
+								}
+								beh.Options = opts
 							}
 
 							// Fixup CPCode
@@ -291,7 +300,11 @@ func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) {
 							newCriteria.Name = cc["name"].(string)
 							coptions, ok := cc["option"]
 							if ok {
-								newCriteria.Options = extractOptions(coptions.(*schema.Set))
+								opts, err := extractOptions(coptions.(*schema.Set))
+								if err != nil {
+									return err
+								}
+								newCriteria.Options = opts
 							}
 							propertyRules.Rule.MergeCriteria(newCriteria)
 						}
@@ -306,7 +319,11 @@ func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) {
 
 			childRules, ok := ruleTree["rule"]
 			if ok {
-				for _, rule := range extractRules(childRules.(*schema.Set)) {
+				rules, err := extractRules(childRules.(*schema.Set))
+				if err != nil {
+					return err
+				}
+				for _, rule := range rules {
 					propertyRules.Rule.MergeChildRule(rule)
 				}
 			}
@@ -337,4 +354,5 @@ func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) {
 			}) //variables
 		}
 	}
+	return nil
 }
