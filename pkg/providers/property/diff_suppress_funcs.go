@@ -3,6 +3,7 @@ package property
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -141,23 +142,21 @@ func getRulesForComp(d interface{}, json string, correlationid string, logger hc
 	logger.Debug("Unmarshal Rules from JSON")
 	unmarshalRulesFromJSONComp(d, json, rules)
 
-	var ruleFormat interface{}
-	var ok bool
-
+	var ruleFormat string
 	switch d.(type) {
 	case *schema.ResourceData:
-		ruleFormat, ok = d.(*schema.ResourceData).GetOk("rule_format")
+		ruleFormat, err = tools.GetStringValue("rule_format", d.(*schema.ResourceData))
 	case *schema.ResourceDiff:
-		ruleFormat, ok = d.(*schema.ResourceDiff).GetOk("rule_format")
+		ruleFormat, err = tools.GetStringValue("rule_format", d.(*schema.ResourceDiff))
 	default:
 		return nil, fmt.Errorf("resource is of invalid type; should be '*schema.ResourceDiff' or '*schema.ResourceData'")
 	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
 
-	if ok {
-		rules.RuleFormat, ok = ruleFormat.(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "rule_format", "string")
-		}
+	if err == nil {
+		rules.RuleFormat = ruleFormat
 	} else {
 		ruleFormats := papi.NewRuleFormats()
 		rules.RuleFormat, err = ruleFormats.GetLatest(correlationid)

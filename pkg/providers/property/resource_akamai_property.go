@@ -13,7 +13,6 @@ import (
 
 	//log "github.com/sirupsen/logrus"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -719,28 +718,23 @@ func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, _ stri
 	if contract == nil || group == nil {
 		return nil, nil
 	}
-	var cpCodeID interface{}
-	var ok bool
 
+	var cpCodeID string
+	var err error
 	switch d.(type) {
 	case *schema.ResourceData:
-		cpCodeID, ok = d.(*schema.ResourceData).GetOk("cp_code")
+		cpCodeID, err = tools.GetStringValue("cp_code", d.(*schema.ResourceData))
 	case *schema.ResourceDiff:
-		cpCodeID, ok = d.(*schema.ResourceDiff).GetOk("cp_code")
+		cpCodeID, err = tools.GetStringValue("cp_code", d.(*schema.ResourceDiff))
 	default:
 		return nil, fmt.Errorf("resource is of invalid type; should be '*schema.ResourceDiff' or '*schema.ResourceData'")
 	}
-	if !ok {
-		return nil, nil
-	}
-
-	cpCodeIDStr, ok := cpCodeID.(string)
-	if !ok {
-		return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "cp_code", "string")
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
 	}
 	logger.Debug("Fetching CP code")
 	cpCode := papi.NewCpCodes(contract, group).NewCpCode()
-	cpCode.CpcodeID = cpCodeIDStr
+	cpCode.CpcodeID = cpCodeID
 	if err := cpCode.GetCpCode(); err != nil {
 		return nil, err
 	}
@@ -775,31 +769,27 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid s
 	return product, nil
 }
 
-func createOrigin(d interface{}, correlationid string, logger hclog.Logger) (*papi.OptionValue, error) {
+func createOrigin(d interface{}, _ string, logger hclog.Logger) (*papi.OptionValue, error) {
 	logger.Debug("Setting origin")
-	var origin interface{}
-	var ok bool
+	var origin *schema.Set
+	var err error
 
 	switch d.(type) {
 	case *schema.ResourceData:
-		origin, ok = d.(*schema.ResourceData).GetOk("origin")
+		origin, err = tools.GetSetValue("origin", d.(*schema.ResourceData))
 	case *schema.ResourceDiff:
-		origin, ok = d.(*schema.ResourceDiff).GetOk("origin")
+		origin, err = tools.GetSetValue("origin", d.(*schema.ResourceDiff))
 	default:
 		return nil, fmt.Errorf("resource is of invalid type; should be '*schema.ResourceDiff' or '*schema.ResourceData'")
 	}
 
-	if !ok {
-		return nil, nil
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
 	}
-	originSet, ok := origin.(*schema.Set)
-	if !ok {
-		return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "origin", "*schema.Set")
-	}
-	if originSet.Len() == 0 {
+	if origin.Len() == 0 {
 		return nil, fmt.Errorf("'origin' property must have at least one value")
 	}
-	originConfig, ok := originSet.List()[0].(map[string]interface{})
+	originConfig, ok := origin.List()[0].(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("origin set value is of invalid type; should be 'map[string]interface{}'")
 	}
@@ -845,11 +835,11 @@ func createOrigin(d interface{}, correlationid string, logger hclog.Logger) (*pa
 	forwardHostname, ok := originConfig["forward_hostname"].(string)
 	if ok {
 		if forwardHostname == "ORIGIN_HOSTNAME" || forwardHostname == "REQUEST_HOST_HEADER" {
-			edge.PrintfCorrelation("[DEBUG]", correlationid, " Setting non-custom forward hostname")
+			logger.Debug("Setting non-custom forward hostname")
 
 			originValues["forwardHostHeader"] = forwardHostname
 		} else {
-			edge.PrintfCorrelation("[DEBUG]", correlationid, " Setting custom forward hostname")
+			logger.Debug("Setting custom forward hostname")
 
 			originValues["forwardHostHeader"] = "CUSTOM"
 			originValues["customForwardHostHeader"] = forwardHostname

@@ -1,6 +1,7 @@
 package property
 
 import (
+	"errors"
 	"fmt"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 
@@ -51,21 +52,21 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 
 	logger.Debug("Creating CP Code")
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
-	name, ok := d.Get("name").(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string")
+	name, err := tools.GetStringValue("name", d)
+	if err != nil {
+		return err
 	}
-	product, ok := d.Get("product").(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "product", "string")
+	product, err := tools.GetStringValue("product", d)
+	if err != nil {
+		return err
 	}
-	group, ok := d.Get("group").(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "group", "string")
+	group, err := tools.GetStringValue("group", d)
+	if err != nil {
+		return err
 	}
-	contract, ok := d.Get("contract").(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "contract", "string")
+	contract, err := tools.GetStringValue("contract", d)
+	if err != nil {
+		return err
 	}
 	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
 	cpCode, err := cpCodes.FindCpCode(name, CorrelationID)
@@ -80,7 +81,10 @@ func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
 		err := cpCode.Save(CorrelationID)
 		if err != nil {
 			logger.Debug("Error saving")
-			logger.Debug("%s", err.(client.APIError).RawBody)
+			var apiError client.APIError
+			if errors.As(err, &apiError) {
+				logger.Debug("%s", apiError.RawBody)
+			}
 			return err
 		}
 	}
@@ -114,17 +118,17 @@ func resourceCPCodeRead(d *schema.ResourceData, _ interface{}) error {
 	CorrelationID := "[PAPI][resourceCPCodeRead-" + akactx.OperationID() + "]"
 
 	logger.Debug("Read CP Code")
-	name, ok := d.Get("name").(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string")
+	name, err := tools.GetStringValue("name", d)
+	if err != nil {
+		return err
 	}
-	group, ok := d.Get("group").(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "group", "string")
+	group, err := tools.GetStringValue("group", d)
+	if err != nil {
+		return err
 	}
-	contract, ok := d.Get("contract").(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "contract", "string")
+	contract, err := tools.GetStringValue("contract", d)
+	if err != nil {
+		return err
 	}
 	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
 	cpCode, err := cpCodes.FindCpCode(d.Id(), CorrelationID)

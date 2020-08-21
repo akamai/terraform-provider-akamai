@@ -41,10 +41,10 @@ func dataSourceCPCodeRead(d *schema.ResourceData, _ interface{}) error {
 	if name, err = tools.GetStringValue("name", d); err != nil {
 		return err
 	}
-	if name, err = tools.GetStringValue("group", d); err != nil {
+	if group, err = tools.GetStringValue("group", d); err != nil {
 		return err
 	}
-	if name, err = tools.GetStringValue("contract", d); err != nil {
+	if contract, err = tools.GetStringValue("contract", d); err != nil {
 		return err
 	}
 	cpCodes := datasourceCPCodePAPINewCPCodes(contract, group)
