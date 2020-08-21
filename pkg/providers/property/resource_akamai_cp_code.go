@@ -106,7 +106,7 @@ func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceCPCodeRead(d *schema.ResourceData, _ interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeRead-" + CreateNonce() + "]"
+	CorrelationID := "[PAPI][resourceCPCodeRead-" + tools.CreateNonce() + "]"
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CP Code")
 	name, ok := d.Get("name").(string)
