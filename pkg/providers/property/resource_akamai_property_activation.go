@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"log"
+	"strings"
 	"time"
 
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
@@ -117,9 +118,12 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 	}
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  DEACTIVE PROPERTY %v", property))
-	network := papi.NetworkValue(d.Get("network").(string))
+	network, err := parseNetwork(d.Get("network").(string))
+	if err != nil {
+		return err
+	}
 	propertyVersion := property.ProductionVersion
-	if network == "STAGING" {
+	if network == papi.NetworkStaging {
 		propertyVersion = property.StagingVersion
 	}
 	version := d.Get("version").(int)
@@ -127,7 +131,7 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 	if propertyVersion == version {
 		// The current active version is the one we need to deactivate
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Deactivating %s version %d \n", network, version))
-		activation, err := deactivateProperty(property, d, papi.NetworkValue(d.Get("network").(string)), CorrelationID)
+		activation, err := deactivateProperty(property, d, network, CorrelationID)
 		if err != nil {
 			return err
 		}
@@ -157,6 +161,22 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) 
 	log.Println("[DEBUG] Done")
 
 	return nil
+}
+
+func parseNetwork(net string) (papi.NetworkValue, error) {
+	networks := map[string]papi.NetworkValue{
+		"STAGING":    papi.NetworkStaging,
+		"STAG":       papi.NetworkStaging,
+		"S":          papi.NetworkStaging,
+		"PRODUCTION": papi.NetworkProduction,
+		"PROD":       papi.NetworkProduction,
+		"P":          papi.NetworkProduction,
+	}
+	networkValue, ok := networks[strings.ToUpper(net)]
+	if !ok {
+		return "", fmt.Errorf("network not recognized")
+	}
+	return networkValue, nil
 }
 
 func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) (bool, error) {
