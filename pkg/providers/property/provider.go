@@ -81,6 +81,7 @@ func Provider() *schema.Provider {
 
 func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 	var papiConfig edgegrid.Config
+	var err error
 	property, err := tools.GetSetValue("property", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return nil, err
@@ -125,16 +126,17 @@ func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return nil, err
 	}
-	if section, err := tools.GetStringValue("property_section", d); err == nil && section != "default" {
+	var section string
+	if section, err = tools.GetStringValue("property_section", d); err == nil && section != "default" {
 		papiConfig, err = edgegrid.Init(edgerc, section)
-	} else if section, err := tools.GetStringValue("papi_section", d); err == nil && section != "default" {
+	} else if section, err = tools.GetStringValue("papi_section", d); err == nil && section != "default" {
 		papiConfig, err = edgegrid.Init(edgerc, section)
 	} else {
-		cfgSection, err := tools.GetStringValue("config_section", d)
+		section, err = tools.GetStringValue("config_section", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return nil, err
 		}
-		papiConfig, err = edgegrid.Init(edgerc, cfgSection)
+		papiConfig, err = edgegrid.Init(edgerc, section)
 	}
 
 	if err != nil {
