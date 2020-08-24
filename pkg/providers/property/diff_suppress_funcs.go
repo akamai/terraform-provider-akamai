@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/go-hclog"
-	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -20,6 +21,7 @@ import (
 func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) bool {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "suppressEquivalentJSONDiffs")
+
 	oldBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(oldBuf, []byte(old)); err != nil {
 		logger.Error("converting to compact json: %s", old)

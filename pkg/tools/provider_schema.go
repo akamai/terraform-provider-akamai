@@ -3,6 +3,7 @@ package tools
 import (
 	"errors"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -23,21 +24,35 @@ type ResourceDataFetcher interface {
 
 // GetStringValue fetches value with given key from ResourceData object and attempts type cast to string
 //
-// if value is not present on provided resource, ErrNotFound is returned
+// if value is not present on provided resource for key or the search keys, ErrNotFound is returned
 // if casting is not successful, ErrInvalidType is returned
-func GetStringValue(key string, rd ResourceDataFetcher) (string, error) {
+func GetStringValue(key string, rd ResourceDataFetcher, search ...string) (string, error) {
 	if key == "" {
 		return "", fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
-	value, ok := rd.GetOk(key)
-	if !ok {
-		return "", fmt.Errorf("%w: %s", ErrNotFound, key)
+
+	search = append([]string{key}, search...)
+
+	for _, key := range search {
+		value, ok := rd.GetOk(key)
+		if ok {
+			str, ok := value.(string)
+			if !ok {
+				return "", fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "string")
+			}
+
+			// TODO: Fix section logic primary edgerc config
+			// HACK: This is to ensure that default values are ignored when explict values are required
+			// This should not be necessary, section values should be required and there should not be
+			// multiples
+			if str == "default" {
+				continue
+			}
+
+			return str, fmt.Errorf("%w: %s", ErrNotFound, key)
+		}
 	}
-	var str string
-	if str, ok = value.(string); !ok {
-		return "", fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "string")
-	}
-	return str, nil
+	return "", fmt.Errorf("%w: %s", ErrNotFound, key)
 }
 
 // GetIntValue fetches value with given key from ResourceData object and attempts type cast to int

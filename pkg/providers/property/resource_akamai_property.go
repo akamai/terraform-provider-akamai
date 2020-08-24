@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/go-hclog"
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/go-hclog"
 
 	//log "github.com/sirupsen/logrus"
 
@@ -1059,9 +1060,12 @@ func extractOptions(options *schema.Set) (map[string]interface{}, error) {
 		if !ok {
 			continue
 		}
+		if val, ok := optionMap["value"].(string); ok && val != "" {
+			optv[optionMap["key"].(string)] = convertString(val)
+			continue
+		}
 		vals, ok := optionMap["values"]
 		if !ok {
-			optv[optionMap["key"].(string)] = convertString(optionMap["value"].(string))
 			continue
 		}
 		valsSet, ok := vals.(*schema.Set)

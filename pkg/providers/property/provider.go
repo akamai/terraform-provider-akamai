@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"log"
 	"sync"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -126,19 +127,13 @@ func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return nil, err
 	}
-	var section string
-	if section, err = tools.GetStringValue("property_section", d); err == nil && section != "default" {
-		papiConfig, err = edgegrid.Init(edgerc, section)
-	} else if section, err = tools.GetStringValue("papi_section", d); err == nil && section != "default" {
-		papiConfig, err = edgegrid.Init(edgerc, section)
-	} else {
-		section, err = tools.GetStringValue("config_section", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return nil, err
-		}
-		papiConfig, err = edgegrid.Init(edgerc, section)
+
+	section, err := tools.GetStringValue("property_section", d, "papi_section", "config_section")
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
 	}
 
+	papiConfig, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}

@@ -1,9 +1,6 @@
 package property
 
 import (
-	"errors"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"io/ioutil"
 	"os"
 	"path"
@@ -11,7 +8,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 )
@@ -20,7 +22,9 @@ var testAccProviders map[string]*schema.Provider
 var testProvider *schema.Provider
 
 func init() {
-	testProvider = Provider()
+	akamai.Provider(hclog.Default(), Subprovider())
+
+	testProvider = inst.Provider
 	testProvider.Schema["edgerc"] = &schema.Schema{
 		Optional:    true,
 		Type:        schema.TypeString,
@@ -38,7 +42,7 @@ func init() {
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := inst.Provider.InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -48,7 +52,7 @@ func testAccPreCheck(t *testing.T) {
 }
 
 func getTestProvider() *schema.Provider {
-	testProvider = Provider()
+	testProvider = inst.Provider
 	testProvider.Schema["edgerc"] = &schema.Schema{
 		Optional:    true,
 		Type:        schema.TypeString,
@@ -69,20 +73,25 @@ func Test_getPAPIV1Service(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		args    args
-		want    *edgegrid.Config
-		wantErr error
-		edgerc  string
-		env     map[string]string
+		name string
+		args args
+		want *edgegrid.Config
+		//	wantErr  error
+		checkErr func(err error) bool
+		edgerc   string
+		env      map[string]string
 	}{
 		{
 			name: "no valid config",
 			args: args{
 				schema: schema.TestResourceDataRaw(t, getTestProvider().Schema, map[string]interface{}{}),
 			},
-			edgerc:  ``,
-			wantErr: errors.New("Unable to create instance using environment or .edgerc file"),
+			edgerc: ``,
+			checkErr: func(err error) bool {
+				// We do this because DeepEqual with errors or interfaces is BAD
+				// Ideally the edgegrid call will return an os error for NotFound, etc.
+				return err.Error() == "Unable to create instance using environment or .edgerc file"
+			},
 		},
 		{
 			name: "undefined .edgerc, undefined section",
@@ -258,6 +267,11 @@ func Test_getPAPIV1Service(t *testing.T) {
 				ClientSecret: "env",
 				MaxBody:      1,
 			},
+			checkErr: func(err error) bool {
+				// We do this because DeepEqual with errors or interfaces is BAD
+				// Ideally the edgegrid call will return an os error for NotFound, etc.
+				return err.Error() == "Unable to create instance using environment or .edgerc file"
+			},
 		},
 		{
 			name: "property block complete",
@@ -321,12 +335,12 @@ func Test_getPAPIV1Service(t *testing.T) {
 			}
 
 			got, err := getPAPIV1Service(tt.args.schema)
-
 			if err != nil {
-				if reflect.DeepEqual(err, tt.wantErr) {
+				if tt.checkErr != nil && tt.checkErr(err) {
 					return
 				}
-				t.Errorf("getPAPIV1Service() error = %v, wantErr %v", err, tt.wantErr)
+
+				t.Errorf("getPAPIV1Service() unexpected error = %w", err)
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {
