@@ -113,7 +113,7 @@ func (p *provider) Name() string {
 const DnsProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-    return DnsProviderVersion
+	return DnsProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {

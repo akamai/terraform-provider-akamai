@@ -161,7 +161,7 @@ func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, _ interface{}) err
 	hostname, err := edgeHostnames.FindEdgeHostname(newHostname)
 	if err != nil {
 		// TODO this error has to be ignored (for now) as FindEdgeHostname returns error if no hostnames were found
-		logger.Error("could not finc edge hostname: %s", err.Error())
+		logger.Debug("could not finc edge hostname: %s", err.Error())
 	}
 	if hostname != nil && hostname.EdgeHostnameID != "" {
 		body, err := jsonhooks.Marshal(hostname)
@@ -214,7 +214,7 @@ func resourceSecureEdgeHostNameImport(d *schema.ResourceData, _ interface{}) ([]
 			results, err := papi.Search(searchKey, resourceID, "")
 			if err != nil {
 				// TODO determine why is this error ignored
-				logger.Error("searching by key: %s: %w", searchKey, err)
+				logger.Debug("searching by key: %s: %w", searchKey, err)
 				continue
 			}
 

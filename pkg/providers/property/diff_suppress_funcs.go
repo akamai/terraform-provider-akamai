@@ -35,7 +35,7 @@ func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) boo
 	rulesOld, err := getRulesForComp(d, old, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Error("calling 'getRulesForComp': %s", err.Error())
+		logger.Debug("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesOld.Etag = ""
 	body, err := jsonhooks.Marshal(rulesOld)
@@ -48,7 +48,7 @@ func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) boo
 	rulesNew, err := getRulesForComp(d, new, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Error("calling 'getRulesForComp': %s", err.Error())
+		logger.Debug("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
@@ -85,7 +85,7 @@ func suppressEquivalentJSONPendingDiffs(old, new string, d *schema.ResourceDiff)
 	rulesOld, err := getRulesForComp(d, old, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Error("calling 'getRulesForComp': %s", err.Error())
+		logger.Debug("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesOld.Etag = ""
 	body, err := jsonhooks.Marshal(rulesOld)
@@ -98,7 +98,7 @@ func suppressEquivalentJSONPendingDiffs(old, new string, d *schema.ResourceDiff)
 	rulesNew, err := getRulesForComp(d, new, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Error("calling 'getRulesForComp': %s", err.Error())
+		logger.Debug("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)

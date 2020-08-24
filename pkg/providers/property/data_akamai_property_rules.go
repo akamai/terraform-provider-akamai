@@ -245,6 +245,7 @@ func dataPropertyRulesRead(d *schema.ResourceData, _ interface{}) error {
 	return nil
 }
 
+// TODO: discuss how property rules should be handled
 func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) error {
 	// Default Rules
 	rules, ok := d.GetOk("rules")

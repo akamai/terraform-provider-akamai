@@ -118,7 +118,7 @@ func (p *provider) Name() string {
 const GtmProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-    return GtmProviderVersion
+	return GtmProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {

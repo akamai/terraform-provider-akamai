@@ -226,7 +226,7 @@ func resourcePropertyCreate(d *schema.ResourceData, _ interface{}) error {
 	rulesAPI, err := property.GetRules(CorrelationID)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
-		logger.Error("calling 'getRulesForComp': %s", err.Error())
+		logger.Debug("calling 'GetRules': %s", err.Error())
 	}
 	rulesAPI.Etag = ""
 	body, err := jsonhooks.Marshal(rulesAPI)
@@ -424,7 +424,7 @@ func resourcePropertyImport(d *schema.ResourceData, _ interface{}) ([]*schema.Re
 			results, err := papi.Search(searchKey, propertyID, "") //<--correlationid
 			if err != nil {
 				// TODO determine why is this error ignored
-				logger.Error("searching by key: %s: %w", searchKey, err)
+				logger.Debug("searching by key: %s: %w", searchKey, err)
 				continue
 			}
 
@@ -491,7 +491,7 @@ func resourcePropertyRead(d *schema.ResourceData, _ interface{}) error {
 	rules, err := property.GetRules(CorrelationID)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
-		logger.Error("calling 'getRulesForComp': %s", err.Error())
+		logger.Debug("calling 'GetRules': %s", err.Error())
 	}
 	rules.Etag = ""
 	body, err := jsonhooks.Marshal(rules)
@@ -553,7 +553,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, _ interface{}) error {
 	rules, err := getRules(d, property, property.Contract, property.Group, CorrelationID, logger)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
-		logger.Error("calling 'getRulesForComp': %s", err.Error())
+		logger.Debug("calling 'getRules': %s", err.Error())
 	}
 	if d.HasChange("rule_format") || d.HasChange("rules") {
 		ruleFormat, err := tools.GetStringValue("rule_format", d)
@@ -588,7 +588,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, _ interface{}) error {
 		rules, err = property.GetRules(CorrelationID)
 		if err != nil {
 			// TODO not sure what to do with this error (is it possible to return here)
-			logger.Error("calling 'getRulesForComp': %s", err.Error())
+			logger.Debug("calling 'GetRules': %s", err.Error())
 		}
 		rules.Etag = ""
 		body, err = jsonhooks.Marshal(rules)
