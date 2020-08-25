@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"errors"
 	"log"
 	"sync"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -104,18 +106,17 @@ func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
 		return &papiConfig, nil
 	}
 
-	var err error
-
-	edgerc := d.Get("edgerc").(string)
-
-	if section, ok := d.GetOk("property_section"); ok && section != "default" {
-		papiConfig, err = edgegrid.Init(edgerc, section.(string))
-	} else if section, ok := d.GetOk("papi_section"); ok && section != "default" {
-		papiConfig, err = edgegrid.Init(edgerc, section.(string))
-	} else {
-		papiConfig, err = edgegrid.Init(edgerc, d.Get("config_section").(string))
+	edgerc, err := tools.GetStringValue("edgerc", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
 	}
 
+	section, err := tools.GetStringValue("property_section", d, "papi_section", "config_section")
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
+
+	papiConfig, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +133,7 @@ func (p *provider) Name() string {
 const ProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-    return ProviderVersion
+	return ProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {

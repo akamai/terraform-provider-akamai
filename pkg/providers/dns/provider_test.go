@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 )
@@ -18,14 +20,16 @@ var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	testAccProvider = Provider()
+	akamai.Provider(hclog.Default(), Subprovider())
+
+	testAccProvider = inst.Provider
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testAccProvider,
 	}
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := inst.Provider.InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -76,7 +80,7 @@ func Test_getConfigDNSV2Service(t *testing.T) {
 		{
 			name: "no valid config",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{}),
 			},
 			edgerc:  ``,
 			wantErr: errors.New("Unable to create instance using environment or .edgerc file"),
@@ -84,7 +88,7 @@ func Test_getConfigDNSV2Service(t *testing.T) {
 		{
 			name: "undefined .edgerc, undefined section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{}),
 			},
 			edgerc: `[default]
 host = default
@@ -103,7 +107,7 @@ max_body = 1`,
 		{
 			name: "undefined .edgerc, default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"dns_section": "default",
 				}),
 			},
@@ -131,7 +135,7 @@ max_body = 2`,
 		{
 			name: "undefined .edgerc, not_default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"dns_section": "not_default",
 				}),
 			},
@@ -159,7 +163,7 @@ max_body = 2`,
 		{
 			name: "no edgerc dns section with env",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"dns_section": "dns",
 				}),
 			},

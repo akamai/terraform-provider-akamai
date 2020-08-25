@@ -2,12 +2,14 @@ package dns
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -90,11 +92,16 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 		return &DNSv2Config, nil
 	}
 
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("dns_section").(string)
-	if section == "" {
-		section = d.Get("config_section").(string)
+	edgerc, err := tools.GetStringValue("edgerc", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
 	}
+
+	section, err := tools.GetStringValue("dns_section", d, "config_section")
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
+
 	DNSv2Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
@@ -113,7 +120,7 @@ func (p *provider) Name() string {
 const DnsProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-    return DnsProviderVersion
+	return DnsProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
