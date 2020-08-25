@@ -1072,6 +1072,10 @@ func extractOptions(options *schema.Set) (map[string]interface{}, error) {
 		if !ok {
 			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "values", "*schema.Set")
 		}
+		if valsSet.Len() == 0 {
+			optv[optionMap["key"].(string)] = convertString(optionMap["value"].(string))
+			continue
+		}
 		if valsSet.Len() > 0 {
 			op := make([]interface{}, 0)
 			for _, v := range vals.(*schema.Set).List() {
