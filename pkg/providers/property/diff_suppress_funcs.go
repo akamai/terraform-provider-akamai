@@ -37,7 +37,7 @@ func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) boo
 	rulesOld, err := getRulesForComp(d, old, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Debug("calling 'getRulesForComp': %s", err.Error())
+		logger.Warn("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesOld.Etag = ""
 	body, err := jsonhooks.Marshal(rulesOld)
@@ -50,7 +50,7 @@ func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) boo
 	rulesNew, err := getRulesForComp(d, new, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Debug("calling 'getRulesForComp': %s", err.Error())
+		logger.Warn("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
@@ -73,12 +73,12 @@ func suppressEquivalentJSONPendingDiffs(old, new string, d *schema.ResourceDiff)
 	logger := akactx.Log("PAPI", "suppressEquivalentJSONPendingDiffs")
 	oldBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(oldBuf, []byte(old)); err != nil {
-		logger.Error("converting to compact json: %s", old)
+		logger.Error("converting old value to compact json: %s", old)
 		return false
 	}
 	newBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(newBuf, []byte(new)); err != nil {
-		logger.Error("converting to compact json: %s", old)
+		logger.Error("converting new value to compact json: %s", newBuf)
 		return false
 	}
 	logger.Debug("old json: %s", string(oldBuf.Bytes()))
@@ -87,7 +87,7 @@ func suppressEquivalentJSONPendingDiffs(old, new string, d *schema.ResourceDiff)
 	rulesOld, err := getRulesForComp(d, old, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Debug("calling 'getRulesForComp': %s", err.Error())
+		logger.Warn("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesOld.Etag = ""
 	body, err := jsonhooks.Marshal(rulesOld)
@@ -100,7 +100,7 @@ func suppressEquivalentJSONPendingDiffs(old, new string, d *schema.ResourceDiff)
 	rulesNew, err := getRulesForComp(d, new, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Debug("calling 'getRulesForComp': %s", err.Error())
+		logger.Warn("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)

@@ -227,7 +227,7 @@ func resourcePropertyCreate(d *schema.ResourceData, _ interface{}) error {
 	rulesAPI, err := property.GetRules(CorrelationID)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
-		logger.Debug("calling 'GetRules': %s", err.Error())
+		logger.Warn("calling 'GetRules': %s", err.Error())
 	}
 	rulesAPI.Etag = ""
 	body, err := jsonhooks.Marshal(rulesAPI)
@@ -269,7 +269,7 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 	}
 	ruleFormat, err := tools.GetStringValue("rule_format", d)
 	if err != nil {
-		if errors.Is(err, tools.ErrNotFound) {
+		if !errors.Is(err, tools.ErrNotFound) {
 			return nil, err
 		}
 		ruleFormats := papi.NewRuleFormats()
@@ -492,7 +492,7 @@ func resourcePropertyRead(d *schema.ResourceData, _ interface{}) error {
 	rules, err := property.GetRules(CorrelationID)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
-		logger.Debug("calling 'GetRules': %s", err.Error())
+		logger.Warn("calling 'GetRules': %s", err.Error())
 	}
 	rules.Etag = ""
 	body, err := jsonhooks.Marshal(rules)
@@ -554,7 +554,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, _ interface{}) error {
 	rules, err := getRules(d, property, property.Contract, property.Group, CorrelationID, logger)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
-		logger.Debug("calling 'getRules': %s", err.Error())
+		logger.Warn("calling 'getRules': %s", err.Error())
 	}
 	if d.HasChange("rule_format") || d.HasChange("rules") {
 		ruleFormat, err := tools.GetStringValue("rule_format", d)
@@ -589,7 +589,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, _ interface{}) error {
 		rules, err = property.GetRules(CorrelationID)
 		if err != nil {
 			// TODO not sure what to do with this error (is it possible to return here)
-			logger.Debug("calling 'GetRules': %s", err.Error())
+			logger.Warn("calling 'GetRules': %s", err.Error())
 		}
 		rules.Etag = ""
 		body, err = jsonhooks.Marshal(rules)
