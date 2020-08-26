@@ -111,9 +111,13 @@ func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
 		return nil, err
 	}
 
-	section, err := tools.GetStringValue("property_section", d, "papi_section", "config_section")
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
+	var section string
+
+	for _, s := range tools.FindStringValues(d, "property_section", "papi_section", "config_section") {
+		if s != "default" {
+			section = s
+			break
+		}
 	}
 
 	papiConfig, err = edgegrid.Init(edgerc, section)

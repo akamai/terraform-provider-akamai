@@ -103,11 +103,14 @@ func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
 		return nil, err
 	}
 
-	section, err := tools.GetStringValue("gtm_section", d, "config_section")
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
-	}
+	var section string
 
+	for _, s := range tools.FindStringValues(d, "gtm_section", "config_section") {
+		if s != "default" {
+			section = s
+			break
+		}
+	}
 	GTMv1Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err

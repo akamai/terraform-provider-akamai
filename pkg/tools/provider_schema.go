@@ -24,34 +24,23 @@ type ResourceDataFetcher interface {
 
 // GetStringValue fetches value with given key from ResourceData object and attempts type cast to string
 //
-// if value is not present on provided resource for key or the search keys, ErrNotFound is returned
+// if value is not present on provided resource for key, ErrNotFound is returned
 // if casting is not successful, ErrInvalidType is returned
-func GetStringValue(key string, rd ResourceDataFetcher, search ...string) (string, error) {
+func GetStringValue(key string, rd ResourceDataFetcher) (string, error) {
 	if key == "" {
 		return "", fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
 
-	search = append([]string{key}, search...)
-
-	for _, key := range search {
-		value, ok := rd.GetOk(key)
-		if ok {
-			str, ok := value.(string)
-			if !ok {
-				return "", fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "string")
-			}
-
-			// TODO: Fix section logic primary edgerc config
-			// HACK: This is to ensure that default values are ignored when explict values are required
-			// This should not be necessary, section values should be required and there should not be
-			// multiples
-			if str == "default" {
-				continue
-			}
-
-			return str, fmt.Errorf("%w: %s", ErrNotFound, key)
+	value, ok := rd.GetOk(key)
+	if ok {
+		str, ok := value.(string)
+		if !ok {
+			return "", fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "string")
 		}
+
+		return str, nil
 	}
+
 	return "", fmt.Errorf("%w: %s", ErrNotFound, key)
 }
 
@@ -110,4 +99,26 @@ func GetSetValue(key string, rd ResourceDataFetcher) (*schema.Set, error) {
 		return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "*schema.Set")
 	}
 	return val, nil
+}
+
+// FindStringValues searches the ResourceData for the list of keys and returns the array of values
+//
+// if the value does not exist it is skipped
+// if the value cannot be cast to string it is skipped
+func FindStringValues(rd ResourceDataFetcher, keys ...string) []string {
+	rval := make([]string, 0)
+
+	for _, key := range keys {
+		value, ok := rd.GetOk(key)
+		if ok {
+			str, ok := value.(string)
+			if !ok {
+				continue
+			}
+
+			rval = append(rval, str)
+		}
+	}
+
+	return rval
 }
