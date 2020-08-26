@@ -111,6 +111,7 @@ func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
 			break
 		}
 	}
+
 	GTMv1Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err

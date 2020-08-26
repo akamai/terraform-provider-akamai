@@ -3,14 +3,16 @@ package property
 import (
 	"errors"
 	"log"
-	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"regexp"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDataSourceGroup_basic(t *testing.T) {
@@ -40,25 +42,25 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 
 func testAccDataSourceGroup_basic() string {
 	return `
-		data "akamai_group" "test" {
-		}
-		
-		output "groupid" {
-			value = "${data.akamai_group.test.id}"
-		}
+data "akamai_group" "test" {
+}
+
+output "groupid" {
+value = "${data.akamai_group.test.id}"
+}
 `
 }
 
 func testAccDataSourceGroup_noContractWithGroupProvided() string {
 	return `
-		data "akamai_group" "test" {
-			name = "Akamai Internal-3-984F"
-		}
-		
-		output "groupid" {
-			value = "${data.akamai_group.test.id}"
-		}
-		`
+data "akamai_group" "test" {
+	name = "Akamai Internal-3-984F"
+}
+
+output "groupid" {
+value = "${data.akamai_group.test.id}"
+}
+`
 }
 
 func testAccCheckAkamaiGroupDestroy(s *terraform.State) error {
