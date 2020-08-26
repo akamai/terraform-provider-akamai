@@ -41,25 +41,25 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 
 func testAccDataSourceGroupBasic() string {
 	return `
-		data "akamai_group" "test" {
-		}
-		
-		output "groupid" {
-			value = "${data.akamai_group.test.id}"
-		}
+data "akamai_group" "test" {
+}
+
+output "groupid" {
+value = "${data.akamai_group.test.id}"
+}
 `
 }
 
 func testAccDataSourceGroupNoContractWithGroupProvided() string {
 	return `
-		data "akamai_group" "test" {
-			name = "Akamai Internal-3-984F"
-		}
-		
-		output "groupid" {
-			value = "${data.akamai_group.test.id}"
-		}
-		`
+data "akamai_group" "test" {
+	name = "Akamai Internal-3-984F"
+}
+
+output "groupid" {
+value = "${data.akamai_group.test.id}"
+}
+`
 }
 
 func testAccCheckAkamaiGroupDestroy(_ *terraform.State) error {
