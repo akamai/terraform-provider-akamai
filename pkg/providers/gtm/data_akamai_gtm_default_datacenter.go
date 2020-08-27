@@ -36,7 +36,7 @@ func dataSourceGTMDefaultDatacenter() *schema.Resource {
 }
 
 // validateDCValue is a SchemaValidateFunc to validate the DC value.
-func validateDCValue(v interface{}, k string) (ws []string, es []error) {
+func validateDCValue(v interface{}, _ string) (ws []string, es []error) {
 	value, ok := v.(int)
 	if !ok {
 		es = append(es, fmt.Errorf("wrong cast"))
@@ -48,7 +48,7 @@ func validateDCValue(v interface{}, k string) (ws []string, es []error) {
 	return
 }
 
-func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, _ interface{}) error {
 	log.Printf("[DEBUG] dataSourceDefaultDatacenter Read")
 
 	domain, ok := d.GetOk("domain")
