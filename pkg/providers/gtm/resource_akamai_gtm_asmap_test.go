@@ -153,7 +153,6 @@ func TestAccAkamaiGTMAsMap_basic(t *testing.T) {
 					testAccCheckNumbersValues,
 					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -172,7 +171,6 @@ func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 					testAccCheckNumbersValues,
 					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccAkamaiGTMAsMapUpdateConfig,
@@ -181,7 +179,6 @@ func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 					testAccCheckNumbersValues,
 					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})

@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -75,7 +74,7 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 				Default:  300,
 			},
-			"static_rr_set": &schema.Schema{
+			"static_rr_set": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
@@ -333,7 +332,7 @@ func parseResourceStringId(id string) (string, string, error) {
 
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return "", "", errors.New("Invalid resource id")
+		return "", "", fmt.Errorf("invalid resource id")
 	}
 
 	return parts[0], parts[1], nil
@@ -363,8 +362,9 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
 
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		return errors.New(cStatus.Status.Message)
+		return fmt.Errorf(cStatus.Status.Message)
 	}
+
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -377,7 +377,6 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error
 				return err
 			}
 		}
-
 	}
 
 	// Give terraform the ID. Format domain::property
@@ -397,7 +396,7 @@ func resourceGTMv1PropertyRead(d *schema.ResourceData, meta interface{}) error {
 	// retrieve the property and domain
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid property resource Id")
+		return fmt.Errorf("invalid property resource Id")
 	}
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
@@ -417,7 +416,7 @@ func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error
 	// pull domain and property out of resource id
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid property resource Id")
+		return fmt.Errorf("Invalid property resource Id")
 	}
 	// Get existing property
 	existProp, err := gtm.GetProperty(property, domain)
@@ -436,7 +435,7 @@ func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -463,7 +462,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, meta interface{}) ([]*s
 	// pull domain and property out of resource id
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, errors.New("Invalid property resource Id")
+		return []*schema.ResourceData{d}, fmt.Errorf("Invalid property resource Id")
 	}
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
@@ -486,7 +485,7 @@ func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error
 	// Get existing property
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid property resource Id")
+		return fmt.Errorf("Invalid property resource Id")
 	}
 	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
@@ -502,7 +501,7 @@ func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -531,7 +530,7 @@ func resourceGTMv1PropertyExists(d *schema.ResourceData, meta interface{}) (bool
 	// pull domain and property out of resource id
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return false, errors.New("Invalid property resource Id")
+		return false, fmt.Errorf("Invalid property resource Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing property [%s] in domain %s", property, domain)
 	prop, err := gtm.GetProperty(property, domain)
