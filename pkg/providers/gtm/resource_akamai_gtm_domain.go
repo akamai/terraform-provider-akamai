@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	client "github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -185,10 +185,6 @@ func GetQueryArgs(d *schema.ResourceData) map[string]string {
 	if groupId != "" && len(groupId) > 0 {
 		qArgs["gid"] = groupId
 	}
-	//accountSwitch := d.Get("account_switch_key").(string)
-	// if accountSwitch != nil && len(accountSwitch) > 0 {
-	//        qArgs["accountSwitchKey"] = accountSwitch
-	//}
 
 	return qArgs
 
@@ -254,7 +250,7 @@ func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DomainRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DomainRead(d *schema.ResourceData, _ interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] Domain: %s", d.Id())
 	// retrieve the domain
@@ -312,8 +308,8 @@ func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 
 }
 
-// Delete GTM Domain. Admin priviledges required in current API version.
-func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
+// Delete GTM Domain. Admin privileges required in current API version.
+func resourceGTMv1DomainDelete(d *schema.ResourceData, _ interface{}) error {
 	log.Printf("[DEBUG] Deleting GTM Domain")
 	log.Printf("[DEBUG] [Akamai GTMv1] Domain: %s", d.Id())
 	// Get existing domain
@@ -369,8 +365,8 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 
 }
 
-// Test GTM Domain existance
-func resourceGTMv1DomainExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+// Test GTM Domain existence
+func resourceGTMv1DomainExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 
 	name := d.Get("name").(string)
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for domain [%s]", name)
@@ -380,10 +376,10 @@ func resourceGTMv1DomainExists(d *schema.ResourceData, meta interface{}) (bool, 
 }
 
 // validateDomainType is a SchemaValidateFunc to validate the Domain type.
-func validateDomainType(v interface{}, k string) (ws []string, es []error) {
+func validateDomainType(v interface{}, _ string) (ws []string, es []error) {
 	value := strings.ToUpper(v.(string))
 	if value != "BASIC" && value != "FULL" && value != "WEIGHTED" && value != "STATIC" && value != "FAILOVER-ONLY" {
-		es = append(es, fmt.Errorf("Type must be basic, full, weighted, static, or failover-only"))
+		es = append(es, fmt.Errorf("type must be basic, full, weighted, static, or failover-only"))
 	}
 	return
 }
@@ -559,10 +555,10 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain) {
 // Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)
 func waitForCompletion(domain string) (bool, error) {
 
-	var defaultInterval time.Duration = 5 * time.Second
-	var defaultTimeout time.Duration = 300 * time.Second
-	var sleepInterval time.Duration = defaultInterval // seconds. TODO:Should be configurable by user ...
-	var sleepTimeout time.Duration = defaultTimeout   // seconds. TODO: Should be configurable by user ...
+	var defaultInterval = 5 * time.Second
+	var defaultTimeout = 300 * time.Second
+	var sleepInterval = defaultInterval // seconds. TODO:Should be configurable by user ...
+	var sleepTimeout = defaultTimeout   // seconds. TODO: Should be configurable by user ...
 	if HashiAcc {
 		// Override for ACC tests
 		sleepTimeout = sleepInterval
@@ -591,7 +587,7 @@ func waitForCompletion(domain string) (bool, error) {
 			sleepTimeout -= sleepInterval
 			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Time Remaining [%v]", sleepTimeout/time.Second)
 		default:
-			return false, fmt.Errorf("Unknown propagationStatus while waiting for change completion") // don't know how/why we would have broken out.
+			return false, fmt.Errorf("unknown propagationStatus while waiting for change completion") // don't know how/why we would have broken out.
 		}
 	}
 }
