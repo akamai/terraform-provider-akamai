@@ -2,6 +2,7 @@ package gtm
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
@@ -81,14 +82,53 @@ func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
 	var GTMv1Config edgegrid.Config
 	var err error
 	if _, ok := d.GetOk("gtm"); ok {
-		config := d.Get("gtm").(set).List()[0].(map[string]interface{})
+		resourceGtm, ok := d.Get("gtm").(set)
+		if !ok {
+			return nil, fmt.Errorf("wrong cast")
+		}
+
+		resourceConfig, ok := resourceGtm.List()[0].(map[string]interface{})
+
+		if !ok {
+			return nil, fmt.Errorf("wrong cast")
+		}
+
+		host, ok := resourceConfig["host"].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong host data type")
+		}
+
+		accessToken, ok := resourceConfig["access_token"].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong access_token data type")
+		}
+
+		clientToken, ok := resourceConfig["client_token"].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong client_token data type")
+		}
+
+		clientSecret, ok := resourceConfig["client_secret"].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong client_secret data type")
+		}
+
+		maxBody, ok := resourceConfig["max_body"].(int)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong max_body data type")
+		}
 
 		GTMv1Config = edgegrid.Config{
-			Host:         config["host"].(string),
-			AccessToken:  config["access_token"].(string),
-			ClientToken:  config["client_token"].(string),
-			ClientSecret: config["client_secret"].(string),
-			MaxBody:      config["max_body"].(int),
+			Host:         host,
+			AccessToken:  accessToken,
+			ClientToken:  clientToken,
+			ClientSecret: clientSecret,
+			MaxBody:      maxBody,
 		}
 
 		gtm.Init(GTMv1Config)
@@ -118,7 +158,7 @@ func (p *provider) Name() string {
 const GtmProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-    return GtmProviderVersion
+	return GtmProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
