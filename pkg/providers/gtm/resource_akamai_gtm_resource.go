@@ -76,7 +76,7 @@ func resourceGTMv1Resource() *schema.Resource {
 				Type:     schema.TypeFloat,
 				Optional: true,
 			},
-			"resource_instance": &schema.Schema{
+			"resource_instance": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
@@ -158,14 +158,14 @@ func resourceGTMv1ResourceCreate(d *schema.ResourceData, meta interface{}) error
 }
 
 // read resource. updates state with entire API result configuration.
-func resourceGTMv1ResourceRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ResourceRead(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] Resource: %s", d.Id())
 	// retrieve the property and domain
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
-		return fmt.Errorf("Invalid resource resource Id")
+		return fmt.Errorf("invalid resource resource Id")
 	}
 	rsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
@@ -184,7 +184,7 @@ func resourceGTMv1ResourceUpdate(d *schema.ResourceData, meta interface{}) error
 	// pull domain and resource out of id
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
-		return fmt.Errorf("Invalid resource Id")
+		return fmt.Errorf("invalid resource Id")
 	}
 	// Get existing property
 	existRsrc, err := gtm.GetResource(resource, domain)
@@ -224,13 +224,13 @@ func resourceGTMv1ResourceUpdate(d *schema.ResourceData, meta interface{}) error
 }
 
 // Import GTM Resource.
-func resourceGTMv1ResourceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1ResourceImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] Resource [%s] Import", d.Id())
 	// pull domain and resource out of resource id
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, fmt.Errorf("Invalid resource resource Id")
+		return []*schema.ResourceData{d}, fmt.Errorf("invalid resource resource Id")
 	}
 	rsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
@@ -246,14 +246,14 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, meta interface{}) ([]*s
 }
 
 // Delete GTM Resource.
-func resourceGTMv1ResourceDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ResourceDelete(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Resource: %s", d.Id())
 	// Get existing resource
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
-		return fmt.Errorf("Invalid resource Id")
+		return fmt.Errorf("invalid resource Id")
 	}
 	existRsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
@@ -286,19 +286,19 @@ func resourceGTMv1ResourceDelete(d *schema.ResourceData, meta interface{}) error
 
 	}
 
-	// if succcessful ....
+	// if successful ....
 	d.SetId("")
 	return nil
 }
 
-// Test GTM Resource existance
-func resourceGTMv1ResourceExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+// Test GTM Resource existence
+func resourceGTMv1ResourceExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and resource out of resource id
 	domain, resource, err := parseResourceResourceId(d.Id())
 	if err != nil {
-		return false, fmt.Errorf("Invalid resource resource Id")
+		return false, fmt.Errorf("invalid resource resource Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing resource [%s] in domain %s", resource, domain)
 	rsrc, err := gtm.GetResource(resource, domain)
