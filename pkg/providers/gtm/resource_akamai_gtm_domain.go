@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -231,7 +230,7 @@ func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] [Akamai GTMv1] Create status:")
 		log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
 		if cStatus.Status.PropagationStatus == "DENIED" {
-			return errors.New(cStatus.Status.Message)
+			return fmt.Errorf(cStatus.Status.Message)
 		}
 		if d.Get("wait_on_complete").(bool) {
 			done, err := waitForCompletion(dname)
@@ -292,7 +291,7 @@ func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] Update status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(d.Id())
@@ -349,7 +348,7 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] [Akamai GTMv1] Delete status:")
 		log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 		if uStat.PropagationStatus == "DENIED" {
-			return errors.New(uStat.Message)
+			return fmt.Errorf(uStat.Message)
 		}
 		if d.Get("wait_on_complete").(bool) {
 			done, err := waitForCompletion(d.Id())
@@ -582,7 +581,7 @@ func waitForCompletion(domain string) (bool, error) {
 			return true, nil
 		case "DENIED":
 			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return DENIED")
-			return false, errors.New(propStat.Message)
+			return false, fmt.Errorf(propStat.Message)
 		case "PENDING":
 			if sleepTimeout <= 0 {
 				log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return TIMED OUT")
@@ -592,7 +591,7 @@ func waitForCompletion(domain string) (bool, error) {
 			sleepTimeout -= sleepInterval
 			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Time Remaining [%v]", sleepTimeout/time.Second)
 		default:
-			return false, errors.New("Unknown propagationStatus while waiting for change completion") // don't know how/why we would have broken out.
+			return false, fmt.Errorf("Unknown propagationStatus while waiting for change completion") // don't know how/why we would have broken out.
 		}
 	}
 }

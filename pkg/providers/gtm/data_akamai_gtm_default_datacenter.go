@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -50,7 +49,7 @@ func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, meta interface{}
 
 	domain, ok := d.GetOk("domain")
 	if !ok {
-		return errors.New("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
 	}
 	// get or create default dc
 	var err error
@@ -70,7 +69,7 @@ func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter retrieval failed. %v", err)
 	}
 	if defaultDC == nil {
-		return errors.New("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter does not Exist")
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter does not Exist")
 	}
 	d.Set("nickname", defaultDC.Nickname)
 	d.Set("datacenter_id", defaultDC.DatacenterId)

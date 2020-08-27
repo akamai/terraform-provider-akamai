@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -104,7 +103,7 @@ func resourceGTMv1CidrMapCreate(d *schema.ResourceData, meta interface{}) error 
 	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		return errors.New(cStatus.Status.Message)
+		return fmt.Errorf(cStatus.Status.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -137,7 +136,7 @@ func resourceGTMv1CidrMapRead(d *schema.ResourceData, meta interface{}) error {
 	// retrieve the property and domain
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return errors.New("Invalid cidrMap cidrMap Id")
+		return fmt.Errorf("Invalid cidrMap cidrMap Id")
 	}
 	cidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
@@ -157,7 +156,7 @@ func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error 
 	// pull domain and cidrMap out of id
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return errors.New("Invalid cidrMap Id")
+		return fmt.Errorf("Invalid cidrMap Id")
 	}
 	// Get existingCidrMap
 	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
@@ -176,7 +175,7 @@ func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error 
 	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -203,7 +202,7 @@ func resourceGTMv1CidrMapImport(d *schema.ResourceData, meta interface{}) ([]*sc
 	// pull domain and cidrMap out of cidrMap id
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, errors.New("Invalid cidrMap cidrMap Id")
+		return []*schema.ResourceData{d}, fmt.Errorf("Invalid cidrMap cidrMap Id")
 	}
 	cidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
@@ -226,7 +225,7 @@ func resourceGTMv1CidrMapDelete(d *schema.ResourceData, meta interface{}) error 
 	// Get existing cidrMap
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return errors.New("Invalid cidrMap Id")
+		return fmt.Errorf("Invalid cidrMap Id")
 	}
 	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
@@ -242,7 +241,7 @@ func resourceGTMv1CidrMapDelete(d *schema.ResourceData, meta interface{}) error 
 	log.Printf("[DEBUG] [Akamai GTMv1] CidrMap Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -271,7 +270,7 @@ func resourceGTMv1CidrMapExists(d *schema.ResourceData, meta interface{}) (bool,
 	// pull domain and cidrMap out of cidrMap id
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return false, errors.New("Invalid cidrMap cidrMap Id")
+		return false, fmt.Errorf("Invalid cidrMap cidrMap Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing cidrMap [%s] in domain %s", cidrMap, domain)
 	cidr, err := gtm.GetCidrMap(cidrMap, domain)

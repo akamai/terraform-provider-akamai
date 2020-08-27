@@ -1,7 +1,7 @@
 package gtm
 
 import (
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -69,7 +69,7 @@ func Test_getGTMV1_3Service(t *testing.T) {
 				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
 			},
 			edgerc:  ``,
-			wantErr: errors.New("Unable to create instance using environment or .edgerc file"),
+			wantErr: fmt.Errorf("Unable to create instance using environment or .edgerc file"),
 		},
 		testsStruct{
 			name: "undefined .edgerc, undefined section",

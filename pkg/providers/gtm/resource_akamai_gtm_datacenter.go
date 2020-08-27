@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -168,7 +167,7 @@ func resourceGTMv1DatacenterCreate(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		return errors.New(cStatus.Status.Message)
+		return fmt.Errorf(cStatus.Status.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -202,7 +201,7 @@ func resourceGTMv1DatacenterRead(d *schema.ResourceData, meta interface{}) error
 	// retrieve the datacenter and domain
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid datacenter resource Id")
+		return fmt.Errorf("Invalid datacenter resource Id")
 	}
 	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
@@ -222,7 +221,7 @@ func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) err
 	// pull domain and dcid out of resource id
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid datacenter resource Id")
+		return fmt.Errorf("Invalid datacenter resource Id")
 	}
 	// Get existing datacenter
 	existDC, err := gtm.GetDatacenter(dcID, domain)
@@ -241,7 +240,7 @@ func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -268,7 +267,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, meta interface{}) ([]
 	// retrieve the datacenter and domain
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return nil, errors.New("Invalid datacenter resource Id")
+		return nil, fmt.Errorf("Invalid datacenter resource Id")
 	}
 	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
@@ -290,7 +289,7 @@ func resourceGTMv1DatacenterDelete(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Datacenter: %s", d.Id())
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid datacenter resource Id")
+		return fmt.Errorf("Invalid datacenter resource Id")
 	}
 	// Get existing datacenter
 	existDC, err := gtm.GetDatacenter(dcID, domain)
@@ -307,7 +306,7 @@ func resourceGTMv1DatacenterDelete(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -336,7 +335,7 @@ func resourceGTMv1DatacenterExists(d *schema.ResourceData, meta interface{}) (bo
 	// pull domain and dcid out of resource id
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return false, errors.New("Invalid datacenter resource Id")
+		return false, fmt.Errorf("Invalid datacenter resource Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing datacenter [%d] in domain %s", dcID, domain)
 	dc, err := gtm.GetDatacenter(dcID, domain)

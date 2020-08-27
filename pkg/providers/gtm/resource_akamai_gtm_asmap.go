@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -87,11 +86,11 @@ func parseResourceASmapId(id string) (string, string, error) {
 func validateDefaultDC(ddcField []interface{}, domain string) error {
 
 	if len(ddcField) == 0 {
-		return errors.New("Default Datacenter invalid")
+		return fmt.Errorf("Default Datacenter invalid")
 	}
 	ddc := ddcField[0].(map[string]interface{})
 	if ddc["datacenter_id"].(int) == 0 {
-		return errors.New("Default Datacenter ID invalid")
+		return fmt.Errorf("Default Datacenter ID invalid")
 	}
 	dc, err := gtm.GetDatacenter(ddc["datacenter_id"].(int), domain)
 	if dc == nil {
@@ -103,7 +102,7 @@ func validateDefaultDC(ddcField []interface{}, domain string) error {
 		}
 		// ddc doesn't exist
 		if ddc["datacenter_id"].(int) != gtm.MapDefaultDC {
-			return errors.New(fmt.Sprintf("Default Datacenter %d does not exist", ddc["datacenter_id"].(int)))
+			return fmt.Errorf(fmt.Sprintf("Default Datacenter %d does not exist", ddc["datacenter_id"].(int)))
 		}
 		ddc, err := gtm.CreateMapsDefaultDatacenter(domain) // create if not already.
 		if ddc == nil {
@@ -137,7 +136,7 @@ func resourceGTMv1ASmapCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		return errors.New(cStatus.Status.Message)
+		return fmt.Errorf(cStatus.Status.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -170,7 +169,7 @@ func resourceGTMv1ASmapRead(d *schema.ResourceData, meta interface{}) error {
 	// retrieve the property and domain
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
-		return errors.New("Invalid asMap asMap Id")
+		return fmt.Errorf("Invalid asMap asMap Id")
 	}
 	as, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
@@ -190,7 +189,7 @@ func resourceGTMv1ASmapUpdate(d *schema.ResourceData, meta interface{}) error {
 	// pull domain and asMap out of id
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
-		return errors.New("Invalid asMap Id")
+		return fmt.Errorf("Invalid asMap Id")
 	}
 	// Get existingASmap
 	existAs, err := gtm.GetAsMap(asMap, domain)
@@ -209,7 +208,7 @@ func resourceGTMv1ASmapUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -236,7 +235,7 @@ func resourceGTMv1ASmapImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	// pull domain and asMap out of asMap id
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, errors.New("Invalid asMap Id")
+		return []*schema.ResourceData{d}, fmt.Errorf("Invalid asMap Id")
 	}
 	as, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
@@ -260,7 +259,7 @@ func resourceGTMv1ASmapDelete(d *schema.ResourceData, meta interface{}) error {
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
 		log.Printf("[ERROR] ASmapDelete: %s", err.Error())
-		return errors.New("Invalid asMap Id")
+		return fmt.Errorf("Invalid asMap Id")
 	}
 	existAs, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
@@ -276,7 +275,7 @@ func resourceGTMv1ASmapDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] ASmap Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -305,7 +304,7 @@ func resourceGTMv1ASmapExists(d *schema.ResourceData, meta interface{}) (bool, e
 	// pull domain and asMap out of asMap id
 	domain, asMap, err := parseResourceASmapId(d.Id())
 	if err != nil {
-		return false, errors.New("Invalid asMap asMap Id")
+		return false, fmt.Errorf("Invalid asMap asMap Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing asMap [%s] in domain %s", asMap, domain)
 	as, err := gtm.GetAsMap(asMap, domain)
