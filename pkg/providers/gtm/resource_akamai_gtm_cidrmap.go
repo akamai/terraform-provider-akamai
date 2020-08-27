@@ -32,7 +32,7 @@ func resourceGTMv1Cidrmap() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"default_datacenter": &schema.Schema{
+			"default_datacenter": {
 				Type:     schema.TypeList,
 				Required: true,
 				MaxItems: 1,
@@ -49,7 +49,7 @@ func resourceGTMv1Cidrmap() *schema.Resource {
 					},
 				},
 			},
-			"assignment": &schema.Schema{
+			"assignment": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
@@ -62,7 +62,7 @@ func resourceGTMv1Cidrmap() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"blocks": &schema.Schema{
+						"blocks": {
 							Type:     schema.TypeList,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
@@ -129,14 +129,14 @@ func resourceGTMv1CidrMapCreate(d *schema.ResourceData, meta interface{}) error 
 }
 
 // read cidrMap. updates state with entire API result configuration.
-func resourceGTMv1CidrMapRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1CidrMapRead(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] CidrMap: %s", d.Id())
 	// retrieve the property and domain
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return fmt.Errorf("Invalid cidrMap cidrMap Id")
+		return fmt.Errorf("invalid cidrMap cidrMap Id")
 	}
 	cidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
@@ -156,7 +156,7 @@ func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error 
 	// pull domain and cidrMap out of id
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return fmt.Errorf("Invalid cidrMap Id")
+		return fmt.Errorf("invalid cidrMap Id")
 	}
 	// Get existingCidrMap
 	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
@@ -196,13 +196,13 @@ func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error 
 }
 
 // Import GTM CidrMap.
-func resourceGTMv1CidrMapImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1CidrMapImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] CidrMap [%s] Import", d.Id())
 	// pull domain and cidrMap out of cidrMap id
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, fmt.Errorf("Invalid cidrMap cidrMap Id")
+		return []*schema.ResourceData{d}, fmt.Errorf("invalid cidrMap cidrMap Id")
 	}
 	cidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
@@ -218,14 +218,14 @@ func resourceGTMv1CidrMapImport(d *schema.ResourceData, meta interface{}) ([]*sc
 }
 
 // Delete GTM CidrMap.
-func resourceGTMv1CidrMapDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1CidrMapDelete(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] CidrMap: %s", d.Id())
 	// Get existing cidrMap
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return fmt.Errorf("Invalid cidrMap Id")
+		return fmt.Errorf("invalid cidrMap Id")
 	}
 	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
 	if err != nil {
@@ -258,19 +258,19 @@ func resourceGTMv1CidrMapDelete(d *schema.ResourceData, meta interface{}) error 
 
 	}
 
-	// if succcessful ....
+	// if successful ....
 	d.SetId("")
 	return nil
 }
 
-// Test GTM CidrMap existance
-func resourceGTMv1CidrMapExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+// Test GTM CidrMap existence
+func resourceGTMv1CidrMapExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and cidrMap out of cidrMap id
 	domain, cidrMap, err := parseResourceCidrMapId(d.Id())
 	if err != nil {
-		return false, fmt.Errorf("Invalid cidrMap cidrMap Id")
+		return false, fmt.Errorf("invalid cidrMap cidrMap Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing cidrMap [%s] in domain %s", cidrMap, domain)
 	cidr, err := gtm.GetCidrMap(cidrMap, domain)
