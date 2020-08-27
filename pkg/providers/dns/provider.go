@@ -113,6 +113,7 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 
 	dnsv2.Init(DNSv2Config)
 	edgegrid.SetupLogging()
+
 	return &DNSv2Config, nil
 }
 

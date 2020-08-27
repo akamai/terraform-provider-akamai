@@ -3,14 +3,17 @@ package property
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"sync"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -39,7 +42,6 @@ func Subprovider() akamai.Subprovider {
 
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
-
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"papi_section": {
@@ -79,27 +81,43 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-type resourceData interface {
-	GetOk(string) (interface{}, bool)
-	Get(string) interface{}
-}
-
-type set interface {
-	List() []interface{}
-}
-
-func getPAPIV1Service(d resourceData) (*edgegrid.Config, error) {
+func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 	var papiConfig edgegrid.Config
-	if _, ok := d.GetOk("property"); ok {
+	var err error
+	property, err := tools.GetSetValue("property", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
+	if err == nil {
 		log.Printf("[DEBUG] Setting property config via HCL")
-		config := d.Get("property").(set).List()[0].(map[string]interface{})
+		cfg := property.List()[0].(map[string]interface{})
 
+		host, ok := cfg["host"].(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
+		}
+		accessToken, ok := cfg["access_token"].(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "access_token", "string")
+		}
+		clientToken, ok := cfg["client_token"].(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_token", "string")
+		}
+		clientSecret, ok := cfg["client_secret"].(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_secret", "string")
+		}
+		maxBody, ok := cfg["max_body"].(int)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "max_body", "int")
+		}
 		papiConfig = edgegrid.Config{
-			Host:         config["host"].(string),
-			AccessToken:  config["access_token"].(string),
-			ClientToken:  config["client_token"].(string),
-			ClientSecret: config["client_secret"].(string),
-			MaxBody:      config["max_body"].(int),
+			Host:         host,
+			AccessToken:  accessToken,
+			ClientToken:  clientToken,
+			ClientSecret: clientSecret,
+			MaxBody:      maxBody,
 		}
 
 		papi.Init(papiConfig)

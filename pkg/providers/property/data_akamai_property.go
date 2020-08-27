@@ -1,10 +1,10 @@
 package property
 
 import (
-	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -29,30 +29,42 @@ func dataSourceAkamaiProperty() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + tools.CreateNonce() + "]"
+func dataAkamaiPropertyRead(d *schema.ResourceData, _ interface{}) error {
+	akactx := akamai.ContextGet(inst.Name())
+	log := akactx.Log("PAPI", "dataAkamaiPropertyRead")
+	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + akactx.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Reading Property")
-	property := findProperty(d, CorrelationID)
+	log.Debug("Reading Property")
+
+	name, err := tools.GetStringValue("name", d)
+	if err != nil {
+		return err
+	}
+	property := findProperty(name, CorrelationID)
 	if property == nil {
-		return fmt.Errorf("Can't find property")
+		return fmt.Errorf("%w: %s", ErrPropertyNotFound, name)
 	}
 
-	_, ok := d.GetOk("version")
-	if ok {
-		property.LatestVersion = d.Get("version").(int)
+	version, err := tools.GetIntValue("version", d)
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return err
+		}
+		property.LatestVersion = version
 	}
 
 	rules, err := property.GetRules(CorrelationID)
 	if err != nil {
-		return fmt.Errorf("Can't get rules for property")
+		return fmt.Errorf("%w: %s", ErrRulesNotFound, err.Error())
 	}
 
-	jsonBody, err := json.Marshal(rules)
-	buf := bytes.NewBufferString("")
-	buf.Write(jsonBody)
-
+	body, err := json.Marshal(rules)
+	if err != nil {
+		return err
+	}
+	if err = d.Set("rules", string(body)); err != nil {
+		return fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error())
+	}
 	d.SetId(property.PropertyID)
-	d.Set("rules", buf.String())
 	return nil
 }
