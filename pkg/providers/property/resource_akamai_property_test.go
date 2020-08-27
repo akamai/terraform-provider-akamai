@@ -175,7 +175,7 @@ func TestAccAkamaiProperty_isSecureFalse(t *testing.T) {
 		"is_secure": false,
 	}
 
-	d := schema.TestResourceDataRaw(t, Provider().ResourcesMap["akamai_property"].Schema, config)
+	d := schema.TestResourceDataRaw(t, inst.Provider.ResourcesMap["akamai_property"].Schema, config)
 	rules := &papi.Rules{}
 	unmarshalRulesFromJSON(d, rules)
 	if rules.Rule.Options.IsSecure == true {
@@ -188,7 +188,7 @@ func TestAccAkamaiProperty_isSecureUnset(t *testing.T) {
 		"rules": `{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\"}}`,
 	}
 
-	d := schema.TestResourceDataRaw(t, Provider().ResourcesMap["akamai_property"].Schema, config)
+	d := schema.TestResourceDataRaw(t, inst.Provider.ResourcesMap["akamai_property"].Schema, config)
 	rules := &papi.Rules{}
 	unmarshalRulesFromJSON(d, rules)
 	if rules.Rule.Options.IsSecure == true {
@@ -201,7 +201,7 @@ func TestAccAkamaiProperty_isSecureJsonTrue(t *testing.T) {
 		"rules": "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":true}}}",
 	}
 
-	d := schema.TestResourceDataRaw(t, Provider().ResourcesMap["akamai_property"].Schema, config)
+	d := schema.TestResourceDataRaw(t, inst.Provider.ResourcesMap["akamai_property"].Schema, config)
 	rules := &papi.Rules{}
 	unmarshalRulesFromJSON(d, rules)
 	if rules.Rule.Options.IsSecure != true {
@@ -214,7 +214,7 @@ func TestAccAkamaiProperty_isSecureJsonFalse(t *testing.T) {
 		"rules": "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":false}}}",
 	}
 
-	d := schema.TestResourceDataRaw(t, Provider().ResourcesMap["akamai_property"].Schema, config)
+	d := schema.TestResourceDataRaw(t, inst.Provider.ResourcesMap["akamai_property"].Schema, config)
 	rules := &papi.Rules{}
 	unmarshalRulesFromJSON(d, rules)
 	if rules.Rule.Options.IsSecure == true {
@@ -228,7 +228,7 @@ func TestAccAkamaiProperty_isSecureJsonTrueConfigFalse(t *testing.T) {
 		"is_secure": false,
 	}
 
-	d := schema.TestResourceDataRaw(t, Provider().ResourcesMap["akamai_property"].Schema, config)
+	d := schema.TestResourceDataRaw(t, inst.Provider.ResourcesMap["akamai_property"].Schema, config)
 	rules := &papi.Rules{}
 	unmarshalRulesFromJSON(d, rules)
 	if rules.Rule.Options.IsSecure == true {
@@ -242,7 +242,7 @@ func TestAccAkamaiProperty_isSecureJsonFalseConfigTrue(t *testing.T) {
 		"is_secure": true,
 	}
 
-	d := schema.TestResourceDataRaw(t, Provider().ResourcesMap["akamai_property"].Schema, config)
+	d := schema.TestResourceDataRaw(t, inst.Provider.ResourcesMap["akamai_property"].Schema, config)
 	rules := &papi.Rules{}
 	unmarshalRulesFromJSON(d, rules)
 	if rules.Rule.Options.IsSecure != true {

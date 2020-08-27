@@ -97,9 +97,13 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 		return nil, err
 	}
 
-	section, err := tools.GetStringValue("dns_section", d, "config_section")
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
+	var section string
+
+	for _, s := range tools.FindStringValues(d, "dns_section", "config_section") {
+		if s != "default" {
+			section = s
+			break
+		}
 	}
 
 	DNSv2Config, err = edgegrid.Init(edgerc, section)
