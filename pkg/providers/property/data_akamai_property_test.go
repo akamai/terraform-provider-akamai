@@ -17,7 +17,7 @@ func TestAccDataSourceProperty_basic(t *testing.T) {
 		CheckDestroy: testAccCheckDataSourcePropertyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceProperty_basic(),
+				Config: testAccDataSourcePropertyBasic(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 					resource.TestCheckResourceAttr(dataSourceName, "name", "terraform-test-datasource"),
@@ -29,7 +29,7 @@ func TestAccDataSourceProperty_basic(t *testing.T) {
 	})
 }
 
-func testAccDataSourceProperty_basic() string {
+func testAccDataSourcePropertyBasic() string {
 	return `
 	provider "akamai" {
 		papi_section = "papi"

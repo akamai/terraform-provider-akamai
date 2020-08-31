@@ -9,9 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"log"
 	"regexp"
-	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -26,13 +24,13 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 		CheckDestroy: testAccCheckAkamaiGroupDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceGroup_basic(),
+				Config: testAccDataSourceGroupBasic(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 				),
 			},
 			{
-				Config:      testAccDataSourceGroup_noContractWithGroupProvided(),
+				Config:      testAccDataSourceGroupNoContractWithGroupProvided(),
 				ExpectError: regexp.MustCompile("^.+looking up group with name:.+contract ID is required for non-default name: .+$"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
@@ -42,30 +40,30 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 	})
 }
 
-func testAccDataSourceGroup_basic() string {
+func testAccDataSourceGroupBasic() string {
 	return `
-		data "akamai_group" "test" {
-		}
-		
-		output "groupid" {
-			value = "${data.akamai_group.test.id}"
-		}
+data "akamai_group" "test" {
+}
+
+output "groupid" {
+value = "${data.akamai_group.test.id}"
+}
 `
 }
 
-func testAccDataSourceGroup_noContractWithGroupProvided() string {
+func testAccDataSourceGroupNoContractWithGroupProvided() string {
 	return `
-		data "akamai_group" "test" {
-			name = "Akamai Internal-3-984F"
-		}
-		
-		output "groupid" {
-			value = "${data.akamai_group.test.id}"
-		}
-		`
+data "akamai_group" "test" {
+	name = "Akamai Internal-3-984F"
 }
 
-func testAccCheckAkamaiGroupDestroy(s *terraform.State) error {
+output "groupid" {
+value = "${data.akamai_group.test.id}"
+}
+`
+}
+
+func testAccCheckAkamaiGroupDestroy(_ *terraform.State) error {
 	log.Printf("[DEBUG] [Group] Searching for Group Delete skipped ")
 
 	return nil
@@ -107,7 +105,7 @@ func TestFindGroupByName(t *testing.T) {
 			givenGroups:            nil,
 			givenGroupsAccountName: "",
 			isDefault:              true,
-			withError:              ErrPapiNoGroupsFound,
+			withError:              ErrNoGroupsFound,
 		},
 		"with default and contract provided, return matching group": {
 			givenName:     "any name",
@@ -140,7 +138,7 @@ func TestFindGroupByName(t *testing.T) {
 			},
 			givenGroupsAccountName: "Account1",
 			isDefault:              true,
-			withError:              ErrPapiGroupNotFound,
+			withError:              ErrLookingUpGroupByName,
 		},
 		"not default and no contract provided, return error": {
 			givenName:     "any name",
@@ -153,7 +151,7 @@ func TestFindGroupByName(t *testing.T) {
 			},
 			givenGroupsAccountName: "",
 			isDefault:              false,
-			withError:              ErrPapiNoContractProvided,
+			withError:              ErrNoContractProvided,
 		},
 		"not default and contract provided, return matching group": {
 			givenName:     "Group A",
@@ -188,7 +186,7 @@ func TestFindGroupByName(t *testing.T) {
 			},
 			givenGroupsAccountName: "",
 			isDefault:              false,
-			withError:              ErrPapiGroupNotInContract,
+			withError:              ErrGroupNotInContract,
 		},
 		"not default and contract provided, no groups found by name": {
 			givenName:              "Group A",
@@ -196,7 +194,7 @@ func TestFindGroupByName(t *testing.T) {
 			givenGroups:            []*papi.Group{},
 			givenGroupsAccountName: "",
 			isDefault:              false,
-			withError:              ErrPapiFindingGroupsByName,
+			withError:              ErrLookingUpGroupByName,
 		},
 	}
 

@@ -2,6 +2,7 @@ package gtm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -136,11 +138,20 @@ func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
 		return &GTMv1Config, nil
 	}
 
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("gtm_section").(string)
-	if section == "" {
-		section = d.Get("config_section").(string)
+	edgerc, err := tools.GetStringValue("edgerc", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
 	}
+
+	var section string
+
+	for _, s := range tools.FindStringValues(d, "gtm_section", "config_section") {
+		if s != "default" {
+			section = s
+			break
+		}
+	}
+
 	GTMv1Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err

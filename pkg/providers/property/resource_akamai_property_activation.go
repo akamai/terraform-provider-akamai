@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/go-hclog"
 	"log"
-	"strings"
 	"time"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -26,164 +26,183 @@ func resourcePropertyActivation() *schema.Resource {
 }
 
 var akamaiPropertyActivationSchema = map[string]*schema.Schema{
-	"property": &schema.Schema{
+	"property": {
 		Type:     schema.TypeString,
 		Required: true,
 	},
-	"version": &schema.Schema{
+	"version": {
 		Type:     schema.TypeInt,
 		Optional: true,
 	},
-	"network": &schema.Schema{
+	"network": {
 		Type:     schema.TypeString,
 		Optional: true,
 		Default:  "staging",
 	},
-	"activate": &schema.Schema{
+	"activate": {
 		Type:     schema.TypeBool,
 		Optional: true,
 		Default:  true,
 	},
-	"contact": &schema.Schema{
+	"contact": {
 		Type:     schema.TypeSet,
 		Required: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
-	"status": &schema.Schema{
+	"status": {
 		Type:     schema.TypeString,
 		Computed: true,
 	},
 }
 
-func resourcePropertyActivationCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + tools.CreateNonce() + "]"
+func resourcePropertyActivationCreate(d *schema.ResourceData, _ interface{}) error {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourcePropertyActivationCreate")
+	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + akactx.OperationID() + "]"
 	d.Partial(true)
 
 	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = d.Get("property").(string)
-	err := property.GetProperty(CorrelationID)
+	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
-		return errors.New("unable to find property")
+		return err
+	}
+	property.PropertyID = propertyID
+	err = property.GetProperty(CorrelationID)
+	if err != nil {
+		return fmt.Errorf("unable to find property: %w", err)
 	}
 
 	// TODO: SetPartial is technically deprecated and only valid when an error
 	// will retruned. Determine if this is necessary here.
 	d.Partial(true)
+	defer func() {
+		d.Partial(false)
+		logger.Debug("Done")
+	}()
 
-	d.Set("property", property.PropertyID)
-
-	if d.Get("activate").(bool) {
-		activation, err := activateProperty(property, d, CorrelationID)
-		if err != nil {
-			return err
-		}
-
-		d.SetId(activation.ActivationID)
-		d.Set("version", activation.PropertyVersion)
-		d.Set("status", string(activation.Status))
-		go activation.PollStatus(property)
-
-	polling:
-		for activation.Status != papi.StatusActive {
-			select {
-			case statusChanged := <-activation.StatusChange:
-				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Property Status: %s\n", activation.Status))
-				if statusChanged == false {
-					break polling
-				}
-				continue polling
-			case <-time.After(time.Minute * 90):
-				edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Activation Timeout (90 minutes)")
-				break polling
-			}
-		}
-	} else {
-		d.SetId("none")
+	if err := d.Set("property", property.PropertyID); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-
-	d.Partial(false)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
-	return nil
-}
-
-func resourcePropertyActivationDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + tools.CreateNonce() + "]"
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  DEACTIVATE PROPERTY")
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = d.Get("property").(string)
-	e := property.GetProperty(CorrelationID)
-	if e != nil {
-		return e
-	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  DEACTIVE PROPERTY %v", property))
-	network, err := parseNetwork(d.Get("network").(string))
+	activate, err := tools.GetBoolValue("activate", d)
 	if err != nil {
 		return err
 	}
-	propertyVersion := property.ProductionVersion
-	if network == papi.NetworkStaging {
-		propertyVersion = property.StagingVersion
+	if !activate {
+		d.SetId("none")
+		d.Partial(false)
+		logger.Debug("Done")
+		return nil
 	}
-	version := d.Get("version").(int)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Version to deactivate is %d and current active %s version is %d\n", version, network, propertyVersion))
-	if propertyVersion == version {
-		// The current active version is the one we need to deactivate
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Deactivating %s version %d \n", network, version))
-		activation, err := deactivateProperty(property, d, network, CorrelationID)
-		if err != nil {
-			return err
-		}
+	activation, err := activateProperty(property, d, CorrelationID, logger)
+	if err != nil {
+		return err
+	}
 
-		go activation.PollStatus(property)
+	d.SetId(activation.ActivationID)
+	if err := d.Set("version", activation.PropertyVersion); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("status", string(activation.Status)); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	go activation.PollStatus(property)
 
-	polling:
-		for activation.Status != papi.StatusActive {
-			select {
-			case statusChanged := <-activation.StatusChange:
-				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Property Status: %s\n", activation.Status))
-				if statusChanged == false {
-					break polling
-				}
-				continue polling
-			case <-time.After(time.Minute * 90):
-				edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Activation Timeout (90 minutes)")
-				break polling
+	for activation.Status != papi.StatusActive {
+		select {
+		case statusChanged := <-activation.StatusChange:
+			logger.Debug("Property Status: %s", activation.Status)
+			if statusChanged == false {
+				return nil
 			}
+			continue
+		case <-time.After(time.Minute * 90):
+			logger.Debug("Activation Timeout (90 minutes)")
+			return nil
 		}
-
-		d.Set("status", string(activation.Status))
 	}
-
-	d.SetId("")
-
-	log.Println("[DEBUG] Done")
-
 	return nil
 }
 
-func parseNetwork(net string) (papi.NetworkValue, error) {
-	networks := map[string]papi.NetworkValue{
-		"STAGING":    papi.NetworkStaging,
-		"STAG":       papi.NetworkStaging,
-		"S":          papi.NetworkStaging,
-		"PRODUCTION": papi.NetworkProduction,
-		"PROD":       papi.NetworkProduction,
-		"P":          papi.NetworkProduction,
+func resourcePropertyActivationDelete(d *schema.ResourceData, _ interface{}) error {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourcePropertyActivationDelete")
+	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + akactx.OperationID() + "]"
+
+	logger.Debug("DEACTIVATE PROPERTY")
+	property := papi.NewProperty(papi.NewProperties())
+	propertyID, err := tools.GetStringValue("property", d)
+	if err != nil {
+		return err
 	}
-	networkValue, ok := networks[strings.ToUpper(net)]
-	if !ok {
-		return "", fmt.Errorf("network not recognized")
+	property.PropertyID = propertyID
+	err = property.GetProperty(CorrelationID)
+	if err != nil {
+		return err
 	}
-	return networkValue, nil
+
+	logger.Debug("DEACTIVE PROPERTY %v", property)
+	networkVal, err := tools.GetStringValue("network", d)
+	if err != nil {
+		return err
+	}
+	network := papi.NetworkValue(networkVal)
+	propertyVersion := property.ProductionVersion
+	if network == "STAGING" {
+		propertyVersion = property.StagingVersion
+	}
+	version, err := tools.GetIntValue("version", d)
+	if err != nil {
+		return err
+	}
+	logger.Debug("Version to deactivate is %d and current active %s version is %d", version, network, propertyVersion)
+	defer func() {
+		d.SetId("")
+		log.Println("[DEBUG] Done")
+	}()
+	if propertyVersion != version {
+		return nil
+	}
+	// The current active version is the one we need to deactivate
+	logger.Debug("Deactivating %s version %d", network, version)
+	activation, err := deactivateProperty(property, d, papi.NetworkValue(networkVal), CorrelationID, logger)
+	if err != nil {
+		return err
+	}
+
+	go activation.PollStatus(property)
+
+polling:
+	for activation.Status != papi.StatusActive {
+		select {
+		case statusChanged := <-activation.StatusChange:
+			logger.Debug("Property Status: %s", activation.Status)
+			if statusChanged == false {
+				break polling
+			}
+			continue polling
+		case <-time.After(time.Minute * 90):
+			logger.Debug("Activation Timeout (90 minutes)")
+			break polling
+		}
+	}
+
+	if err := d.Set("status", string(activation.Status)); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	return nil
 }
 
-func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	CorrelationID := "[PAPI][resourcePropertyActivationExists-" + tools.CreateNonce() + "]"
+func resourcePropertyActivationExists(d *schema.ResourceData, _ interface{}) (bool, error) {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourcePropertyActivationExists")
+	CorrelationID := "[PAPI][resourcePropertyActivationExists-" + akactx.OperationID() + "]"
 	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = d.Get("property").(string)
-	err := property.GetProperty(CorrelationID)
+	propertyID, err := tools.GetStringValue("property", d)
+	if err != nil {
+		return false, err
+	}
+	property.PropertyID = propertyID
+	err = property.GetProperty(CorrelationID)
 	if err != nil {
 		return false, err
 	}
@@ -194,44 +213,67 @@ func resourcePropertyActivationExists(d *schema.ResourceData, meta interface{}) 
 		return false, nil
 	}
 
-	network := papi.NetworkValue(d.Get("network").(string))
-	version := d.Get("version").(int)
-
+	networkVal, err := tools.GetStringValue("network", d)
+	if err != nil {
+		return false, err
+	}
+	network := papi.NetworkValue(networkVal)
+	version, err := tools.GetIntValue("version", d)
+	if err != nil {
+		return false, err
+	}
 	for _, activation := range activations.Activations.Items {
 		if activation.Network == network && activation.PropertyVersion == version {
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Found Existing Activation %s version %d \n", network, version))
+			logger.Debug("Found Existing Activation %s version %d", network, version)
 			return true, nil
 		}
 	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Did Not Find Existing Activation %s version %d \n", network, version))
+	logger.Debug("Did Not Find Existing Activation %s version %d", network, version)
 	return false, nil
 }
 
-func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + tools.CreateNonce() + "]"
+func resourcePropertyActivationRead(d *schema.ResourceData, _ interface{}) error {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourcePropertyActivationRead")
+	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + akactx.OperationID() + "]"
 	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = d.Get("property").(string)
-	err := property.GetProperty(CorrelationID)
+	propertyID, err := tools.GetStringValue("property", d)
+	if err != nil {
+		return err
+	}
+	property.PropertyID = propertyID
+	err = property.GetProperty(CorrelationID)
 	if err != nil {
 		return err
 	}
 
-	//d.SetId("")
 	activations, err := property.GetActivations()
 	if err != nil {
 		// No activations found
 		return nil
 	}
 
-	network := papi.NetworkValue(d.Get("network").(string))
-	version := d.Get("version").(int)
+	networkVal, err := tools.GetStringValue("network", d)
+	if err != nil {
+		return err
+	}
+	network := papi.NetworkValue(networkVal)
+	version, err := tools.GetIntValue("version", d)
+	if err != nil {
+		return err
+	}
 
 	for _, activation := range activations.Activations.Items {
-		if activation.Network == network && activation.PropertyVersion == version {
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Found Existing Activation %s version %d \n", network, version))
-			d.SetId(activation.ActivationID)
-			d.Set("status", string(activation.Status))
-			d.Set("version", activation.PropertyVersion)
+		if activation.Network != network || activation.PropertyVersion != version {
+			continue
+		}
+		logger.Debug("Found Existing Activation %s version %d", network, version)
+		d.SetId(activation.ActivationID)
+		if err := d.Set("status", string(activation.Status)); err != nil {
+			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		}
+		if err := d.Set("version", activation.PropertyVersion); err != nil {
+			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -239,151 +281,175 @@ func resourcePropertyActivationRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + tools.CreateNonce() + "]"
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourcePropertyActivationRead")
+	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + akactx.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " UPDATING")
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Fetching property")
+	logger.Debug("UPDATING")
+	logger.Debug("Fetching property")
 	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = d.Get("property").(string)
-	e := property.GetProperty(CorrelationID)
-	if e != nil {
-		return e
+	propertyID, err := tools.GetStringValue("property", d)
+	if err != nil {
+		return err
 	}
-
-	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)), CorrelationID)
+	property.PropertyID = propertyID
+	err = property.GetProperty(CorrelationID)
+	if err != nil {
+		return err
+	}
+	network, err := tools.GetStringValue("network", d)
 	if err != nil {
 		return err
 	}
 
-	a, err := findExistingActivation(property, activation, CorrelationID)
-
-	if err == nil {
-		activation = a
+	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(network), CorrelationID, logger)
+	if err != nil {
+		return err
 	}
 
-	if d.Get("activate").(bool) {
-		/*old, new := d.GetChange("network")
-		if old.(string) != new.(string) {
-			// deactivate on the old network, we don't need to wait for this
-			deactivateProperty(property, d, papi.NetworkValue(old.(string)))
-		}
-		*/
-		// No activation in progress, create a new one
-		if a == nil {
-			activation, err = activateProperty(property, d, CorrelationID)
-			if err != nil {
-				return err
-			}
-		}
+	foundActivation, err := findExistingActivation(property, activation, CorrelationID, logger)
+	if err == nil {
+		activation = foundActivation
+	}
 
-		d.SetId(activation.ActivationID)
-		d.Set("version", activation.PropertyVersion)
-		d.Set("status", string(activation.Status))
-
-		go activation.PollStatus(property)
-
-	polling:
-		for activation.Status != papi.StatusActive {
-			select {
-			case statusChanged := <-activation.StatusChange:
-				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Property Status: %s\n", activation.Status))
-				if statusChanged == false {
-					break polling
-				}
-				continue polling
-			case <-time.After(time.Minute * 90):
-				edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Activation Timeout (90 minutes)")
-				break polling
-			}
-		}
-		d.Set("version", activation.PropertyVersion)
-		d.Set("status", string(activation.Status))
-	} else {
+	activate, err := tools.GetBoolValue("activate", d)
+	if err != nil {
+		return err
+	}
+	if !activate {
+		logger.Debug("Done")
 		return resourcePropertyActivationRead(d, meta)
 	}
+	// No activation in progress, create a new one
+	if foundActivation == nil {
+		activation, err = activateProperty(property, d, CorrelationID, logger)
+		if err != nil {
+			return err
+		}
+	}
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Done")
+	d.SetId(activation.ActivationID)
+	go activation.PollStatus(property)
+
+polling:
+	for activation.Status != papi.StatusActive {
+		select {
+		case statusChanged := <-activation.StatusChange:
+			logger.Debug("Property Status: %s\n", activation.Status)
+			if statusChanged == false {
+				break polling
+			}
+			continue polling
+		case <-time.After(time.Minute * 90):
+			logger.Debug("Activation Timeout (90 minutes)")
+			break polling
+		}
+	}
+	if err := d.Set("status", string(activation.Status)); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("version", activation.PropertyVersion); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+
+	logger.Debug("Done")
 	return nil
 }
 
-func activateProperty(property *papi.Property, d *schema.ResourceData, correlationid string) (*papi.Activation, error) {
-	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(d.Get("network").(string)), correlationid)
+func activateProperty(property *papi.Property, d *schema.ResourceData, correlationid string, logger hclog.Logger) (*papi.Activation, error) {
+	network, err := tools.GetStringValue("network", d)
+	if err != nil {
+		return nil, err
+	}
+	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(network), correlationid, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	if a, err := findExistingActivation(property, activation, correlationid); err == nil && a != nil {
-		return a, nil
+	if foundActivation, err := findExistingActivation(property, activation, correlationid, logger); err == nil && foundActivation != nil {
+		return foundActivation, nil
 	}
-
-	err = activation.Save(property, true)
-	if err != nil {
-		body, _ := json.Marshal(activation)
-		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  API Request Body: %s\n", string(body)))
+	if err = activation.Save(property, true); err != nil {
+		body, err := json.Marshal(activation)
+		if err != nil {
+			logger.Error("marshaling error: %s", err)
+		}
+		logger.Debug("API Request Body: %s", string(body))
 		return nil, err
 	}
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Activation submitted successfully")
+	logger.Debug("Activation submitted successfully")
 	return activation, nil
 }
 
-func deactivateProperty(property *papi.Property, d *schema.ResourceData, network papi.NetworkValue, correlationid string) (*papi.Activation, error) {
+func deactivateProperty(property *papi.Property, d *schema.ResourceData, network papi.NetworkValue, correlationid string, logger hclog.Logger) (*papi.Activation, error) {
 	version, err := property.GetLatestVersion(network, correlationid)
 	if err != nil || version == nil {
 		// Not active
 		return nil, nil
 	}
 
-	activation, err := getActivation(d, property, papi.ActivationTypeDeactivate, network, correlationid)
+	activation, err := getActivation(d, property, papi.ActivationTypeDeactivate, network, correlationid, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	if a, err := findExistingActivation(property, activation, correlationid); err == nil && a != nil {
-		return a, nil
+	if foundActivation, err := findExistingActivation(property, activation, correlationid, logger); err == nil && foundActivation != nil {
+		return foundActivation, nil
 	}
 
-	err = activation.Save(property, true)
-	if err != nil {
-		body, _ := json.Marshal(activation)
-		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  API Request Body: %s\n", string(body)))
+	if err = activation.Save(property, true); err != nil {
+		body, err := json.Marshal(activation)
+		if err != nil {
+			logger.Error("marshaling error: %s", err)
+		}
+		logger.Debug("API Request Body: %s\n", string(body))
 		return nil, err
 	}
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Deactivation submitted successfully")
-
+	logger.Debug("Deactivation submitted successfully")
 	return activation, nil
 }
 
-func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue, correlationid string) (*papi.Activation, error) {
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Creating new activation")
+func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue, correlationid string, logger hclog.Logger) (*papi.Activation, error) {
+	logger.Debug("Creating new activation")
 	activation := papi.NewActivation(papi.NewActivations())
-	if version, ok := d.GetOk("version"); ok && version.(int) != 0 {
-		activation.PropertyVersion = version.(int)
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
+	if !errors.Is(err, tools.ErrNotFound) && version != 0 {
+		activation.PropertyVersion = version
 	} else {
 		version, err := property.GetLatestVersion("", correlationid)
 		if err != nil {
 			return nil, err
 		}
-		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Using latest version: %d\n", version.PropertyVersion))
+		logger.Debug("Using latest version: %d", version.PropertyVersion)
 		activation.PropertyVersion = version.PropertyVersion
 	}
 	activation.Network = network
-	for _, email := range d.Get("contact").(*schema.Set).List() {
-		activation.NotifyEmails = append(activation.NotifyEmails, email.(string))
+	contact, err := tools.GetSetValue("contact", d)
+	if err != nil {
+		return nil, err
+	}
+	for _, email := range contact.List() {
+		emailStr, ok := email.(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "email", "string")
+		}
+		activation.NotifyEmails = append(activation.NotifyEmails, emailStr)
 	}
 	activation.Note = "Using Terraform"
-
 	activation.ActivationType = activationType
 
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Activating")
+	logger.Debug("Activating")
 	return activation, nil
 }
 
-func findExistingActivation(property *papi.Property, activation *papi.Activation, correlationid string) (*papi.Activation, error) {
+func findExistingActivation(property *papi.Property, activation *papi.Activation, _ string, logger hclog.Logger) (*papi.Activation, error) {
 	activations, err := property.GetActivations()
 	if err != nil {
 		return nil, err
 	}
-
 	inProgressStates := map[papi.StatusValue]bool{
 		papi.StatusActive:              true,
 		papi.StatusNew:                 true,
@@ -395,20 +461,16 @@ func findExistingActivation(property *papi.Property, activation *papi.Activation
 	}
 
 	for _, a := range activations.Activations.Items {
-
 		if _, ok := inProgressStates[a.Status]; !ok {
 			continue
 		}
 
 		// There is an activation in progress, if it's for the same version/network/type we can re-use it
-
-		//log.Println("[DEBUG] Existing activation found")
 		if a.PropertyVersion == activation.PropertyVersion && a.ActivationType == activation.ActivationType && a.Network == activation.Network {
-			edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" An Existing activation found %v Activations values %s version %d Activationpassed in  %s version %d  \n", inProgressStates[a.Status], a.Network, a.PropertyVersion, activation.Network, activation.PropertyVersion))
+			logger.Debug("An Existing activation found %v Activations values %s version %d Activationpassed in  %s version %d",
+				inProgressStates[a.Status], a.Network, a.PropertyVersion, activation.Network, activation.PropertyVersion)
 			return a, nil
 		}
-
 	}
-
 	return nil, nil
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
 
 	// Load the providers
 	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers"
@@ -21,12 +20,8 @@ func main() {
 	flag.BoolVar(&debugMode, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
-	// init the standard logger here so we can pass it to the provider
-	logger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Trace,
-		Output:     os.Stderr,
-		JSONFormat: true,
-	})
+	// init the default logger here so we can pass it to the provider
+	logger := hclog.Default()
 
 	prov := akamai.Provider(
 		logger,
