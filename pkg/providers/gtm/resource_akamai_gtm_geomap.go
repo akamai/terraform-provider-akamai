@@ -209,8 +209,14 @@ func resourceGTMv1GeomapImport(d *schema.ResourceData, _ interface{}) ([]*schema
 	if err != nil {
 		return nil, err
 	}
-	d.Set("domain", domain)
-	d.Set("wait_on_complete", true)
+	err = d.Set("domain", domain)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("wait_on_complete", true)
+	if err != nil {
+		return nil, err
+	}
 	populateTerraformGeoMapState(d, geo)
 
 	// use same Id as passed in
@@ -306,7 +312,10 @@ func populateGeoMapObject(d *schema.ResourceData, geo *gtm.GeoMap) {
 func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap) {
 
 	// walk through all state elements
-	d.Set("name", geo.Name)
+	err := d.Set("name", geo.Name)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformGeoMapState failed: %s", err.Error())
+	}
 	populateTerraformGeoAssignmentsState(d, geo)
 	populateTerraformGeoDefaultDCState(d, geo)
 
@@ -374,8 +383,10 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 			aStateList = append(aStateList, aNew)
 		}
 	}
-	d.Set("assignment", aStateList)
-
+	err := d.Set("assignment", aStateList)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformGeoAssignmentsState failed: %s", err.Error())
+	}
 }
 
 // create and populate GTM GeoMap DefaultDatacenter object
@@ -409,5 +420,8 @@ func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap)
 		"nickname":      geo.DefaultDatacenter.Nickname,
 	}
 	ddcListNew[0] = ddcNew
-	d.Set("default_datacenter", ddcListNew)
+	err := d.Set("default_datacenter", ddcListNew)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformGeoDefaultDCState failed: %s", err.Error())
+	}
 }
