@@ -82,7 +82,7 @@ func parseResourceASmapId(id string) (string, string, error) {
 
 }
 
-// Util method to validate default datacenter and create if necc
+// Util method to validate default datacenter and create if necessary
 func validateDefaultDC(ddcField []interface{}, domain string) error {
 
 	if len(ddcField) == 0 {
@@ -104,8 +104,8 @@ func validateDefaultDC(ddcField []interface{}, domain string) error {
 		if ddc["datacenter_id"].(int) != gtm.MapDefaultDC {
 			return fmt.Errorf(fmt.Sprintf("Default Datacenter %d does not exist", ddc["datacenter_id"].(int)))
 		}
-		ddc, err := gtm.CreateMapsDefaultDatacenter(domain) // create if not already.
-		if ddc == nil {
+		_, err := gtm.CreateMapsDefaultDatacenter(domain) // create if not already.
+		if err != nil {
 			return fmt.Errorf("[ERROR] MapCreate failed on Default Datacenter check: %s", err.Error())
 		}
 	}
@@ -297,12 +297,12 @@ func resourceGTMv1ASmapDelete(d *schema.ResourceData, _ interface{}) error {
 
 	}
 
-	// if succcessful ....
+	// if successful ....
 	d.SetId("")
 	return nil
 }
 
-// Test GTM ASmap existance
+// Test GTM ASmap existence
 func resourceGTMv1ASmapExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
@@ -344,7 +344,10 @@ func populateASmapObject(d *schema.ResourceData, as *gtm.AsMap) {
 func populateTerraformASmapState(d *schema.ResourceData, as *gtm.AsMap) {
 
 	// walk through all state elements
-	d.Set("name", as.Name)
+	err := d.Set("name", as.Name)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformASmapState failed: %s", err.Error())
+	}
 	populateTerraformAsAssignmentsState(d, as)
 	populateTerraformAsDefaultDCState(d, as)
 }
@@ -411,7 +414,10 @@ func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtm.AsMap) 
 			aStateList = append(aStateList, aNew)
 		}
 	}
-	d.Set("assignment", aStateList)
+	err := d.Set("assignment", aStateList)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformAsAssignmentsState failed: %s", err.Error())
+	}
 }
 
 // create and populate GTM ASmap DefaultDatacenter object
@@ -445,5 +451,8 @@ func populateTerraformAsDefaultDCState(d *schema.ResourceData, as *gtm.AsMap) {
 		"nickname":      as.DefaultDatacenter.Nickname,
 	}
 	ddcListNew[0] = ddcNew
-	d.Set("default_datacenter", ddcListNew)
+	err := d.Set("default_datacenter", ddcListNew)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformAsDefaultDCState failed: %s", err.Error())
+	}
 }

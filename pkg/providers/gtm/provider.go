@@ -184,7 +184,7 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(ctx context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func (p *provider) Configure(_ context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	log.Named(p.Name()).Debug("START Configure")
 
 	cfg, err := getConfigGTMV1Service(d)

@@ -55,23 +55,23 @@ func resourceGTMv1Datacenter() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"default_load_object": &schema.Schema{
+			"default_load_object": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"load_servers": &schema.Schema{
+						"load_servers": {
 							Type:     schema.TypeList,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
 						},
-						"load_object": &schema.Schema{
+						"load_object": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "",
 						},
-						"load_object_port": &schema.Schema{
+						"load_object_port": {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
@@ -194,14 +194,14 @@ func resourceGTMv1DatacenterCreate(d *schema.ResourceData, meta interface{}) err
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DatacenterRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DatacenterRead(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] Datacenter: %s", d.Id())
 	// retrieve the datacenter and domain
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return fmt.Errorf("Invalid datacenter resource Id")
+		return fmt.Errorf("invalid datacenter resource Id")
 	}
 	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
@@ -221,7 +221,7 @@ func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) err
 	// pull domain and dcid out of resource id
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return fmt.Errorf("Invalid datacenter resource Id")
+		return fmt.Errorf("invalid datacenter resource Id")
 	}
 	// Get existing datacenter
 	existDC, err := gtm.GetDatacenter(dcID, domain)
@@ -260,14 +260,14 @@ func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) err
 	return resourceGTMv1DatacenterRead(d, meta)
 }
 
-func resourceGTMv1DatacenterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1DatacenterImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Import")
 	log.Printf("[DEBUG] Importing [Akamai GTMv1] Datacenter: %s", d.Id())
 	// retrieve the datacenter and domain
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return nil, fmt.Errorf("Invalid datacenter resource Id")
+		return nil, fmt.Errorf("invalid datacenter resource Id")
 	}
 	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
@@ -275,21 +275,27 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, err
 	}
 	populateTerraformDCState(d, dc)
-	d.Set("domain", domain)
-	d.Set("wait_on_complete", true)
+	err = d.Set("domain", domain)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("wait_on_complete", true)
+	if err != nil {
+		return nil, err
+	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Import %v", dc)
 	return []*schema.ResourceData{d}, err
 
 }
 
 // Delete GTM Datacenter.
-func resourceGTMv1DatacenterDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DatacenterDelete(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Datacenter: %s", d.Id())
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return fmt.Errorf("Invalid datacenter resource Id")
+		return fmt.Errorf("invalid datacenter resource Id")
 	}
 	// Get existing datacenter
 	existDC, err := gtm.GetDatacenter(dcID, domain)
@@ -323,19 +329,19 @@ func resourceGTMv1DatacenterDelete(d *schema.ResourceData, meta interface{}) err
 
 	}
 
-	// if succcessful ....
+	// if successful ....
 	d.SetId("")
 	return nil
 }
 
-// Test GTM Datacenter existance
-func resourceGTMv1DatacenterExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+// Test GTM Datacenter existence
+func resourceGTMv1DatacenterExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and dcid out of resource id
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return false, fmt.Errorf("Invalid datacenter resource Id")
+		return false, fmt.Errorf("invalid datacenter resource Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing datacenter [%d] in domain %s", dcID, domain)
 	dc, err := gtm.GetDatacenter(dcID, domain)
@@ -386,24 +392,31 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 	}
 	// pull apart Set
 	dloList := d.Get("default_load_object").([]interface{})
-	if dloList == nil || len(dloList) == 0 {
+	if len(dloList) == 0 {
 		dc.DefaultLoadObject = nil
 	} else {
 		dloObject := gtm.NewLoadObject()
-		for _, v := range dloList {
-			dloMap := v.(map[string]interface{})
-			dloObject.LoadObject = dloMap["load_object"].(string)
-			dloObject.LoadObjectPort = dloMap["load_object_port"].(int)
-			if dloMap["load_servers"] != nil {
-				ls := make([]string, len(dloMap["load_servers"].([]interface{})))
-				for i, sl := range dloMap["load_servers"].([]interface{}) {
-					ls[i] = sl.(string)
-				}
-				dloObject.LoadServers = ls
-			}
-			dc.DefaultLoadObject = dloObject
-			break
+		dloMap, ok := dloList[0].(map[string]interface{})
+		if !ok {
+			log.Printf("[ERROR] populateDatacenterObject failed")
 		}
+		dloObject.LoadObject, ok = dloMap["load_object"].(string)
+		if !ok {
+			log.Printf("[ERROR] populateDatacenterObject failed")
+		}
+		dloObject.LoadObjectPort, ok = dloMap["load_object_port"].(int)
+		if !ok {
+			log.Printf("[ERROR] populateDatacenterObject failed")
+		}
+		loadServers, ok := dloMap["load_servers"]
+		if ok {
+			servers := loadServers.([]interface{})
+			dloObject.LoadServers = make([]string, len(servers))
+			for i, server := range servers {
+				dloObject.LoadServers[i] = server.(string)
+			}
+		}
+		dc.DefaultLoadObject = dloObject
 	}
 	if v, ok := d.GetOk("latitude"); ok {
 		dc.Latitude = v.(float64)
@@ -456,14 +469,20 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 
 	// walk through all state elements
-	d.Set("nickname", dc.Nickname)
-	d.Set("datacenter_id", dc.DatacenterId)
-	d.Set("city", dc.City)
-	d.Set("clone_of", dc.CloneOf)
-	d.Set("cloud_server_host_header_override", dc.CloudServerHostHeaderOverride)
-	d.Set("cloud_server_targeting", dc.CloudServerTargeting)
-	d.Set("continent", dc.Continent)
-	d.Set("country", dc.Country)
+	for stateKey, stateValue := range map[string]interface{}{
+		"nickname":                          dc.Nickname,
+		"datacenter_id":                     dc.DatacenterId,
+		"city":                              dc.City,
+		"clone_of":                          dc.CloneOf,
+		"cloud_server_host_header_override": dc.CloudServerHostHeaderOverride,
+		"cloud_server_targeting":            dc.CloudServerTargeting,
+		"continent":                         dc.Continent,
+		"country":                           dc.Country} {
+		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			log.Printf("[ERROR] populateTerraformDCState failed: %s", err.Error())
+		}
+	}
 	dloStateList := d.Get("default_load_object").([]interface{})
 	if dloStateList == nil {
 		dloStateList = make([]interface{}, 0, 1)
@@ -490,16 +509,23 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 			dloStateList = make([]interface{}, 0, 1)
 		}
 	}
-	d.Set("default_load_object", dloStateList)
-	d.Set("latitude", dc.Latitude)
-	d.Set("longitude", dc.Longitude)
-	d.Set("ping_interval", dc.PingInterval)
-	d.Set("ping_packet_size", dc.PingPacketSize)
-	d.Set("score_penalty", dc.ScorePenalty)
-	d.Set("servermonitor_liveness_count", dc.ServermonitorLivenessCount)
-	d.Set("servermonitor_load_count", dc.ServermonitorLoadCount)
-	d.Set("servermonitor_pool", dc.ServermonitorPool)
-	d.Set("state_or_province", dc.StateOrProvince)
-	d.Set("virtual", dc.Virtual)
+	for stateKey, stateValue := range map[string]interface{}{
+		"default_load_object":          dloStateList,
+		"latitude":                     dc.Latitude,
+		"longitude":                    dc.Longitude,
+		"ping_interval":                dc.PingInterval,
+		"ping_packet_size":             dc.PingPacketSize,
+		"score_penalty":                dc.ScorePenalty,
+		"servermonitor_liveness_count": dc.ServermonitorLivenessCount,
+		"servermonitor_load_count":     dc.ServermonitorLoadCount,
+		"servermonitor_pool":           dc.ServermonitorPool,
+		"state_or_province":            dc.StateOrProvince,
+		"virtual":                      dc.Virtual,
+	} {
+		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			log.Printf("[ERROR] populateTerraformDCState failed: %s", err.Error())
+		}
+	}
 
 }

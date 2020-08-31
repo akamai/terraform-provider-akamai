@@ -187,7 +187,6 @@ func GetQueryArgs(d *schema.ResourceData) map[string]string {
 	}
 
 	return qArgs
-
 }
 
 // Create a new GTM Domain
@@ -416,7 +415,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 		}
 		dom.EmailNotificationList = ls
 	} else if d.HasChange("email_notification_list") {
-		dom.EmailNotificationList = make([]string, 0, 0)
+		dom.EmailNotificationList = make([]string, 0)
 	}
 	if v, ok := d.GetOk("min_pingable_region_fraction"); ok {
 		dom.MinPingableRegionFraction = v.(float32)
@@ -488,9 +487,6 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 	if v, ok := d.GetOk("default_health_threshold"); ok {
 		dom.DefaultHealthThreshold = v.(float64)
 	}
-	// Want??
-	//if v, ok := d.GetOk("last_modified_by"); ok { dom.LastModifiedBy = v.(string) }
-	// Want?
 	if v, ok := d.GetOk("modification_comments"); ok {
 		dom.ModificationComments = v.(string)
 	}
@@ -514,42 +510,44 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 // Populate Terraform state from provided Domain object
 func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain) {
 
-	// walk through all state elements
-	d.Set("name", dom.Name)
-	d.Set("type", dom.Type)
-	d.Set("default_unreachable_threshold", dom.DefaultUnreachableThreshold)
-	d.Set("email_notification_list", dom.EmailNotificationList)
-	d.Set("min_pingable_region_fraction", dom.MinPingableRegionFraction)
-	d.Set("default_timeout_penalty", dom.DefaultTimeoutPenalty)
-	d.Set("servermonitor_liveness_count", dom.ServermonitorLivenessCount)
-	d.Set("round_robin_prefix", dom.RoundRobinPrefix)
-	d.Set("servermonitor_load_count", dom.ServermonitorLoadCount)
-	d.Set("ping_interval", dom.PingInterval)
-	d.Set("max_ttl", dom.MaxTTL)
-	d.Set("load_imbalance_percentage", dom.LoadImbalancePercentage)
-	d.Set("default_health_max", dom.DefaultHealthMax)
-	d.Set("map_update_interval", dom.MapUpdateInterval)
-	d.Set("max_properties", dom.MaxProperties)
-	d.Set("max_resources", dom.MaxResources)
-	d.Set("default_ssl_client_private_key", dom.DefaultSslClientPrivateKey)
-	d.Set("default_error_penalty", dom.DefaultErrorPenalty)
-	d.Set("max_test_timeout", dom.MaxTestTimeout)
-	d.Set("cname_coalescing_enabled", dom.CnameCoalescingEnabled)
-	d.Set("default_health_multiplier", dom.DefaultHealthMultiplier)
-	d.Set("servermonitor_pool", dom.ServermonitorPool)
-	d.Set("load_feedback", dom.LoadFeedback)
-	d.Set("min_ttl", dom.MinTTL)
-	d.Set("default_max_unreachable_penalty", dom.DefaultMaxUnreachablePenalty)
-	d.Set("default_health_threshold", dom.DefaultHealthThreshold)
-	// Want??
-	//d.Set("last_modified_by", dom.LastModifiedBy)
-	// Want?
-	d.Set("modification_comments", dom.ModificationComments)
-	d.Set("min_test_interval", dom.MinTestInterval)
-	d.Set("ping_packet_size", dom.PingPacketSize)
-	d.Set("default_ssl_client_certificate", dom.DefaultSslClientCertificate)
-	d.Set("end_user_mapping_enabled", dom.EndUserMappingEnabled)
-
+	for stateKey, stateValue := range map[string]interface{}{
+		"name":                            dom.Name,
+		"type":                            dom.Type,
+		"default_unreachable_threshold":   dom.DefaultUnreachableThreshold,
+		"email_notification_list":         dom.EmailNotificationList,
+		"min_pingable_region_fraction":    dom.MinPingableRegionFraction,
+		"default_timeout_penalty":         dom.DefaultTimeoutPenalty,
+		"servermonitor_liveness_count":    dom.ServermonitorLivenessCount,
+		"round_robin_prefix":              dom.RoundRobinPrefix,
+		"servermonitor_load_count":        dom.ServermonitorLoadCount,
+		"ping_interval":                   dom.PingInterval,
+		"max_ttl":                         dom.MaxTTL,
+		"load_imbalance_percentage":       dom.LoadImbalancePercentage,
+		"default_health_max":              dom.DefaultHealthMax,
+		"map_update_interval":             dom.MapUpdateInterval,
+		"max_properties":                  dom.MaxProperties,
+		"max_resources":                   dom.MaxResources,
+		"default_ssl_client_private_key":  dom.DefaultSslClientPrivateKey,
+		"default_error_penalty":           dom.DefaultErrorPenalty,
+		"max_test_timeout":                dom.MaxTestTimeout,
+		"cname_coalescing_enabled":        dom.CnameCoalescingEnabled,
+		"default_health_multiplier":       dom.DefaultHealthMultiplier,
+		"servermonitor_pool":              dom.ServermonitorPool,
+		"load_feedback":                   dom.LoadFeedback,
+		"min_ttl":                         dom.MinTTL,
+		"default_max_unreachable_penalty": dom.DefaultMaxUnreachablePenalty,
+		"default_health_threshold":        dom.DefaultHealthThreshold,
+		"modification_comments":           dom.ModificationComments,
+		"min_test_interval":               dom.MinTestInterval,
+		"ping_packet_size":                dom.PingPacketSize,
+		"default_ssl_client_certificate":  dom.DefaultSslClientCertificate,
+		"end_user_mapping_enabled":        dom.EndUserMappingEnabled} {
+		// walk through all state elements
+		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			log.Printf("[ERROR] populateTerraformState failed: %s", err.Error())
+		}
+	}
 }
 
 // Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)

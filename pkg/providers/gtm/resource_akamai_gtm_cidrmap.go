@@ -208,8 +208,14 @@ func resourceGTMv1CidrMapImport(d *schema.ResourceData, _ interface{}) ([]*schem
 	if err != nil {
 		return nil, err
 	}
-	d.Set("domain", domain)
-	d.Set("wait_on_complete", true)
+	err = d.Set("domain", domain)
+	if err != nil {
+		log.Printf("[ERROR] resourceGTMv1CidrMapImport failed: %s", err.Error())
+	}
+	err = d.Set("wait_on_complete", true)
+	if err != nil {
+		log.Printf("[ERROR] resourceGTMv1CidrMapImport failed: %s", err.Error())
+	}
 	populateTerraformCidrMapState(d, cidr)
 
 	// use same Id as passed in
@@ -305,7 +311,10 @@ func populateCidrMapObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
 	// walk through all state elements
-	d.Set("name", cidr.Name)
+	err := d.Set("name", cidr.Name)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformCidrMapState failed: %s", err.Error())
+	}
 	populateTerraformCidrAssignmentsState(d, cidr)
 	populateTerraformCidrDefaultDCState(d, cidr)
 
@@ -373,8 +382,10 @@ func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.Cid
 			aStateList = append(aStateList, aNew)
 		}
 	}
-	d.Set("assignment", aStateList)
-
+	err := d.Set("assignment", aStateList)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformCidrAssignmentsState failed: %s", err.Error())
+	}
 }
 
 // create and populate GTM CidrMap DefaultDatacenter object
@@ -408,6 +419,8 @@ func populateTerraformCidrDefaultDCState(d *schema.ResourceData, cidr *gtm.CidrM
 		"nickname":      cidr.DefaultDatacenter.Nickname,
 	}
 	ddcListNew[0] = ddcNew
-	d.Set("default_datacenter", ddcListNew)
-
+	err := d.Set("default_datacenter", ddcListNew)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformCidrDefaultDCState failed: %s", err.Error())
+	}
 }
