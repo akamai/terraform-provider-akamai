@@ -305,7 +305,7 @@ func populateGeoMapObject(d *schema.ResourceData, geo *gtm.GeoMap) {
 // Populate Terraform state from provided GeoMap object
 func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap) {
 
-	// walk thru all state elements
+	// walk through all state elements
 	d.Set("name", geo.Name)
 	populateTerraformGeoAssignmentsState(d, geo)
 	populateTerraformGeoDefaultDCState(d, geo)

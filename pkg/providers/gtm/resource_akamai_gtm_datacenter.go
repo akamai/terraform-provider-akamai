@@ -455,7 +455,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
 // Populate Terraform state from provided Datacenter object
 func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 
-	// walk thru all state elements
+	// walk through all state elements
 	d.Set("nickname", dc.Nickname)
 	d.Set("datacenter_id", dc.DatacenterId)
 	d.Set("city", dc.City)

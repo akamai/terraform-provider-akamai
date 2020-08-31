@@ -304,7 +304,7 @@ func populateCidrMapObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 // Populate Terraform state from provided CidrMap object
 func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtm.CidrMap) {
 
-	// walk thru all state elements
+	// walk through all state elements
 	d.Set("name", cidr.Name)
 	populateTerraformCidrAssignmentsState(d, cidr)
 	populateTerraformCidrDefaultDCState(d, cidr)

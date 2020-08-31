@@ -514,7 +514,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 // Populate Terraform state from provided Domain object
 func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain) {
 
-	// walk thru all state elements
+	// walk through all state elements
 	d.Set("name", dom.Name)
 	d.Set("type", dom.Type)
 	d.Set("default_unreachable_threshold", dom.DefaultUnreachableThreshold)

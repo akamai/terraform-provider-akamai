@@ -387,7 +387,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource) {
 func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Entering populateTerraformResourceState")
-	// walk thru all state elements
+	// walk through all state elements
 	d.Set("name", rsrc.Name)
 	d.Set("type", rsrc.Type)
 	d.Set("host_header", rsrc.HostHeader)

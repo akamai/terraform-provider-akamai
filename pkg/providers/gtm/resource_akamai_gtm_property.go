@@ -677,7 +677,7 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 // Populate Terraform state from provided Property object
 func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) {
 
-	// walk thru all state elements
+	// walk through all state elements
 	d.Set("name", prop.Name)
 	d.Set("type", prop.Type)
 	d.Set("ipv6", prop.Ipv6)

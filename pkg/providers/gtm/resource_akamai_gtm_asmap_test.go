@@ -235,7 +235,7 @@ func testAccCheckNumbersValues(s *terraform.State) error {
 			return fmt.Errorf("asmap was not found for as_Numbers check")
 		}
 		log.Printf("[DEBUG] [Akamai GTMV1_3] ASMAP Validating as_numbers")
-		// Walk thru all attributes
+		// Walk through all attributes
 		mapAttribs := rs.Primary.Attributes
 		assignEntries, err := strconv.Atoi(mapAttribs["assignment.#"])
 		if err != nil {

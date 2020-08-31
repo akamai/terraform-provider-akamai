@@ -343,7 +343,7 @@ func populateASmapObject(d *schema.ResourceData, as *gtm.AsMap) {
 // Populate Terraform state from provided ASmap object
 func populateTerraformASmapState(d *schema.ResourceData, as *gtm.AsMap) {
 
-	// walk thru all state elements
+	// walk through all state elements
 	d.Set("name", as.Name)
 	populateTerraformAsAssignmentsState(d, as)
 	populateTerraformAsDefaultDCState(d, as)
