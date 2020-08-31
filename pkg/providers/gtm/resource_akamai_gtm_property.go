@@ -677,36 +677,42 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 // Populate Terraform state from provided Property object
 func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) {
 
-	// walk thru all state elements
-	d.Set("name", prop.Name)
-	d.Set("type", prop.Type)
-	d.Set("ipv6", prop.Ipv6)
-	d.Set("score_aggregation_type", prop.ScoreAggregationType)
-	d.Set("stickiness_bonus_percentage", prop.StickinessBonusPercentage)
-	d.Set("stickiness_bonus_constant", prop.StickinessBonusConstant)
-	d.Set("health_threshold", prop.HealthThreshold)
-	d.Set("use_computed_targets", prop.UseComputedTargets)
-	d.Set("backup_ip", prop.BackupIp)
-	d.Set("balance_by_download_score", prop.BalanceByDownloadScore)
-	d.Set("static_ttl", prop.StaticTTL)
-	d.Set("unreachable_threshold", prop.UnreachableThreshold)
-	d.Set("min_live_fraction", prop.MinLiveFraction)
-	d.Set("health_multiplier", prop.HealthMultiplier)
-	d.Set("dynamic_ttl", prop.DynamicTTL)
-	d.Set("max_unreachable_penalty", prop.MaxUnreachablePenalty)
-	d.Set("map_name", prop.MapName)
-	d.Set("handout_limit", prop.HandoutLimit)
-	d.Set("handout_mode", prop.HandoutMode)
-	d.Set("load_imbalance_percentage", prop.LoadImbalancePercentage)
-	d.Set("failover_delay", prop.FailoverDelay)
-	d.Set("backup_cname", prop.BackupCName)
-	d.Set("failback_delay", prop.FailbackDelay)
-	d.Set("health_max", prop.HealthMax)
-	d.Set("ghost_demand_reporting", prop.GhostDemandReporting)
-	d.Set("weighted_hash_bits_for_ipv4", prop.WeightedHashBitsForIPv4)
-	d.Set("weighted_hash_bits_for_ipv6", prop.WeightedHashBitsForIPv6)
-	d.Set("cname", prop.CName)
-	d.Set("comments", prop.Comments)
+	for stateKey, stateValue := range map[string]interface{}{
+		"name":                        prop.Name,
+		"ipv6":                        prop.Ipv6,
+		"score_aggregation_type":      prop.ScoreAggregationType,
+		"stickiness_bonus_percentage": prop.StickinessBonusPercentage,
+		"stickiness_bonus_constant":   prop.StickinessBonusConstant,
+		"health_threshold":            prop.HealthThreshold,
+		"use_computed_targets":        prop.UseComputedTargets,
+		"backup_ip":                   prop.BackupIp,
+		"balance_by_download_score":   prop.BalanceByDownloadScore,
+		"static_ttl":                  prop.StaticTTL,
+		"unreachable_threshold":       prop.UnreachableThreshold,
+		"min_live_fraction":           prop.MinLiveFraction,
+		"health_multiplier":           prop.HealthMultiplier,
+		"dynamic_ttl":                 prop.DynamicTTL,
+		"max_unreachable_penalty":     prop.MaxUnreachablePenalty,
+		"map_name":                    prop.MapName,
+		"handout_limit":               prop.HandoutLimit,
+		"handout_mode":                prop.HandoutMode,
+		"load_imbalance_percentage":   prop.LoadImbalancePercentage,
+		"failover_delay":              prop.FailoverDelay,
+		"backup_cname":                prop.BackupCName,
+		"failback_delay":              prop.FailbackDelay,
+		"health_max":                  prop.HealthMax,
+		"ghost_demand_reporting":      prop.GhostDemandReporting,
+		"weighted_hash_bits_for_ipv4": prop.WeightedHashBitsForIPv4,
+		"weighted_hash_bits_for_ipv6": prop.WeightedHashBitsForIPv6,
+		"cname":                       prop.CName,
+		"comments":                    prop.Comments,
+	} {
+		// walk thru all state elements
+		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			log.Printf("[ERROR] [Akamai GTMv1] Invalid configuration: %s", err.Error())
+		}
+	}
 	populateTerraformTrafficTargetState(d, prop)
 	populateTerraformStaticRRSetState(d, prop)
 	populateTerraformLivenessTestState(d, prop)
