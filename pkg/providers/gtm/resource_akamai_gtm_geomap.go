@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -33,7 +32,7 @@ func resourceGTMv1Geomap() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"default_datacenter": &schema.Schema{
+			"default_datacenter": {
 				Type:       schema.TypeList,
 				Required:   true,
 				MaxItems:   1,
@@ -51,7 +50,7 @@ func resourceGTMv1Geomap() *schema.Resource {
 					},
 				},
 			},
-			"assignment": &schema.Schema{
+			"assignment": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
@@ -64,7 +63,7 @@ func resourceGTMv1Geomap() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"countries": &schema.Schema{
+						"countries": {
 							Type:     schema.TypeList,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
@@ -105,7 +104,7 @@ func resourceGTMv1GeomapCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] GeoMap Create status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		return errors.New(cStatus.Status.Message)
+		return fmt.Errorf(cStatus.Status.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -131,14 +130,14 @@ func resourceGTMv1GeomapCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 // read geoMap. updates state with entire API result configuration.
-func resourceGTMv1GeomapRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1GeomapRead(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] GeoMap: %s", d.Id())
 	// retrieve the property and domain
 	domain, geoMap, err := parseResourceGeoMapId(d.Id())
 	if err != nil {
-		return errors.New("Invalid geoMap geoMap Id")
+		return fmt.Errorf("invalid geoMap geoMap Id")
 	}
 	geo, err := gtm.GetGeoMap(geoMap, domain)
 	if err != nil {
@@ -158,7 +157,7 @@ func resourceGTMv1GeomapUpdate(d *schema.ResourceData, meta interface{}) error {
 	// pull domain and geoMap out of id
 	domain, geoMap, err := parseResourceGeoMapId(d.Id())
 	if err != nil {
-		return errors.New("Invalid geoMap Id")
+		return fmt.Errorf("invalid geoMap Id")
 	}
 	// Get existingGeoMap
 	existGeo, err := gtm.GetGeoMap(geoMap, domain)
@@ -177,7 +176,7 @@ func resourceGTMv1GeomapUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] GeoMap Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -198,20 +197,26 @@ func resourceGTMv1GeomapUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 // Import GTM GeoMap.
-func resourceGTMv1GeomapImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1GeomapImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] GeoMap [%s] Import", d.Id())
 	// pull domain and geoMap out of geoMap id
 	domain, geoMap, err := parseResourceGeoMapId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, errors.New("Invalid geoMap Id")
+		return []*schema.ResourceData{d}, fmt.Errorf("invalid geoMap Id")
 	}
 	geo, err := gtm.GetGeoMap(geoMap, domain)
 	if err != nil {
 		return nil, err
 	}
-	d.Set("domain", domain)
-	d.Set("wait_on_complete", true)
+	err = d.Set("domain", domain)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("wait_on_complete", true)
+	if err != nil {
+		return nil, err
+	}
 	populateTerraformGeoMapState(d, geo)
 
 	// use same Id as passed in
@@ -220,14 +225,14 @@ func resourceGTMv1GeomapImport(d *schema.ResourceData, meta interface{}) ([]*sch
 }
 
 // Delete GTM GeoMap.
-func resourceGTMv1GeomapDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1GeomapDelete(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] GeoMap: %s", d.Id())
 	// Get existing geoMap
 	domain, geoMap, err := parseResourceGeoMapId(d.Id())
 	if err != nil {
-		return errors.New("Invalid geoMap Id")
+		return fmt.Errorf("invalid geoMap Id")
 	}
 	existGeo, err := gtm.GetGeoMap(geoMap, domain)
 	if err != nil {
@@ -243,7 +248,7 @@ func resourceGTMv1GeomapDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] GeoMap Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -260,19 +265,19 @@ func resourceGTMv1GeomapDelete(d *schema.ResourceData, meta interface{}) error {
 
 	}
 
-	// if succcessful ....
+	// if successful ....
 	d.SetId("")
 	return nil
 }
 
-// Test GTM GeoMap existance
-func resourceGTMv1GeomapExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+// Test GTM GeoMap existence
+func resourceGTMv1GeomapExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and geoMap out of geoMap id
 	domain, geoMap, err := parseResourceGeoMapId(d.Id())
 	if err != nil {
-		return false, errors.New("Invalid geoMap geoMap Id")
+		return false, fmt.Errorf("invalid geoMap geoMap Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing geoMap [%s] in domain %s", geoMap, domain)
 	geo, err := gtm.GetGeoMap(geoMap, domain)
@@ -306,8 +311,11 @@ func populateGeoMapObject(d *schema.ResourceData, geo *gtm.GeoMap) {
 // Populate Terraform state from provided GeoMap object
 func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap) {
 
-	// walk thru all state elements
-	d.Set("name", geo.Name)
+	// walk through all state elements
+	err := d.Set("name", geo.Name)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformGeoMapState failed: %s", err.Error())
+	}
 	populateTerraformGeoAssignmentsState(d, geo)
 	populateTerraformGeoDefaultDCState(d, geo)
 
@@ -375,8 +383,10 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 			aStateList = append(aStateList, aNew)
 		}
 	}
-	d.Set("assignment", aStateList)
-
+	err := d.Set("assignment", aStateList)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformGeoAssignmentsState failed: %s", err.Error())
+	}
 }
 
 // create and populate GTM GeoMap DefaultDatacenter object
@@ -410,6 +420,8 @@ func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap)
 		"nickname":      geo.DefaultDatacenter.Nickname,
 	}
 	ddcListNew[0] = ddcNew
-	d.Set("default_datacenter", ddcListNew)
-
+	err := d.Set("default_datacenter", ddcListNew)
+	if err != nil {
+		log.Printf("[ERROR] populateTerraformGeoDefaultDCState failed: %s", err.Error())
+	}
 }

@@ -391,7 +391,7 @@ func dnsRecordTargetSuppress(k, old, new string, d *schema.ResourceData) bool {
 	// May call with values in both old and new or in one or the other.
 	// Seems if different, get one invocation with old val and null new as well as
 	// invocation with new val and null old. In all cases, we retrieve old and new sets
-	// from ResourceData and validate thru those.
+	// from ResourceData and validate through those.
 
 	recordtype := d.Get("recordtype").(string)
 	oldlist, newlist := d.GetChange("target")
@@ -1423,7 +1423,7 @@ func bindRecord(d *schema.ResourceData) (dnsv2.RecordBody, error) {
 			priority := d.Get("priority").(int)
 			increment := d.Get("priority_increment").(int)
 			log.Printf("[DEBUG] [Akamai DNSv2] MX BIND Priority: %d ; Increment: %d", priority, increment)
-			// walk thru target first
+			// walk through target first
 			for _, recContent := range target {
 				targentry := recContent.(string)
 				if targentry[len(recContent.(string))-1:] != "." {

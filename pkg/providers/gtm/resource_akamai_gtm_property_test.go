@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -279,7 +278,7 @@ func testAccCheckAkamaiGTMPropertyDestroy(s *terraform.State) error {
 func parseStringID(id string) (string, string, error) {
 	idComp := strings.Split(id, ":")
 	if len(idComp) < 2 {
-		return "", "", errors.New("Invalid Property ID")
+		return "", "", fmt.Errorf("Invalid Property ID")
 	}
 
 	return idComp[1], idComp[0], nil
