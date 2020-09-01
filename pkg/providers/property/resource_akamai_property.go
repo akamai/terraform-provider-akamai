@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strconv"
 	"strings"
@@ -23,13 +24,13 @@ import (
 
 func resourceProperty() *schema.Resource {
 	return &schema.Resource{
-		Create:        resourcePropertyCreate,
-		Read:          resourcePropertyRead,
-		Update:        resourcePropertyUpdate,
-		Delete:        resourcePropertyDelete,
+		CreateContext: resourcePropertyCreate,
+		ReadContext:   resourcePropertyRead,
+		UpdateContext: resourcePropertyUpdate,
+		DeleteContext: resourcePropertyDelete,
 		CustomizeDiff: resourceCustomDiffCustomizeDiff,
 		Importer: &schema.ResourceImporter{
-			State: resourcePropertyImport,
+			StateContext: resourcePropertyImport,
 		},
 		Schema: akamaiPropertySchema,
 	}
@@ -156,50 +157,45 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyCreate(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyCreate")
 	CorrelationID := "[PAPI][resourcePropertyCreate-" + akactx.OperationID() + "]"
 	d.Partial(true)
-
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	contract, err := getContract(d, CorrelationID, logger)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	product, err := getProduct(d, contract, CorrelationID, logger)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	var property *papi.Property
 	name, err := tools.GetStringValue("name", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if property = findProperty(name, CorrelationID); property == nil {
-		if product == nil {
-			return errors.New("product must be specified to create a new property")
-		}
-
 		property, err = createProperty(contract, group, product, d, CorrelationID, logger)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
 	err = ensureEditableVersion(property, CorrelationID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("account", property.AccountID); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("version", property.LatestVersion); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 
 	// The API now has data, so save the partial state
@@ -207,22 +203,28 @@ func resourcePropertyCreate(d *schema.ResourceData, _ interface{}) error {
 
 	rules, err := getRules(d, property, contract, group, CorrelationID, logger)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err = rules.Save(CorrelationID); err != nil {
 		if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
 			var msg string
+			var diags diag.Diagnostics
 			for _, v := range rules.Errors {
 				msg += fmt.Sprintf("\n Rule validation error: %s %s %s %s %s", v.Type, v.Title, v.Detail, v.Instance, v.BehaviorName)
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Invalid Property Rules",
+					Detail:   msg,
+				})
 			}
-			return errors.New("Error - Invalid Property Rules" + msg)
+			return diags
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	hostnames, err := setHostnames(property, d, CorrelationID, logger)
 	if err := d.Set("edge_hostnames", hostnames); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	rulesAPI, err := property.GetRules(CorrelationID)
 	if err != nil {
@@ -232,7 +234,7 @@ func resourcePropertyCreate(d *schema.ResourceData, _ interface{}) error {
 	rulesAPI.Etag = ""
 	body, err := jsonhooks.Marshal(rulesAPI)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	sha1hashAPI := tools.GetSHAString(string(body))
@@ -240,15 +242,15 @@ func resourcePropertyCreate(d *schema.ResourceData, _ interface{}) error {
 	logger.Debug("CREATE Check rules after unmarshal from Json %s\n", string(body))
 
 	if err := d.Set("rulessha", sha1hashAPI); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	d.SetId(fmt.Sprintf("%s", property.PropertyID))
 	if err := d.Set("rules", string(body)); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	d.Partial(false)
 	logger.Debug("Done")
-	return resourcePropertyRead(d, nil)
+	return resourcePropertyRead(nil, d, nil)
 }
 
 func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group, correlationid string, logger hclog.Logger) (*papi.Rules, error) {
@@ -371,24 +373,25 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 	return property, nil
 }
 
-func resourcePropertyDelete(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyDelete(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyDelete")
 	CorrelationID := "[PAPI][resourcePropertyDelete-" + akactx.OperationID() + "]"
 	logger.Debug("DELETING")
 	contractID, err := tools.GetStringValue("contract", d)
+	//Todo clean up redundant checks and bubble up errors
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
-			return err
+			return diag.FromErr(err)
 		}
-		return errors.New("missing contract ID")
+		return diag.FromErr(errors.New("missing contract ID"))
 	}
 	groupID, err := tools.GetStringValue("group", d)
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
-			return err
+			return diag.FromErr(err)
 		}
-		return errors.New("missing group ID")
+		return diag.FromErr(errors.New("missing group ID"))
 	}
 
 	property := papi.NewProperty(papi.NewProperties())
@@ -398,23 +401,23 @@ func resourcePropertyDelete(d *schema.ResourceData, _ interface{}) error {
 
 	err = property.GetProperty(CorrelationID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if property.StagingVersion != 0 {
-		return fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkStaging)
+		return diag.Errorf("property is still active on %s and cannot be deleted", papi.NetworkStaging)
 	}
 	if property.ProductionVersion != 0 {
-		return fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkProduction)
+		return diag.Errorf("property is still active on %s and cannot be deleted", papi.NetworkProduction)
 	}
 	if err = property.Delete(CorrelationID); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 	logger.Debug("Done")
 	return nil
 }
 
-func resourcePropertyImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourcePropertyImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyImport")
 	propertyID := d.Id()
@@ -462,7 +465,7 @@ func resourcePropertyImport(d *schema.ResourceData, _ interface{}) ([]*schema.Re
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourcePropertyRead(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyRead")
 	CorrelationID := "[PAPI][resourcePropertyRead-" + akactx.OperationID() + "]"
@@ -471,22 +474,22 @@ func resourcePropertyRead(d *schema.ResourceData, _ interface{}) error {
 	property.PropertyID = d.Id()
 	err := property.GetProperty(CorrelationID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if err := d.Set("account", property.AccountID); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract", property.ContractID); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group", property.GroupID); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("name", property.PropertyName); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("note", property.Note); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 
 	rules, err := property.GetRules(CorrelationID)
@@ -497,46 +500,46 @@ func resourcePropertyRead(d *schema.ResourceData, _ interface{}) error {
 	rules.Etag = ""
 	body, err := jsonhooks.Marshal(rules)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	sha1hashAPI := tools.GetSHAString(string(body))
 	logger.Debug("READ SHA from Json %s", sha1hashAPI)
 	logger.Debug("READ Rules from API : %s", string(body))
 	if err := d.Set("rules", string(body)); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("rulessha", sha1hashAPI); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if rules.RuleFormat != "" {
 		if err := d.Set("rule_format", rules.RuleFormat); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
 	} else {
 		if err := d.Set("rule_format", property.RuleFormat); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 	logger.Debug("Property RuleFormat from API : %s", property.RuleFormat)
 	if err := d.Set("version", property.LatestVersion); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if property.StagingVersion > 0 {
 		if err := d.Set("staging_version", property.StagingVersion); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 	if property.ProductionVersion > 0 {
 		if err := d.Set("production_version", property.ProductionVersion); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 	d.Partial(false)
 	return nil
 }
 
-func resourcePropertyUpdate(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyUpdate")
 	CorrelationID := "[PAPI][resourcePropertyUpdate-" + akactx.OperationID() + "]"
@@ -544,11 +547,11 @@ func resourcePropertyUpdate(d *schema.ResourceData, _ interface{}) error {
 	d.Partial(true)
 	property, err := getProperty(d, CorrelationID, logger)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	err = ensureEditableVersion(property, CorrelationID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	rules, err := getRules(d, property, property.Contract, property.Group, CorrelationID, logger)
@@ -560,7 +563,7 @@ func resourcePropertyUpdate(d *schema.ResourceData, _ interface{}) error {
 		ruleFormat, err := tools.GetStringValue("rule_format", d)
 		if err != nil {
 			if !errors.Is(err, tools.ErrNotFound) {
-				return err
+				return diag.FromErr(err)
 			}
 		} else {
 			property.RuleFormat = ruleFormat
@@ -568,22 +571,29 @@ func resourcePropertyUpdate(d *schema.ResourceData, _ interface{}) error {
 		}
 		body, err := jsonhooks.Marshal(rules)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := d.Set("rules", string(body)); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
 		logger.Debug("UPDATE Check rules after unmarshal from Json %s", string(body))
 		if err = rules.Save(CorrelationID); err != nil {
 			if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
 				var msg string
+				//Todo Create reusable diagnostic functions if needed
+				var diags diag.Diagnostics
 				for _, v := range rules.Errors {
 					msg += fmt.Sprintf("\n Rule validation error: %s %s %s %s %s", v.Type, v.Title, v.Detail, v.Instance, v.BehaviorName)
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Invalid Property Rules",
+						Detail:   msg,
+					})
 				}
-				return errors.New("Error - Invalid Property Rules" + msg)
+				return diags
 			}
 			logger.Debug("update rules.Save err: %#v", err)
-			return fmt.Errorf("update rules.Save err: %#v", err)
+			return diag.Errorf("update rules.Save err: %#v", err)
 		}
 
 		rules, err = property.GetRules(CorrelationID)
@@ -594,33 +604,33 @@ func resourcePropertyUpdate(d *schema.ResourceData, _ interface{}) error {
 		rules.Etag = ""
 		body, err = jsonhooks.Marshal(rules)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		sha1hashAPI := tools.GetSHAString(string(body))
 		logger.Debug("UPDATE SHA from Json %s", sha1hashAPI)
 		if err := d.Set("rulessha", sha1hashAPI); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 	if err := d.Set("version", property.LatestVersion); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if d.HasChange("hostnames") {
 		edgeHostnamesMap, err := setHostnames(property, d, CorrelationID, logger)
 		if err != nil {
-			return fmt.Errorf("setHostnames err: %#v", err)
+			return diag.Errorf("setHostnames err: %#v", err)
 		}
 		if err := d.Set("edge_hostnames", edgeHostnamesMap); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
 	d.Partial(false)
 
 	logger.Debug("Done")
-	return resourcePropertyRead(d, nil)
+	return resourcePropertyRead(nil, d, nil)
 }
 
 func resourceCustomDiffCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
