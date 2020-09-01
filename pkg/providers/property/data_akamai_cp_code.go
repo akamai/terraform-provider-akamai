@@ -1,16 +1,18 @@
 package property
 
 import (
+	"context"
 	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCPCode() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCPCodeRead,
+		ReadContext: dataSourceCPCodeRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -30,7 +32,7 @@ func dataSourceCPCode() *schema.Resource {
 	}
 }
 
-func dataSourceCPCodeRead(d *schema.ResourceData, _ interface{}) error {
+func dataSourceCPCodeRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	log := akactx.Log("PAPI", "dataSourceCPCodeRead")
 	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + akactx.OperationID() + "]"
@@ -39,31 +41,31 @@ func dataSourceCPCodeRead(d *schema.ResourceData, _ interface{}) error {
 	var name, group, contract string
 	var err error
 	if name, err = tools.GetStringValue("name", d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if group, err = tools.GetStringValue("group", d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if contract, err = tools.GetStringValue("contract", d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	cpCodes := datasourceCPCodePAPINewCPCodes(contract, group)
 	cpCode, err := cpCodes.FindCpCode(name, CorrelationID)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrLookingUpCPCode, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", ErrLookingUpCPCode, err.Error()))
 	}
 	if cpCode == nil {
-		return fmt.Errorf("%w: invalid CP Code", ErrLookingUpCPCode)
+		return diag.FromErr(fmt.Errorf("%w: invalid CP Code", ErrLookingUpCPCode))
 	}
 
 	if err := d.Set("name", cpCode.CpcodeName); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("id", cpCode.CpcodeID); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.SetId(cpCode.CpcodeID)
 

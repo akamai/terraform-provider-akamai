@@ -192,10 +192,10 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, _ interfa
 		return diag.FromErr(err)
 	}
 	if err := d.Set("account", property.AccountID); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("version", property.LatestVersion); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	// The API now has data, so save the partial state
@@ -224,7 +224,7 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, _ interfa
 
 	hostnames, err := setHostnames(property, d, CorrelationID, logger)
 	if err := d.Set("edge_hostnames", hostnames); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	rulesAPI, err := property.GetRules(CorrelationID)
 	if err != nil {
@@ -242,11 +242,11 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, _ interfa
 	logger.Debug("CREATE Check rules after unmarshal from Json %s\n", string(body))
 
 	if err := d.Set("rulessha", sha1hashAPI); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.SetId(fmt.Sprintf("%s", property.PropertyID))
 	if err := d.Set("rules", string(body)); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.Partial(false)
 	logger.Debug("Done")
@@ -477,19 +477,19 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface
 		return diag.FromErr(err)
 	}
 	if err := d.Set("account", property.AccountID); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("contract", property.ContractID); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("group", property.GroupID); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("name", property.PropertyName); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("note", property.Note); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	rules, err := property.GetRules(CorrelationID)
@@ -506,33 +506,33 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface
 	logger.Debug("READ SHA from Json %s", sha1hashAPI)
 	logger.Debug("READ Rules from API : %s", string(body))
 	if err := d.Set("rules", string(body)); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("rulessha", sha1hashAPI); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	if rules.RuleFormat != "" {
 		if err := d.Set("rule_format", rules.RuleFormat); err != nil {
-			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	} else {
 		if err := d.Set("rule_format", property.RuleFormat); err != nil {
-			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
 	logger.Debug("Property RuleFormat from API : %s", property.RuleFormat)
 	if err := d.Set("version", property.LatestVersion); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if property.StagingVersion > 0 {
 		if err := d.Set("staging_version", property.StagingVersion); err != nil {
-			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
 	if property.ProductionVersion > 0 {
 		if err := d.Set("production_version", property.ProductionVersion); err != nil {
-			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
 	d.Partial(false)
@@ -574,7 +574,7 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 			return diag.FromErr(err)
 		}
 		if err := d.Set("rules", string(body)); err != nil {
-			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 		logger.Debug("UPDATE Check rules after unmarshal from Json %s", string(body))
 		if err = rules.Save(CorrelationID); err != nil {
@@ -610,11 +610,11 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 		sha1hashAPI := tools.GetSHAString(string(body))
 		logger.Debug("UPDATE SHA from Json %s", sha1hashAPI)
 		if err := d.Set("rulessha", sha1hashAPI); err != nil {
-			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
 	if err := d.Set("version", property.LatestVersion); err != nil {
-		return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	if d.HasChange("hostnames") {
@@ -623,7 +623,7 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 			return diag.Errorf("setHostnames err: %#v", err)
 		}
 		if err := d.Set("edge_hostnames", edgeHostnamesMap); err != nil {
-			return diag.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
 

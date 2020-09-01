@@ -1,10 +1,12 @@
 package property
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
@@ -14,13 +16,13 @@ import (
 
 func resourcePropertyVariables() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePropertyVariablesCreate,
-		Read:   resourcePropertyVariablesRead,
-		Update: resourcePropertyVariablesUpdate,
-		Delete: resourcePropertyVariablesDelete,
+		CreateContext: resourcePropertyVariablesCreate,
+		ReadContext:   resourcePropertyVariablesRead,
+		UpdateContext: resourcePropertyVariablesUpdate,
+		DeleteContext: resourcePropertyVariablesDelete,
 		Exists: resourcePropertyVariablesExists,
 		Importer: &schema.ResourceImporter{
-			State: resourcePropertyVariablesImport,
+			StateContext: resourcePropertyVariablesImport,
 		},
 		Schema: akamaiPropertyVariablesSchema,
 	}
@@ -71,14 +73,14 @@ var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyVariablesCreate(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyVariablesCreate")
 	rule := papi.NewRule()
 	logger.Debug("START Check for variables")
 	variables, err := tools.GetSetValue("variables", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return err
+		return diag.FromErr(err)
 	}
 	if err == nil {
 		logger.Debug("Check for variables  %s", variables)
@@ -107,23 +109,23 @@ func resourcePropertyVariablesCreate(d *schema.ResourceData, _ interface{}) erro
 			newVariable := papi.NewVariable()
 			name, ok := variableMap["name"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string"))
 			}
 			description, ok := variableMap["description"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "description", "string")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "description", "string"))
 			}
 			value, ok := variableMap["value"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "value", "string")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "value", "string"))
 			}
 			hidden, ok := variableMap["hidden"].(bool)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "hidden", "bool")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "hidden", "bool"))
 			}
 			sensitive, ok := variableMap["sensitive"].(bool)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "sensitive", "bool")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "sensitive", "bool"))
 			}
 			newVariable.Name = name
 			newVariable.Description = description
@@ -136,21 +138,21 @@ func resourcePropertyVariablesCreate(d *schema.ResourceData, _ interface{}) erro
 
 	body, err := jsonhooks.Marshal(rule)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	logger.Debug("JSON result  %s", string(body))
 	sha := tools.GetSHAString(string(body))
 	if err := d.Set("json", string(body)); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.SetId(sha)
 	logger.Debug("Done")
 
-	return resourcePropertyVariablesRead(d, nil)
+	return resourcePropertyVariablesRead(nil, d, nil)
 }
 
-func resourcePropertyVariablesDelete(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyVariablesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyVariablesDelete")
 	logger.Debug("DELETING")
@@ -159,7 +161,7 @@ func resourcePropertyVariablesDelete(d *schema.ResourceData, _ interface{}) erro
 	return nil
 }
 
-func resourcePropertyVariablesImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourcePropertyVariablesImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 	resourceID := d.Id()
 	propertyID := resourceID
 
@@ -219,11 +221,11 @@ func resourcePropertyVariablesExists(d *schema.ResourceData, _ interface{}) (boo
 	return true, nil
 }
 
-func resourcePropertyVariablesRead(_ *schema.ResourceData, _ interface{}) error {
+func resourcePropertyVariablesRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
 }
 
-func resourcePropertyVariablesUpdate(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyVariablesUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log(inst.Name())
 	logger.Debug("UPDATING")
@@ -232,7 +234,7 @@ func resourcePropertyVariablesUpdate(d *schema.ResourceData, _ interface{}) erro
 	variables, err := tools.GetSetValue("variables", d)
 	if err != nil {
 		if err != tools.ErrNotFound {
-			return err
+			return diag.FromErr(err)
 		}
 		logger.Debug("Done")
 		return nil
@@ -255,23 +257,23 @@ func resourcePropertyVariablesUpdate(d *schema.ResourceData, _ interface{}) erro
 			newVariable := papi.NewVariable()
 			name, ok := variableMap["name"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string"))
 			}
 			description, ok := variableMap["description"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "description", "string")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "description", "string"))
 			}
 			value, ok := variableMap["value"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "value", "string")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "value", "string"))
 			}
 			hidden, ok := variableMap["hidden"].(bool)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "hidden", "bool")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "hidden", "bool"))
 			}
 			sensitive, ok := variableMap["sensitive"].(bool)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "sensitive", "bool")
+				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "sensitive", "bool"))
 			}
 			newVariable.Name = name
 			newVariable.Description = description
@@ -284,12 +286,12 @@ func resourcePropertyVariablesUpdate(d *schema.ResourceData, _ interface{}) erro
 
 	body, err := jsonhooks.Marshal(rule)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	logger.Debug("JSON result  %s", string(body))
 	sha := tools.GetSHAString(string(body))
 	if err := d.Set("json", string(body)); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.SetId(sha)
 	logger.Debug("Done")
