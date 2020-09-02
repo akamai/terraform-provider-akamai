@@ -1,10 +1,12 @@
 package property
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -13,7 +15,7 @@ import (
 
 func dataSourcePropertyGroups() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePropertyGroupsRead,
+		ReadContext: dataSourcePropertyGroupsRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -27,7 +29,7 @@ func dataSourcePropertyGroups() *schema.Resource {
 	}
 }
 
-func dataSourcePropertyGroupsRead(d *schema.ResourceData, _ interface{}) error {
+func dataSourcePropertyGroupsRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	log := akactx.Log("PAPI", "dataSourcePropertyGroupsRead")
 	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + akactx.OperationID() + "]"
@@ -36,7 +38,7 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, _ interface{}) error {
 	var getDefault bool
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
-			return err
+			return diag.FromErr(err)
 		}
 		name = "default"
 		getDefault = true
@@ -46,15 +48,15 @@ func dataSourcePropertyGroupsRead(d *schema.ResourceData, _ interface{}) error {
 	groups := papi.NewGroups()
 	err = groups.GetGroups(CorrelationID)
 	if err != nil {
-		return fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err)
+		return diag.FromErr(fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err))
 	}
 	contract, err := tools.GetStringValue("contract", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return err
+		return diag.FromErr(err)
 	}
 	group, err := findGroupByName(name, contract, groups, getDefault)
 	if err != nil {
-		return fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err)
+		return diag.FromErr(fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err))
 	}
 
 	log.Debug("Searching for records [%v]", group)
