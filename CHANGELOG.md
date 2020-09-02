@@ -1,4 +1,14 @@
-## 0.9.0 (Unreleased)
+# RELEASE NOTES
+
+## 0.9.0 (August 26, 2020)
+* [IMPORTANT] Breaking change for TF clients <= 0.11. Provider now built using Terraform sdk v2 library. Terraform dropped 0.11 client support as part of this update.  This change will make many new enhancements possible. ([See: Terraform v2 sdk](https://www.terraform.io/docs/extend/guides/v2-upgrade-guide.html))
+* [CHANGE] Individual edgerc file sections for different Akamai APIs (i.e., `property_section`, `dns_section`) has been deprecated in favor a common `config_section` used in conjuction with provider aliases ([See: Multiple Provider Configurations](https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations))
+* [FIX] datasource akamai_group will no longer panic when contract not provided
+* [ADD] Project re-organized to prepare for additional APIs to be included
+
+## 0.8.2 (August 13, 2020)
+* Initial release via the Terraform Registry. Otherwise identical to 0.8.1 release
+
 ## 0.8.1 (July 30, 2020)
 * [FIX] Activation is executed, even without changes #139 (`akamai-property-activation`) ([#139](https://github.com/terraform-providers/terraform-provider-template/issues/139))
 * [FIX] Cannot find group when there are groups with the same name under multiple contract. #168 (`akamai-property-group`) ([#168](https://github.com/terraform-providers/terraform-provider-template/issues/168))
