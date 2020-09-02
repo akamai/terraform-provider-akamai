@@ -404,10 +404,10 @@ func resourcePropertyDelete(_ context.Context, d *schema.ResourceData, _ interfa
 		return diag.FromErr(err)
 	}
 	if property.StagingVersion != 0 {
-		return diag.Errorf("property is still active on %s and cannot be deleted", papi.NetworkStaging)
+		return diag.FromErr(fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkStaging))
 	}
 	if property.ProductionVersion != 0 {
-		return diag.Errorf("property is still active on %s and cannot be deleted", papi.NetworkProduction)
+		return diag.FromErr(fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkProduction))
 	}
 	if err = property.Delete(CorrelationID); err != nil {
 		return diag.FromErr(err)
@@ -593,7 +593,7 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 				return diags
 			}
 			logger.Debug("update rules.Save err: %#v", err)
-			return diag.Errorf("update rules.Save err: %#v", err)
+			return diag.FromErr(fmt.Errorf("update rules.Save err: %#v", err))
 		}
 
 		rules, err = property.GetRules(CorrelationID)
@@ -620,7 +620,7 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 	if d.HasChange("hostnames") {
 		edgeHostnamesMap, err := setHostnames(property, d, CorrelationID, logger)
 		if err != nil {
-			return diag.Errorf("setHostnames err: %#v", err)
+			return diag.FromErr(fmt.Errorf("setHostnames err: %#v", err))
 		}
 		if err := d.Set("edge_hostnames", edgeHostnamesMap); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
