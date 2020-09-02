@@ -17,7 +17,7 @@ func TestAccDataSourceContract_basic(t *testing.T) {
 		CheckDestroy: testAccCheckAkamaiContractDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceContract_basic(),
+				Config: testAccDataSourceContractBasic(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 				),
@@ -26,7 +26,7 @@ func TestAccDataSourceContract_basic(t *testing.T) {
 	})
 }
 
-func testAccDataSourceContract_basic() string {
+func testAccDataSourceContractBasic() string {
 	return `
 provider "akamai" {
   papi_section = "papi"

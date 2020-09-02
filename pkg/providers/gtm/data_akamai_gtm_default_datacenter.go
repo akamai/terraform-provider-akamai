@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -37,25 +36,33 @@ func dataSourceGTMDefaultDatacenter() *schema.Resource {
 }
 
 // validateDCValue is a SchemaValidateFunc to validate the DC value.
-func validateDCValue(v interface{}, k string) (ws []string, es []error) {
-	value := v.(int)
+func validateDCValue(v interface{}, _ string) (ws []string, es []error) {
+	value, ok := v.(int)
+	if !ok {
+		es = append(es, fmt.Errorf("wrong cast"))
+		return
+	}
 	if value != gtm.MapDefaultDC && value != gtm.Ipv4DefaultDC && value != gtm.Ipv6DefaultDC {
-		es = append(es, fmt.Errorf("Datacenter value must be %d, %d, or %d", gtm.MapDefaultDC, gtm.Ipv4DefaultDC, gtm.Ipv6DefaultDC))
+		es = append(es, fmt.Errorf("datacenter value must be %d, %d, or %d", gtm.MapDefaultDC, gtm.Ipv4DefaultDC, gtm.Ipv6DefaultDC))
 	}
 	return
 }
 
-func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, _ interface{}) error {
 	log.Printf("[DEBUG] dataSourceDefaultDatacenter Read")
 
 	domain, ok := d.GetOk("domain")
 	if !ok {
-		return errors.New("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
 	}
 	// get or create default dc
+	dcid, ok := d.Get("datacenter").(int)
+	if !ok {
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: datacenter not initialized")
+	}
+
+	var defaultDC = gtm.NewDatacenter()
 	var err error
-	dcid := d.Get("datacenter").(int)
-	defaultDC := gtm.NewDatacenter()
 	if dcid == gtm.MapDefaultDC {
 		defaultDC, err = gtm.CreateMapsDefaultDatacenter(domain.(string))
 	} else if dcid == gtm.Ipv4DefaultDC {
@@ -70,10 +77,10 @@ func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter retrieval failed. %v", err)
 	}
 	if defaultDC == nil {
-		return errors.New("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter does not Exist")
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter does not Exist")
 	}
-	d.Set("nickname", defaultDC.Nickname)
-	d.Set("datacenter_id", defaultDC.DatacenterId)
+	_ = d.Set("nickname", defaultDC.Nickname)
+	_ = d.Set("datacenter_id", defaultDC.DatacenterId)
 	defaultDatacenterId := fmt.Sprintf("%s:%s:%d", domain.(string), "default_datcenter", defaultDC.DatacenterId)
 	log.Printf("[DEBUG] [Akamai GTMv1] Generated Default DC Resource Id: %s", defaultDatacenterId)
 	d.SetId(defaultDatacenterId)

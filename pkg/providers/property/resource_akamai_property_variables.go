@@ -1,11 +1,12 @@
 package property
 
 import (
+	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"strings"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -26,12 +27,12 @@ func resourcePropertyVariables() *schema.Resource {
 }
 
 var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
-	"variables": &schema.Schema{
+	"variables": {
 		Type:     schema.TypeSet,
 		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"variable": &schema.Schema{
+				"variable": {
 					Type:     schema.TypeSet,
 					Optional: true,
 					Elem: &schema.Resource{
@@ -70,75 +71,105 @@ var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyVariablesCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyVariablesCreate-" + tools.CreateNonce() + "]"
+func resourcePropertyVariablesCreate(d *schema.ResourceData, _ interface{}) error {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourcePropertyVariablesCreate")
 	rule := papi.NewRule()
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, ": START Check for variables")
-	variables, ok := d.GetOk("variables")
-	if ok {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables  %s\n", variables))
+	logger.Debug("START Check for variables")
+	variables, err := tools.GetSetValue("variables", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	if err == nil {
+		logger.Debug("Check for variables  %s", variables)
 	}
 
-	for _, r := range variables.(*schema.Set).List() {
+	for _, r := range variables.List() {
 		variable, ok := r.(map[string]interface{})
-		if ok {
-			vv, ok := variable["variable"]
-			if ok {
-				for _, v := range vv.(*schema.Set).List() {
-					variableMap, ok := v.(map[string]interface{})
-					if ok {
-						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  name %s\n", variableMap["name"]))
-						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  value %s\n", variableMap["value"]))
-						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  description%s\n", variableMap["description"]))
-						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  hidden%s\n", variableMap["hidden"]))
-						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  sensitive%s\n", variableMap["sensitive"]))
-						edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables LOOP  fqname%s\n", variableMap["fqname"]))
-						newVariable := papi.NewVariable()
-						newVariable.Name = variableMap["name"].(string)
-						newVariable.Description = variableMap["description"].(string)
-						newVariable.Value = variableMap["value"].(string)
-						newVariable.Hidden = variableMap["hidden"].(bool)
-						newVariable.Sensitive = variableMap["sensitive"].(bool)
-						rule.AddVariable(newVariable)
-					}
-				}
-
+		if !ok {
+			continue
+		}
+		vv, ok := variable["variable"]
+		if !ok {
+			continue
+		}
+		for _, v := range vv.(*schema.Set).List() {
+			variableMap, ok := v.(map[string]interface{})
+			if !ok {
+				continue
 			}
-
+			logger.Debug(" Check for variables LOOP  name %s", variableMap["name"])
+			logger.Debug("  Check for variables LOOP  value %s", variableMap["value"])
+			logger.Debug("  Check for variables LOOP  description %s", variableMap["description"])
+			logger.Debug("  Check for variables LOOP  hidden %s", variableMap["hidden"])
+			logger.Debug("  Check for variables LOOP  sensitive %s", variableMap["sensitive"])
+			logger.Debug("  Check for variables LOOP  fqname %s", variableMap["fqname"])
+			newVariable := papi.NewVariable()
+			name, ok := variableMap["name"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string")
+			}
+			description, ok := variableMap["description"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "description", "string")
+			}
+			value, ok := variableMap["value"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "value", "string")
+			}
+			hidden, ok := variableMap["hidden"].(bool)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "hidden", "bool")
+			}
+			sensitive, ok := variableMap["sensitive"].(bool)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "sensitive", "bool")
+			}
+			newVariable.Name = name
+			newVariable.Description = description
+			newVariable.Value = value
+			newVariable.Hidden = hidden
+			newVariable.Sensitive = sensitive
+			rule.AddVariable(newVariable)
 		}
 	}
 
-	jsonBody, err := jsonhooks.Marshal(rule)
+	body, err := jsonhooks.Marshal(rule)
 	if err != nil {
 		return err
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Json result  %s\n", string(jsonBody)))
-	sha := tools.GetSHAString(string(jsonBody))
-	d.Set("json", string(jsonBody))
-
+	logger.Debug("JSON result  %s", string(body))
+	sha := tools.GetSHAString(string(body))
+	if err := d.Set("json", string(body)); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	d.SetId(sha)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Done")
+	logger.Debug("Done")
 
-	return resourcePropertyVariablesRead(d, meta)
+	return resourcePropertyVariablesRead(d, nil)
 }
 
-func resourcePropertyVariablesDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyVariablesDelete-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "DELETING")
+func resourcePropertyVariablesDelete(d *schema.ResourceData, _ interface{}) error {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourcePropertyVariablesDelete")
+	logger.Debug("DELETING")
 	d.SetId("")
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Done")
-
+	logger.Debug("Done")
 	return nil
 }
 
-func resourcePropertyVariablesImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourcePropertyVariablesImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 	resourceID := d.Id()
 	propertyID := resourceID
 
 	if !strings.HasPrefix(resourceID, "prp_") {
-		for _, searchKey := range []papi.SearchKey{papi.SearchByPropertyName, papi.SearchByHostname, papi.SearchByEdgeHostname} {
+		keys := []papi.SearchKey{
+			papi.SearchByPropertyName,
+			papi.SearchByHostname,
+			papi.SearchByEdgeHostname,
+		}
+		for _, searchKey := range keys {
 			results, err := papi.Search(searchKey, resourceID, "") //<--correlationid
 			if err != nil {
 				continue
@@ -153,85 +184,114 @@ func resourcePropertyVariablesImport(d *schema.ResourceData, meta interface{}) (
 
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = propertyID
-	e := property.GetProperty("")
-	if e != nil {
-		return nil, e
+	err := property.GetProperty("")
+	if err != nil {
+		return nil, err
 	}
-
-	d.Set("account", property.AccountID)
-	d.Set("contract", property.ContractID)
-	d.Set("group", property.GroupID)
-
-	d.Set("name", property.PropertyName)
-	d.Set("version", property.LatestVersion)
+	if err := d.Set("account", property.AccountID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("contract", property.ContractID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("group", property.GroupID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("name", property.PropertyName); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("version", property.LatestVersion); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	d.SetId(property.PropertyID)
-
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourcePropertyVariablesExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	CorrelationID := "[PAPI][resourcePropertyVariablesExists-" + tools.CreateNonce() + "]"
+func resourcePropertyVariablesExists(d *schema.ResourceData, _ interface{}) (bool, error) {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log("PAPI", "resourcePropertyVariablesExists")
 	variables := d.Id()
+	// FIXME this function always returns true, nil
 	if variables != "" {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables  %s\n", variables))
+		logger.Debug("Check for variables  %s", variables)
 		return true, nil
-	} else {
-		return true, nil
-
 	}
-
+	return true, nil
 }
 
-func resourcePropertyVariablesRead(d *schema.ResourceData, meta interface{}) error {
-
+func resourcePropertyVariablesRead(_ *schema.ResourceData, _ interface{}) error {
 	return nil
 }
 
-func resourcePropertyVariablesUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyVariablesUpdate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "UPDATING")
+func resourcePropertyVariablesUpdate(d *schema.ResourceData, _ interface{}) error {
+	akactx := akamai.ContextGet(inst.Name())
+	logger := akactx.Log(inst.Name())
+	logger.Debug("UPDATING")
 	rule := papi.NewRule()
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " START Check for variables")
-	variables, ok := d.GetOk("variables")
-	if ok {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Check for variables  %s\n", variables))
-		//}
-
-		for _, r := range variables.(*schema.Set).List() {
-			variable, ok := r.(map[string]interface{})
-			if ok {
-				vv, ok := variable["variable"]
-				if ok {
-					for _, v := range vv.(*schema.Set).List() {
-						variableMap, ok := v.(map[string]interface{})
-						if ok {
-							newVariable := papi.NewVariable()
-							newVariable.Name = variableMap["name"].(string)
-							newVariable.Description = variableMap["description"].(string)
-							newVariable.Value = variableMap["value"].(string)
-							newVariable.Hidden = variableMap["hidden"].(bool)
-							newVariable.Sensitive = variableMap["sensitive"].(bool)
-							rule.AddVariable(newVariable)
-						}
-					}
-
-				}
-
-			}
-		}
-
-		jsonBody, err := jsonhooks.Marshal(rule)
-		if err != nil {
+	logger.Debug("START Check for variables")
+	variables, err := tools.GetSetValue("variables", d)
+	if err != nil {
+		if err != tools.ErrNotFound {
 			return err
 		}
-
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Json result  %s\n", string(jsonBody)))
-
-		sha := tools.GetSHAString(string(jsonBody))
-		d.Set("json", string(jsonBody))
-
-		d.SetId(sha)
+		logger.Debug("Done")
+		return nil
 	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Done")
+	logger.Debug("Check for variables  %s", variables)
+	for _, r := range variables.List() {
+		variable, ok := r.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		vv, ok := variable["variable"]
+		if !ok {
+			continue
+		}
+		for _, v := range vv.(*schema.Set).List() {
+			variableMap, ok := v.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			newVariable := papi.NewVariable()
+			name, ok := variableMap["name"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string")
+			}
+			description, ok := variableMap["description"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "description", "string")
+			}
+			value, ok := variableMap["value"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "value", "string")
+			}
+			hidden, ok := variableMap["hidden"].(bool)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "hidden", "bool")
+			}
+			sensitive, ok := variableMap["sensitive"].(bool)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "sensitive", "bool")
+			}
+			newVariable.Name = name
+			newVariable.Description = description
+			newVariable.Value = value
+			newVariable.Hidden = hidden
+			newVariable.Sensitive = sensitive
+			rule.AddVariable(newVariable)
+		}
+	}
+
+	body, err := jsonhooks.Marshal(rule)
+	if err != nil {
+		return err
+	}
+	logger.Debug("JSON result  %s", string(body))
+	sha := tools.GetSHAString(string(body))
+	if err := d.Set("json", string(body)); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	d.SetId(sha)
+	logger.Debug("Done")
 	return nil
 }

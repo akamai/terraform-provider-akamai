@@ -1,7 +1,7 @@
 package gtm
 
 import (
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 )
@@ -18,14 +20,16 @@ var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	testAccProvider = Provider()
+	akamai.Provider(hclog.Default(), Subprovider())
+
+	testAccProvider = inst.Provider
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testAccProvider,
 	}
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := inst.Provider.InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -63,18 +67,18 @@ type args struct {
 func Test_getGTMV1_3Service(t *testing.T) {
 
 	var tests = []testsStruct{
-		testsStruct{
+		{
 			name: "no valid config",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{}),
 			},
 			edgerc:  ``,
-			wantErr: errors.New("Unable to create instance using environment or .edgerc file"),
+			wantErr: fmt.Errorf("Unable to create instance using environment or .edgerc file"),
 		},
-		testsStruct{
+		{
 			name: "undefined .edgerc, undefined section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{}),
 			},
 			edgerc: `[default]
 host = default
@@ -91,10 +95,10 @@ max_body = 1`,
 			},
 		},
 		// Section specific follows
-		testsStruct{
+		{
 			name: "undefined .edgerc, default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"gtm_section": "default",
 				}),
 			},
@@ -119,10 +123,10 @@ max_body = 2`,
 				MaxBody:      1,
 			},
 		},
-		testsStruct{
+		{
 			name: "undefined .edgerc, not_default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"gtm_section": "not_default",
 				}),
 			},
@@ -147,10 +151,10 @@ max_body = 2`,
 				MaxBody:      2,
 			},
 		},
-		testsStruct{
+		{
 			name: "no edgerc gtm section with env",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"gtm_section": "gtm",
 				}),
 			},
@@ -241,8 +245,8 @@ func testGetConfigServiceExec(t *testing.T, tests []testsStruct, configService g
 			}
 
 			got, err := configService(tt.args.schema)
-
 			if err != nil {
+				// TODO: Should not use deep equal with errors (RR)
 				if reflect.DeepEqual(err, tt.wantErr) {
 					return
 				}

@@ -1,11 +1,12 @@
 package property
 
 import (
+	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"strings"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -27,35 +28,36 @@ func dataSourcePropertyGroups() *schema.Resource {
 }
 
 func dataSourcePropertyGroupsRead(d *schema.ResourceData, _ interface{}) error {
-	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + tools.CreateNonce() + "]"
+	akactx := akamai.ContextGet(inst.Name())
+	log := akactx.Log("PAPI", "dataSourcePropertyGroupsRead")
+	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + akactx.OperationID() + "]"
 	var name string
-	_, ok := d.GetOk("name")
+	name, err := tools.GetStringValue("name", d)
 	var getDefault bool
-	if !ok {
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return err
+		}
 		name = "default"
 		getDefault = true
-	} else {
-		name = d.Get("name").(string)
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  [Akamai Property Groups] Start Searching for property group records %s ", name))
+	log.Debug("[Akamai Property Groups] Start Searching for property group records %s ", name)
 	groups := papi.NewGroups()
-	err := groups.GetGroups(CorrelationID)
+	err = groups.GetGroups(CorrelationID)
 	if err != nil {
-		return fmt.Errorf("%w: %q: %s", ErrPapiLookingUpGroupByName, name, err)
+		return fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err)
 	}
-	contract, contractOk := d.GetOk("contract")
-	var contractStr string
-	if contractOk {
-		contractStr, ok = contract.(string)
+	contract, err := tools.GetStringValue("contract", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	group, err := findGroupByName(name, contract, groups, getDefault)
+	if err != nil {
+		return fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err)
 	}
 
-	group, err := findGroupByName(name, contractStr, groups, getDefault)
-	if err != nil {
-		return fmt.Errorf("%w: %q: %s", ErrPapiLookingUpGroupByName, name, err)
-	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Searching for records [%v]", group))
+	log.Debug("Searching for records [%v]", group)
 	d.SetId(group.GroupID)
 	return nil
 }
@@ -68,7 +70,7 @@ TODO: we should decide whether returning first group from slice of groups is pro
 for non-default name, if contract was provided, a group with matching contract ID should be returned
 in case of non-default name, contract is mandatory
 */
-func findGroupByName(name string, contract string, groups *papi.Groups, isDefault bool) (*papi.Group, error) {
+func findGroupByName(name, contract string, groups *papi.Groups, isDefault bool) (*papi.Group, error) {
 	var group *papi.Group
 	var err error
 	if isDefault {
@@ -77,38 +79,33 @@ func findGroupByName(name string, contract string, groups *papi.Groups, isDefaul
 			name += "-" + strings.TrimPrefix(contract, "ctr_")
 			group, err = groups.FindGroup(name)
 			if err != nil {
-				return nil, fmt.Errorf("%s: %w", err.Error(), ErrPapiGroupNotFound)
+				return nil, fmt.Errorf("%s: %w", err.Error(), ErrLookingUpGroupByName)
 			}
-		} else {
-			// Find the first one
-			if len(groups.Groups.Items) == 0 {
-				return nil, ErrPapiNoGroupsFound
+			return group, nil
+		}
+		// Find the first one
+		if len(groups.Groups.Items) == 0 {
+			return nil, ErrNoGroupsFound
+		}
+		return groups.Groups.Items[0], nil
+
+	}
+	// for non-default name, contract is required
+	if contract == "" {
+		return nil, fmt.Errorf("%w: %s", ErrNoContractProvided, name)
+	}
+	var foundGroups []*papi.Group
+	foundGroups, err = groups.FindGroupsByName(name)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", err.Error(), ErrLookingUpGroupByName)
+	}
+	// Make sure the group belongs to the specified contract
+	for _, foundGroup := range foundGroups {
+		for _, c := range foundGroup.ContractIDs {
+			if c == contract || c == "ctr_"+contract {
+				return foundGroup, nil
 			}
-			group = groups.Groups.Items[0]
-		}
-	} else {
-		// for non-default name, contract is required
-		if contract == "" {
-			return nil, fmt.Errorf("%w: %s", ErrPapiNoContractProvided, name)
-		}
-		var foundGroups []*papi.Group
-		foundGroups, err := groups.FindGroupsByName(name)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", err.Error(), ErrPapiFindingGroupsByName)
-		}
-		// Make sure the group belongs to the specified contract
-	FoundGroupsLoop:
-		for _, foundGroup := range foundGroups {
-			for _, c := range foundGroup.ContractIDs {
-				if c == contract || c == "ctr_"+contract {
-					group = foundGroup
-					break FoundGroupsLoop
-				}
-			}
-		}
-		if group == nil {
-			return nil, fmt.Errorf("%w: %s", ErrPapiGroupNotInContract, contract)
 		}
 	}
-	return group, nil
+	return nil, fmt.Errorf("%w: %s", ErrGroupNotInContract, contract)
 }

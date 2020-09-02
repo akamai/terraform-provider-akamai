@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -198,7 +197,7 @@ func testAccDeleteDatacenter(dcid int, dom string) error {
 func parseIntID(id string) (int, string, error) {
 	idComp := strings.Split(id, ":")
 	if len(idComp) < 2 {
-		return 0, "", errors.New("Invalid Datacenter ID")
+		return 0, "", fmt.Errorf("Invalid Datacenter ID")
 	}
 	dcid, err := strconv.Atoi(idComp[1])
 	if err != nil {

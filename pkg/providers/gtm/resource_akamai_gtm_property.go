@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -75,7 +74,7 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 				Default:  300,
 			},
-			"static_rr_set": &schema.Schema{
+			"static_rr_set": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
@@ -333,7 +332,7 @@ func parseResourceStringId(id string) (string, string, error) {
 
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return "", "", errors.New("Invalid resource id")
+		return "", "", fmt.Errorf("invalid resource id")
 	}
 
 	return parts[0], parts[1], nil
@@ -363,8 +362,9 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
 
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		return errors.New(cStatus.Status.Message)
+		return fmt.Errorf(cStatus.Status.Message)
 	}
+
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
 		if done {
@@ -377,7 +377,6 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error
 				return err
 			}
 		}
-
 	}
 
 	// Give terraform the ID. Format domain::property
@@ -390,14 +389,14 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1PropertyRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyRead(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] Property: %s", d.Id())
 	// retrieve the property and domain
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid property resource Id")
+		return fmt.Errorf("invalid property resource Id")
 	}
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
@@ -417,7 +416,7 @@ func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error
 	// pull domain and property out of resource id
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid property resource Id")
+		return fmt.Errorf("invalid property resource Id")
 	}
 	// Get existing property
 	existProp, err := gtm.GetProperty(property, domain)
@@ -436,7 +435,7 @@ func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Update  status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -450,20 +449,19 @@ func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error
 				return err
 			}
 		}
-
 	}
 
 	return resourceGTMv1PropertyRead(d, meta)
 }
 
 // Import GTM Property.
-func resourceGTMv1PropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1PropertyImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] Property [%s] Import", d.Id())
 	// pull domain and property out of resource id
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, errors.New("Invalid property resource Id")
+		return []*schema.ResourceData{d}, fmt.Errorf("invalid property resource Id")
 	}
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
@@ -479,14 +477,14 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, meta interface{}) ([]*s
 }
 
 // Delete GTM Property.
-func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyDelete(d *schema.ResourceData, _ interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Property: %s", d.Id())
 	// Get existing property
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid property resource Id")
+		return fmt.Errorf("invalid property resource Id")
 	}
 	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
@@ -502,7 +500,7 @@ func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[DEBUG] [Akamai GTMv1] Property Delete status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(domain)
@@ -519,19 +517,19 @@ func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error
 
 	}
 
-	// if succcessful ....
+	// if successful ....
 	d.SetId("")
 	return nil
 }
 
-// Test GTM Property existance
-func resourceGTMv1PropertyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+// Test GTM Property existence
+func resourceGTMv1PropertyExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and property out of resource id
 	domain, property, err := parsePropertyResourceId(d.Id())
 	if err != nil {
-		return false, errors.New("Invalid property resource Id")
+		return false, fmt.Errorf("invalid property resource Id")
 	}
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing property [%s] in domain %s", property, domain)
 	prop, err := gtm.GetProperty(property, domain)
@@ -679,7 +677,7 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
 // Populate Terraform state from provided Property object
 func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) {
 
-	// walk thru all state elements
+	// walk through all state elements
 	d.Set("name", prop.Name)
 	d.Set("type", prop.Type)
 	d.Set("ipv6", prop.Ipv6)
@@ -1007,18 +1005,6 @@ func convertStringToInterfaceList(stringList []string) []interface{} {
 	log.Printf("[DEBUG] [Akamai GTMv1] String List: %v", stringList)
 	retList := make([]interface{}, 0, len(stringList))
 	for _, v := range stringList {
-		retList = append(retList, v)
-	}
-
-	return retList
-
-}
-
-func convertIntToInterfaceList(intList []int) []interface{} {
-
-	log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
-	retList := make([]interface{}, 0, len(intList))
-	for _, v := range intList {
 		retList = append(retList, v)
 	}
 
