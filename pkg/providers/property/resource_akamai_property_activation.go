@@ -1,12 +1,14 @@
 package property
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"time"
 
@@ -16,10 +18,10 @@ import (
 
 func resourcePropertyActivation() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePropertyActivationCreate,
-		Read:   resourcePropertyActivationRead,
-		Update: resourcePropertyActivationUpdate,
-		Delete: resourcePropertyActivationDelete,
+		CreateContext: resourcePropertyActivationCreate,
+		ReadContext:   resourcePropertyActivationRead,
+		UpdateContext: resourcePropertyActivationUpdate,
+		DeleteContext: resourcePropertyActivationDelete,
 		Exists: resourcePropertyActivationExists,
 		Schema: akamaiPropertyActivationSchema,
 	}
@@ -55,7 +57,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyActivationCreate(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyActivationCreate")
 	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + akactx.OperationID() + "]"
@@ -64,12 +66,12 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, _ interface{}) err
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	property.PropertyID = propertyID
 	err = property.GetProperty(CorrelationID)
 	if err != nil {
-		return fmt.Errorf("unable to find property: %w", err)
+		return diag.FromErr(fmt.Errorf("unable to find property: %w", err))
 	}
 
 	// TODO: SetPartial is technically deprecated and only valid when an error
@@ -81,11 +83,11 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, _ interface{}) err
 	}()
 
 	if err := d.Set("property", property.PropertyID); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	activate, err := tools.GetBoolValue("activate", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if !activate {
 		d.SetId("none")
@@ -95,15 +97,15 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, _ interface{}) err
 	}
 	activation, err := activateProperty(property, d, CorrelationID, logger)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(activation.ActivationID)
 	if err := d.Set("version", activation.PropertyVersion); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("status", string(activation.Status)); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	go activation.PollStatus(property)
 
@@ -123,7 +125,7 @@ func resourcePropertyActivationCreate(d *schema.ResourceData, _ interface{}) err
 	return nil
 }
 
-func resourcePropertyActivationDelete(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyActivationDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyActivationDelete")
 	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + akactx.OperationID() + "]"
@@ -132,18 +134,18 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, _ interface{}) err
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	property.PropertyID = propertyID
 	err = property.GetProperty(CorrelationID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	logger.Debug("DEACTIVE PROPERTY %v", property)
 	networkVal, err := tools.GetStringValue("network", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	network := papi.NetworkValue(networkVal)
 	propertyVersion := property.ProductionVersion
@@ -152,7 +154,7 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, _ interface{}) err
 	}
 	version, err := tools.GetIntValue("version", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	logger.Debug("Version to deactivate is %d and current active %s version is %d", version, network, propertyVersion)
 	defer func() {
@@ -166,7 +168,7 @@ func resourcePropertyActivationDelete(d *schema.ResourceData, _ interface{}) err
 	logger.Debug("Deactivating %s version %d", network, version)
 	activation, err := deactivateProperty(property, d, papi.NetworkValue(networkVal), CorrelationID, logger)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	go activation.PollStatus(property)
@@ -187,11 +189,11 @@ polling:
 	}
 
 	if err := d.Set("status", string(activation.Status)); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	return nil
 }
-
+//Todo should be part of ReadContext
 func resourcePropertyActivationExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyActivationExists")
@@ -232,19 +234,19 @@ func resourcePropertyActivationExists(d *schema.ResourceData, _ interface{}) (bo
 	return false, nil
 }
 
-func resourcePropertyActivationRead(d *schema.ResourceData, _ interface{}) error {
+func resourcePropertyActivationRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyActivationRead")
 	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + akactx.OperationID() + "]"
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	property.PropertyID = propertyID
 	err = property.GetProperty(CorrelationID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	activations, err := property.GetActivations()
@@ -255,12 +257,12 @@ func resourcePropertyActivationRead(d *schema.ResourceData, _ interface{}) error
 
 	networkVal, err := tools.GetStringValue("network", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	network := papi.NetworkValue(networkVal)
 	version, err := tools.GetIntValue("version", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	for _, activation := range activations.Activations.Items {
@@ -270,17 +272,17 @@ func resourcePropertyActivationRead(d *schema.ResourceData, _ interface{}) error
 		logger.Debug("Found Existing Activation %s version %d", network, version)
 		d.SetId(activation.ActivationID)
 		if err := d.Set("status", string(activation.Status)); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 		if err := d.Set("version", activation.PropertyVersion); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
 
 	return nil
 }
 
-func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePropertyActivationUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyActivationRead")
 	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + akactx.OperationID() + "]"
@@ -290,21 +292,21 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	property.PropertyID = propertyID
 	err = property.GetProperty(CorrelationID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	network, err := tools.GetStringValue("network", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	activation, err := getActivation(d, property, papi.ActivationTypeActivate, papi.NetworkValue(network), CorrelationID, logger)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	foundActivation, err := findExistingActivation(property, activation, CorrelationID, logger)
@@ -314,17 +316,17 @@ func resourcePropertyActivationUpdate(d *schema.ResourceData, meta interface{}) 
 
 	activate, err := tools.GetBoolValue("activate", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if !activate {
 		logger.Debug("Done")
-		return resourcePropertyActivationRead(d, meta)
+		return resourcePropertyActivationRead(nil, d, meta)
 	}
 	// No activation in progress, create a new one
 	if foundActivation == nil {
 		activation, err = activateProperty(property, d, CorrelationID, logger)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
@@ -346,10 +348,10 @@ polling:
 		}
 	}
 	if err := d.Set("status", string(activation.Status)); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("version", activation.PropertyVersion); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	logger.Debug("Done")
