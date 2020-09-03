@@ -1,13 +1,12 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
-	client "github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -186,13 +185,8 @@ func GetQueryArgs(d *schema.ResourceData) map[string]string {
 	if groupId != "" && len(groupId) > 0 {
 		qArgs["gid"] = groupId
 	}
-	//accountSwitch := d.Get("account_switch_key").(string)
-	// if accountSwitch != nil && len(accountSwitch) > 0 {
-	//        qArgs["accountSwitchKey"] = accountSwitch
-	//}
 
 	return qArgs
-
 }
 
 // Create a new GTM Domain
@@ -231,7 +225,7 @@ func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] [Akamai GTMv1] Create status:")
 		log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
 		if cStatus.Status.PropagationStatus == "DENIED" {
-			return errors.New(cStatus.Status.Message)
+			return fmt.Errorf(cStatus.Status.Message)
 		}
 		if d.Get("wait_on_complete").(bool) {
 			done, err := waitForCompletion(dname)
@@ -255,7 +249,7 @@ func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DomainRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DomainRead(d *schema.ResourceData, _ interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] Domain: %s", d.Id())
 	// retrieve the domain
@@ -292,7 +286,7 @@ func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] Update status:")
 	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
 	if d.Get("wait_on_complete").(bool) {
 		done, err := waitForCompletion(d.Id())
@@ -313,8 +307,8 @@ func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 
 }
 
-// Delete GTM Domain. Admin priviledges required in current API version.
-func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
+// Delete GTM Domain. Admin privileges required in current API version.
+func resourceGTMv1DomainDelete(d *schema.ResourceData, _ interface{}) error {
 	log.Printf("[DEBUG] Deleting GTM Domain")
 	log.Printf("[DEBUG] [Akamai GTMv1] Domain: %s", d.Id())
 	// Get existing domain
@@ -349,7 +343,7 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] [Akamai GTMv1] Delete status:")
 		log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
 		if uStat.PropagationStatus == "DENIED" {
-			return errors.New(uStat.Message)
+			return fmt.Errorf(uStat.Message)
 		}
 		if d.Get("wait_on_complete").(bool) {
 			done, err := waitForCompletion(d.Id())
@@ -370,8 +364,8 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 
 }
 
-// Test GTM Domain existance
-func resourceGTMv1DomainExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+// Test GTM Domain existence
+func resourceGTMv1DomainExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 
 	name := d.Get("name").(string)
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for domain [%s]", name)
@@ -381,10 +375,10 @@ func resourceGTMv1DomainExists(d *schema.ResourceData, meta interface{}) (bool, 
 }
 
 // validateDomainType is a SchemaValidateFunc to validate the Domain type.
-func validateDomainType(v interface{}, k string) (ws []string, es []error) {
+func validateDomainType(v interface{}, _ string) (ws []string, es []error) {
 	value := strings.ToUpper(v.(string))
 	if value != "BASIC" && value != "FULL" && value != "WEIGHTED" && value != "STATIC" && value != "FAILOVER-ONLY" {
-		es = append(es, fmt.Errorf("Type must be basic, full, weighted, static, or failover-only"))
+		es = append(es, fmt.Errorf("type must be basic, full, weighted, static, or failover-only"))
 	}
 	return
 }
@@ -421,7 +415,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 		}
 		dom.EmailNotificationList = ls
 	} else if d.HasChange("email_notification_list") {
-		dom.EmailNotificationList = make([]string, 0, 0)
+		dom.EmailNotificationList = make([]string, 0)
 	}
 	if v, ok := d.GetOk("min_pingable_region_fraction"); ok {
 		dom.MinPingableRegionFraction = v.(float32)
@@ -493,9 +487,6 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 	if v, ok := d.GetOk("default_health_threshold"); ok {
 		dom.DefaultHealthThreshold = v.(float64)
 	}
-	// Want??
-	//if v, ok := d.GetOk("last_modified_by"); ok { dom.LastModifiedBy = v.(string) }
-	// Want?
 	if v, ok := d.GetOk("modification_comments"); ok {
 		dom.ModificationComments = v.(string)
 	}
@@ -519,51 +510,53 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
 // Populate Terraform state from provided Domain object
 func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain) {
 
-	// walk thru all state elements
-	d.Set("name", dom.Name)
-	d.Set("type", dom.Type)
-	d.Set("default_unreachable_threshold", dom.DefaultUnreachableThreshold)
-	d.Set("email_notification_list", dom.EmailNotificationList)
-	d.Set("min_pingable_region_fraction", dom.MinPingableRegionFraction)
-	d.Set("default_timeout_penalty", dom.DefaultTimeoutPenalty)
-	d.Set("servermonitor_liveness_count", dom.ServermonitorLivenessCount)
-	d.Set("round_robin_prefix", dom.RoundRobinPrefix)
-	d.Set("servermonitor_load_count", dom.ServermonitorLoadCount)
-	d.Set("ping_interval", dom.PingInterval)
-	d.Set("max_ttl", dom.MaxTTL)
-	d.Set("load_imbalance_percentage", dom.LoadImbalancePercentage)
-	d.Set("default_health_max", dom.DefaultHealthMax)
-	d.Set("map_update_interval", dom.MapUpdateInterval)
-	d.Set("max_properties", dom.MaxProperties)
-	d.Set("max_resources", dom.MaxResources)
-	d.Set("default_ssl_client_private_key", dom.DefaultSslClientPrivateKey)
-	d.Set("default_error_penalty", dom.DefaultErrorPenalty)
-	d.Set("max_test_timeout", dom.MaxTestTimeout)
-	d.Set("cname_coalescing_enabled", dom.CnameCoalescingEnabled)
-	d.Set("default_health_multiplier", dom.DefaultHealthMultiplier)
-	d.Set("servermonitor_pool", dom.ServermonitorPool)
-	d.Set("load_feedback", dom.LoadFeedback)
-	d.Set("min_ttl", dom.MinTTL)
-	d.Set("default_max_unreachable_penalty", dom.DefaultMaxUnreachablePenalty)
-	d.Set("default_health_threshold", dom.DefaultHealthThreshold)
-	// Want??
-	//d.Set("last_modified_by", dom.LastModifiedBy)
-	// Want?
-	d.Set("modification_comments", dom.ModificationComments)
-	d.Set("min_test_interval", dom.MinTestInterval)
-	d.Set("ping_packet_size", dom.PingPacketSize)
-	d.Set("default_ssl_client_certificate", dom.DefaultSslClientCertificate)
-	d.Set("end_user_mapping_enabled", dom.EndUserMappingEnabled)
-
+	for stateKey, stateValue := range map[string]interface{}{
+		"name":                            dom.Name,
+		"type":                            dom.Type,
+		"default_unreachable_threshold":   dom.DefaultUnreachableThreshold,
+		"email_notification_list":         dom.EmailNotificationList,
+		"min_pingable_region_fraction":    dom.MinPingableRegionFraction,
+		"default_timeout_penalty":         dom.DefaultTimeoutPenalty,
+		"servermonitor_liveness_count":    dom.ServermonitorLivenessCount,
+		"round_robin_prefix":              dom.RoundRobinPrefix,
+		"servermonitor_load_count":        dom.ServermonitorLoadCount,
+		"ping_interval":                   dom.PingInterval,
+		"max_ttl":                         dom.MaxTTL,
+		"load_imbalance_percentage":       dom.LoadImbalancePercentage,
+		"default_health_max":              dom.DefaultHealthMax,
+		"map_update_interval":             dom.MapUpdateInterval,
+		"max_properties":                  dom.MaxProperties,
+		"max_resources":                   dom.MaxResources,
+		"default_ssl_client_private_key":  dom.DefaultSslClientPrivateKey,
+		"default_error_penalty":           dom.DefaultErrorPenalty,
+		"max_test_timeout":                dom.MaxTestTimeout,
+		"cname_coalescing_enabled":        dom.CnameCoalescingEnabled,
+		"default_health_multiplier":       dom.DefaultHealthMultiplier,
+		"servermonitor_pool":              dom.ServermonitorPool,
+		"load_feedback":                   dom.LoadFeedback,
+		"min_ttl":                         dom.MinTTL,
+		"default_max_unreachable_penalty": dom.DefaultMaxUnreachablePenalty,
+		"default_health_threshold":        dom.DefaultHealthThreshold,
+		"modification_comments":           dom.ModificationComments,
+		"min_test_interval":               dom.MinTestInterval,
+		"ping_packet_size":                dom.PingPacketSize,
+		"default_ssl_client_certificate":  dom.DefaultSslClientCertificate,
+		"end_user_mapping_enabled":        dom.EndUserMappingEnabled} {
+		// walk through all state elements
+		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			log.Printf("[ERROR] populateTerraformState failed: %s", err.Error())
+		}
+	}
 }
 
 // Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)
 func waitForCompletion(domain string) (bool, error) {
 
-	var defaultInterval time.Duration = 5 * time.Second
-	var defaultTimeout time.Duration = 300 * time.Second
-	var sleepInterval time.Duration = defaultInterval // seconds. TODO:Should be configurable by user ...
-	var sleepTimeout time.Duration = defaultTimeout   // seconds. TODO: Should be configurable by user ...
+	var defaultInterval = 5 * time.Second
+	var defaultTimeout = 300 * time.Second
+	var sleepInterval = defaultInterval // seconds. TODO:Should be configurable by user ...
+	var sleepTimeout = defaultTimeout   // seconds. TODO: Should be configurable by user ...
 	if HashiAcc {
 		// Override for ACC tests
 		sleepTimeout = sleepInterval
@@ -582,7 +575,7 @@ func waitForCompletion(domain string) (bool, error) {
 			return true, nil
 		case "DENIED":
 			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return DENIED")
-			return false, errors.New(propStat.Message)
+			return false, fmt.Errorf(propStat.Message)
 		case "PENDING":
 			if sleepTimeout <= 0 {
 				log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return TIMED OUT")
@@ -592,7 +585,7 @@ func waitForCompletion(domain string) (bool, error) {
 			sleepTimeout -= sleepInterval
 			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Time Remaining [%v]", sleepTimeout/time.Second)
 		default:
-			return false, errors.New("Unknown propagationStatus while waiting for change completion") // don't know how/why we would have broken out.
+			return false, fmt.Errorf("unknown propagationStatus while waiting for change completion") // don't know how/why we would have broken out.
 		}
 	}
 }

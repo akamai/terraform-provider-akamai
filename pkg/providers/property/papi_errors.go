@@ -21,12 +21,14 @@ var (
 	// ErrNoContractsFound is returned when no contracts were found
 	ErrNoContractsFound = errors.New("no contracts were found")
 
+	// PAPI Product errors
+
 	// PAPI CP Code errors
 
 	// ErrLookingUpCPCode is returned when fetching CP Code from API client by contractID returned an error or no CP Code was found
 	ErrLookingUpCPCode = errors.New("looking up CP Code by name")
 	// ErrPAPICPCodeModify is returned while attempting to modify existing CP code
-	ErrPAPICPCodeModify = errors.New("CP Code with provided name already exists for provided group and contract IDs and it cannot be managed through this API - please contact Customer Support")
+	ErrCPCodeModify = errors.New("CP Code with provided name already exists for provided group and contract IDs and it cannot be managed through this API - please contact Customer Support")
 
 	// PAPI Property errors
 

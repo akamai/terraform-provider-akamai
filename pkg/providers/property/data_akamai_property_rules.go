@@ -1,8 +1,10 @@
 package property
 
 import (
+	"context"
 	"fmt"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
@@ -13,7 +15,7 @@ import (
 
 func dataPropertyRules() *schema.Resource {
 	return &schema.Resource{
-		Read:   dataPropertyRulesRead,
+		ReadContext:   dataPropertyRulesRead,
 		Schema: akamaiDataPropertyRulesSchema,
 	}
 }
@@ -221,22 +223,22 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 	},
 }
 
-func dataPropertyRulesRead(d *schema.ResourceData, _ interface{}) error {
+func dataPropertyRulesRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	rules := papi.NewRules()
 
 	// get rules from the TF config
 	err := unmarshalRules(d, rules)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	jsonBody, err := jsonhooks.Marshal(rules)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	sha := tools.GetSHAString(string(jsonBody))
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error())
+		return diag.FromErr(fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error()))
 	}
 
 	d.SetId(sha)
