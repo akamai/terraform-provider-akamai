@@ -1,10 +1,14 @@
 # RELEASE NOTES
 
-## 0.9.0 (August 26, 2020)
+## 0.9.1 (Sept 02, 2020)
 * [IMPORTANT] Breaking change for TF clients <= 0.11. Provider now built using Terraform sdk v2 library. Terraform dropped 0.11 client support as part of this update.  This change will make many new enhancements possible. ([See: Terraform v2 sdk](https://www.terraform.io/docs/extend/guides/v2-upgrade-guide.html))
 * [CHANGE] Individual edgerc file sections for different Akamai APIs (i.e., `property_section`, `dns_section`) has been deprecated in favor a common `config_section` used in conjuction with provider aliases ([See: Multiple Provider Configurations](https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations))
 * [FIX] datasource akamai_group will no longer panic when contract not provided
 * [ADD] Project re-organized to prepare for additional APIs to be included
+* Fixed build job to compile sub-modules. Code is identical to 0.9.0 release
+
+## 0.9.0 (August 26, 2020)
+* [IMPORTANT] This build did not compile all modules properly so use 0.9.1 above instead.
 
 ## 0.8.2 (August 13, 2020)
 * Initial release via the Terraform Registry. Otherwise identical to 0.8.1 release
