@@ -2,11 +2,11 @@ package dns
 
 import (
 	"context"
-	"sort"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"sort"
 )
 
 func dataSourceDNSRecordSet() *schema.Resource {
@@ -44,7 +44,7 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, met
 	log := akactx.Log("DNS", "dataSourceDNSRecordSetRead")
 	//CorrelationID := "[DNS][dataSourceDNSRecordSetRead-" + akactx.OperationID() + "]"
 
-	log.Debug("[Akamai DNSv2] Start Searching for records %s %s %s ", zone, host, recordtype)
+	log.Debug("[Akamai DNSv2] Start Searching for records", "zone", zone, "host", host, "recordtype", recordtype)
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
 

@@ -5,11 +5,10 @@ import (
 	"sort"
 	"strings"
 
-        "github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceAuthoritiesSet() *schema.Resource {
@@ -31,14 +30,14 @@ func dataSourceAuthoritiesSet() *schema.Resource {
 
 func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-        akactx := akamai.ContextGet(inst.Name())
-        log := akactx.Log("DNS", "dataSourceDNSAuthoritiesRead")
+	akactx := akamai.ContextGet(inst.Name())
+	log := akactx.Log("DNS", "dataSourceDNSAuthoritiesRead")
 
-        contractid := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
-        // Warning or Errors can be collected in a slice type
-        var diags diag.Diagnostics
+	contractid := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
+	// Warning or Errors can be collected in a slice type
+	var diags diag.Diagnostics
 
-	log.Debug("[Akamai DNSv2] Start Searching for authority records %s ", contractid)
+	log.Debug("[Akamai DNSv2] Start Searching for authority records", "contractid", contractid)
 
 	ns, err := dnsv2.GetNameServerRecordList(contractid)
 	if err != nil {
