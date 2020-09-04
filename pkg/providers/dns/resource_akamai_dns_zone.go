@@ -116,11 +116,11 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, meta i
 	hostname := d.Get("zone").(string)
 
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("DNS", "resourceDNSZoneCreate")
-	CorrelationID := "[DNSv2][resourceDNSZoneCreate-" + hostname + "]"
+	logger := akactx.Log("i[Akamai DNS]", "resourceDNSZoneCreate")
+	CorrelationID := "[DNSv2][resourceDNSZoneCreate-" + akactx.OperationID() + "]"
 
-	log.Info("[Akamai DNSv2] Zone Create.", "zone", hostname)
-	log.Info("[Akamai DNSv2] Zone Create.", "CorrelationID", CorrelationID)
+	logger.Info("Zone Create.", "zone", hostname)
+	logger.Info("Zone Create.", "CorrelationID", CorrelationID)
 
 	if err := checkDNSv2Zone(d); err != nil {
 		return diag.FromErr(err)
@@ -137,7 +137,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, meta i
 	populateDNSv2ZoneObject(d, zonecreate)
 
 	// First try to get the zone from the API
-	log.Debug(fmt.Sprintf("[Akamai DNSv2] Searching for zone [%s]", hostname))
+	logger.Debug(fmt.Sprintf("Searching for zone [%s]", hostname))
 	zone, e := dnsv2.GetZone(hostname)
 
 	if e != nil {
@@ -145,7 +145,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, meta i
 		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
 			// if the zone is not found/404 we will create a new
 			// blank zone for the records to be added to and continue
-			log.Debug(fmt.Sprintf("[Akamai DNS] Creating new zone: %v", zonecreate))
+			logger.Debug(fmt.Sprintf("Creating new zone: %v", zonecreate))
 			e = zonecreate.Save(zonequerystring, true)
 			if e != nil {
 				return append(diags, diag.Diagnostic{
@@ -195,7 +195,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	// Save the zone to the API
-	log.Debug(fmt.Sprintf("[Akamai DNSv2] Zone exists. Updating zone %v", zonecreate))
+	logger.Debug(fmt.Sprintf("Zone exists. Updating zone %v", zonecreate))
 	// Give terraform the ID
 	if d.Id() == "" || strings.Contains(d.Id(), "#") {
 		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
@@ -212,11 +212,11 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	hostname := d.Get("zone").(string)
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("DNS", "resourceDNSZoneRead")
-	CorrelationID := "[DNSv2][resourceDNSZoneRead-" + d.Id() + "]"
+	logger := akactx.Log("[Akamai DNS]", "resourceDNSZoneRead")
+	CorrelationID := "[DNSv2][resourceDNSZoneRead-" + akactx.OperationID() + "]"
 
-	log.Info("[Akamai DNSv2] Zone Read.", "zone", hostname)
-	log.Info("[Akamai DNSv2] Zone Read.", "CorrelationID", CorrelationID)
+	logger.Info("Zone Read.", "zone", hostname)
+	logger.Info("Zone Read.", "CorrelationID", CorrelationID)
 
 	masterlist := d.Get("masters").(*schema.Set).List()
 	masters := make([]string, 0, len(masterlist))
@@ -227,7 +227,7 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	}
 	// find the zone first
-	log.Debug(fmt.Sprintf("[Akamai DNS] Searching for zone [%s]", hostname))
+	logger.Debug(fmt.Sprintf("Searching for zone [%s]", hostname))
 	zone, e := dnsv2.GetZone(hostname)
 	if e != nil {
 		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() {
@@ -245,7 +245,7 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	populateDNSv2ZoneState(d, zone)
 
-	log.Debug(fmt.Sprintf("[Akamai DNSv2] READ content: %v", zone))
+	logger.Debug(fmt.Sprintf("READ content: %v", zone))
 	if strings.Contains(d.Id(), "#") {
 		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
 	} else {
@@ -261,11 +261,11 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	hostname := d.Get("zone").(string)
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("DNS", "resourceDNSZoneUpdate")
-	CorrelationID := "[DNSv2][resourceDNSZoneUpdate-" + d.Id() + "]"
+	logger := akactx.Log("[Akamai DNS]", "resourceDNSZoneUpdate")
+	CorrelationID := "[DNSv2][resourceDNSZoneUpdate-" + akactx.OperationID() + "]"
 
-	log.Info("[Akamai DNSv2] Zone Update.", "zone", hostname)
-	log.Info("[Akamai DNSv2] Zone Update.", "CorrelationID", CorrelationID)
+	logger.Info("Zone Update.", "zone", hostname)
+	logger.Info("Zone Update.", "CorrelationID", CorrelationID)
 
 	if err := checkDNSv2Zone(d); err != nil {
 		return diag.FromErr(err)
@@ -275,12 +275,12 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	zonetype := d.Get("type").(string)
 	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
 
-	log.Debug(fmt.Sprintf("[Akamai DNSv2] Searching for zone [%s]", hostname))
+	logger.Debug(fmt.Sprintf("Searching for zone [%s]", hostname))
 	zone, e := dnsv2.GetZone(hostname)
 	if e != nil {
 		// If there's no existing zone we'll create a blank one
 		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
-			log.Debug(fmt.Sprintf("[DEBUG] [Akamai DNS] [ERROR] %s", e.Error()))
+			logger.Debug(e.Error())
 			// Something drastically wrong if we are trying to update a non existent zone!
 			return diag.Errorf("Attempt to update non existent zone: %s", hostname)
 		} else {
@@ -304,7 +304,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	populateDNSv2ZoneObject(d, zonecreate)
 
 	// Save the zone to the API
-	log.Debug(fmt.Sprintf("[Akamai DNSv2] Saving zone %v", zonecreate))
+	logger.Debug(fmt.Sprintf("Saving zone %v", zonecreate))
 	e = zonecreate.Update(zonequerystring)
 	if e != nil {
 		return append(diags, diag.Diagnostic{
@@ -328,14 +328,14 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schem
 
 	hostname := d.Id()
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("DNS", "resourceDNSZoneImport")
-	CorrelationID := "[DNSv2][resourceDNSZoneImport-" + d.Id() + "]"
+	logger := akactx.Log("[Akamai DNS]", "resourceDNSZoneImport")
+	CorrelationID := "[DNSv2][resourceDNSZoneImport-" + akactx.OperationID() + "]"
 
-	log.Info("[Akamai DNSv2] Zone Import.", "zone", hostname)
-	log.Info("[Akamai DNSv2] Zone Import.", "CorrelationID", CorrelationID)
+	logger.Info("Zone Import.", "zone", hostname)
+	logger.Info("Zone Import.", "CorrelationID", CorrelationID)
 
 	// find the zone first
-	log.Debug(fmt.Sprintf("[Akamai DNS] Searching for zone [%s]", hostname))
+	logger.Debug(fmt.Sprintf("Searching for zone [%s]", hostname))
 	zone, err := dnsv2.GetZone(hostname)
 	if err != nil {
 		return nil, err
@@ -355,13 +355,13 @@ func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, meta i
 
 	hostname := d.Get("zone").(string)
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("DNS", "resourceDNSZoneDelete")
-	CorrelationID := "[DNSv2][resourceDNSZoneDelete-" + d.Id() + "]"
+	logger := akactx.Log("[Akamai DNS]", "resourceDNSZoneDelete")
+	CorrelationID := "[DNSv2][resourceDNSZoneDelete-" + akactx.OperationID() + "]"
 
-	log.Info(fmt.Sprintf("[Akamai DNSv2] Zone Delete.", "zone", hostname))
-	log.Info(fmt.Sprintf("[Akamai DNSv2] Zone Delete.", "CorrelationID", CorrelationID))
+	logger.Info(fmt.Sprintf("Zone Delete.", "zone", hostname))
+	logger.Info(fmt.Sprintf("Zone Delete.", "CorrelationID", CorrelationID))
 
-	log.Warn("[Akamai DNSv2] DNS Zone deletion not allowed")
+	logger.Warn("DNS Zone deletion not allowed")
 
 	// No ZONE delete operation permitted.
 

@@ -2,6 +2,7 @@ package dns
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -31,23 +32,27 @@ func dataSourceAuthoritiesSet() *schema.Resource {
 func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("DNS", "dataSourceDNSAuthoritiesRead")
+	logger := akactx.Log("[Akamai DNS]", "dataSourceDNSAuthoritiesRead")
 
 	contractid := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	log.Debug("[Akamai DNSv2] Start Searching for authority records", "contractid", contractid)
+	logger.Debug("Start Searching for authority records", "contractid", contractid)
 
 	ns, err := dnsv2.GetNameServerRecordList(contractid)
 	if err != nil {
-		diags = append(diags, diag.Errorf("error looking up A records for %q: %s", contractid, err)...)
-	} else {
-		log.Debug("[Akamai DNSv2] Searching for records [%v]", ns)
-
-		sort.Strings(ns)
-		d.Set("authorities", ns)
-		d.SetId(contractid)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("error looking up ns records for %s", contractid),
+			Detail:   err.Error(),
+		})
 	}
+	logger.Debug("Searching for records", "records", ns)
+
+	sort.Strings(ns)
+	d.Set("authorities", ns)
+	d.SetId(contractid)
+
 	return diags
 }
