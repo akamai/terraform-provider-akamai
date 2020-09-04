@@ -15,8 +15,8 @@ import (
 
 func dataPropertyRules() *schema.Resource {
 	return &schema.Resource{
-		ReadContext:   dataPropertyRulesRead,
-		Schema: akamaiDataPropertyRulesSchema,
+		ReadContext: dataPropertyRulesRead,
+		Schema:      akamaiDataPropertyRulesSchema,
 	}
 }
 

@@ -20,7 +20,7 @@ func resourcePropertyVariables() *schema.Resource {
 		ReadContext:   resourcePropertyVariablesRead,
 		UpdateContext: resourcePropertyVariablesUpdate,
 		DeleteContext: resourcePropertyVariablesDelete,
-		Exists: resourcePropertyVariablesExists,
+		Exists:        resourcePropertyVariablesExists,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyVariablesImport,
 		},

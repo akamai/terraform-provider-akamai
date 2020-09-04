@@ -22,8 +22,8 @@ func resourcePropertyActivation() *schema.Resource {
 		ReadContext:   resourcePropertyActivationRead,
 		UpdateContext: resourcePropertyActivationUpdate,
 		DeleteContext: resourcePropertyActivationDelete,
-		Exists: resourcePropertyActivationExists,
-		Schema: akamaiPropertyActivationSchema,
+		Exists:        resourcePropertyActivationExists,
+		Schema:        akamaiPropertyActivationSchema,
 	}
 }
 
@@ -193,6 +193,7 @@ polling:
 	}
 	return nil
 }
+
 //Todo should be part of ReadContext
 func resourcePropertyActivationExists(d *schema.ResourceData, _ interface{}) (bool, error) {
 	akactx := akamai.ContextGet(inst.Name())

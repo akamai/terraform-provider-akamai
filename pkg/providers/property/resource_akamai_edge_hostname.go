@@ -19,7 +19,7 @@ func resourceSecureEdgeHostName() *schema.Resource {
 		CreateContext: resourceSecureEdgeHostNameCreate,
 		ReadContext:   resourceSecureEdgeHostNameRead,
 		DeleteContext: resourceSecureEdgeHostNameDelete,
-		Exists: resourceSecureEdgeHostNameExists,
+		Exists:        resourceSecureEdgeHostNameExists,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceSecureEdgeHostNameImport,
 		},
