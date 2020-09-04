@@ -722,7 +722,7 @@ func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, _ stri
 	if contract == nil {
 		return nil, ErrNoContractProvided
 	}
-	if group == nil{
+	if group == nil {
 		return nil, ErrNoGroupProvided
 	}
 	var cpCodeID string
