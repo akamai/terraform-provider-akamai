@@ -26,7 +26,7 @@ func dataSourcePropertyContractRead(d *schema.ResourceData, _ interface{}) error
 	akactx := akamai.ContextGet(inst.Name())
 
 	// demonstrate the context logger
-	log := akactx.Log()
+	log := akactx.Log("PAPI", "dataSourcePropertyContractRead")
 	CorrelationID := "[PAPI][dataSourcePropertyContractRead-" + akactx.OperationID() + "]"
 	contracts := papi.NewContracts()
 	group, err := tools.GetStringValue("group", d)

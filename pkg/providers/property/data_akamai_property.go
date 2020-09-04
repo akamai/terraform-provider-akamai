@@ -34,7 +34,7 @@ func dataSourceAkamaiProperty() *schema.Resource {
 
 func dataAkamaiPropertyRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log()
+	log := akactx.Log("PAPI", "dataAkamaiPropertyRead")
 	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + akactx.OperationID() + "]"
 
 	log.Debug("Reading Property")

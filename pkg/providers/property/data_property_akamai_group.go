@@ -32,7 +32,7 @@ func dataSourcePropertyGroups() *schema.Resource {
 
 func dataSourcePropertyGroupsRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log()
+	log := akactx.Log("PAPI", "dataSourcePropertyGroupsRead")
 	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + akactx.OperationID() + "]"
 	var name string
 	name, err := tools.GetStringValue("name", d)
