@@ -11,7 +11,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 )
@@ -20,7 +19,7 @@ var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	akamai.Provider(hclog.Default(), Subprovider())
+	akamai.Provider(Subprovider())
 
 	testAccProvider = inst.Provider
 	testAccProviders = map[string]*schema.Provider{

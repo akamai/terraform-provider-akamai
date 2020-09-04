@@ -48,7 +48,7 @@ func validateDCValue(v interface{}, _ string) (ws []string, es []error) {
 	return
 }
 
-func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, _ interface{}) error {
+func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] dataSourceDefaultDatacenter Read")
 
 	domain, ok := d.GetOk("domain")

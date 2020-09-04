@@ -110,7 +110,7 @@ func resourceDNSv2Zone() *schema.Resource {
 	}
 }
 
-func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSv2ZoneCreate(d *schema.ResourceData, m interface{}) error {
 	// only allow one record to be created at a time
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
@@ -165,7 +165,7 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 				return e
 			}
 			d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
-			return resourceDNSv2ZoneRead(d, meta)
+			return resourceDNSv2ZoneRead(d, m)
 		} else {
 			return e
 		}
@@ -179,13 +179,13 @@ func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
 	} else {
 		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
 	}
-	return resourceDNSv2ZoneRead(d, meta)
+	return resourceDNSv2ZoneRead(d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceDNSv2ZoneRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSv2ZoneRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] [Akamai DNSv2] READ")
 
 	log.Printf("[DEBUG] Reading [Akamai DNSv2] Record: %s", d.Id())
@@ -225,7 +225,7 @@ func resourceDNSv2ZoneRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 // Update DNS Zone
-func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSv2ZoneUpdate(d *schema.ResourceData, m interface{}) error {
 	// only allow one record to be created at a time
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
@@ -276,11 +276,11 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	} else {
 		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
 	}
-	return resourceDNSv2ZoneRead(d, meta)
+	return resourceDNSv2ZoneRead(d, m)
 }
 
 // Import Zone. Id is the zone
-func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	hostname := d.Id()
 	// find the zone first
 	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
@@ -299,15 +299,15 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDNSv2ZoneDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSv2ZoneDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Deleting DNS Zone")
 
 	// No ZONE delete operation permitted.
 
-	return schema.Noop(d, meta)
+	return schema.Noop(d, m)
 }
 
-func resourceDNSv2ZoneExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceDNSv2ZoneExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 	hostname := d.Get("zone").(string)
 	masterlist := d.Get("masters").(*schema.Set).List()

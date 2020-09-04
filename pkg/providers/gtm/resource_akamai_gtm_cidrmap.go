@@ -82,7 +82,7 @@ func parseResourceCidrMapId(id string) (string, string, error) {
 }
 
 // Create a new GTM CidrMap
-func resourceGTMv1CidrMapCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1CidrMapCreate(d *schema.ResourceData, m interface{}) error {
 
 	domain := d.Get("domain").(string)
 
@@ -124,12 +124,12 @@ func resourceGTMv1CidrMapCreate(d *schema.ResourceData, meta interface{}) error 
 	cidrMapId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	log.Printf("[DEBUG] [Akamai GTMv1] Generated CidrMap CidrMap Id: %s", cidrMapId)
 	d.SetId(cidrMapId)
-	return resourceGTMv1CidrMapRead(d, meta)
+	return resourceGTMv1CidrMapRead(d, m)
 
 }
 
 // read cidrMap. updates state with entire API result configuration.
-func resourceGTMv1CidrMapRead(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1CidrMapRead(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] CidrMap: %s", d.Id())
@@ -149,7 +149,7 @@ func resourceGTMv1CidrMapRead(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Update GTM CidrMap
-func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] CidrMap: %s", d.Id())
@@ -192,11 +192,11 @@ func resourceGTMv1CidrMapUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	}
 
-	return resourceGTMv1CidrMapRead(d, meta)
+	return resourceGTMv1CidrMapRead(d, m)
 }
 
 // Import GTM CidrMap.
-func resourceGTMv1CidrMapImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1CidrMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] CidrMap [%s] Import", d.Id())
 	// pull domain and cidrMap out of cidrMap id
@@ -224,7 +224,7 @@ func resourceGTMv1CidrMapImport(d *schema.ResourceData, _ interface{}) ([]*schem
 }
 
 // Delete GTM CidrMap.
-func resourceGTMv1CidrMapDelete(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1CidrMapDelete(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] CidrMap: %s", d.Id())
@@ -270,7 +270,7 @@ func resourceGTMv1CidrMapDelete(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Test GTM CidrMap existence
-func resourceGTMv1CidrMapExists(d *schema.ResourceData, _ interface{}) (bool, error) {
+func resourceGTMv1CidrMapExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and cidrMap out of cidrMap id

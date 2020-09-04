@@ -34,7 +34,7 @@ func dataSourceDNSRecordSet() *schema.Resource {
 	}
 }
 
-func dataSourceDNSRecordSetRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceDNSRecordSetRead(d *schema.ResourceData, m interface{}) error {
 	zone := d.Get("zone").(string)
 	host := d.Get("host").(string)
 	recordtype := d.Get("record_type").(string)

@@ -27,7 +27,7 @@ func dataSourceAuthoritiesSet() *schema.Resource {
 	}
 }
 
-func dataSourceAuthoritiesSetRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceAuthoritiesSetRead(d *schema.ResourceData, m interface{}) error {
 	contractid := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
 
 	log.Printf("[DEBUG] [Akamai DNSv2] Start Searching for authority records %s ", contractid)

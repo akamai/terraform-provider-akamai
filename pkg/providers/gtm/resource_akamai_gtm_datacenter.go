@@ -148,7 +148,7 @@ var (
 )
 
 // Create a new GTM Datacenter
-func resourceGTMv1DatacenterCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DatacenterCreate(d *schema.ResourceData, m interface{}) error {
 
 	// Async GTM DC creation causes issues at this writing. Synchronize as work around.
 	datacenterCreateLock.Lock()
@@ -188,13 +188,13 @@ func resourceGTMv1DatacenterCreate(d *schema.ResourceData, meta interface{}) err
 	datacenterId := fmt.Sprintf("%s:%d", domain, cStatus.Resource.DatacenterId)
 	log.Printf("[DEBUG] [Akamai GTMv1] Generated DC Resource Id: %s", datacenterId)
 	d.SetId(datacenterId)
-	return resourceGTMv1DatacenterRead(d, meta)
+	return resourceGTMv1DatacenterRead(d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DatacenterRead(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1DatacenterRead(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] Datacenter: %s", d.Id())
@@ -214,7 +214,7 @@ func resourceGTMv1DatacenterRead(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Update GTM Datacenter
-func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Datacenter: %s", d.Id())
@@ -257,10 +257,10 @@ func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) err
 
 	}
 
-	return resourceGTMv1DatacenterRead(d, meta)
+	return resourceGTMv1DatacenterRead(d, m)
 }
 
-func resourceGTMv1DatacenterImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Import")
 	log.Printf("[DEBUG] Importing [Akamai GTMv1] Datacenter: %s", d.Id())
@@ -289,7 +289,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, _ interface{}) ([]*sc
 }
 
 // Delete GTM Datacenter.
-func resourceGTMv1DatacenterDelete(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1DatacenterDelete(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Datacenter: %s", d.Id())
@@ -335,7 +335,7 @@ func resourceGTMv1DatacenterDelete(d *schema.ResourceData, _ interface{}) error 
 }
 
 // Test GTM Datacenter existence
-func resourceGTMv1DatacenterExists(d *schema.ResourceData, _ interface{}) (bool, error) {
+func resourceGTMv1DatacenterExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and dcid out of resource id

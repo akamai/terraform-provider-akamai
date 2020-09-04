@@ -72,11 +72,11 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameCreate")
+func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 	d.Partial(true)
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + akactx.OperationID() + "]"
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + meta.OperationID() + "]"
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
@@ -192,18 +192,18 @@ func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameDelete")
+func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
 	logger.Debugf("DELETING")
 	d.SetId("")
 	logger.Debugf("DONE")
 	return nil
 }
 
-func resourceSecureEdgeHostNameImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameImport")
+func resourceSecureEdgeHostNameImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameImport")
 	resourceID := d.Id()
 	propertyID := resourceID
 
@@ -256,10 +256,10 @@ func resourceSecureEdgeHostNameImport(_ context.Context, d *schema.ResourceData,
 }
 
 // Todo This logic can be part of ReadContext function. Don't need separate exists function
-func resourceSecureEdgeHostNameExists(d *schema.ResourceData, _ interface{}) (bool, error) {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameCreate")
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + akactx.OperationID() + "]"
+func resourceSecureEdgeHostNameExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + meta.OperationID() + "]"
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
 		return false, err
@@ -286,10 +286,10 @@ func resourceSecureEdgeHostNameExists(d *schema.ResourceData, _ interface{}) (bo
 	return true, nil
 }
 
-func resourceSecureEdgeHostNameRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameCreate")
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + akactx.OperationID() + "]"
+func resourceSecureEdgeHostNameRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + meta.OperationID() + "]"
 	d.Partial(true)
 
 	group, err := getGroup(d, CorrelationID, logger)

@@ -3,9 +3,10 @@ package property
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -15,8 +16,8 @@ import (
 
 func dataPropertyRules() *schema.Resource {
 	return &schema.Resource{
-		ReadContext:   dataPropertyRulesRead,
-		Schema: akamaiDataPropertyRulesSchema,
+		ReadContext: dataPropertyRulesRead,
+		Schema:      akamaiDataPropertyRulesSchema,
 	}
 }
 
@@ -223,7 +224,7 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 	},
 }
 
-func dataPropertyRulesRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func dataPropertyRulesRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	rules := papi.NewRules()
 
 	// get rules from the TF config

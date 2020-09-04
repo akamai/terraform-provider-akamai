@@ -33,10 +33,11 @@ func dataSourceCPCode() *schema.Resource {
 	}
 }
 
-func dataSourceCPCodeRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("PAPI", "dataSourceCPCodeRead")
-	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + akactx.OperationID() + "]"
+func dataSourceCPCodeRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	log := meta.Log("PAPI", "dataSourceCPCodeRead")
+
+	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + meta.OperationID() + "]"
 	log.Debug("Read CP Code")
 
 	var name, group, contract string

@@ -48,10 +48,10 @@ func resourceCPCode() *schema.Resource {
 	}
 }
 
-func resourceCPCodeCreate(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceCPCodeCreate")
-	CorrelationID := "[PAPI][resourceCPCodeCreate-" + akactx.OperationID() + "]"
+func resourceCPCodeCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceCPCodeCreate")
+	CorrelationID := "[PAPI][resourceCPCodeCreate-" + meta.OperationID() + "]"
 
 	logger.Debugf("Creating CP Code")
 	name, err := tools.GetStringValue("name", d)
@@ -95,19 +95,21 @@ func resourceCPCodeCreate(_ context.Context, d *schema.ResourceData, _ interface
 	return resourceCPCodeRead(nil, d, nil)
 }
 
-func resourceCPCodeDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceCPCodeDelete")
+func resourceCPCodeDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+
+	logger := meta.Log("PAPI", "resourceCPCodeDelete")
+
 	logger.Debugf("Deleting CP Code")
 	// No PAPI CP Code delete operation exists.
 	// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
-	return schema.NoopContext(nil, d, meta)
+	return schema.NoopContext(nil, d, m)
 }
 
-func resourceCPCodeRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceCPCodeRead")
-	CorrelationID := "[PAPI][resourceCPCodeRead-" + akactx.OperationID() + "]"
+func resourceCPCodeRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceCPCodeRead")
+	CorrelationID := "[PAPI][resourceCPCodeRead-" + meta.OperationID() + "]"
 
 	logger.Debugf("Read CP Code")
 	name, err := tools.GetStringValue("name", d)

@@ -158,10 +158,10 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyCreate")
-	CorrelationID := "[PAPI][resourcePropertyCreate-" + akactx.OperationID() + "]"
+func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyCreate")
+	CorrelationID := "[PAPI][resourcePropertyCreate-" + meta.OperationID() + "]"
 	d.Partial(true)
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
@@ -374,10 +374,10 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 	return property, nil
 }
 
-func resourcePropertyDelete(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyDelete")
-	CorrelationID := "[PAPI][resourcePropertyDelete-" + akactx.OperationID() + "]"
+func resourcePropertyDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyDelete")
+	CorrelationID := "[PAPI][resourcePropertyDelete-" + meta.OperationID() + "]"
 	logger.Debugf("DELETING")
 	contractID, err := tools.GetStringValue("contract", d)
 	//Todo clean up redundant checks and bubble up errors
@@ -418,9 +418,9 @@ func resourcePropertyDelete(_ context.Context, d *schema.ResourceData, _ interfa
 	return nil
 }
 
-func resourcePropertyImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyImport")
+func resourcePropertyImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyImport")
 	propertyID := d.Id()
 
 	if !strings.HasPrefix(propertyID, "prp_") {
@@ -466,10 +466,10 @@ func resourcePropertyImport(_ context.Context, d *schema.ResourceData, _ interfa
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyRead")
-	CorrelationID := "[PAPI][resourcePropertyRead-" + akactx.OperationID() + "]"
+func resourcePropertyRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyRead")
+	CorrelationID := "[PAPI][resourcePropertyRead-" + meta.OperationID() + "]"
 	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
@@ -540,10 +540,10 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface
 	return nil
 }
 
-func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyUpdate")
-	CorrelationID := "[PAPI][resourcePropertyUpdate-" + akactx.OperationID() + "]"
+func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyUpdate")
+	CorrelationID := "[PAPI][resourcePropertyUpdate-" + meta.OperationID() + "]"
 	logger.Debugf("UPDATING")
 	d.Partial(true)
 	property, err := getProperty(d, CorrelationID, logger)
@@ -634,9 +634,10 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 	return resourcePropertyRead(nil, d, nil)
 }
 
-func resourceCustomDiffCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceCustomDiffCustomizeDiff")
+func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceCustomDiffCustomizeDiff")
+
 	logger.Debugf("ID: %s", d.Id())
 	// Note that this gets put into state after the update, regardless of whether
 	// or not anything is acted upon in the diff.

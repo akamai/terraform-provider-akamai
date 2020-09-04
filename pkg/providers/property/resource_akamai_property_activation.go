@@ -58,10 +58,10 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationCreate")
-	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + akactx.OperationID() + "]"
+func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
+	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + meta.OperationID() + "]"
 	d.Partial(true)
 
 	property := papi.NewProperty(papi.NewProperties())
@@ -126,10 +126,10 @@ func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourcePropertyActivationDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationDelete")
-	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + akactx.OperationID() + "]"
+func resourcePropertyActivationDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationDelete")
+	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + meta.OperationID() + "]"
 
 	logger.Debugf("DEACTIVATE PROPERTY")
 	property := papi.NewProperty(papi.NewProperties())
@@ -196,10 +196,10 @@ polling:
 }
 
 //Todo should be part of ReadContext
-func resourcePropertyActivationExists(d *schema.ResourceData, _ interface{}) (bool, error) {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationExists")
-	CorrelationID := "[PAPI][resourcePropertyActivationExists-" + akactx.OperationID() + "]"
+func resourcePropertyActivationExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationExists")
+	CorrelationID := "[PAPI][resourcePropertyActivationExists-" + meta.OperationID() + "]"
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
@@ -236,10 +236,10 @@ func resourcePropertyActivationExists(d *schema.ResourceData, _ interface{}) (bo
 	return false, nil
 }
 
-func resourcePropertyActivationRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationRead")
-	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + akactx.OperationID() + "]"
+func resourcePropertyActivationRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationRead")
+	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + meta.OperationID() + "]"
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
@@ -284,10 +284,10 @@ func resourcePropertyActivationRead(_ context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourcePropertyActivationUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationRead")
-	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + akactx.OperationID() + "]"
+func resourcePropertyActivationUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationRead")
+	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + meta.OperationID() + "]"
 
 	logger.Debugf("UPDATING")
 	logger.Debugf("Fetching property")
@@ -322,7 +322,7 @@ func resourcePropertyActivationUpdate(_ context.Context, d *schema.ResourceData,
 	}
 	if !activate {
 		logger.Debugf("Done")
-		return resourcePropertyActivationRead(nil, d, meta)
+		return resourcePropertyActivationRead(nil, d, m)
 	}
 	// No activation in progress, create a new one
 	if foundActivation == nil {

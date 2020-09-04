@@ -190,7 +190,7 @@ func GetQueryArgs(d *schema.ResourceData) map[string]string {
 }
 
 // Create a new GTM Domain
-func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DomainCreate(d *schema.ResourceData, m interface{}) error {
 
 	dname := d.Get("name").(string)
 	log.Printf("[INFO] [Akamai GTM] Creating domain [%s]", dname)
@@ -243,13 +243,13 @@ func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	// Give terraform the ID
 	d.SetId(dname)
-	return resourceGTMv1DomainRead(d, meta)
+	return resourceGTMv1DomainRead(d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DomainRead(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1DomainRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] Domain: %s", d.Id())
 	// retrieve the domain
@@ -264,7 +264,7 @@ func resourceGTMv1DomainRead(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Update GTM Domain
-func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DomainUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Domain: %s", d.Id())
@@ -303,12 +303,12 @@ func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	}
 
-	return resourceGTMv1DomainRead(d, meta)
+	return resourceGTMv1DomainRead(d, m)
 
 }
 
 // Delete GTM Domain. Admin privileges required in current API version.
-func resourceGTMv1DomainDelete(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1DomainDelete(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[DEBUG] Deleting GTM Domain")
 	log.Printf("[DEBUG] [Akamai GTMv1] Domain: %s", d.Id())
 	// Get existing domain
@@ -365,7 +365,7 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Test GTM Domain existence
-func resourceGTMv1DomainExists(d *schema.ResourceData, _ interface{}) (bool, error) {
+func resourceGTMv1DomainExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 	name := d.Get("name").(string)
 	log.Printf("[DEBUG] [Akamai GTMv1] Searching for domain [%s]", name)

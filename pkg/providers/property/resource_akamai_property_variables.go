@@ -74,9 +74,9 @@ var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyVariablesCreate")
+func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyVariablesCreate")
 	rule := papi.NewRule()
 	logger.Debugf("START Check for variables")
 	variables, err := tools.GetSetValue("variables", d)
@@ -153,16 +153,16 @@ func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, 
 	return resourcePropertyVariablesRead(nil, d, nil)
 }
 
-func resourcePropertyVariablesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyVariablesDelete")
+func resourcePropertyVariablesDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyVariablesDelete")
 	logger.Debugf("DELETING")
 	d.SetId("")
 	logger.Debugf("Done")
 	return nil
 }
 
-func resourcePropertyVariablesImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourcePropertyVariablesImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	resourceID := d.Id()
 	propertyID := resourceID
 
@@ -210,9 +210,9 @@ func resourcePropertyVariablesImport(_ context.Context, d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourcePropertyVariablesExists(d *schema.ResourceData, _ interface{}) (bool, error) {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyVariablesExists")
+func resourcePropertyVariablesExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyVariablesExists")
 	variables := d.Id()
 	// FIXME this function always returns true, nil
 	if variables != "" {
@@ -222,13 +222,13 @@ func resourcePropertyVariablesExists(d *schema.ResourceData, _ interface{}) (boo
 	return true, nil
 }
 
-func resourcePropertyVariablesRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePropertyVariablesRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return nil
 }
 
-func resourcePropertyVariablesUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log(inst.Name())
+func resourcePropertyVariablesUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log(inst.Name())
 	logger.Debugf("UPDATING")
 	rule := papi.NewRule()
 	logger.Debugf("START Check for variables")

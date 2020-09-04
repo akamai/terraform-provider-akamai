@@ -170,22 +170,22 @@ var akamaiPropertyRulesSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyRulesCreate(d *schema.ResourceData, meta interface{}) error {
+func resourcePropertyRulesCreate(d *schema.ResourceData, m interface{}) error {
 	return errors.New("The akamai_property_rules resource has moved to a data source, please change 'resource \"akamai_property_rules\"' to 'data \"akamai_property_rules\"")
 }
 
-func resourcePropertyRulesDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePropertyRulesDelete(d *schema.ResourceData, m interface{}) error {
 	return errors.New("The akamai_property_rules resource has moved to a data source, please change 'resource \"akamai_property_rules\"' to 'data \"akamai_property_rules\"")
 }
 
-func resourcePropertyRulesExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourcePropertyRulesExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	return false, errors.New("The akamai_property_rules resource has moved to a data source, please change 'resource \"akamai_property_rules\"' to 'data \"akamai_property_rules\"")
 }
 
-func resourcePropertyRulesRead(d *schema.ResourceData, meta interface{}) error {
+func resourcePropertyRulesRead(d *schema.ResourceData, m interface{}) error {
 	return errors.New("The akamai_property_rules resource has moved to a data source, please change 'resource \"akamai_property_rules\"' to 'data \"akamai_property_rules\"")
 }
 
-func resourcePropertyRulesUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourcePropertyRulesUpdate(d *schema.ResourceData, m interface{}) error {
 	return errors.New("The akamai_property_rules resource has moved to a data source, please change 'resource \"akamai_property_rules\"' to 'data \"akamai_property_rules\"")
 }

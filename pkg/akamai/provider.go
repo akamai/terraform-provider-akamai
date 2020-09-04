@@ -2,9 +2,7 @@ package akamai
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -14,9 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mr-tron/base58"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
@@ -49,42 +45,27 @@ type (
 		DataSources() map[string]*schema.Resource
 
 		// Configure returns the subprovider opaque state object
-		Configure(context.Context, log.Interface, *schema.ResourceData) (interface{}, diag.Diagnostics)
+		Configure(log.Interface, *schema.ResourceData) diag.Diagnostics
 	}
 
-	// Context provides logging and other support services to the adapters
-	Context interface {
-		// Log returns a named logger for the subprovider
-		Log(ctx ...string) log.Interface
+	meta struct {
+		operationID string
+		log         hclog.Logger
+	}
 
-		// Meta returns this providers internal meta object
-		Meta() interface{}
+	// OperationMeta is the akamai meta object interface
+	OperationMeta interface {
+		// Log constructs an hclog sublogger and returns the log.Interface
+		Log(args ...interface{}) log.Interface
 
-		// CacheSet sets an object in the meta cache
-		CacheSet(key string, value interface{}) error
-
-		// CacheGet gets an object from the meta cache
-		CacheGet(key string, out interface{}) error
-
-		// OperationID is a unique id for an operation
+		// OperationID returns the operation id
 		OperationID() string
-
-		// TerraformVersion returns the version from the core provider
-		TerraformVersion() string
 	}
 
 	provider struct {
 		schema.Provider
-		log    log.Interface
-		subs   map[string]Subprovider
-		states map[string]interface{}
-		cache  *bigcache.BigCache
-	}
-
-	akaContext struct {
-		operationID string
-		log         log.Interface
-		meta        interface{}
+		subs  map[string]Subprovider
+		cache *bigcache.BigCache
 	}
 )
 
@@ -95,23 +76,7 @@ var (
 )
 
 // Provider returns the provider function to terraform
-func Provider(l hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
-	// Set the apex log handler to the structured logging interface
-	log.SetHandler(&logHandler{l})
-
-	// check for trace as the structured logger does not support trace
-	// just make it debug to get everything from the provider
-	lvlString := strings.ToLower(logging.LogLevel())
-	if lvlString == "trace" {
-		lvlString = "debug"
-	}
-
-	if lvl, err := log.ParseLevel(lvlString); err == nil {
-		log.SetLevel(lvl)
-	} else {
-		log.SetLevel(log.InfoLevel)
-	}
-
+func Provider(provs ...Subprovider) plugin.ProviderFunc {
 	once.Do(func() {
 		instance = &provider{
 			Provider: schema.Provider{
@@ -132,9 +97,7 @@ func Provider(l hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 				DataSourcesMap:     make(map[string]*schema.Resource),
 				ProviderMetaSchema: make(map[string]*schema.Schema),
 			},
-			subs:   make(map[string]Subprovider),
-			states: make(map[string]interface{}),
-			log:    log.Log,
+			subs: make(map[string]Subprovider),
 		}
 
 		cache, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
@@ -165,28 +128,30 @@ func Provider(l hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 		}
 
 		instance.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-			var stateSet bool
+			// generat an operation id so we can correlate all calls to this provider
+			opid := uuid.Must(uuid.NewRandom()).String()
+
+			// create a log from the hclog in the context
+			log := hclog.FromContext(ctx).With(
+				"OperationID", opid,
+			)
+
+			meta := &meta{
+				log:         log,
+				operationID: opid,
+			}
 
 			for _, p := range instance.subs {
-				state, err := p.Configure(ctx, log.Log.WithField("provider", p.Name()), d)
+				err := p.Configure(LogFromHCLog(log), d)
 				if err != nil {
 					return nil, err
 				}
-
-				if state != nil {
-					stateSet = true
-					instance.states[p.Name()] = state
-				}
-			}
-
-			if !stateSet {
-				return nil, ErrNoConfiguredProviders.Diagnostics()
 			}
 
 			// TODO: once the client is update this will be done elsewhere
 			client.UserAgent = instance.UserAgent(ProviderName, instance.TerraformVersion)
 
-			return &instance, nil
+			return meta, nil
 		}
 	})
 
@@ -215,77 +180,22 @@ func mergeResource(from, to map[string]*schema.Resource) (map[string]*schema.Res
 	return to, nil
 }
 
-// ContextGet returns the context object from the passed interface
-func ContextGet(name string) Context {
-	sub, ok := instance.subs[name]
-	if !ok {
-		panic(ErrProviderNotLoaded(name))
-	}
-
-	coid := uuid.Must(uuid.NewRandom())
-	opid := base58.Encode(coid[:])
-	m := akaContext{
-		operationID: opid,
-		log: instance.log.WithFields(log.Fields{
-			"provider": sub.Name(),
-			"ver":      sub.Version(),
-			"opid":     opid,
-		}),
-	}
-
-	if state, ok := instance.states[name]; ok {
-		m.meta = state
-	}
-
-	return &m
+// Meta return the meta object interface
+func Meta(m interface{}) OperationMeta {
+	return m.(OperationMeta)
 }
 
-func (c *akaContext) Log(ctx ...string) log.Interface {
-	if len(ctx) > 0 {
-		return c.log.WithField("context", strings.Join(ctx, "."))
-	}
-	return c.log
+// ProviderLog creates a logger for the provider from the meta
+func (m *meta) Log(args ...interface{}) log.Interface {
+	return LogFromHCLog(m.log.With(args...))
 }
 
-func (c *akaContext) Meta() interface{} {
-	return c.meta
+// OperationID returns the operation id from the meta
+func (m *meta) OperationID() string {
+	return m.operationID
 }
 
-func (c *akaContext) OperationID() string {
-	return c.operationID
-}
-
-func (c *akaContext) TerraformVersion() string {
-	return instance.TerraformVersion
-}
-
-func (c *akaContext) CacheSet(key string, val interface{}) error {
-	var in []byte
-
-	switch v := val.(type) {
-	case []byte:
-		in = v
-	default:
-		data, err := json.Marshal(val)
-		if err != nil {
-			return err
-		}
-
-		in = data
-	}
-
-	return instance.cache.Set(key, in)
-}
-
-func (c *akaContext) CacheGet(key string, out interface{}) error {
-	data, err := instance.cache.Get(key)
-	if err != nil {
-		if err == bigcache.ErrEntryNotFound {
-			return ErrCacheEntryNotFound(key)
-		}
-
-		return err
-	}
-
-	return json.Unmarshal(data, out)
+// Log returns a global log object, there is no context like operation id
+func Log(args ...interface{}) log.Interface {
+	return LogFromHCLog(hclog.Default().With(args...))
 }

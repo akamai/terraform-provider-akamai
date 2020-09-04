@@ -115,7 +115,7 @@ func validateDefaultDC(ddcField []interface{}, domain string) error {
 }
 
 // Create a new GTM ASmap
-func resourceGTMv1ASmapCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ASmapCreate(d *schema.ResourceData, m interface{}) error {
 
 	domain := d.Get("domain").(string)
 
@@ -157,12 +157,12 @@ func resourceGTMv1ASmapCreate(d *schema.ResourceData, meta interface{}) error {
 	asMapId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	log.Printf("[DEBUG] [Akamai GTMv1] Generated ASmap ASmap Id: %s", asMapId)
 	d.SetId(asMapId)
-	return resourceGTMv1ASmapRead(d, meta)
+	return resourceGTMv1ASmapRead(d, m)
 
 }
 
 // read asMap. updates state with entire API result configuration.
-func resourceGTMv1ASmapRead(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1ASmapRead(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] ASmap: %s", d.Id())
@@ -182,7 +182,7 @@ func resourceGTMv1ASmapRead(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Update GTM ASmap
-func resourceGTMv1ASmapUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ASmapUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] ASmap: %s", d.Id())
@@ -224,11 +224,11 @@ func resourceGTMv1ASmapUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	return resourceGTMv1ASmapRead(d, meta)
+	return resourceGTMv1ASmapRead(d, m)
 }
 
 // Import GTM ASmap.
-func resourceGTMv1ASmapImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1ASmapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] ASmap [%s] Import", d.Id())
 	// pull domain and asMap out of asMap id
@@ -256,7 +256,7 @@ func resourceGTMv1ASmapImport(d *schema.ResourceData, _ interface{}) ([]*schema.
 }
 
 // Delete GTM ASmap.
-func resourceGTMv1ASmapDelete(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1ASmapDelete(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] ASmap: %s", d.Id())
@@ -303,7 +303,7 @@ func resourceGTMv1ASmapDelete(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Test GTM ASmap existence
-func resourceGTMv1ASmapExists(d *schema.ResourceData, _ interface{}) (bool, error) {
+func resourceGTMv1ASmapExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and asMap out of asMap id

@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"log"
 	"net"
 	"regexp"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -619,7 +620,7 @@ func executeRecordFunction(name string, d *schema.ResourceData, fn recordFunctio
 }
 
 // Create a new DNS Record
-func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 	// only allow one record per record type to be created at a time
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
@@ -663,7 +664,7 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if recordtype == "SOA" {
 		// A default SOA is created automagically when the primary zone is created ...
-		err := resourceDNSRecordRead(d, meta)
+		err := resourceDNSRecordRead(d, m)
 		if err == nil {
 			// Record exists
 			serial := d.Get("serial").(int) + 1
@@ -729,12 +730,12 @@ func resourceDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 		d.SetId(fmt.Sprintf("%s-%s-%s-%s", zone, host, recordtype, sha1hash))
 	}
 	// Lock won't be release til after Read ...
-	return resourceDNSRecordRead(d, meta)
+	return resourceDNSRecordRead(d, m)
 
 }
 
 // Update DNS Record
-func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSRecordUpdate(d *schema.ResourceData, m interface{}) error {
 	// only allow one record per record type to be updated at a time
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
@@ -848,10 +849,10 @@ func resourceDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 	// Lock not released until after Read ...
-	return resourceDNSRecordRead(d, meta)
+	return resourceDNSRecordRead(d, m)
 }
 
-func resourceDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSRecordRead(d *schema.ResourceData, m interface{}) error {
 	var zone string
 	var host string
 	var recordtype string
@@ -1019,7 +1020,7 @@ func validateSOARecord(d *schema.ResourceData) (int, bool) {
 
 }
 
-func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 
 	idParts := strings.Split(d.Id(), "#")
 	if len(idParts) != 3 {
@@ -1085,7 +1086,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDNSRecordDelete(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[INFO] [Akamai DNS] Record Delete")
 
@@ -1112,7 +1113,7 @@ func resourceDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	return executeRecordFunction("DELETE", d, recordcreate.Delete, zone, host, recordtype, false)
 }
 
-func resourceDNSRecordExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceDNSRecordExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 	var zone string
 	var host string

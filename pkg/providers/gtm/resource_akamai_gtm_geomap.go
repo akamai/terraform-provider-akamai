@@ -83,7 +83,7 @@ func parseResourceGeoMapId(id string) (string, string, error) {
 }
 
 // Create a new GTM GeoMap
-func resourceGTMv1GeomapCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1GeomapCreate(d *schema.ResourceData, m interface{}) error {
 
 	domain := d.Get("domain").(string)
 
@@ -125,12 +125,12 @@ func resourceGTMv1GeomapCreate(d *schema.ResourceData, meta interface{}) error {
 	geoMapId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	log.Printf("[DEBUG] [Akamai GTMv1] Generated GeoMap GeoMap Id: %s", geoMapId)
 	d.SetId(geoMapId)
-	return resourceGTMv1GeomapRead(d, meta)
+	return resourceGTMv1GeomapRead(d, m)
 
 }
 
 // read geoMap. updates state with entire API result configuration.
-func resourceGTMv1GeomapRead(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1GeomapRead(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] GeoMap: %s", d.Id())
@@ -150,7 +150,7 @@ func resourceGTMv1GeomapRead(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Update GTM GeoMap
-func resourceGTMv1GeomapUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1GeomapUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] GeoMap: %s", d.Id())
@@ -193,11 +193,11 @@ func resourceGTMv1GeomapUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	}
 
-	return resourceGTMv1GeomapRead(d, meta)
+	return resourceGTMv1GeomapRead(d, m)
 }
 
 // Import GTM GeoMap.
-func resourceGTMv1GeomapImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1GeomapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] GeoMap [%s] Import", d.Id())
 	// pull domain and geoMap out of geoMap id
@@ -225,7 +225,7 @@ func resourceGTMv1GeomapImport(d *schema.ResourceData, _ interface{}) ([]*schema
 }
 
 // Delete GTM GeoMap.
-func resourceGTMv1GeomapDelete(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1GeomapDelete(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] GeoMap: %s", d.Id())
@@ -271,7 +271,7 @@ func resourceGTMv1GeomapDelete(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Test GTM GeoMap existence
-func resourceGTMv1GeomapExists(d *schema.ResourceData, _ interface{}) (bool, error) {
+func resourceGTMv1GeomapExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and geoMap out of geoMap id

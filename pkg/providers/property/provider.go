@@ -1,7 +1,6 @@
 package property
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -170,13 +169,13 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(ctx context.Context, log log.Interface, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
 
-	cfg, err := getPAPIV1Service(d)
+	_, err := getPAPIV1Service(d)
 	if err != nil {
-		return nil, nil
+		return nil
 	}
 
-	return cfg, nil
+	return nil
 }

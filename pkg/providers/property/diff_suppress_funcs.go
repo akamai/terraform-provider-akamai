@@ -19,8 +19,7 @@ import (
 
 // FIXME this function is identical to suppressEquivalentJSONPendingDiffs
 func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) bool {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "suppressEquivalentJSONDiffs")
+	logger := akamai.Log("PAPI", "suppressEquivalentJSONDiffs")
 
 	oldBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(oldBuf, []byte(old)); err != nil {
@@ -69,13 +68,13 @@ func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) boo
 }
 
 func suppressEquivalentJSONPendingDiffs(old, new string, d *schema.ResourceDiff) bool {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "suppressEquivalentJSONPendingDiffs")
+	logger := akamai.Log("PAPI", "suppressEquivalentJSONPendingDiffs")
 	oldBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(oldBuf, []byte(old)); err != nil {
 		logger.Errorf("converting old value to compact json: %s", old)
 		return false
 	}
+
 	newBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(newBuf, []byte(new)); err != nil {
 		logger.Errorf("converting new value to compact json: %s", newBuf)

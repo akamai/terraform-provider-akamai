@@ -117,7 +117,7 @@ func parseResourceResourceId(id string) (string, string, error) {
 }
 
 // Create a new GTM Resource
-func resourceGTMv1ResourceCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ResourceCreate(d *schema.ResourceData, m interface{}) error {
 
 	domain := d.Get("domain").(string)
 
@@ -153,12 +153,12 @@ func resourceGTMv1ResourceCreate(d *schema.ResourceData, meta interface{}) error
 	resourceId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	log.Printf("[DEBUG] [Akamai GTMv1] Generated Resource Resource Id: %s", resourceId)
 	d.SetId(resourceId)
-	return resourceGTMv1ResourceRead(d, meta)
+	return resourceGTMv1ResourceRead(d, m)
 
 }
 
 // read resource. updates state with entire API result configuration.
-func resourceGTMv1ResourceRead(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1ResourceRead(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] Resource: %s", d.Id())
@@ -178,7 +178,7 @@ func resourceGTMv1ResourceRead(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Update GTM Resource
-func resourceGTMv1ResourceUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1ResourceUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
 	// pull domain and resource out of id
@@ -220,11 +220,11 @@ func resourceGTMv1ResourceUpdate(d *schema.ResourceData, meta interface{}) error
 
 	}
 
-	return resourceGTMv1ResourceRead(d, meta)
+	return resourceGTMv1ResourceRead(d, m)
 }
 
 // Import GTM Resource.
-func resourceGTMv1ResourceImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] Resource [%s] Import", d.Id())
 	// pull domain and resource out of resource id
@@ -246,7 +246,7 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, _ interface{}) ([]*sche
 }
 
 // Delete GTM Resource.
-func resourceGTMv1ResourceDelete(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1ResourceDelete(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Resource: %s", d.Id())
@@ -292,7 +292,7 @@ func resourceGTMv1ResourceDelete(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Test GTM Resource existence
-func resourceGTMv1ResourceExists(d *schema.ResourceData, _ interface{}) (bool, error) {
+func resourceGTMv1ResourceExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and resource out of resource id

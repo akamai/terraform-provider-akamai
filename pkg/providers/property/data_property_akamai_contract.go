@@ -22,13 +22,14 @@ func dataSourcePropertyContract() *schema.Resource {
 	}
 }
 
-func dataSourcePropertyContractRead(d *schema.ResourceData, _ interface{}) error {
-	akactx := akamai.ContextGet(inst.Name())
+func dataSourcePropertyContractRead(d *schema.ResourceData, m interface{}) error {
+	meta := akamai.Meta(m)
 
-	// demonstrate the context logger
-	log := akactx.Log("PAPI", "dataSourcePropertyContractRead")
-	CorrelationID := "[PAPI][dataSourcePropertyContractRead-" + akactx.OperationID() + "]"
+	log := meta.Log("PAPI", "dataSourcePropertyContractRead")
+
+	CorrelationID := "[PAPI][dataSourcePropertyContractRead-" + meta.OperationID() + "]"
 	contracts := papi.NewContracts()
+
 	group, err := tools.GetStringValue("group", d)
 	// If no group, just return the first contract
 	if err != nil {
