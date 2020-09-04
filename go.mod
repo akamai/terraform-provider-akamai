@@ -9,7 +9,6 @@ require (
 	github.com/aws/aws-sdk-go v1.30.12 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-hclog v0.9.2
-	github.com/hashicorp/terraform-plugin-sdk v1.15.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
