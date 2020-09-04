@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+
+	"github.com/apex/log"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/go-hclog"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -24,47 +24,47 @@ func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) boo
 
 	oldBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(oldBuf, []byte(old)); err != nil {
-		logger.Error("converting to compact json: %s", old)
+		logger.Errorf("converting to compact json: %s", old)
 		return false
 	}
 	newBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(newBuf, []byte(new)); err != nil {
-		logger.Error("converting to compact json: %s", old)
+		logger.Errorf("converting to compact json: %s", old)
 		return false
 	}
-	logger.Debug("old json: %s", string(oldBuf.Bytes()))
-	logger.Debug("new json: %s", string(newBuf.Bytes()))
+	logger.Debugf("old json: %s", string(oldBuf.Bytes()))
+	logger.Debugf("new json: %s", string(newBuf.Bytes()))
 	rulesOld, err := getRulesForComp(d, old, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Warn("calling 'getRulesForComp': %s", err.Error())
+		logger.Warnf("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesOld.Etag = ""
 	body, err := jsonhooks.Marshal(rulesOld)
 	if err != nil {
-		logger.Error("marshaling rules: %s", err.Error())
+		logger.Errorf("marshaling rules: %s", err.Error())
 		return false
 	}
 	sha1hashOld := tools.GetSHAString(string(body))
-	logger.Debug("SHA from OLD Json %s", sha1hashOld)
+	logger.Debugf("SHA from OLD Json %s", sha1hashOld)
 	rulesNew, err := getRulesForComp(d, new, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Warn("calling 'getRulesForComp': %s", err.Error())
+		logger.Warnf("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
 	if err != nil {
-		logger.Error("marshaling rules: %s", err.Error())
+		logger.Errorf("marshaling rules: %s", err.Error())
 		return false
 	}
 	sha1hashNew := tools.GetSHAString(string(jsonBodyNew))
-	logger.Debug("SHA from NEW Json %s", sha1hashNew)
+	logger.Debugf("SHA from NEW Json %s", sha1hashNew)
 	if sha1hashOld == sha1hashNew {
-		logger.Debug("SHA Equal skip diff")
+		logger.Debugf("SHA Equal skip diff")
 		return true
 	}
-	logger.Debug("SHA Not Equal diff applies")
+	logger.Debugf("SHA Not Equal diff applies")
 	return false
 }
 
@@ -73,53 +73,53 @@ func suppressEquivalentJSONPendingDiffs(old, new string, d *schema.ResourceDiff)
 	logger := akactx.Log("PAPI", "suppressEquivalentJSONPendingDiffs")
 	oldBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(oldBuf, []byte(old)); err != nil {
-		logger.Error("converting old value to compact json: %s", old)
+		logger.Errorf("converting old value to compact json: %s", old)
 		return false
 	}
 	newBuf := bytes.NewBuffer([]byte{})
 	if err := json.Compact(newBuf, []byte(new)); err != nil {
-		logger.Error("converting new value to compact json: %s", newBuf)
+		logger.Errorf("converting new value to compact json: %s", newBuf)
 		return false
 	}
-	logger.Debug("old json: %s", string(oldBuf.Bytes()))
-	logger.Debug("new json: %s", string(newBuf.Bytes()))
+	logger.Debugf("old json: %s", string(oldBuf.Bytes()))
+	logger.Debugf("new json: %s", string(newBuf.Bytes()))
 
 	rulesOld, err := getRulesForComp(d, old, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Warn("calling 'getRulesForComp': %s", err.Error())
+		logger.Warnf("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesOld.Etag = ""
 	body, err := jsonhooks.Marshal(rulesOld)
 	if err != nil {
-		logger.Error("marshaling rules: %s", err.Error())
+		logger.Errorf("marshaling rules: %s", err.Error())
 		return false
 	}
 	sha1hashOld := tools.GetSHAString(string(body))
-	logger.Debug("SHA from OLD Json %s", sha1hashOld)
+	logger.Debugf("SHA from OLD Json %s", sha1hashOld)
 	rulesNew, err := getRulesForComp(d, new, "", logger)
 	if err != nil {
 		// todo not sure what to do with this error
-		logger.Warn("calling 'getRulesForComp': %s", err.Error())
+		logger.Warnf("calling 'getRulesForComp': %s", err.Error())
 	}
 	rulesNew.Etag = ""
 	jsonBodyNew, err := jsonhooks.Marshal(rulesNew)
 	if err != nil {
-		logger.Error("marshaling rules: %s", err.Error())
+		logger.Errorf("marshaling rules: %s", err.Error())
 		return false
 	}
 	sha1hashNew := tools.GetSHAString(string(jsonBodyNew))
-	logger.Debug("SHA from NEW Json %s", sha1hashNew)
+	logger.Debugf("SHA from NEW Json %s", sha1hashNew)
 	if sha1hashOld == sha1hashNew {
-		logger.Debug("SHA Equal skip diff")
+		logger.Debugf("SHA Equal skip diff")
 		return true
 	}
-	logger.Debug("SHA Not Equal diff applies")
+	logger.Debugf("SHA Not Equal diff applies")
 	return false
 }
 
 // TODO: discuss how property rules should be handled
-func getRulesForComp(d interface{}, json string, correlationid string, logger hclog.Logger) (*papi.Rules, error) {
+func getRulesForComp(d interface{}, json string, correlationid string, logger log.Interface) (*papi.Rules, error) {
 	property, err := getProperty(d, correlationid, logger)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func getRulesForComp(d interface{}, json string, correlationid string, logger hc
 		return nil, err
 	}
 	// get rules from the TF config
-	logger.Debug("Unmarshal Rules from JSON")
+	logger.Debugf("Unmarshal Rules from JSON")
 	unmarshalRulesFromJSONComp(d, json, rules)
 
 	var ruleFormat string
@@ -191,7 +191,7 @@ func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *
 					bb, ok := value.Value().(map[string]interface{})
 					if ok {
 						for k, v := range bb {
-							log.Println("k:", k, "v:", v)
+							log.Infof("k:", k, "v:", v)
 						}
 
 						beh := papi.NewBehavior()

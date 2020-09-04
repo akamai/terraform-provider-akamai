@@ -11,7 +11,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/go-hclog"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -184,8 +184,8 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(_ context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	log.Named(p.Name()).Debug("START Configure")
+func (p *provider) Configure(_ context.Context, log log.Interface, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	log.Debug("START Configure")
 
 	cfg, err := getConfigGTMV1Service(d)
 	if err != nil {

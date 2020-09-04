@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -31,7 +32,7 @@ func dataSourcePropertyGroups() *schema.Resource {
 
 func dataSourcePropertyGroupsRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("PAPI", "dataSourcePropertyGroupsRead")
+	log := akactx.Log()
 	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + akactx.OperationID() + "]"
 	var name string
 	name, err := tools.GetStringValue("name", d)
@@ -44,7 +45,7 @@ func dataSourcePropertyGroupsRead(_ context.Context, d *schema.ResourceData, _ i
 		getDefault = true
 	}
 
-	log.Debug("[Akamai Property Groups] Start Searching for property group records %s ", name)
+	log.Debugf("[Akamai Property Groups] Start Searching for property group records %s ", name)
 	groups := papi.NewGroups()
 	err = groups.GetGroups(CorrelationID)
 	if err != nil {
@@ -59,7 +60,7 @@ func dataSourcePropertyGroupsRead(_ context.Context, d *schema.ResourceData, _ i
 		return diag.FromErr(fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err))
 	}
 
-	log.Debug("Searching for records [%v]", group)
+	log.Debugf("Searching for records [%v]", group)
 	d.SetId(group.GroupID)
 	return nil
 }

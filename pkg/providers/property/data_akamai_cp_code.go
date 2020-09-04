@@ -3,6 +3,7 @@ package property
 import (
 	"context"
 	"fmt"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -34,7 +35,7 @@ func dataSourceCPCode() *schema.Resource {
 
 func dataSourceCPCodeRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("PAPI", "dataSourceCPCodeRead")
+	log := akactx.Log()
 	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + akactx.OperationID() + "]"
 	log.Debug("Read CP Code")
 
@@ -69,7 +70,7 @@ func dataSourceCPCodeRead(_ context.Context, d *schema.ResourceData, _ interface
 	}
 	d.SetId(cpCode.CpcodeID)
 
-	log.Debug("Read CP Code: %+v", cpCode)
+	log.Debugf("Read CP Code: %+v", cpCode)
 	return nil
 }
 

@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -20,7 +21,7 @@ func resourcePropertyVariables() *schema.Resource {
 		ReadContext:   resourcePropertyVariablesRead,
 		UpdateContext: resourcePropertyVariablesUpdate,
 		DeleteContext: resourcePropertyVariablesDelete,
-		Exists: resourcePropertyVariablesExists,
+		Exists:        resourcePropertyVariablesExists,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyVariablesImport,
 		},
@@ -77,13 +78,13 @@ func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, 
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyVariablesCreate")
 	rule := papi.NewRule()
-	logger.Debug("START Check for variables")
+	logger.Debugf("START Check for variables")
 	variables, err := tools.GetSetValue("variables", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if err == nil {
-		logger.Debug("Check for variables  %s", variables)
+		logger.Debugf("Check for variables  %s", variables)
 	}
 
 	for _, r := range variables.List() {
@@ -100,12 +101,12 @@ func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, 
 			if !ok {
 				continue
 			}
-			logger.Debug(" Check for variables LOOP  name %s", variableMap["name"])
-			logger.Debug("  Check for variables LOOP  value %s", variableMap["value"])
-			logger.Debug("  Check for variables LOOP  description %s", variableMap["description"])
-			logger.Debug("  Check for variables LOOP  hidden %s", variableMap["hidden"])
-			logger.Debug("  Check for variables LOOP  sensitive %s", variableMap["sensitive"])
-			logger.Debug("  Check for variables LOOP  fqname %s", variableMap["fqname"])
+			logger.Debugf(" Check for variables LOOP  name %s", variableMap["name"])
+			logger.Debugf("  Check for variables LOOP  value %s", variableMap["value"])
+			logger.Debugf("  Check for variables LOOP  description %s", variableMap["description"])
+			logger.Debugf("  Check for variables LOOP  hidden %s", variableMap["hidden"])
+			logger.Debugf("  Check for variables LOOP  sensitive %s", variableMap["sensitive"])
+			logger.Debugf("  Check for variables LOOP  fqname %s", variableMap["fqname"])
 			newVariable := papi.NewVariable()
 			name, ok := variableMap["name"].(string)
 			if !ok {
@@ -141,13 +142,13 @@ func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	logger.Debug("JSON result  %s", string(body))
+	logger.Debugf("JSON result  %s", string(body))
 	sha := tools.GetSHAString(string(body))
 	if err := d.Set("json", string(body)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.SetId(sha)
-	logger.Debug("Done")
+	logger.Debugf("Done")
 
 	return resourcePropertyVariablesRead(nil, d, nil)
 }
@@ -155,9 +156,9 @@ func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, 
 func resourcePropertyVariablesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log("PAPI", "resourcePropertyVariablesDelete")
-	logger.Debug("DELETING")
+	logger.Debugf("DELETING")
 	d.SetId("")
-	logger.Debug("Done")
+	logger.Debugf("Done")
 	return nil
 }
 
@@ -215,7 +216,7 @@ func resourcePropertyVariablesExists(d *schema.ResourceData, _ interface{}) (boo
 	variables := d.Id()
 	// FIXME this function always returns true, nil
 	if variables != "" {
-		logger.Debug("Check for variables  %s", variables)
+		logger.Debugf("Check for variables  %s", variables)
 		return true, nil
 	}
 	return true, nil
@@ -228,18 +229,18 @@ func resourcePropertyVariablesRead(_ context.Context, d *schema.ResourceData, me
 func resourcePropertyVariablesUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	akactx := akamai.ContextGet(inst.Name())
 	logger := akactx.Log(inst.Name())
-	logger.Debug("UPDATING")
+	logger.Debugf("UPDATING")
 	rule := papi.NewRule()
-	logger.Debug("START Check for variables")
+	logger.Debugf("START Check for variables")
 	variables, err := tools.GetSetValue("variables", d)
 	if err != nil {
 		if err != tools.ErrNotFound {
 			return diag.FromErr(err)
 		}
-		logger.Debug("Done")
+		logger.Debugf("Done")
 		return nil
 	}
-	logger.Debug("Check for variables  %s", variables)
+	logger.Debugf("Check for variables  %s", variables)
 	for _, r := range variables.List() {
 		variable, ok := r.(map[string]interface{})
 		if !ok {
@@ -288,12 +289,12 @@ func resourcePropertyVariablesUpdate(_ context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debug("JSON result  %s", string(body))
+	logger.Debugf("JSON result  %s", string(body))
 	sha := tools.GetSHAString(string(body))
 	if err := d.Set("json", string(body)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.SetId(sha)
-	logger.Debug("Done")
+	logger.Debugf("Done")
 	return nil
 }

@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/allegro/bigcache"
+	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mr-tron/base58"
@@ -46,13 +49,13 @@ type (
 		DataSources() map[string]*schema.Resource
 
 		// Configure returns the subprovider opaque state object
-		Configure(context.Context, hclog.Logger, *schema.ResourceData) (interface{}, diag.Diagnostics)
+		Configure(context.Context, log.Interface, *schema.ResourceData) (interface{}, diag.Diagnostics)
 	}
 
 	// Context provides logging and other support services to the adapters
 	Context interface {
 		// Log returns a named logger for the subprovider
-		Log(prefix ...string) hclog.Logger
+		Log(ctx ...string) log.Interface
 
 		// Meta returns this providers internal meta object
 		Meta() interface{}
@@ -72,7 +75,7 @@ type (
 
 	provider struct {
 		schema.Provider
-		log    hclog.Logger
+		log    log.Interface
 		subs   map[string]Subprovider
 		states map[string]interface{}
 		cache  *bigcache.BigCache
@@ -80,7 +83,7 @@ type (
 
 	akaContext struct {
 		operationID string
-		log         hclog.Logger
+		log         log.Interface
 		meta        interface{}
 	}
 )
@@ -92,7 +95,23 @@ var (
 )
 
 // Provider returns the provider function to terraform
-func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
+func Provider(l hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
+	// Set the apex log handler to the structured logging interface
+	log.SetHandler(&logHandler{l})
+
+	// check for trace as the structured logger does not support trace
+	// just make it debug to get everything from the provider
+	lvlString := strings.ToLower(logging.LogLevel())
+	if lvlString == "trace" {
+		lvlString = "debug"
+	}
+
+	if lvl, err := log.ParseLevel(lvlString); err == nil {
+		log.SetLevel(lvl)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
+
 	once.Do(func() {
 		instance = &provider{
 			Provider: schema.Provider{
@@ -115,7 +134,7 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 			},
 			subs:   make(map[string]Subprovider),
 			states: make(map[string]interface{}),
-			log:    log,
+			log:    log.Log,
 		}
 
 		cache, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
@@ -149,7 +168,7 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 			var stateSet bool
 
 			for _, p := range instance.subs {
-				state, err := p.Configure(ctx, log, d)
+				state, err := p.Configure(ctx, log.Log.WithField("provider", p.Name()), d)
 				if err != nil {
 					return nil, err
 				}
@@ -207,7 +226,11 @@ func ContextGet(name string) Context {
 	opid := base58.Encode(coid[:])
 	m := akaContext{
 		operationID: opid,
-		log:         instance.log.Named(sub.Name()).Named(sub.Version()).Named(opid),
+		log: instance.log.WithFields(log.Fields{
+			"provider": sub.Name(),
+			"ver":      sub.Version(),
+			"opid":     opid,
+		}),
 	}
 
 	if state, ok := instance.states[name]; ok {
@@ -217,13 +240,9 @@ func ContextGet(name string) Context {
 	return &m
 }
 
-func (c *akaContext) Log(prefix ...string) hclog.Logger {
-	if len(prefix) > 0 {
-		log := c.log
-		for _, p := range prefix {
-			log = log.Named(p)
-		}
-		return log
+func (c *akaContext) Log(ctx ...string) log.Interface {
+	if len(ctx) > 0 {
+		return c.log.WithField("context", strings.Join(ctx, "."))
 	}
 	return c.log
 }

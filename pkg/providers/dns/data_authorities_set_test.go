@@ -45,7 +45,7 @@ output "authorities" {
 }
 
 func testAccCheckAuthoritiesSetDestroy(s *terraform.State) error {
-	log.Printf("[DEBUG] [Group] Searching for AuthoritiesSet Delete skipped ")
+	log.Printf("[Group] Searching for AuthoritiesSet Delete skipped ")
 
 	return nil
 }
