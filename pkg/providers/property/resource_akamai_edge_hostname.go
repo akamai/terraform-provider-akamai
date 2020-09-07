@@ -75,7 +75,6 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
-	d.Partial(true)
 	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + meta.OperationID() + "]"
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
@@ -179,7 +178,6 @@ func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData,
 
 		logger.Debugf("Existing edge hostname FOUND = %s", hostname.EdgeHostnameID)
 		d.SetId(hostname.EdgeHostnameID)
-		d.Partial(false)
 		return nil
 	}
 	logger.Debugf("Creating new edge hostname: %#v", newHostname)
@@ -188,7 +186,6 @@ func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	d.SetId(newHostname.EdgeHostnameID)
-	d.Partial(false)
 	return nil
 }
 
@@ -290,7 +287,6 @@ func resourceSecureEdgeHostNameRead(_ context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + meta.OperationID() + "]"
-	d.Partial(true)
 
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
