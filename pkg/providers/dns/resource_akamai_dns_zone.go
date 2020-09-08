@@ -3,13 +3,14 @@ package dns
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"strings"
-	"sync"
-	"time"
 )
 
 var dnsWriteLock sync.Mutex
@@ -109,18 +110,16 @@ func resourceDNSv2Zone() *schema.Resource {
 	}
 }
 
-func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
 	hostname := d.Get("zone").(string)
 
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("i[Akamai DNS]", "resourceDNSZoneCreate")
-	CorrelationID := "[DNSv2][resourceDNSZoneCreate-" + akactx.OperationID() + "]"
+	meta := akamai.Meta(m)
+	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneCreate")
 
-	logger.Info("Zone Create.", "zone", hostname)
-	logger.Info("Zone Create.", "CorrelationID", CorrelationID)
+	logger.WithField("zone", hostname).Info("Zone Create")
 
 	if err := checkDNSv2Zone(d); err != nil {
 		return diag.FromErr(err)
@@ -206,17 +205,15 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 }
 
-func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
 	hostname := d.Get("zone").(string)
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("[Akamai DNS]", "resourceDNSZoneRead")
-	CorrelationID := "[DNSv2][resourceDNSZoneRead-" + akactx.OperationID() + "]"
+	meta := akamai.Meta(m)
+	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneRead")
 
-	logger.Info("Zone Read.", "zone", hostname)
-	logger.Info("Zone Read.", "CorrelationID", CorrelationID)
+	logger.WithField("zone", hostname).Info("Zone Read")
 
 	masterlist := d.Get("masters").(*schema.Set).List()
 	masters := make([]string, 0, len(masterlist))
@@ -255,17 +252,15 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, meta int
 }
 
 // Update DNS Zone
-func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
 	hostname := d.Get("zone").(string)
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("[Akamai DNS]", "resourceDNSZoneUpdate")
-	CorrelationID := "[DNSv2][resourceDNSZoneUpdate-" + akactx.OperationID() + "]"
+	meta := akamai.Meta(m)
+	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneUpdate")
 
-	logger.Info("Zone Update.", "zone", hostname)
-	logger.Info("Zone Update.", "CorrelationID", CorrelationID)
+	logger.WithField("zone", hostname).Info("Zone Update")
 
 	if err := checkDNSv2Zone(d); err != nil {
 		return diag.FromErr(err)
@@ -324,15 +319,13 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 // Import Zone. Id is the zone
-func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 
 	hostname := d.Id()
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("[Akamai DNS]", "resourceDNSZoneImport")
-	CorrelationID := "[DNSv2][resourceDNSZoneImport-" + akactx.OperationID() + "]"
+	meta := akamai.Meta(m)
+	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneImport")
 
-	logger.Info("Zone Import.", "zone", hostname)
-	logger.Info("Zone Import.", "CorrelationID", CorrelationID)
+	logger.WithField("zone", hostname).Info("Zone Import")
 
 	// find the zone first
 	logger.Debug(fmt.Sprintf("Searching for zone [%s]", hostname))
@@ -351,15 +344,13 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	hostname := d.Get("zone").(string)
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("[Akamai DNS]", "resourceDNSZoneDelete")
-	CorrelationID := "[DNSv2][resourceDNSZoneDelete-" + akactx.OperationID() + "]"
+	meta := akamai.Meta(m)
+	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneDelete")
 
-	logger.Info(fmt.Sprintf("Zone Delete.", "zone", hostname))
-	logger.Info(fmt.Sprintf("Zone Delete.", "CorrelationID", CorrelationID))
+	logger.WithField("zone", hostname).Info("Zone Import")
 
 	logger.Warn("DNS Zone deletion not allowed")
 

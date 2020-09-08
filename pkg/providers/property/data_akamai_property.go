@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -31,10 +32,10 @@ func dataSourceAkamaiProperty() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertyRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	log := akactx.Log("PAPI", "dataAkamaiPropertyRead")
-	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + akactx.OperationID() + "]"
+func dataAkamaiPropertyRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	log := meta.Log("PAPI", "dataAkamaiPropertyRead")
+	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + meta.OperationID() + "]"
 
 	log.Debug("Reading Property")
 

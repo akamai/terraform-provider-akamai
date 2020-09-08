@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
@@ -19,7 +20,7 @@ func resourceSecureEdgeHostName() *schema.Resource {
 		CreateContext: resourceSecureEdgeHostNameCreate,
 		ReadContext:   resourceSecureEdgeHostNameRead,
 		DeleteContext: resourceSecureEdgeHostNameDelete,
-		Exists: resourceSecureEdgeHostNameExists,
+		Exists:        resourceSecureEdgeHostNameExists,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceSecureEdgeHostNameImport,
 		},
@@ -71,21 +72,21 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameCreate")
+func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 	d.Partial(true)
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + akactx.OperationID() + "]"
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + meta.OperationID() + "]"
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debug("  Edgehostnames GROUP = %v", group)
+	logger.Debugf("  Edgehostnames GROUP = %v", group)
 	contract, err := getContract(d, CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debug("Edgehostnames CONTRACT = %v", contract)
+	logger.Debugf("Edgehostnames CONTRACT = %v", contract)
 	product, err := getProduct(d, contract, CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
@@ -163,25 +164,25 @@ func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData,
 	hostname, err := edgeHostnames.FindEdgeHostname(newHostname)
 	if err != nil {
 		// TODO this error has to be ignored (for now) as FindEdgeHostname returns error if no hostnames were found
-		logger.Debug("could not finc edge hostname: %s", err.Error())
+		logger.Debugf("could not finc edge hostname: %s", err.Error())
 	}
 	if hostname != nil && hostname.EdgeHostnameID != "" {
 		body, err := jsonhooks.Marshal(hostname)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		logger.Debug("EHN Found = %s", body)
+		logger.Debugf("EHN Found = %s", body)
 
 		if hostname.IPVersionBehavior != newHostname.IPVersionBehavior {
 			return diag.FromErr(fmt.Errorf("existing edge hostname found with incompatible IP version (%s vs %s). You must use the same settings, or try a different edge hostname", hostname.IPVersionBehavior, newHostname.IPVersionBehavior))
 		}
 
-		logger.Debug("Existing edge hostname FOUND = %s", hostname.EdgeHostnameID)
+		logger.Debugf("Existing edge hostname FOUND = %s", hostname.EdgeHostnameID)
 		d.SetId(hostname.EdgeHostnameID)
 		d.Partial(false)
 		return nil
 	}
-	logger.Debug("Creating new edge hostname: %#v", newHostname)
+	logger.Debugf("Creating new edge hostname: %#v", newHostname)
 	err = newHostname.Save("", CorrelationID)
 	if err != nil {
 		return diag.FromErr(err)
@@ -191,18 +192,18 @@ func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameDelete")
-	logger.Debug("DELETING")
+func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
+	logger.Debugf("DELETING")
 	d.SetId("")
-	logger.Debug("DONE")
+	logger.Debugf("DONE")
 	return nil
 }
 
-func resourceSecureEdgeHostNameImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameImport")
+func resourceSecureEdgeHostNameImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameImport")
 	resourceID := d.Id()
 	propertyID := resourceID
 
@@ -216,7 +217,7 @@ func resourceSecureEdgeHostNameImport(_ context.Context, d *schema.ResourceData,
 			results, err := papi.Search(searchKey, resourceID, "")
 			if err != nil {
 				// TODO determine why is this error ignored
-				logger.Debug("searching by key: %s: %w", searchKey, err)
+				logger.Debugf("searching by key: %s: %w", searchKey, err)
 				continue
 			}
 
@@ -255,68 +256,68 @@ func resourceSecureEdgeHostNameImport(_ context.Context, d *schema.ResourceData,
 }
 
 // Todo This logic can be part of ReadContext function. Don't need separate exists function
-func resourceSecureEdgeHostNameExists(d *schema.ResourceData, _ interface{}) (bool, error) {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameCreate")
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + akactx.OperationID() + "]"
+func resourceSecureEdgeHostNameExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + meta.OperationID() + "]"
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
 		return false, err
 	}
-	logger.Debug("Figuring out edgehostnames GROUP = %v", group)
+	logger.Debugf("Figuring out edgehostnames GROUP = %v", group)
 	contract, err := getContract(d, CorrelationID, logger)
 	if err != nil {
 		return false, err
 	}
-	logger.Debug("Figuring out edgehostnames CONTRACT = %v", contract)
+	logger.Debugf("Figuring out edgehostnames CONTRACT = %v", contract)
 	property := papi.NewProperty(papi.NewProperties())
 	property.Group = group
 	property.Contract = contract
 
-	logger.Debug("Figuring out edgehostnames %v", d.Id())
+	logger.Debugf("Figuring out edgehostnames %v", d.Id())
 	edgeHostnames := papi.NewEdgeHostnames()
-	logger.Debug("NewEdgeHostnames empty struct  %s", edgeHostnames.ContractID)
+	logger.Debugf("NewEdgeHostnames empty struct  %s", edgeHostnames.ContractID)
 	err = edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, d.Id(), CorrelationID)
 	if err != nil {
 		return false, err
 	}
 	// FIXME: this logic seems to be flawed - 'true' is returned whenever GetEdgeHostnames did not return an error (even if no hostnames were present in response)
-	logger.Debug("Edgehostname EXISTS in contract")
+	logger.Debugf("Edgehostname EXISTS in contract")
 	return true, nil
 }
 
-func resourceSecureEdgeHostNameRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceSecureEdgeHostNameCreate")
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + akactx.OperationID() + "]"
+func resourceSecureEdgeHostNameRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
+	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + meta.OperationID() + "]"
 	d.Partial(true)
 
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debug("Figuring out edgehostnames GROUP = %v", group)
+	logger.Debugf("Figuring out edgehostnames GROUP = %v", group)
 	contract, err := getContract(d, CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debug("Figuring out edgehostnames CONTRACT = %v", contract)
+	logger.Debugf("Figuring out edgehostnames CONTRACT = %v", contract)
 	property := papi.NewProperty(papi.NewProperties())
 	property.Group = group
 	property.Contract = contract
-	logger.Debug("Figuring out edgehostnames %v", d.Id())
+	logger.Debugf("Figuring out edgehostnames %v", d.Id())
 	edgeHostnames := papi.NewEdgeHostnames()
-	logger.Debug("NewEdgeHostnames empty struct %v", edgeHostnames.ContractID)
+	logger.Debugf("NewEdgeHostnames empty struct %v", edgeHostnames.ContractID)
 	err = edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "", CorrelationID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debug("EdgeHostnames exist in contract")
+	logger.Debugf("EdgeHostnames exist in contract")
 
 	if len(edgeHostnames.EdgeHostnames.Items) == 0 {
 		return diag.FromErr(fmt.Errorf("no default edge hostname found"))
 	}
-	logger.Debug("Edgehostnames Default host %v", edgeHostnames.EdgeHostnames.Items[0])
+	logger.Debugf("Edgehostnames Default host %v", edgeHostnames.EdgeHostnames.Items[0])
 	defaultEdgeHostname := edgeHostnames.EdgeHostnames.Items[0]
 
 	var found bool
@@ -333,8 +334,8 @@ func resourceSecureEdgeHostNameRead(_ context.Context, d *schema.ResourceData, m
 				edgeHostnameID = hostname.EdgeHostnameID
 			}
 		}
-		logger.Debug("Found EdgeHostname %v", found)
-		logger.Debug("Default EdgeHostname %v", defaultEdgeHostname)
+		logger.Debugf("Found EdgeHostname %v", found)
+		logger.Debugf("Default EdgeHostname %v", defaultEdgeHostname)
 	}
 
 	if err := d.Set("contract", contract); err != nil {

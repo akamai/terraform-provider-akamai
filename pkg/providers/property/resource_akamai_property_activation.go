@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/apex/log"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"log"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -22,8 +23,8 @@ func resourcePropertyActivation() *schema.Resource {
 		ReadContext:   resourcePropertyActivationRead,
 		UpdateContext: resourcePropertyActivationUpdate,
 		DeleteContext: resourcePropertyActivationDelete,
-		Exists: resourcePropertyActivationExists,
-		Schema: akamaiPropertyActivationSchema,
+		Exists:        resourcePropertyActivationExists,
+		Schema:        akamaiPropertyActivationSchema,
 	}
 }
 
@@ -57,10 +58,10 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationCreate")
-	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + akactx.OperationID() + "]"
+func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
+	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + meta.OperationID() + "]"
 	d.Partial(true)
 
 	property := papi.NewProperty(papi.NewProperties())
@@ -79,7 +80,7 @@ func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData,
 	d.Partial(true)
 	defer func() {
 		d.Partial(false)
-		logger.Debug("Done")
+		logger.Debugf("Done")
 	}()
 
 	if err := d.Set("property", property.PropertyID); err != nil {
@@ -92,7 +93,7 @@ func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData,
 	if !activate {
 		d.SetId("none")
 		d.Partial(false)
-		logger.Debug("Done")
+		logger.Debugf("Done")
 		return nil
 	}
 	activation, err := activateProperty(property, d, CorrelationID, logger)
@@ -112,25 +113,25 @@ func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData,
 	for activation.Status != papi.StatusActive {
 		select {
 		case statusChanged := <-activation.StatusChange:
-			logger.Debug("Property Status: %s", activation.Status)
+			logger.Debugf("Property Status: %s", activation.Status)
 			if statusChanged == false {
 				return nil
 			}
 			continue
 		case <-time.After(time.Minute * 90):
-			logger.Debug("Activation Timeout (90 minutes)")
+			logger.Debugf("Activation Timeout (90 minutes)")
 			return nil
 		}
 	}
 	return nil
 }
 
-func resourcePropertyActivationDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationDelete")
-	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + akactx.OperationID() + "]"
+func resourcePropertyActivationDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationDelete")
+	CorrelationID := "[PAPI][resourcePropertyActivationDelete-" + meta.OperationID() + "]"
 
-	logger.Debug("DEACTIVATE PROPERTY")
+	logger.Debugf("DEACTIVATE PROPERTY")
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
@@ -142,7 +143,7 @@ func resourcePropertyActivationDelete(_ context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	logger.Debug("DEACTIVE PROPERTY %v", property)
+	logger.Debugf("DEACTIVE PROPERTY %v", property)
 	networkVal, err := tools.GetStringValue("network", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -156,16 +157,16 @@ func resourcePropertyActivationDelete(_ context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debug("Version to deactivate is %d and current active %s version is %d", version, network, propertyVersion)
+	logger.Debugf("Version to deactivate is %d and current active %s version is %d", version, network, propertyVersion)
 	defer func() {
 		d.SetId("")
-		log.Println("[DEBUG] Done")
+		log.Debug("Done")
 	}()
 	if propertyVersion != version {
 		return nil
 	}
 	// The current active version is the one we need to deactivate
-	logger.Debug("Deactivating %s version %d", network, version)
+	logger.Debugf("Deactivating %s version %d", network, version)
 	activation, err := deactivateProperty(property, d, papi.NetworkValue(networkVal), CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
@@ -177,13 +178,13 @@ polling:
 	for activation.Status != papi.StatusActive {
 		select {
 		case statusChanged := <-activation.StatusChange:
-			logger.Debug("Property Status: %s", activation.Status)
+			logger.Debugf("Property Status: %s", activation.Status)
 			if statusChanged == false {
 				break polling
 			}
 			continue polling
 		case <-time.After(time.Minute * 90):
-			logger.Debug("Activation Timeout (90 minutes)")
+			logger.Debugf("Activation Timeout (90 minutes)")
 			break polling
 		}
 	}
@@ -193,11 +194,12 @@ polling:
 	}
 	return nil
 }
+
 //Todo should be part of ReadContext
-func resourcePropertyActivationExists(d *schema.ResourceData, _ interface{}) (bool, error) {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationExists")
-	CorrelationID := "[PAPI][resourcePropertyActivationExists-" + akactx.OperationID() + "]"
+func resourcePropertyActivationExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationExists")
+	CorrelationID := "[PAPI][resourcePropertyActivationExists-" + meta.OperationID() + "]"
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
@@ -226,18 +228,18 @@ func resourcePropertyActivationExists(d *schema.ResourceData, _ interface{}) (bo
 	}
 	for _, activation := range activations.Activations.Items {
 		if activation.Network == network && activation.PropertyVersion == version {
-			logger.Debug("Found Existing Activation %s version %d", network, version)
+			logger.Debugf("Found Existing Activation %s version %d", network, version)
 			return true, nil
 		}
 	}
-	logger.Debug("Did Not Find Existing Activation %s version %d", network, version)
+	logger.Debugf("Did Not Find Existing Activation %s version %d", network, version)
 	return false, nil
 }
 
-func resourcePropertyActivationRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationRead")
-	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + akactx.OperationID() + "]"
+func resourcePropertyActivationRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationRead")
+	CorrelationID := "[PAPI][resourcePropertyActivationRead-" + meta.OperationID() + "]"
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
@@ -269,7 +271,7 @@ func resourcePropertyActivationRead(_ context.Context, d *schema.ResourceData, m
 		if activation.Network != network || activation.PropertyVersion != version {
 			continue
 		}
-		logger.Debug("Found Existing Activation %s version %d", network, version)
+		logger.Debugf("Found Existing Activation %s version %d", network, version)
 		d.SetId(activation.ActivationID)
 		if err := d.Set("status", string(activation.Status)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -282,13 +284,13 @@ func resourcePropertyActivationRead(_ context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourcePropertyActivationUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyActivationRead")
-	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + akactx.OperationID() + "]"
+func resourcePropertyActivationUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationRead")
+	CorrelationID := "[PAPI][resourcePropertyActivationUpdate-" + meta.OperationID() + "]"
 
-	logger.Debug("UPDATING")
-	logger.Debug("Fetching property")
+	logger.Debugf("UPDATING")
+	logger.Debugf("Fetching property")
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
 	if err != nil {
@@ -319,8 +321,8 @@ func resourcePropertyActivationUpdate(_ context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	if !activate {
-		logger.Debug("Done")
-		return resourcePropertyActivationRead(nil, d, meta)
+		logger.Debugf("Done")
+		return resourcePropertyActivationRead(nil, d, m)
 	}
 	// No activation in progress, create a new one
 	if foundActivation == nil {
@@ -337,13 +339,13 @@ polling:
 	for activation.Status != papi.StatusActive {
 		select {
 		case statusChanged := <-activation.StatusChange:
-			logger.Debug("Property Status: %s\n", activation.Status)
+			logger.Debugf("Property Status: %s\n", activation.Status)
 			if statusChanged == false {
 				break polling
 			}
 			continue polling
 		case <-time.After(time.Minute * 90):
-			logger.Debug("Activation Timeout (90 minutes)")
+			logger.Debugf("Activation Timeout (90 minutes)")
 			break polling
 		}
 	}
@@ -354,11 +356,11 @@ polling:
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	logger.Debug("Done")
+	logger.Debugf("Done")
 	return nil
 }
 
-func activateProperty(property *papi.Property, d *schema.ResourceData, correlationid string, logger hclog.Logger) (*papi.Activation, error) {
+func activateProperty(property *papi.Property, d *schema.ResourceData, correlationid string, logger log.Interface) (*papi.Activation, error) {
 	network, err := tools.GetStringValue("network", d)
 	if err != nil {
 		return nil, err
@@ -374,16 +376,16 @@ func activateProperty(property *papi.Property, d *schema.ResourceData, correlati
 	if err = activation.Save(property, true); err != nil {
 		body, err := json.Marshal(activation)
 		if err != nil {
-			logger.Error("marshaling error: %s", err)
+			logger.Errorf("marshaling error: %s", err)
 		}
-		logger.Debug("API Request Body: %s", string(body))
+		logger.Debugf("API Request Body: %s", string(body))
 		return nil, err
 	}
-	logger.Debug("Activation submitted successfully")
+	logger.Debugf("Activation submitted successfully")
 	return activation, nil
 }
 
-func deactivateProperty(property *papi.Property, d *schema.ResourceData, network papi.NetworkValue, correlationid string, logger hclog.Logger) (*papi.Activation, error) {
+func deactivateProperty(property *papi.Property, d *schema.ResourceData, network papi.NetworkValue, correlationid string, logger log.Interface) (*papi.Activation, error) {
 	version, err := property.GetLatestVersion(network, correlationid)
 	if err != nil || version == nil {
 		// Not active
@@ -402,17 +404,17 @@ func deactivateProperty(property *papi.Property, d *schema.ResourceData, network
 	if err = activation.Save(property, true); err != nil {
 		body, err := json.Marshal(activation)
 		if err != nil {
-			logger.Error("marshaling error: %s", err)
+			logger.Errorf("marshaling error: %s", err)
 		}
-		logger.Debug("API Request Body: %s\n", string(body))
+		logger.Debugf("API Request Body: %s\n", string(body))
 		return nil, err
 	}
-	logger.Debug("Deactivation submitted successfully")
+	logger.Debugf("Deactivation submitted successfully")
 	return activation, nil
 }
 
-func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue, correlationid string, logger hclog.Logger) (*papi.Activation, error) {
-	logger.Debug("Creating new activation")
+func getActivation(d *schema.ResourceData, property *papi.Property, activationType papi.ActivationValue, network papi.NetworkValue, correlationid string, logger log.Interface) (*papi.Activation, error) {
+	logger.Debugf("Creating new activation")
 	activation := papi.NewActivation(papi.NewActivations())
 	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -425,7 +427,7 @@ func getActivation(d *schema.ResourceData, property *papi.Property, activationTy
 		if err != nil {
 			return nil, err
 		}
-		logger.Debug("Using latest version: %d", version.PropertyVersion)
+		logger.Debugf("Using latest version: %d", version.PropertyVersion)
 		activation.PropertyVersion = version.PropertyVersion
 	}
 	activation.Network = network
@@ -443,11 +445,11 @@ func getActivation(d *schema.ResourceData, property *papi.Property, activationTy
 	activation.Note = "Using Terraform"
 	activation.ActivationType = activationType
 
-	logger.Debug("Activating")
+	logger.Debugf("Activating")
 	return activation, nil
 }
 
-func findExistingActivation(property *papi.Property, activation *papi.Activation, _ string, logger hclog.Logger) (*papi.Activation, error) {
+func findExistingActivation(property *papi.Property, activation *papi.Activation, _ string, logger log.Interface) (*papi.Activation, error) {
 	activations, err := property.GetActivations()
 	if err != nil {
 		return nil, err
@@ -469,7 +471,7 @@ func findExistingActivation(property *papi.Property, activation *papi.Activation
 
 		// There is an activation in progress, if it's for the same version/network/type we can re-use it
 		if a.PropertyVersion == activation.PropertyVersion && a.ActivationType == activation.ActivationType && a.Network == activation.Network {
-			logger.Debug("An Existing activation found %v Activations values %s version %d Activationpassed in  %s version %d",
+			logger.Debugf("An Existing activation found %v Activations values %s version %d Activationpassed in  %s version %d",
 				inProgressStates[a.Status], a.Network, a.PropertyVersion, activation.Network, activation.PropertyVersion)
 			return a, nil
 		}

@@ -346,7 +346,7 @@ func parsePropertyResourceId(id string) (string, string, error) {
 }
 
 // Create a new GTM Property
-func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyCreate(d *schema.ResourceData, m interface{}) error {
 
 	domain := d.Get("domain").(string)
 
@@ -383,13 +383,13 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error
 	propertyId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	log.Printf("[DEBUG] [Akamai GTMv1] Generated Property Resource Id: %s", propertyId)
 	d.SetId(propertyId)
-	return resourceGTMv1PropertyRead(d, meta)
+	return resourceGTMv1PropertyRead(d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1PropertyRead(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1PropertyRead(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] READ")
 	log.Printf("[DEBUG] Reading [Akamai GTMv1] Property: %s", d.Id())
@@ -409,7 +409,7 @@ func resourceGTMv1PropertyRead(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Update GTM Property
-func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
 	log.Printf("[DEBUG] Updating [Akamai GTMv1] Property: %s", d.Id())
@@ -451,11 +451,11 @@ func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
-	return resourceGTMv1PropertyRead(d, meta)
+	return resourceGTMv1PropertyRead(d, m)
 }
 
 // Import GTM Property.
-func resourceGTMv1PropertyImport(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 
 	log.Printf("[INFO] [Akamai GTM] Property [%s] Import", d.Id())
 	// pull domain and property out of resource id
@@ -477,7 +477,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, _ interface{}) ([]*sche
 }
 
 // Delete GTM Property.
-func resourceGTMv1PropertyDelete(d *schema.ResourceData, _ interface{}) error {
+func resourceGTMv1PropertyDelete(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
 	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Property: %s", d.Id())
@@ -523,7 +523,7 @@ func resourceGTMv1PropertyDelete(d *schema.ResourceData, _ interface{}) error {
 }
 
 // Test GTM Property existence
-func resourceGTMv1PropertyExists(d *schema.ResourceData, _ interface{}) (bool, error) {
+func resourceGTMv1PropertyExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
 	// pull domain and property out of resource id

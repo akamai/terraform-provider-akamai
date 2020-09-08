@@ -2,18 +2,17 @@ package akamai
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/allegro/bigcache"
+	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mr-tron/base58"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
@@ -46,42 +45,27 @@ type (
 		DataSources() map[string]*schema.Resource
 
 		// Configure returns the subprovider opaque state object
-		Configure(context.Context, hclog.Logger, *schema.ResourceData) (interface{}, diag.Diagnostics)
+		Configure(log.Interface, *schema.ResourceData) diag.Diagnostics
 	}
 
-	// Context provides logging and other support services to the adapters
-	Context interface {
-		// Log returns a named logger for the subprovider
-		Log(prefix ...string) hclog.Logger
+	meta struct {
+		operationID string
+		log         hclog.Logger
+	}
 
-		// Meta returns this providers internal meta object
-		Meta() interface{}
+	// OperationMeta is the akamai meta object interface
+	OperationMeta interface {
+		// Log constructs an hclog sublogger and returns the log.Interface
+		Log(args ...interface{}) log.Interface
 
-		// CacheSet sets an object in the meta cache
-		CacheSet(key string, value interface{}) error
-
-		// CacheGet gets an object from the meta cache
-		CacheGet(key string, out interface{}) error
-
-		// OperationID is a unique id for an operation
+		// OperationID returns the operation id
 		OperationID() string
-
-		// TerraformVersion returns the version from the core provider
-		TerraformVersion() string
 	}
 
 	provider struct {
 		schema.Provider
-		log    hclog.Logger
-		subs   map[string]Subprovider
-		states map[string]interface{}
-		cache  *bigcache.BigCache
-	}
-
-	akaContext struct {
-		operationID string
-		log         hclog.Logger
-		meta        interface{}
+		subs  map[string]Subprovider
+		cache *bigcache.BigCache
 	}
 )
 
@@ -92,7 +76,7 @@ var (
 )
 
 // Provider returns the provider function to terraform
-func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
+func Provider(provs ...Subprovider) plugin.ProviderFunc {
 	once.Do(func() {
 		instance = &provider{
 			Provider: schema.Provider{
@@ -113,9 +97,7 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 				DataSourcesMap:     make(map[string]*schema.Resource),
 				ProviderMetaSchema: make(map[string]*schema.Schema),
 			},
-			subs:   make(map[string]Subprovider),
-			states: make(map[string]interface{}),
-			log:    log,
+			subs: make(map[string]Subprovider),
 		}
 
 		cache, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
@@ -146,28 +128,29 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 		}
 
 		instance.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-			var stateSet bool
+			// generate an operation id so we can correlate all calls to this provider
+			opid := uuid.Must(uuid.NewRandom()).String()
 
-			for _, p := range instance.subs {
-				state, err := p.Configure(ctx, log, d)
-				if err != nil {
-					return nil, err
-				}
+			// create a log from the hclog in the context
+			log := hclog.FromContext(ctx).With(
+				"OperationID", opid,
+			)
 
-				if state != nil {
-					stateSet = true
-					instance.states[p.Name()] = state
-				}
+			meta := &meta{
+				log:         log,
+				operationID: opid,
 			}
 
-			if !stateSet {
-				return nil, ErrNoConfiguredProviders.Diagnostics()
+			for _, p := range instance.subs {
+				if err := p.Configure(LogFromHCLog(log), d); err != nil {
+					return nil, err
+				}
 			}
 
 			// TODO: once the client is update this will be done elsewhere
 			client.UserAgent = instance.UserAgent(ProviderName, instance.TerraformVersion)
 
-			return &instance, nil
+			return meta, nil
 		}
 	})
 
@@ -196,77 +179,22 @@ func mergeResource(from, to map[string]*schema.Resource) (map[string]*schema.Res
 	return to, nil
 }
 
-// ContextGet returns the context object from the passed interface
-func ContextGet(name string) Context {
-	sub, ok := instance.subs[name]
-	if !ok {
-		panic(ErrProviderNotLoaded(name))
-	}
-
-	coid := uuid.Must(uuid.NewRandom())
-	opid := base58.Encode(coid[:])
-	m := akaContext{
-		operationID: opid,
-		log:         instance.log.Named(sub.Name()).Named(sub.Version()).Named(opid),
-	}
-
-	if state, ok := instance.states[name]; ok {
-		m.meta = state
-	}
-
-	return &m
+// Meta return the meta object interface
+func Meta(m interface{}) OperationMeta {
+	return m.(OperationMeta)
 }
 
-func (c *akaContext) Log(prefix ...string) hclog.Logger {
-	if len(prefix) > 0 {
-		log := c.log
-		for _, p := range prefix {
-			log = log.Named(p)
-		}
-		return log
-	}
-	return c.log
+// ProviderLog creates a logger for the provider from the meta
+func (m *meta) Log(args ...interface{}) log.Interface {
+	return LogFromHCLog(m.log.With(args...))
 }
 
-func (c *akaContext) Meta() interface{} {
-	return c.meta
+// OperationID returns the operation id from the meta
+func (m *meta) OperationID() string {
+	return m.operationID
 }
 
-func (c *akaContext) OperationID() string {
-	return c.operationID
-}
-
-func (c *akaContext) TerraformVersion() string {
-	return instance.TerraformVersion
-}
-
-func (c *akaContext) CacheSet(key string, val interface{}) error {
-	var in []byte
-
-	switch v := val.(type) {
-	case []byte:
-		in = v
-	default:
-		data, err := json.Marshal(val)
-		if err != nil {
-			return err
-		}
-
-		in = data
-	}
-
-	return instance.cache.Set(key, in)
-}
-
-func (c *akaContext) CacheGet(key string, out interface{}) error {
-	data, err := instance.cache.Get(key)
-	if err != nil {
-		if err == bigcache.ErrEntryNotFound {
-			return ErrCacheEntryNotFound(key)
-		}
-
-		return err
-	}
-
-	return json.Unmarshal(data, out)
+// Log returns a global log object, there is no context like operation id
+func Log(args ...interface{}) log.Interface {
+	return LogFromHCLog(hclog.Default().With(args...))
 }

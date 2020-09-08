@@ -1,11 +1,11 @@
 package property
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
+
+	"github.com/apex/log"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -14,7 +14,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -89,7 +88,7 @@ func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 		return nil, err
 	}
 	if err == nil {
-		log.Printf("[DEBUG] Setting property config via HCL")
+		log.Infof("[DEBUG] Setting property config via HCL")
 		cfg := property.List()[0].(map[string]interface{})
 
 		host, ok := cfg["host"].(string)
@@ -170,13 +169,13 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(ctx context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	log.Named(p.Name()).Debug("START Configure")
+func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+	log.Debug("START Configure")
 
-	cfg, err := getPAPIV1Service(d)
+	_, err := getPAPIV1Service(d)
 	if err != nil {
-		return nil, nil
+		return nil
 	}
 
-	return cfg, nil
+	return nil
 }

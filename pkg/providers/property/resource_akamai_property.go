@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"log"
 	"strconv"
 	"strings"
 
+	"github.com/apex/log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/go-hclog"
 
 	//log "github.com/sirupsen/logrus"
 
@@ -157,10 +158,10 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyCreate")
-	CorrelationID := "[PAPI][resourcePropertyCreate-" + akactx.OperationID() + "]"
+func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyCreate")
+	CorrelationID := "[PAPI][resourcePropertyCreate-" + meta.OperationID() + "]"
 	d.Partial(true)
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
@@ -229,7 +230,7 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, _ interfa
 	rulesAPI, err := property.GetRules(CorrelationID)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
-		logger.Warn("calling 'GetRules': %s", err.Error())
+		logger.Warnf("calling 'GetRules': %s", err.Error())
 	}
 	rulesAPI.Etag = ""
 	body, err := jsonhooks.Marshal(rulesAPI)
@@ -238,8 +239,8 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, _ interfa
 	}
 
 	sha1hashAPI := tools.GetSHAString(string(body))
-	logger.Debug("CREATE SHA from Json %s\n", sha1hashAPI)
-	logger.Debug("CREATE Check rules after unmarshal from Json %s\n", string(body))
+	logger.Debugf("CREATE SHA from Json %s\n", sha1hashAPI)
+	logger.Debugf("CREATE Check rules after unmarshal from Json %s\n", string(body))
 
 	if err := d.Set("rulessha", sha1hashAPI); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -249,11 +250,11 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, _ interfa
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.Partial(false)
-	logger.Debug("Done")
+	logger.Debugf("Done")
 	return resourcePropertyRead(nil, d, nil)
 }
 
-func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group, correlationid string, logger hclog.Logger) (*papi.Rules, error) {
+func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group, correlationid string, logger log.Interface) (*papi.Rules, error) {
 	rules := papi.NewRules()
 	rules.Rule.Name = "default"
 	rules.PropertyID = d.Id()
@@ -266,7 +267,7 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 
 	_, ok := d.GetOk("rules")
 	if ok {
-		logger.Debug("Unmarshal Rules from JSON")
+		logger.Debugf("Unmarshal Rules from JSON")
 		unmarshalRulesFromJSON(d, rules)
 	}
 	ruleFormat, err := tools.GetStringValue("rule_format", d)
@@ -288,15 +289,15 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 		return nil, err
 	}
 
-	logger.Debug("updateStandardBehaviors")
+	logger.Debugf("updateStandardBehaviors")
 	updateStandardBehaviors(rules, cpCode, origin, correlationid, logger)
-	logger.Debug("fixupPerformanceBehaviors")
+	logger.Debugf("fixupPerformanceBehaviors")
 	fixupPerformanceBehaviors(rules, correlationid, logger)
 
 	return rules, nil
 }
 
-func setHostnames(property *papi.Property, d *schema.ResourceData, _ string, logger hclog.Logger) (map[string]string, error) {
+func setHostnames(property *papi.Property, d *schema.ResourceData, _ string, logger log.Interface) (map[string]string, error) {
 	hostnameEdgeHostnames, ok := d.Get("hostnames").(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "hostnames", "map[string]interface{}")
@@ -318,12 +319,12 @@ func setHostnames(property *papi.Property, d *schema.ResourceData, _ string, log
 			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "edge_hostname", "string")
 		}
 		newEdgeHostname.EdgeHostnameDomain = edgeHostNameStr
-		logger.Debug("Searching for edge hostname: %s, for hostname: %s", edgeHostNameStr, public)
+		logger.Debugf("Searching for edge hostname: %s, for hostname: %s", edgeHostNameStr, public)
 		newEdgeHostname, err = edgeHostnames.FindEdgeHostname(newEdgeHostname)
 		if err != nil {
 			return nil, fmt.Errorf("edge hostname not found: %s", edgeHostNameStr)
 		}
-		logger.Debug("Found edge hostname: %s", newEdgeHostname.EdgeHostnameDomain)
+		logger.Debugf("Found edge hostname: %s", newEdgeHostname.EdgeHostnameDomain)
 
 		hostname := hostnames.NewHostname()
 		hostname.EdgeHostnameID = newEdgeHostname.EdgeHostnameID
@@ -338,8 +339,8 @@ func setHostnames(property *papi.Property, d *schema.ResourceData, _ string, log
 	return edgeHostnamesMap, nil
 }
 
-func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Product, d *schema.ResourceData, correlationid string, logger hclog.Logger) (*papi.Property, error) {
-	logger.Debug("Creating property")
+func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Product, d *schema.ResourceData, correlationid string, logger log.Interface) (*papi.Property, error) {
+	logger.Debugf("Creating property")
 	property, err := group.NewProperty(contract)
 	if err != nil {
 		return nil, err
@@ -369,15 +370,15 @@ func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Pr
 	if err = property.Save(correlationid); err != nil {
 		return nil, err
 	}
-	logger.Debug("Property created: %s", property.PropertyID)
+	logger.Debugf("Property created: %s", property.PropertyID)
 	return property, nil
 }
 
-func resourcePropertyDelete(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyDelete")
-	CorrelationID := "[PAPI][resourcePropertyDelete-" + akactx.OperationID() + "]"
-	logger.Debug("DELETING")
+func resourcePropertyDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyDelete")
+	CorrelationID := "[PAPI][resourcePropertyDelete-" + meta.OperationID() + "]"
+	logger.Debugf("DELETING")
 	contractID, err := tools.GetStringValue("contract", d)
 	//Todo clean up redundant checks and bubble up errors
 	if err != nil {
@@ -413,13 +414,13 @@ func resourcePropertyDelete(_ context.Context, d *schema.ResourceData, _ interfa
 		return diag.FromErr(err)
 	}
 	d.SetId("")
-	logger.Debug("Done")
+	logger.Debugf("Done")
 	return nil
 }
 
-func resourcePropertyImport(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyImport")
+func resourcePropertyImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyImport")
 	propertyID := d.Id()
 
 	if !strings.HasPrefix(propertyID, "prp_") {
@@ -428,7 +429,7 @@ func resourcePropertyImport(_ context.Context, d *schema.ResourceData, _ interfa
 			results, err := papi.Search(searchKey, propertyID, "") //<--correlationid
 			if err != nil {
 				// TODO determine why is this error ignored
-				logger.Debug("searching by key: %s: %w", searchKey, err)
+				logger.Debugf("searching by key: %s: %w", searchKey, err)
 				continue
 			}
 
@@ -465,10 +466,10 @@ func resourcePropertyImport(_ context.Context, d *schema.ResourceData, _ interfa
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyRead")
-	CorrelationID := "[PAPI][resourcePropertyRead-" + akactx.OperationID() + "]"
+func resourcePropertyRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyRead")
+	CorrelationID := "[PAPI][resourcePropertyRead-" + meta.OperationID() + "]"
 	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
@@ -495,7 +496,7 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface
 	rules, err := property.GetRules(CorrelationID)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
-		logger.Warn("calling 'GetRules': %s", err.Error())
+		logger.Warnf("calling 'GetRules': %s", err.Error())
 	}
 	rules.Etag = ""
 	body, err := jsonhooks.Marshal(rules)
@@ -503,8 +504,8 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface
 		return diag.FromErr(err)
 	}
 	sha1hashAPI := tools.GetSHAString(string(body))
-	logger.Debug("READ SHA from Json %s", sha1hashAPI)
-	logger.Debug("READ Rules from API : %s", string(body))
+	logger.Debugf("READ SHA from Json %s", sha1hashAPI)
+	logger.Debugf("READ Rules from API : %s", string(body))
 	if err := d.Set("rules", string(body)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -521,7 +522,7 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-	logger.Debug("Property RuleFormat from API : %s", property.RuleFormat)
+	logger.Debugf("Property RuleFormat from API : %s", property.RuleFormat)
 	if err := d.Set("version", property.LatestVersion); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -539,11 +540,11 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, _ interface
 	return nil
 }
 
-func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourcePropertyUpdate")
-	CorrelationID := "[PAPI][resourcePropertyUpdate-" + akactx.OperationID() + "]"
-	logger.Debug("UPDATING")
+func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyUpdate")
+	CorrelationID := "[PAPI][resourcePropertyUpdate-" + meta.OperationID() + "]"
+	logger.Debugf("UPDATING")
 	d.Partial(true)
 	property, err := getProperty(d, CorrelationID, logger)
 	if err != nil {
@@ -557,7 +558,7 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 	rules, err := getRules(d, property, property.Contract, property.Group, CorrelationID, logger)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
-		logger.Warn("calling 'getRules': %s", err.Error())
+		logger.Warnf("calling 'getRules': %s", err.Error())
 	}
 	if d.HasChange("rule_format") || d.HasChange("rules") {
 		ruleFormat, err := tools.GetStringValue("rule_format", d)
@@ -576,7 +577,7 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 		if err := d.Set("rules", string(body)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-		logger.Debug("UPDATE Check rules after unmarshal from Json %s", string(body))
+		logger.Debugf("UPDATE Check rules after unmarshal from Json %s", string(body))
 		if err = rules.Save(CorrelationID); err != nil {
 			if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
 				var msg string
@@ -592,14 +593,14 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 				}
 				return diags
 			}
-			logger.Debug("update rules.Save err: %#v", err)
+			logger.Debugf("update rules.Save err: %#v", err)
 			return diag.FromErr(fmt.Errorf("update rules.Save err: %#v", err))
 		}
 
 		rules, err = property.GetRules(CorrelationID)
 		if err != nil {
 			// TODO not sure what to do with this error (is it possible to return here)
-			logger.Warn("calling 'GetRules': %s", err.Error())
+			logger.Warnf("calling 'GetRules': %s", err.Error())
 		}
 		rules.Etag = ""
 		body, err = jsonhooks.Marshal(rules)
@@ -608,7 +609,7 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 		}
 
 		sha1hashAPI := tools.GetSHAString(string(body))
-		logger.Debug("UPDATE SHA from Json %s", sha1hashAPI)
+		logger.Debugf("UPDATE SHA from Json %s", sha1hashAPI)
 		if err := d.Set("rulessha", sha1hashAPI); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
@@ -629,14 +630,15 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, _ interfa
 
 	d.Partial(false)
 
-	logger.Debug("Done")
+	logger.Debugf("Done")
 	return resourcePropertyRead(nil, d, nil)
 }
 
-func resourceCustomDiffCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-	akactx := akamai.ContextGet(inst.Name())
-	logger := akactx.Log("PAPI", "resourceCustomDiffCustomizeDiff")
-	logger.Debug("ID: %s", d.Id())
+func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceCustomDiffCustomizeDiff")
+
+	logger.Debugf("ID: %s", d.Id())
 	// Note that this gets put into state after the update, regardless of whether
 	// or not anything is acted upon in the diff.
 	old, new := d.GetChange("rules")
@@ -648,10 +650,10 @@ func resourceCustomDiffCustomizeDiff(_ context.Context, d *schema.ResourceDiff, 
 	if !ok {
 		return fmt.Errorf("value is of invalid type: %v; should be %s", new, "string")
 	}
-	logger.Debug("OLD: %s", oldStr)
-	logger.Debug("NEW: %s", newStr)
+	logger.Debugf("OLD: %s", oldStr)
+	logger.Debugf("NEW: %s", newStr)
 	if !suppressEquivalentJSONPendingDiffs(oldStr, newStr, d) {
-		logger.Debug("CHANGED VALUES: %s %s " + oldStr + " " + newStr)
+		logger.Debugf("CHANGED VALUES: %s %s " + oldStr + " " + newStr)
 		if err := d.SetNewComputed("version"); err != nil {
 			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
@@ -660,8 +662,8 @@ func resourceCustomDiffCustomizeDiff(_ context.Context, d *schema.ResourceDiff, 
 }
 
 // Helpers
-func getProperty(d interface{}, correlationid string, logger hclog.Logger) (*papi.Property, error) {
-	logger.Debug("Fetching property")
+func getProperty(d interface{}, correlationid string, logger log.Interface) (*papi.Property, error) {
+	logger.Debugf("Fetching property")
 	var propertyID string
 	switch d.(type) {
 	case *schema.ResourceData:
@@ -677,8 +679,8 @@ func getProperty(d interface{}, correlationid string, logger hclog.Logger) (*pap
 	return property, err
 }
 
-func getGroup(d *schema.ResourceData, correlationid string, logger hclog.Logger) (*papi.Group, error) {
-	logger.Debug("Fetching groups")
+func getGroup(d *schema.ResourceData, correlationid string, logger log.Interface) (*papi.Group, error) {
+	logger.Debugf("Fetching groups")
 	groupID, err := tools.GetStringValue("group", d)
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
@@ -697,12 +699,12 @@ func getGroup(d *schema.ResourceData, correlationid string, logger hclog.Logger)
 		return nil, err
 	}
 
-	logger.Debug("Group found: %s", group.GroupID)
+	logger.Debugf("Group found: %s", group.GroupID)
 	return group, nil
 }
 
-func getContract(d *schema.ResourceData, correlationid string, logger hclog.Logger) (*papi.Contract, error) {
-	logger.Debug("Fetching contract")
+func getContract(d *schema.ResourceData, correlationid string, logger log.Interface) (*papi.Contract, error) {
+	logger.Debugf("Fetching contract")
 	contractID, err := tools.GetStringValue("contract", d)
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
@@ -721,11 +723,11 @@ func getContract(d *schema.ResourceData, correlationid string, logger hclog.Logg
 		return nil, err
 	}
 
-	logger.Debug("Contract found: %s", contract.ContractID)
+	logger.Debugf("Contract found: %s", contract.ContractID)
 	return contract, nil
 }
 
-func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, _ string, logger hclog.Logger) (*papi.CpCode, error) {
+func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, _ string, logger log.Interface) (*papi.CpCode, error) {
 	if contract == nil || group == nil {
 		return nil, nil
 	}
@@ -743,21 +745,21 @@ func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, _ stri
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return nil, err
 	}
-	logger.Debug("Fetching CP code")
+	logger.Debugf("Fetching CP code")
 	cpCode := papi.NewCpCodes(contract, group).NewCpCode()
 	cpCode.CpcodeID = cpCodeID
 	if err := cpCode.GetCpCode(); err != nil {
 		return nil, err
 	}
-	logger.Debug("CP code found: %s", cpCode.CpcodeID)
+	logger.Debugf("CP code found: %s", cpCode.CpcodeID)
 	return cpCode, nil
 }
 
-func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid string, logger hclog.Logger) (*papi.Product, error) {
+func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid string, logger log.Interface) (*papi.Product, error) {
 	if contract == nil {
 		return nil, nil
 	}
-	logger.Debug("Fetching product")
+	logger.Debugf("Fetching product")
 	productID, err := tools.GetStringValue("product", d)
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
@@ -776,12 +778,12 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid s
 		return nil, err
 	}
 
-	logger.Debug("Product found: %s", product.ProductID)
+	logger.Debugf("Product found: %s", product.ProductID)
 	return product, nil
 }
 
-func createOrigin(d interface{}, _ string, logger hclog.Logger) (*papi.OptionValue, error) {
-	logger.Debug("Setting origin")
+func createOrigin(d interface{}, _ string, logger log.Interface) (*papi.OptionValue, error) {
+	logger.Debugf("Setting origin")
 	var origin *schema.Set
 	var err error
 
@@ -846,11 +848,11 @@ func createOrigin(d interface{}, _ string, logger hclog.Logger) (*papi.OptionVal
 	forwardHostname, ok := originConfig["forward_hostname"].(string)
 	if ok {
 		if forwardHostname == "ORIGIN_HOSTNAME" || forwardHostname == "REQUEST_HOST_HEADER" {
-			logger.Debug("Setting non-custom forward hostname")
+			logger.Debugf("Setting non-custom forward hostname")
 
 			originValues["forwardHostHeader"] = forwardHostname
 		} else {
-			logger.Debug("Setting custom forward hostname")
+			logger.Debugf("Setting custom forward hostname")
 
 			originValues["forwardHostHeader"] = "CUSTOM"
 			originValues["customForwardHostHeader"] = forwardHostname
@@ -861,13 +863,13 @@ func createOrigin(d interface{}, _ string, logger hclog.Logger) (*papi.OptionVal
 	return &ov, nil
 }
 
-func fixupPerformanceBehaviors(rules *papi.Rules, _ string, logger hclog.Logger) {
+func fixupPerformanceBehaviors(rules *papi.Rules, _ string, logger log.Interface) {
 	behavior, err := rules.FindBehavior("/Performance/sureRoute")
 	if err != nil || behavior == nil || behavior.Options["testObjectUrl"] != "" {
 		return
 	}
 
-	logger.Debug("Fixing Up SureRoute Behavior")
+	logger.Debugf("Fixing Up SureRoute Behavior")
 	behavior.MergeOptions(papi.OptionValue{
 		"testObjectUrl":   "/akamai/sureroute-testobject.html",
 		"enableCustomKey": false,
@@ -875,8 +877,8 @@ func fixupPerformanceBehaviors(rules *papi.Rules, _ string, logger hclog.Logger)
 	})
 }
 
-func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *papi.OptionValue, _ string, logger hclog.Logger) {
-	logger.Debug("cpCode: %#v", cpCode)
+func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *papi.OptionValue, _ string, logger log.Interface) {
+	logger.Debugf("cpCode: %#v", cpCode)
 	if cpCode != nil {
 		b := papi.NewBehavior()
 		b.Name = "cpCode"
@@ -920,7 +922,7 @@ func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
 						if ok {
 							//							log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR MAP  ", bb)
 							for k, v := range bb {
-								log.Println("k:", k, "v:", v)
+								log.Debugf("k:", k, "v:", v)
 							}
 
 							beh := papi.NewBehavior()
@@ -1132,7 +1134,7 @@ func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
 				}
 			}
-			log.Println("[DEBUG] extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comments)
+			log.Debugf("extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comments)
 
 			ruledetail := gjson.Parse(value.String())
 			//			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
