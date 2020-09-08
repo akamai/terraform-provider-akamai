@@ -142,8 +142,7 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 			}
 
 			for _, p := range instance.subs {
-				err := p.Configure(LogFromHCLog(log), d)
-				if err != nil {
+				if err := p.Configure(LogFromHCLog(log), d); err != nil {
 					return nil, err
 				}
 			}
