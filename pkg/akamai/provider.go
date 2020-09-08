@@ -128,7 +128,7 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 		}
 
 		instance.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-			// generat an operation id so we can correlate all calls to this provider
+			// generate an operation id so we can correlate all calls to this provider
 			opid := uuid.Must(uuid.NewRandom()).String()
 
 			// create a log from the hclog in the context

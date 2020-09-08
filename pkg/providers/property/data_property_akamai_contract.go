@@ -1,18 +1,19 @@
 package property
 
 import (
+	"context"
 	"errors"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePropertyContract() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourcePropertyContractRead,
+		ReadContext: dataSourcePropertyContractRead,
 		Schema: map[string]*schema.Schema{
 			"group": {
 				Type:     schema.TypeString,
@@ -22,7 +23,7 @@ func dataSourcePropertyContract() *schema.Resource {
 	}
 }
 
-func dataSourcePropertyContractRead(d *schema.ResourceData, m interface{}) error {
+func dataSourcePropertyContractRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 
 	log := meta.Log("PAPI", "dataSourcePropertyContractRead")
@@ -34,13 +35,13 @@ func dataSourcePropertyContractRead(d *schema.ResourceData, m interface{}) error
 	// If no group, just return the first contract
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
-			return err
+			return diag.FromErr(err)
 		}
 		if err := contracts.GetContracts(CorrelationID); err != nil {
-			return fmt.Errorf("error looking up Contracts for group %q: %s", group, err)
+			return diag.Errorf("error looking up Contracts for group %q: %s", group, err)
 		}
 		if len(contracts.Contracts.Items) == 0 {
-			return fmt.Errorf("%w", ErrNoContractsFound)
+			return diag.Errorf("%w", ErrNoContractsFound)
 		}
 		d.SetId(contracts.Contracts.Items[0].ContractID)
 		return nil
@@ -49,7 +50,7 @@ func dataSourcePropertyContractRead(d *schema.ResourceData, m interface{}) error
 	log.Debug("[Akamai Property Contract] Start Searching for property contract by group")
 	groups, err := papi.GetGroups()
 	if err != nil {
-		return fmt.Errorf("%w: %q: %s", ErrLookingUpContract, group, err)
+		return diag.Errorf("%w: %q: %s", ErrLookingUpContract, group, err)
 	}
 
 	for _, g := range groups.Groups.Items {
@@ -57,11 +58,11 @@ func dataSourcePropertyContractRead(d *schema.ResourceData, m interface{}) error
 			continue
 		}
 		if len(g.ContractIDs) == 0 {
-			return fmt.Errorf("%w: %s", ErrLookingUpContract, group)
+			return diag.Errorf("%w: %s", ErrLookingUpContract, group)
 		}
 		d.SetId(g.ContractIDs[0])
 		return nil
 	}
 
-	return fmt.Errorf("%w; groupID: %q", ErrNoContractsFound, group)
+	return diag.Errorf("%w; groupID: %q", ErrNoContractsFound, group)
 }
