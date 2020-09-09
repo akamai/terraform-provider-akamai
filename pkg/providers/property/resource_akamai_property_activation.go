@@ -62,7 +62,6 @@ func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
 	CorrelationID := "[PAPI][resourcePropertyActivationCreate-" + meta.OperationID() + "]"
-	d.Partial(true)
 
 	property := papi.NewProperty(papi.NewProperties())
 	propertyID, err := tools.GetStringValue("property", d)
@@ -75,14 +74,7 @@ func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("unable to find property: %w", err))
 	}
 
-	// TODO: SetPartial is technically deprecated and only valid when an error
-	// will retruned. Determine if this is necessary here.
-	d.Partial(true)
-	defer func() {
-		d.Partial(false)
-		logger.Debugf("Done")
-	}()
-
+	defer logger.Debugf("Done")
 	if err := d.Set("property", property.PropertyID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -92,7 +84,6 @@ func resourcePropertyActivationCreate(_ context.Context, d *schema.ResourceData,
 	}
 	if !activate {
 		d.SetId("none")
-		d.Partial(false)
 		logger.Debugf("Done")
 		return nil
 	}

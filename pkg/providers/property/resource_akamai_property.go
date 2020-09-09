@@ -162,7 +162,6 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interfa
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
 	CorrelationID := "[PAPI][resourcePropertyCreate-" + meta.OperationID() + "]"
-	d.Partial(true)
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
@@ -199,7 +198,6 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	// The API now has data, so save the partial state
 	d.SetId(property.PropertyID)
 
 	rules, err := getRules(d, property, contract, group, CorrelationID, logger)
@@ -249,7 +247,6 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interfa
 	if err := d.Set("rules", string(body)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	d.Partial(false)
 	logger.Debugf("Done")
 	return resourcePropertyRead(nil, d, nil)
 }
@@ -470,7 +467,6 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, m interface
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyRead")
 	CorrelationID := "[PAPI][resourcePropertyRead-" + meta.OperationID() + "]"
-	d.Partial(true)
 	property := papi.NewProperty(papi.NewProperties())
 	property.PropertyID = d.Id()
 	err := property.GetProperty(CorrelationID)
@@ -536,7 +532,6 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, m interface
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-	d.Partial(false)
 	return nil
 }
 
@@ -545,7 +540,6 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, m interfa
 	logger := meta.Log("PAPI", "resourcePropertyUpdate")
 	CorrelationID := "[PAPI][resourcePropertyUpdate-" + meta.OperationID() + "]"
 	logger.Debugf("UPDATING")
-	d.Partial(true)
 	property, err := getProperty(d, CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
@@ -627,8 +621,6 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-
-	d.Partial(false)
 
 	logger.Debugf("Done")
 	return resourcePropertyRead(nil, d, nil)
