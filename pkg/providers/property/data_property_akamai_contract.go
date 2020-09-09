@@ -41,7 +41,7 @@ func dataSourcePropertyContractRead(_ context.Context, d *schema.ResourceData, m
 			return diag.Errorf("error looking up Contracts for group %q: %s", group, err)
 		}
 		if len(contracts.Contracts.Items) == 0 {
-			return diag.Errorf("%w", ErrNoContractsFound)
+			return diag.Errorf("%s", ErrNoContractsFound.Error())
 		}
 		d.SetId(contracts.Contracts.Items[0].ContractID)
 		return nil
@@ -50,7 +50,7 @@ func dataSourcePropertyContractRead(_ context.Context, d *schema.ResourceData, m
 	log.Debug("[Akamai Property Contract] Start Searching for property contract by group")
 	groups, err := papi.GetGroups()
 	if err != nil {
-		return diag.Errorf("%w: %q: %s", ErrLookingUpContract, group, err)
+		return diag.Errorf("%s: %q: %s", ErrLookingUpContract.Error(), group, err)
 	}
 
 	for _, g := range groups.Groups.Items {
@@ -58,11 +58,11 @@ func dataSourcePropertyContractRead(_ context.Context, d *schema.ResourceData, m
 			continue
 		}
 		if len(g.ContractIDs) == 0 {
-			return diag.Errorf("%w: %s", ErrLookingUpContract, group)
+			return diag.Errorf("%s: %s", ErrLookingUpContract.Error(), group)
 		}
 		d.SetId(g.ContractIDs[0])
 		return nil
 	}
 
-	return diag.Errorf("%w; groupID: %q", ErrNoContractsFound, group)
+	return diag.Errorf("%s; groupID: %q", ErrNoContractsFound.Error(), group)
 }
