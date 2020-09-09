@@ -18,11 +18,13 @@ var (
 	ErrLookingUpContract = errors.New("looking up contract for provided group")
 	// ErrNoContractProvided is retured when no contract ID was provided but "name" was
 	ErrNoContractProvided = errors.New("contract ID is required for non-default name")
+	//
+	ErrNoGroupProvided = errors.New("group not found and it is a required input")
 	// ErrNoContractsFound is returned when no contracts were found
 	ErrNoContractsFound = errors.New("no contracts were found")
 
 	// PAPI Product errors
-
+	ErrNoProductProvided = errors.New("product not found and it is a required input")
 	// PAPI CP Code errors
 
 	// ErrLookingUpCPCode is returned when fetching CP Code from API client by contractID returned an error or no CP Code was found

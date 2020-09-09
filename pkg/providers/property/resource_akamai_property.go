@@ -55,7 +55,6 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	"product": {
 		Type:     schema.TypeString,
 		Optional: true,
-		Default:  "prd_SPM",
 		ForceNew: true,
 	},
 	"rule_format": {
@@ -678,7 +677,7 @@ func getGroup(d *schema.ResourceData, correlationid string, logger log.Interface
 		if !errors.Is(err, tools.ErrNotFound) {
 			return nil, err
 		}
-		return nil, nil
+		return nil, ErrNoGroupProvided
 	}
 	groups := papi.NewGroups()
 	err = groups.GetGroups(correlationid)
@@ -702,7 +701,7 @@ func getContract(d *schema.ResourceData, correlationid string, logger log.Interf
 		if !errors.Is(err, tools.ErrNotFound) {
 			return nil, err
 		}
-		return nil, nil
+		return nil, ErrNoContractProvided
 	}
 	contracts := papi.NewContracts()
 	err = contracts.GetContracts(correlationid)
@@ -720,10 +719,12 @@ func getContract(d *schema.ResourceData, correlationid string, logger log.Interf
 }
 
 func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, _ string, logger log.Interface) (*papi.CpCode, error) {
-	if contract == nil || group == nil {
-		return nil, nil
+	if contract == nil {
+		return nil, ErrNoContractProvided
 	}
-
+	if group == nil{
+		return nil, ErrNoGroupProvided
+	}
 	var cpCodeID string
 	var err error
 	switch d.(type) {
@@ -749,7 +750,7 @@ func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, _ stri
 
 func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid string, logger log.Interface) (*papi.Product, error) {
 	if contract == nil {
-		return nil, nil
+		return nil, ErrNoContractProvided
 	}
 	logger.Debugf("Fetching product")
 	productID, err := tools.GetStringValue("product", d)
@@ -757,7 +758,7 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid s
 		if !errors.Is(err, tools.ErrNotFound) {
 			return nil, err
 		}
-		return nil, nil
+		return nil, ErrNoProductProvided
 	}
 	products := papi.NewProducts()
 	err = products.GetProducts(contract, correlationid)
