@@ -23,7 +23,7 @@ var akamaiPropertyRulesSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 	},
-	"rules": &schema.Schema{
+	"rules": {
 		Type:     schema.TypeSet,
 		Optional: true,
 		Elem: &schema.Resource{
@@ -34,12 +34,12 @@ var akamaiPropertyRulesSchema = map[string]*schema.Schema{
 					Default:  "all",
 				},
 				"behavior": akpsBehavior,
-				"is_secure": &schema.Schema{
+				"is_secure": {
 					Type:     schema.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
-				"rule": &schema.Schema{
+				"rule": {
 					Type:     schema.TypeSet,
 					Optional: true,
 					Elem: &schema.Resource{
@@ -59,7 +59,7 @@ var akamaiPropertyRulesSchema = map[string]*schema.Schema{
 							},
 							"criteria": akpsCriteria,
 							"behavior": akpsBehavior,
-							"rule": &schema.Schema{
+							"rule": {
 								Type:     schema.TypeSet,
 								Optional: true,
 								Elem: &schema.Resource{
@@ -79,7 +79,7 @@ var akamaiPropertyRulesSchema = map[string]*schema.Schema{
 										},
 										"criteria": akpsCriteria,
 										"behavior": akpsBehavior,
-										"rule": &schema.Schema{
+										"rule": {
 											Type:     schema.TypeSet,
 											Optional: true,
 											Elem: &schema.Resource{
@@ -99,7 +99,7 @@ var akamaiPropertyRulesSchema = map[string]*schema.Schema{
 													},
 													"criteria": akpsCriteria,
 													"behavior": akpsBehavior,
-													"rule": &schema.Schema{
+													"rule": {
 														Type:     schema.TypeSet,
 														Optional: true,
 														Elem: &schema.Resource{
@@ -131,7 +131,7 @@ var akamaiPropertyRulesSchema = map[string]*schema.Schema{
 						},
 					},
 				},
-				"variable": &schema.Schema{
+				"variable": {
 					Type:     schema.TypeSet,
 					Optional: true,
 					Elem: &schema.Resource{

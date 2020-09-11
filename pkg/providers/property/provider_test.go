@@ -1,6 +1,9 @@
 package property
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -124,7 +127,7 @@ func Test_getPAPIV1Service(t *testing.T) {
 		client_token = default
 		client_secret = default
 		max_body = 1
-		
+
 		[not_default]
 		host = not_default
 		access_token = not_default
@@ -152,7 +155,7 @@ func Test_getPAPIV1Service(t *testing.T) {
 		client_token = default
 		client_secret = default
 		max_body = 1
-		
+
 		[not_default]
 		host = not_default
 		access_token = not_default
@@ -180,7 +183,7 @@ func Test_getPAPIV1Service(t *testing.T) {
 		client_token = default
 		client_secret = default
 		max_body = 1
-		
+
 		[not_default]
 		host = not_default
 		access_token = not_default
@@ -208,7 +211,7 @@ func Test_getPAPIV1Service(t *testing.T) {
 		client_token = default
 		client_secret = default
 		max_body = 1
-		
+
 		[not_default]
 		host = not_default
 		access_token = not_default
@@ -422,4 +425,28 @@ func restoreEnv(env []string) {
 		envVar := strings.Split(value, "=")
 		os.Setenv(envVar[0], envVar[1])
 	}
+}
+
+// loadFixtureBytes returns the entire contents of the given file as a byte slice
+func loadFixtureBytes(path string) []byte {
+	contents, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return contents
+}
+
+// loadFixtureString returns the entire contents of the given file as a string
+func loadFixtureString(path string) string {
+	return string(loadFixtureBytes(path))
+}
+
+// compactJSON converts a JSON-encoded byte slice to a compact form (so our JSON fixtures can be readable)
+func compactJSON(encoded []byte) string {
+	buf := bytes.Buffer{}
+	if err := json.Compact(&buf, encoded); err != nil {
+		panic(fmt.Sprintf("%s: %s", err, string(encoded)))
+	}
+
+	return buf.String()
 }
