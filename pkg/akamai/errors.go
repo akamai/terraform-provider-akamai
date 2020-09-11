@@ -22,11 +22,11 @@ var (
 	ErrNoConfiguredProviders = &Error{"One or more Akamai Edgegrid provider configurations must be defined", false}
 
 	// ErrCacheEntryNotFound returns a cache entry error
-	ErrCacheEntryNotFound = func(key string) error { return &Error{fmt.Sprintf("cache entry %q not found", key), true} }
+	ErrCacheEntryNotFound = &Error{"cache entry not found", true}
 
 	// ErrProviderNotLoaded returned and panic'd when a requested provider is not loaded
 	// Users should never see this, unit tests and sanity checks should pick this up
-	ErrProviderNotLoaded = func(name string) error { return &Error{fmt.Sprintf("Provider %q not loaded", name), false} }
+	ErrProviderNotLoaded = &Error{"provider not loaded", false}
 
 	// NoticeDeprecatedUseAlias is returned for schema configurations that are deprecated
 	// Terraform now supports section aliases
