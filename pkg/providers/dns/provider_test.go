@@ -2,6 +2,8 @@ package dns
 
 import (
 	"errors"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"io/ioutil"
 	"os"
 	"path"
@@ -60,12 +62,12 @@ func (d *data) List() []interface{} {
 }
 
 type args struct {
-	schema resourceData
+	schema tools.ResourceDataFetcher
 }
 
 func Test_getConfigDNSV2Service(t *testing.T) {
 	type args struct {
-		schema resourceData
+		schema tools.ResourceDataFetcher
 	}
 
 	tests := []struct {
@@ -184,19 +186,30 @@ max_body = 2`,
 		{
 			name: "dns block complete",
 			args: args{
-				schema: &data{
-					data: map[string]interface{}{
-						"dns": &data{
-							data: map[string]interface{}{
-								"host":          "block",
-								"access_token":  "block",
-								"client_token":  "block",
-								"client_secret": "block",
-								"max_body":      1,
+				schema: func() *schema.ResourceData {
+					resource := schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"dns": {
+								Optional: true,
+								Type:     schema.TypeSet,
+								Elem:     config.Options("dns"),
 							},
 						},
-					},
-				},
+					}
+					rd := resource.TestResourceData()
+					rd.Set("dns", schema.NewSet(func(i interface{}) int {
+						return 0
+					}, []interface{}{
+						map[string]interface{}{
+							"host":          "block",
+							"access_token":  "block",
+							"client_token":  "block",
+							"client_secret": "block",
+							"max_body":      1,
+						},
+					}))
+					return rd
+				}(),
 			},
 			want: &edgegrid.Config{
 				Host:         "block",
@@ -255,7 +268,7 @@ type testsStruct struct {
 	env     map[string]string
 }
 
-type getConfigServiceSig func(resourceData) (*edgegrid.Config, error)
+type getConfigServiceSig func(fetcher tools.ResourceDataFetcher) (*edgegrid.Config, error)
 
 func testGetConfigServiceExec(t *testing.T, tests []testsStruct, configService getConfigServiceSig) {
 

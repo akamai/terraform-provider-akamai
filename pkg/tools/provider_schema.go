@@ -90,13 +90,32 @@ func GetSetValue(key string, rd ResourceDataFetcher) (*schema.Set, error) {
 	if key == "" {
 		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
+	val := new(schema.Set)
 	value, ok := rd.GetOk(key)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrNotFound, key)
+		return val, fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
-	var val *schema.Set
 	if val, ok = value.(*schema.Set); !ok {
-		return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "*schema.Set")
+		return val, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "*schema.Set")
+	}
+	return val, nil
+}
+
+// GetListValue fetches value with given key from ResourceData object and attempts type cast to *[]interface{}
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetListValue(key string, rd ResourceDataFetcher) ([]interface{}, error) {
+	if key == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+	value, ok := rd.GetOk(key)
+	val := make([]interface{}, 0)
+	if !ok {
+		return val, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+	if val, ok = value.([]interface{}); !ok {
+		return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "[]interface{}")
 	}
 	return val, nil
 }

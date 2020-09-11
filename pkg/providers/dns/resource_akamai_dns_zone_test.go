@@ -2,6 +2,9 @@ package dns
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"log"
 	"strings"
 	"testing"
@@ -140,31 +143,6 @@ func testAccCheckAkamaiDNSZoneDestroy(s *terraform.State) error {
 			return err
 		}
 		log.Printf("[DEBUG] [Akamai DNSv2] Searching for zone [%v]", zone)
-		/*
-			if len(zone.Zone.A) > 0 ||
-				len(zone.Zone.Aaaa) > 0 ||
-				len(zone.Zone.Afsdb) > 0 ||
-				len(zone.Zone.Cname) > 0 ||
-				len(zone.Zone.Dnskey) > 0 ||
-				len(zone.Zone.Ds) > 0 ||
-				len(zone.Zone.Hinfo) > 0 ||
-				len(zone.Zone.Loc) > 0 ||
-				len(zone.Zone.Mx) > 0 ||
-				len(zone.Zone.Naptr) > 0 ||
-				len(zone.Zone.Nsec3) > 0 ||
-				len(zone.Zone.Nsec3param) > 0 ||
-				len(zone.Zone.Ptr) > 0 ||
-				len(zone.Zone.Rp) > 0 ||
-				len(zone.Zone.Rrsig) > 0 ||
-				len(zone.Zone.Spf) > 0 ||
-				len(zone.Zone.Srv) > 0 ||
-				len(zone.Zone.Sshfp) > 0 ||
-				len(zone.Zone.Txt) > 0 {
-				// These never get deleted
-				// len(zone.Zone.Ns) > 0 ||
-				// len(zone.Zone.Soa) > 0 ||
-				return fmt.Errorf("zone was not deleted %s", hostname)
-			}*/
 	}
 	return nil
 }
@@ -201,4 +179,139 @@ func TestValidateZoneType(t *testing.T) {
 			t.Errorf("Value %v is invalid: %v", gv, err)
 		}
 	}
+}
+
+func TestCheckDNSv2Zone(t *testing.T) {
+	tests := map[string]struct {
+		init      func(*mocked)
+		withError bool
+	}{
+		"type SECONDARY, validation ok": {
+			init: func(m *mocked) {
+				m.On("GetOk", "zone").Return("test", true).Once()
+				m.On("GetOk", "type").Return("SECONDARY", true).Once()
+				m.On("GetOk", "masters").Return(schema.NewSet(func(i interface{}) int {
+					return 1
+				}, []interface{}{"1"}), true).Once()
+				m.On("GetOk", "target").Return("", true).Once()
+				m.On("GetOk", "tsig_key").Return([]interface{}{"1"}, true).Once()
+				m.On("GetOk", "sign_and_serve").Return(false, true).Once()
+			},
+			withError: false,
+		},
+		"type ALIAS, validation ok": {
+			init: func(m *mocked) {
+				m.On("GetOk", "zone").Return("test", true).Once()
+				m.On("GetOk", "type").Return("ALIAS", true).Once()
+				m.On("GetOk", "masters").Return(&schema.Set{}, true)
+				m.On("GetOk", "target").Return("test-target", true).Once()
+				m.On("GetOk", "tsig_key").Return([]interface{}{}, true).Once()
+				m.On("GetOk", "sign_and_serve").Return(false, true).Once()
+			},
+			withError: false,
+		},
+		"different type, validation ok": {
+			init: func(m *mocked) {
+				m.On("GetOk", "zone").Return("test", true).Once()
+				m.On("GetOk", "type").Return("SOME_TYPE", true).Once()
+				m.On("GetOk", "masters").Return(&schema.Set{}, true)
+				m.On("GetOk", "target").Return("", true).Once()
+				m.On("GetOk", "tsig_key").Return([]interface{}{}, true).Once()
+				m.On("GetOk", "sign_and_serve").Return(false, true).Once()
+			},
+			withError: false,
+		},
+		"type SECONDARY, masters is empty": {
+			init: func(m *mocked) {
+				m.On("GetOk", "zone").Return("test", true).Once()
+				m.On("GetOk", "type").Return("SECONDARY", true).Once()
+				m.On("GetOk", "masters").Return(schema.NewSet(func(i interface{}) int {
+					return 1
+				}, []interface{}{"1"}), true).Once()
+				m.On("GetOk", "target").Return("test-target", true).Once()
+				m.On("GetOk", "tsig_key").Return([]interface{}{"1"}, true).Once()
+				m.On("GetOk", "sign_and_serve").Return(false, true).Once()
+			},
+			withError: true,
+		},
+		"type SECONDARY, target is not empty": {
+			init: func(m *mocked) {
+				m.On("GetOk", "zone").Return("test", true).Once()
+				m.On("GetOk", "type").Return("SECONDARY", true).Once()
+				m.On("GetOk", "masters").Return(&schema.Set{}, true).Once()
+				m.On("GetOk", "target").Return("", true).Once()
+				m.On("GetOk", "tsig_key").Return([]interface{}{"1"}, true).Once()
+				m.On("GetOk", "sign_and_serve").Return(false, true).Once()
+			},
+			withError: true,
+		},
+		"type ALIAS, masters is not empty": {
+			init: func(m *mocked) {
+				m.On("GetOk", "zone").Return("test", true).Once()
+				m.On("GetOk", "type").Return("ALIAS", true).Once()
+				m.On("GetOk", "masters").Return(schema.NewSet(func(i interface{}) int {
+					return 1
+				}, []interface{}{"1"}), true).Once()
+				m.On("GetOk", "target").Return("test-target", true).Once()
+				m.On("GetOk", "tsig_key").Return([]interface{}{}, true).Once()
+				m.On("GetOk", "sign_and_serve").Return(false, true).Once()
+			},
+			withError: true,
+		},
+		"type ALIAS, target is empty": {
+			init: func(m *mocked) {
+				m.On("GetOk", "zone").Return("test", true).Once()
+				m.On("GetOk", "type").Return("ALIAS", true).Once()
+				m.On("GetOk", "masters").Return(&schema.Set{}, true).Once()
+				m.On("GetOk", "target").Return("", true).Once()
+				m.On("GetOk", "tsig_key").Return([]interface{}{}, true).Once()
+				m.On("GetOk", "sign_and_serve").Return(false, true).Once()
+			},
+			withError: true,
+		},
+		"type ALIAS, sign and serve is on": {
+			init: func(m *mocked) {
+				m.On("GetOk", "zone").Return("test", true).Once()
+				m.On("GetOk", "type").Return("ALIAS", true).Once()
+				m.On("GetOk", "masters").Return(&schema.Set{}, true).Once()
+				m.On("GetOk", "target").Return("test-target", true).Once()
+				m.On("GetOk", "tsig_key").Return([]interface{}{}, true).Once()
+				m.On("GetOk", "sign_and_serve").Return(true, true).Once()
+			},
+			withError: true,
+		},
+		"type ALIAS, tsig is not empty": {
+			init: func(m *mocked) {
+				m.On("GetOk", "zone").Return("test", true).Once()
+				m.On("GetOk", "type").Return("ALIAS", true).Once()
+				m.On("GetOk", "masters").Return(&schema.Set{}, true).Once()
+				m.On("GetOk", "target").Return("test-target", true).Once()
+				m.On("GetOk", "tsig_key").Return([]interface{}{"1"}, true).Once()
+				m.On("GetOk", "sign_and_serve").Return(false, true).Once()
+			},
+			withError: true,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			m := &mocked{}
+			test.init(m)
+			err := checkDNSv2Zone(m)
+			m.AssertExpectations(t)
+			if test.withError {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
+}
+
+type mocked struct {
+	mock.Mock
+}
+
+func (m *mocked) GetOk(key string) (interface{}, bool) {
+	args := m.Called(key)
+	return args.Get(0), args.Bool(1)
 }

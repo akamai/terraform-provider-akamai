@@ -3,11 +3,12 @@ package dns
 import (
 	"context"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/apex/log"
 	"sort"
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -39,23 +40,28 @@ func dataSourceDNSRecordSet() *schema.Resource {
 
 func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-
-	zone := d.Get("zone").(string)
-	host := d.Get("host").(string)
-	recordtype := d.Get("record_type").(string)
-
 	logger := meta.Log("[Akamai DNS]", "dataSourceDNSRecordSetRead")
+	zone, err := tools.GetStringValue("zone", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	host, err := tools.GetStringValue("host", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	recordType, err := tools.GetStringValue("record_type", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	logger.WithFields(log.Fields{
 		"zone":       zone,
 		"host":       host,
-		"recordtype": recordtype,
+		"recordtype": recordType,
 	}).Debug("Start Searching for records")
-
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
-
-	rdata, err := dnsv2.GetRdata(zone, host, recordtype)
+	rdata, err := dnsv2.GetRdata(zone, host, recordType)
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -66,8 +72,9 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	logger.WithField("rdata", rdata).Debug("Recordset found.")
 	sort.Strings(rdata)
 
-	d.Set("rdata", rdata)
+	if err := d.Set("rdata", rdata); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(host)
-
-	return diags
+	return nil
 }
