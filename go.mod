@@ -7,6 +7,7 @@ require (
 	github.com/allegro/bigcache v1.2.1
 	github.com/apex/log v1.9.0
 	github.com/aws/aws-sdk-go v1.30.12 // indirect
+	github.com/cyberphone/json-canonicalization v0.0.0-20200703052342-77e15c5d8e47
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-hclog v0.9.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
@@ -18,7 +19,8 @@ require (
 	github.com/tidwall/gjson v1.2.1
 	github.com/tidwall/match v1.0.1 // indirect
 	github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 // indirect
-	golang.org/x/tools v0.0.0-20200903005429-2364a5e8fdcf // indirect
+	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 // indirect
+	golang.org/x/tools v0.0.0-20200909210914-44a2922940c2 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )
 

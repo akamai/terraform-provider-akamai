@@ -13,6 +13,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/cyberphone/json-canonicalization/go/src/webpki.org/jsoncanonicalizer"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tidwall/gjson"
 )
@@ -21,13 +22,24 @@ import (
 func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) bool {
 	logger := akamai.Log("PAPI", "suppressEquivalentJSONDiffs")
 
+	jsonCompactor := func(dest *bytes.Buffer, input []byte) error {
+		// canonicalize input using jsoncanonicalizer
+		res, err := jsoncanonicalizer.Transform(input)
+		if err != nil {
+			return err
+		}
+
+		// compact the input
+		return json.Compact(dest, res)
+	}
+
 	oldBuf := bytes.NewBuffer([]byte{})
-	if err := json.Compact(oldBuf, []byte(old)); err != nil {
+	if err := jsonCompactor(oldBuf, []byte(old)); err != nil {
 		logger.Errorf("converting to compact json: %s", old)
 		return false
 	}
 	newBuf := bytes.NewBuffer([]byte{})
-	if err := json.Compact(newBuf, []byte(new)); err != nil {
+	if err := jsonCompactor(newBuf, []byte(new)); err != nil {
 		logger.Errorf("converting to compact json: %s", old)
 		return false
 	}
@@ -69,14 +81,26 @@ func suppressEquivalentJSONDiffs(_, old, new string, d *schema.ResourceData) boo
 
 func suppressEquivalentJSONPendingDiffs(old, new string, d *schema.ResourceDiff) bool {
 	logger := akamai.Log("PAPI", "suppressEquivalentJSONPendingDiffs")
+
+	jsonCompactor := func(dest *bytes.Buffer, input []byte) error {
+		// canonicalize input using jsoncanonicalizer
+		res, err := jsoncanonicalizer.Transform(input)
+		if err != nil {
+			return err
+		}
+
+		// compact the input
+		return json.Compact(dest, res)
+	}
+
 	oldBuf := bytes.NewBuffer([]byte{})
-	if err := json.Compact(oldBuf, []byte(old)); err != nil {
+	if err := jsonCompactor(oldBuf, []byte(old)); err != nil {
 		logger.Errorf("converting old value to compact json: %s", old)
 		return false
 	}
 
 	newBuf := bytes.NewBuffer([]byte{})
-	if err := json.Compact(newBuf, []byte(new)); err != nil {
+	if err := jsonCompactor(newBuf, []byte(new)); err != nil {
 		logger.Errorf("converting new value to compact json: %s", newBuf)
 		return false
 	}
