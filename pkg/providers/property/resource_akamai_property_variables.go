@@ -222,7 +222,7 @@ func resourcePropertyVariablesExists(d *schema.ResourceData, m interface{}) (boo
 	return true, nil
 }
 
-func resourcePropertyVariablesRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePropertyVariablesRead(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }
 

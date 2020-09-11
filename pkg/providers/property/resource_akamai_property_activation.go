@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/apex/log"
@@ -139,9 +140,12 @@ func resourcePropertyActivationDelete(_ context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network := papi.NetworkValue(networkVal)
+	network, err := parseNetwork(networkVal)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	propertyVersion := property.ProductionVersion
-	if network == "STAGING" {
+	if network == papi.NetworkStaging {
 		propertyVersion = property.StagingVersion
 	}
 	version, err := tools.GetIntValue("version", d)
@@ -186,7 +190,22 @@ polling:
 	return nil
 }
 
-//Todo should be part of ReadContext
+func parseNetwork(net string) (papi.NetworkValue, error) {
+	networks := map[string]papi.NetworkValue{
+		"STAGING":    papi.NetworkStaging,
+		"STAG":       papi.NetworkStaging,
+		"S":          papi.NetworkStaging,
+		"PRODUCTION": papi.NetworkProduction,
+		"PROD":       papi.NetworkProduction,
+		"P":          papi.NetworkProduction,
+	}
+	networkValue, ok := networks[strings.ToUpper(net)]
+	if !ok {
+		return "", fmt.Errorf("network not recognized")
+	}
+	return networkValue, nil
+}
+
 func resourcePropertyActivationExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationExists")

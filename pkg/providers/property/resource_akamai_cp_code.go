@@ -81,7 +81,8 @@ func resourceCPCodeCreate(_ context.Context, d *schema.ResourceData, m interface
 		cpCode = cpCodes.NewCpCode()
 		cpCode.ProductID = product
 		cpCode.CpcodeName = name
-		logger.Debugf("CPCode: %+v")
+
+		logger.Debugf("CPCode: %+v", cpCode)
 		err := cpCode.Save(CorrelationID)
 		if err != nil {
 			logger.Debugf("Error saving")

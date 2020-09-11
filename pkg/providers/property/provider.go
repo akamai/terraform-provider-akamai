@@ -7,12 +7,11 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

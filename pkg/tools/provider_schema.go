@@ -44,6 +44,28 @@ func GetStringValue(key string, rd ResourceDataFetcher) (string, error) {
 	return "", fmt.Errorf("%w: %s", ErrNotFound, key)
 }
 
+// GetInterfaceArrayValue fetches value with given key from ResourceData object and attempts type cast to []interface{}
+//
+// if value is not present on provided resource for key, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetInterfaceArrayValue(key string, rd ResourceDataFetcher) ([]interface{}, error) {
+	if key == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+
+	value, ok := rd.GetOk(key)
+	if ok {
+		interf, ok := value.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "[]interface{}")
+		}
+
+		return interf, nil
+	}
+
+	return nil, fmt.Errorf("%w: %s", ErrNotFound, key)
+}
+
 // GetIntValue fetches value with given key from ResourceData object and attempts type cast to int
 //
 // if value is not present on provided resource, ErrNotFound is returned
@@ -59,6 +81,44 @@ func GetIntValue(key string, rd ResourceDataFetcher) (int, error) {
 	var num int
 	if num, ok = value.(int); !ok {
 		return 0, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "int")
+	}
+	return num, nil
+}
+
+// GetFloat64Value fetches value with given key from ResourceData object and attempts type cast to float64
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetFloat64Value(key string, rd ResourceDataFetcher) (float64, error) {
+	if key == "" {
+		return 0, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+	value, ok := rd.GetOk(key)
+	if !ok {
+		return 0, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+	var num float64
+	if num, ok = value.(float64); !ok {
+		return 0, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "float64")
+	}
+	return num, nil
+}
+
+// GetFloat32Value fetches value with given key from ResourceData object and attempts type cast to float64
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetFloat32Value(key string, rd ResourceDataFetcher) (float32, error) {
+	if key == "" {
+		return 0, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+	value, ok := rd.GetOk(key)
+	if !ok {
+		return 0, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+	var num float32
+	if num, ok = value.(float32); !ok {
+		return 0, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "float32")
 	}
 	return num, nil
 }

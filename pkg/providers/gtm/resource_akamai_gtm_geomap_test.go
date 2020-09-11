@@ -71,7 +71,7 @@ resource "akamai_gtm_geomap" "test_geo" {
         akamai_gtm_domain.test_domain,
         akamai_gtm_datacenter.test_geo_datacenter
     ]
-}`, gtm_test_domain)
+}`, gtmTestDomain)
 
 var testAccAkamaiGTMGeoMapUpdateConfig = fmt.Sprintf(`
 provider "akamai" {
@@ -135,7 +135,7 @@ resource "akamai_gtm_geomap" "test_geo" {
         akamai_gtm_datacenter.test_geo_datacenter
     ]
  
-}`, gtm_test_domain)
+}`, gtmTestDomain)
 
 func TestAccAkamaiGTMGeoMap_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -149,7 +149,6 @@ func TestAccAkamaiGTMGeoMap_basic(t *testing.T) {
 					testAccCheckAkamaiGTMGeoMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_geomap.test_geo", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -167,7 +166,6 @@ func TestAccAkamaiGTMGeoMap_update(t *testing.T) {
 					testAccCheckAkamaiGTMGeoMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_geomap.test_geo", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccAkamaiGTMGeoMapUpdateConfig,
@@ -175,7 +173,6 @@ func TestAccAkamaiGTMGeoMap_update(t *testing.T) {
 					testAccCheckAkamaiGTMGeoMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_geomap.test_geo", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -184,8 +181,8 @@ func TestAccAkamaiGTMGeoMap_update(t *testing.T) {
 func testAccPreCheckGeo(t *testing.T) {
 
 	testAccPreCheckTF(t)
-	testCheckDeleteGeoMap("test_geomap", gtm_test_domain)
-	testAccDeleteDatacenterByNickname("test_geo_datacenter", gtm_test_domain)
+	testCheckDeleteGeoMap("test_geomap", gtmTestDomain)
+	testAccDeleteDatacenterByNickname("test_geo_datacenter", gtmTestDomain)
 
 }
 
@@ -229,6 +226,9 @@ func testAccCheckAkamaiGTMGeoMapExists(s *terraform.State) error {
 		}
 
 		geoName, dom, err := parseStringID(rs.Primary.ID)
+		if err != nil {
+			return err
+		}
 		_, err = gtm.GetGeoMap(geoName, dom)
 		if err != nil {
 			return err

@@ -2,9 +2,10 @@ package gtm
 
 import (
 	"fmt"
-	"log"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -49,40 +50,45 @@ func validateDCValue(v interface{}, _ string) (ws []string, es []error) {
 }
 
 func dataSourceGTMDefaultDatacenterRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("[DEBUG] dataSourceDefaultDatacenter Read")
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "dataSourceGTMDefaultDatacenterRead")
 
-	domain, ok := d.GetOk("domain")
-	if !ok {
-		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
+	domain, err := tools.GetStringValue("domain", d)
+	if err != nil {
+		logger.Warnf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
+
+		return err
 	}
 	// get or create default dc
 	dcid, ok := d.Get("datacenter").(int)
 	if !ok {
-		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: datacenter not initialized")
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcid)
 	}
 
 	var defaultDC = gtm.NewDatacenter()
-	var err error
-	if dcid == gtm.MapDefaultDC {
-		defaultDC, err = gtm.CreateMapsDefaultDatacenter(domain.(string))
-	} else if dcid == gtm.Ipv4DefaultDC {
-		defaultDC, err = gtm.CreateIPv4DefaultDatacenter(domain.(string))
-	} else if dcid == gtm.Ipv6DefaultDC {
-		defaultDC, err = gtm.CreateIPv6DefaultDatacenter(domain.(string))
-	} else {
-		// shouldn't be reachable
-		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Invalid Default Datacenter %d in configuration", dcid)
+	switch dcid {
+	case gtm.MapDefaultDC:
+		defaultDC, err = gtm.CreateMapsDefaultDatacenter(domain)
+	case gtm.Ipv4DefaultDC:
+		defaultDC, err = gtm.CreateIPv4DefaultDatacenter(domain)
+	case gtm.Ipv6DefaultDC:
+		defaultDC, err = gtm.CreateIPv6DefaultDatacenter(domain)
+	default:
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcid)
 	}
+
 	if err != nil {
-		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter retrieval failed. %v", err)
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: default datacenter retrieval failed. %v", err)
 	}
-	if defaultDC == nil {
-		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Default Datacenter does not Exist")
+	if err := d.Set("nickname", defaultDC.Nickname); err != nil {
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: setting nickname failed. %v", err.Error())
 	}
-	_ = d.Set("nickname", defaultDC.Nickname)
-	_ = d.Set("datacenter_id", defaultDC.DatacenterId)
-	defaultDatacenterId := fmt.Sprintf("%s:%s:%d", domain.(string), "default_datcenter", defaultDC.DatacenterId)
-	log.Printf("[DEBUG] [Akamai GTMv1] Generated Default DC Resource Id: %s", defaultDatacenterId)
-	d.SetId(defaultDatacenterId)
+	if err := d.Set("datacenter_id", defaultDC.DatacenterId); err != nil {
+		return fmt.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: setting datacenter id failed. %v", err.Error())
+	}
+	defaultDatacenterID := fmt.Sprintf("%s:%s:%d", domain, "default_datcenter", defaultDC.DatacenterId)
+	logger.Debugf("[Error] GTM dataSourceGTMDefaultDatacenterRead: generated Default DC Resource Id: %s", defaultDatacenterID)
+	d.SetId(defaultDatacenterID)
+
 	return nil
 }
