@@ -4,7 +4,7 @@ terraform {
 			source = "akamai/akamai"
 		}
 	}
-	required_version = ">= 0.13"
+	required_version = ">= 0.12"
 }
 
 provider "akamai" {
@@ -12,7 +12,7 @@ provider "akamai" {
 	config_section = "papi"
 }
 
-resource "akamai_property_rules" "rules" {
+data "akamai_property_rules" "rules" {
 	rules {
 		behavior {
 			name = "origin"
@@ -91,5 +91,5 @@ resource "akamai_property_rules" "rules" {
 }
 
 output "json" {
-	value = akamai_property_rules.rules.json
+	value = data.akamai_property_rules.rules.json
 }

@@ -37,7 +37,7 @@ else
      fi
 
    DOCKER_BUILDKIT=1 docker build \
-      -f build/internal/package/Dockerfile \
+      -f build/internal/package/Dockerfile.qa \
       --build-arg TERRAFORM_VERSION=${TERRAFORM_VERSION} \
       --build-arg PROVIDER_BRANCH_NAME=${PROVIDER_BRANCH_NAME} \
       --ssh default \

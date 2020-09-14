@@ -10,24 +10,15 @@ WORKDIR $GOPATH/src/github.com/akamai
 RUN apk add --update git bash openssh
 
 ## Following can only be done inside the lunabuild docker container to copy ssh sockets and keys
-COPY .ssh /root/.ssh
-RUN chmod 0600 /root/.ssh
-## known hosts generated via /usr/bin/ssh-keyscan git.source.akamai.com >> /root/.ssh/known_hosts
-# this can not be done inside the lunabuild docker container so we copy instead
-ADD known_hosts /root/.ssh/known_hosts
-RUN apk add --no-cache openssh-client \
- && ssh-keyscan github.com > /root/.ssh/known_hosts
-
+COPY .ssh/id_* /root/.ssh/
+COPY .ssh/known_hosts /root/.ssh/
+RUN chown -R root:root /root/.ssh && chmod 700 /root/.ssh && chmod 600 /root/.ssh/id_rsa && chmod 644 /root/.ssh/id_rsa.pub /root/.ssh/known_hosts
 
 ADD AkamaiCorpRoot-G1.pem /usr/local/share/ca-certificates/AkamaiCorpRoot-G1.pem
 RUN update-ca-certificates
-#RUN git config --global http.sslVerify "false"
-#RUN git clone https://git.source.akamai.com/scm/fee/terraform-provider-akamai.git
-#RUN git clone https://git.source.akamai.com/scm/fee/akamaiopen-edgegrid-golang.git
-#RUN --mount=type=ssh git clone ssh://git@git.source.akamai.com:7999/fee/terraform-provider-akamai.git
-#RUN --mount=type=ssh git clone ssh://git@git.source.akamai.com:7999/fee/akamaiopen-edgegrid-golang.git
 RUN git clone ssh://git@git.source.akamai.com:7999/fee/terraform-provider-akamai.git
 RUN git clone ssh://git@git.source.akamai.com:7999/fee/akamaiopen-edgegrid-golang.git
+
 RUN cd terraform-provider-akamai && git checkout ${PROVIDER_BRANCH_NAME} && \
     go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang=../akamaiopen-edgegrid-golang && \
     go install -tags all
