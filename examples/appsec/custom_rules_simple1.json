@@ -1,0 +1,43 @@
+{
+    "name": "Fat Rule 1",
+    "description": "Can I create all conditions?",
+    "tag": [
+        "test"
+    ],
+    "conditions": [{
+            "type": "requestMethodMatch",
+            "positiveMatch": true,
+            "value": [
+                "GET",
+                "CONNECT",
+                "TRACE",
+                "PUT",
+                "POST",
+                "OPTIONS",
+                "DELETE",
+                "HEAD"
+            ]
+        },
+        {
+            "type": "pathMatch",
+            "positiveMatch": true,
+            "value": [
+                "/H",
+                "/O",
+                "/Li",
+                "/He"
+            ]
+        },
+        {
+            "type": "extensionMatch",
+            "positiveMatch": true,
+            "valueWildcard": true,
+            "valueCase": true,
+            "value": [
+                "Li",
+                "He",
+                "H"
+            ]
+        }
+    ]
+}
