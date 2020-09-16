@@ -1,9 +1,18 @@
-provider "akamai" {
-	edgerc = "~/.edgerc"
-	papi_section = "papi"
+terraform {
+	required_providers {
+		akamai = {
+			source = "akamai/akamai"
+		}
+	}
+	required_version = ">= 0.12"
 }
 
-resource "akamai_property_rules" "rules" {
+provider "akamai" {
+	edgerc = "~/.edgerc"
+	config_section = "papi"
+}
+
+data "akamai_property_rules" "rules" {
 	rules {
 		behavior {
 			name = "origin"
@@ -82,5 +91,5 @@ resource "akamai_property_rules" "rules" {
 }
 
 output "json" {
-	value = "${akamai_property_rules.rules.json}"
+	value = data.akamai_property_rules.rules.json
 }

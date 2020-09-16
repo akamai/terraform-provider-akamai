@@ -1,6 +1,15 @@
+terraform {
+	required_providers {
+		akamai = {
+			source = "akamai/akamai"
+		}
+	}
+	required_version = ">= 0.13"
+}
+
 provider "akamai" {
      edgerc = "~/.edgerc"
-     papi_section = "papi"
+     config_section = "papi"
 }
 
 variable "activate" {
@@ -56,5 +65,5 @@ resource "akamai_property" "dshafik_sandbox" {
 		}
 	}
 
-    activate = "${var.activate}"
+    activate = var.activate
 }
