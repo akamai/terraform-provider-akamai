@@ -371,7 +371,7 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf(cStatus.Status.Message)
 	}
 
-waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return err
 	}
@@ -1039,9 +1039,11 @@ func convertStringToInterfaceList(stringList []string, m interface{}) []interfac
 
 }
 
-func convertInt64ToInterfaceList(intList []int64) []interface{} {
+func convertInt64ToInterfaceList(intList []int64, m interface{}) []interface{} {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "convertInt64ToInterfaceList")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
+	logger.Debugf("Int List: %v", intList)
 	retList := make([]interface{}, 0, len(intList))
 	for _, v := range intList {
 		retList = append(retList, v)

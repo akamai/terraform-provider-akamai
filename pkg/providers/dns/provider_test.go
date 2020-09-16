@@ -268,7 +268,7 @@ type testsStruct struct {
 	env     map[string]string
 }
 
-type getConfigServiceSig func(fetcher tools.ResourceDataFetcher) (*edgegrid.Config, error)
+type getConfigServiceSig func(tools.ResourceDataFetcher) (*edgegrid.Config, error)
 
 func testGetConfigServiceExec(t *testing.T, tests []testsStruct, configService getConfigServiceSig) {
 

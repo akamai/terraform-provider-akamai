@@ -455,7 +455,7 @@ func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap,
 		"nickname":      geo.DefaultDatacenter.Nickname,
 	}
 	ddcListNew[0] = ddcNew
-	if err :=d.Set("default_datacenter", ddcListNew); err != nil {
+	if err := d.Set("default_datacenter", ddcListNew); err != nil {
 		logger.Errorf("populateTerraformGeoDefaultDCState failed: %s", err.Error())
 	}
 }

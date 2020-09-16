@@ -441,7 +441,7 @@ func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtm.AsMap, 
 			}
 			a["datacenter_id"] = aObject.DatacenterId
 			a["nickname"] = aObject.Nickname
-			a["as_numbers"] = reconcileTerraformLists(a["as_numbers"].([]interface{}), convertInt64ToInterfaceList(aObject.AsNumbers), m)
+			a["as_numbers"] = reconcileTerraformLists(a["as_numbers"].([]interface{}), convertInt64ToInterfaceList(aObject.AsNumbers, m), m)
 			// remove object
 			delete(objectInventory, objIndex)
 		}

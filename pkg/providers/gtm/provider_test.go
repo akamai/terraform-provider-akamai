@@ -68,7 +68,7 @@ func Test_getGTMV1_3Service(t *testing.T) {
 				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{}),
 			},
 			edgerc:  ``,
-			wantErr: fmt.Errorf("unable to create instance using environment or .edgerc file"),
+			wantErr: fmt.Errorf("Unable to create instance using environment or .edgerc file"),
 		},
 		{
 			name: "undefined .edgerc, undefined section",
