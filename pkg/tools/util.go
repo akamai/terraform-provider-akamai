@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+    "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // GetSHAString returns a sha1 from the string
@@ -28,4 +29,13 @@ func CreateNonce() string {
 		return ""
 	}
 	return uuid.String()
+}
+
+//Convert schema.Set to a slice of strings
+func SetToStringSlice(s *schema.Set) []string {
+	list := make([]string, s.Len())
+	for i, v := range s.List() {
+		list[i] = v.(string)
+	}
+	return list
 }
