@@ -1,14 +1,15 @@
 package appsec
 
 import (
-	"context"
+	"errors"
 	"sync"
 
 	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
-	"github.com/hashicorp/go-hclog"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -98,10 +99,18 @@ func getAPPSECV1Service(d resourceData) (*edgegrid.Config, error) {
 		return &APPSECv1Config, nil
 	}
 
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("appsec_section").(string)
-	if section == "" {
-		section = d.Get("config_section").(string)
+	edgerc, err := tools.GetStringValue("edgerc", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
+
+	var section string
+
+	for _, s := range tools.FindStringValues(d, "appsec_section", "config_section") {
+		if s != "default" {
+			section = s
+			break
+		}
 	}
 	APPSECv1Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
@@ -136,12 +145,12 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(ctx context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	log.Named(p.Name()).Debug("START Configure")
+func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+	log.Debug("START Configure")
 
-	cfg, err := getAPPSECV1Service(d)
+	_, err := getAPPSECV1Service(d)
 	if err != nil {
-		return nil, nil
+		return nil
 	}
-	return cfg, nil
+	return nil
 }
