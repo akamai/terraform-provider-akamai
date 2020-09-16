@@ -8,19 +8,16 @@ import (
 	"strings"
 
 	"github.com/apex/log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
 	//log "github.com/sirupsen/logrus"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/tidwall/gjson"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func resourceProperty() *schema.Resource {
@@ -485,7 +482,8 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("note", property.Note); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		// since note is an optional parameter, just logging the error.
+		logger.Warnf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 
 	rules, err := property.GetRules(CorrelationID)
