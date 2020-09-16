@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 )
@@ -18,14 +19,15 @@ var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	testAccProvider = Provider()
+	akamai.Provider(Subprovider())
+	testAccProvider = inst.Provider
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testAccProvider,
 	}
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := inst.Provider.InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -84,7 +86,7 @@ func Test_getAPPSECV1Service(t *testing.T) {
 		{
 			name: "undefined .edgerc, undefined section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{}),
 			},
 			edgerc: `[default]
 host = default
@@ -103,7 +105,7 @@ max_body = 1`,
 		{
 			name: "undefined .edgerc, default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"appsec_section": "default",
 				}),
 			},
