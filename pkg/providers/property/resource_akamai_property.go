@@ -682,7 +682,10 @@ func getGroup(d *schema.ResourceData, correlationid string, logger log.Interface
 	if err != nil {
 		return nil, err
 	}
-
+	groupID, err = tools.AddPrefix(groupID, "grp_")
+	if err != nil {
+		return nil, err
+	}
 	group, err := groups.FindGroup(groupID)
 	if err != nil {
 		return nil, err
@@ -706,7 +709,10 @@ func getContract(d *schema.ResourceData, correlationid string, logger log.Interf
 	if err != nil {
 		return nil, err
 	}
-
+	contractID, err = tools.AddPrefix(contractID, "ctr_")
+	if err != nil {
+		return nil, err
+	}
 	contract, err := contracts.FindContract(contractID)
 	if err != nil {
 		return nil, err
@@ -763,7 +769,10 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid s
 	if err != nil {
 		return nil, err
 	}
-
+	productID, err = tools.AddPrefix(productID, "prd_")
+	if err != nil {
+		return nil, err
+	}
 	product, err := products.FindProduct(productID)
 	if err != nil {
 		return nil, err
