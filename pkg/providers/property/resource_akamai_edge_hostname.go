@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
@@ -127,23 +127,21 @@ func resourceSecureEdgeHostNameCreate(_ context.Context, d *schema.ResourceData,
 		newHostname.SecureNetwork = "SHARED_CERT"
 	}
 
-	ipv4, err := tools.GetBoolValue("ipv4", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	ipv4, _ := tools.GetBoolValue("ipv4", d)
 	if ipv4 {
 		newHostname.IPVersionBehavior = "IPV4"
 	}
-	ipv6, err := tools.GetBoolValue("ipv6", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	ipv6, _ := tools.GetBoolValue("ipv6", d)
 	if ipv6 {
 		newHostname.IPVersionBehavior = "IPV6"
 	}
 	if ipv4 && ipv6 {
 		newHostname.IPVersionBehavior = "IPV6_COMPLIANCE"
 	}
+	if !(ipv4 && ipv6) {
+		return diag.FromErr(fmt.Errorf("ipv4 or ipv6 must be specified to create a new Edge Hostname"))
+	}
+
 	if err := d.Set("ip_behavior", newHostname.IPVersionBehavior); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -288,6 +286,8 @@ func resourceSecureEdgeHostNameRead(_ context.Context, d *schema.ResourceData, m
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + meta.OperationID() + "]"
 
+	var diags diag.Diagnostics
+
 	group, err := getGroup(d, CorrelationID, logger)
 	if err != nil {
 		return diag.FromErr(err)
@@ -334,12 +334,15 @@ func resourceSecureEdgeHostNameRead(_ context.Context, d *schema.ResourceData, m
 		logger.Debugf("Default EdgeHostname %v", defaultEdgeHostname)
 	}
 
-	if err := d.Set("contract", contract); err != nil {
+	if err := d.Set("contract", contract.ContractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("group", group); err != nil {
+	if err := d.Set("group", group.GroupID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("edge_hostname", defaultEdgeHostname.EdgeHostnameDomain); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.SetId(edgeHostnameID)
-	return nil
+	return diags
 }
