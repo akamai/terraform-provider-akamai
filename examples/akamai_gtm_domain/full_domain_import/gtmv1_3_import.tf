@@ -1,7 +1,13 @@
-provider "akamai" {
-    edgerc = "/home/demo/.edgerc"
-    gtm_section = "default"
+terraform {
+  required_version = ">= 0.12"
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
+
+provider "akamai" {}
 
 // Note: Resource imports must be done one at a time
 
@@ -34,5 +40,3 @@ resource "akamai_gtm_asmap" "tfexample_as_1" {
 
 resource "akamai_gtm_geomap" "tfexample_geo_2" {
 }
-
-

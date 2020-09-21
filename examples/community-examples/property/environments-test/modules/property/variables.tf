@@ -5,6 +5,6 @@ variable "network" {
 }
 
 variable "activate" {
- default = "true"
+  default = "true"
 }
 

@@ -1,5 +1,5 @@
 module "property" {
-	source = "../../modules/property"
-	network = "production"
-	env = "envtest"
+  source  = "../../modules/property"
+  network = "production"
+  env     = "envtest"
 }
