@@ -127,28 +127,14 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 			},
 			"hardware": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					oldold := strings.Trim(old, "\\\"")
-					newnew := strings.Trim(new, "\"")
-					if oldold == newnew {
-						return true
-					}
-					return false
-				},
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
 			},
 			"software": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					oldold := strings.Trim(old, "\\\"")
-					newnew := strings.Trim(new, "\"")
-					if oldold == newnew {
-						return true
-					}
-					return false
-				},
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
 			},
 			"priority": {
 				Type:     schema.TypeInt,
@@ -163,16 +149,19 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 			},
 			"flagsnaptr": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
 			},
 			"service": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
 			},
 			"regexp": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
 			},
 			"replacement": {
 				Type:     schema.TypeString,
@@ -195,12 +184,14 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 			},
 			"mailbox": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: dnsRecordFieldDotSuffixSuppress,
 			},
 			"txt": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: dnsRecordFieldDotSuffixSuppress,
 			},
 			"type_covered": {
 				Type:     schema.TypeString,
@@ -263,16 +254,9 @@ func resourceDNSv2Record() *schema.Resource {
 				Optional: true,
 			},
 			"email_address": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					oldold := strings.TrimRight(old, ".")
-					newnew := strings.TrimRight(new, ".")
-					if oldold == newnew {
-						return true
-					}
-					return false
-				},
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: dnsRecordFieldDotSuffixSuppress,
 			},
 			"serial": {
 				Type:     schema.TypeInt,
@@ -355,6 +339,26 @@ var certTypes = map[string]int{
 	"IACPKIX": 8,
 	"URI":     253,
 	"OID":     254,
+}
+
+// Suppress check for fields that have dot suffix in tfstate
+func dnsRecordFieldDotSuffixSuppress(_, old, new string, d *schema.ResourceData) bool {
+	oldValStr := strings.TrimRight(old, ".")
+	newValStr := strings.TrimRight(new, ".")
+	if oldValStr == newValStr {
+		return true
+	}
+	return false
+}
+
+// Suppress check for fields that are quoted in tfstate
+func dnsRecordFieldTrimQuoteSuppress(_, old, new string, d *schema.ResourceData) bool {
+	oldValStr := strings.Trim(old, "\\\"")
+	newValStr := strings.Trim(new, "\"")
+	if oldValStr == newValStr {
+		return true
+	}
+	return false
 }
 
 // Suppress check for type_value. Mnemonic config comes back as numeric
@@ -473,6 +477,49 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, old str
 		baseVal = strings.ReplaceAll(baseVal, singleQuote, "")
 		for _, compval := range compList {
 			compval = strings.ReplaceAll(compval, singleQuote, "")
+			logger.Debugf("updated baseVal: %v", baseVal)
+			logger.Debugf("compval: %v", compval)
+			if baseVal == compval {
+				return true
+			}
+		}
+		return false
+	}
+
+	if recordType == RRTypeMx {
+		// MX record target can contain priority. strip if present for comparison
+		baseComponents := strings.Split(baseVal, " ")
+		if len(baseComponents) > 2 || len(baseComponents) < 1 {
+			logger.Warnf("updated baseVal: %v invalid", baseVal)
+			return false
+		}
+		if len(baseComponents) == 2 {
+			baseVal = baseComponents[1]
+		}
+		baseVal = strings.TrimRight(baseVal, ".")
+		for _, compval := range compList {
+			compComponents := strings.Split(compval, " ")
+			if len(compComponents) > 2 || len(compComponents) < 1 {
+				logger.Warnf("updated compval: %v invalid", compval)
+				return false
+			}
+			if len(compComponents) == 2 {
+				compval = compComponents[1]
+			}
+			compval = strings.TrimRight(compval, ".")
+			logger.Debugf("updated baseVal: %v", baseVal)
+			logger.Debugf("compval: %v", compval)
+			if baseVal == compval {
+				return true
+			}
+		}
+		return false
+	}
+
+	if recordType == RRTypeAfsdb || recordType == RRTypeCname || recordType == RRTypePtr || recordType == RRTypeSrv {
+		baseVal = strings.TrimRight(baseVal, ".")
+		for _, compval := range compList {
+			compval = strings.TrimRight(compval, ".")
 			logger.Debugf("updated baseVal: %v", baseVal)
 			logger.Debugf("compval: %v", compval)
 			if baseVal == compval {
