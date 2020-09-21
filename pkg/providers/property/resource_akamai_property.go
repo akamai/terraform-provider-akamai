@@ -218,9 +218,14 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interfa
 	}
 
 	hostnames, err := setHostnames(property, d, CorrelationID, logger)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("%s", err.Error()))
+	}
+
 	if err := d.Set("edge_hostnames", hostnames); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
+
 	rulesAPI, err := property.GetRules(CorrelationID)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
