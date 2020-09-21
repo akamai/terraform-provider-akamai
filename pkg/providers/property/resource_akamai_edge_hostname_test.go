@@ -3,7 +3,6 @@ package property
 import (
 	"fmt"
 	"log"
-	//"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
