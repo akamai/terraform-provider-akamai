@@ -90,7 +90,7 @@ output "configversionproductionstatus" {
   value = data.akamai_appsec_configuration_version.appsecconfigversion.production_status
 }
 
-/*data "akamai_appsec_export_configuration" "export" {
+data "akamai_appsec_export_configuration" "export" {
   config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
   version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
   search = ["ruleActions","securityPolicies","selectedHosts.tf","selectedHosts","customRules","rulesets","reputationProfiles","ratePolicies","matchTargets"] //"selectableHosts"
@@ -100,7 +100,7 @@ output "configversionproductionstatus" {
 output "exportconfig" {
   value = data.akamai_appsec_export_configuration.export.output_text
 }
-*/
+
 
 /* 
 resource "akamai_appsec_selected_hostnames" "appsecselectedhostnames" {
@@ -155,7 +155,7 @@ resource "akamai_appsec_match_targets" "appsecmatchtargets" {
     //bypass_network_lists = ["888518_ACDDCKERS","1304427_AAXXBBLIST"]
 }
 */
-
+/*
 data "local_file" "rules" {
   filename = "${path.module}/custom_rules_simple.json"
 }
@@ -170,7 +170,7 @@ resource "akamai_appsec_custom_rule" "appseccustomrule1" {
     rules = file("${path.module}/custom_rules_simple1.json")
 }
 
-
+*/
 /*
 resource "akamai_appsec_activations" "appsecactivations" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
@@ -182,9 +182,42 @@ resource "akamai_appsec_activations" "appsecactivations" {
 }*/
 
 
-resource "akamai_appsec_rate_policy" "appsecratepolicy" {
+resource "akamai_appsec_rate_policy" "appsecreatepolicy" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version_number = data.akamai_appsec_configuration.appsecconfigedge.latest_version
     json =  file("${path.module}/rate_policy.json")
     
 }
+
+resource  "akamai_appsec_rate_policy_action" "appsecreatepolicysaction" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+    rate_policy_id = akamai_appsec_rate_policy.appsecreatepolicy.id
+    ipv4_action = "alert"
+    ipv6_action = "none"
+}
+
+resource "akamai_appsec_slow_post_protection_settings" "appsecslowpostprotectionsettings" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+    slow_rate_action = "alert"                        
+    slow_rate_threshold_rate = 10
+    slow_rate_threshold_period = 30
+    duration_threshold_timeout = 20
+}
+
+/*
+data "akamai_appsec_rate_policy_actions" "appsecreatepolicysactions" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+    
+}
+
+
+output "ds_rate_policy_actions" {
+  value = data.akamai_appsec_rate_policy_actions.appsecreatepolicysactions.rate_policy_id
+}
+*/

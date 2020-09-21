@@ -33,7 +33,7 @@ func resourceMatchTargets() *schema.Resource {
 			"json": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				ConflictsWith: []string{"type", "sequence", "is_negative_path_match", "is_negative_file_extension_match", "default_file", "hostnames", "file_paths", "file_extensions", "security_policy", "bypass_network_lists"},
+				ConflictsWith: []string{"type", "is_negative_path_match", "is_negative_file_extension_match", "default_file", "hostnames", "file_paths", "file_extensions", "security_policy", "bypass_network_lists"},
 			},
 
 			"target_id": {
@@ -44,11 +44,6 @@ func resourceMatchTargets() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Optional: true,
-			},
-			"sequence": {
-				Type:          schema.TypeInt,
-				Optional:      true,
-				ConflictsWith: []string{"json"},
 			},
 			"is_negative_path_match": {
 				Type:          schema.TypeBool,
@@ -112,7 +107,6 @@ func resourceMatchTargetsCreate(d *schema.ResourceData, meta interface{}) error 
 		matchtargets.ConfigID = d.Get("config_id").(int)
 		matchtargets.ConfigVersion = d.Get("version").(int)
 		matchtargets.Type = d.Get("type").(string)
-		matchtargets.Sequence = d.Get("sequence").(int)
 		matchtargets.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
 		matchtargets.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
 		matchtargets.DefaultFile = d.Get("default_file").(string)
@@ -153,8 +147,8 @@ func resourceMatchTargetsUpdate(d *schema.ResourceData, meta interface{}) error 
 	} else {
 		matchtargets.ConfigID = d.Get("config_id").(int)
 		matchtargets.ConfigVersion = d.Get("version").(int)
+		matchtargets.TargetID, _ = strconv.Atoi(d.Id())
 		matchtargets.Type = d.Get("type").(string)
-		matchtargets.Sequence = d.Get("sequence").(int)
 		matchtargets.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
 		matchtargets.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
 		matchtargets.DefaultFile = d.Get("default_file").(string)
@@ -219,7 +213,6 @@ func resourceMatchTargetsRead(d *schema.ResourceData, meta interface{}) error {
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CONFIG value  %v\n", matchtargets.TargetID))
 	d.Set("type", matchtargets.Type)
-	d.Set("sequence", matchtargets.Sequence)
 	d.Set("is_negative_path_match", matchtargets.IsNegativePathMatch)
 	d.Set("is_negative_file_extension_match", matchtargets.IsNegativeFileExtensionMatch)
 	d.Set("default_file", matchtargets.DefaultFile)
