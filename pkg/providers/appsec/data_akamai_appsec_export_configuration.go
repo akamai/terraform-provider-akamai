@@ -70,12 +70,12 @@ func dataSourceExportConfigurationRead(d *schema.ResourceData, meta interface{})
 	searchlist, ok := d.GetOk("search")
 	if ok {
 		ot := OutputTemplates{}
-		ot.InitTemplates()
+		InitTemplates(ot)
 
 		var outputtextresult string
 
 		for _, h := range searchlist.([]interface{}) {
-			outputtext, err := ot.RenderTemplates(h.(string), exportconfiguration)
+			outputtext, err := RenderTemplates(ot, h.(string), exportconfiguration)
 			if err == nil {
 				outputtextresult = outputtextresult + outputtext
 			}
