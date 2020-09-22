@@ -3,13 +3,12 @@ package property
 import (
 	"fmt"
 	"log"
+	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
-	//"strings"
-	"testing"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 )
 
 var testAccAkamaiSecureEdgeHostNameConfig = fmt.Sprintf(`

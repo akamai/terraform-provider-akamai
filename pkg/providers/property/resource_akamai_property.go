@@ -218,6 +218,10 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interfa
 	}
 
 	hostnames, err := setHostnames(property, d, CorrelationID, logger)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("%s", err.Error()))
+	}
+
 	if err := d.Set("edge_hostnames", hostnames); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
