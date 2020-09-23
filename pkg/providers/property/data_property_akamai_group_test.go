@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
@@ -202,10 +202,14 @@ func TestFindGroupByName(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			groups := papi.NewGroups()
+			groups := &papi.GetGroupsResponse{
+				Groups: papi.GroupItems{
+					Items: make([]*papi.Group, 0),
+				},
+			}
 			groups.AccountName = test.givenGroupsAccountName
 			for _, group := range test.givenGroups {
-				groups.AddGroup(group)
+				groups.Groups.Items = append(groups.Groups.Items, group)
 			}
 			res, err := findGroupByName(test.givenName, test.givenContract, groups, test.isDefault)
 			if test.withError != nil {

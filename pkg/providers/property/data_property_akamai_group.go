@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -30,10 +31,16 @@ func dataSourcePropertyGroups() *schema.Resource {
 	}
 }
 
-func dataSourcePropertyGroupsRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourcePropertyGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	log := meta.Log("PAPI", "dataSourcePropertyGroupsRead")
-	CorrelationID := "[PAPI][dataSourcePropertyGroupsRead-" + meta.OperationID() + "]"
+
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(log),
+	)
+
 	var name string
 	name, err := tools.GetStringValue("name", d)
 	var getDefault bool
@@ -46,11 +53,12 @@ func dataSourcePropertyGroupsRead(_ context.Context, d *schema.ResourceData, m i
 	}
 
 	log.Debugf("[Akamai Property Groups] Start Searching for property group records %s ", name)
-	groups := papi.NewGroups()
-	err = groups.GetGroups(CorrelationID)
+
+	groups, err := getGroups(ctx, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err))
+		return diag.FromErr(err)
 	}
+
 	contract, err := tools.GetStringValue("contract", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -73,16 +81,24 @@ TODO: we should decide whether returning first group from slice of groups is pro
 for non-default name, if contract was provided, a group with matching contract ID should be returned
 in case of non-default name, contract is mandatory
 */
-func findGroupByName(name, contract string, groups *papi.Groups, isDefault bool) (*papi.Group, error) {
+func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDefault bool) (*papi.Group, error) {
 	var group *papi.Group
-	var err error
+
 	if isDefault {
 		name = groups.AccountName
 		if contract != "" {
+			var found bool
+
 			name += "-" + strings.TrimPrefix(contract, "ctr_")
-			group, err = groups.FindGroup(name)
-			if err != nil {
-				return nil, fmt.Errorf("%s: %w", err.Error(), ErrLookingUpGroupByName)
+			for _, group := range groups.Groups.Items {
+				if group.GroupID == name {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				return nil, fmt.Errorf("group with id %q not found: %w", name, ErrLookingUpGroupByName)
 			}
 			return group, nil
 		}
@@ -91,16 +107,18 @@ func findGroupByName(name, contract string, groups *papi.Groups, isDefault bool)
 			return nil, ErrNoGroupsFound
 		}
 		return groups.Groups.Items[0], nil
-
 	}
+
 	// for non-default name, contract is required
 	if contract == "" {
 		return nil, fmt.Errorf("%w: %s", ErrNoContractProvided, name)
 	}
+
 	var foundGroups []*papi.Group
-	foundGroups, err = groups.FindGroupsByName(name)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrLookingUpGroupByName)
+	for _, group := range groups.Groups.Items {
+		if group.GroupName == name {
+			foundGroups = append(foundGroups, group)
+		}
 	}
 	// Make sure the group belongs to the specified contract
 	for _, foundGroup := range foundGroups {
@@ -111,4 +129,22 @@ func findGroupByName(name, contract string, groups *papi.Groups, isDefault bool)
 		}
 	}
 	return nil, fmt.Errorf("%w: %s", ErrGroupNotInContract, contract)
+}
+
+func getGroups(ctx context.Context, meta akamai.OperationMeta) (*papi.GetGroupsResponse, error) {
+	groups := &papi.GetGroupsResponse{}
+	if err := meta.CacheGet("groups", groups); err != nil {
+		if !akamai.IsNotFoundError(err) {
+			return nil, err
+		}
+		groups, err = inst.client(meta.Session()).GetGroups(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if err := meta.CacheSet("groups", groups); err != nil {
+			return nil, err
+		}
+	}
+
+	return groups, nil
 }

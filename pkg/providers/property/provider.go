@@ -8,9 +8,9 @@ import (
 	"github.com/apex/log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	papiv1 "github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -20,7 +20,12 @@ import (
 type (
 	provider struct {
 		*schema.Provider
+
+		client papi.ClientFunc
 	}
+
+	// Option is a papi provider option
+	Option func(p *provider)
 )
 
 var (
@@ -30,9 +35,13 @@ var (
 )
 
 // Subprovider returns a core sub provider
-func Subprovider() akamai.Subprovider {
+func Subprovider(opts ...Option) akamai.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
+
+		for _, opt := range opts {
+			opt(inst)
+		}
 	})
 
 	return inst
@@ -41,25 +50,7 @@ func Subprovider() akamai.Subprovider {
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
-		Schema: map[string]*schema.Schema{
-			"papi_section": {
-				Optional:   true,
-				Type:       schema.TypeString,
-				Default:    "default",
-				Deprecated: akamai.NoticeDeprecatedUseAlias("papi_section"),
-			},
-			"property_section": {
-				Optional:   true,
-				Type:       schema.TypeString,
-				Default:    "default",
-				Deprecated: akamai.NoticeDeprecatedUseAlias("property_section"),
-			},
-			"property": {
-				Optional: true,
-				Type:     schema.TypeSet,
-				Elem:     config.Options("property"),
-			},
-		},
+		Schema: map[string]*schema.Schema{},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_contract":       dataSourcePropertyContract(),
 			"akamai_cp_code":        dataSourceCPCode(),
@@ -77,6 +68,13 @@ func Provider() *schema.Provider {
 		},
 	}
 	return provider
+}
+
+// WithClientFunc sets the client interface function, used for mocking and testing
+func WithClientFunc(c papi.ClientFunc) Option {
+	return func(p *provider) {
+		p.client = c
+	}
 }
 
 func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
@@ -118,7 +116,7 @@ func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 			MaxBody:      maxBody,
 		}
 
-		papi.Init(papiConfig)
+		papiv1.Init(papiConfig)
 		return &papiConfig, nil
 	}
 
@@ -141,7 +139,7 @@ func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 		return nil, err
 	}
 
-	papi.Init(papiConfig)
+	papiv1.Init(papiConfig)
 	return &papiConfig, nil
 }
 

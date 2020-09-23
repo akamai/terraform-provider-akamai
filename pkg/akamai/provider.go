@@ -3,16 +3,21 @@ package akamai
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/allegro/bigcache"
 	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/spf13/cast"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
@@ -46,20 +51,6 @@ type (
 
 		// Configure returns the subprovider opaque state object
 		Configure(log.Interface, *schema.ResourceData) diag.Diagnostics
-	}
-
-	meta struct {
-		operationID string
-		log         hclog.Logger
-	}
-
-	// OperationMeta is the akamai meta object interface
-	OperationMeta interface {
-		// Log constructs an hclog sublogger and returns the log.Interface
-		Log(args ...interface{}) log.Interface
-
-		// OperationID returns the operation id
-		OperationID() string
 	}
 
 	provider struct {
@@ -128,6 +119,7 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 		}
 
 		instance.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+
 			// generate an operation id so we can correlate all calls to this provider
 			opid := uuid.Must(uuid.NewRandom()).String()
 
@@ -136,9 +128,34 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				"OperationID", opid,
 			)
 
+			edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
+
+			edgercPath, err := tools.GetStringValue("edgerc", d)
+			if err != nil && !IsNotFoundError(err) {
+				return nil, diag.FromErr(err)
+			}
+			if edgercPath != "" {
+				edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
+			}
+
+			edgerc, err := edgegrid.New(edgercOps...)
+			if err != nil {
+				return nil, diag.FromErr(fmt.Errorf("failed to load edgegrid config: %w", err))
+			}
+
+			userAgent := instance.UserAgent(ProviderName, instance.TerraformVersion)
+
+			sess, err := session.New(
+				session.WithConfig(edgerc),
+				session.WithUserAgent(userAgent),
+				session.WithLog(LogFromHCLog(log)),
+				session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
+			)
+
 			meta := &meta{
 				log:         log,
 				operationID: opid,
+				sess:        sess,
 			}
 
 			for _, p := range instance.subs {
@@ -147,8 +164,8 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				}
 			}
 
-			// TODO: once the client is update this will be done elsewhere
-			client.UserAgent = instance.UserAgent(ProviderName, instance.TerraformVersion)
+			// DEPRECATED: once the client is updated to v2 this will be done elsewhere
+			client.UserAgent = userAgent
 
 			return meta, nil
 		}
@@ -177,24 +194,4 @@ func mergeResource(from, to map[string]*schema.Resource) (map[string]*schema.Res
 		to[k] = v
 	}
 	return to, nil
-}
-
-// Meta return the meta object interface
-func Meta(m interface{}) OperationMeta {
-	return m.(OperationMeta)
-}
-
-// ProviderLog creates a logger for the provider from the meta
-func (m *meta) Log(args ...interface{}) log.Interface {
-	return LogFromHCLog(m.log.With(args...))
-}
-
-// OperationID returns the operation id from the meta
-func (m *meta) OperationID() string {
-	return m.operationID
-}
-
-// Log returns a global log object, there is no context like operation id
-func Log(args ...interface{}) log.Interface {
-	return LogFromHCLog(hclog.Default().With(args...))
 }
