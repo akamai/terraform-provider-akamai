@@ -23,6 +23,14 @@ func dataSourceSelectableHostnames() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
+			"active_in_staging": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"active_in_production": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"hostnames": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -62,9 +70,46 @@ func dataSourceSelectableHostnamesRead(d *schema.ResourceData, meta interface{})
 
 	d.Set("hostnames_json", string(jsonBody))
 
+	var flagsetstg, flagsetprod string
+
+	flagsetstg = "UNSET"
+	flagsetprod = "UNSET"
+
+	activeinstaging, ok := d.GetOkExists("active_in_staging")
+	if ok {
+		flagsetstg = "SET"
+	}
+	activeinproduction, ok := d.GetOkExists("active_in_production")
+	if ok {
+		flagsetprod = "SET"
+	}
+
 	newhdata := make([]string, 0, len(selectablehostnames.AvailableSet))
 	for _, hosts := range selectablehostnames.AvailableSet {
-		newhdata = append(newhdata, hosts.Hostname)
+		var flagstg, flagprod string
+		flagstg = "NOMATCH"
+		flagprod = "NOMATCH"
+
+		if activeinstaging.(bool) == hosts.ActiveInStaging {
+			flagstg = "MATCH"
+		} else {
+			flagstg = "NOMATCH"
+		}
+
+		if activeinproduction.(bool) == hosts.ActiveInProduction {
+			flagprod = "MATCH"
+		} else {
+			flagprod = "NOMATCH"
+		}
+
+		if flagstg == "MATCH" && flagprod == "MATCH" {
+			newhdata = append(newhdata, hosts.Hostname)
+		}
+
+		if flagsetstg == "UNSET" && flagsetprod == "UNSET" {
+			newhdata = append(newhdata, hosts.Hostname)
+		}
+
 	}
 
 	//edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  SET SelectedHostnames H %v", h))

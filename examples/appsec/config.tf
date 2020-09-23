@@ -155,7 +155,7 @@ resource "akamai_appsec_match_targets" "appsecmatchtargets" {
     //bypass_network_lists = ["888518_ACDDCKERS","1304427_AAXXBBLIST"]
 }
 */
-/*
+
 data "local_file" "rules" {
   filename = "${path.module}/custom_rules_simple.json"
 }
@@ -170,7 +170,7 @@ resource "akamai_appsec_custom_rule" "appseccustomrule1" {
     rules = file("${path.module}/custom_rules_simple1.json")
 }
 
-*/
+
 /*
 resource "akamai_appsec_activations" "appsecactivations" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
@@ -208,16 +208,21 @@ resource "akamai_appsec_slow_post_protection_settings" "appsecslowpostprotection
     duration_threshold_timeout = 20
 }
 
-/*
 data "akamai_appsec_rate_policy_actions" "appsecreatepolicysactions" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
     policy_id = "AAAA_81230"
-    
 }
-
-
 output "ds_rate_policy_actions" {
-  value = data.akamai_appsec_rate_policy_actions.appsecreatepolicysactions.rate_policy_id
+  value = data.akamai_appsec_rate_policy_actions.appsecreatepolicysactions.output_text
 }
-*/
+resource "akamai_appsec_custom_rule_action" "appsecreatecustomruleaction" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+    rule_id = akamai_appsec_custom_rule.appseccustomrule1.rule_id
+    custom_rule_action = "alert"
+}
+output "customruleaction" {
+  value = akamai_appsec_custom_rule_action.appsecreatecustomruleaction.rule_id
+}

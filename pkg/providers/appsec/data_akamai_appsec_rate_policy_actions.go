@@ -26,9 +26,10 @@ func dataSourceRatePolicyActions() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"rate_policy_id": {
-				Type:     schema.TypeString,
-				Computed: true,
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text Export representation",
 			},
 		},
 	}
@@ -57,7 +58,14 @@ func dataSourceRatePolicyActionsRead(d *schema.ResourceData, meta interface{}) e
 		d.SetId(strconv.Itoa(configval.ID))
 	}
 
-	d.Set("rate_policy_id", ratepolicyactions)
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "ratePolicyActions", ratepolicyactions)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("ratePolicyActions outputtext   %v\n", outputtext))
+	if err == nil {
+		d.Set("output_text", outputtext)
+	}
 
 	return nil
 }
