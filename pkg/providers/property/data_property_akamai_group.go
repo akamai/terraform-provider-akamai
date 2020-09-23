@@ -137,7 +137,7 @@ func getGroups(ctx context.Context, meta akamai.OperationMeta) (*papi.GetGroupsR
 		if !akamai.IsNotFoundError(err) {
 			return nil, err
 		}
-		groups, err = inst.client(meta.Session()).GetGroups(ctx)
+		groups, err = inst.Client(meta).GetGroups(ctx)
 		if err != nil {
 			return nil, err
 		}

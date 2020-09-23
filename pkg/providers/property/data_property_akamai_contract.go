@@ -41,7 +41,7 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 		if !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		contracts, err := inst.client(meta.Session()).GetContracts(ctx)
+		contracts, err := inst.Client(meta).GetContracts(ctx)
 		if err != nil {
 			return diag.Errorf("error looking up Contracts for group %q: %s", group, err)
 		}

@@ -21,7 +21,7 @@ type (
 	provider struct {
 		*schema.Provider
 
-		client papi.ClientFunc
+		client papi.PAPI
 	}
 
 	// Option is a papi provider option
@@ -70,11 +70,19 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-// WithClientFunc sets the client interface function, used for mocking and testing
-func WithClientFunc(c papi.ClientFunc) Option {
+// WithClient sets the client interface function, used for mocking and testing
+func WithClient(c papi.PAPI) Option {
 	return func(p *provider) {
 		p.client = c
 	}
+}
+
+// Client returns the PAPI interface
+func (p *provider) Client(meta akamai.OperationMeta) papi.PAPI {
+	if p.client != nil {
+		return p.client
+	}
+	return papi.Client(meta.Session())
 }
 
 func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
