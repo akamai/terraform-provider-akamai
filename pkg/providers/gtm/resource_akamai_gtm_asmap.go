@@ -7,7 +7,6 @@ import (
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -129,17 +128,17 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	if domainName, err := tools.GetStringValue("name", d); err != nil {
+	if name, err := tools.GetStringValue("name", d); err != nil {
 		logger.Errorf("asMap name not initialized: %s", err.Error())
 		return diag.FromErr(err)
 	} else {
-		logger.Infof("Creating asMap [%s] in domain [%s]", domainName, domain)
+		logger.Infof("Creating asMap [%s] in domain [%s]", name, domain)
 	}
 
 	// Make sure Default Datacenter exists
 	interfaceArray, err := tools.GetInterfaceArrayValue("default_datacenter", d)
 	if err != nil {
-		logger.Errorf("Default Datacenter not initialized: %s", err.Error())
+		logger.Errorf("Default datacenter not initialized: %s", err.Error())
 		return diag.FromErr(err)
 	}
 	var diags diag.Diagnostics
@@ -156,18 +155,18 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 	logger.Debugf("Proposed New asMap: [%v]", newAS)
 	cStatus, err := newAS.Create(domain)
 	if err != nil {
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  "asMap Create failed: %s",
-			Detail: err.Error(),
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "asMap Create failed",
+			Detail:   err.Error(),
 		})
 	}
 	logger.Debugf("asMap Create status: %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  cStatus.Status.Message,
-                })
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  cStatus.Status.Message,
+		})
 	}
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
@@ -182,11 +181,11 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 				logger.Infof("asMap Create pending")
 			} else {
 				logger.Errorf("asMap Create failed [%s]", err.Error())
-		                return append(diags, diag.Diagnostic{
-                			        Severity: diag.Error,
-                        			Summary:  "asMap Create failed",
-						Detail: err.Error(),
-                		})
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "asMap Create failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
 	}
@@ -209,20 +208,16 @@ func resourceGTMv1ASmapRead(ctx context.Context, d *schema.ResourceData, m inter
 	// retrieve the property and domain
 	domain, asMap, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Invalid asMap ID: %s", d.Id()),
-			Detail:   err.Error(),
-		})
+		return diag.FromErr(err)
 	}
 	as, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
 		logger.Errorf("asMap Read error: %s", err.Error())
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  "asMap Read error",
-                        Detail:   err.Error(),
-                })
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "asMap Read error",
+			Detail:   err.Error(),
+		})
 	}
 	populateTerraformASmapState(d, as, m)
 	logger.Debugf("READ %v", as)
@@ -235,45 +230,41 @@ func resourceGTMv1ASmapUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASmapUpdate")
 
 	logger.Debugf("UPDATE asMap: %s", d.Id())
-        var diags diag.Diagnostics
+	var diags diag.Diagnostics
 	// pull domain and asMap out of id
 	domain, asMap, err := parseResourceStringId(d.Id())
 	if err != nil {
-		logger.Errorf("invalid asMap ID: %s", d.Id())
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  "Invalid asMap ID",
-                        Detail:   err.Error(),
-                })
+		logger.Errorf("Invalid asMap ID: %s", d.Id())
+		return diag.FromErr(err)
 	}
 	// Get existingASmap
 	existAs, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
-		logger.Errorf("asMap update read error: %s", err.Error())
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  "asMap Update Read error",
-                        Detail:   err.Error(),
-                })
+		logger.Errorf("asMap Update read error: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "asMap Update Read error",
+			Detail:   err.Error(),
+		})
 	}
 	logger.Debugf("asMap BEFORE: %v", existAs)
 	populateASmapObject(d, existAs, m)
 	logger.Debugf("asMap PROPOSED: %v", existAs)
 	uStat, err := existAs.Update(domain)
 	if err != nil {
-		logger.Errorf("asMapUpdate: %s", err.Error())
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  "asMap Update error",
-                        Detail:   err.Error(),
-                })
+		logger.Errorf("asMap pdate: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "asMap Update error",
+			Detail:   err.Error(),
+		})
 	}
 	logger.Debugf("asMap Update status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  uStat.Message,
-                })
+			Severity: diag.Error,
+			Summary:  uStat.Message,
+		})
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
@@ -283,17 +274,17 @@ func resourceGTMv1ASmapUpdate(ctx context.Context, d *schema.ResourceData, m int
 	if waitOnComplete {
 		done, err := waitForCompletion(domain, m)
 		if done {
-			logger.Infof("ASmap update completed")
+			logger.Infof("ASmap Update completed")
 		} else {
 			if err == nil {
-				logger.Infof("ASmap update pending")
+				logger.Infof("ASmap Update pending")
 			} else {
-				logger.Errorf("ASmap update failed [%s]", err.Error())
-                                return append(diags, diag.Diagnostic{
-                                                Severity: diag.Error,
-                                                Summary:  "asMap Update failed",
-                                                Detail: err.Error(),
-                                })
+				logger.Errorf("ASmap Update failed [%s]", err.Error())
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "asMap Update failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
 	}
@@ -310,7 +301,7 @@ func resourceGTMv1ASmapImport(d *schema.ResourceData, m interface{}) ([]*schema.
 	// pull domain and asMap out of asMap id
 	domain, asMap, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, fmt.Errorf("invalid asMap ID")
+		return []*schema.ResourceData{d}, err
 	}
 	as, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
@@ -334,45 +325,39 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASmapDelete")
 
-	logger.Debugf("DELETE")
 	logger.Debugf("Deleting asMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing asMap
 	domain, asMap, err := parseResourceStringId(d.Id())
 	if err != nil {
-		log.Errorf("[ERROR] ASmapDelete: %s", err.Error())
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  "Invalid asMap ID",
-                        Detail:   err.Error(),
-                })
+		log.Errorf("[ERROR] ASmap Delete: %s", err.Error())
+		return diag.FromErr(err)
 	}
 	existAs, err := gtm.GetAsMap(asMap, domain)
 	if err != nil {
-		logger.Errorf("ASmapDelete: %s", err.Error())
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  "asMap doesn't exist",
-                        Detail:   err.Error(),
-                })
+		logger.Errorf("ASmap Delete: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "asMap doesn't exist",
+			Detail:   err.Error(),
+		})
 	}
 	logger.Debugf("Deleting ASmap: %v", existAs)
 	uStat, err := existAs.Delete(domain)
 	if err != nil {
-		logger.Errorf("ASmapDelete: %s", err.Error())
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  "asMap delete failed",
-                        Detail:   err.Error(),
-                })
+		logger.Errorf("ASmap Delete: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "asMap Delete failed",
+			Detail:   err.Error(),
+		})
 	}
-	logger.Debugf("asMap Delete status:")
-	logger.Debugf("%v", uStat)
+	logger.Debugf("asMap Delete status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  uStat.Message,
-                })
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  uStat.Message,
+		})
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
@@ -382,17 +367,17 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 	if waitOnComplete {
 		done, err := waitForCompletion(domain, m)
 		if done {
-			logger.Infof("asMap delete completed")
+			logger.Infof("asMap Delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("asMap delete pending")
+				logger.Infof("asMap Delete pending")
 			} else {
-				logger.Errorf("asMap delete failed [%s]", err.Error())
-                                return append(diags, diag.Diagnostic{
-                                                Severity: diag.Error,
-                                                Summary:  "asMap Delete failed",
-                                                Detail: err.Error(),
-                                })
+				logger.Errorf("asMap Delete failed [%s]", err.Error())
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "asMap Delete failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
 	}

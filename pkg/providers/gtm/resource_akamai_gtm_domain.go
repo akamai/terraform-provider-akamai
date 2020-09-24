@@ -1,6 +1,7 @@
 package gtm
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -18,11 +20,10 @@ var HashiAcc = false
 
 func resourceGTMv1Domain() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGTMv1DomainCreate,
-		Read:   resourceGTMv1DomainRead,
-		Update: resourceGTMv1DomainUpdate,
-		Delete: resourceGTMv1DomainDelete,
-		Exists: resourceGTMv1DomainExists,
+		CreateContext: resourceGTMv1DomainCreate,
+		ReadContext:   resourceGTMv1DomainRead,
+		UpdateContext: resourceGTMv1DomainUpdate,
+		DeleteContext: resourceGTMv1DomainDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -200,57 +201,83 @@ func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
 }
 
 // Create a new GTM Domain
-func resourceGTMv1DomainCreate(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DomainCreate")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainCreate")
 
 	dname, err := tools.GetStringValue("name", d)
 	if err != nil {
-		logger.Warnf("Domain name not found in ResourceData")
+		logger.Errorf("Domain name not found in ResourceData")
+		return diag.FromErr(err)
 	}
 	logger.Infof("Creating domain [%s]", dname)
-	newDom := populateNewDomainObject(d, m)
+	newDom, err := populateNewDomainObject(d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	logger.Debugf("Domain: [%v]", newDom)
-
+	var diags diag.Diagnostics
 	queryArgs, err := GetQueryArgs(d)
 	if err != nil {
-		logger.Errorf("DomainCreate failed: %s", err.Error())
-		return err
+		logger.Errorf("Domain Create failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain Create failed",
+			Detail:   err.Error(),
+		})
 	}
 	cStatus, err := newDom.Create(queryArgs)
-
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
-			logger.Errorf("DomainCreate failed: %s", err.Error())
-			return err
+			logger.Errorf("Domain Create failed: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Create failed",
+				Detail:   err.Error(),
+			})
 		}
 		if _, ok := err.(gtm.CommonError); !ok {
-			logger.Errorf("DomainCreate failed: %s", err.Error())
-			return err
+			logger.Errorf("Domain Create failed: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Create failed",
+				Detail:   err.Error(),
+			})
 		}
 		origErr, ok := err.(gtm.CommonError).GetItem("err").(client.APIError)
 		if !ok {
 			logger.Errorf("DomainCreate failed: %s", err.Error())
-			return err
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Create failed",
+				Detail:   err.Error(),
+			})
 		}
 		if origErr.Status == 400 && strings.Contains(origErr.RawBody, "proposed domain name") && strings.Contains(origErr.RawBody, "Domain Validation Error") {
 			// Already exists
 			logger.Warnf("Domain %s already exists. Ignoring error (Hashicorp).", dname)
 		} else {
-			logger.Errorf("Error creating domain [%s]", err.Error())
-			return err
+			logger.Errorf("Error creating Domain [%s]", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Create failed",
+				Detail:   err.Error(),
+			})
 		}
 	} else {
-		logger.Debugf("Create status:")
-		logger.Debugf("%v", cStatus.Status)
+		logger.Debugf("Create status: %v", cStatus.Status)
 		if cStatus.Status.PropagationStatus == "DENIED" {
-			return fmt.Errorf(cStatus.Status.Message)
+			logger.Errorf(cStatus.Status.Message)
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  cStatus.Status.Message,
+			})
 		}
 
 		waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if waitOnComplete {
@@ -262,30 +289,38 @@ func resourceGTMv1DomainCreate(d *schema.ResourceData, m interface{}) error {
 					logger.Infof("Domain Create pending")
 				} else {
 					logger.Errorf("Domain Create failed [%s]", err.Error())
-					return err
+					return append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Domain Create failed",
+						Detail:   err.Error(),
+					})
 				}
 			}
 		}
 	}
 	// Give terraform the ID
 	d.SetId(dname)
-	return resourceGTMv1DomainRead(d, m)
+	return resourceGTMv1DomainRead(ctx, d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DomainRead(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DomainRead")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainRead")
 
-	logger.Debugf("READ")
 	logger.Debugf("Reading Domain: %s", d.Id())
+	var diags diag.Diagnostics
 	// retrieve the domain
 	dom, err := gtm.GetDomain(d.Id())
 	if err != nil {
-		logger.Errorf("DomainRead error: %s", err.Error())
-		return err
+		logger.Errorf("Domain Read error: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain Read error",
+			Detail:   err.Error(),
+		})
 	}
 	populateTerraformState(d, dom, m)
 	logger.Debugf("READ %v", dom)
@@ -293,119 +328,168 @@ func resourceGTMv1DomainRead(d *schema.ResourceData, m interface{}) error {
 }
 
 // Update GTM Domain
-func resourceGTMv1DomainUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DomainUpdate")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainUpdate")
 
-	logger.Debugf("UPDATE")
 	logger.Debugf("Updating Domain: %s", d.Id())
+	var diags diag.Diagnostics
 	// Get existing domain
 	existDom, err := gtm.GetDomain(d.Id())
 	if err != nil {
-		logger.Errorf("DomainUpdate failed: %s", err.Error())
-		return err
+		logger.Errorf("Domain Update failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Update Domain read failed",
+			Detail:   err.Error(),
+		})
 	}
 	logger.Debugf("Updating Domain BEFORE: %v", existDom)
-	populateDomainObject(d, existDom, m)
+	err = populateDomainObject(d, existDom, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	logger.Debugf("Updating Domain PROPOSED: %v", existDom)
 	//existDom := populateNewDomainObject(d)
 	args, err := GetQueryArgs(d)
 	if err != nil {
-		logger.Errorf("DomainUpdate failed: %s", err.Error())
-		return err
+		logger.Errorf("Domain Update failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain Update error",
+			Detail:   err.Error(),
+		})
 	}
 	uStat, err := existDom.Update(args)
 	if err != nil {
-		logger.Errorf("DomainUpdate failed: %s", err.Error())
-		return err
+		logger.Errorf("Domain Update failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain Update error",
+			Detail:   err.Error(),
+		})
 	}
-	logger.Debugf("Update status:")
-	logger.Debugf("%v", uStat)
+	logger.Debugf("Update status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return fmt.Errorf(uStat.Message)
+		logger.Errorf(uStat.Message)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  uStat.Message,
+		})
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {
 		done, err := waitForCompletion(d.Id(), m)
 		if done {
-			logger.Infof("Domain update completed")
+			logger.Infof("Domain Update completed")
 		} else {
 			if err == nil {
-				logger.Infof("Domain update pending")
+				logger.Infof("Domain Update pending")
 			} else {
-				logger.Warnf("Domain update failed [%s]", err.Error())
-				return err
+				logger.Errorf("Domain Update failed [%s]", err.Error())
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "domain Update failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
 
 	}
 
-	return resourceGTMv1DomainRead(d, m)
+	return resourceGTMv1DomainRead(ctx, d, m)
 
 }
 
 // Delete GTM Domain. Admin privileges required in current API version.
-func resourceGTMv1DomainDelete(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DomainDelete")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainDelete")
 
-	logger.Debugf("Deleting GTM Domain")
-	logger.Debugf("Domain: %s", d.Id())
+	logger.Debugf("Deleting GTM Domain: %s", d.Id())
+	var diags diag.Diagnostics
 	// Get existing domain
 	existDom, err := gtm.GetDomain(d.Id())
 	if err != nil {
-		logger.Errorf("DomainDelete failed: %s", err.Error())
-		return err
+		logger.Errorf("Domain Delete failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Invalid domain ID: %s", d.Id()),
+			Detail:   err.Error(),
+		})
 	}
 	uStat, err := existDom.Delete()
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
-			logger.Errorf("Error DomainDelete: %s", err.Error())
-			return err
+			logger.Errorf("Error Domain Delete: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Delete error",
+				Detail:   err.Error(),
+			})
 		}
 		if _, ok := err.(gtm.CommonError); !ok {
-			logger.Errorf("Error DomainDelete: %s", err.Error())
-			return err
+			logger.Errorf("Error Domain Delete: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Delete error",
+				Detail:   err.Error(),
+			})
 		}
 		origErr, ok := err.(gtm.CommonError).GetItem("err").(client.APIError)
 		if !ok {
-			logger.Errorf("Error DomainDelete: %s", err.Error())
-			return err
+			logger.Errorf("Error Domain Delete: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Delete error",
+				Detail:   err.Error(),
+			})
 		}
 		if origErr.Status == 405 && strings.Contains(origErr.RawBody, "Bad Request") && strings.Contains(origErr.RawBody, "DELETE method is not supported") {
 			logger.Warnf(": Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
 		} else {
-			logger.Errorf("Error DomainDelete: %s", err.Error())
-			return err
+			logger.Errorf("Error Domain Delete: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Delete error",
+				Detail:   err.Error(),
+			})
 		}
 	} else {
-		logger.Debugf("Delete status:")
-		logger.Debugf("%v", uStat)
+		logger.Debugf("Delete status: %v", uStat)
 		if uStat.PropagationStatus == "DENIED" {
-			return fmt.Errorf(uStat.Message)
+			logger.Errorf(uStat.Message)
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  uStat.Message,
+			})
 		}
 
 		waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		if waitOnComplete {
 			done, err := waitForCompletion(d.Id(), m)
 			if done {
-				logger.Infof("Domain delete completed")
+				logger.Infof("Domain Delete completed")
 			} else {
 				if err == nil {
-					logger.Infof("Domain delete pending")
+					logger.Infof("Domain Delete pending")
 				} else {
-					logger.Warnf("Domain delete failed [%s]", err.Error())
-					return err
+					logger.Errorf("Domain Delete failed [%s]", err.Error())
+					return append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Domain Delete failed",
+						Detail:   err.Error(),
+					})
 				}
 			}
 		}
@@ -413,22 +497,6 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, m interface{}) error {
 	d.SetId("")
 	return nil
 
-}
-
-// Test GTM Domain existence
-func resourceGTMv1DomainExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DomainExists")
-
-	name, err := tools.GetStringValue("name", d)
-	if err != nil {
-		logger.Errorf("Domain name not found in ResourceData")
-		return false, err
-	}
-	logger.Debugf("Searching for domain [%s]", name)
-	domain, err := gtm.GetDomain(name)
-	logger.Debugf("Searching for Existing domain result [%v]", domain)
-	return domain != nil, err
 }
 
 // validateDomainType is a SchemaValidateFunc to validate the Domain type.
@@ -441,30 +509,33 @@ func validateDomainType(v interface{}, _ string) (ws []string, es []error) {
 }
 
 // Create and populate a new domain object from resource data
-func populateNewDomainObject(d *schema.ResourceData, m interface{}) *gtm.Domain {
+func populateNewDomainObject(d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
 
 	name, _ := tools.GetStringValue("name", d)
 	domObj := gtm.NewDomain(name, d.Get("type").(string))
-	populateDomainObject(d, domObj, m)
+	err := populateDomainObject(d, domObj, m)
 
-	return domObj
+	return domObj, err
 
 }
 
 // Populate existing domain object from resource data
-func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}) {
+func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}) error {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "populateDomainObject")
+	logger := meta.Log("Akamai GTM", "populateDomainObject")
 
 	domainName, err := tools.GetStringValue("name", d)
 	if err != nil {
+		// Should be caught earlier ...
 		logger.Warnf("Domain name not set: %s", err.Error())
 	}
 
 	if domainName != dom.Name {
 		dom.Name = domainName
-		logger.Warnf("Domain [%s] state and GTM names inconsistent!", dom.Name)
+		logger.Errorf("Domain [%s] state and GTM names inconsistent!", dom.Name)
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
+
 	if v, err := tools.GetStringValue("type", d); err == nil {
 		if v != dom.Type {
 			dom.Type = v
@@ -488,6 +559,11 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	if v, err := tools.GetIntValue("default_timeout_penalty", d); err == nil || d.HasChange("default_timeout_penalty") {
 		dom.DefaultTimeoutPenalty = v
 	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() default_timeout_penalty failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+	}
+
 	if v, err := tools.GetIntValue("servermonitor_liveness_count", d); err == nil {
 		dom.ServermonitorLivenessCount = v
 	}
@@ -506,6 +582,11 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	if v, err := tools.GetFloat64Value("load_imbalance_percentage", d); err == nil {
 		dom.LoadImbalancePercentage = v
 	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+	}
+
 	if v, err := tools.GetFloat64Value("default_health_max", d); err == nil {
 		dom.DefaultHealthMax = v
 	}
@@ -521,9 +602,19 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	if v, err := tools.GetStringValue("default_ssl_client_private_key", d); err == nil || d.HasChange("default_ssl_client_private_key") {
 		dom.DefaultSslClientPrivateKey = v
 	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() default_ssl_client_private_key failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+	}
+
 	if v, err := tools.GetIntValue("default_error_penalty", d); err == nil || d.HasChange("default_error_penalty") {
 		dom.DefaultErrorPenalty = v
 	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() default_error_penalty failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+	}
+
 	if v, err := tools.GetFloat64Value("max_test_timeout", d); err == nil {
 		dom.MaxTestTimeout = v
 	}
@@ -548,9 +639,14 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	if v, err := tools.GetFloat64Value("default_health_threshold", d); err == nil {
 		dom.DefaultHealthThreshold = v
 	}
-	if v, err := tools.GetStringValue("modification_comments", d); err == nil {
+	if v, err := tools.GetStringValue("comment", d); err == nil || d.HasChange("comment") {
 		dom.ModificationComments = v
 	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() comment failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+	}
+
 	if v, err := tools.GetIntValue("min_test_interval", d); err == nil {
 		dom.MinTestInterval = v
 	}
@@ -560,16 +656,23 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	if v, err := tools.GetStringValue("default_ssl_client_certificate", d); err == nil || d.HasChange("default_ssl_client_certificate") {
 		dom.DefaultSslClientCertificate = v
 	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() default_ssl_client_certificate failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+	}
+
 	if v, err := tools.GetBoolValue("end_user_mapping_enabled", d); err == nil {
 		dom.EndUserMappingEnabled = v
 	}
+
+	return nil
 
 }
 
 // Populate Terraform state from provided Domain object
 func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "populateTerraformState")
+	logger := meta.Log("Akamai GTM", "populateTerraformState")
 
 	for stateKey, stateValue := range map[string]interface{}{
 		"name":                            dom.Name,
@@ -598,7 +701,7 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface
 		"min_ttl":                         dom.MinTTL,
 		"default_max_unreachable_penalty": dom.DefaultMaxUnreachablePenalty,
 		"default_health_threshold":        dom.DefaultHealthThreshold,
-		"modification_comments":           dom.ModificationComments,
+		"comment":                         dom.ModificationComments,
 		"min_test_interval":               dom.MinTestInterval,
 		"ping_packet_size":                dom.PingPacketSize,
 		"default_ssl_client_certificate":  dom.DefaultSslClientCertificate,
