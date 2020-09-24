@@ -56,6 +56,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_configuration":         dataSourceConfiguration(),
 			"akamai_appsec_configuration_version": dataSourceConfigurationVersion(),
 			"akamai_appsec_custom_rules":          dataSourceCustomRules(),
+			"akamai_appsec_custom_rule_actions":   dataSourceCustomRuleActions(),
 			"akamai_appsec_export_configuration":  dataSourceExportConfiguration(),
 			"akamai_appsec_rate_policy_actions":   dataSourceRatePolicyActions(),
 			"akamai_appsec_selectable_hostnames":  dataSourceSelectableHostnames(),

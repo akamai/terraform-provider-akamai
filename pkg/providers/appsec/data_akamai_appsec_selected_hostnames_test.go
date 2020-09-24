@@ -8,16 +8,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiCustomRules_basic(t *testing.T) {
-	dataSourceName := "data.appsec_akamai_custom_rules.akamaicustomrules"
+func TestAccAkamaiSelectedHostnames_data_basic(t *testing.T) {
+	dataSourceName := "data.akamai_appsec_selected_hostnames.appsecselectedhostnames"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiCustomRulesDestroy,
+		CheckDestroy: testAccCheckAkamaiSelectedHostnamesDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiCustomRulesConfig(),
+				Config: testAccAkamaiSelectedHostnamesConfig(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 				),
@@ -26,11 +26,12 @@ func TestAccAkamaiCustomRules_basic(t *testing.T) {
 	})
 }
 
-func testAccAkamaiCustomRulesConfig() string {
+func testAccAkamaiSelectedHostnamesConfig() string {
 	return `
 provider "akamai" {
   appsec_section = "default"
 }
+
 data "akamai_appsec_configuration" "appsecconfigedge" {
   name = "Example for EDGE"
   
@@ -42,19 +43,16 @@ output "configsedge" {
   value = data.akamai_appsec_configuration.appsecconfigedge.config_id
 }
 
-
-data "akamai_appsec_custom_rules" "appseccustomrule" {
+data "akamai_appsec_selected_hostnames" "appsecselectedhostnames" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version  
 }
 
-output "appseccustomrules" {
-  value = data.akamai_appsec_custom_rules.appseccustomrule.output_text
-}
 
 `
 }
 
-func testAccCheckAkamaiCustomRulesDestroy(s *terraform.State) error {
-	log.Printf("[DEBUG] [Akamai CustomRules] CustomRules Destroy skipped ")
+func testAccCheckAkamaiSelectedHostnamesDestroy(s *terraform.State) error {
+	log.Printf("[DEBUG] [Akamai SelectedHostnames] SelectedHostnames Destroy skipped ")
 	return nil
 }

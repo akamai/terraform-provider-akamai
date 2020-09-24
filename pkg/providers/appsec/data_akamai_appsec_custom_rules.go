@@ -18,10 +18,6 @@ func dataSourceCustomRules() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"rule_id": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -46,17 +42,8 @@ func dataSourceCustomRulesRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CustomRules   %v\n", customrules))
-	ots := OutputTemplates{}
-	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "customRules", customrules)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CustomRules outputtext   %v\n", outputtext))
-	if err == nil {
-		d.Set("output_text", outputtext)
-	}
-
-	d.Set("rule_id", customrules.CustomRules[0].ID)
-	d.SetId(strconv.Itoa(customrules.CustomRules[0].ID))
+	d.SetId(strconv.Itoa(configid))
 
 	return nil
 }

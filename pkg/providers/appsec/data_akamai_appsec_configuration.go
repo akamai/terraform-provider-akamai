@@ -30,9 +30,18 @@ func dataSourceConfiguration() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"config_list": {
-				Type:     schema.TypeString,
+			"staging_version": {
+				Type:     schema.TypeInt,
 				Computed: true,
+			},
+			"production_version": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text Export representation",
 			},
 		},
 	}
@@ -44,9 +53,7 @@ func dataSourceConfigurationRead(d *schema.ResourceData, meta interface{}) error
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read Configuration")
 
 	configuration := appsec.NewConfigurationResponse()
-	configurationversion := appsec.NewConfigurationVersionResponse()
 	configName := d.Get("name").(string)
-	version := d.Get("version").(int)
 
 	err := configuration.GetConfiguration(CorrelationID)
 	if err != nil {
@@ -62,37 +69,24 @@ func dataSourceConfigurationRead(d *schema.ResourceData, meta interface{}) error
 
 	for _, configval := range configuration.Configurations {
 
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CONFIG value  %v\n", configval.ID))
-		configurationversion.ConfigID = configval.ID
-		err := configurationversion.GetConfigurationVersion(CorrelationID)
-		if err != nil {
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-			return nil
-		}
-
-		//configlist = configlist + " ConfigID/Name=" + strconv.Itoa(configval.ID) + "/" + configval.Name + " VersionList="
-		configlist = configlist + "\n" + strconv.Itoa(configval.ID) + " " + configval.Name
-		for _, configversionval := range configurationversion.VersionList {
-			configlist = configlist + " " + strconv.Itoa(configversionval.Version)
-		}
-		configlist = configlist + "\n"
-
 		if configval.Name == configName {
-
-			for _, configversionval := range configurationversion.VersionList {
-				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CONFIG Version value  %v\n", configversionval.Version))
-				if configversionval.Version == version {
-					d.Set("version", strconv.Itoa(version))
-				}
-				//	configlist = configlist + " " + strconv.Itoa(configversionval.Version)
-			}
-
 			d.Set("config_id", configval.ID)
 			d.Set("latest_version", configval.LatestVersion)
+			d.Set("staging_version", configval.StagingVersion)
+			d.Set("production_version", configval.ProductionVersion)
 			configidfound = configval.ID
 		}
-		d.Set("config_list", configlist)
 	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "configuration", configuration)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Configuration outputtext   %v\n", outputtext))
+	if err == nil {
+		d.Set("output_text", outputtext)
+	}
+
 	d.SetId(strconv.Itoa(configidfound))
 
 	return nil

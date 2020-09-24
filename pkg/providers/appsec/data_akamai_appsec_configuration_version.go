@@ -26,10 +26,6 @@ func dataSourceConfigurationVersion() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"version_list": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"staging_status": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -37,6 +33,11 @@ func dataSourceConfigurationVersion() *schema.Resource {
 			"production_status": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text Export representation",
 			},
 		},
 	}
@@ -59,6 +60,7 @@ func dataSourceConfigurationVersionRead(d *schema.ResourceData, meta interface{}
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("ConfigurationVersion   %v\n", configurationversion))
 	d.Set("latest_version", configurationversion.LastCreatedVersion)
+
 	for _, configval := range configurationversion.VersionList {
 
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CONFIG value  %v\n", configval.Version))
@@ -69,6 +71,16 @@ func dataSourceConfigurationVersionRead(d *schema.ResourceData, meta interface{}
 			d.SetId(strconv.Itoa(configval.ConfigID))
 		}
 	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "configurationVersion", configurationversion)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("ConfigurationVesion outputtext   %v\n", outputtext))
+	if err == nil {
+		d.Set("output_text", outputtext)
+	}
+	d.SetId(strconv.Itoa(configurationversion.ConfigID))
 
 	return nil
 }

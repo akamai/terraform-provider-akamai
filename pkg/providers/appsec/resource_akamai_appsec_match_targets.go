@@ -42,52 +42,67 @@ func resourceMatchTargets() *schema.Resource {
 			},
 
 			"type": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ConflictsWith:    []string{"json"},
+				DiffSuppressFunc: suppressJsonProvided,
 			},
-			"is_negative_path_match": {
-				Type:          schema.TypeBool,
+			/*"sequence": {
+				Type:          schema.TypeInt,
 				Optional:      true,
 				ConflictsWith: []string{"json"},
+			},*/
+			"is_negative_path_match": {
+				Type:             schema.TypeBool,
+				Optional:         true,
+				ConflictsWith:    []string{"json"},
+				DiffSuppressFunc: suppressJsonProvided,
 			},
 			"is_negative_file_extension_match": {
-				Type:          schema.TypeBool,
-				Optional:      true,
-				ConflictsWith: []string{"json"},
+				Type:             schema.TypeBool,
+				Optional:         true,
+				ConflictsWith:    []string{"json"},
+				DiffSuppressFunc: suppressJsonProvided,
 			},
 			"default_file": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"json"},
+				Type:             schema.TypeString,
+				Optional:         true,
+				ConflictsWith:    []string{"json"},
+				DiffSuppressFunc: suppressJsonProvided,
 			},
 			"hostnames": &schema.Schema{
-				Type:          schema.TypeSet,
-				Optional:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				ConflictsWith: []string{"json"},
+				Type:             schema.TypeSet,
+				Optional:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				ConflictsWith:    []string{"json"},
+				DiffSuppressFunc: suppressJsonProvided,
 			},
 			"file_paths": &schema.Schema{
-				Type:          schema.TypeSet,
-				Optional:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				ConflictsWith: []string{"json"},
+				Type:             schema.TypeSet,
+				Optional:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				ConflictsWith:    []string{"json"},
+				DiffSuppressFunc: suppressJsonProvided,
 			},
 			"file_extensions": &schema.Schema{
-				Type:          schema.TypeSet,
-				Optional:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				ConflictsWith: []string{"json"},
+				Type:             schema.TypeSet,
+				Optional:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				ConflictsWith:    []string{"json"},
+				DiffSuppressFunc: suppressJsonProvided,
 			},
 			"security_policy": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"json"},
+				Type:             schema.TypeString,
+				Optional:         true,
+				ConflictsWith:    []string{"json"},
+				DiffSuppressFunc: suppressJsonProvided,
 			},
 			"bypass_network_lists": &schema.Schema{
-				Type:          schema.TypeSet,
-				Optional:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				ConflictsWith: []string{"json"},
+				Type:             schema.TypeSet,
+				Optional:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				ConflictsWith:    []string{"json"},
+				DiffSuppressFunc: suppressJsonProvided,
 			},
 		},
 	}
@@ -103,10 +118,12 @@ func resourceMatchTargetsCreate(d *schema.ResourceData, meta interface{}) error 
 	if ok {
 
 		json.Unmarshal([]byte(jsonpostpayload.(string)), &matchtargets)
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" JSON  %v\n", matchtargets))
 	} else {
 		matchtargets.ConfigID = d.Get("config_id").(int)
 		matchtargets.ConfigVersion = d.Get("version").(int)
 		matchtargets.Type = d.Get("type").(string)
+		//		matchtargets.Sequence = d.Get("sequence").(int)
 		matchtargets.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
 		matchtargets.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
 		matchtargets.DefaultFile = d.Get("default_file").(string)
@@ -144,11 +161,13 @@ func resourceMatchTargetsUpdate(d *schema.ResourceData, meta interface{}) error 
 	if ok {
 
 		json.Unmarshal([]byte(jsonpostpayload.(string)), &matchtargets)
+		matchtargets.TargetID, _ = strconv.Atoi(d.Id())
 	} else {
 		matchtargets.ConfigID = d.Get("config_id").(int)
 		matchtargets.ConfigVersion = d.Get("version").(int)
 		matchtargets.TargetID, _ = strconv.Atoi(d.Id())
 		matchtargets.Type = d.Get("type").(string)
+		//matchtargets.Sequence = d.Get("sequence").(int)
 		matchtargets.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
 		matchtargets.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
 		matchtargets.DefaultFile = d.Get("default_file").(string)
@@ -213,6 +232,7 @@ func resourceMatchTargetsRead(d *schema.ResourceData, meta interface{}) error {
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CONFIG value  %v\n", matchtargets.TargetID))
 	d.Set("type", matchtargets.Type)
+	//d.Set("sequence", matchtargets.Sequence)
 	d.Set("is_negative_path_match", matchtargets.IsNegativePathMatch)
 	d.Set("is_negative_file_extension_match", matchtargets.IsNegativeFileExtensionMatch)
 	d.Set("default_file", matchtargets.DefaultFile)

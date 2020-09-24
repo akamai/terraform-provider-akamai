@@ -19,7 +19,7 @@ func TestAccAkamaiSelectedHostnames_basic(t *testing.T) {
 		//CheckDestroy: testAccCheckAkamaiSelectedHostnamesDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiSelectedHostnamesConfig(),
+				Config: testAccAkamaiSelectedHostnamesNConfig(),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAkamaiSelectedHostnamesExists,
 					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
@@ -29,7 +29,7 @@ func TestAccAkamaiSelectedHostnames_basic(t *testing.T) {
 	})
 }
 
-func testAccAkamaiSelectedHostnamesConfig() string {
+func testAccAkamaiSelectedHostnamesNConfig() string {
 	return `
 provider "akamai" {
   appsec_section = "default"
