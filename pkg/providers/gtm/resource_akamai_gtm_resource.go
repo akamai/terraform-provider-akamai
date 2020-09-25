@@ -2,8 +2,8 @@ package gtm
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -349,7 +349,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {
@@ -392,82 +392,94 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceDelete")
 
-	if v, err := tools.GetStringValue("name", d); err == nil {
-		rsrc.Name = v
+	vstr, err := tools.GetStringValue("name", d)
+	if err == nil {
+		rsrc.Name = vstr
 	}
-	if v, err := tools.GetStringValue("type", d); err == nil {
-		rsrc.Type = v
+	vstr, err = tools.GetStringValue("type", d)
+	if err == nil {
+		rsrc.Type = vstr
 	}
-	if v, err := tools.GetStringValue("host_header", d); err == nil || d.HasChange("host_header") {
-		rsrc.HostHeader = v
+	vstr, err = tools.GetStringValue("host_header", d)
+	if err == nil || d.HasChange("host_header") {
+		rsrc.HostHeader = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() host_header failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("least_squares_decay", d); err == nil || d.HasChange("least_squares_decay") {
-		rsrc.LeastSquaresDecay = v
+	vfloat, err := tools.GetFloat64Value("least_squares_decay", d)
+	if err == nil || d.HasChange("least_squares_decay") {
+		rsrc.LeastSquaresDecay = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() least_squares_decay failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("upper_bound", d); err == nil || d.HasChange("upper_bound") {
-		rsrc.UpperBound = v
+	vint, err := tools.GetIntValue("upper_bound", d)
+	if err == nil || d.HasChange("upper_bound") {
+		rsrc.UpperBound = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() upper_bound failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetStringValue("description", d); err == nil || d.HasChange("description") {
-		rsrc.Description = v
+	vstr, err = tools.GetStringValue("description", d)
+	if err == nil || d.HasChange("description") {
+		rsrc.Description = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() description failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetStringValue("leader_string", d); err == nil || d.HasChange("leader_string") {
-		rsrc.LeaderString = v
+	vstr, err = tools.GetStringValue("leader_string", d)
+	if err == nil || d.HasChange("leader_string") {
+		rsrc.LeaderString = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() leader_string failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetStringValue("constrained_property", d); err == nil || d.HasChange("constrained_property") {
-		rsrc.ConstrainedProperty = v
+	vstr, err = tools.GetStringValue("constrained_property", d)
+	if err == nil || d.HasChange("constrained_property") {
+		rsrc.ConstrainedProperty = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() constrained_property failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetStringValue("aggregation_type", d); err == nil {
-		rsrc.AggregationType = v
+	vstr, err = tools.GetStringValue("aggregation_type", d)
+	if err == nil {
+		rsrc.AggregationType = vstr
 	}
 
-	if v, err := tools.GetFloat64Value("load_imbalance_percentage", d); err == nil || d.HasChange("load_imbalance_percentage") {
-		rsrc.LoadImbalancePercentage = v
+	vfloat, err = tools.GetFloat64Value("load_imbalance_percentage", d)
+	if err == nil || d.HasChange("load_imbalance_percentage") {
+		rsrc.LoadImbalancePercentage = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("max_u_multiplicative_increment", d); err == nil || d.HasChange("max_u_multiplicative_increment") {
-		rsrc.MaxUMultiplicativeIncrement = v
+	vfloat, err = tools.GetFloat64Value("max_u_multiplicative_increment", d)
+	if err == nil || d.HasChange("max_u_multiplicative_increment") {
+		rsrc.MaxUMultiplicativeIncrement = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() max_u_multiplicative_increment failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("decay_rate", d); err == nil || d.HasChange("decay_rate") {
-		rsrc.DecayRate = v
+	vfloat, err = tools.GetFloat64Value("decay_rate", d)
+	if err == nil || d.HasChange("decay_rate") {
+		rsrc.DecayRate = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() decay_rate failed: %v", err.Error())

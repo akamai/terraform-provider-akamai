@@ -441,19 +441,22 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "populateDatacenterObject")
 
-	if v, err := tools.GetStringValue("nickname", d); err == nil {
-		dc.Nickname = v
+	vstr, err := tools.GetStringValue("nickname", d)
+	if err == nil {
+		dc.Nickname = vstr
 	}
-	if v, err := tools.GetStringValue("city", d); err == nil || d.HasChange("city") {
-		dc.City = v
+	vstr, err = tools.GetStringValue("city", d)
+	if err == nil || d.HasChange("city") {
+		dc.City = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() city failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("clone_of", d); err == nil || d.HasChange("clone_of") {
-		dc.CloneOf = v
+	vint, err := tools.GetIntValue("clone_of", d)
+	if err == nil || d.HasChange("clone_of") {
+		dc.CloneOf = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() clone_of failed: %v", err.Error())
@@ -474,16 +477,18 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	dc.CloudServerTargeting = cloudServerTargeting
 
-	if v, err := tools.GetStringValue("continent", d); err == nil || d.HasChange("continent") {
-		dc.Continent = v
+	vstr, err = tools.GetStringValue("continent", d)
+	if err == nil || d.HasChange("continent") {
+		dc.Continent = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() continent failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetStringValue("country", d); err == nil || d.HasChange("country") {
-		dc.Country = v
+	vstr, err = tools.GetStringValue("country", d)
+	if err == nil || d.HasChange("country") {
+		dc.Country = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() country failed: %v", err.Error())
@@ -531,54 +536,65 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 		}
 		dc.DefaultLoadObject = dloObject
 	}
-	if v, err := tools.GetFloat64Value("latitude", d); err == nil || d.HasChange("latitude") {
-		dc.Latitude = v
+
+	vfloat, err := tools.GetFloat64Value("latitude", d)
+	if err == nil || d.HasChange("latitude") {
+		dc.Latitude = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() latitude failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("longitude", d); err == nil || d.HasChange("longitude") {
-		dc.Longitude = v
+	vfloat, err = tools.GetFloat64Value("longitude", d)
+	if err == nil || d.HasChange("longitude") {
+		dc.Longitude = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() longitude failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("ping_interval", d); err == nil {
-		dc.PingInterval = v
+	vint, err = tools.GetIntValue("ping_interval", d)
+	if err == nil {
+		dc.PingInterval = vint
 	}
-	if v, err := tools.GetIntValue("ping_packet_size", d); err == nil {
-		dc.PingPacketSize = v
+	vint, err = tools.GetIntValue("ping_packet_size", d)
+	if err == nil {
+		dc.PingPacketSize = vint
 	}
-	if v, err := tools.GetIntValue("datacenter_id", d); err == nil {
-		dc.DatacenterId = v
+	vint, err = tools.GetIntValue("datacenter_id", d)
+	if err == nil {
+		dc.DatacenterId = vint
 	}
-	if v, err := tools.GetIntValue("score_penalty", d); err == nil {
-		dc.ScorePenalty = v
+	vint, err = tools.GetIntValue("score_penalty", d)
+	if err == nil {
+		dc.ScorePenalty = vint
 	}
-	if v, err := tools.GetIntValue("servermonitor_liveness_count", d); err == nil || d.HasChange("servermonitor_liveness_count") {
-		dc.ServermonitorLivenessCount = v
+	vint, err = tools.GetIntValue("servermonitor_liveness_count", d)
+	if err == nil || d.HasChange("servermonitor_liveness_count") {
+		dc.ServermonitorLivenessCount = vint
 		if err != nil {
 			logger.Warnf("populateDataCenterObject() failed: %v", err.Error())
 		}
 	}
-	if v, err := tools.GetIntValue("servermonitor_load_count", d); err == nil || d.HasChange("servermonitor_load_count") {
-		dc.ServermonitorLoadCount = v
+	vint, err = tools.GetIntValue("servermonitor_load_count", d)
+	if err == nil || d.HasChange("servermonitor_load_count") {
+		dc.ServermonitorLoadCount = vint
 		if err != nil {
 			logger.Warnf("populateDataCenterObject() failed: %v", err.Error())
 		}
 	}
-	if v, err := tools.GetStringValue("servermonitor_pool", d); err == nil || d.HasChange("servermonitor_pool") {
-		dc.ServermonitorPool = v
+	vstr, err = tools.GetStringValue("servermonitor_pool", d)
+	if err == nil || d.HasChange("servermonitor_pool") {
+		dc.ServermonitorPool = vstr
 		if err != nil {
 			logger.Warnf("populateDataCenterObject() failed: %v", err.Error())
 		}
 	}
-	if v, err := tools.GetStringValue("state_or_province", d); err == nil || d.HasChange("state_or_province") {
-		dc.StateOrProvince = v
+	vstr, err = tools.GetStringValue("state_or_province", d)
+	if err == nil || d.HasChange("state_or_province") {
+		dc.StateOrProvince = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Warnf("populateDataCenterObject() state_or_province failed: %v", err.Error())

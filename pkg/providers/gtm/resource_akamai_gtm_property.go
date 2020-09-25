@@ -2,9 +2,9 @@ package gtm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
-	"errors"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -350,12 +350,12 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 
 	domain, err := tools.GetStringValue("domain", d)
 	if err != nil {
-		return diag.FromError(err)
+		return diag.FromErr(err)
 	}
 
 	propertyName, err := tools.GetStringValue("name", d)
 	if err != nil {
-		return diag.FromError(err)
+		return diag.FromErr(err)
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
@@ -367,13 +367,13 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	cStatus, err := newProp.Create(domain)
 	if err != nil {
 		logger.Errorf("Property Create failed: %s", err.Error())
-		return diag.FromErr(fmt.Sprintf("Property Create failed: %s", err.Error()))
+		return diag.FromErr(fmt.Errorf("Property Create failed: %s", err.Error()))
 	}
 	logger.Debugf("Property Create status: %v", cStatus.Status)
 
 	if cStatus.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(cStatus.Status.Message)
-		return diag.FromErr(fmt.Sprintf(cStatus.Status.Message))
+		return diag.FromErr(fmt.Errorf(cStatus.Status.Message))
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
@@ -390,7 +390,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 				logger.Infof("Property Create pending")
 			} else {
 				logger.Errorf("Property Create failed [%s]", err.Error())
-				return diag.FromErr(fmt.Sprintf("Property Create failed [%s]", err.Error()))
+				return diag.FromErr(fmt.Errorf("Property Create failed [%s]", err.Error()))
 			}
 		}
 	}
@@ -563,178 +563,205 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 
 // Populate existing property object from resource data
 func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "populatePropertyObject")
 
-	if v, err := tools.GetStringValue("name", d); err == nil {
-		prop.Name = v
+	vstr, err := tools.GetStringValue("name", d)
+	if err == nil {
+		prop.Name = vstr
 	}
-	if v, err := tools.GetStringValue("type", d); err == nil {
-		prop.Type = v
+	vstr, err = tools.GetStringValue("type", d)
+	if err == nil {
+		prop.Type = vstr
 	}
-	if v, err := tools.GetStringValue("score_aggregation_type", d); err == nil {
-		prop.ScoreAggregationType = v
+	vstr, err = tools.GetStringValue("score_aggregation_type", d)
+	if err == nil {
+		prop.ScoreAggregationType = vstr
 	}
-	if v, err := tools.GetIntValue("stickiness_bonus_percentage", d); err == nil || d.HasChange("stickiness_bonus_percentage") {
-		prop.StickinessBonusPercentage = v
+	vint, err := tools.GetIntValue("stickiness_bonus_percentage", d)
+	if err == nil || d.HasChange("stickiness_bonus_percentage") {
+		prop.StickinessBonusPercentage = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() stickiness_bonus_percentage failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("stickiness_bonus_constant", d); err == nil || d.HasChange("stickiness_bonus_constant") {
-		prop.StickinessBonusConstant = v
+	vint, err = tools.GetIntValue("stickiness_bonus_constant", d)
+	if err == nil || d.HasChange("stickiness_bonus_constant") {
+		prop.StickinessBonusConstant = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() stickiness_bonus_constant failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("health_threshold", d); err == nil || d.HasChange("health_threshold") {
-		prop.HealthThreshold = v
+	vfloat, err := tools.GetFloat64Value("health_threshold", d)
+	if err == nil || d.HasChange("health_threshold") {
+		prop.HealthThreshold = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() health_threshold failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetBoolValue("ipv6", d); err == nil {
-		prop.Ipv6 = v
+	if ipv6, err := tools.GetBoolValue("ipv6", d); err == nil {
+		prop.Ipv6 = ipv6
 	}
-	if v, err := tools.GetBoolValue("use_computed_targets", d); err == nil {
-		prop.UseComputedTargets = v
+	if uct, err := tools.GetBoolValue("use_computed_targets", d); err == nil {
+		prop.UseComputedTargets = uct
 	}
-	if v, err := tools.GetStringValue("backup_ip", d); err == nil || d.HasChange("backup_ip") {
-		prop.BackupIp = v
+
+	vstr, err = tools.GetStringValue("backup_ip", d)
+	if err == nil || d.HasChange("backup_ip") {
+		prop.BackupIp = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() backup_ip failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetBoolValue("balance_by_download_score", d); err == nil {
-		prop.BalanceByDownloadScore = v
+	if bbds, err := tools.GetBoolValue("balance_by_download_score", d); err == nil {
+		prop.BalanceByDownloadScore = bbds
 	}
-	if v, err := tools.GetIntValue("static_ttl", d); err == nil || d.HasChange("static_ttl") {
-		prop.StaticTTL = v
+
+	vint, err = tools.GetIntValue("static_ttl", d)
+	if err == nil || d.HasChange("static_ttl") {
+		prop.StaticTTL = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() static_ttl failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("unreachable_threshold", d); err == nil || d.HasChange("unreachable_threshold") {
-		prop.UnreachableThreshold = v
+	vfloat, err = tools.GetFloat64Value("unreachable_threshold", d)
+	if err == nil || d.HasChange("unreachable_threshold") {
+		prop.UnreachableThreshold = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() unreachable_threshold failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("min_live_fraction", d); err == nil || d.HasChange("min_live_fraction") {
-		prop.MinLiveFraction = v
+	vfloat, err = tools.GetFloat64Value("min_live_fraction", d)
+	if err == nil || d.HasChange("min_live_fraction") {
+		prop.MinLiveFraction = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() min_live_fraction failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("health_multiplier", d); err == nil || d.HasChange("health_multiplier") {
-		prop.HealthMultiplier = v
+	vfloat, err = tools.GetFloat64Value("health_multiplier", d)
+	if err == nil || d.HasChange("health_multiplier") {
+		prop.HealthMultiplier = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() health_multiplier failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("dynamic_ttl", d); err == nil || d.HasChange("dynamic_ttl") {
-		prop.DynamicTTL = v
+	vint, err = tools.GetIntValue("dynamic_ttl", d)
+	if err == nil || d.HasChange("dynamic_ttl") {
+		prop.DynamicTTL = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() dynamic_ttl failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("max_unreachable_penalty", d); err == nil || d.HasChange("max_unreachable_penalty") {
-		prop.MaxUnreachablePenalty = v
+	vint, err = tools.GetIntValue("max_unreachable_penalty", d)
+	if err == nil || d.HasChange("max_unreachable_penalty") {
+		prop.MaxUnreachablePenalty = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() max_unreachable_penalty failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetStringValue("map_name", d); err == nil || d.HasChange("map_name") {
-		prop.MapName = v
+	vstr, err = tools.GetStringValue("map_name", d)
+	if err == nil || d.HasChange("map_name") {
+		prop.MapName = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() map_name failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("handout_limit", d); err == nil || d.HasChange("handout_limit") {
-		prop.HandoutLimit = v
+	if vint, err = tools.GetIntValue("handout_limit", d); err == nil || d.HasChange("handout_limit") {
+		prop.HandoutLimit = vint
 	}
-	if v, err := tools.GetStringValue("handout_mode", d); err == nil {
-		prop.HandoutMode = v
+	if vstr, err = tools.GetStringValue("handout_mode", d); err == nil {
+		prop.HandoutMode = vstr
 	}
-	if v, err := tools.GetFloat64Value("load_imbalance_percentage", d); err == nil || d.HasChange("load_imbalance_percentage") {
-		prop.LoadImbalancePercentage = v
+
+	vfloat, err = tools.GetFloat64Value("load_imbalance_percentage", d)
+	if err == nil || d.HasChange("load_imbalance_percentage") {
+		prop.LoadImbalancePercentage = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("failover_delay", d); err == nil || d.HasChange("failover_delay") {
-		prop.FailoverDelay = v
+	vint, err = tools.GetIntValue("failover_delay", d)
+	if err == nil || d.HasChange("failover_delay") {
+		prop.FailoverDelay = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() failover_delay failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetStringValue("backup_cname", d); err == nil || d.HasChange("backup_cname") {
-		prop.BackupCName = v
+	vstr, err = tools.GetStringValue("backup_cname", d)
+	if err == nil || d.HasChange("backup_cname") {
+		prop.BackupCName = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() backup_cname failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("failback_delay", d); err == nil || d.HasChange("failback_delay") {
-		prop.FailbackDelay = v
+	vint, err = tools.GetIntValue("failback_delay", d)
+	if err == nil || d.HasChange("failback_delay") {
+		prop.FailbackDelay = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() failback_delay failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("health_max", d); err == nil || d.HasChange("health_max") {
-		prop.HealthMax = v
+	vfloat, err = tools.GetFloat64Value("health_max", d)
+	if err == nil || d.HasChange("health_max") {
+		prop.HealthMax = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() health_max failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetBoolValue("ghost_demand_reporting", d); err == nil {
-		prop.GhostDemandReporting = v
+	if gdr, err := tools.GetBoolValue("ghost_demand_reporting", d); err == nil {
+		prop.GhostDemandReporting = gdr
 	}
-	if v, err := tools.GetIntValue("weighted_hash_bits_for_ipv4", d); err == nil {
-		prop.WeightedHashBitsForIPv4 = v
+	if vint, err = tools.GetIntValue("weighted_hash_bits_for_ipv4", d); err == nil {
+		prop.WeightedHashBitsForIPv4 = vint
 	}
-	if v, err := tools.GetIntValue("weighted_hash_bits_for_ipv6", d); err == nil {
-		prop.WeightedHashBitsForIPv6 = v
+	if vint, err = tools.GetIntValue("weighted_hash_bits_for_ipv6", d); err == nil {
+		prop.WeightedHashBitsForIPv6 = vint
 	}
-	if v, err := tools.GetStringValue("cname", d); err == nil || d.HasChange("cname") {
-		prop.CName = v
+
+	vstr, err = tools.GetStringValue("cname", d)
+	if err == nil || d.HasChange("cname") {
+		prop.CName = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() cname failed: %v", err.Error())
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetStringValue("comments", d); err == nil || d.HasChange("comments") {
-		prop.Comments = v
+	vstr, err = tools.GetStringValue("comments", d)
+	if err == nil || d.HasChange("comments") {
+		prop.Comments = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() comments failed: %v", err.Error())

@@ -2,10 +2,10 @@ package gtm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
-	"errors"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -537,133 +537,160 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetStringValue("type", d); err == nil {
-		if v != dom.Type {
-			dom.Type = v
+	vstr, err := tools.GetStringValue("type", d)
+	if err == nil {
+		if vstr != dom.Type {
+			dom.Type = vstr
 		}
 	}
-	if v, err := tools.GetFloat32Value("default_unreachable_threshold", d); err == nil {
-		dom.DefaultUnreachableThreshold = v
+	vfl32, err := tools.GetFloat32Value("default_unreachable_threshold", d)
+	if err == nil {
+		dom.DefaultUnreachableThreshold = vfl32
 	}
-	if v, err := tools.GetInterfaceArrayValue("email_notification_list", d); err == nil {
-		ls := make([]string, len(v))
-		for i, sl := range v {
+	vlist, err := tools.GetInterfaceArrayValue("email_notification_list", d)
+	if err == nil {
+		ls := make([]string, len(vlist))
+		for i, sl := range vlist {
 			ls[i] = sl.(string)
 		}
 		dom.EmailNotificationList = ls
 	} else if d.HasChange("email_notification_list") {
 		dom.EmailNotificationList = make([]string, 0)
 	}
-	if v, err := tools.GetFloat32Value("min_pingable_region_fraction", d); err == nil {
-		dom.MinPingableRegionFraction = v
+	vfl32, err = tools.GetFloat32Value("min_pingable_region_fraction", d)
+	if err == nil {
+		dom.MinPingableRegionFraction = vfl32
 	}
-	if v, err := tools.GetIntValue("default_timeout_penalty", d); err == nil || d.HasChange("default_timeout_penalty") {
-		dom.DefaultTimeoutPenalty = v
+	vint, err := tools.GetIntValue("default_timeout_penalty", d)
+	if err == nil || d.HasChange("default_timeout_penalty") {
+		dom.DefaultTimeoutPenalty = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_timeout_penalty failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("servermonitor_liveness_count", d); err == nil {
-		dom.ServermonitorLivenessCount = v
+	vint, err = tools.GetIntValue("servermonitor_liveness_count", d)
+	if err == nil {
+		dom.ServermonitorLivenessCount = vint
 	}
-	if v, err := tools.GetStringValue("round_robin_prefix", d); err == nil {
-		dom.RoundRobinPrefix = v
+	vstr, err = tools.GetStringValue("round_robin_prefix", d)
+	if err == nil {
+		dom.RoundRobinPrefix = vstr
 	}
-	if v, err := tools.GetIntValue("servermonitor_load_count", d); err == nil {
-		dom.ServermonitorLoadCount = v
+	vint, err = tools.GetIntValue("servermonitor_load_count", d)
+	if err == nil {
+		dom.ServermonitorLoadCount = vint
 	}
-	if v, err := tools.GetIntValue("ping_interval", d); err == nil {
-		dom.PingInterval = v
+	vint, err = tools.GetIntValue("ping_interval", d)
+	if err == nil {
+		dom.PingInterval = vint
 	}
-	if v, err := tools.GetIntValue("max_ttl", d); err == nil {
-		dom.MaxTTL = int64(v)
+	vint, err = tools.GetIntValue("max_ttl", d)
+	if err == nil {
+		dom.MaxTTL = int64(vint)
 	}
-	if v, err := tools.GetFloat64Value("load_imbalance_percentage", d); err == nil {
-		dom.LoadImbalancePercentage = v
+	vfloat, err := tools.GetFloat64Value("load_imbalance_percentage", d)
+	if err == nil {
+		dom.LoadImbalancePercentage = vfloat
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("default_health_max", d); err == nil {
-		dom.DefaultHealthMax = v
+	vfloat, err = tools.GetFloat64Value("default_health_max", d)
+	if err == nil {
+		dom.DefaultHealthMax = vfloat
 	}
-	if v, err := tools.GetIntValue("map_update_interval", d); err == nil {
-		dom.MapUpdateInterval = v
+	vint, err = tools.GetIntValue("map_update_interval", d)
+	if err == nil {
+		dom.MapUpdateInterval = vint
 	}
-	if v, err := tools.GetIntValue("max_properties", d); err == nil {
-		dom.MaxProperties = v
+	vint, err = tools.GetIntValue("max_properties", d)
+	if err == nil {
+		dom.MaxProperties = vint
 	}
-	if v, err := tools.GetIntValue("max_resources", d); err == nil {
-		dom.MaxResources = v
+	vint, err = tools.GetIntValue("max_resources", d)
+	if err == nil {
+		dom.MaxResources = vint
 	}
-	if v, err := tools.GetStringValue("default_ssl_client_private_key", d); err == nil || d.HasChange("default_ssl_client_private_key") {
-		dom.DefaultSslClientPrivateKey = v
+	vstr, err = tools.GetStringValue("default_ssl_client_private_key", d)
+	if err == nil || d.HasChange("default_ssl_client_private_key") {
+		dom.DefaultSslClientPrivateKey = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_private_key failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("default_error_penalty", d); err == nil || d.HasChange("default_error_penalty") {
-		dom.DefaultErrorPenalty = v
+	vint, err = tools.GetIntValue("default_error_penalty", d)
+	if err == nil || d.HasChange("default_error_penalty") {
+		dom.DefaultErrorPenalty = vint
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_error_penalty failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetFloat64Value("max_test_timeout", d); err == nil {
-		dom.MaxTestTimeout = v
+	vfloat, err = tools.GetFloat64Value("max_test_timeout", d)
+	if err == nil {
+		dom.MaxTestTimeout = vfloat
 	}
 	if cnameCoalescingEnabled, err := tools.GetBoolValue("cname_coalescing_enabled", d); err == nil {
 		dom.CnameCoalescingEnabled = cnameCoalescingEnabled
 	}
-	if v, err := tools.GetFloat64Value("default_health_multiplier", d); err == nil {
-		dom.DefaultHealthMultiplier = v
+	vfloat, err = tools.GetFloat64Value("default_health_multiplier", d)
+	if err == nil {
+		dom.DefaultHealthMultiplier = vfloat
 	}
-	if v, err := tools.GetStringValue("servermonitor_pool", d); err == nil {
-		dom.ServermonitorPool = v
+	vstr, err = tools.GetStringValue("servermonitor_pool", d)
+	if err == nil {
+		dom.ServermonitorPool = vstr
 	}
 	if loadFeedback, err := tools.GetBoolValue("load_feedback", d); err == nil {
 		dom.LoadFeedback = loadFeedback
 	}
-	if v, err := tools.GetIntValue("min_ttl", d); err == nil {
-		dom.MinTTL = int64(v)
+	vint, err = tools.GetIntValue("min_ttl", d)
+	if err == nil {
+		dom.MinTTL = int64(vint)
 	}
-	if v, err := tools.GetIntValue("default_max_unreachable_penalty", d); err == nil {
-		dom.DefaultMaxUnreachablePenalty = v
+	vint, err = tools.GetIntValue("default_max_unreachable_penalty", d)
+	if err == nil {
+		dom.DefaultMaxUnreachablePenalty = vint
 	}
-	if v, err := tools.GetFloat64Value("default_health_threshold", d); err == nil {
-		dom.DefaultHealthThreshold = v
+	vfloat, err = tools.GetFloat64Value("default_health_threshold", d)
+	if err == nil {
+		dom.DefaultHealthThreshold = vfloat
 	}
-	if v, err := tools.GetStringValue("comment", d); err == nil || d.HasChange("comment") {
-		dom.ModificationComments = v
+	vstr, err = tools.GetStringValue("comment", d)
+	if err == nil || d.HasChange("comment") {
+		dom.ModificationComments = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() comment failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetIntValue("min_test_interval", d); err == nil {
-		dom.MinTestInterval = v
+	vint, err = tools.GetIntValue("min_test_interval", d)
+	if err == nil {
+		dom.MinTestInterval = vint
 	}
-	if v, err := tools.GetIntValue("ping_packet_size", d); err == nil {
-		dom.PingPacketSize = v
+	vint, err = tools.GetIntValue("ping_packet_size", d)
+	if err == nil {
+		dom.PingPacketSize = vint
 	}
-	if v, err := tools.GetStringValue("default_ssl_client_certificate", d); err == nil || d.HasChange("default_ssl_client_certificate") {
-		dom.DefaultSslClientCertificate = v
+	vstr, err = tools.GetStringValue("default_ssl_client_certificate", d)
+	if err == nil || d.HasChange("default_ssl_client_certificate") {
+		dom.DefaultSslClientCertificate = vstr
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_certificate failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	if v, err := tools.GetBoolValue("end_user_mapping_enabled", d); err == nil {
-		dom.EndUserMappingEnabled = v
+	if vbool, err := tools.GetBoolValue("end_user_mapping_enabled", d); err == nil {
+		dom.EndUserMappingEnabled = vbool
 	}
 
 	return nil

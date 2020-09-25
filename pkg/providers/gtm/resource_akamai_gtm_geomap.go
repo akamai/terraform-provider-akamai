@@ -330,7 +330,7 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {
