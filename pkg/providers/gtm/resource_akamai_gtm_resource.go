@@ -3,6 +3,7 @@ package gtm
 import (
 	"context"
 	"fmt"
+	"errors"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"

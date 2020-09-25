@@ -1,9 +1,10 @@
 package gtm
 
 import (
-	"contecxt"
+	"context"
 	"fmt"
 	"strings"
+	"errors"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -528,7 +529,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	uStat, err := existProp.Delete(domain)
 	if err != nil {
 		logger.Errorf("Property Delete failed: %s", err.Error())
-		return diag.fromErr(fmt.Errorf("Property Delete failed: %s", err.Error()))
+		return diag.FromErr(fmt.Errorf("Property Delete failed: %s", err.Error()))
 	}
 	logger.Debugf("Property Delete status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
@@ -538,7 +539,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {

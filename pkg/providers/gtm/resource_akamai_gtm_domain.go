@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"errors"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"

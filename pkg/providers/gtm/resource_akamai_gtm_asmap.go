@@ -330,7 +330,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 	// Get existing asMap
 	domain, asMap, err := parseResourceStringId(d.Id())
 	if err != nil {
-		log.Errorf("[ERROR] ASmap Delete: %s", err.Error())
+		logger.Errorf("[ERROR] ASmap Delete: %s", err.Error())
 		return diag.FromErr(err)
 	}
 	existAs, err := gtm.GetAsMap(asMap, domain)
