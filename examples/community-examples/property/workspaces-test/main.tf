@@ -1,6 +1,16 @@
 terraform {
-  required_version = "~> 0.12"
+  required_version = ">= 0.12"
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+    template = {
+      source = "hashicorp/template"
+    }
+  }
 }
+
+provider "akamai" {}
 
 variable "edgerc" {
   type        = string
@@ -76,11 +86,6 @@ variable "rule_format" {
   description = "PAPI rule schema version"
 }
 
-provider "akamai" {
-  edgerc           = "~/.edgerc"
-  property_section = var.edgerc_papi
-}
-
 data "akamai_contract" "default" {}
 
 data "akamai_group" "default" {
@@ -141,7 +146,6 @@ resource "akamai_property" "default" {
 resource "akamai_property_activation" "staging" {
   property = akamai_property.default.id
   network  = "STAGING"
-  # version  = akamai_property.default.version
   activate = var.staging
   contact  = var.email
 }
@@ -149,7 +153,6 @@ resource "akamai_property_activation" "staging" {
 resource "akamai_property_activation" "production" {
   property = akamai_property.default.id
   network  = "PRODUCTION"
-  # version  = akamai_property.default.version
   activate = var.production
   contact  = var.email
 }

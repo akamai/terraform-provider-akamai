@@ -1,0 +1,24 @@
+{
+  "accountId": "",
+  "contractId": "",
+  "groupId": "",
+  "propertyId": "",
+  "propertyVersion": 0,
+  "etag": "",
+  "ruleFormat": "",
+  "rules": {
+    "name": "default",
+    "behaviors": [
+      {
+        "name": "siteShield",
+        "options": {
+          "ssmap": {
+            "value": "mapname.akamai.net"
+          }
+        }
+      }
+    ],
+    "criteriaMustSatisfy": "all",
+    "options": {}
+  }
+}

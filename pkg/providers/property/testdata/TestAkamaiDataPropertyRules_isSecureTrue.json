@@ -1,0 +1,16 @@
+{
+   "accountId": "",
+   "contractId": "",
+   "groupId": "",
+   "propertyId": "",
+   "propertyVersion": 0,
+   "etag": "",
+   "ruleFormat": "",
+   "rules": {
+      "name": "default",
+      "criteriaMustSatisfy": "all",
+      "options": {
+         "is_secure": true
+      }
+   }
+}

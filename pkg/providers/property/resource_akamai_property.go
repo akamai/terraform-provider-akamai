@@ -9,7 +9,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	//log "github.com/sirupsen/logrus"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/tidwall/gjson"
@@ -218,6 +218,10 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interfa
 	}
 
 	hostnames, err := setHostnames(property, d, CorrelationID, logger)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("%s", err.Error()))
+	}
+
 	if err := d.Set("edge_hostnames", hostnames); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -682,7 +686,10 @@ func getGroup(d *schema.ResourceData, correlationid string, logger log.Interface
 	if err != nil {
 		return nil, err
 	}
-
+	groupID, err = tools.AddPrefix(groupID, "grp_")
+	if err != nil {
+		return nil, err
+	}
 	group, err := groups.FindGroup(groupID)
 	if err != nil {
 		return nil, err
@@ -706,7 +713,10 @@ func getContract(d *schema.ResourceData, correlationid string, logger log.Interf
 	if err != nil {
 		return nil, err
 	}
-
+	contractID, err = tools.AddPrefix(contractID, "ctr_")
+	if err != nil {
+		return nil, err
+	}
 	contract, err := contracts.FindContract(contractID)
 	if err != nil {
 		return nil, err
@@ -763,7 +773,10 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid s
 	if err != nil {
 		return nil, err
 	}
-
+	productID, err = tools.AddPrefix(productID, "prd_")
+	if err != nil {
+		return nil, err
+	}
 	product, err := products.FindProduct(productID)
 	if err != nil {
 		return nil, err
@@ -1115,7 +1128,7 @@ func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 		if ok {
 			rule.Name, _ = vv["name"].(string)
 			rule.Comments, _ = vv["comments"].(string)
-			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
+			criteriaMustSatisfy, ok := vv["criteria_match"]
 			if ok {
 				if criteriaMustSatisfy.(string) == "all" {
 					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
@@ -1219,7 +1232,7 @@ func extractRules(drules *schema.Set) ([]*papi.Rule, error) {
 			rule.Name = vv["name"].(string)
 			rule.Comments = vv["comment"].(string)
 
-			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
+			criteriaMustSatisfy, ok := vv["criteria_match"]
 			if ok {
 				if criteriaMustSatisfy.(string) == "all" {
 					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll

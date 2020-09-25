@@ -1,18 +1,18 @@
 variable "env" {
-        default = "staging"
+  default = "staging"
 }
 
 variable "username" {
-	default = "test"
+  default = "test"
 }
 
 variable "password" {
-	default = "test"
+  default = "test"
 }
 
 variable "customers" {
-	type = map(object({
-		username = string
-		password = string
-	}))
+  type = map(object({
+    username = string
+    password = string
+  }))
 }

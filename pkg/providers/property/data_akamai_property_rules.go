@@ -315,6 +315,16 @@ func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) error {
 					}
 				}
 
+				if criteriamustsatisfy, ok := ruleTree["criteria_match"]; ok {
+					s, _ := criteriamustsatisfy.(string)
+					switch s {
+					case "all":
+						propertyRules.Rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
+					case "any":
+						propertyRules.Rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
+					}
+				}
+
 				isSecure, ok := ruleTree["is_secure"].(bool)
 				if ok && isSecure {
 					propertyRules.Rule.Options.IsSecure = isSecure
