@@ -46,7 +46,7 @@ output "configsedge" {
 }
 
 
-resource "akamai_appsec_slow_post_protection_settings" "appsecslowpostprotectionsettings" {
+resource "akamai_appsec_slow_post" "appsecslowpostprotectionsettings" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
     slow_rate_action = "alert"                        
@@ -60,7 +60,7 @@ resource "akamai_appsec_slow_post_protection_settings" "appsecslowpostprotection
 
 func testAccCheckAkamaiSlowPostProtectionSettingsExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_appsec_slow_post_protection_settings" {
+		if rs.Type != "akamai_appsec_slow_post" {
 			continue
 		}
 		//rname := rs.Primary.ID

@@ -44,7 +44,7 @@ output "configsedge" {
 }
 
 
-resource "akamai_appsec_configuration_clone" "appsecconfigurationclone" {
+resource "akamai_appsec_configuration_version_clone" "appsecconfigurationclone" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     create_from_version = data.akamai_appsec_configuration.appsecconfigedge.latest_version 
     rule_update  = false
@@ -56,7 +56,7 @@ resource "akamai_appsec_configuration_clone" "appsecconfigurationclone" {
 
 func testAccCheckAkamaiConfigurationCloneExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_appsec_configuration_clone" {
+		if rs.Type != "akamai_appsec_configuration_version_clone" {
 			continue
 		}
 		//rname := rs.Primary.ID
