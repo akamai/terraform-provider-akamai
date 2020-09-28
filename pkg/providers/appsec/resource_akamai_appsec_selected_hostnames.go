@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -37,6 +38,15 @@ func resourceSelectedHostnames() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"mode": {
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					Append,
+					Replace,
+					Remove,
+				}, false),
 			},
 		},
 	}
@@ -94,6 +104,8 @@ func resourceSelectedHostnamesUpdate(d *schema.ResourceData, meta interface{}) e
 
 	configid := d.Get("config_id").(int)
 	version := d.Get("version").(int)
+	mode := d.Get("mode").(string)
+
 	hn := &appsec.SelectedHostnamesResponse{}
 
 	hostnamelist := d.Get("hostnames").([]interface{})
@@ -104,9 +116,37 @@ func resourceSelectedHostnamesUpdate(d *schema.ResourceData, meta interface{}) e
 		hn.HostnameList = append(hn.HostnameList, m)
 	}
 
-	selectedhostnames.HostnameList = hn.HostnameList
+	//Fill in existing then decide what to do
+	err := selectedhostnames.GetSelectedHostnames(configid, version, CorrelationID)
+	if err != nil {
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
+		return nil
+	}
 
-	err := selectedhostnames.UpdateSelectedHostnames(configid, version, CorrelationID)
+	switch mode {
+	case Remove:
+		for idx, h := range selectedhostnames.HostnameList {
+
+			for _, hl := range hostnamelist {
+				if h.Hostname == hl.(string) {
+					RemoveIndex(selectedhostnames.HostnameList, idx)
+				}
+			}
+		}
+	case Append:
+		for _, h := range selectedhostnames.HostnameList {
+			m := appsec.Hostname{}
+			m.Hostname = h.Hostname
+			hn.HostnameList = append(hn.HostnameList, m)
+		}
+		selectedhostnames.HostnameList = hn.HostnameList
+	case Replace:
+		selectedhostnames.HostnameList = hn.HostnameList
+	default:
+		selectedhostnames.HostnameList = hn.HostnameList
+	}
+
+	err = selectedhostnames.UpdateSelectedHostnames(configid, version, CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
 		return err
@@ -115,3 +155,15 @@ func resourceSelectedHostnamesUpdate(d *schema.ResourceData, meta interface{}) e
 	return resourceSelectedHostnamesRead(d, meta)
 
 }
+
+//RemoveIndex reemove host from list
+func RemoveIndex(hl []appsec.Hostname, index int) []appsec.Hostname {
+	return append(hl[:index], hl[index+1:]...)
+}
+
+// Append Replace Remove mode flags
+const (
+	Append  = "APPEND"
+	Replace = "REPLACE"
+	Remove  = "REMOVE"
+)
