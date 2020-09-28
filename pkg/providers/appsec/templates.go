@@ -6,6 +6,7 @@ import (
 	"strings"
 	"text/template"
 
+	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
@@ -21,9 +22,11 @@ type OutputTemplate struct {
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
 		fmt.Printf("%s is in the OutputTemplate >> %+v\n", key, f)
+		edge.PrintfCorrelation("[DEBUG]", "TEMPLATE", fmt.Sprintf("%s   %v\n", key, f))
 		return f, nil
 	} else {
 		fmt.Printf("%s is NOT in the OutputTemplate!\n", key)
+		edge.PrintfCorrelation("[DEBUG]", "TEMPLATE", fmt.Sprintf("Error %s   \n", key))
 		return nil, fmt.Errorf("Error not found")
 	}
 }
@@ -93,8 +96,10 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["selectedHosts.tf"] = &OutputTemplate{TemplateName: "selectedHosts.tf", TableTitle: "Hostname", TemplateType: "TERRAFORM", TemplateString: "\nresource \"akamai_appsec_selected_hostnames\" \"appsecselectedhostnames\" { \n config_id = {{.ConfigID}}\n version = {{.Version}}\n hostnames = [{{  range $index, $element := .SelectedHosts }}{{if $index}},{{end}}{{quote .}}{{end}}] \n }"}
 	otm["ratePolicies"] = &OutputTemplate{TemplateName: "ratePolicies", TableTitle: "ID|PolicyID", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .RatePolicies}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["matchTargets"] = &OutputTemplate{TemplateName: "matchTargets", TableTitle: "ID|PolicyID", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .MatchTargets.WebsiteTargets}}{{if $index}},{{end}}{{.ID}}|{{.SecurityPolicy.PolicyID}}{{end}}"}
+	otm["DSmatchTarget"] = &OutputTemplate{TemplateName: "matchTarget", TableTitle: "ID|PolicyID", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .MatchTargets.WebsiteTargets}}{{if $index}},{{end}}{{.TargetID}}|{{.SecurityPolicy.PolicyID}}{{end}}"}
 	otm["reputationProfiles"] = &OutputTemplate{TemplateName: "reputationProfiles", TableTitle: "ID|Name(Title)", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .ReputationProfiles}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["customRules"] = &OutputTemplate{TemplateName: "customRules", TableTitle: "ID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .CustomRules}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
+	otm["DScustomRules"] = &OutputTemplate{TemplateName: "customRules", TableTitle: "ID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .CustomRules}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["customRuleActions"] = &OutputTemplate{TemplateName: "customRuleActions", TableTitle: "ID|Action", TemplateType: "TABULAR", TemplateString: "{{range .SecurityPolicies}}{{range $index, $element := .CustomRuleActions}}{{if $index}},{{end}}{{.ID}}|{{.Action}}{{end}}{{end}}"}
 	otm["customRuleAction"] = &OutputTemplate{TemplateName: "customRuleAction", TableTitle: "ID|Name|Action", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .}}{{if $index}},{{end}}{{.RuleID}}|{{.Name}} |{{.Action}}{{end}}"}
 	otm["ratePolicyActions"] = &OutputTemplate{TemplateName: "ratePolicyActions", TableTitle: "ID|Ipv4Action|Ipv6Action", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .RatePolicyActions}}{{if $index}},{{end}}{{.ID}}| {{.Ipv4Action}}|{{.Ipv6Action}}{{end}}"}
