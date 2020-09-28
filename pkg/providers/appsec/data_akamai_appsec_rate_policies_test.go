@@ -45,7 +45,7 @@ output "configsedge" {
 
 data "akamai_appsec_rate_policies" "appsecreatepolicies" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version_number = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
 }
 
 

@@ -26,7 +26,7 @@ func resourceRatePolicy() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version_number": {
+			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -51,7 +51,7 @@ func resourceRatePolicyCreate(d *schema.ResourceData, meta interface{}) error {
 	jsonpostpayload := d.Get("json")
 	json.Unmarshal([]byte(jsonpostpayload.(string)), &ratepolicy)
 	ratepolicy.ConfigID = d.Get("config_id").(int)
-	ratepolicy.ConfigVersion = d.Get("version_number").(int)
+	ratepolicy.ConfigVersion = d.Get("version").(int)
 
 	err := ratepolicy.SaveRatePolicy(CorrelationID)
 	if err != nil {
@@ -73,7 +73,7 @@ func resourceRatePolicyUpdate(d *schema.ResourceData, meta interface{}) error {
 	jsonpostpayload := d.Get("json")
 	json.Unmarshal([]byte(jsonpostpayload.(string)), &ratepolicy)
 	ratepolicy.ConfigID = d.Get("config_id").(int)
-	ratepolicy.ConfigVersion = d.Get("version_number").(int)
+	ratepolicy.ConfigVersion = d.Get("version").(int)
 	ratepolicy.ID, _ = strconv.Atoi(d.Id())
 
 	err := ratepolicy.UpdateRatePolicy(CorrelationID)
@@ -92,7 +92,7 @@ func resourceRatePolicyDelete(d *schema.ResourceData, meta interface{}) error {
 	ratepolicy := appsec.NewRatePolicyResponse()
 
 	ratepolicy.ConfigID = d.Get("config_id").(int)
-	ratepolicy.ConfigVersion = d.Get("version_number").(int)
+	ratepolicy.ConfigVersion = d.Get("version").(int)
 	ratepolicy.ID, _ = strconv.Atoi(d.Id())
 
 	err := ratepolicy.DeleteRatePolicy(CorrelationID)
@@ -113,7 +113,7 @@ func resourceRatePolicyRead(d *schema.ResourceData, meta interface{}) error {
 	ratepolicy := appsec.NewRatePolicyResponse()
 
 	ratepolicy.ConfigID = d.Get("config_id").(int)
-	ratepolicy.ConfigVersion = d.Get("version_number").(int)
+	ratepolicy.ConfigVersion = d.Get("version").(int)
 	ratepolicy.ID, _ = strconv.Atoi(d.Id())
 
 	err := ratepolicy.GetRatePolicy(CorrelationID)

@@ -75,7 +75,7 @@ output "configsedge" {
 
 resource "akamai_appsec_rate_policy" "appsecratepolicy" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version_number = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
 }
 
 
