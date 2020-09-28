@@ -201,15 +201,15 @@ resource "akamai_appsec_rate_policy" "appsecratepolicy" {
     json =  file("${path.module}/rate_policy.json")
 }
 */
-/*
+
 data "akamai_appsec_rate_policies" "appsecreatepolicies" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version_number = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
 }
 output "ds_rate_policies" {
   value = data.akamai_appsec_rate_policies.appsecreatepolicies.output_text
 }
-*/
+
 /*
 resource  "akamai_appsec_rate_policy_action" "appsecreatepolicysaction" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id

@@ -18,7 +18,7 @@ func dataSourceRatePolicies() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version_number": {
+			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -38,7 +38,7 @@ func dataSourceRatePoliciesRead(d *schema.ResourceData, meta interface{}) error 
 
 	ratepolicies := appsec.NewRatePoliciesResponse()
 	configid := d.Get("config_id").(int)
-	version := d.Get("version_number").(int)
+	version := d.Get("version").(int)
 
 	err := ratepolicies.GetRatePolicies(configid, version, CorrelationID)
 	if err != nil {
