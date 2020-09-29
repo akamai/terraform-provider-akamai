@@ -17,6 +17,9 @@ locals {
 data "akamai_gtm_default_datacenter" "default_datacenter" {
   domain     = akamai_gtm_domain.tfexample_domain.name
   datacenter = 5400
+  depends_on = [
+    akamai_gtm_domain.tfexample_domain
+  ]
 }
 
 // Mapping API Structure element names to Resource attribute names:
@@ -60,8 +63,11 @@ resource "akamai_gtm_domain" "tfexample_domain" {
   contract                  = local.contract
   group                     = local.group
   email_notification_list   = []
-  load_imbalance_percentage = 20
-  wait_on_complete          = false
+  load_imbalance_percentage = 40
+  default_timeout_penalty = 50
+  default_error_penalty = 100
+  // Required
+  wait_on_complete          = false 
 }
 
 resource "akamai_gtm_datacenter" "tfexample_dc_1" {
@@ -86,7 +92,7 @@ resource "akamai_gtm_datacenter" "tfexample_dc_1" {
   default_load_object {
     load_object      = "/test"
     load_object_port = 80
-    load_servers     = ["1.2.3.4", "1.2.3.5"]
+    load_servers     = ["1.2.3.4", "1.2.3.9"]
   }
   depends_on = [
     akamai_gtm_domain.tfexample_domain
@@ -120,10 +126,10 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
   traffic_target {
     datacenter_id = akamai_gtm_datacenter.tfexample_dc_1.datacenter_id
     enabled       = true
-    weight        = 100
-    servers       = ["1.2.3.4"]
+    weight        = 200
+    servers       = ["1.2.3.9"]
     name          = ""
-    handout_cname = ""
+    handout_cname = "test"
   }
 
   //
@@ -134,10 +140,10 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
   // Optional [partial]
 
   liveness_test {
-    name                             = "lt1"
-    test_interval                    = 30
+    name                             = "lt5"
+    test_interval                    = 40
     test_object_protocol             = "HTTP"
-    test_timeout                     = 20
+    test_timeout                     = 30
     answers_required                 = false
     disable_nonstandard_port_warning = false
     error_penalty                    = 0
@@ -207,24 +213,6 @@ resource "akamai_gtm_resource" "tfexample_resource_1" {
   ]
 }
 
-resource "akamai_gtm_resource" "tfexample_resource_2" {
-  domain           = akamai_gtm_domain.tfexample_domain.name
-  name             = "tfexample_resource_2"
-  aggregation_type = "median"
-  type             = "XML load object via HTTP"
-  resource_instance {
-    datacenter_id           = akamai_gtm_datacenter.tfexample_dc_2.datacenter_id
-    use_default_load_object = false
-    load_object             = "/test"
-    load_servers            = ["1.2.3.4"]
-    load_object_port        = 80
-  }
-  wait_on_complete = false
-  depends_on = [
-    akamai_gtm_domain.tfexample_domain, akamai_gtm_datacenter.tfexample_dc_2
-  ]
-}
-
 resource "akamai_gtm_cidrmap" "tfexample_cidr_1" {
   //
   // CIDRmap auto generated id format [domain:name], e.g tfexample.akadns.net:tfexample_cidr_1
@@ -244,23 +232,10 @@ resource "akamai_gtm_cidrmap" "tfexample_cidr_1" {
     // Optional
     blocks = ["1.2.3.9/24"]
   }
-  wait_on_complete = true
+  wait_on_complete = false
   depends_on = [
     akamai_gtm_domain.tfexample_domain,
     akamai_gtm_datacenter.tfexample_dc_1
-  ]
-}
-
-resource "akamai_gtm_cidrmap" "tfexample_cidr_2" {
-  domain = akamai_gtm_domain.tfexample_domain.name
-  name   = "tfexample_cidr_2"
-  default_datacenter {
-    datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-    nickname      = data.akamai_gtm_default_datacenter.default_datacenter.nickname
-  }
-  wait_on_complete = true
-  depends_on = [
-    akamai_gtm_domain.tfexample_domain
   ]
 }
 
@@ -287,7 +262,7 @@ resource "akamai_gtm_asmap" "tfexample_as_1" {
     nickname      = akamai_gtm_datacenter.tfexample_dc_2.nickname
     as_numbers    = [12229, 16703, 17335]
   }
-  wait_on_complete = true
+  wait_on_complete = false
   depends_on = [
     akamai_gtm_domain.tfexample_domain,
     akamai_gtm_datacenter.tfexample_dc_1,
@@ -295,13 +270,13 @@ resource "akamai_gtm_asmap" "tfexample_as_1" {
   ]
 }
 
-resource "akamai_gtm_geomap" "tfexample_geo_2" {
+resource "akamai_gtm_geomap" "tfexample_geo_1" {
   //
   // Geomap auto generated id format [domain:name], e.g. tfexample.akadns.net:tfexample_geo_2
   //
   // Required
   domain = akamai_gtm_domain.tfexample_domain.name
-  name   = "tfexample_geo_2"
+  name   = "tfexample_geo_1"
   default_datacenter {
     datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
     nickname      = data.akamai_gtm_default_datacenter.default_datacenter.nickname
@@ -314,7 +289,7 @@ resource "akamai_gtm_geomap" "tfexample_geo_2" {
     // Optional
     countries = ["GB"]
   }
-  wait_on_complete = true
+  wait_on_complete = false
   depends_on = [
     akamai_gtm_domain.tfexample_domain,
     akamai_gtm_datacenter.tfexample_dc_2
