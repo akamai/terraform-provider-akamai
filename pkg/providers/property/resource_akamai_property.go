@@ -156,7 +156,7 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
 	CorrelationID := "[PAPI][resourcePropertyCreate-" + meta.OperationID() + "]"
@@ -198,7 +198,7 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interfa
 
 	d.SetId(property.PropertyID)
 
-	rules, err := getRules(d, property, contract, group, CorrelationID, logger)
+	rules, err := getRules(ctx, d, property, contract, group, CorrelationID, logger, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -253,13 +253,13 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interfa
 	return resourcePropertyRead(nil, d, m)
 }
 
-func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group, correlationid string, logger log.Interface) (*papi.Rules, error) {
+func getRules(ctx context.Context, d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group, correlationid string, logger log.Interface, m akamai.OperationMeta) (*papi.Rules, error) {
 	rules := papi.NewRules()
 	rules.Rule.Name = "default"
 	rules.PropertyID = d.Id()
 	rules.PropertyVersion = property.LatestVersion
 
-	origin, err := createOrigin(d, correlationid, logger)
+	origin, err := createOrigin(d, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +283,7 @@ func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Co
 		rules.RuleFormat = ruleFormat
 	}
 
-	cpCode, err := getCPCode(d, contract, group, correlationid, logger)
+	cpCode, err := getCPCode(ctx, m, contract, group, logger, d)
 	if err != nil {
 		return nil, err
 	}
@@ -545,7 +545,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	return nil
 }
 
-func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyUpdate")
 	CorrelationID := "[PAPI][resourcePropertyUpdate-" + meta.OperationID() + "]"
@@ -559,7 +559,7 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	rules, err := getRules(d, property, property.Contract, property.Group, CorrelationID, logger)
+	rules, err := getRules(ctx, d, property, property.Contract, property.Group, CorrelationID, logger, meta)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
 		logger.Warnf("calling 'getRules': %s", err.Error())
@@ -735,7 +735,7 @@ func getContract(d *schema.ResourceData, correlationid string, logger log.Interf
 	return contract, nil
 }
 
-func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, _ string, logger log.Interface) (*papi.CpCode, error) {
+func getCPCode(ctx context.Context, m akamai.OperationMeta, contract *papi.Contract, group *papi.Group, logger log.Interface, d interface{}) (*v2.CPCode, error) {
 	if contract == nil {
 		return nil, ErrNoContractProvided
 	}
@@ -756,13 +756,17 @@ func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, _ stri
 		return nil, err
 	}
 	logger.Debugf("Fetching CP code")
-	cpCode := papi.NewCpCodes(contract, group).NewCpCode()
-	cpCode.CpcodeID = cpCodeID
-	if err := cpCode.GetCpCode(); err != nil {
+
+	cpCodeResponse, err := inst.Client(m).GetCPCode(ctx, v2.GetCPCodeRequest{
+		CPCodeID:   cpCodeID,
+		ContractID: contract.ContractID,
+		GroupID:    group.GroupID,
+	})
+	if err != nil {
 		return nil, err
 	}
-	logger.Debugf("CP code found: %s", cpCode.CpcodeID)
-	return cpCode, nil
+	logger.Debugf("CP code found: %s", cpCodeResponse.CPCodes.Items[0])
+	return &cpCodeResponse.CPCodes.Items[0], nil
 }
 
 func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid string, logger log.Interface) (*papi.Product, error) {
@@ -795,7 +799,7 @@ func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid s
 	return product, nil
 }
 
-func createOrigin(d interface{}, _ string, logger log.Interface) (*papi.OptionValue, error) {
+func createOrigin(d interface{}, logger log.Interface) (*papi.OptionValue, error) {
 	logger.Debugf("Setting origin")
 	var origin *schema.Set
 	var err error
@@ -893,25 +897,21 @@ func fixupPerformanceBehaviors(rules *papi.Rules, _ string, logger log.Interface
 	})
 }
 
-func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *papi.OptionValue, _ string, logger log.Interface) {
+func updateStandardBehaviors(rules *papi.Rules, cpCode *v2.CPCode, origin *papi.OptionValue, _ string, logger log.Interface) {
 	logger.Debugf("cpCode: %#v", cpCode)
-	if cpCode != nil {
-		b := papi.NewBehavior()
-		b.Name = "cpCode"
-		b.Options = papi.OptionValue{
-			"value": papi.OptionValue{
-				"id": cpCode.ID(),
-			},
-		}
-		rules.Rule.MergeBehavior(b)
+	b := papi.NewBehavior()
+	b.Name = "cpCode"
+	b.Options = papi.OptionValue{
+		"value": papi.OptionValue{
+			"id": cpCode.ID,
+		},
 	}
+	rules.Rule.MergeBehavior(b)
 
-	if origin != nil {
-		b := papi.NewBehavior()
-		b.Name = "origin"
-		b.Options = *origin
-		rules.Rule.MergeBehavior(b)
-	}
+	b = papi.NewBehavior()
+	b.Name = "origin"
+	b.Options = *origin
+	rules.Rule.MergeBehavior(b)
 }
 
 // TODO: discuss how property rules should be handled
