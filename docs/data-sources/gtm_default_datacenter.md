@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm_default_datacenter"
-sidebar_current: "docs-akamai-data-gtm_default_datacenter"
+subcategory: "docs-akamai-data-gtm_default_datacenter"
 description: |-
  CP Code
 ---

@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Provider: Akamai"
-sidebar_current: "docs-akamai-index"
+subcategory: "docs-akamai-index"
 description: |-
   Akamai
 ---
@@ -124,3 +124,11 @@ If the section name is `default`, you can omit it, instead using:
 * `AKAMAI_CLIENT_TOKEN`
 * `AKAMAI_CLIENT_SECRET`
 * `AKAMAI_MAX_BODY` (optional)
+
+## Guides
+
+* [Frequently Asked Questions](guides/faq.md)
+* [Get Started with DNS Zone Administration](guides/get_started_dns_zone.md)
+* [Get Started with GTM Domain Administration](guides/get_started_gtm_domain.md)
+* [Get Started with Property Management](guides/get_started_property.md)
+* [Appendix](guides/appendix.md)

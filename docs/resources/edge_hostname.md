@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: edge hostname"
-sidebar_current: "docs-akamai-resource-edge-hostname"
+subcategory: "docs-akamai-resource-edge-hostname"
 description: |-
   Edge Hostname
 ---

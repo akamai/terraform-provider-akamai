@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: group"
-sidebar_current: "docs-akamai-data-group"
+subcategory: "docs-akamai-data-group"
 description: |-
  Group
 ---

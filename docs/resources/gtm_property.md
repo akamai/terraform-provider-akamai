@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm property"
-sidebar_current: "docs-akamai-resource-gtm-property"
+subcategory: "docs-akamai-resource-gtm-property"
 description: |-
   GTM Property
 ---

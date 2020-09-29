@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm datacenter"
-sidebar_current: "docs-akamai-resource-gtm-datacenter"
+subcategory: "docs-akamai-resource-gtm-datacenter"
 description: |-
   GTM Datacenter
 ---

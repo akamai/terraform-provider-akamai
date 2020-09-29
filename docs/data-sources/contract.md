@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: contract"
-sidebar_current: "docs-akamai-data-contract"
+subcategory: "docs-akamai-data-contract"
 description: |-
  Contract
 ---

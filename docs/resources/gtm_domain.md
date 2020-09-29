@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm domain"
-sidebar_current: "docs-akamai-resource-gtm-domain"
+subcategory: "docs-akamai-resource-gtm-domain"
 description: |-
   GTM Domain
 ---

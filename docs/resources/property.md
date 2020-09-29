@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: property"
-sidebar_current: "docs-akamai-resource-property-config"
+subcategory: "docs-akamai-resource-property-config"
 description: |-
   Create and update Akamai Properties
 ---

@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: property activation"
-sidebar_current: "docs-akamai-resource-property-activation"
+subcategory: "docs-akamai-resource-property-activation"
 description: |-
   Property Activation
 ---

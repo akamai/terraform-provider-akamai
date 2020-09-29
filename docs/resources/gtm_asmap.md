@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm asmap"
-sidebar_current: "docs-akamai-resource-gtm-asmap"  
+subcategory: "docs-akamai-resource-gtm-asmap"  
 description: |-
   GTM AS Map
 ---
