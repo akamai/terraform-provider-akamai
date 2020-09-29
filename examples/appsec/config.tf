@@ -39,7 +39,7 @@ resource "akamai_appsec_configuration_clone" "appsecconfigurationclone" {
     rule_update  = true
    }
 */
-/*
+
 data "akamai_appsec_selectable_hostnames" "appsecselectablehostnames" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
@@ -49,10 +49,14 @@ data "akamai_appsec_selectable_hostnames" "appsecselectablehostnames" {
  //   active_in_production = false
  //   active_in_staging = true
    // active_in_production = true
-   active_in_staging = false
-    active_in_production = true
+ //  active_in_staging = false
+   // active_in_production = true
 }
-*/
+
+
+output "selectablehostnames_output_text" {
+  value = data.akamai_appsec_selectable_hostnames.appsecselectablehostnames.output_text
+}
 /*
 output "selectablehostnames_json" {
   value = data.akamai_appsec_selectable_hostnames.appsecselectablehostnames.hostnames_json

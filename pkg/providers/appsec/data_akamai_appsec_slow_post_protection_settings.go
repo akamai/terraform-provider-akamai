@@ -53,6 +53,15 @@ func dataSourceSlowPostProtectionSettingsRead(d *schema.ResourceData, meta inter
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("SlowPostProtectionSettings   %v\n", slowpostprotectionsettings))
 
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "slowPostDS", slowpostprotectionsettings)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("slowPost outputtext   %v\n", outputtext))
+	if err == nil {
+		d.Set("output_text", outputtext)
+	}
+
 	d.SetId(strconv.Itoa(configid))
 
 	return nil

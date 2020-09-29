@@ -60,7 +60,7 @@ func testAccCheckAkamaiConfigurationCloneExists(s *terraform.State) error {
 			continue
 		}
 		//rname := rs.Primary.ID
-		ccresp := appsec.NewConfigurationCloneResponse()
+		ccresp := appsec.NewConfigurationVersionCloneResponse()
 		err := ccresp.GetConfigurationClone("TEST")
 
 		if err != nil {

@@ -14,12 +14,12 @@ import (
 // appsec v1
 //
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
-func resourceConfigurationClone() *schema.Resource {
+func resourceConfigurationVersionClone() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceConfigurationCloneCreate,
-		Read:   resourceConfigurationCloneRead,
-		Update: resourceConfigurationCloneUpdate,
-		Delete: resourceConfigurationCloneDelete,
+		Create: resourceConfigurationVersionCloneCreate,
+		Read:   resourceConfigurationVersionCloneRead,
+		Update: resourceConfigurationVersionCloneUpdate,
+		Delete: resourceConfigurationVersionCloneDelete,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -44,18 +44,18 @@ func resourceConfigurationClone() *schema.Resource {
 	}
 }
 
-func resourceConfigurationCloneCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceConfigurationCloneCreate-" + tools.CreateNonce() + "]"
+func resourceConfigurationVersionCloneCreate(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[APPSEC][resourceConfigurationVersionCloneCreate-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating ConfigurationClone")
 
-	configurationclone := appsec.NewConfigurationCloneResponse()
+	configurationversionclone := appsec.NewConfigurationVersionCloneResponse()
 
-	configurationclonepost := appsec.NewConfigurationClonePost()
+	ConfigurationVersionClonePost := appsec.NewConfigurationVersionClonePost()
 
-	configurationclone.ConfigID = d.Get("config_id").(int)
-	configurationclonepost.CreateFromVersion = d.Get("create_from_version").(int)
+	configurationversionclone.ConfigID = d.Get("config_id").(int)
+	ConfigurationVersionClonePost.CreateFromVersion = d.Get("create_from_version").(int)
 
-	ccr, err := configurationclone.SaveConfigurationClone(configurationclonepost, CorrelationID)
+	ccr, err := configurationversionclone.SaveConfigurationClone(ConfigurationVersionClonePost, CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
 		return err
@@ -64,38 +64,38 @@ func resourceConfigurationCloneCreate(d *schema.ResourceData, meta interface{}) 
 	d.Set("version", ccr.Version)
 	d.SetId(strconv.Itoa(ccr.Version))
 
-	return resourceConfigurationCloneRead(d, meta)
+	return resourceConfigurationVersionCloneRead(d, meta)
 }
 
-func resourceConfigurationCloneRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceConfigurationCloneRead-" + tools.CreateNonce() + "]"
+func resourceConfigurationVersionCloneRead(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[APPSEC][resourceConfigurationVersionCloneRead-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read ConfigurationClone")
 
-	configurationclone := appsec.NewConfigurationCloneResponse()
+	configurationversionclone := appsec.NewConfigurationVersionCloneResponse()
 
-	configurationclone.ConfigID = d.Get("config_id").(int)
-	configurationclone.Version = d.Get("create_from_version").(int)
+	configurationversionclone.ConfigID = d.Get("config_id").(int)
+	configurationversionclone.Version = d.Get("create_from_version").(int)
 
-	err := configurationclone.GetConfigurationClone(CorrelationID)
+	err := configurationversionclone.GetConfigurationClone(CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
 		return err
 	}
 
-	d.SetId(strconv.Itoa(configurationclone.ConfigID))
+	d.SetId(strconv.Itoa(configurationversionclone.ConfigID))
 
 	return nil
 }
 
-func resourceConfigurationCloneDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceConfigurationCloneDelete-" + tools.CreateNonce() + "]"
+func resourceConfigurationVersionCloneDelete(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[APPSEC][resourceConfigurationVersionCloneDelete-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting ConfigurationClone")
 
 	return schema.Noop(d, meta)
 }
 
-func resourceConfigurationCloneUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceConfigurationCloneUpdate-" + tools.CreateNonce() + "]"
+func resourceConfigurationVersionCloneUpdate(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[APPSEC][resourceConfigurationVersionCloneUpdate-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Updating ConfigurationClone")
 
 	return schema.Noop(d, meta)
