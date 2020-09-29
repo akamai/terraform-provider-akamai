@@ -1,8 +1,8 @@
 package gtm
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -10,6 +10,7 @@ import (
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceGTMDefaultDatacenter() *schema.Resource {
@@ -21,12 +22,15 @@ func dataSourceGTMDefaultDatacenter() *schema.Resource {
 				Required: true,
 			},
 			"datacenter": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Default:      5400,
-				ValidateFunc: validateDCValue,
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  gtm.MapDefaultDC,
+				ValidateFunc: validation.IntInSlice([]int{
+					gtm.MapDefaultDC,
+					gtm.Ipv4DefaultDC,
+					gtm.Ipv6DefaultDC,
+				}),
 			},
-
 			"datacenter_id": {
 				Type:     schema.TypeInt,
 				Computed: true,
@@ -39,19 +43,6 @@ func dataSourceGTMDefaultDatacenter() *schema.Resource {
 	}
 }
 
-// validateDCValue is a SchemaValidateFunc to validate the DC value.
-func validateDCValue(v interface{}, _ string) (ws []string, es []error) {
-	value, ok := v.(int)
-	if !ok {
-		es = append(es, fmt.Errorf("wrong cast"))
-		return
-	}
-	if value != gtm.MapDefaultDC && value != gtm.Ipv4DefaultDC && value != gtm.Ipv6DefaultDC {
-		es = append(es, fmt.Errorf("datacenter value must be %d, %d, or %d", gtm.MapDefaultDC, gtm.Ipv4DefaultDC, gtm.Ipv6DefaultDC))
-	}
-	return
-}
-
 func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "dataSourceGTMDefaultDatacenterRead")
@@ -62,7 +53,7 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 
 		return diag.FromErr(err)
 	}
-        var diags diag.Diagnostics
+	var diags diag.Diagnostics
 	// get or create default dc
 	dcid, ok := d.Get("datacenter").(int)
 	if !ok {
@@ -72,8 +63,8 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 		})
 	}
 	logger.WithFields(log.Fields{
-		"domain":       domain,
-		"dcid":       dcid,
+		"domain": domain,
+		"dcid":   dcid,
 	}).Debug("Start Default Datacenter Retrieval")
 
 	var defaultDC = gtm.NewDatacenter()
@@ -85,31 +76,31 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 	case gtm.Ipv6DefaultDC:
 		defaultDC, err = gtm.CreateIPv6DefaultDatacenter(domain)
 	default:
-                return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcid),
-                })
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcid),
+		})
 	}
 
 	if err != nil {
 		return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcid),
-			Detail: err.Error(),
-                })
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcid),
+			Detail:   err.Error(),
+		})
 	}
 	if err := d.Set("nickname", defaultDC.Nickname); err != nil {
-		 return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary: "GTM dataSourceGTMDefaultDatacenterRead: setting nickname failed.",
-			Detail:	err.Error(),
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "GTM dataSourceGTMDefaultDatacenterRead: setting nickname failed.",
+			Detail:   err.Error(),
 		})
 	}
 	if err := d.Set("datacenter_id", defaultDC.DatacenterId); err != nil {
 		return append(diags, diag.Diagnostic{
-                        Severity: diag.Error,
-                        Summary: "GTM dataSourceGTMDefaultDatacenterRead: setting datacenter id failed.",
-			Detail: err.Error(),
+			Severity: diag.Error,
+			Summary:  "GTM dataSourceGTMDefaultDatacenterRead: setting datacenter id failed.",
+			Detail:   err.Error(),
 		})
 	}
 	defaultDatacenterID := fmt.Sprintf("%s:%s:%d", domain, "default_datcenter", defaultDC.DatacenterId)
