@@ -248,7 +248,7 @@ func resourcePropertyCreate(_ context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	logger.Debugf("Done")
-	return resourcePropertyRead(nil, d, nil)
+	return resourcePropertyRead(nil, d, m)
 }
 
 func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group, correlationid string, logger log.Interface) (*papi.Rules, error) {
@@ -624,7 +624,7 @@ func resourcePropertyUpdate(_ context.Context, d *schema.ResourceData, m interfa
 	}
 
 	logger.Debugf("Done")
-	return resourcePropertyRead(nil, d, nil)
+	return resourcePropertyRead(nil, d, m)
 }
 
 func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
