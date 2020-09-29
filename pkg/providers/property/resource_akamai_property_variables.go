@@ -150,7 +150,7 @@ func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, 
 	d.SetId(sha)
 	logger.Debugf("Done")
 
-	return resourcePropertyVariablesRead(nil, d, nil)
+	return resourcePropertyVariablesRead(nil, d, m)
 }
 
 func resourcePropertyVariablesDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

@@ -63,12 +63,6 @@ func dataSourceCPCodeRead(_ context.Context, d *schema.ResourceData, m interface
 	if err := d.Set("name", cpCode.CpcodeName); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-	if err := d.Set("id", cpCode.CpcodeID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
 	d.SetId(cpCode.CpcodeID)
 
 	log.Debugf("Read CP Code: %+v", cpCode)
