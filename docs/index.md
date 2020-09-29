@@ -37,6 +37,46 @@ The local .edgerc file can be referenced in the top of the Akamai Terraform conf
 
 ## Example Usage
 
+Terraform 0.13 and later:
+
+```hcl
+terraform {
+  required_providers {
+    akamai = {
+      source  = "hashicorp/akamai"
+      version = "~> 0.9.1"
+    }
+  }
+}
+
+# Configure the Akamai Provider
+provider "akamai" {
+  edgerc = "~/.edgerc"
+  papi_section = "papi"
+  dns_section = "dns"
+  gtm_section = "gtm"
+}
+
+# Create a Property
+resource "akamai_property" "example_property" {
+  name = "www.example.org"
+  
+  # ...
+}
+
+# Create a DNS Record
+resource "akamai_dns_record" "example_record" {
+  zone       = "example.org"
+  name       = "www.example.org"
+  recordtype = "CNAME"
+  active     = true
+  ttl        = 600
+  target     = ["example.org.akamaized.net."]
+}
+```
+
+Terraform 0.12 and earlier:
+
 ```hcl
 # Configure the Akamai Provider
 provider "akamai" {
