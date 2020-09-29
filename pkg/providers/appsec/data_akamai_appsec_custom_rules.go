@@ -43,6 +43,15 @@ func dataSourceCustomRulesRead(d *schema.ResourceData, meta interface{}) error {
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CustomRules   %v\n", customrules))
 
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "customRules", customrules)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("customrules outputtext   %v\n", outputtext))
+	if err == nil {
+		d.Set("output_text", outputtext)
+	}
+
 	d.SetId(strconv.Itoa(configid))
 
 	return nil

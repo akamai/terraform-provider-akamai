@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiRatePolicyActions_basic(t *testing.T) {
-	dataSourceName := "data.appsec_akamai_rate_policy_actions.akamairatepolicyactions"
+func TestAccAkamaiRatePolicyActions_data_basic(t *testing.T) {
+	dataSourceName := "data.akamai_appsec_rate_policy_actions.appsecratepolicyactions"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -33,19 +33,21 @@ provider "akamai" {
 }
 data "akamai_appsec_configuration" "appsecconfigedge" {
   name = "Example for EDGE"
-  
 }
-
-
 
 output "configsedge" {
   value = data.akamai_appsec_configuration.appsecconfigedge.config_id
 }
 
-
-data "akamai_appsec_rate_policy_actions" "appsecreatepolicysaction" {
+data "akamai_appsec_rate_policy_actions" "appsecreatepolicysactions" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+    
+}
+
+output "ds_rate_policy_actions" {
+  value = data.akamai_appsec_rate_policy_actions.appsecreatepolicysactions.output_text
 }
 
 

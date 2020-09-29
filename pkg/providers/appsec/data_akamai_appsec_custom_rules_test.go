@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiCustomRules_basic(t *testing.T) {
-	dataSourceName := "data.appsec_akamai_custom_rules.akamaicustomrules"
+func TestAccAkamaiCustomRules_data_basic(t *testing.T) {
+	dataSourceName := "data.akamai_appsec_custom_rules.appseccustomrules"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

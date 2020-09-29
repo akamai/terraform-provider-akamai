@@ -59,6 +59,7 @@ func dataSourceConfigurationVersionRead(d *schema.ResourceData, meta interface{}
 	}
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("ConfigurationVersion   %v\n", configurationversion))
+
 	d.Set("latest_version", configurationversion.LastCreatedVersion)
 
 	for _, configval := range configurationversion.VersionList {

@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiSelectableHostnames_basic(t *testing.T) {
+func TestAccAkamaiSelectableHostnames_data_basic(t *testing.T) {
 	dataSourceName := "data.akamai_appsec_selectable_hostnames.appsecselectablehostnames"
 
 	resource.ParallelTest(t, resource.TestCase{

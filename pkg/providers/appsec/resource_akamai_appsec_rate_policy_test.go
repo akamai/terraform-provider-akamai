@@ -11,7 +11,7 @@ import (
 )
 
 func TestAccAkamaiRatePolicy_basic(t *testing.T) {
-	dataSourceName := "appsec_appsec_rate_policy.appsecratepolicy"
+	dataSourceName := "akamai_appsec_rate_policy.appsecratepolicy"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

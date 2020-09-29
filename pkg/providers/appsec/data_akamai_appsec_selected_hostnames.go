@@ -79,6 +79,7 @@ func dataSourceSelectedHostnamesRead(d *schema.ResourceData, meta interface{}) e
 	d.Set("hostnames_json", string(jsonBody))
 
 	newhdata := make([]string, 0, len(selectedhostnames.HostnameList))
+
 	for _, hosts := range selectedhostnames.HostnameList {
 		newhdata = append(newhdata, hosts.Hostname)
 	}

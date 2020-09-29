@@ -51,25 +51,29 @@ func resourceSecurityPolicyClone() *schema.Resource {
 
 func resourceSecurityPolicyCloneCreate(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[APPSEC][resourceSecurityPolicyCloneCreate-" + tools.CreateNonce() + "]"
-
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating SecurityPolicyClone")
 
 	securitypolicyclone := appsec.NewSecurityPolicyCloneResponse()
+
 	securitypolicyclonepost := appsec.NewSecurityPolicyClonePost()
+
 	securitypolicyclone.ConfigID = d.Get("config_id").(int)
 	securitypolicyclone.Version = d.Get("version").(int)
 	securitypolicyclonepost.CreateFromSecurityPolicy = d.Get("create_from_security_policy").(string)
 	securitypolicyclonepost.PolicyName = d.Get("policy_name").(string)
 	securitypolicyclonepost.PolicyPrefix = d.Get("policy_prefix").(string)
+
 	spcr, err := securitypolicyclone.Save(securitypolicyclonepost, CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
 		return err
 	}
+
 	d.Set("policy_id", spcr.PolicyID)
 	d.Set("policy_name", spcr.PolicyName)
 	d.Set("policy_prefix", securitypolicyclonepost.PolicyPrefix)
 	d.SetId(spcr.PolicyID)
+
 	return resourceSecurityPolicyCloneRead(d, meta)
 }
 
@@ -81,6 +85,7 @@ func resourceSecurityPolicyCloneRead(d *schema.ResourceData, meta interface{}) e
 	securitypolicyclone.ConfigID = d.Get("config_id").(int)
 	securitypolicyclone.Version = d.Get("version").(int)
 	policy_id := d.Id()
+
 	spcr, err := securitypolicyclone.GetSecurityPolicyClone(CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
@@ -96,17 +101,20 @@ func resourceSecurityPolicyCloneRead(d *schema.ResourceData, meta interface{}) e
 			d.SetId(configval.PolicyID)
 		}
 	}
+
 	return nil
 }
 
 func resourceSecurityPolicyCloneDelete(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[APPSEC][resourceSecurityPolicyCloneDelete-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting SecurityPolicyClone")
+
 	return schema.Noop(d, meta)
 }
 
 func resourceSecurityPolicyCloneUpdate(d *schema.ResourceData, meta interface{}) error {
 	CorrelationID := "[APPSEC][resourceSecurityPolicyCloneUpdate-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Updating SecurityPolicyClone")
+
 	return schema.Noop(d, meta)
 }

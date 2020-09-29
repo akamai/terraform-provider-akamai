@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiConfigurationVersion_basic(t *testing.T) {
-	dataSourceName := "data.appsec_akamai_configuration_version.akamaiconfigurationversion"
+func TestAccAkamaiConfigurationVersion_data_basic(t *testing.T) {
+	dataSourceName := "data.akamai_appsec_configuration_version.appsecconfigurationversion"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -46,7 +46,7 @@ output "configsedgelatestversion" {
 }
 
 output "configsedgeconfiglist" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_list
+  value = data.akamai_appsec_configuration.appsecconfigedge.output_text
 }
 
 output "configsedgeconfigversion" {

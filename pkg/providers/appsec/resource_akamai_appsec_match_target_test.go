@@ -1,9 +1,12 @@
 package appsec
 
 import (
+	"fmt"
 	"log"
+	"strconv"
 	"testing"
 
+	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )

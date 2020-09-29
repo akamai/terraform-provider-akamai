@@ -42,6 +42,11 @@ func dataSourceSelectableHostnames() *schema.Resource {
 				Computed:    true,
 				Description: "JSON List of hostnames",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text Export representation",
+			},
 		},
 	}
 }
@@ -114,6 +119,15 @@ func dataSourceSelectableHostnamesRead(d *schema.ResourceData, meta interface{})
 
 	//edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  SET SelectedHostnames H %v", h))
 	d.Set("hostnames", newhdata)
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "selectableHosts", selectablehostnames)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("selectablehostnames outputtext   %v\n", outputtext))
+	if err == nil {
+		d.Set("output_text", outputtext)
+	}
 
 	d.SetId(strconv.Itoa(selectablehostnames.ConfigID))
 

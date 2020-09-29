@@ -47,8 +47,6 @@ func dataSourceMatchTargetsRead(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("MatchTargets   %v\n", matchtargets))
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("MatchTargets API  %v\n", matchtargets.MatchTargets.APITargets))
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("MatchTargets WEB  %v\n", matchtargets.MatchTargets.WebsiteTargets[0].SecurityPolicy.PolicyID))
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)

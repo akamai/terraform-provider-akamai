@@ -55,7 +55,7 @@ func resourceConfigurationCloneCreate(d *schema.ResourceData, meta interface{}) 
 	configurationclone.ConfigID = d.Get("config_id").(int)
 	configurationclonepost.CreateFromVersion = d.Get("create_from_version").(int)
 
-	ccr, err := configurationclone.Save(configurationclonepost, CorrelationID)
+	ccr, err := configurationclone.SaveConfigurationClone(configurationclonepost, CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
 		return err

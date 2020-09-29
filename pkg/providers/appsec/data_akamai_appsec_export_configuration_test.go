@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiExportConfiguration_basic(t *testing.T) {
+func TestAccAkamaiExportConfiguration_data_basic(t *testing.T) {
 	dataSourceName := "data.akamai_appsec_export_configuration.appsecexportconfiguration"
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -39,6 +39,7 @@ data "akamai_appsec_configuration" "appsecconfigedge" {
 data "akamai_appsec_export_configuration" "appsecexportconfiguration" {
    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
    version  = data.akamai_appsec_configuration.appsecconfigedge.latest_version 
+search = ["ruleActions","customRules","rulesets","reputationProfiles","ratePolicies","matchTargets"]
 }
 
 

@@ -28,7 +28,7 @@ func resourceCustomRuleAction() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": &schema.Schema{
+			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},

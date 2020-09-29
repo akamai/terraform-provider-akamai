@@ -15,12 +15,12 @@ import (
 // appsec v1
 //
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
-func resourceSlowPostProtectionSettings() *schema.Resource {
+func resourceSlowPostProtectionSetting() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceSlowPostProtectionSettingsUpdate,
-		Read:   resourceSlowPostProtectionSettingsRead,
-		Update: resourceSlowPostProtectionSettingsUpdate,
-		Delete: resourceSlowPostProtectionSettingsDelete,
+		Create: resourceSlowPostProtectionSettingUpdate,
+		Read:   resourceSlowPostProtectionSettingRead,
+		Update: resourceSlowPostProtectionSettingUpdate,
+		Delete: resourceSlowPostProtectionSettingDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -62,17 +62,17 @@ func resourceSlowPostProtectionSettings() *schema.Resource {
 	}
 }
 
-func resourceSlowPostProtectionSettingsRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceSlowPostProtectionSettingsRead-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read SlowPostProtectionSettings")
+func resourceSlowPostProtectionSettingRead(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[APPSEC][resourceSlowPostProtectionSettingRead-" + tools.CreateNonce() + "]"
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read SlowPostProtectionSetting")
 
-	slowpostprotectionsettings := appsec.NewSlowPostProtectionSettingsResponse()
+	slowpostprotectionsetting := appsec.NewSlowPostProtectionSettingResponse()
 
 	configid := d.Get("config_id").(int)
 	version := d.Get("version").(int)
 	policyid := d.Get("policy_id").(string)
 
-	err := slowpostprotectionsettings.GetSlowPostProtectionSettings(configid, version, policyid, CorrelationID)
+	err := slowpostprotectionsetting.GetSlowPostProtectionSetting(configid, version, policyid, CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
 		return nil
@@ -83,18 +83,18 @@ func resourceSlowPostProtectionSettingsRead(d *schema.ResourceData, meta interfa
 	return nil
 }
 
-func resourceSlowPostProtectionSettingsDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceSlowPostProtectionSettingsDelete-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting SlowPostProtectionSettings")
+func resourceSlowPostProtectionSettingDelete(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[APPSEC][resourceSlowPostProtectionSettingDelete-" + tools.CreateNonce() + "]"
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting SlowPostProtectionSetting")
 
 	return schema.Noop(d, meta)
 }
 
-func resourceSlowPostProtectionSettingsUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceSlowPostProtectionSettingsUpdate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Updating SlowPostProtectionSettings")
+func resourceSlowPostProtectionSettingUpdate(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[APPSEC][resourceSlowPostProtectionSettingUpdate-" + tools.CreateNonce() + "]"
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Updating SlowPostProtectionSetting")
 
-	slowpostprotectionsettings := appsec.NewSlowPostProtectionSettingsResponse()
+	slowpostprotectionsetting := appsec.NewSlowPostProtectionSettingResponse()
 
 	slowpostprotectionsettingspost := appsec.NewSlowPostProtectionSettingsPost()
 
@@ -106,12 +106,12 @@ func resourceSlowPostProtectionSettingsUpdate(d *schema.ResourceData, meta inter
 	slowpostprotectionsettingspost.SlowRateThreshold.Period = d.Get("slow_rate_threshold_period").(int)
 	slowpostprotectionsettingspost.DurationThreshold.Timeout = d.Get("duration_threshold_timeout").(int)
 
-	err := slowpostprotectionsettings.UpdateSlowPostProtectionSettings(configid, version, policyid, slowpostprotectionsettingspost, CorrelationID)
+	err := slowpostprotectionsetting.UpdateSlowPostProtectionSetting(configid, version, policyid, slowpostprotectionsettingspost, CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
 		return err
 	}
 
-	return resourceSlowPostProtectionSettingsRead(d, meta)
+	return resourceSlowPostProtectionSettingRead(d, meta)
 
 }

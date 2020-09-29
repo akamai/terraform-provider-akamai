@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiMatchTargets_basic(t *testing.T) {
-	dataSourceName := "data.appsec_akamai_match_targets.akamaimatchtargets"
+func TestAccAkamaiMatchTargets_data_basic(t *testing.T) {
+	dataSourceName := "data.akamai_appsec_match_targets.appsecmatchtargets"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

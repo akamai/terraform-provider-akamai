@@ -8,16 +8,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiRatePolicies_data_basic(t *testing.T) {
-	dataSourceName := "data.akamai_appsec_rate_policies.appsecratepolicies"
+func TestAccAkamaiSlowPostProtectionSettings_data_basic(t *testing.T) {
+	dataSourceName := "data.akamai_appsec_slow_post_protection_settings.appsecslowpostprotectionsettings"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiRatePoliciesDestroy,
+		CheckDestroy: testAccCheckAkamaiSlowPostProtectionSettingsDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAkamaiRatePoliciesConfig(),
+				Config: testAccAkamaiSlowPostProtectionSettingsConfig(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 				),
@@ -26,7 +26,7 @@ func TestAccAkamaiRatePolicies_data_basic(t *testing.T) {
 	})
 }
 
-func testAccAkamaiRatePoliciesConfig() string {
+func testAccAkamaiSlowPostProtectionSettingsConfig() string {
 	return `
 provider "akamai" {
   appsec_section = "default"
@@ -43,16 +43,20 @@ output "configsedge" {
 }
 
 
-data "akamai_appsec_rate_policies" "appsecreatepolicies" {
+data "akamai_appsec_slow_post" "appsecslowpostprotectionsettings" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
 }
 
+output "configsedge_post_output_text" {
+  value = data.akamai_appsec_slow_post.appsecslowpostprotectionsettings.output_text
+}
 
 `
 }
 
-func testAccCheckAkamaiRatePoliciesDestroy(s *terraform.State) error {
-	log.Printf("[DEBUG] [Akamai RatePolicies] RatePolicies Destroy skipped ")
+func testAccCheckAkamaiSlowPostProtectionSettingsDestroy(s *terraform.State) error {
+	log.Printf("[DEBUG] [Akamai SlowPostProtectionSettings] SlowPostProtectionSettings Destroy skipped ")
 	return nil
 }

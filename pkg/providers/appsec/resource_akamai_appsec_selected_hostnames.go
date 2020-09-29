@@ -117,9 +117,9 @@ func resourceSelectedHostnamesUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	//Fill in existing then decide what to do
-	err := selectedhostnames.GetSelectedHostnames(configid, version, CorrelationID)
-	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
+	errh := selectedhostnames.GetSelectedHostnames(configid, version, CorrelationID)
+	if errh != nil {
+		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", errh))
 		return nil
 	}
 
@@ -146,7 +146,7 @@ func resourceSelectedHostnamesUpdate(d *schema.ResourceData, meta interface{}) e
 		selectedhostnames.HostnameList = hn.HostnameList
 	}
 
-	err = selectedhostnames.UpdateSelectedHostnames(configid, version, CorrelationID)
+	err := selectedhostnames.UpdateSelectedHostnames(configid, version, CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
 		return err

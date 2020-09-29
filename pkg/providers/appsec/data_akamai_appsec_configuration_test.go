@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiConfiguration_basic(t *testing.T) {
+func TestAccAkamaiConfiguration_data_basic(t *testing.T) {
 	dataSourceName := "data.akamai_appsec_configuration.appsecconfiguration"
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -46,7 +46,7 @@ output "configsedgelatestversion" {
 }
 
 output "configsedgeconfiglist" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_list
+  value = data.akamai_appsec_configuration.appsecconfigedge.output_text
 }
 
 output "configsedgeconfigversion" {

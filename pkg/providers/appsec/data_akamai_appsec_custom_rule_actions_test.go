@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccAkamaiCustomRuleActions_basic(t *testing.T) {
-	dataSourceName := "data.appsec_akamai_custom_rule_actions.akamaicustomruleactions"
+func TestAccAkamaiCustomRuleActions_data_basic(t *testing.T) {
+	dataSourceName := "data.akamai_appsec_custom_rule_actions.appseccustomruleactions"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -33,8 +33,14 @@ provider "akamai" {
 }
 
 
-resource "akamai_appsec_export_config" "appsecexport" {
-    name = "Akamai Tools"
+data "akamai_appsec_custom_rule_actions" "appsecreatecustomruleactions" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+}
+
+output "customruleactions" {
+  value = data.akamai_appsec_custom_rule_actions.appsecreatecustomruleactions.output_text
 }
 
 

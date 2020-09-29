@@ -100,7 +100,8 @@ output "configsedge" {
 
 
 resource "akamai_appsec_custom_rule" "appseccustomrule" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+	config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+	custom_rules_json =  file("${path.module}/custom_rules.json")
 }
 
 `

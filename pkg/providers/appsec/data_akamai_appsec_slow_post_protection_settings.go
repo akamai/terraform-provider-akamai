@@ -10,9 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceCustomRuleActions() *schema.Resource {
+func dataSourceSlowPostProtectionSettings() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCustomRuleActionsRead,
+		Read: dataSourceSlowPostProtectionSettingsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -35,34 +35,24 @@ func dataSourceCustomRuleActions() *schema.Resource {
 	}
 }
 
-func dataSourceCustomRuleActionsRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceCustomRuleActionsRead-" + tools.CreateNonce() + "]"
+func dataSourceSlowPostProtectionSettingsRead(d *schema.ResourceData, meta interface{}) error {
+	CorrelationID := "[APPSEC][dataSourceSlowPostProtectionSettingsRead-" + tools.CreateNonce() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CustomRuleActions")
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read SlowPostProtectionSettings")
 
-	customruleactions := appsec.NewCustomRuleActionsResponse()
+	slowpostprotectionsettings := appsec.NewSlowPostProtectionSettingsResponse()
 	configid := d.Get("config_id").(int)
 	version := d.Get("version").(int)
 	policyid := d.Get("policy_id").(string)
 
-	err := customruleactions.GetCustomRuleActions(configid, version, policyid, CorrelationID)
+	err := slowpostprotectionsettings.GetSlowPostProtectionSettings(configid, version, policyid, CorrelationID)
 	if err != nil {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
 		return nil
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CustomRuleActions   %v\n", customruleactions))
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("SlowPostProtectionSettings   %v\n", slowpostprotectionsettings))
 
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "customRuleAction", customruleactions)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("customRuleAction outputtext   %v\n", outputtext))
-	if err == nil {
-		d.Set("output_text", outputtext)
-	}
-
-	//d.Set("rule_id", ruleid)
 	d.SetId(strconv.Itoa(configid))
 
 	return nil
