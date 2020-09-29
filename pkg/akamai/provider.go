@@ -137,6 +137,13 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 			if edgercPath != "" {
 				edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
 			}
+			environment, err := tools.GetStringValue("config_section", d)
+			if err != nil && !IsNotFoundError(err) {
+				return nil, diag.FromErr(err)
+			}
+			if environment != "" {
+				edgercOps = append(edgercOps, edgegrid.WithSection(environment))
+			}
 
 			edgerc, err := edgegrid.New(edgercOps...)
 			if err != nil {
@@ -146,7 +153,7 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 			userAgent := instance.UserAgent(ProviderName, instance.TerraformVersion)
 
 			sess, err := session.New(
-				session.WithConfig(edgerc),
+				session.WithSigner(edgerc),
 				session.WithUserAgent(userAgent),
 				session.WithLog(LogFromHCLog(log)),
 				session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
