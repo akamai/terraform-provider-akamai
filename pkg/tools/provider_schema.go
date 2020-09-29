@@ -131,11 +131,9 @@ func GetBoolValue(key string, rd ResourceDataFetcher) (bool, error) {
 	if key == "" {
 		return false, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
-	value, ok := rd.GetOk(key)
-	if !ok {
-		return false, fmt.Errorf("%w: %s", ErrNotFound, key)
-	}
+	value, _ := rd.GetOk(key)
 	var val bool
+	var ok bool
 	if val, ok = value.(bool); !ok {
 		return false, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "bool")
 	}
@@ -161,7 +159,7 @@ func GetSetValue(key string, rd ResourceDataFetcher) (*schema.Set, error) {
 	return val, nil
 }
 
-// GetListValue fetches value with given key from ResourceData object and attempts type cast to *[]interface{}
+// GetListValue fetches value with given key from ResourceData object and attempts type cast to []interface{}
 //
 // if value is not present on provided resource, ErrNotFound is returned
 // if casting is not successful, ErrInvalidType is returned

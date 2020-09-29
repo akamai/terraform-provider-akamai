@@ -136,7 +136,7 @@ func TestGetBoolValue(t *testing.T) {
 			init: func(m *mocked) {
 				m.On("GetOk", "key").Return(false, false).Once()
 			},
-			withError: ErrNotFound,
+			expected: false,
 		},
 		"empty key passed": {
 			key:       "",
