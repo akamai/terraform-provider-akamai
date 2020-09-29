@@ -232,28 +232,28 @@ func unmarshalRulesFromJSONComp(d interface{}, rulesComp string, propertyRules *
 				}) // behavior list loop
 
 			}
-
-			if key.String() == "criteria" {
-				criteria := gjson.Parse(value.String())
-
-				criteria.ForEach(func(key, value gjson.Result) bool {
-
-					cc, ok := value.Value().(map[string]interface{})
-					if ok {
-						newCriteria := papi.NewCriteria()
-						newCriteria.Name = cc["name"].(string)
-
-						coptions, ok := cc["option"]
-						if ok {
-							println("OPTIONS ", coptions)
-							newCriteria.Options = coptions.(map[string]interface{})
-						}
-						propertyRules.Rule.MergeCriteria(newCriteria)
-					}
-					return true
-				})
-			} // if ok criteria
 		} /// if ok behaviors
+
+		if key.String() == "criteria" {
+			criteria := gjson.Parse(value.String())
+
+			criteria.ForEach(func(key, value gjson.Result) bool {
+
+				cc, ok := value.Value().(map[string]interface{})
+				if ok {
+					newCriteria := papi.NewCriteria()
+					newCriteria.Name = cc["name"].(string)
+
+					coptions, ok := cc["option"]
+					if ok {
+						println("OPTIONS ", coptions)
+						newCriteria.Options = coptions.(map[string]interface{})
+					}
+					propertyRules.Rule.MergeCriteria(newCriteria)
+				}
+				return true
+			})
+		} // if ok criteria
 
 		if key.String() == "children" {
 			childRules := gjson.Parse(value.String())
