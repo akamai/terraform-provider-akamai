@@ -139,6 +139,13 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 			} else {
 				edgercOps = append(edgercOps, edgegrid.WithFile(edgegrid.DefaultConfigFile))
 			}
+			environment, err := tools.GetStringValue("config_section", d)
+			if err != nil && !IsNotFoundError(err) {
+				return nil, diag.FromErr(err)
+			}
+			if environment != "" {
+				edgercOps = append(edgercOps, edgegrid.WithSection(environment))
+			}
 
 			edgerc, err := edgegrid.New(edgercOps...)
 			if err != nil {
