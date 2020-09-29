@@ -24,7 +24,9 @@ var testAccProviders map[string]*schema.Provider
 var testProvider *schema.Provider
 
 func init() {
-	akamai.Provider(Subprovider())
+	akamai.Provider(Subprovider(
+		WithClient(new(mockpapi)),
+	))
 
 	testProvider = inst.Provider
 	testProvider.Schema["edgerc"] = &schema.Schema{
