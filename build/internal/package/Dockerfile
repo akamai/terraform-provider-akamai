@@ -17,10 +17,14 @@ RUN chown -R root:root /root/.ssh && chmod 700 /root/.ssh && chmod 600 /root/.ss
 ADD AkamaiCorpRoot-G1.pem /usr/local/share/ca-certificates/AkamaiCorpRoot-G1.pem
 RUN update-ca-certificates
 RUN git clone ssh://git@git.source.akamai.com:7999/fee/terraform-provider-akamai.git
-RUN git clone ssh://git@git.source.akamai.com:7999/fee/akamaiopen-edgegrid-golang.git
+RUN git clone ssh://git@git.source.akamai.com:7999/fee/akamaiopen-edgegrid-golang.git edgegrid-v1
+RUN git clone ssh://git@git.source.akamai.com:7999/fee/akamaiopen-edgegrid-golang.git edgegrid-v2
 
-RUN cd terraform-provider-akamai && git checkout ${PROVIDER_BRANCH_NAME} && \
-    go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang=../akamaiopen-edgegrid-golang && \
+RUN cd edgegrid-v1 && git checkout develop && \
+    cd ../edgegrid-v2 && git checkout v2 && \
+    cd ../terraform-provider-akamai && git checkout ${PROVIDER_BRANCH_NAME} && \
+    go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang=../edgegrid-v1 && \
+    go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2=../edgegrid-v2 && \
     go install -tags all
 
 FROM hashicorp/terraform:${TERRAFORM_VERSION}

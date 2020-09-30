@@ -124,3 +124,11 @@ If the section name is `default`, you can omit it, instead using:
 * `AKAMAI_CLIENT_TOKEN`
 * `AKAMAI_CLIENT_SECRET`
 * `AKAMAI_MAX_BODY` (optional)
+
+## Guides
+
+* [Frequently Asked Questions](g/faq.html.markdown)
+* [Get Started with DNS Zone Administration](g/get_started_dns_zone.html.markdown)
+* [Get Started with GTM Domain Administration](g/get_started_gtm_domain.html.markdown)
+* [Get Started with Property Management](g/get_started_property.html.markdown)
+* [Appendix](g/appendix.html.markdown)
