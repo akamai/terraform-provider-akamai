@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
@@ -463,8 +465,9 @@ func resourcePropertyImport(_ context.Context, d *schema.ResourceData, m interfa
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourcePropertyRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
+	client := inst.Client(meta)
 	logger := meta.Log("PAPI", "resourcePropertyRead")
 	CorrelationID := "[PAPI][resourcePropertyRead-" + meta.OperationID() + "]"
 	property := papi.NewProperty(papi.NewProperties())
@@ -490,13 +493,19 @@ func resourcePropertyRead(_ context.Context, d *schema.ResourceData, m interface
 		logger.Warnf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 
-	rules, err := property.GetRules(CorrelationID)
+	getRulesRequest := v2.GetRuleTreeRequest{
+		PropertyID:      property.PropertyID,
+		PropertyVersion: property.LatestVersion,
+		ContractID:      property.ContractID,
+		GroupID:         property.GroupID,
+	}
+	rules, err := client.GetRuleTree(ctx, getRulesRequest)
 	if err != nil {
 		// TODO not sure what to do with this error (is it possible to return here)
 		logger.Warnf("calling 'GetRules': %s", err.Error())
 	}
 	rules.Etag = ""
-	body, err := jsonhooks.Marshal(rules)
+	body, err := json.Marshal(rules)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -639,13 +648,13 @@ func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff
 	if !ok {
 		return fmt.Errorf("value is of invalid type: %v; should be %s", old, "string")
 	}
-	newStr, ok := old.(string)
+	newStr, ok := new.(string)
 	if !ok {
 		return fmt.Errorf("value is of invalid type: %v; should be %s", new, "string")
 	}
 	logger.Debugf("OLD: %s", oldStr)
 	logger.Debugf("NEW: %s", newStr)
-	if !suppressEquivalentJSONPendingDiffs(oldStr, newStr, d) {
+	if !compareRulesJSON(oldStr, newStr) {
 		logger.Debugf("CHANGED VALUES: %s %s " + oldStr + " " + newStr)
 		if err := d.SetNewComputed("version"); err != nil {
 			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
@@ -800,8 +809,11 @@ func createOrigin(d interface{}, _ string, logger log.Interface) (*papi.OptionVa
 		return nil, fmt.Errorf("resource is of invalid type; should be '*schema.ResourceDiff' or '*schema.ResourceData'")
 	}
 
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return nil, err
+		}
+		return nil, nil
 	}
 	if origin.Len() == 0 {
 		return nil, fmt.Errorf("'origin' property must have at least one value")
