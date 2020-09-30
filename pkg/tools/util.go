@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -28,4 +29,12 @@ func CreateNonce() string {
 		return ""
 	}
 	return uuid.String()
+}
+
+// MaxDuration returns the larger of x or y.
+func MaxDuration(x, y time.Duration) time.Duration {
+	if x < y {
+		return y
+	}
+	return x
 }

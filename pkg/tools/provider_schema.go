@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/spf13/cast"
 )
 
 var (
@@ -61,6 +62,34 @@ func GetInterfaceArrayValue(key string, rd ResourceDataFetcher) ([]interface{}, 
 		}
 
 		return interf, nil
+	}
+
+	return nil, fmt.Errorf("%w: %s", ErrNotFound, key)
+}
+
+// GetStringSliceValue fetches value with given key from ResourceData object and attempts type cast to []interface{}
+// and then conver to []string
+//
+// if value is not present on provided resource for key, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetStringSliceValue(key string, rd ResourceDataFetcher) ([]string, error) {
+	if key == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+
+	rval := make([]string, 0)
+	value, ok := rd.GetOk(key)
+	if ok {
+		interf, ok := value.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "[]interface{}")
+		}
+
+		for _, s := range interf {
+			rval = append(rval, cast.ToString(s))
+		}
+
+		return rval, nil
 	}
 
 	return nil, fmt.Errorf("%w: %s", ErrNotFound, key)

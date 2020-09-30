@@ -128,7 +128,10 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				"OperationID", opid,
 			)
 
-			edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
+			edgercOps := []edgegrid.Option{
+				edgegrid.WithEnv(true),
+				edgegrid.WithFile(edgegrid.DefaultConfigFile),
+			}
 
 			edgercPath, err := tools.GetStringValue("edgerc", d)
 			if err != nil && !IsNotFoundError(err) {
