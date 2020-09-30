@@ -11,6 +11,7 @@ import (
 	papiv1 "github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -50,7 +51,26 @@ func Subprovider(opts ...Option) akamai.Subprovider {
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
-		Schema: map[string]*schema.Schema{},
+		Schema: map[string]*schema.Schema{
+			"papi_section": {
+				Optional:   true,
+				Type:       schema.TypeString,
+				Default:    "default",
+				Deprecated: akamai.NoticeDeprecatedUseAlias("papi_section"),
+			},
+			"property_section": {
+				Optional:   true,
+				Type:       schema.TypeString,
+				Default:    "default",
+				Deprecated: akamai.NoticeDeprecatedUseAlias("property_section"),
+			},
+			"property": {
+				Optional:   true,
+				Type:       schema.TypeSet,
+				Elem:       config.Options("property"),
+				Deprecated: akamai.NoticeDeprecatedUseAlias("property"),
+			},
+		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_contract":       dataSourcePropertyContract(),
 			"akamai_cp_code":        dataSourceCPCode(),
@@ -85,7 +105,7 @@ func (p *provider) Client(meta akamai.OperationMeta) papi.PAPI {
 	return papi.Client(meta.Session())
 }
 
-func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
+func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	var papiConfig edgegrid.Config
 	var err error
 	property, err := tools.GetSetValue("property", d)
@@ -141,6 +161,11 @@ func getPAPIV1Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 			break
 		}
 	}
+
+	// override default section with deprecated values, which become aliases for the v2 api client
+	// since the deprecated values exist for v1 api compatibitliy with had a singleton issue
+	// this has no impact on functionality of subproviders not using the v2 api client
+	d.Set("config_section", section)
 
 	papiConfig, err = edgegrid.Init(edgerc, section)
 	if err != nil {

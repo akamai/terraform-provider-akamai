@@ -119,7 +119,6 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 		}
 
 		instance.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-
 			// generate an operation id so we can correlate all calls to this provider
 			opid := uuid.Must(uuid.NewRandom()).String()
 
@@ -127,6 +126,13 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 			log := hclog.FromContext(ctx).With(
 				"OperationID", opid,
 			)
+
+			// configure sub-providers
+			for _, p := range instance.subs {
+				if err := p.Configure(LogFromHCLog(log), d); err != nil {
+					return nil, err
+				}
+			}
 
 			edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
 
@@ -139,6 +145,12 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 			} else {
 				edgercOps = append(edgercOps, edgegrid.WithFile(edgegrid.DefaultConfigFile))
 			}
+
+			edgercSection, err := tools.GetStringValue("config_section", d)
+			if err != nil && !IsNotFoundError(err) {
+				return nil, diag.FromErr(err)
+			}
+			edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
 
 			edgerc, err := edgegrid.New(edgercOps...)
 			if err != nil {
@@ -158,12 +170,6 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				log:         log,
 				operationID: opid,
 				sess:        sess,
-			}
-
-			for _, p := range instance.subs {
-				if err := p.Configure(LogFromHCLog(log), d); err != nil {
-					return nil, err
-				}
 			}
 
 			// DEPRECATED: once the client is updated to v2 this will be done elsewhere
