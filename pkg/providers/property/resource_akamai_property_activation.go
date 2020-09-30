@@ -489,3 +489,20 @@ func lookupActivation(ctx context.Context, client papi.PAPI, query lookupActivat
 	}
 	return nil, nil
 }
+
+func networkAlias(network string) (papi., error) {
+	networks := map[string]papi.NetworkValue{
+		"STAGING":    papi.NetworkStaging,
+		"STAG":       papi.NetworkStaging,
+		"S":          papi.NetworkStaging,
+		"PRODUCTION": papi.NetworkProduction,
+		"PROD":       papi.NetworkProduction,
+		"P":          papi.NetworkProduction,
+	}
+	networkValue, ok := networks[strings.ToUpper(net)]
+	if !ok {
+		return "", fmt.Errorf("network not recognized")
+	}
+	return networkValue, nil
+	return nil
+}
