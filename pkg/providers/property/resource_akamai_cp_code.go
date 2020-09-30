@@ -95,7 +95,7 @@ func resourceCPCodeCreate(_ context.Context, d *schema.ResourceData, m interface
 	}
 	logger.Debugf("Resulting CP Code: %#v", cpCode)
 	d.SetId(cpCode.CpcodeID)
-	return resourceCPCodeRead(nil, d, nil)
+	return resourceCPCodeRead(nil, d, m)
 }
 
 func resourceCPCodeDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

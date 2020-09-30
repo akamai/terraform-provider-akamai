@@ -6,7 +6,6 @@ require (
 	github.com/allegro/bigcache v1.2.1
 	github.com/apex/log v1.9.0
 	github.com/aws/aws-sdk-go v1.30.12 // indirect
-	github.com/cyberphone/json-canonicalization v0.0.0-20200703052342-77e15c5d8e47
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-hclog v0.9.2
@@ -20,6 +19,7 @@ require (
 	github.com/tidwall/gjson v1.2.1
 	github.com/tidwall/match v1.0.1 // indirect
 	github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 // indirect
+	github.com/tj/assert v0.0.3
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 // indirect
 	golang.org/x/tools v0.0.0-20200923014426-f5e916c686e1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
