@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -107,6 +108,31 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	if version == 0 {
 		// use the latest version for the property
 		version = property.Property.LatestVersion
+	}
+
+	// check to see if this tree has any issues
+	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+		PropertyID:      propertyID,
+		PropertyVersion: version,
+		ValidateRules:   true,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// if there are errors return them cleanly
+	if len(rules.Errors) > 0 {
+		diags := make([]diag.Diagnostic, 0)
+
+		for _, e := range rules.Errors {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  e.Title,
+				Detail:   e.Detail,
+			})
+		}
+
+		return diags
 	}
 
 	network, err := tools.GetStringValue("network", d)
@@ -303,7 +329,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", d)
+	network, err := networkAlias(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -378,7 +404,32 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		version = property.Property.LatestVersion
 	}
 
-	network, err := tools.GetStringValue("network", d)
+	// check to see if this tree has any issues
+	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+		PropertyID:      propertyID,
+		PropertyVersion: version,
+		ValidateRules:   true,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// if there are errors return them cleanly
+	if len(rules.Errors) > 0 {
+		diags := make([]diag.Diagnostic, 0)
+
+		for _, e := range rules.Errors {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  e.Title,
+				Detail:   e.Detail,
+			})
+		}
+
+		return diags
+	}
+
+	network, err := networkAlias(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -490,19 +541,23 @@ func lookupActivation(ctx context.Context, client papi.PAPI, query lookupActivat
 	return nil, nil
 }
 
-func networkAlias(network string) (papi., error) {
-	networks := map[string]papi.NetworkValue{
-		"STAGING":    papi.NetworkStaging,
-		"STAG":       papi.NetworkStaging,
-		"S":          papi.NetworkStaging,
-		"PRODUCTION": papi.NetworkProduction,
-		"PROD":       papi.NetworkProduction,
-		"P":          papi.NetworkProduction,
+func networkAlias(d *schema.ResourceData) (papi.ActivationNetwork, error) {
+	network, err := tools.GetStringValue("network", d)
+	if err != nil {
+		return "", err
 	}
-	networkValue, ok := networks[strings.ToUpper(net)]
+
+	networks := map[string]papi.ActivationNetwork{
+		"STAGING":    papi.ActivationNetworkStaging,
+		"STAG":       papi.ActivationNetworkStaging,
+		"S":          papi.ActivationNetworkStaging,
+		"PRODUCTION": papi.ActivationNetworkProduction,
+		"PROD":       papi.ActivationNetworkProduction,
+		"P":          papi.ActivationNetworkProduction,
+	}
+	networkValue, ok := networks[strings.ToUpper(network)]
 	if !ok {
 		return "", fmt.Errorf("network not recognized")
 	}
 	return networkValue, nil
-	return nil
 }
