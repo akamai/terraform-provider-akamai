@@ -47,11 +47,7 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 			return diag.Errorf("error looking up Contracts for group %q: %s", group, err)
 		}
 		if len(contracts.Contracts.Items) == 0 {
-<<<<<<< HEAD
 			return diag.FromErr(fmt.Errorf("%w", ErrNoContractsFound))
-=======
-			return diag.Errorf("%s", ErrNoContractsFound)
->>>>>>> develop
 		}
 		d.SetId(contracts.Contracts.Items[0].ContractID)
 		return nil
@@ -70,19 +66,11 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 			continue
 		}
 		if len(g.ContractIDs) == 0 {
-<<<<<<< HEAD
 			return diag.FromErr(fmt.Errorf("%w: %s", ErrLookingUpContract, group))
-=======
-			return diag.Errorf("%s: %s", ErrLookingUpContract, group)
->>>>>>> develop
 		}
 		d.SetId(g.ContractIDs[0])
 		return nil
 	}
 
-<<<<<<< HEAD
 	return diag.FromErr(fmt.Errorf("%w; groupID: %q", ErrNoContractsFound, group))
-=======
-	return diag.Errorf("%s; groupID: %q", ErrNoContractsFound, group)
->>>>>>> develop
 }
