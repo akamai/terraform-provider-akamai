@@ -1,7 +1,6 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -97,7 +96,7 @@ resource "akamai_gtm_property" "test_property" {
 	akamai_gtm_datacenter.test_prop_datacenter
     ]
 }
-`, gtm_test_domain)
+`, gtmTestDomain)
 
 var testAccAkamaiGTMPropertyUpdateConfig = fmt.Sprintf(`
 provider "akamai" {
@@ -184,7 +183,7 @@ resource "akamai_gtm_property" "test_property" {
 	akamai_gtm_datacenter.test_prop_datacenter
     ]    
 }   
-`, gtm_test_domain)
+`, gtmTestDomain)
 
 func TestAccAkamaiGTMProperty_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -233,8 +232,8 @@ func TestAccAkamaiGTMProperty_update(t *testing.T) {
 func testAccPreCheckProp(t *testing.T) {
 
 	testAccPreCheckTF(t)
-	testCheckDeleteProperty("test_property", gtm_test_domain)
-	testAccDeleteDatacenterByNickname("test_prop_datacenter", gtm_test_domain)
+	testCheckDeleteProperty("test_property", gtmTestDomain)
+	testAccDeleteDatacenterByNickname("test_prop_datacenter", gtmTestDomain)
 
 }
 
@@ -279,7 +278,7 @@ func testAccCheckAkamaiGTMPropertyDestroy(s *terraform.State) error {
 func parseStringID(id string) (string, string, error) {
 	idComp := strings.Split(id, ":")
 	if len(idComp) < 2 {
-		return "", "", errors.New("Invalid Property ID")
+		return "", "", fmt.Errorf("invalid Property ID")
 	}
 
 	return idComp[1], idComp[0], nil
@@ -293,6 +292,9 @@ func testAccCheckAkamaiGTMPropertyExists(s *terraform.State) error {
 		}
 
 		prop, dom, err := parseStringID(rs.Primary.ID)
+		if err != nil {
+			return err
+		}
 		_, err = gtm.GetProperty(prop, dom)
 		if err != nil {
 			return err

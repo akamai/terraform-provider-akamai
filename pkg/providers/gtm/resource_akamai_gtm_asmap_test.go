@@ -72,7 +72,7 @@ resource "akamai_gtm_asmap" "test_as" {
         akamai_gtm_domain.test_domain,
         akamai_gtm_datacenter.test_as_datacenter
     ]
-}`, gtm_test_domain)
+}`, gtmTestDomain)
 
 var testAccAkamaiGTMAsMapUpdateConfig = fmt.Sprintf(`
 provider "akamai" {
@@ -136,7 +136,7 @@ resource "akamai_gtm_asmap" "test_as" {
         akamai_gtm_datacenter.test_as_datacenter
     ]
  
-}`, gtm_test_domain)
+}`, gtmTestDomain)
 
 var asMap *gtm.AsMap
 
@@ -153,7 +153,6 @@ func TestAccAkamaiGTMAsMap_basic(t *testing.T) {
 					testAccCheckNumbersValues,
 					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -172,7 +171,6 @@ func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 					testAccCheckNumbersValues,
 					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccAkamaiGTMAsMapUpdateConfig,
@@ -181,7 +179,6 @@ func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 					testAccCheckNumbersValues,
 					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -190,8 +187,8 @@ func TestAccAkamaiGTMAsMap_update(t *testing.T) {
 func testAccPreCheckAS(t *testing.T) {
 
 	testAccPreCheckTF(t)
-	testCheckDeleteAsMap("test_asmap", gtm_test_domain)
-	testAccDeleteDatacenterByNickname("test_as_datacenter", gtm_test_domain)
+	testCheckDeleteAsMap("test_asmap", gtmTestDomain)
+	testAccDeleteDatacenterByNickname("test_as_datacenter", gtmTestDomain)
 
 }
 
@@ -238,11 +235,11 @@ func testAccCheckNumbersValues(s *terraform.State) error {
 			return fmt.Errorf("asmap was not found for as_Numbers check")
 		}
 		log.Printf("[DEBUG] [Akamai GTMV1_3] ASMAP Validating as_numbers")
-		// Walk thru all attributes
+		// Walk through all attributes
 		mapAttribs := rs.Primary.Attributes
 		assignEntries, err := strconv.Atoi(mapAttribs["assignment.#"])
 		if err != nil {
-			return fmt.Errorf("Assignments attribute was not found")
+			return fmt.Errorf("assignments attribute was not found")
 		}
 		// Construct a list to compare
 		assignMap := make(map[int][]int)
@@ -251,7 +248,7 @@ func testAccCheckNumbersValues(s *terraform.State) error {
 			assignBaseIndex := "assignments." + iString + "."
 			dcid, _ := strconv.Atoi(mapAttribs[assignBaseIndex+"datacenter_id"])
 			numbersEntries, _ := strconv.Atoi(mapAttribs[assignBaseIndex+"as_numbers.#"])
-			numbersMap := []int{}
+			var numbersMap []int
 			numbersBaseIndex := assignBaseIndex + "as_numbers."
 			for j := 0; j < numbersEntries; j++ {
 				jString := strconv.Itoa(j)
@@ -275,7 +272,7 @@ func testAccCheckNumbersValues(s *terraform.State) error {
 					}
 				}
 				if compares != len(entry) {
-					return fmt.Errorf("Assignments numbers mismatch")
+					return fmt.Errorf("assignments numbers mismatch")
 				}
 				log.Printf("[DEBUG] [Akamai GTMV1_3] ASMAP assignment numbers DC match [%v]", id)
 			}
@@ -293,6 +290,9 @@ func testAccCheckAkamaiGTMAsMapExists(s *terraform.State) error {
 		}
 
 		asName, dom, err := parseStringID(rs.Primary.ID)
+		if err != nil {
+			return err
+		}
 		asMap, err = gtm.GetAsMap(asName, dom)
 		if err != nil {
 			return err

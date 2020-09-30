@@ -10,9 +10,9 @@ description: |-
 
 ## Finding Current Status Of The Akamai Provider
 
-[Terraform_Provider_Akamai Issue Status](https://github.com/terraform-providers/terraform-provider-akamai/issues) provides the current status of reported known provider isues.
+[Terraform_Provider_Akamai Issue Status](https://github.com/akamai/terraform-provider-akamai/issues) provides the current status of reported known provider isues.
 
-[Terraform_Provider_Akamai Release Notes](https://github.com/terraform-providers/terraform-provider-akamai/blob/master/README.md) provides the current release status, including most recent changes.
+[Terraform_Provider_Akamai Release Notes](https://github.com/akamai/terraform-provider-akamai/blob/master/README.md) provides the current release status, including most recent changes.
 
 ## Migrating a property to Terraform
 

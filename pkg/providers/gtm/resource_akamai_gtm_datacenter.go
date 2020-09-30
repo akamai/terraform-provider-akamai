@@ -1,12 +1,13 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -56,23 +57,23 @@ func resourceGTMv1Datacenter() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"default_load_object": &schema.Schema{
+			"default_load_object": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"load_servers": &schema.Schema{
+						"load_servers": {
 							Type:     schema.TypeList,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
 						},
-						"load_object": &schema.Schema{
+						"load_object": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "",
 						},
-						"load_object_port": &schema.Schema{
+						"load_object_port": {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
@@ -135,13 +136,13 @@ func resourceGTMv1Datacenter() *schema.Resource {
 func parseDatacenterResourceId(id string) (string, int, error) {
 
 	parts := strings.SplitN(id, ":", 2)
+	domain := parts[0]
 	dcID, err := strconv.Atoi(parts[1])
 	if len(parts) != 2 || parts[0] == "" || err != nil {
 		return "", -1, err
 	}
 
-	return parts[0], dcID, err
-
+	return domain, dcID, nil
 }
 
 var (
@@ -149,36 +150,52 @@ var (
 )
 
 // Create a new GTM Datacenter
-func resourceGTMv1DatacenterCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DatacenterCreate(d *schema.ResourceData, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterCreate")
 
 	// Async GTM DC creation causes issues at this writing. Synchronize as work around.
 	datacenterCreateLock.Lock()
 	defer datacenterCreateLock.Unlock()
 
-	domain := d.Get("domain").(string)
-
-	log.Printf("[INFO] [Akamai GTM] Creating datacenter [%s] in domain [%s]", d.Get("nickname").(string), domain)
-	newDC := populateNewDatacenterObject(d)
-	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New Datacenter: [%v]", newDC)
-	cStatus, err := newDC.Create(domain)
+	domain, err := tools.GetStringValue("domain", d)
 	if err != nil {
-		log.Printf("[ERROR] DatacenterCreate failed: %s", err.Error())
+		logger.Warnf("dataSourceGTMDefaultDatacenterRead: Domain not initialized")
 		return err
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Create status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
-	if cStatus.Status.PropagationStatus == "DENIED" {
-		return errors.New(cStatus.Status.Message)
+	datacenterName, err := tools.GetStringValue("nickname", d)
+	if err != nil {
+		logger.Warnf("dataSourceGTMDefaultDatacenterRead: nickname not initialized")
+		return err
 	}
-	if d.Get("wait_on_complete").(bool) {
-		done, err := waitForCompletion(domain)
+
+	logger.Infof("Creating datacenter [%s] in domain [%s]", datacenterName, domain)
+	newDC := populateNewDatacenterObject(d, m)
+	logger.Debugf("Proposed New Datacenter: [%v]", newDC)
+	cStatus, err := newDC.Create(domain)
+	if err != nil {
+		logger.Errorf("DatacenterCreate failed: %s", err.Error())
+		return err
+	}
+	logger.Debugf("Datacenter Create status: %v", cStatus.Status)
+	if cStatus.Status.PropagationStatus == "DENIED" {
+		return fmt.Errorf(cStatus.Status.Message)
+	}
+
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
+		return err
+	}
+
+	if waitOnComplete {
+		done, err := waitForCompletion(domain, m)
 		if done {
-			log.Printf("[INFO] [Akamai GTMv1] Datacenter Create completed")
+			logger.Infof("Datacenter Create completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMv1] Datacenter Create pending")
+				logger.Infof("Datacenter Create pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMv1] Datacenter Create failed [%s]", err.Error())
+				logger.Errorf("Datacenter Create failed [%s]", err.Error())
 				return err
 			}
 		}
@@ -187,286 +204,352 @@ func resourceGTMv1DatacenterCreate(d *schema.ResourceData, meta interface{}) err
 
 	// Give terraform the ID. Format domain::dcid
 	datacenterId := fmt.Sprintf("%s:%d", domain, cStatus.Resource.DatacenterId)
-	log.Printf("[DEBUG] [Akamai GTMv1] Generated DC Resource Id: %s", datacenterId)
+	logger.Debugf("Generated DC Resource Id: %s", datacenterId)
 	d.SetId(datacenterId)
-	return resourceGTMv1DatacenterRead(d, meta)
+	return resourceGTMv1DatacenterRead(d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DatacenterRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DatacenterRead(d *schema.ResourceData, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterRead")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] READ")
-	log.Printf("[DEBUG] Reading [Akamai GTMv1] Datacenter: %s", d.Id())
+	logger.Debugf("READ")
+	logger.Debugf("Reading Datacenter: %s", d.Id())
 	// retrieve the datacenter and domain
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid datacenter resource Id")
+		return fmt.Errorf("invalid datacenter resource ID")
 	}
 	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
-		log.Printf("[ERROR] DatacenterRead failed: %s", err.Error())
+		logger.Errorf("DatacenterRead failed: %s", err.Error())
 		return err
 	}
-	populateTerraformDCState(d, dc)
-	log.Printf("[DEBUG] [Akamai GTMv1] READ %v", dc)
+	populateTerraformDCState(d, dc, m)
+	logger.Debugf("READ %v", dc)
 	return nil
 }
 
 // Update GTM Datacenter
-func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DatacenterUpdate(d *schema.ResourceData, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterUpdate")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Datacenter: %s", d.Id())
+	logger.Debugf("UPDATE")
+	logger.Debugf("Updating Datacenter: %s", d.Id())
 	// pull domain and dcid out of resource id
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid datacenter resource Id")
+		return fmt.Errorf("invalid datacenter resource ID")
 	}
 	// Get existing datacenter
 	existDC, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
-		log.Printf("[ERROR] DatacenterUpdate failed: %s", err.Error())
+		logger.Errorf("DatacenterUpdate failed: %s", err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Datacenter BEFORE: %v", existDC)
-	populateDatacenterObject(d, existDC)
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Datacenter PROPOSED: %v", existDC)
+	logger.Debugf("Updating Datacenter BEFORE: %v", existDC)
+	populateDatacenterObject(d, existDC, m)
+	logger.Debugf("Updating Datacenter PROPOSED: %v", existDC)
 	uStat, err := existDC.Update(domain)
 	if err != nil {
-		log.Printf("[ERROR] DatacenterUpdate failed: %s", err.Error())
+		logger.Errorf("DatacenterUpdate failed: %s", err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	logger.Debugf("Datacenter Update  status:")
+	logger.Debugf("%v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
-	if d.Get("wait_on_complete").(bool) {
-		done, err := waitForCompletion(domain)
+
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
+		return err
+	}
+
+	if waitOnComplete {
+		done, err := waitForCompletion(domain, m)
 		if done {
-			log.Printf("[INFO] [Akamai GTMv1] Datacenter update completed")
+			logger.Infof("Datacenter update completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMv1] Datacenter update pending")
+				logger.Infof("Datacenter update pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMv1] Datacenter update failed [%s]", err.Error())
+				logger.Errorf("Datacenter update failed [%s]", err.Error())
 				return err
 			}
 		}
 
 	}
 
-	return resourceGTMv1DatacenterRead(d, meta)
+	return resourceGTMv1DatacenterRead(d, m)
 }
 
-func resourceGTMv1DatacenterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterImport")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] Import")
-	log.Printf("[DEBUG] Importing [Akamai GTMv1] Datacenter: %s", d.Id())
+	logger.Debugf("Import")
+	logger.Debugf("Importing Datacenter: %s", d.Id())
 	// retrieve the datacenter and domain
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return nil, errors.New("Invalid datacenter resource Id")
+		return nil, fmt.Errorf("invalid datacenter resource ID")
 	}
 	dc, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
-		log.Printf("[ERROR] DatacenterImport error: %s", err.Error())
+		logger.Errorf("DatacenterImport error: %s", err.Error())
 		return nil, err
 	}
-	populateTerraformDCState(d, dc)
-	d.Set("domain", domain)
-	d.Set("wait_on_complete", true)
-	log.Printf("[DEBUG] [Akamai GTMv1] Import %v", dc)
+	populateTerraformDCState(d, dc, m)
+	if err := d.Set("domain", domain); err != nil {
+		return nil, err
+	}
+	if err := d.Set("wait_on_complete", true); err != nil {
+		return nil, err
+	}
+	logger.Debugf("Import %v", dc)
 	return []*schema.ResourceData{d}, err
 
 }
 
 // Delete GTM Datacenter.
-func resourceGTMv1DatacenterDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DatacenterDelete(d *schema.ResourceData, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterDelete")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
-	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Datacenter: %s", d.Id())
+	logger.Debugf("DELETE")
+	logger.Debugf("Deleting Datacenter: %s", d.Id())
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return errors.New("Invalid datacenter resource Id")
+		return fmt.Errorf("invalid datacenter resource ID")
 	}
 	// Get existing datacenter
 	existDC, err := gtm.GetDatacenter(dcID, domain)
 	if err != nil {
-		log.Printf("[ERROR] DatacenterDelete failed: %s", err.Error())
+		logger.Errorf("DatacenterDelete failed: %s", err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Datacenter: %v", existDC)
+	logger.Debugf("Deleting Datacenter: %v", existDC)
 	uStat, err := existDC.Delete(domain)
 	if err != nil {
-		log.Printf("[ERROR] DatacenterDelete failed: %s", err.Error())
+		logger.Errorf("DatacenterDelete failed: %s", err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Datacenter Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	logger.Debugf("Datacenter Delete status:")
+	logger.Debugf("%v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
-	if d.Get("wait_on_complete").(bool) {
-		done, err := waitForCompletion(domain)
+
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
+		return err
+	}
+
+	if waitOnComplete {
+		done, err := waitForCompletion(domain, m)
 		if done {
-			log.Printf("[INFO] [Akamai GTMv1] Datacenter delete completed")
+			logger.Infof("Datacenter delete completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMv1] Datacenter delete pending")
+				logger.Infof("Datacenter delete pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMv1] Datacenter delete failed [%s]", err.Error())
+				logger.Errorf("Datacenter delete failed [%s]", err.Error())
 				return err
 			}
 		}
 
 	}
 
-	// if succcessful ....
+	// if successful ....
 	d.SetId("")
 	return nil
 }
 
-// Test GTM Datacenter existance
-func resourceGTMv1DatacenterExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+// Test GTM Datacenter existence
+func resourceGTMv1DatacenterExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterExists")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
+	logger.Debugf("Exists")
 	// pull domain and dcid out of resource id
 	domain, dcID, err := parseDatacenterResourceId(d.Id())
 	if err != nil {
-		return false, errors.New("Invalid datacenter resource Id")
+		return false, fmt.Errorf("invalid datacenter resource ID")
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing datacenter [%d] in domain %s", dcID, domain)
+	logger.Debugf("Searching for existing datacenter [%d] in domain %s", dcID, domain)
 	dc, err := gtm.GetDatacenter(dcID, domain)
-	log.Printf("[DEBUG] [Akamai GTMv1] Searching for Existing datacenter result [%v]", domain)
+	logger.Debugf("Searching for Existing datacenter result [%v]", domain)
 	return dc != nil, err
 }
 
 // Create and populate a new datacenter object from resource data
-func populateNewDatacenterObject(d *schema.ResourceData) *gtm.Datacenter {
+func populateNewDatacenterObject(d *schema.ResourceData, m interface{}) *gtm.Datacenter {
 
 	dcObj := gtm.NewDatacenter()
 	dcObj.DefaultLoadObject = gtm.NewLoadObject()
-	populateDatacenterObject(d, dcObj)
+	populateDatacenterObject(d, dcObj, m)
 
 	return dcObj
-
 }
 
 // Populate existing datacenter object from resource data
-func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter) {
+func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "populateDatacenterObject")
 
-	if v, ok := d.GetOk("nickname"); ok {
-		dc.Nickname = v.(string)
+	if v, err := tools.GetStringValue("nickname", d); err == nil {
+		dc.Nickname = v
 	}
-	if v, ok := d.GetOk("city"); ok {
-		dc.City = v.(string)
-	} else if d.HasChange("city") {
-		dc.City = v.(string)
+	if v, err := tools.GetStringValue("city", d); err == nil || d.HasChange("city") {
+		dc.City = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
+		}
 	}
-	if v, ok := d.GetOk("clone_of"); ok {
-		dc.CloneOf = v.(int)
-	} else if d.HasChange("clone_of") {
-		dc.CloneOf = v.(int)
+
+	if v, err := tools.GetIntValue("clone_of", d); err == nil || d.HasChange("clone_of") {
+		dc.CloneOf = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
+		}
 	}
-	v := d.Get("cloud_server_host_header_override")
-	dc.CloudServerHostHeaderOverride = v.(bool)
-	v = d.Get("cloud_server_targeting")
-	dc.CloudServerTargeting = v.(bool)
-	if v, ok := d.GetOk("continent"); ok {
-		dc.Continent = v.(string)
-	} else if d.HasChange("continent") {
-		dc.Continent = v.(string)
+	cloudServerHostHeaderOverride, err := tools.GetBoolValue("cloud_server_host_header_override", d)
+	if err != nil {
+		logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: cloud_server_host_header_override not set: %v", err.Error()))
 	}
-	if v, ok := d.GetOk("country"); ok {
-		dc.Country = v.(string)
-	} else if d.HasChange("country") {
-		dc.Country = v.(string)
+	dc.CloudServerHostHeaderOverride = cloudServerHostHeaderOverride
+	cloudServerTargeting, err := tools.GetBoolValue("cloud_server_targeting", d)
+	if err != nil {
+		logger.Warnf("cloud_server_targeting not set: %s", err.Error())
+	}
+	dc.CloudServerTargeting = cloudServerTargeting
+	if v, err := tools.GetStringValue("continent", d); err == nil || d.HasChange("continent") {
+		dc.Continent = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
+		}
+	}
+	if v, err := tools.GetStringValue("country", d); err == nil || d.HasChange("country") {
+		dc.Country = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
+		}
 	}
 	// pull apart Set
-	dloList := d.Get("default_load_object").([]interface{})
-	if dloList == nil || len(dloList) == 0 {
+	if dloList, err := tools.GetInterfaceArrayValue("default_load_object", d); err != nil || len(dloList) == 0 {
 		dc.DefaultLoadObject = nil
 	} else {
 		dloObject := gtm.NewLoadObject()
-		for _, v := range dloList {
-			dloMap := v.(map[string]interface{})
-			dloObject.LoadObject = dloMap["load_object"].(string)
-			dloObject.LoadObjectPort = dloMap["load_object_port"].(int)
-			if dloMap["load_servers"] != nil {
-				ls := make([]string, len(dloMap["load_servers"].([]interface{})))
-				for i, sl := range dloMap["load_servers"].([]interface{}) {
-					ls[i] = sl.(string)
+		dloMap, ok := dloList[0].(map[string]interface{})
+		if !ok {
+			logger.Errorf("populateDatacenterObject failed")
+		}
+		dloObject.LoadObject, ok = dloMap["load_object"].(string)
+		if !ok {
+			logger.Errorf("populateDatacenterObject failed, bad load_object format")
+		}
+		dloObject.LoadObjectPort, ok = dloMap["load_object_port"].(int)
+		if !ok {
+			logger.Errorf("populateDatacenterObject failed, bad load_object_port format")
+		}
+		loadServers, ok := dloMap["load_servers"]
+		if ok {
+			servers, ok := loadServers.([]interface{})
+			if ok {
+				dloObject.LoadServers = make([]string, len(servers))
+				for i, server := range servers {
+					if dloObject.LoadServers[i], ok = server.(string); !ok {
+						logger.Errorf("populateDatacenterObject failed, bad loadServer format: %s", server)
+					}
 				}
-				dloObject.LoadServers = ls
+			} else {
+				logger.Errorf("populateDatacenterObject failed, bad load_servers format: %s", loadServers)
 			}
-			dc.DefaultLoadObject = dloObject
-			break
+		} else {
+			logger.Errorf("populateDatacenterObject failed, load_servers not present")
+		}
+		dc.DefaultLoadObject = dloObject
+	}
+	if v, err := tools.GetFloat64Value("latitude", d); err == nil || d.HasChange("latitude") {
+		dc.Latitude = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
 		}
 	}
-	if v, ok := d.GetOk("latitude"); ok {
-		dc.Latitude = v.(float64)
-	} else if d.HasChange("latitude") {
-		dc.Latitude = v.(float64)
+	if v, err := tools.GetFloat64Value("longitude", d); err == nil || d.HasChange("longitude") {
+		dc.Longitude = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
+		}
 	}
-	if v, ok := d.GetOk("longitude"); ok {
-		dc.Longitude = v.(float64)
-	} else if d.HasChange("longitude") {
-		dc.Longitude = v.(float64)
+	if v, err := tools.GetStringValue("nickname", d); err == nil {
+		dc.Nickname = v
 	}
-	if v, ok := d.GetOk("nickname"); ok {
-		dc.Nickname = v.(string)
+	if v, err := tools.GetIntValue("ping_interval", d); err == nil {
+		dc.PingInterval = v
 	}
-	if v, ok := d.GetOk("ping_interval"); ok {
-		dc.PingInterval = v.(int)
+	if v, err := tools.GetIntValue("ping_packet_size", d); err == nil {
+		dc.PingPacketSize = v
 	}
-	if v, ok := d.GetOk("ping_packet_size"); ok {
-		dc.PingPacketSize = v.(int)
+	if v, err := tools.GetIntValue("datacenter_id", d); err == nil {
+		dc.DatacenterId = v
 	}
-	if v, ok := d.GetOk("datacenter_id"); ok {
-		dc.DatacenterId = v.(int)
+	if v, err := tools.GetIntValue("score_penalty", d); err == nil {
+		dc.ScorePenalty = v
 	}
-	if v, ok := d.GetOk("score_penalty"); ok {
-		dc.ScorePenalty = v.(int)
+	if v, err := tools.GetIntValue("servermonitor_liveness_count", d); err == nil || d.HasChange("servermonitor_liveness_count") {
+		dc.ServermonitorLivenessCount = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
+		}
 	}
-	if v, ok := d.GetOk("servermonitor_liveness_count"); ok {
-		dc.ServermonitorLivenessCount = v.(int)
-	} else if d.HasChange("servermonitor_liveness_count") {
-		dc.ServermonitorLivenessCount = v.(int)
+	if v, err := tools.GetIntValue("servermonitor_load_count", d); err == nil || d.HasChange("servermonitor_load_count") {
+		dc.ServermonitorLoadCount = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
+		}
 	}
-	if v, ok := d.GetOk("servermonitor_load_count"); ok {
-		dc.ServermonitorLoadCount = v.(int)
-	} else if d.HasChange("servermonitor_load_count") {
-		dc.ServermonitorLoadCount = v.(int)
+	if v, err := tools.GetStringValue("servermonitor_pool", d); err == nil || d.HasChange("servermonitor_pool") {
+		dc.ServermonitorPool = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
+		}
 	}
-	if v, ok := d.GetOk("servermonitor_pool"); ok {
-		dc.ServermonitorPool = v.(string)
-	} else if d.HasChange("servermonitor_pool") {
-		dc.ServermonitorPool = v.(string)
-	}
-	if v, ok := d.GetOk("state_or_province"); ok {
-		dc.StateOrProvince = v.(string)
-	} else if d.HasChange("state_or_province") {
-		dc.StateOrProvince = v.(string)
+	if v, err := tools.GetStringValue("state_or_province", d); err == nil || d.HasChange("state_or_province") {
+		dc.StateOrProvince = v
+		if err != nil {
+			logger.Warnf(fmt.Sprintf("populateDataCenterObject() failed: %v", err.Error()))
+		}
 	}
 }
 
 // Populate Terraform state from provided Datacenter object
-func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
+func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "populateTerrafomDCState")
 
-	// walk thru all state elements
-	d.Set("nickname", dc.Nickname)
-	d.Set("datacenter_id", dc.DatacenterId)
-	d.Set("city", dc.City)
-	d.Set("clone_of", dc.CloneOf)
-	d.Set("cloud_server_host_header_override", dc.CloudServerHostHeaderOverride)
-	d.Set("cloud_server_targeting", dc.CloudServerTargeting)
-	d.Set("continent", dc.Continent)
-	d.Set("country", dc.Country)
-	dloStateList := d.Get("default_load_object").([]interface{})
-	if dloStateList == nil {
+	// walk through all state elements
+	for stateKey, stateValue := range map[string]interface{}{
+		"nickname":                          dc.Nickname,
+		"datacenter_id":                     dc.DatacenterId,
+		"city":                              dc.City,
+		"clone_of":                          dc.CloneOf,
+		"cloud_server_host_header_override": dc.CloudServerHostHeaderOverride,
+		"cloud_server_targeting":            dc.CloudServerTargeting,
+		"continent":                         dc.Continent,
+		"country":                           dc.Country} {
+		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			logger.Errorf("populateTerraformDCState failed: %s", err.Error())
+		}
+	}
+	dloStateList, err := tools.GetInterfaceArrayValue("default_load_object", d)
+	if err != nil {
 		dloStateList = make([]interface{}, 0, 1)
 	}
 	if len(dloStateList) == 0 && dc.DefaultLoadObject != nil && (dc.DefaultLoadObject.LoadObject != "" || len(dc.DefaultLoadObject.LoadServers) != 0 || dc.DefaultLoadObject.LoadObjectPort > 0) {
@@ -483,7 +566,7 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 			dlo["load_object"] = dc.DefaultLoadObject.LoadObject
 			dlo["load_object_port"] = dc.DefaultLoadObject.LoadObjectPort
 			if dlo["load_servers"] != nil && len(dlo["load_servers"].([]interface{})) > 0 {
-				dlo["load_servers"] = reconcileTerraformLists(dlo["load_servers"].([]interface{}), convertStringToInterfaceList(dc.DefaultLoadObject.LoadServers))
+				dlo["load_servers"] = reconcileTerraformLists(dlo["load_servers"].([]interface{}), convertStringToInterfaceList(dc.DefaultLoadObject.LoadServers, m), m)
 			} else {
 				dlo["load_servers"] = dc.DefaultLoadObject.LoadServers
 			}
@@ -491,16 +574,23 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter) {
 			dloStateList = make([]interface{}, 0, 1)
 		}
 	}
-	d.Set("default_load_object", dloStateList)
-	d.Set("latitude", dc.Latitude)
-	d.Set("longitude", dc.Longitude)
-	d.Set("ping_interval", dc.PingInterval)
-	d.Set("ping_packet_size", dc.PingPacketSize)
-	d.Set("score_penalty", dc.ScorePenalty)
-	d.Set("servermonitor_liveness_count", dc.ServermonitorLivenessCount)
-	d.Set("servermonitor_load_count", dc.ServermonitorLoadCount)
-	d.Set("servermonitor_pool", dc.ServermonitorPool)
-	d.Set("state_or_province", dc.StateOrProvince)
-	d.Set("virtual", dc.Virtual)
+	for stateKey, stateValue := range map[string]interface{}{
+		"default_load_object":          dloStateList,
+		"latitude":                     dc.Latitude,
+		"longitude":                    dc.Longitude,
+		"ping_interval":                dc.PingInterval,
+		"ping_packet_size":             dc.PingPacketSize,
+		"score_penalty":                dc.ScorePenalty,
+		"servermonitor_liveness_count": dc.ServermonitorLivenessCount,
+		"servermonitor_load_count":     dc.ServermonitorLoadCount,
+		"servermonitor_pool":           dc.ServermonitorPool,
+		"state_or_province":            dc.StateOrProvince,
+		"virtual":                      dc.Virtual,
+	} {
+		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			logger.Errorf("populateTerraformDCState failed: %s", err.Error())
+		}
+	}
 
 }

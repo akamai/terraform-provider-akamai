@@ -2,6 +2,8 @@ package dns
 
 import (
 	"errors"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"io/ioutil"
 	"os"
 	"path"
@@ -10,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 )
@@ -18,14 +21,16 @@ var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	testAccProvider = Provider()
+	akamai.Provider(Subprovider())
+
+	testAccProvider = inst.Provider
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testAccProvider,
 	}
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := inst.Provider.InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -57,12 +62,12 @@ func (d *data) List() []interface{} {
 }
 
 type args struct {
-	schema resourceData
+	schema tools.ResourceDataFetcher
 }
 
 func Test_getConfigDNSV2Service(t *testing.T) {
 	type args struct {
-		schema resourceData
+		schema tools.ResourceDataFetcher
 	}
 
 	tests := []struct {
@@ -76,7 +81,7 @@ func Test_getConfigDNSV2Service(t *testing.T) {
 		{
 			name: "no valid config",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{}),
 			},
 			edgerc:  ``,
 			wantErr: errors.New("Unable to create instance using environment or .edgerc file"),
@@ -84,7 +89,7 @@ func Test_getConfigDNSV2Service(t *testing.T) {
 		{
 			name: "undefined .edgerc, undefined section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{}),
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{}),
 			},
 			edgerc: `[default]
 host = default
@@ -103,7 +108,7 @@ max_body = 1`,
 		{
 			name: "undefined .edgerc, default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"dns_section": "default",
 				}),
 			},
@@ -131,7 +136,7 @@ max_body = 2`,
 		{
 			name: "undefined .edgerc, not_default section",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"dns_section": "not_default",
 				}),
 			},
@@ -159,7 +164,7 @@ max_body = 2`,
 		{
 			name: "no edgerc dns section with env",
 			args: args{
-				schema: schema.TestResourceDataRaw(t, Provider().Schema, map[string]interface{}{
+				schema: schema.TestResourceDataRaw(t, inst.Provider.Schema, map[string]interface{}{
 					"dns_section": "dns",
 				}),
 			},
@@ -181,19 +186,30 @@ max_body = 2`,
 		{
 			name: "dns block complete",
 			args: args{
-				schema: &data{
-					data: map[string]interface{}{
-						"dns": &data{
-							data: map[string]interface{}{
-								"host":          "block",
-								"access_token":  "block",
-								"client_token":  "block",
-								"client_secret": "block",
-								"max_body":      1,
+				schema: func() *schema.ResourceData {
+					resource := schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"dns": {
+								Optional: true,
+								Type:     schema.TypeSet,
+								Elem:     config.Options("dns"),
 							},
 						},
-					},
-				},
+					}
+					rd := resource.TestResourceData()
+					rd.Set("dns", schema.NewSet(func(i interface{}) int {
+						return 0
+					}, []interface{}{
+						map[string]interface{}{
+							"host":          "block",
+							"access_token":  "block",
+							"client_token":  "block",
+							"client_secret": "block",
+							"max_body":      1,
+						},
+					}))
+					return rd
+				}(),
 			},
 			want: &edgegrid.Config{
 				Host:         "block",
@@ -252,7 +268,7 @@ type testsStruct struct {
 	env     map[string]string
 }
 
-type getConfigServiceSig func(resourceData) (*edgegrid.Config, error)
+type getConfigServiceSig func(tools.ResourceDataFetcher) (*edgegrid.Config, error)
 
 func testGetConfigServiceExec(t *testing.T, tests []testsStruct, configService getConfigServiceSig) {
 

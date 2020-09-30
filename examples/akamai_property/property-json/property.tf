@@ -1,46 +1,49 @@
-provider "akamai" {
-  edgerc = "~/.edgerc"
-  papi_section = "global"
+terraform {
+  required_version = ">= 0.12"
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+    local = {
+      source = "hashicorp/local"
+    }
+  }
 }
 
+provider "akamai" {}
+
 resource "akamai_property" "terraform_example" {
-  name = "terraform_example1"
-  contact = [
-    "martin@akava.io"
-  ]
+  name    = "terraform_example1"
+  contact = ["you@example.com"]
   product = "prd_SPM"
-  contract = "${data.akamai_contract.contract.id}"
-  group = "${data.akamai_group.group.id}"
   cp_code = "cpc_846642"
 
   hostnames = {
-    "terraform.example1.org" = "${akamai_edge_hostname.ehn.edge_hostname}"
-    "terraform.example1.com" = "${akamai_edge_hostname.ehn.edge_hostname}"
+    "terraform.example1.org" = akamai_edge_hostname.ehn.edge_hostname
+    "terraform.example1.com" = akamai_edge_hostname.ehn.edge_hostname
   }
 
   rule_format = "v2019-07-25"
-  variables = "${akamai_property_variables.origin.json}"
-  rules = "${data.local_file.rules.content}"
+  variables   = akamai_property_variables.origin.json
+  rules       = data.local_file.rules.content
 }
 
 resource "akamai_edge_hostname" "ehn" {
   edge_hostname = "terraform.example1.org.edgesuite.net"
 
-  product = "prd_SPM"
-  contract = "${data.akamai_contract.contract.id}"
-  group = "${data.akamai_group.group.id}"
+  product  = "prd_SPM"
+  contract = data.akamai_contract.contract.id
+  group    = data.akamai_group.group.id
 
   ipv4 = true
   ipv6 = true
 }
 
 data "akamai_contract" "contract" {
-  group = "${data.akamai_group.group.name}"
+  group = data.akamai_group.group.name
 }
 
-data "akamai_group" "group" {
-  name = "Terraform Provider"
-}
+data "akamai_group" "group" {}
 
 data "local_file" "rules" {
   filename = "rules.json"

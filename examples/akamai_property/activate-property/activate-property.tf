@@ -1,36 +1,15 @@
-provider "akamai" {
-     edgerc = "~/.edgerc"
-     papi_section = "papi_section"
+terraform {
+  required_version = ">= 0.12"
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-variable "activate" {
-	default = true
-}
+provider "akamai" {}
 
-resource "akamai_property_activation" "dshafik_sandbox" {
-
-        name = "akavadeveloper.com"
-        contact = ["martin@akava.io"]
-        hostname = ["akavadeveloper.com"]
-        contract = "${data.akamai_contract.our_contract.id}"
-        group =  "${data.akamai_group.our_group.id}"
-        network = "STAGING"
-        activate = "${var.activate}"
-}
-
-data "akamai_group" "our_group" {
-    name = "Davey Shafik"
-}
-
-output "groupid" {
-  value = "${data.akamai_group.our_group.id}"
-}
-
-
-data "akamai_contract" "our_contract" {
-    name = "Davey Shafik"
-}
-
-output "contractid" {
-  value = "${data.akamai_contract.our_contract.id}"
+resource "akamai_property_activation" "activation" {
+  property = "example.com"
+  contact  = ["you@example.com"]
 }

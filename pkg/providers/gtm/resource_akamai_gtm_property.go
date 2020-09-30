@@ -1,10 +1,11 @@
 package gtm
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"strings"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -75,7 +76,7 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 				Default:  300,
 			},
-			"static_rr_set": &schema.Schema{
+			"static_rr_set": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
@@ -333,395 +334,409 @@ func parseResourceStringId(id string) (string, string, error) {
 
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return "", "", errors.New("Invalid resource id")
+		return "", "", fmt.Errorf("invalid resource id")
 	}
 
 	return parts[0], parts[1], nil
 
 }
 
-// utility func to parse Terraform property resource id
-func parsePropertyResourceId(id string) (string, string, error) {
-
-	return parseResourceStringId(id)
-}
-
 // Create a new GTM Property
-func resourceGTMv1PropertyCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyCreate(d *schema.ResourceData, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyCreate")
 
-	domain := d.Get("domain").(string)
-
-	log.Printf("[INFO] [Akamai GTM] Creating property [%s] in domain [%s]", d.Get("name").(string), domain)
-	newProp := populateNewPropertyObject(d)
-	log.Printf("[DEBUG] [Akamai GTMv1] Proposed New Property: [%v]", newProp)
-	cStatus, err := newProp.Create(domain)
+	domain, err := tools.GetStringValue("domain", d)
 	if err != nil {
-		log.Printf("[ERROR] PropertyCreate failed: %s", err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Property Create status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
+
+	propertyName, err := tools.GetStringValue("name", d)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
+	newProp := populateNewPropertyObject(d, m)
+	logger.Debugf("Proposed New Property: [%v]", newProp)
+	cStatus, err := newProp.Create(domain)
+	if err != nil {
+		logger.Errorf("PropertyCreate failed: %s", err.Error())
+		return err
+	}
+	logger.Debugf("Property Create status:")
+	logger.Debugf("%v", cStatus.Status)
 
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		return errors.New(cStatus.Status.Message)
+		return fmt.Errorf(cStatus.Status.Message)
 	}
-	if d.Get("wait_on_complete").(bool) {
-		done, err := waitForCompletion(domain)
+
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
+		return err
+	}
+
+	if waitOnComplete {
+		done, err := waitForCompletion(domain, m)
 		if done {
-			log.Printf("[INFO] [Akamai GTMv1] Property Create completed")
+			logger.Infof("Property Create completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMv1] Property Create pending")
+				logger.Infof("Property Create pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMv1] Property Create failed [%s]", err.Error())
+				logger.Errorf("Property Create failed [%s]", err.Error())
 				return err
 			}
 		}
-
 	}
 
 	// Give terraform the ID. Format domain::property
 	propertyId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	log.Printf("[DEBUG] [Akamai GTMv1] Generated Property Resource Id: %s", propertyId)
+	logger.Debugf("Generated Property Resource Id: %s", propertyId)
 	d.SetId(propertyId)
-	return resourceGTMv1PropertyRead(d, meta)
+	return resourceGTMv1PropertyRead(d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1PropertyRead(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyRead(d *schema.ResourceData, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyRead")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] READ")
-	log.Printf("[DEBUG] Reading [Akamai GTMv1] Property: %s", d.Id())
+	logger.Debugf("READ")
+	logger.Debugf("Reading Property: %s", d.Id())
 	// retrieve the property and domain
-	domain, property, err := parsePropertyResourceId(d.Id())
+	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return errors.New("Invalid property resource Id")
+		return fmt.Errorf("invalid property resource Id")
 	}
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
-		log.Printf("[ERROR] PropertyRead failed: %s", err.Error())
+		logger.Errorf("PropertyRead failed: %s", err.Error())
 		return err
 	}
-	populateTerraformPropertyState(d, prop)
-	log.Printf("[DEBUG] [Akamai GTMv1] READ %v", prop)
+	populateTerraformPropertyState(d, prop, m)
+	logger.Debugf("READ %v", prop)
 	return nil
 }
 
 // Update GTM Property
-func resourceGTMv1PropertyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyUpdate(d *schema.ResourceData, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyUpdate")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Property: %s", d.Id())
+	logger.Debugf("UPDATE")
+	logger.Debugf("Updating Property: %s", d.Id())
 	// pull domain and property out of resource id
-	domain, property, err := parsePropertyResourceId(d.Id())
+	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return errors.New("Invalid property resource Id")
+		return fmt.Errorf("invalid property resource Id")
 	}
 	// Get existing property
 	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
-		log.Printf("[ERROR] PropertyUpdate failed: %s", err.Error())
+		logger.Errorf("PropertyUpdate failed: %s", err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Property BEFORE: %v", existProp)
-	populatePropertyObject(d, existProp)
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Property PROPOSED: %v", existProp)
+	logger.Debugf("Updating Property BEFORE: %v", existProp)
+	populatePropertyObject(d, existProp, m)
+	logger.Debugf("Updating Property PROPOSED: %v", existProp)
 	uStat, err := existProp.Update(domain)
 	if err != nil {
-		log.Printf("[ERROR] PropertyUpdate failed: %s", err.Error())
+		logger.Errorf("PropertyUpdate failed: %s", err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Property Update  status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	logger.Debugf("Property Update  status:")
+	logger.Debugf("%v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
-	if d.Get("wait_on_complete").(bool) {
-		done, err := waitForCompletion(domain)
+
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
+		return err
+	}
+
+	if waitOnComplete {
+		done, err := waitForCompletion(domain, m)
 		if done {
-			log.Printf("[INFO] [Akamai GTMv1] Property update completed")
+			logger.Infof("Property update completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMv1] Property update pending")
+				logger.Infof("Property update pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMv1] Property update failed [%s]", err.Error())
+				logger.Errorf("Property update failed [%s]", err.Error())
 				return err
 			}
 		}
-
 	}
 
-	return resourceGTMv1PropertyRead(d, meta)
+	return resourceGTMv1PropertyRead(d, m)
 }
 
 // Import GTM Property.
-func resourceGTMv1PropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyImport")
 
-	log.Printf("[INFO] [Akamai GTM] Property [%s] Import", d.Id())
+	logger.Infof("Property [%s] Import", d.Id())
 	// pull domain and property out of resource id
-	domain, property, err := parsePropertyResourceId(d.Id())
+	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, errors.New("Invalid property resource Id")
+		return []*schema.ResourceData{d}, fmt.Errorf("invalid property resource Id")
 	}
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
 		return nil, err
 	}
-	d.Set("domain", domain)
-	d.Set("wait_on_complete", true)
-	populateTerraformPropertyState(d, prop)
+	if err := d.Set("domain", domain); err != nil {
+		return nil, err
+	}
+	if err := d.Set("wait_on_complete", true); err != nil {
+		return nil, err
+	}
+	populateTerraformPropertyState(d, prop, m)
 
 	// use same Id as passed in
-	log.Printf("[INFO] [Akamai GTM] Property [%s] [%s] Imported", d.Id(), d.Get("name"))
+	logger.Infof("Property [%s] [%s] Imported", d.Id(), d.Get("name"))
 	return []*schema.ResourceData{d}, nil
 }
 
 // Delete GTM Property.
-func resourceGTMv1PropertyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1PropertyDelete(d *schema.ResourceData, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyDelete")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] DELETE")
-	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Property: %s", d.Id())
+	logger.Debugf("DELETE")
+	logger.Debugf("Deleting Property: %s", d.Id())
 	// Get existing property
-	domain, property, err := parsePropertyResourceId(d.Id())
+	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return errors.New("Invalid property resource Id")
+		return fmt.Errorf("invalid property resource Id")
 	}
 	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
-		log.Printf("[ERROR] PropertyDelete failed: %s", err.Error())
+		logger.Errorf("PropertyDelete failed: %s", err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] Deleting [Akamai GTMv1] Property: %v", existProp)
+	logger.Debugf("Deleting Property: %v", existProp)
 	uStat, err := existProp.Delete(domain)
 	if err != nil {
-		log.Printf("[ERROR] PropertyDelete failed: %s", err.Error())
+		logger.Errorf("PropertyDelete failed: %s", err.Error())
 		return err
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Property Delete status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	logger.Debugf("Property Delete status:")
+	logger.Debugf("%v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		return fmt.Errorf(uStat.Message)
 	}
-	if d.Get("wait_on_complete").(bool) {
-		done, err := waitForCompletion(domain)
+
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
+		return err
+	}
+
+	if waitOnComplete {
+		done, err := waitForCompletion(domain, m)
 		if done {
-			log.Printf("[INFO] [Akamai GTMv1] Property delete completed")
+			logger.Infof("Property delete completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMv1] Property delete pending")
+				logger.Infof("Property delete pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMv1] Property delete failed [%s]", err.Error())
+				logger.Errorf("Property delete failed [%s]", err.Error())
 				return err
 			}
 		}
 
 	}
 
-	// if succcessful ....
+	// if successful ....
 	d.SetId("")
 	return nil
 }
 
-// Test GTM Property existance
-func resourceGTMv1PropertyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+// Test GTM Property existence
+func resourceGTMv1PropertyExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyExists")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] Exists")
+	logger.Debugf("Exists")
 	// pull domain and property out of resource id
-	domain, property, err := parsePropertyResourceId(d.Id())
+	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return false, errors.New("Invalid property resource Id")
+		return false, fmt.Errorf("invalid property resource Id")
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Searching for existing property [%s] in domain %s", property, domain)
+	logger.Debugf("Searching for existing property [%s] in domain %s", property, domain)
 	prop, err := gtm.GetProperty(property, domain)
 	return prop != nil, err
 }
 
-// Create and populate a new property object from resource data
-func populateNewPropertyObject(d *schema.ResourceData) *gtm.Property {
-
-	propObj := gtm.NewProperty(d.Get("name").(string))
-	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
-	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
-	populatePropertyObject(d, propObj)
-
-	return propObj
-
-}
-
 // Populate existing property object from resource data
-func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property) {
+func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 
-	if v, ok := d.GetOk("name"); ok {
-		prop.Name = v.(string)
+	if v, err := tools.GetStringValue("name", d); err == nil {
+		prop.Name = v
 	}
-	if v, ok := d.GetOk("type"); ok {
-		prop.Type = v.(string)
+	if v, err := tools.GetStringValue("type", d); err == nil {
+		prop.Type = v
 	}
-	if v, ok := d.GetOk("score_aggregation_type"); ok {
-		prop.ScoreAggregationType = v.(string)
+	if v, err := tools.GetStringValue("score_aggregation_type", d); err == nil {
+		prop.ScoreAggregationType = v
 	}
-	if v, ok := d.GetOk("stickiness_bonus_percentage"); ok {
-		prop.StickinessBonusPercentage = v.(int)
-	} else if d.HasChange("stickiness_bonus_percentage") {
-		prop.StickinessBonusPercentage = v.(int)
+	if v, err := tools.GetIntValue("stickiness_bonus_percentage", d); err == nil || d.HasChange("stickiness_bonus_percentage") {
+		prop.StickinessBonusPercentage = v
 	}
-	if v, ok := d.GetOk("stickiness_bonus_constant"); ok {
-		prop.StickinessBonusConstant = v.(int)
-	} else if d.HasChange("stickiness_bonus_constant") {
-		prop.StickinessBonusConstant = v.(int)
+	if v, err := tools.GetIntValue("stickiness_bonus_constant", d); err == nil || d.HasChange("stickiness_bonus_constant") {
+		prop.StickinessBonusConstant = v
 	}
-	if v, ok := d.GetOk("health_threshold"); ok {
-		prop.HealthThreshold = v.(float64)
-	} else if d.HasChange("health_threshold") {
-		prop.HealthThreshold = v.(float64)
+	if v, err := tools.GetFloat64Value("health_threshold", d); err == nil || d.HasChange("health_threshold") {
+		prop.HealthThreshold = v
 	}
-	v := d.Get("ipv6")
-	prop.Ipv6 = v.(bool)
-	v = d.Get("use_computed_targets")
-	prop.UseComputedTargets = v.(bool)
-	if v, ok := d.GetOk("backup_ip"); ok {
-		prop.BackupIp = v.(string)
-	} else if d.HasChange("backup_ip") {
-		prop.BackupIp = v.(string)
+	if v, err := tools.GetBoolValue("ipv6", d); err == nil {
+		prop.Ipv6 = v
 	}
-	v = d.Get("balance_by_download_score")
-	prop.BalanceByDownloadScore = v.(bool)
-	if v, ok := d.GetOk("static_ttl"); ok {
-		prop.StaticTTL = v.(int)
+	if v, err := tools.GetBoolValue("use_computed_targets", d); err == nil {
+		prop.UseComputedTargets = v
 	}
-	if v, ok := d.GetOk("unreachable_threshold"); ok {
-		prop.UnreachableThreshold = v.(float64)
-	} else if d.HasChange("unreachable_threshold") {
-		prop.UnreachableThreshold = v.(float64)
+	if v, err := tools.GetStringValue("backup_ip", d); err == nil || d.HasChange("backup_ip") {
+		prop.BackupIp = v
 	}
-	if v, ok := d.GetOk("min_live_fraction"); ok {
-		prop.MinLiveFraction = v.(float64)
-	} else if d.HasChange("min_live_fraction") {
-		prop.MinLiveFraction = v.(float64)
+	if v, err := tools.GetBoolValue("balance_by_download_score", d); err == nil {
+		prop.BalanceByDownloadScore = v
 	}
-	if v, ok := d.GetOk("health_multiplier"); ok {
-		prop.HealthMultiplier = v.(float64)
-	} else if d.HasChange("health_multiplier") {
-		prop.HealthMultiplier = v.(float64)
+	if v, err := tools.GetIntValue("static_ttl", d); err == nil {
+		prop.StaticTTL = v
 	}
-	if v, ok := d.GetOk("dynamic_ttl"); ok {
-		prop.DynamicTTL = v.(int)
+	if v, err := tools.GetFloat64Value("unreachable_threshold", d); err == nil {
+		prop.UnreachableThreshold = v
 	}
-	if v, ok := d.GetOk("max_unreachable_penalty"); ok {
-		prop.MaxUnreachablePenalty = v.(int)
-	} else if d.HasChange("max_unreachable_penalty") {
-		prop.MaxUnreachablePenalty = v.(int)
+	if v, err := tools.GetFloat64Value("min_live_fraction", d); err == nil || d.HasChange("min_live_fraction") {
+		prop.MinLiveFraction = v
 	}
-	if v, ok := d.GetOk("map_name"); ok {
-		prop.MapName = v.(string)
-	} else if d.HasChange("map_name") {
-		prop.MapName = v.(string)
+	if v, err := tools.GetFloat64Value("health_multiplier", d); err == nil || d.HasChange("health_multiplier") {
+		prop.HealthMultiplier = v
 	}
-	if v, ok := d.GetOk("handout_limit"); ok {
-		prop.HandoutLimit = v.(int)
-	} else if d.HasChange("handout_limit") {
-		prop.HandoutLimit = v.(int)
+	if v, err := tools.GetIntValue("dynamic_ttl", d); err == nil {
+		prop.DynamicTTL = v
 	}
-	if v, ok := d.GetOk("handout_mode"); ok {
-		prop.HandoutMode = v.(string)
+	if v, err := tools.GetIntValue("max_unreachable_penalty", d); err == nil || d.HasChange("max_unreachable_penalty") {
+		prop.MaxUnreachablePenalty = v
 	}
-	if v, ok := d.GetOk("load_imbalance_percentage"); ok {
-		prop.LoadImbalancePercentage = v.(float64)
-	} else if d.HasChange("load_imbalance_percentage") {
-		prop.LoadImbalancePercentage = v.(float64)
+	if v, err := tools.GetStringValue("map_name", d); err == nil || d.HasChange("map_name") {
+		prop.MapName = v
 	}
-	if v, ok := d.GetOk("failover_delay"); ok {
-		prop.FailoverDelay = v.(int)
-	} else if d.HasChange("failover_delay") {
-		prop.FailoverDelay = v.(int)
+	if v, err := tools.GetIntValue("handout_limit", d); err == nil || d.HasChange("handout_limit") {
+		prop.HandoutLimit = v
 	}
-	if v, ok := d.GetOk("backup_cname"); ok {
-		prop.BackupCName = v.(string)
-	} else if d.HasChange("backup_cname") {
-		prop.BackupCName = v.(string)
+	if v, err := tools.GetStringValue("handout_mode", d); err == nil {
+		prop.HandoutMode = v
 	}
-	if v, ok := d.GetOk("failback_delay"); ok {
-		prop.FailbackDelay = v.(int)
-	} else if d.HasChange("failback_delay") {
-		prop.FailbackDelay = v.(int)
+	if v, err := tools.GetFloat64Value("load_imbalance_percentage", d); err == nil || d.HasChange("load_imbalance_percentage") {
+		prop.LoadImbalancePercentage = v
 	}
-	if v, ok := d.GetOk("health_max"); ok {
-		prop.HealthMax = v.(float64)
-	} else if d.HasChange("health_max") {
-		prop.HealthMax = v.(float64)
+	if v, err := tools.GetIntValue("failover_delay", d); err == nil || d.HasChange("failover_delay") {
+		prop.FailoverDelay = v
 	}
-	v = d.Get("ghost_demand_reporting")
-	prop.GhostDemandReporting = v.(bool)
-	if v, ok := d.GetOk("weighted_hash_bits_for_ipv4"); ok {
-		prop.WeightedHashBitsForIPv4 = v.(int)
+	if v, err := tools.GetStringValue("backup_cname", d); err == nil || d.HasChange("backup_cname") {
+		prop.BackupCName = v
 	}
-	if v, ok := d.GetOk("weighted_hash_bits_for_ipv6"); ok {
-		prop.WeightedHashBitsForIPv6 = v.(int)
+	if v, err := tools.GetIntValue("failback_delay", d); err == nil || d.HasChange("failback_delay") {
+		prop.FailbackDelay = v
 	}
-	if v, ok := d.GetOk("cname"); ok {
-		prop.CName = v.(string)
-	} else if d.HasChange("cname") {
-		prop.CName = v.(string)
+	if v, err := tools.GetFloat64Value("health_max", d); err == nil || d.HasChange("health_max") {
+		prop.HealthMax = v
 	}
-	if v, ok := d.GetOk("comments"); ok {
-		prop.Comments = v.(string)
-	} else if d.HasChange("comments") {
-		prop.Comments = v.(string)
+	if v, err := tools.GetBoolValue("ghost_demand_reporting", d); err == nil {
+		prop.GhostDemandReporting = v
 	}
-	populateTrafficTargetObject(d, prop)
+	if v, err := tools.GetIntValue("weighted_hash_bits_for_ipv4", d); err == nil {
+		prop.WeightedHashBitsForIPv4 = v
+	}
+	if v, err := tools.GetIntValue("weighted_hash_bits_for_ipv6", d); err == nil {
+		prop.WeightedHashBitsForIPv6 = v
+	}
+	if v, err := tools.GetStringValue("cname", d); err == nil || d.HasChange("cname") {
+		prop.CName = v
+	}
+	if v, err := tools.GetStringValue("comments", d); err == nil || d.HasChange("comments") {
+		prop.Comments = v
+	}
+	populateTrafficTargetObject(d, prop, m)
 	populateStaticRRSetObject(d, prop)
 	populateLivenessTestObject(d, prop)
 
 }
 
-// Populate Terraform state from provided Property object
-func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property) {
+// Create and populate a new property object from resource data
+func populateNewPropertyObject(d *schema.ResourceData, m interface{}) *gtm.Property {
 
-	// walk thru all state elements
-	d.Set("name", prop.Name)
-	d.Set("type", prop.Type)
-	d.Set("ipv6", prop.Ipv6)
-	d.Set("score_aggregation_type", prop.ScoreAggregationType)
-	d.Set("stickiness_bonus_percentage", prop.StickinessBonusPercentage)
-	d.Set("stickiness_bonus_constant", prop.StickinessBonusConstant)
-	d.Set("health_threshold", prop.HealthThreshold)
-	d.Set("use_computed_targets", prop.UseComputedTargets)
-	d.Set("backup_ip", prop.BackupIp)
-	d.Set("balance_by_download_score", prop.BalanceByDownloadScore)
-	d.Set("static_ttl", prop.StaticTTL)
-	d.Set("unreachable_threshold", prop.UnreachableThreshold)
-	d.Set("min_live_fraction", prop.MinLiveFraction)
-	d.Set("health_multiplier", prop.HealthMultiplier)
-	d.Set("dynamic_ttl", prop.DynamicTTL)
-	d.Set("max_unreachable_penalty", prop.MaxUnreachablePenalty)
-	d.Set("map_name", prop.MapName)
-	d.Set("handout_limit", prop.HandoutLimit)
-	d.Set("handout_mode", prop.HandoutMode)
-	d.Set("load_imbalance_percentage", prop.LoadImbalancePercentage)
-	d.Set("failover_delay", prop.FailoverDelay)
-	d.Set("backup_cname", prop.BackupCName)
-	d.Set("failback_delay", prop.FailbackDelay)
-	d.Set("health_max", prop.HealthMax)
-	d.Set("ghost_demand_reporting", prop.GhostDemandReporting)
-	d.Set("weighted_hash_bits_for_ipv4", prop.WeightedHashBitsForIPv4)
-	d.Set("weighted_hash_bits_for_ipv6", prop.WeightedHashBitsForIPv6)
-	d.Set("cname", prop.CName)
-	d.Set("comments", prop.Comments)
-	populateTerraformTrafficTargetState(d, prop)
-	populateTerraformStaticRRSetState(d, prop)
-	populateTerraformLivenessTestState(d, prop)
+	name, _ := tools.GetStringValue("name", d)
+	propObj := gtm.NewProperty(name)
+	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
+	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
+	populatePropertyObject(d, propObj, m)
+
+	return propObj
+
+}
+
+// Populate Terraform state from provided Property object
+func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "populateTerraformPropertyState")
+
+	for stateKey, stateValue := range map[string]interface{}{
+		"name":                        prop.Name,
+		"ipv6":                        prop.Ipv6,
+		"score_aggregation_type":      prop.ScoreAggregationType,
+		"stickiness_bonus_percentage": prop.StickinessBonusPercentage,
+		"stickiness_bonus_constant":   prop.StickinessBonusConstant,
+		"health_threshold":            prop.HealthThreshold,
+		"use_computed_targets":        prop.UseComputedTargets,
+		"backup_ip":                   prop.BackupIp,
+		"balance_by_download_score":   prop.BalanceByDownloadScore,
+		"static_ttl":                  prop.StaticTTL,
+		"unreachable_threshold":       prop.UnreachableThreshold,
+		"min_live_fraction":           prop.MinLiveFraction,
+		"health_multiplier":           prop.HealthMultiplier,
+		"dynamic_ttl":                 prop.DynamicTTL,
+		"max_unreachable_penalty":     prop.MaxUnreachablePenalty,
+		"map_name":                    prop.MapName,
+		"handout_limit":               prop.HandoutLimit,
+		"handout_mode":                prop.HandoutMode,
+		"load_imbalance_percentage":   prop.LoadImbalancePercentage,
+		"failover_delay":              prop.FailoverDelay,
+		"backup_cname":                prop.BackupCName,
+		"failback_delay":              prop.FailbackDelay,
+		"health_max":                  prop.HealthMax,
+		"ghost_demand_reporting":      prop.GhostDemandReporting,
+		"weighted_hash_bits_for_ipv4": prop.WeightedHashBitsForIPv4,
+		"weighted_hash_bits_for_ipv6": prop.WeightedHashBitsForIPv6,
+		"cname":                       prop.CName,
+		"comments":                    prop.Comments,
+	} {
+		// walk thru all state elements
+		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			logger.Errorf("Invalid configuration: %s", err.Error())
+		}
+	}
+	populateTerraformTrafficTargetState(d, prop, m)
+	populateTerraformStaticRRSetState(d, prop, m)
+	populateTerraformLivenessTestState(d, prop, m)
 
 }
 
 // create and populate GTM Property TrafficTargets object
-func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property) {
+func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyExists")
 
 	// pull apart List
-	tt := d.Get("traffic_target")
-	if tt != nil {
-		traffTargList := tt.([]interface{})
+	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
+	if err == nil {
 		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
 		for i, v := range traffTargList {
 			ttMap := v.(map[string]interface{})
@@ -741,11 +756,15 @@ func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property) {
 			trafficObjList[i] = trafficTarget
 		}
 		prop.TrafficTargets = trafficObjList
+	} else {
+		logger.Warnf("traffic_target not set in ResourceData: %s", err.Error())
 	}
 }
 
 // create and populate Terraform traffic_targets schema
-func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Property) {
+func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "populateTerraformTrafficTargetState")
 
 	objectInventory := make(map[int]*gtm.TrafficTarget, len(prop.TrafficTargets))
 	if len(prop.TrafficTargets) > 0 {
@@ -753,13 +772,13 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 			objectInventory[aObj.DatacenterId] = aObj
 		}
 	}
-	ttStateList := d.Get("traffic_target").([]interface{})
+	ttStateList, _ := tools.GetInterfaceArrayValue("traffic_target", d)
 	for _, ttMap := range ttStateList {
 		tt := ttMap.(map[string]interface{})
 		objIndex := tt["datacenter_id"].(int)
 		ttObject := objectInventory[objIndex]
 		if ttObject == nil {
-			log.Printf("[WARNING] [Akamai GTMv1] Property TrafficTarget %d NOT FOUND in returned GTM Object", tt["datacenter_id"])
+			logger.Warnf("Property TrafficTarget %d NOT FOUND in returned GTM Object", tt["datacenter_id"])
 			continue
 		}
 		tt["datacenter_id"] = ttObject.DatacenterId
@@ -767,14 +786,14 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		tt["enabled"] = ttObject.Enabled
 		tt["weight"] = ttObject.Weight
 		tt["handout_cname"] = ttObject.HandoutCName
-		tt["servers"] = reconcileTerraformLists(tt["servers"].([]interface{}), convertStringToInterfaceList(ttObject.Servers))
+		tt["servers"] = reconcileTerraformLists(tt["servers"].([]interface{}), convertStringToInterfaceList(ttObject.Servers, m), m)
 		// remove object
 		delete(objectInventory, objIndex)
 	}
 	if len(objectInventory) > 0 {
 		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
 		for _, mttObj := range objectInventory {
-			log.Printf("[DEBUG] [Akamai GTMv1] Property TrafficObject NEW State Object: %d", mttObj.DatacenterId)
+			logger.Debugf("Property TrafficObject NEW State Object: %d", mttObj.DatacenterId)
 			ttNew := map[string]interface{}{
 				"datacenter_id": mttObj.DatacenterId,
 				"enabled":       mttObj.Enabled,
@@ -786,7 +805,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 			ttStateList = append(ttStateList, ttNew)
 		}
 	}
-	d.Set("traffic_target", ttStateList)
+	_ = d.Set("traffic_target", ttStateList)
 
 }
 
@@ -794,8 +813,8 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	// pull apart List
-	staticSetList := d.Get("static_rr_set").([]interface{})
-	if staticSetList != nil {
+	staticSetList, err := tools.GetInterfaceArrayValue("static_rr_set", d)
+	if err == nil {
 		staticObjList := make([]*gtm.StaticRRSet, len(staticSetList)) // create new object list
 		for i, v := range staticSetList {
 			recMap := v.(map[string]interface{})
@@ -816,7 +835,9 @@ func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 }
 
 // create and populate Terraform static_rr_sets schema
-func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Property) {
+func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "populateTerraformStaticRRSetState")
 
 	objectInventory := make(map[string]*gtm.StaticRRSet, len(prop.StaticRRSets))
 	if len(prop.StaticRRSets) > 0 {
@@ -824,23 +845,23 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 			objectInventory[aObj.Type] = aObj
 		}
 	}
-	rrStateList := d.Get("static_rr_set").([]interface{})
+	rrStateList, _ := tools.GetInterfaceArrayValue("static_rr_set", d)
 	for _, rrMap := range rrStateList {
 		rr := rrMap.(map[string]interface{})
 		objIndex := rr["type"].(string)
 		rrObject := objectInventory[objIndex]
 		if rrObject == nil {
-			log.Printf("[WARNING] [Akamai GTMv1] Property StaticRRSet %s NOT FOUND in returned GTM Object", rr["type"])
+			logger.Warnf("Property StaticRRSet %s NOT FOUND in returned GTM Object", rr["type"])
 			continue
 		}
 		rr["type"] = rrObject.Type
 		rr["ttl"] = rrObject.TTL
-		rr["rdata"] = reconcileTerraformLists(rr["rdata"].([]interface{}), convertStringToInterfaceList(rrObject.Rdata))
+		rr["rdata"] = reconcileTerraformLists(rr["rdata"].([]interface{}), convertStringToInterfaceList(rrObject.Rdata, m), m)
 		// remove object
 		delete(objectInventory, objIndex)
 	}
 	if len(objectInventory) > 0 {
-		log.Printf("[DEBUG] [Akamai GTMv1] Property StaticRRSet objects left...")
+		logger.Debugf("Property StaticRRSet objects left...")
 		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
 		for _, mrrObj := range objectInventory {
 			rrNew := map[string]interface{}{
@@ -851,15 +872,15 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 			rrStateList = append(rrStateList, rrNew)
 		}
 	}
-	d.Set("static_rr_set", rrStateList)
+	_ = d.Set("static_rr_set", rrStateList)
 
 }
 
-// Populate existing Livenesstest  object from resource data
+// Populate existing Liveness test  object from resource data
 func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 
-	liveTestList := d.Get("liveness_test").([]interface{})
-	if liveTestList != nil {
+	liveTestList, err := tools.GetInterfaceArrayValue("liveness_test", d)
+	if err == nil {
 		liveTestObjList := make([]*gtm.LivenessTest, len(liveTestList)) // create new object list
 		for i, l := range liveTestList {
 			v := l.(map[string]interface{})
@@ -905,7 +926,9 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 }
 
 // create and populate Terraform liveness_test schema
-func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Property) {
+func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "populateTerraformLivenessTestState")
 
 	objectInventory := make(map[string]*gtm.LivenessTest, len(prop.LivenessTests))
 	if len(prop.LivenessTests) > 0 {
@@ -913,13 +936,13 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			objectInventory[aObj.Name] = aObj
 		}
 	}
-	ltStateList := d.Get("liveness_test").([]interface{})
+	ltStateList, _ := tools.GetInterfaceArrayValue("liveness_test", d)
 	for _, ltMap := range ltStateList {
 		lt := ltMap.(map[string]interface{})
 		objIndex := lt["name"].(string)
 		ltObject := objectInventory[objIndex]
 		if ltObject == nil {
-			log.Printf("[WARNING] [Akamai GTMv1] Property LivenessTest  %s NOT FOUND in returned GTM Object", lt["name"])
+			logger.Warnf("Property LivenessTest  %s NOT FOUND in returned GTM Object", lt["name"])
 			continue
 		}
 		lt["name"] = ltObject.Name
@@ -958,7 +981,7 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 		delete(objectInventory, objIndex)
 	}
 	if len(objectInventory) > 0 {
-		log.Printf("[DEBUG] [Akamai GTMv1] Property LivenessTest objects left...")
+		logger.Debugf("Property LivenessTest objects left...")
 		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
 		for _, l := range objectInventory {
 			ltNew := map[string]interface{}{
@@ -998,13 +1021,15 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			ltStateList = append(ltStateList, ltNew)
 		}
 	}
-	d.Set("liveness_test", ltStateList)
+	_ = d.Set("liveness_test", ltStateList)
 
 }
 
-func convertStringToInterfaceList(stringList []string) []interface{} {
+func convertStringToInterfaceList(stringList []string, m interface{}) []interface{} {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "convertStringToInterfaceList")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] String List: %v", stringList)
+	logger.Debugf("String List: %v", stringList)
 	retList := make([]interface{}, 0, len(stringList))
 	for _, v := range stringList {
 		retList = append(retList, v)
@@ -1014,21 +1039,11 @@ func convertStringToInterfaceList(stringList []string) []interface{} {
 
 }
 
-func convertIntToInterfaceList(intList []int) []interface{} {
+func convertInt64ToInterfaceList(intList []int64, m interface{}) []interface{} {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "convertInt64ToInterfaceList")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
-	retList := make([]interface{}, 0, len(intList))
-	for _, v := range intList {
-		retList = append(retList, v)
-	}
-
-	return retList
-
-}
-
-func convertInt64ToInterfaceList(intList []int64) []interface{} {
-
-	log.Printf("[DEBUG] [Akamai GTMv1] Int List: %v", intList)
+	logger.Debugf("Int List: %v", intList)
 	retList := make([]interface{}, 0, len(intList))
 	for _, v := range intList {
 		retList = append(retList, v)
@@ -1039,10 +1054,12 @@ func convertInt64ToInterfaceList(intList []int64) []interface{} {
 }
 
 // Util method to reconcile list configs. Type agnostic. Goal: maintain order of tf list config
-func reconcileTerraformLists(terraList []interface{}, newList []interface{}) []interface{} {
+func reconcileTerraformLists(terraList []interface{}, newList []interface{}, m interface{}) []interface{} {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "reconcileTerraformLists")
 
-	log.Printf("[DEBUG] [Akamai GTMv1] Existing Terra List: %v", terraList)
-	log.Printf("[DEBUG] [Akamai GTMv1] Read List: %v", newList)
+	logger.Debugf("Existing Terra List: %v", terraList)
+	logger.Debugf("Read List: %v", newList)
 	newMap := make(map[string]interface{}, len(newList))
 	updatedList := make([]interface{}, 0, len(newList))
 	for _, newelem := range newList {
@@ -1060,7 +1077,7 @@ func reconcileTerraformLists(terraList []interface{}, newList []interface{}) []i
 		updatedList = append(updatedList, newVal)
 	}
 
-	log.Printf("[DEBUG] [Akamai GTMv1] Updated Terra List: %v", updatedList)
+	logger.Debugf("Updated Terra List: %v", updatedList)
 	return updatedList
 
 }

@@ -17,7 +17,7 @@ func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
 		CheckDestroy: testAccCheckAuthoritiesSetDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceAuthoritiesSet_basic(),
+				Config: testAccDataSourceAuthoritiesSetBasic(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 				),
@@ -26,7 +26,7 @@ func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
 	})
 }
 
-func testAccDataSourceAuthoritiesSet_basic() string {
+func testAccDataSourceAuthoritiesSetBasic() string {
 	return `
 provider "akamai" {
   papi_section = "dns"
@@ -44,8 +44,8 @@ output "authorities" {
 }`
 }
 
-func testAccCheckAuthoritiesSetDestroy(s *terraform.State) error {
-	log.Printf("[DEBUG] [Group] Searching for AuthoritiesSet Delete skipped ")
+func testAccCheckAuthoritiesSetDestroy(*terraform.State) error {
+	log.Printf("[Group] Searching for AuthoritiesSet Delete skipped ")
 
 	return nil
 }

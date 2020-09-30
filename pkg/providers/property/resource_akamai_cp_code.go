@@ -1,12 +1,15 @@
 package property
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -17,27 +20,27 @@ import (
 // https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
 func resourceCPCode() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceCPCodeCreate,
-		Read:   resourceCPCodeRead,
-		Delete: resourceCPCodeDelete,
+		CreateContext: resourceCPCodeCreate,
+		ReadContext:   resourceCPCodeRead,
+		DeleteContext: resourceCPCodeDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"contract": &schema.Schema{
+			"contract": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"group": &schema.Schema{
+			"group": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"product": &schema.Schema{
+			"product": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -46,49 +49,90 @@ func resourceCPCode() *schema.Resource {
 	}
 }
 
-func resourceCPCodeCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeCreate-" + tools.CreateNonce() + "]"
+func resourceCPCodeCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceCPCodeCreate")
+	CorrelationID := "[PAPI][resourceCPCodeCreate-" + meta.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating CP Code")
+	logger.Debugf("Creating CP Code")
+	name, err := tools.GetStringValue("name", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	product, err := tools.GetStringValue("product", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	group, err := tools.GetStringValue("group", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	contract, err := tools.GetStringValue("contract", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
-	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
-	cpCode, err := cpCodes.FindCpCode(d.Get("name").(string), CorrelationID)
-	if cpCode == nil || err != nil {
+	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
+	cpCode, err := cpCodes.FindCpCode(name, CorrelationID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", ErrLookingUpCPCode, err.Error()))
+	}
+	if cpCode == nil {
 		cpCode = cpCodes.NewCpCode()
-		cpCode.ProductID = d.Get("product").(string)
-		cpCode.CpcodeName = d.Get("name").(string)
+		cpCode.ProductID = product
+		cpCode.CpcodeName = name
 
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  CPCode: %+v", cpCode))
+		logger.Debugf("CPCode: %+v", cpCode)
 		err := cpCode.Save(CorrelationID)
 		if err != nil {
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Error saving")
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("%s", err.(client.APIError).RawBody))
-			return err
+			logger.Debugf("Error saving")
+			var apiError client.APIError
+			if errors.As(err, &apiError) {
+				logger.Debugf("%s", apiError.RawBody)
+			}
+			return diag.FromErr(err)
 		}
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Resulting CP Code: %#v\n\n\n", cpCode))
+	logger.Debugf("Resulting CP Code: %#v", cpCode)
 	d.SetId(cpCode.CpcodeID)
-	return resourceCPCodeRead(d, meta)
+	return resourceCPCodeRead(nil, d, m)
 }
 
-func resourceCPCodeDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeCreate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting CP Code")
+func resourceCPCodeDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+
+	logger := meta.Log("PAPI", "resourceCPCodeDelete")
+
+	logger.Debugf("Deleting CP Code")
 	// No PAPI CP Code delete operation exists.
 	// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
-	return schema.Noop(d, meta)
+	return schema.NoopContext(nil, d, m)
 }
 
-func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceCPCodeRead-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CP Code")
-	cpCodes := resourceCPCodePAPINewCPCodes(d, meta)
+func resourceCPCodeRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceCPCodeRead")
+	CorrelationID := "[PAPI][resourceCPCodeRead-" + meta.OperationID() + "]"
+
+	logger.Debugf("Read CP Code")
+	name, err := tools.GetStringValue("name", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	group, err := tools.GetStringValue("group", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	contract, err := tools.GetStringValue("contract", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
 	cpCode, err := cpCodes.FindCpCode(d.Id(), CorrelationID)
 	if cpCode == nil || err != nil {
-		cpCode, err = cpCodes.FindCpCode(d.Get("name").(string), CorrelationID)
+		cpCode, err = cpCodes.FindCpCode(name, CorrelationID)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
@@ -97,16 +141,16 @@ func resourceCPCodeRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(cpCode.CpcodeID)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Read CP Code: %+v", cpCode))
+	logger.Debugf("Read CP Code: %+v", cpCode)
 	return nil
 }
 
-func resourceCPCodePAPINewCPCodes(d *schema.ResourceData, meta interface{}) *papi.CpCodes {
+func resourceCPCodePAPINewCPCodes(contractID, groupID string) *papi.CpCodes {
 	contract := &papi.Contract{
-		ContractID: d.Get("contract").(string),
+		ContractID: contractID,
 	}
 	group := &papi.Group{
-		GroupID: d.Get("group").(string),
+		GroupID: groupID,
 	}
 	return papi.NewCpCodes(contract, group)
 }

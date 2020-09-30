@@ -1,14 +1,16 @@
 package dns
 
 import (
-	"context"
+	"errors"
+	"fmt"
 	"sync"
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
-	"github.com/hashicorp/go-hclog"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -63,38 +65,67 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-type resourceData interface {
-	GetOk(string) (interface{}, bool)
-	Get(string) interface{}
-}
-
-type set interface {
-	List() []interface{}
-}
-
-func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
+func getConfigDNSV2Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 	var DNSv2Config edgegrid.Config
 	var err error
-	if _, ok := d.GetOk("dns"); ok {
-		config := d.Get("dns").(set).List()[0].(map[string]interface{})
-
-		DNSv2Config = edgegrid.Config{
-			Host:         config["host"].(string),
-			AccessToken:  config["access_token"].(string),
-			ClientToken:  config["client_token"].(string),
-			ClientSecret: config["client_secret"].(string),
-			MaxBody:      config["max_body"].(int),
+	dns, err := tools.GetSetValue("dns", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
+	if err == nil {
+		dnsConfig := dns.List()
+		if len(dnsConfig) == 0 {
+			return nil, fmt.Errorf("'dns' property in provider must have at least one entry")
 		}
-
+		configMap, ok := dnsConfig[0].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("dns config entry is of invalid type; should be 'map[string]interface{}'")
+		}
+		host, ok := configMap["host"].(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
+		}
+		accessToken, ok := configMap["access_token"].(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "access_token", "string")
+		}
+		clientToken, ok := configMap["client_token"].(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_token", "string")
+		}
+		clientSecret, ok := configMap["client_secret"].(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_secret", "string")
+		}
+		maxBody, ok := configMap["max_body"].(int)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "max_body", "int")
+		}
+		DNSv2Config = edgegrid.Config{
+			Host:         host,
+			AccessToken:  accessToken,
+			ClientToken:  clientToken,
+			ClientSecret: clientSecret,
+			MaxBody:      maxBody,
+		}
 		dnsv2.Init(DNSv2Config)
 		return &DNSv2Config, nil
 	}
 
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("dns_section").(string)
-	if section == "" {
-		section = d.Get("config_section").(string)
+	edgerc, err := tools.GetStringValue("edgerc", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
 	}
+
+	var section string
+
+	for _, s := range tools.FindStringValues(d, "dns_section", "config_section") {
+		if s != "default" {
+			section = s
+			break
+		}
+	}
+
 	DNSv2Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
@@ -102,6 +133,7 @@ func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
 
 	dnsv2.Init(DNSv2Config)
 	edgegrid.SetupLogging()
+
 	return &DNSv2Config, nil
 }
 
@@ -109,11 +141,11 @@ func (p *provider) Name() string {
 	return "dns"
 }
 
-// DnsProviderVersion update version string anytime provider adds new features
-const DnsProviderVersion string = "v0.8.3"
+// DNSProviderVersion update version string anytime provider adds new features
+const DNSProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-    return DnsProviderVersion
+	return DNSProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
@@ -128,12 +160,12 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(ctx context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	log.Named(p.Name()).Debug("START Configure")
+func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+	log.Debug("START Configure")
 
-	cfg, err := getConfigDNSV2Service(d)
+	_, err := getConfigDNSV2Service(d)
 	if err != nil {
-		return nil, nil
+		return nil
 	}
-	return cfg, nil
+	return nil
 }

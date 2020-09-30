@@ -17,7 +17,7 @@ func TestAccDataSourceCPCode_basic(t *testing.T) {
 		CheckDestroy: testAccCheckDataSourceCPCodeDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceCPCode_basic(),
+				Config: testAccDataSourceCPCodeBasic(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 				),
@@ -26,7 +26,7 @@ func TestAccDataSourceCPCode_basic(t *testing.T) {
 	})
 }
 
-func testAccDataSourceCPCode_basic() string {
+func testAccDataSourceCPCodeBasic() string {
 	return `
 provider "akamai" {
   papi_section = "papi"

@@ -1,17 +1,20 @@
 package property
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceAkamaiProperty() *schema.Resource {
 	return &schema.Resource{
-		Read: dataAkamaiPropertyRead,
+		ReadContext: dataAkamaiPropertyRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -29,30 +32,42 @@ func dataSourceAkamaiProperty() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + tools.CreateNonce() + "]"
+func dataAkamaiPropertyRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	log := meta.Log("PAPI", "dataAkamaiPropertyRead")
+	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + meta.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Reading Property")
-	property := findProperty(d, CorrelationID)
+	log.Debug("Reading Property")
+
+	name, err := tools.GetStringValue("name", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	property := findProperty(name, CorrelationID)
 	if property == nil {
-		return fmt.Errorf("Can't find property")
+		return diag.FromErr(fmt.Errorf("%w: %s", ErrPropertyNotFound, name))
 	}
 
-	_, ok := d.GetOk("version")
-	if ok {
-		property.LatestVersion = d.Get("version").(int)
+	version, err := tools.GetIntValue("version", d)
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		property.LatestVersion = version
 	}
 
 	rules, err := property.GetRules(CorrelationID)
 	if err != nil {
-		return fmt.Errorf("Can't get rules for property")
+		return diag.FromErr(fmt.Errorf("%w: %s", ErrRulesNotFound, err.Error()))
 	}
 
-	jsonBody, err := json.Marshal(rules)
-	buf := bytes.NewBufferString("")
-	buf.Write(jsonBody)
-
+	body, err := json.Marshal(rules)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err = d.Set("rules", string(body)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(property.PropertyID)
-	d.Set("rules", buf.String())
 	return nil
 }

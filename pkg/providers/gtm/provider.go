@@ -1,14 +1,16 @@
 package gtm
 
 import (
-	"context"
+	"errors"
+	"fmt"
 	"sync"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
-	"github.com/hashicorp/go-hclog"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -81,14 +83,53 @@ func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
 	var GTMv1Config edgegrid.Config
 	var err error
 	if _, ok := d.GetOk("gtm"); ok {
-		config := d.Get("gtm").(set).List()[0].(map[string]interface{})
+		resourceGtm, ok := d.Get("gtm").(set)
+		if !ok {
+			return nil, fmt.Errorf("wrong cast")
+		}
+
+		resourceConfig, ok := resourceGtm.List()[0].(map[string]interface{})
+
+		if !ok {
+			return nil, fmt.Errorf("wrong cast")
+		}
+
+		host, ok := resourceConfig["host"].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong host data type")
+		}
+
+		accessToken, ok := resourceConfig["access_token"].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong access_token data type")
+		}
+
+		clientToken, ok := resourceConfig["client_token"].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong client_token data type")
+		}
+
+		clientSecret, ok := resourceConfig["client_secret"].(string)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong client_secret data type")
+		}
+
+		maxBody, ok := resourceConfig["max_body"].(int)
+
+		if !ok {
+			return nil, fmt.Errorf("wrong max_body data type")
+		}
 
 		GTMv1Config = edgegrid.Config{
-			Host:         config["host"].(string),
-			AccessToken:  config["access_token"].(string),
-			ClientToken:  config["client_token"].(string),
-			ClientSecret: config["client_secret"].(string),
-			MaxBody:      config["max_body"].(int),
+			Host:         host,
+			AccessToken:  accessToken,
+			ClientToken:  clientToken,
+			ClientSecret: clientSecret,
+			MaxBody:      maxBody,
 		}
 
 		gtm.Init(GTMv1Config)
@@ -96,11 +137,20 @@ func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
 		return &GTMv1Config, nil
 	}
 
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("gtm_section").(string)
-	if section == "" {
-		section = d.Get("config_section").(string)
+	edgerc, err := tools.GetStringValue("edgerc", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
 	}
+
+	var section string
+
+	for _, s := range tools.FindStringValues(d, "gtm_section", "config_section") {
+		if s != "default" {
+			section = s
+			break
+		}
+	}
+
 	GTMv1Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
@@ -114,11 +164,11 @@ func (p *provider) Name() string {
 	return "gtm"
 }
 
-// GtmProviderVersion update version string anytime provider adds new features
+// GtmProviderVersion update version string anytime provider adds new features.
 const GtmProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-    return GtmProviderVersion
+	return GtmProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
@@ -133,13 +183,13 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(ctx context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	log.Named(p.Name()).Debug("START Configure")
+func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+	log.Debug("START Configure")
 
-	cfg, err := getConfigGTMV1Service(d)
+	_, err := getConfigGTMV1Service(d)
 	if err != nil {
-		return nil, nil
+		return nil
 	}
 
-	return cfg, nil
+	return nil
 }

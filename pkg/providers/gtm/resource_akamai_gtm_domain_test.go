@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var gtm_test_domain = "gtm_terra_testdomain.akadns.net"
+var gtmTestDomain = "gtm_terra_testdomain.akadns.net"
 
 var testAccAkamaiGTMDomainConfig = fmt.Sprintf(`
 provider "akamai" {
@@ -35,7 +35,7 @@ resource "akamai_gtm_domain" "test_domain" {
 	group     = data.akamai_group.group.id
 	load_imbalance_percentage = 10
 }
-`, gtm_test_domain)
+`, gtmTestDomain)
 
 var testAccAkamaiGTMDomainUpdateConfig = fmt.Sprintf(`
 provider "akamai" {
@@ -60,7 +60,7 @@ resource "akamai_gtm_domain" "test_domain" {
         group     = data.akamai_group.group.id
         load_imbalance_percentage = 10
 }
-`, gtm_test_domain)
+`, gtmTestDomain)
 
 func TestAccAkamaiGTMADomain_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -146,7 +146,7 @@ func testAccCheckAkamaiGTMDomainExists(s *terraform.State) error {
 }
 
 // Sets a Hack flag so cn work with existing Domains (only Admin can Delete)
-func testAccPreCheckTF(t *testing.T) {
+func testAccPreCheckTF(_ *testing.T) {
 
 	// by definition, we are running acceptance tests. ;-)
 	log.Printf("[DEBUG] [Akamai GTMV1] Setting HashiAcc true")
