@@ -279,10 +279,11 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		delete, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
 			PropertyID: propertyID,
 			Activation: papi.Activation{
-				ActivationType:  papi.ActivationTypeDeactivate,
-				Network:         papi.ActivationNetwork(network),
-				PropertyVersion: version,
-				NotifyEmails:    notify,
+				ActivationType:         papi.ActivationTypeDeactivate,
+				Network:                papi.ActivationNetwork(network),
+				PropertyVersion:        version,
+				NotifyEmails:           notify,
+				AcknowledgeAllWarnings: true,
 			},
 		})
 		if err != nil {
