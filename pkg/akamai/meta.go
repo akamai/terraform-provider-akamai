@@ -20,7 +20,7 @@ type (
 		// OperationID returns the operation id
 		OperationID() string
 
-		// Session returns the operation API session
+		// Session returns the operation API default session
 		Session() session.Session
 
 		// CacheGet returns an object from the cache

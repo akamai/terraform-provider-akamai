@@ -5,7 +5,7 @@ require (
 	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.0-00010101000000-000000000000
 	github.com/allegro/bigcache v1.2.1
 	github.com/apex/log v1.9.0
-	github.com/aws/aws-sdk-go v1.30.12 // indirect
+	github.com/aws/aws-sdk-go v1.30.12
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-hclog v0.9.2
@@ -26,7 +26,7 @@ require (
 )
 
 replace (
-	//github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 => ../AkamaiOPEN-edgegrid-golang
+	// github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 => ../AkamaiOPEN-edgegrid-golang
 
 	// https://github.com/golang/lint/issues/446
 	github.com/golang/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422

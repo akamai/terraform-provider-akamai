@@ -162,10 +162,9 @@ func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 		}
 	}
 
-	// override default section with deprecated values, which become aliases for the v2 api client
-	// since the deprecated values exist for v1 api compatibitliy with had a singleton issue
-	// this has no impact on functionality of subproviders not using the v2 api client
-	d.Set("config_section", section)
+	if section != "" {
+		d.Set("config_section", section)
+	}
 
 	papiConfig, err = edgegrid.Init(edgerc, section)
 	if err != nil {
