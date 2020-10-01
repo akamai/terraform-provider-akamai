@@ -9,6 +9,7 @@ import (
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
@@ -68,14 +69,16 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 }
 
 func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	diags := make(diag.Diagnostics, 0)
+
 	meta := akamai.Meta(m)
-	log := meta.Log("PAPI", "resourcePropertyActivationCreate")
+	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
 	client := inst.Client(meta)
 
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 
 	activate, err := tools.GetBoolValue("activate", d)
@@ -84,7 +87,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	if !activate {
 		d.SetId("none")
-		log.Debugf("Done")
+		logger.Debugf("Done")
 		return nil
 	}
 
@@ -122,22 +125,45 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 
 	// if there are errors return them cleanly
 	if len(rules.Errors) > 0 {
-		diags := make([]diag.Diagnostic, 0)
-
 		for _, e := range rules.Errors {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  e.Title,
 				Detail:   e.Detail,
 			})
+
+			logger.WithFields(log.Fields{
+				"type":         e.Type,
+				"title":        e.Title,
+				"detail":       e.Detail,
+				"instance":     e.Instance,
+				"behaviorName": e.BehaviorName,
+			}).Debug("property rule error")
 		}
 
 		return diags
 	}
 
+	// if there are warnings insert them to be displayed to the user
+	if len(rules.Warnings) > 0 {
+		for _, e := range rules.Warnings {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  e.ErrorLocation,
+				Detail:   e.Detail,
+			})
+
+			logger.WithFields(log.Fields{
+				"type":          e.Type,
+				"detail":        e.Detail,
+				"errorLocation": e.ErrorLocation,
+			}).Debug("property rule warning")
+		}
+	}
+
 	network, err := tools.GetStringValue("network", d)
 	if err != nil {
-		return diag.FromErr(err)
+		return tools.DiagsWithErrors(diags, err)
 	}
 
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
@@ -147,13 +173,13 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		activationType: papi.ActivationTypeActivate,
 	})
 	if err != nil {
-		return diag.FromErr(err)
+		return tools.DiagsWithErrors(diags, err)
 	}
 
 	if activation == nil {
 		notify, err := tools.GetStringSliceValue("contact", d)
 		if err != nil {
-			return diag.FromErr(err)
+			return tools.DiagsWithErrors(diags, err)
 		}
 
 		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
@@ -166,7 +192,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			},
 		})
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("create activation failed: %w", err))
+			return tools.DiagsWithErrors(diags, err)
 		}
 
 		// query the activation to retreive the initial status
@@ -174,7 +200,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			ActivationID: create.ActivationID,
 		})
 		if err != nil {
-			return diag.FromErr(err)
+			return tools.DiagsWithErrors(diags, err)
 		}
 
 		activation = act.Activation
@@ -189,24 +215,24 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 				ActivationID: activation.ActivationID,
 			})
 			if err != nil {
-				return diag.FromErr(err)
+				return tools.DiagsWithErrors(diags, err)
 			}
 			activation = act.Activation
 
 		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			return tools.DiagsWithErrors(diags, ctx.Err())
 		}
 	}
 
 	if err := d.Set("version", activation.PropertyVersion); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return tools.DiagsWithErrors(diags, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	if err := d.Set("status", string(activation.Status)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return tools.DiagsWithErrors(diags, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	return nil
+	return diags
 }
 
 func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -362,14 +388,16 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	diags := make(diag.Diagnostics, 0)
+
 	meta := akamai.Meta(m)
-	log := meta.Log("PAPI", "resourcePropertyActivationUpdate")
+	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
 	client := inst.Client(meta)
 
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 
 	activate, err := tools.GetBoolValue("activate", d)
@@ -378,7 +406,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 	if !activate {
 		d.SetId("none")
-		log.Debugf("Done")
+		logger.Debugf("Done")
 		return nil
 	}
 
@@ -416,22 +444,45 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 
 	// if there are errors return them cleanly
 	if len(rules.Errors) > 0 {
-		diags := make([]diag.Diagnostic, 0)
-
 		for _, e := range rules.Errors {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  e.Title,
 				Detail:   e.Detail,
 			})
+
+			logger.WithFields(log.Fields{
+				"type":         e.Type,
+				"title":        e.Title,
+				"detail":       e.Detail,
+				"instance":     e.Instance,
+				"behaviorName": e.BehaviorName,
+			})
 		}
 
 		return diags
 	}
 
+	// if there are warnings insert them to be displayed to the user
+	if len(rules.Warnings) > 0 {
+		for _, e := range rules.Warnings {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  e.ErrorLocation,
+				Detail:   e.Detail,
+			})
+
+			logger.WithFields(log.Fields{
+				"type":          e.Type,
+				"detail":        e.Detail,
+				"errorLocation": e.ErrorLocation,
+			}).Debug("property rule warning")
+		}
+	}
+
 	network, err := networkAlias(d)
 	if err != nil {
-		return diag.FromErr(err)
+		return tools.DiagsWithErrors(diags, err)
 	}
 
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
@@ -441,13 +492,13 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		activationType: papi.ActivationTypeActivate,
 	})
 	if err != nil {
-		return diag.FromErr(err)
+		return tools.DiagsWithErrors(diags, err)
 	}
 
 	if activation == nil {
 		notify, err := tools.GetStringSliceValue("contact", d)
 		if err != nil {
-			return diag.FromErr(err)
+			return tools.DiagsWithErrors(diags, err)
 		}
 
 		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
@@ -460,7 +511,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			},
 		})
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("create activation failed: %w", err))
+			return tools.DiagsWithErrors(diags, fmt.Errorf("create activation failed: %w", err))
 		}
 
 		// query the activation to retreive the initial status
@@ -468,7 +519,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			ActivationID: create.ActivationID,
 		})
 		if err != nil {
-			return diag.FromErr(err)
+			return tools.DiagsWithErrors(diags, err)
 		}
 
 		activation = act.Activation
@@ -483,24 +534,24 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 				ActivationID: activation.ActivationID,
 			})
 			if err != nil {
-				return diag.FromErr(err)
+				return tools.DiagsWithErrors(diags, err)
 			}
 			activation = act.Activation
 
 		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			return tools.DiagsWithErrors(diags, ctx.Err())
 		}
 	}
 
 	if err := d.Set("version", activation.PropertyVersion); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return tools.DiagsWithErrors(diags, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	if err := d.Set("status", string(activation.Status)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return tools.DiagsWithErrors(diags, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	return nil
+	return diags
 }
 
 type lookupActivationRequest struct {
