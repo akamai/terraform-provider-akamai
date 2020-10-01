@@ -38,4 +38,8 @@ var (
 	ErrPropertyNotFound = errors.New("property not found")
 	// ErrRulesNotFound is returned when no rules were found
 	ErrRulesNotFound = errors.New("property rules not found")
+
+	// PAPI property version errors
+	ErrVersionNotFound = errors.New("property version not found")
+	ErrVersionCreate   = errors.New("creating property version")
 )

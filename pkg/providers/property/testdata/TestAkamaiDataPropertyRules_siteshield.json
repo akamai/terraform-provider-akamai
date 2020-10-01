@@ -7,7 +7,6 @@
   "etag": "",
   "ruleFormat": "",
   "rules": {
-    "name": "default",
     "behaviors": [
       {
         "name": "siteShield",
@@ -18,7 +17,7 @@
         }
       }
     ],
-    "criteriaMustSatisfy": "all",
-    "options": {}
+    "name": "default",
+    "criteriaMustSatisfy": "all"
   }
 }

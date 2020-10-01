@@ -8,7 +8,6 @@
    "ruleFormat": "",
    "rules": {
       "name": "default",
-      "criteriaMustSatisfy": "all",
-      "options": {}
+      "criteriaMustSatisfy": "all"
    }
 }

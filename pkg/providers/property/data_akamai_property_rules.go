@@ -2,14 +2,13 @@ package property
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"log"
-
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tidwall/gjson"
 )
@@ -224,15 +223,13 @@ var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
 	},
 }
 
-func dataPropertyRulesRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	rules := papi.NewRules()
-
+func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// get rules from the TF config
-	err := unmarshalRules(d, rules)
+	rules, err := unmarshalRules(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	jsonBody, err := jsonhooks.Marshal(rules)
+	jsonBody, err := json.Marshal(papi.GetRuleTreeResponse{Rules: rules})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -249,124 +246,126 @@ func dataPropertyRulesRead(_ context.Context, d *schema.ResourceData, m interfac
 }
 
 // TODO: discuss how property rules should be handled
-func unmarshalRules(d *schema.ResourceData, propertyRules *papi.Rules) error {
+func unmarshalRules(d *schema.ResourceData) (papi.Rules, error) {
+	propertyRules := papi.Rules{Name: "default"}
 	// Default Rules
 	rules, ok := d.GetOk("rules")
-	if ok {
-		for _, r := range rules.(*schema.Set).List() {
-			ruleTree, ok := r.(map[string]interface{})
+	if !ok {
+		return papi.Rules{}, nil
+	}
+	for _, r := range rules.(*schema.Set).List() {
+		ruleTree, ok := r.(map[string]interface{})
+		if ok {
+			behavior, ok := ruleTree["behavior"]
 			if ok {
-				behavior, ok := ruleTree["behavior"]
-				if ok {
-					for _, b := range behavior.(*schema.Set).List() {
-						bb, ok := b.(map[string]interface{})
+				for _, b := range behavior.(*schema.Set).List() {
+					bb, ok := b.(map[string]interface{})
+					if ok {
+						beh := papi.RuleBehavior{}
+						beh.Name = bb["name"].(string)
+						boptions, ok := bb["option"]
 						if ok {
-							beh := papi.NewBehavior()
-							beh.Name = bb["name"].(string)
-							boptions, ok := bb["option"]
-							if ok {
-								opts, err := extractOptions(boptions.(*schema.Set))
-								if err != nil {
-									return err
-								}
-								beh.Options = opts
+							opts, err := extractOptions(boptions.(*schema.Set))
+							if err != nil {
+								return papi.Rules{}, err
 							}
+							beh.Options = opts
+						}
 
-							// Fixup CPCode
-							if beh.Name == "cpCode" {
-								if _, ok := beh.Options["value"]; !ok {
-									if _, ok := beh.Options["id"]; ok {
-										cpCode := papi.NewCpCodes(nil, nil).NewCpCode()
-										cpCode.CpcodeID = beh.Options["id"].(string)
-										beh.Options = papi.OptionValue{"value": papi.OptionValue{"id": cpCode.ID()}}
+						// Fixup CPCode
+						if beh.Name == "cpCode" {
+							if _, ok := beh.Options["value"]; !ok {
+								if _, ok := beh.Options["id"]; ok {
+									cpCodeID, err := tools.GetIntID(beh.Options["id"].(string), "cpc_")
+									if err != nil {
+										return papi.Rules{}, err
 									}
+									beh.Options = papi.RuleOptionsMap{"value": map[string]interface{}{"id": cpCodeID}}
 								}
 							}
-
-							// Fixup SiteShield
-							if beh.Name == "siteShield" {
-								if _, ok := beh.Options["ssmap"].(string); ok {
-									beh.Options = papi.OptionValue{"ssmap": papi.OptionValue{"value": beh.Options["ssmap"].(string)}}
-								}
-							}
-
-							propertyRules.Rule.MergeBehavior(beh)
 						}
-					}
-				}
 
-				criteria, ok := ruleTree["criteria"]
-				if ok {
-					for _, c := range criteria.(*schema.Set).List() {
-						cc, ok := c.(map[string]interface{})
-						if ok {
-							newCriteria := papi.NewCriteria()
-							newCriteria.Name = cc["name"].(string)
-							coptions, ok := cc["option"]
-							if ok {
-								opts, err := extractOptions(coptions.(*schema.Set))
-								if err != nil {
-									return err
-								}
-								newCriteria.Options = opts
+						// Fixup SiteShield
+						if beh.Name == "siteShield" {
+							if _, ok := beh.Options["ssmap"].(string); ok {
+								beh.Options = papi.RuleOptionsMap{"ssmap": map[string]interface{}{"value": beh.Options["ssmap"].(string)}}
 							}
-							propertyRules.Rule.MergeCriteria(newCriteria)
 						}
-					}
-				}
 
-				if criteriamustsatisfy, ok := ruleTree["criteria_match"]; ok {
-					s, _ := criteriamustsatisfy.(string)
-					switch s {
-					case "all":
-						propertyRules.Rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
-					case "any":
-						propertyRules.Rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
+						propertyRules.Behaviors = mergeBehaviors(propertyRules.Behaviors, beh)
 					}
-				}
-
-				isSecure, ok := ruleTree["is_secure"].(bool)
-				if ok && isSecure {
-					propertyRules.Rule.Options.IsSecure = isSecure
 				}
 			}
 
-			childRules, ok := ruleTree["rule"]
+			criteria, ok := ruleTree["criteria"]
 			if ok {
-				rules, err := extractRules(childRules.(*schema.Set))
-				if err != nil {
-					return err
+				for _, c := range criteria.(*schema.Set).List() {
+					cc, ok := c.(map[string]interface{})
+					if ok {
+						newCriteria := papi.RuleBehavior{}
+						newCriteria.Name = cc["name"].(string)
+						coptions, ok := cc["option"]
+						if ok {
+							opts, err := extractOptions(coptions.(*schema.Set))
+							if err != nil {
+								return papi.Rules{}, err
+							}
+							newCriteria.Options = opts
+						}
+						propertyRules.Criteria = append(propertyRules.Criteria, newCriteria)
+					}
 				}
-				for _, rule := range rules {
-					propertyRules.Rule.MergeChildRule(rule)
+			}
+
+			if criteriamustsatisfy, ok := ruleTree["criteria_match"]; ok {
+				s, _ := criteriamustsatisfy.(string)
+				switch s {
+				case "all":
+					propertyRules.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
+				case "any":
+					propertyRules.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
 				}
+			}
+
+			isSecure, ok := ruleTree["is_secure"].(bool)
+			if ok && isSecure {
+				propertyRules.Options = &papi.RuleOptions{IsSecure: isSecure}
 			}
 		}
 
-		// ADD vars from variables resource
-		jsonvars, ok := d.GetOk("variables")
+		childRules, ok := ruleTree["rule"]
 		if ok {
-			log.Println("VARS from JSON ", jsonvars)
-			variables := gjson.Parse(jsonvars.(string))
-			result := gjson.Get(variables.String(), "variables") //gjson.GetMany(variables.String(),"variables.#.name","variables.#.description","variables.#.value","variables.#.hidden","variables.#.sensitive" )
-
-			result.ForEach(func(key, value gjson.Result) bool {
-				variableMap, ok := value.Value().(map[string]interface{})
-				log.Println("VARS from JSON LOOP NAME ", variableMap["name"].(string))
-				log.Println("VARS from JSON LOOP DESC ", variableMap["description"].(string))
-				if ok {
-					newVariable := papi.NewVariable()
-					newVariable.Name = variableMap["name"].(string)
-					newVariable.Description = variableMap["description"].(string)
-					newVariable.Value = variableMap["value"].(string)
-					newVariable.Hidden = variableMap["hidden"].(bool)
-					newVariable.Sensitive = variableMap["sensitive"].(bool)
-					propertyRules.Rule.AddVariable(newVariable)
-				}
-
-				return true
-			}) //variables
+			rules, err := extractRules(childRules.(*schema.Set))
+			if err != nil {
+				return papi.Rules{}, err
+			}
+			propertyRules.Children = append(propertyRules.Children, rules...)
 		}
 	}
-	return nil
+
+	// ADD vars from variables resource
+	jsonvars, ok := d.GetOk("variables")
+	if ok {
+		log.Println("VARS from JSON ", jsonvars)
+		variables := gjson.Parse(jsonvars.(string))
+		result := gjson.Get(variables.String(), "variables")
+
+		result.ForEach(func(key, value gjson.Result) bool {
+			variableMap, ok := value.Value().(map[string]interface{})
+			log.Println("VARS from JSON LOOP NAME ", variableMap["name"].(string))
+			log.Println("VARS from JSON LOOP DESC ", variableMap["description"].(string))
+			if ok {
+				newVariable := papi.RuleVariable{}
+				newVariable.Name = variableMap["name"].(string)
+				newVariable.Description = variableMap["description"].(string)
+				newVariable.Value = variableMap["value"].(string)
+				newVariable.Hidden = variableMap["hidden"].(bool)
+				newVariable.Sensitive = variableMap["sensitive"].(bool)
+				propertyRules.Variables = addVariable(propertyRules.Variables, newVariable)
+			}
+
+			return true
+		}) //variables
+	}
+	return propertyRules, nil
 }

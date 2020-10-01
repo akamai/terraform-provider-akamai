@@ -196,7 +196,7 @@ func TestFindGroupByName(t *testing.T) {
 			givenGroups:            []*papi.Group{},
 			givenGroupsAccountName: "",
 			isDefault:              false,
-			withError:              ErrLookingUpGroupByName,
+			withError:              ErrGroupNotInContract,
 		},
 	}
 

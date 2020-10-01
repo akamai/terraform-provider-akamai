@@ -8,9 +8,9 @@
    "ruleFormat": "",
    "rules": {
       "name": "default",
-      "criteriaMustSatisfy": "all",
       "options": {
          "is_secure": true
-      }
+      },
+      "criteriaMustSatisfy": "all"
    }
 }

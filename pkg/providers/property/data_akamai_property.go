@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -32,20 +33,18 @@ func dataSourceAkamaiProperty() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertyRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataAkamaiPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	log := meta.Log("PAPI", "dataAkamaiPropertyRead")
-	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + meta.OperationID() + "]"
-
 	log.Debug("Reading Property")
 
 	name, err := tools.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	property := findProperty(name, CorrelationID)
-	if property == nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", ErrPropertyNotFound, name))
+	prop, err := findProperty(ctx, name, meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	version, err := tools.GetIntValue("version", d)
@@ -53,10 +52,10 @@ func dataAkamaiPropertyRead(_ context.Context, d *schema.ResourceData, m interfa
 		if !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		property.LatestVersion = version
+		prop.LatestVersion = version
 	}
 
-	rules, err := property.GetRules(CorrelationID)
+	rules, err := getRulesForProperty(ctx, prop, meta)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", ErrRulesNotFound, err.Error()))
 	}
@@ -68,6 +67,21 @@ func dataAkamaiPropertyRead(_ context.Context, d *schema.ResourceData, m interfa
 	if err = d.Set("rules", string(body)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error()))
 	}
-	d.SetId(property.PropertyID)
+	d.SetId(prop.PropertyID)
 	return nil
+}
+
+func getRulesForProperty(ctx context.Context, property *papi.Property, meta akamai.OperationMeta) (*papi.GetRuleTreeResponse, error) {
+	client := inst.Client(meta)
+	req := papi.GetRuleTreeRequest{
+		PropertyID:      property.PropertyID,
+		PropertyVersion: property.LatestVersion,
+		ContractID:      property.ContractID,
+		GroupID:         property.GroupID,
+	}
+	rules, err := client.GetRuleTree(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrRulesNotFound, err.Error())
+	}
+	return rules, nil
 }
