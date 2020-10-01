@@ -13,8 +13,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"http"
 
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/apex/log"
@@ -575,13 +577,13 @@ func getRecordLock(recordType string) *sync.Mutex {
 	return recordCreateLock[recordType]
 }
 
-func bumpSoaSerial(name string, d *schema.ResourceData, zone, host string, logger log.Interface) (recordFunction, error) {
+func bumpSoaSerial(name string, d *schema.ResourceData, ctx context.Context, meta akamai.OperationMeta, zone, host string, logger log.Interface) (recordFunction, error) {
 	// Get SOA Record
-	recordset, err := dnsv2.GetRecord(zone, host, "SOA")
+	recordset, err := inst.Client(meta).GetRecord(ctx, zone, host, "SOA")
 	if err != nil {
 		return nil, fmt.Errorf("error looking up SOA record for %s: %w", host, err)
 	}
-	rdataFieldMap := dnsv2.ParseRData("SOA", recordset.Target)
+	rdataFieldMap := dns.ParseRData(ctx, "SOA", recordset.Target)
 
 	serial, ok := rdataFieldMap["serial"].(int)
 	if !ok {
@@ -595,37 +597,36 @@ func bumpSoaSerial(name string, d *schema.ResourceData, zone, host string, logge
 		return nil, err
 	}
 	if name == "CREATE" {
-		return newRecord.Save, nil
+		return inst.Client(meta).CreateRecord, nil
 	}
 	if name == "UPDATE" {
-		return newRecord.Update, nil
+		return inst.Client(meta).UpdateRecord, nil
 	}
 	return nil, fmt.Errorf("bad function: %s", name)
 }
 
 // Record function signature
-type recordFunction func(string, ...bool) error
+type recordFunction func(context.Context, dns.RecordBody, string, ...bool) error
 
-func executeRecordFunction(name string, d *schema.ResourceData, fn recordFunction, zone, host, recordType string, logger log.Interface, rlock bool) error {
+func executeRecordFunction(ctx context.Context, name string, d *schema.ResourceData, fn recordFunction, rec dns.RecordBody, zone, host, recordType string, logger log.Interface, rlock bool) error {
+
 	logger.Debug(fmt.Sprintf("executeRecordFunction - zone: %s, host: %s, recordtype: %s", zone, host, recordType))
 	// DNS API can have Concurrency issues
 	opRetry := opRetryCount
-	e := fn(zone, rlock)
+	e := fn(ctx, rec, zone, rlock)
 	for e != nil && opRetry > 0 {
-		if !dnsv2.IsConfigDNSError(e) {
+		apiError, ok := e.(session.NewAPIError)
+		// prep failure or network failure?
+		if !ok || apiError.StatusCode < http.StatusBadRequest { 
 			logger.Errorf("executeRecordFunction - %s Record failed for record [%s] [%s] [%s] ", name, zone, host, recordType)
 			return e
 		}
-		if e.(dnsv2.ConfigDNSError).ConcurrencyConflict() {
+		if apiError.StatusCode == http.StatusConflict {
 			logger.Debug("executeRecordFunction - Concurrency Conflict")
 			opRetry--
 			time.Sleep(100 * time.Millisecond)
-			e = fn(zone, rlock)
+			e = fn(ctx, rec, zone, rlock)
 			continue
-		}
-		recErr, ok := e.(*dnsv2.RecordError)
-		if !ok {
-			return fmt.Errorf("error is of invalid type; should be '*dnsv2.RecordError'")
 		}
 		// relying on error string is not a good idea, better to introduce separate error variables for each cause or error codes
 		if (name == "CREATE" || name == "UPDATE") && strings.Contains(recErr.Error(), "SOA serial number must be incremented") {
@@ -636,10 +637,10 @@ func executeRecordFunction(name string, d *schema.ResourceData, fn recordFunctio
 			if err != nil {
 				return err
 			}
-			e = fn(zone, rlock)
+			e = fn(ctx, rec, zone, rlock)
 			continue
 		}
-		if name == "DELETE" && e.(dnsv2.ConfigDNSError).NotFound() {
+		if name == "DELETE" && apiError.StatusCode == http.StatusNotFound() {
 			// record doesn't exist
 			d.SetId("")
 			logger.Debug(fmt.Sprintf("executeRecordFunction - %s [WARNING] %s", name, "Record not found"))
@@ -660,6 +661,11 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	meta := akamai.Meta(m)
 	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordCreate")
 	logger.Info("Record Create.")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(log),
+	)
 
 	var zone, host, recordType string
 	var err error
@@ -695,7 +701,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	if recordType == "SOA" {
 		logger.Debug("Attempting to create a SOA record")
 		// A default SOA is created automagically when the primary zone is created ...
-		if _, err := dnsv2.GetRecord(zone, host, recordType); err == nil {
+		if _, err := inst.Client(meta).GetRecord(ctx, zone, host, recordType); err == nil {
 			// Record exists
 			serial, err := tools.GetIntValue("serial", d)
 			if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -704,10 +710,13 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 			if err := d.Set("serial", serial+1); err != nil {
 				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 			}
-		} else if dnsv2.IsConfigDNSError(err) && err.(dnsv2.ConfigDNSError).NotFound() == true {
-			logger.Debug("SOA Record not found. Initialize serial")
-			if err := d.Set("serial", 1); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		} else {
+			apiError, ok := err.(session.APIError)
+			if ok && apiError.StatusCode == http.StatusNotFound {
+				logger.Debug("SOA Record not found. Initialize serial")
+				if err := d.Set("serial", 1); err != nil {
+					return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				}
 			}
 		}
 	}
@@ -730,23 +739,26 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// First try to get the zone from the API
 	logger.Debugf("Searching for records [%s]", zone)
 	rdata := make([]string, 0)
-	recordSet, e := dnsv2.GetRecord(zone, host, recordType)
-	if e != nil && !dnsv2.IsConfigDNSError(e) {
-		return append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("failed looking up %s records for %s", recordType, host),
-			Detail:   e.Error(),
-		})
+	recordSet, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
+	if e != nil {
+		apiError, ok := e.(session.APIError)
+		if !ok || apiError.StatusCode != http.StatusNotFound {
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("failed looking up %s records for %s", recordType, host),
+				Detail:   e.Error(),
+			})
+		}
 	}
 	if recordSet != nil {
-		rdata = dnsv2.ProcessRdata(recordSet.Target, recordType)
+		rdata = inst.Client(meta).ProcessRdata(ctx, recordSet.Target, recordType)
 	}
 	// If there's no existing record we'll create a blank one
-	if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() {
-		// if the record is not found/404 we will create a new
+	if e != nil {
+		// record not found/404 we will create a new
 		logger.Debug("Creating new record")
 		// Save the zone to the API
-		e = executeRecordFunction("CREATE", d, recordCreate.Save, zone, host, recordType, logger, false)
+		e = executeRecordFunction(ctx, "CREATE", d, inst.Client(meta).CreateRecord, recordCreate, zone, host, recordType, logger, false)
 		if e != nil {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -757,7 +769,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	} else {
 		logger.Debug("Updating record")
 		if len(rdata) > 0 {
-			e = executeRecordFunction("CREATE", d, recordCreate.Update, zone, host, recordType, logger, false)
+			e = executeRecordFunction(ctx, "CREATE", d, inst.Client(meta).UpdateRecord, recordCreate, zone, host, recordType, logger, false)
 			if e != nil {
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
@@ -801,6 +813,12 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	meta := akamai.Meta(m)
 	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordUpdate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(log),
+	)
+
 	var zone, host, recordType string
 	var err error
 	zone, err = tools.GetStringValue("zone", d)
@@ -852,9 +870,10 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	if recordType == "SOA" {
 		// need to get current serial and increment as part of update
-		record, e := dnsv2.GetRecord(zone, host, recordType)
+		record, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 		if e != nil {
-			if !dnsv2.IsConfigDNSError(e) || !e.(dnsv2.ConfigDNSError).NotFound() {
+			apiError, ok := e.(session.APIError)
+			if !ok || apiError.StatusCode != http.StatusNotFound {
 				logger.Error(fmt.Sprintf("UPDATE Read [ERROR] %s", e.Error()))
 				return diag.FromErr(e)
 			}
@@ -866,7 +885,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 			})
 		}
 		// Parse Rdata
-		serial, ok := dnsv2.ParseRData(recordType, record.Target)["serial"].(int)
+		serial, ok := inst.Client(meta).ParseRData(ctx, recordType, record.Target)["serial"].(int)
 		if !ok {
 			return diag.Errorf("%v: %s, %q", tools.ErrInvalidType, "seral", "string")
 		}
@@ -890,16 +909,19 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	// First try to get the zone from the API
 	logger.Debug(fmt.Sprintf("UPDATE Searching for records [%s]", zone))
 	rdata := make([]string, 0, 0)
-	recordset, e := dnsv2.GetRecord(zone, host, recordType)
-	if e != nil && !dnsv2.IsConfigDNSError(e) {
-		return append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Error looking up recordset %s", host),
-			Detail:   e.Error(),
-		})
+	recordset, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
+	if e != nil
+		apiError, ok := e.(session.APIError)
+		if !ok || apiError.StatusCode != http.StatusNotFound {
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Error looking up recordset %s", host),
+				Detail:   e.Error(),
+			})
+		}
 	}
 	if recordset != nil {
-		rdata = dnsv2.ProcessRdata(recordset.Target, recordType)
+		rdata = inst.Client(meta).ProcessRdata(ctx, recordset.Target, recordType)
 	}
 	logger.WithField("length", len(rdata)).Debug("UPDATE Searching for records")
 	if len(rdata) == 0 {
@@ -910,18 +932,18 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	sha1hashtest := tools.GetSHAString(extractString)
 	logger.Debug(fmt.Sprintf("UPDATE SHA sum from recordread [%s]", sha1hashtest))
 	// If there's no existing record we'll create a blank one
-	if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() {
+	if e != nil {
 		// if the record is not found/404 we will create a new
 		logger.Error(fmt.Sprintf("UPDATE [ERROR] %s", e.Error()))
 		logger.Debug(fmt.Sprintf("UPDATE Creating new record"))
 		// Save the zone to the API
-		e = executeRecordFunction("UPDATE", d, recordCreate.Save, zone, host, recordType, logger, false)
+		e = executeRecordFunction(ctx, "UPDATE", d, inst.Client(meta).CreateRecord, recordCreate, zone, host, recordType, logger, false)
 		if e != nil {
 			return diag.FromErr(e)
 		}
 	} else {
 		logger.Debug("UPDATE Updating record")
-		e = executeRecordFunction("UPDATE", d, recordCreate.Update, zone, host, recordType, logger, false)
+		e = executeRecordFunction(ctx, "UPDATE", d, inst.Client(meta).UpdateRecord, recordCreate, zone, host, recordType, logger, false)
 		if e != nil {
 			return diag.FromErr(e)
 		}
@@ -945,6 +967,11 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	meta := akamai.Meta(m)
 	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordRead")
 	logger.Info("Record Read")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(log),
+	)
 
 	var zone, host, recordType string
 	var err error
@@ -1000,30 +1027,25 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		"recordtype": recordType,
 	}).Info("READ Searching for zone records")
 
-	record, e := dnsv2.GetRecord(zone, host, recordType)
-	if e != nil && !dnsv2.IsConfigDNSError(e) {
-		logger.Error(fmt.Sprintf("RECORD READ. error looking up %s records for %q: %s", recordType, host, e.Error()))
-		return append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Recordset read failure",
-			Detail:   e.Error(),
-		})
-	}
-	if dnsv2.IsConfigDNSError(e) {
-		if e.(dnsv2.ConfigDNSError).NotFound() {
-			// record doesn't exist
-			logger.Errorf("READ Record Not Found: %s", e.Error())
-			d.SetId("")
-			return diag.Errorf("Record not found")
+	record, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
+	if e != nil {
+		apiError, ok := e.(session.APIError)
+		if !ok || apiError.StatusCode != http.StatusNotFound {{
+			logger.Error(fmt.Sprintf("RECORD READ. error looking up %s records for %q: %s", recordType, host, e.Error()))
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Recordset read failure",
+				Detail:   e.Error(),
+			})
 		}
-		logger.Errorf("READ error: %s", e.Error())
-		return append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Recordset read failure",
-			Detail:   e.Error(),
-		})
-
 	}
+	if e != nil {
+		// record doesn't exist
+		logger.Errorf("READ Record Not Found: %s", e.Error())
+		d.SetId("")
+		return diag.Errorf("Record not found")
+	}
+
 	logger.Debugf("RECORD READ [%v] [%s] [%s] [%s] ", record, zone, host, recordType)
 
 	b1, err := json.Marshal(record.Target)
@@ -1035,8 +1057,8 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		})
 	}
 	logger.Debugf("READ record data read JSON %s", string(b1))
-	rdataFieldMap := dnsv2.ParseRData(recordType, record.Target) // returns map[string]interface{}
-	targets := dnsv2.ProcessRdata(record.Target, recordType)
+	rdataFieldMap := inst.Client(meta).ParseRData(recordType, record.Target) // returns map[string]interface{}
+	targets := inst.Client(meta).ProcessRdata(record.Target, recordType)
 	switch recordType {
 	case RRTypeMx:
 		// calc rdata sha from read record
@@ -1165,6 +1187,12 @@ func validateSOARecord(d *schema.ResourceData, logger log.Interface) bool {
 func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordImport")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(log),
+	)
+
 	idParts := strings.Split(d.Id(), "#")
 	if len(idParts) != 3 {
 		return []*schema.ResourceData{d}, fmt.Errorf("invalid ID for Zone Import: %s", d.Id())
@@ -1178,23 +1206,20 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	// Get recordset
 	logger.Debugf("Searching for zone Recordset. %s", idParts)
 
-	recordset, e := dnsv2.GetRecord(zone, recordName, recordType)
+	recordset, e := inst.Client(meta).GetRecord(ctx, zone, recordName, recordType)
 	if e != nil {
-		if !dnsv2.IsConfigDNSError(e) {
+                apiError, ok := err.(session.APIError)
+                if !ok || apiError.StatusCode != http.StatusNotFound() {
 			logger.Debug(fmt.Sprintf("IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordName, recordType))
 			d.SetId("")
 			return []*schema.ResourceData{d}, e
 		}
-		if e.(dnsv2.ConfigDNSError).NotFound() {
-			// record doesn't exist
-			d.SetId("")
-			logger.Error("IMPORT Error. Record not found")
-			return nil, fmt.Errorf("record not found")
-		}
+		// record doesn't exist
 		d.SetId("")
-		logger.Errorf("IMPORT Failure: %s", e.Error())
-		return nil, e
+		logger.Error("IMPORT Error. Record not found")
+		return nil, fmt.Errorf("record not found")
 	}
+
 	if err := d.Set("zone", zone); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
@@ -1207,7 +1232,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	if err := d.Set("ttl", recordset.TTL); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	targets := dnsv2.ProcessRdata(recordset.Target, recordType)
+	targets := inst.Client(meta).ProcessRdata(ctx, recordset.Target, recordType)
 	if recordset.RecordType == "MX" {
 		// can't guarantee order of MX records. Forced to set pri, incr to 0 and targets as is
 		if err := d.Set("target", targets); err != nil {
@@ -1215,7 +1240,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		}
 	} else {
 		// Parse Rdata
-		rdataFieldMap := dnsv2.ParseRData(recordset.RecordType, recordset.Target) // returns map[string]interface{}
+		rdataFieldMap := inst.Client(meta).ParseRData(ctx, recordset.RecordType, recordset.Target) // returns map[string]interface{}
 		for fname, fvalue := range rdataFieldMap {
 			if err := d.Set(fname, fvalue); err != nil {
 				return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
@@ -1244,6 +1269,11 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordUpdate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(log),
+	)
 
 	zone, err := tools.GetStringValue("zone", d)
 	if err != nil {
@@ -1282,11 +1312,11 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	sort.Strings(records)
 	logger.Debug(fmt.Sprintf("Delete zone Record. Zone: %s, Host: %s, Recordtype:  %s", zone, host, recordType))
-	recordcreate := dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+	recordcreate := dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	// Warning: Delete will expunge the ENTIRE Recordset regardless of whether user thought they were removing an instance
 
-	if err := executeRecordFunction("DELETE", d, recordcreate.Delete, zone, host, recordType, logger, false); err != nil {
+	if err := executeRecordFunction(ctx, "DELETE", d, inst.Client(meta).DeleteRecord, recordcreate, zone, host, recordType, logger, false); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
@@ -1330,53 +1360,53 @@ func padCoordinates(str string, logger log.Interface) string {
 	return fmt.Sprintf("%s %s %s %s %s %s %s %s %sm %sm %sm %sm", latD, latM, latS, latDir, longD, longM, longS, longDir, padvalue(altitude, logger), padvalue(size, logger), padvalue(horizPrecision, logger), padvalue(vertPrecision, logger))
 }
 
-func bindRecord(d *schema.ResourceData, logger log.Interface) (dnsv2.RecordBody, error) {
+func bindRecord(d *schema.ResourceData, logger log.Interface) (dns.RecordBody, error) {
 
 	var host, recordType string
 	var err error
 	host, err = tools.GetStringValue("name", d)
 	if err != nil {
-		return dnsv2.RecordBody{}, err
+		return dns.RecordBody{}, err
 	}
 	recordType, err = tools.GetStringValue("recordtype", d)
 	if err != nil {
-		return dnsv2.RecordBody{}, err
+		return dns.RecordBody{}, err
 	}
 	ttl, err := tools.GetIntValue("ttl", d)
 	if err != nil {
-		return dnsv2.RecordBody{}, err
+		return dns.RecordBody{}, err
 	}
 
 	target, err := tools.GetListValue("target", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return dnsv2.RecordBody{}, err
+		return dns.RecordBody{}, err
 	}
 	records, err := buildRecordsList(target, recordType, logger)
 	if err != nil {
-		return dnsv2.RecordBody{}, nil
+		return dns.RecordBody{}, nil
 	}
 
 	simpleRecord := map[string]struct{}{"A": {}, "AAAA": {}, "AKAMAICDN": {}, "CNAME": {}, "LOC": {}, "NS": {}, "PTR": {}, "SPF": {}, "TXT": {}, "CAA": {}}
 	if _, ok := simpleRecord[recordType]; ok {
 		sort.Strings(records)
-		return dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}, nil
+		return dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}, nil
 	}
 	return newRecordCreate(d, recordType, target, host, ttl, logger)
 }
 
-func newRecordCreate(d *schema.ResourceData, recordType string, target []interface{}, host string, ttl int, logger log.Interface) (dnsv2.RecordBody, error) {
-	var recordCreate dnsv2.RecordBody
+func newRecordCreate(d *schema.ResourceData, recordType string, target []interface{}, host string, ttl int, logger log.Interface) (dns.RecordBody, error) {
+	var recordCreate dns.RecordBody
 	switch recordType {
 	case RRTypeAfsdb:
 		records := make([]string, 0, len(target))
 		subtype, err := tools.GetIntValue("subtype", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		for _, recContent := range target {
 			recContentStr, ok := recContent.(string)
 			if !ok {
-				return dnsv2.RecordBody{}, fmt.Errorf("record is of invalid type; should be 'string'")
+				return dns.RecordBody{}, fmt.Errorf("record is of invalid type; should be 'string'")
 			}
 			record := strconv.Itoa(subtype) + " " + recContentStr
 			if !strings.HasSuffix(recContentStr, ".") {
@@ -1386,56 +1416,56 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 
 		}
 		sort.Strings(records)
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeDnskey:
 		flags, err := tools.GetIntValue("flags", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		protocol, err := tools.GetIntValue("protocol", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		algorithm, err := tools.GetIntValue("algorithm", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		key, err := tools.GetStringValue("key", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(flags) + " " + strconv.Itoa(protocol) + " " + strconv.Itoa(algorithm) + " " + key}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeDs:
 		digestType, err := tools.GetIntValue("digest_type", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		keytag, err := tools.GetIntValue("keytag", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		algorithm, err := tools.GetIntValue("algorithm", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		digest, err := tools.GetStringValue("digest", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(keytag) + " " + strconv.Itoa(algorithm) + " " + strconv.Itoa(digestType) + " " + digest}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeHinfo:
 		hardware, err := tools.GetStringValue("hardware", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		software, err := tools.GetStringValue("software", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 
 		// Fields may have embedded backslash. Quotes optional
@@ -1449,36 +1479,37 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 		}
 
 		records := []string{hardware + " " + software}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeLoc:
 		records := make([]string, 0, len(target))
 		for _, recContent := range target {
 			recContentStr, ok := recContent.(string)
 			if !ok {
-				return dnsv2.RecordBody{}, fmt.Errorf("record is of invalid type; should be 'string'")
+				return dns.RecordBody{}, fmt.Errorf("record is of invalid type; should be 'string'")
 			}
 			records = append(records, recContentStr)
 		}
 		sort.Strings(records)
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeMx:
 		zone, err := tools.GetStringValue("zone", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		logger.Debug(fmt.Sprintf("MX record targets to process: %v", target))
-		recordset, e := dnsv2.GetRecord(zone, host, recordType)
+		recordset, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 		rdata := make([]string, 0, 0)
 		if e != nil {
-			if !dnsv2.IsConfigDNSError(e) || !e.(dnsv2.ConfigDNSError).NotFound() {
+	                apiError, ok := err.(session.APIError)
+        	        if !ok || apiError.StatusCode != http.StatusNotFound() {
 				// failure other than not found
-				return dnsv2.RecordBody{}, fmt.Errorf(e.Error())
+				return dns.RecordBody{}, fmt.Errorf(e.Error())
 			}
 			logger.Debug("Searching for existing MX records no prexisting targets found")
 		} else {
-			rdata = dnsv2.ProcessRdata(recordset.Target, recordType)
+			rdata = inst.Client(meta).ProcessRdata(ctx, recordset.Target, recordType)
 		}
 		logger.Debug(fmt.Sprintf("Existing MX records to append to target %v", rdata))
 
@@ -1487,7 +1518,7 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 		for _, r := range rdata {
 			entryparts := strings.Split(r, " ")
 			if len(entryparts) < 1 {
-				return dnsv2.RecordBody{}, fmt.Errorf("RData shcould consist of at least 2 parts separated with ' '")
+				return dns.RecordBody{}, fmt.Errorf("RData shcould consist of at least 2 parts separated with ' '")
 			}
 			rn := entryparts[1]
 			if !strings.HasSuffix(rn, ".") {
@@ -1503,21 +1534,21 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 			oldList, newList := d.GetChange("target")
 			oldTargetList, ok := oldList.([]interface{})
 			if !ok {
-				return dnsv2.RecordBody{}, fmt.Errorf("'oldList' is of invalid type; should be '[]interface{}'")
+				return dns.RecordBody{}, fmt.Errorf("'oldList' is of invalid type; should be '[]interface{}'")
 			}
 			newTargetList, ok := newList.([]interface{})
 			if !ok {
-				return dnsv2.RecordBody{}, fmt.Errorf("'newList' is of invalid type; should be '[]interface{}'")
+				return dns.RecordBody{}, fmt.Errorf("'newList' is of invalid type; should be '[]interface{}'")
 			}
 			for _, oldTarg := range oldTargetList {
 				oldTargStr, ok := oldTarg.(string)
 				if !ok {
-					return dnsv2.RecordBody{}, fmt.Errorf("oldTarg is of invalid type; should be 'string'")
+					return dns.RecordBody{}, fmt.Errorf("oldTarg is of invalid type; should be 'string'")
 				}
 				for _, newTarg := range newTargetList {
 					newTargStr, ok := newTarg.(string)
 					if !ok {
-						return dnsv2.RecordBody{}, fmt.Errorf("newTarg is of invalid type; should be 'string'")
+						return dns.RecordBody{}, fmt.Errorf("newTarg is of invalid type; should be 'string'")
 					}
 					if oldTargStr == newTargStr {
 						// FIXME: this only breaks the inner loop, in which case this loop does nothing
@@ -1539,18 +1570,18 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 
 		priority, err := tools.GetIntValue("priority", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		increment, err := tools.GetIntValue("priority_increment", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		logger.Debug(fmt.Sprintf("MX BIND Priority: %d ; Increment: %d", priority, increment))
 		// walk thru target first
 		for _, recContent := range target {
 			targEntry, ok := recContent.(string)
 			if !ok {
-				return dnsv2.RecordBody{}, fmt.Errorf("record is of invalid type; should be 'string'")
+				return dns.RecordBody{}, fmt.Errorf("record is of invalid type; should be 'string'")
 			}
 			if !strings.HasSuffix(targEntry, ".") {
 				targEntry += "."
@@ -1560,13 +1591,13 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 			var targPri int
 			targParts := strings.Split(targEntry, " ") // need to support target entry with/without priority
 			if len(targParts) > 2 {
-				return dnsv2.RecordBody{}, fmt.Errorf("Invalid MX Record format")
+				return dns.RecordBody{}, fmt.Errorf("Invalid MX Record format")
 			}
 			if len(targParts) == 2 {
 				targHost = targParts[1]
 				targPri, err = strconv.Atoi(targParts[0])
 				if err != nil {
-					return dnsv2.RecordBody{}, fmt.Errorf("Invalid MX Record format")
+					return dns.RecordBody{}, fmt.Errorf("Invalid MX Record format")
 				}
 			} else {
 				targPri = priority
@@ -1575,7 +1606,7 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 				logger.Debug(fmt.Sprintf("MX BIND. %s in existing map", targEntry))
 				// target already in rdata
 				if pri != targPri {
-					return dnsv2.RecordBody{}, fmt.Errorf("MX Record Priority Mismatch. Target order must align with EdgeDNS")
+					return dns.RecordBody{}, fmt.Errorf("MX Record Priority Mismatch. Target order must align with EdgeDNS")
 				}
 				delete(rdataTargetMap, targHost)
 			}
@@ -1596,33 +1627,33 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 		logger.Debug(fmt.Sprintf("Existing MX records to append to target before schema data LEN %d %v", len(rdata), records))
 
 		sort.Strings(records)
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeNaptr:
 		flagsnaptr, err := tools.GetStringValue("flagsnaptr", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		order, err := tools.GetIntValue("order", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		preference, err := tools.GetIntValue("preference", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		regexp, err := tools.GetStringValue("regexp", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		replacement, err := tools.GetStringValue("replacement", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		// Following three fields may have embedded backslash
 		service, err := tools.GetStringValue("service", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		if !strings.HasPrefix(service, `"`) {
 			service = `"` + service + `"`
@@ -1634,132 +1665,132 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 			flagsnaptr = `"` + flagsnaptr + `"`
 		}
 		records := []string{strconv.Itoa(order) + " " + strconv.Itoa(preference) + " " + flagsnaptr + " " + service + " " + regexp + " " + replacement}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeNsec3:
 		flags, err := tools.GetIntValue("flags", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		algorithm, err := tools.GetIntValue("algorithm", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		iterations, err := tools.GetIntValue("iterations", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		nextHashedOwnerName, err := tools.GetStringValue("next_hashed_owner_name", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		salt, err := tools.GetStringValue("salt", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		typeBitmaps, err := tools.GetStringValue("type_bitmaps", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(algorithm) + " " + strconv.Itoa(flags) + " " + strconv.Itoa(iterations) + " " + salt + " " + nextHashedOwnerName + " " + typeBitmaps}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeNsec3Param:
 		flags, err := tools.GetIntValue("flags", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		algorithm, err := tools.GetIntValue("algorithm", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		iterations, err := tools.GetIntValue("iterations", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		salt, err := tools.GetStringValue("salt", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(algorithm) + " " + strconv.Itoa(flags) + " " + strconv.Itoa(iterations) + " " + salt}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeRp:
 		mailbox, err := tools.GetStringValue("mailbox", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		if !strings.HasSuffix(mailbox, ".") {
 			mailbox = mailbox + "."
 		}
 		txt, err := tools.GetStringValue("txt", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		if !strings.HasSuffix(txt, ".") {
 			txt += "."
 		}
 		records := []string{mailbox + " " + txt}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeRrsig:
 		expiration, err := tools.GetStringValue("expiration", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		inception, err := tools.GetStringValue("inception", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		originalTTL, err := tools.GetIntValue("original_ttl", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		algorithm, err := tools.GetIntValue("algorithm", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		labels, err := tools.GetIntValue("labels", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		keytag, err := tools.GetIntValue("keytag", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		signature, err := tools.GetStringValue("signature", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		signer, err := tools.GetStringValue("signer", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		typeCovered, err := tools.GetStringValue("type_covered", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		records := []string{typeCovered + " " + strconv.Itoa(algorithm) + " " + strconv.Itoa(labels) + " " + strconv.Itoa(originalTTL) + " " + expiration + " " + inception + " " + strconv.Itoa(keytag) + " " + signer + " " + signature}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeSrv:
 		records := make([]string, 0, len(target))
 		priority, err := tools.GetIntValue("priority", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		weight, err := tools.GetIntValue("weight", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		port, err := tools.GetIntValue("port", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		for _, recContent := range target {
 			recContentStr, ok := recContent.(string)
 			if !ok {
-				return dnsv2.RecordBody{}, fmt.Errorf("record is of invalid type; should be 'string'")
+				return dns.RecordBody{}, fmt.Errorf("record is of invalid type; should be 'string'")
 			}
 			record := strconv.Itoa(priority) + " " + strconv.Itoa(weight) + " " + strconv.Itoa(port) + " " + recContentStr
 			if !strings.HasSuffix(recContentStr, ".") {
@@ -1769,122 +1800,122 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 
 		}
 		sort.Strings(records)
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeSshfp:
 		algorithm, err := tools.GetIntValue("algorithm", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		fingerprintType, err := tools.GetIntValue("fingerprint_type", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		fingerprint, err := tools.GetStringValue("fingerprint", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(algorithm) + " " + strconv.Itoa(fingerprintType) + " " + fingerprint}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeSoa:
 		nameserver, err := tools.GetStringValue("name_server", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		emailaddr, err := tools.GetStringValue("email_address", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		if !strings.HasSuffix(emailaddr, ".") {
 			emailaddr += "."
 		}
 		serial, err := tools.GetIntValue("serial", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		refresh, err := tools.GetIntValue("refresh", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		retry, err := tools.GetIntValue("retry", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		expiry, err := tools.GetIntValue("expiry", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		nxdomainttl, err := tools.GetIntValue("nxdomain_ttl", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 
 		records := []string{nameserver + " " + emailaddr + " " + strconv.Itoa(serial) + " " + strconv.Itoa(refresh) + " " + strconv.Itoa(retry) + " " + strconv.Itoa(expiry) + " " + strconv.Itoa(nxdomainttl)}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeAkamaiTlc:
 		dnsname, err := tools.GetStringValue("dns_name", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		answtype, err := tools.GetStringValue("answer_type", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		records := []string{answtype + " " + dnsname}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeCert:
 		certtype, err := tools.GetStringValue("type_mnemonic", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		typevalue, err := tools.GetIntValue("type_value", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		keytag, err := tools.GetIntValue("keytag", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		algorithm, err := tools.GetIntValue("algorithm", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		certificate, err := tools.GetStringValue("certificate", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		// value or mnemonic type?
 		if certtype == "" {
 			certtype = strconv.Itoa(typevalue)
 		}
 		records := []string{certtype + " " + strconv.Itoa(keytag) + " " + strconv.Itoa(algorithm) + " " + certificate}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeTlsa:
 		usage, err := tools.GetIntValue("usage", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		selector, err := tools.GetIntValue("selector", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		matchtype, err := tools.GetIntValue("match_type", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		certificate, err := tools.GetStringValue("certificate", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return dnsv2.RecordBody{}, err
+			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(usage) + " " + strconv.Itoa(selector) + " " + strconv.Itoa(matchtype) + " " + certificate}
-		recordCreate = dnsv2.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	default:
-		return dnsv2.RecordBody{}, fmt.Errorf("unable to create a Record Body for %s : %s", host, recordType)
+		return dns.RecordBody{}, fmt.Errorf("unable to create a Record Body for %s : %s", host, recordType)
 	}
 
 	return recordCreate, nil
