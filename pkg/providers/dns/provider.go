@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	dns "github.com/akamai/terraform-provider-akamai/v2/pkg/configdns"
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"

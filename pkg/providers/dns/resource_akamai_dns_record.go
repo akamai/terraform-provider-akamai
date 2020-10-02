@@ -7,13 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"http"
 
 	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
 
@@ -610,14 +610,14 @@ type recordFunction func(context.Context, dns.RecordBody, string, ...bool) error
 
 func executeRecordFunction(ctx context.Context, name string, d *schema.ResourceData, fn recordFunction, rec dns.RecordBody, zone, host, recordType string, logger log.Interface, rlock bool) error {
 
-	logger.Debug(fmt.Sprintf("executeRecordFunction - zone: %s, host: %s, recordtype: %s", zone, host, recordType))
+	logger.Debugf("executeRecordFunction - zone: %s, host: %s, recordtype: %s", zone, host, recordType)
 	// DNS API can have Concurrency issues
 	opRetry := opRetryCount
 	e := fn(ctx, rec, zone, rlock)
 	for e != nil && opRetry > 0 {
 		apiError, ok := e.(session.NewAPIError)
 		// prep failure or network failure?
-		if !ok || apiError.StatusCode < http.StatusBadRequest { 
+		if !ok || apiError.StatusCode < http.StatusBadRequest {
 			logger.Errorf("executeRecordFunction - %s Record failed for record [%s] [%s] [%s] ", name, zone, host, recordType)
 			return e
 		}
@@ -643,10 +643,10 @@ func executeRecordFunction(ctx context.Context, name string, d *schema.ResourceD
 		if name == "DELETE" && apiError.StatusCode == http.StatusNotFound() {
 			// record doesn't exist
 			d.SetId("")
-			logger.Debug(fmt.Sprintf("executeRecordFunction - %s [WARNING] %s", name, "Record not found"))
+			logger.Debugf("executeRecordFunction - %s [WARNING] %s", name, "Record not found")
 			break
 		}
-		logger.Debug(fmt.Sprintf("executeRecordFunction - %s [ERROR] %s", name, e.Error()))
+		logger.Debugf("executeRecordFunction - %s [ERROR] %s", name, e.Error())
 		return e
 	}
 	return nil
@@ -684,7 +684,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	logger.Info(fmt.Sprintf("Record Create. zone: %s, host: %s, recordtype: %s", zone, host, recordType))
+	logger.Infof("Record Create. zone: %s, host: %s, recordtype: %s", zone, host, recordType)
 
 	if err := validateRecord(d); err != nil {
 		return append(diags, diag.Diagnostic{
@@ -877,7 +877,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 				logger.Error(fmt.Sprintf("UPDATE Read [ERROR] %s", e.Error()))
 				return diag.FromErr(e)
 			}
-			logger.Error(fmt.Sprintf("UPDATE Record Read. error looking up %s records for %q: %s", recordType, host, e.Error()))
+			logger.Errorf("UPDATE Record Read. error looking up %s records for %q: %s", recordType, host, e.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  "Update Recordset read failure",
@@ -905,12 +905,12 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	extractString := strings.Join(recordCreate.Target, " ")
 	sha1hash := tools.GetSHAString(extractString)
 
-	logger.Debug(fmt.Sprintf("UPDATE SHA sum for recordupdate [%s]", sha1hash))
+	logger.Debugf("UPDATE SHA sum for recordupdate [%s]", sha1hash)
 	// First try to get the zone from the API
-	logger.Debug(fmt.Sprintf("UPDATE Searching for records [%s]", zone))
+	logger.Debugf("UPDATE Searching for records [%s]", zone)
 	rdata := make([]string, 0, 0)
 	recordset, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
-	if e != nil
+	if e != nil {
 		apiError, ok := e.(session.APIError)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
 			return append(diags, diag.Diagnostic{
@@ -930,12 +930,12 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	sort.Strings(rdata)
 	extractString = strings.Join(rdata, " ")
 	sha1hashtest := tools.GetSHAString(extractString)
-	logger.Debug(fmt.Sprintf("UPDATE SHA sum from recordread [%s]", sha1hashtest))
+	logger.Debugf("UPDATE SHA sum from recordread [%s]", sha1hashtest)
 	// If there's no existing record we'll create a blank one
 	if e != nil {
 		// if the record is not found/404 we will create a new
-		logger.Error(fmt.Sprintf("UPDATE [ERROR] %s", e.Error()))
-		logger.Debug(fmt.Sprintf("UPDATE Creating new record"))
+		logger.Errorf("UPDATE [ERROR] %s", e.Error())
+		logger.Debugf("UPDATE Creating new record")
 		// Save the zone to the API
 		e = executeRecordFunction(ctx, "UPDATE", d, inst.Client(meta).CreateRecord, recordCreate, zone, host, recordType, logger, false)
 		if e != nil {
@@ -1030,8 +1030,8 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	record, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 	if e != nil {
 		apiError, ok := e.(session.APIError)
-		if !ok || apiError.StatusCode != http.StatusNotFound {{
-			logger.Error(fmt.Sprintf("RECORD READ. error looking up %s records for %q: %s", recordType, host, e.Error()))
+		if !ok || apiError.StatusCode != http.StatusNotFound {
+			logger.Errorf("RECORD READ. error looking up %s records for %q: %s", recordType, host, e.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  "Recordset read failure",
@@ -1208,9 +1208,9 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 	recordset, e := inst.Client(meta).GetRecord(ctx, zone, recordName, recordType)
 	if e != nil {
-                apiError, ok := err.(session.APIError)
-                if !ok || apiError.StatusCode != http.StatusNotFound() {
-			logger.Debug(fmt.Sprintf("IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordName, recordType))
+		apiError, ok := err.(session.APIError)
+		if !ok || apiError.StatusCode != http.StatusNotFound() {
+			logger.Debugf("IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordName, recordType)
 			d.SetId("")
 			return []*schema.ResourceData{d}, e
 		}
@@ -1249,7 +1249,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	}
 	var importTargetString string
 	if len(targets) == 0 {
-		logger.Error(fmt.Sprintf("IMPORT Invalid Record. No target returned  [%s] [%s] [%s] ", zone, recordName, recordType))
+		logger.Errorf("IMPORT Invalid Record. No target returned  [%s] [%s] [%s] ", zone, recordName, recordType)
 		d.SetId("")
 		return []*schema.ResourceData{d}, nil
 	}
@@ -1311,7 +1311,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 		records = append(records, recContentStr)
 	}
 	sort.Strings(records)
-	logger.Debug(fmt.Sprintf("Delete zone Record. Zone: %s, Host: %s, Recordtype:  %s", zone, host, recordType))
+	logger.Debugf("Delete zone Record. Zone: %s, Host: %s, Recordtype:  %s", zone, host, recordType)
 	recordcreate := dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	// Warning: Delete will expunge the ENTIRE Recordset regardless of whether user thought they were removing an instance
@@ -1498,12 +1498,12 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		logger.Debug(fmt.Sprintf("MX record targets to process: %v", target))
+		logger.Debugf("MX record targets to process: %v", target)
 		recordset, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 		rdata := make([]string, 0, 0)
 		if e != nil {
-	                apiError, ok := err.(session.APIError)
-        	        if !ok || apiError.StatusCode != http.StatusNotFound() {
+			apiError, ok := err.(session.APIError)
+			if !ok || apiError.StatusCode != http.StatusNotFound() {
 				// failure other than not found
 				return dns.RecordBody{}, fmt.Errorf(e.Error())
 			}
@@ -1511,7 +1511,7 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 		} else {
 			rdata = inst.Client(meta).ProcessRdata(ctx, recordset.Target, recordType)
 		}
-		logger.Debug(fmt.Sprintf("Existing MX records to append to target %v", rdata))
+		logger.Debugf("Existing MX records to append to target %v", rdata)
 
 		//create map from rdata
 		rdataTargetMap := make(map[string]int, len(rdata))
@@ -1557,7 +1557,7 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 					}
 				}
 				// not there. remove
-				logger.Debug(fmt.Sprintf("MX BIND target %v deleted", oldTarg))
+				logger.Debugf("MX BIND target %v deleted", oldTarg)
 				delTarg := oldTargStr
 				rdtParts := strings.Split(oldTargStr, " ")
 				if len(rdtParts) > 1 {
@@ -1576,7 +1576,7 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		logger.Debug(fmt.Sprintf("MX BIND Priority: %d ; Increment: %d", priority, increment))
+		logger.Debugf("MX BIND Priority: %d ; Increment: %d", priority, increment)
 		// walk thru target first
 		for _, recContent := range target {
 			targEntry, ok := recContent.(string)
@@ -1586,7 +1586,7 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 			if !strings.HasSuffix(targEntry, ".") {
 				targEntry += "."
 			}
-			logger.Debug(fmt.Sprintf("MX BIND Processing Target %s", targEntry))
+			logger.Debugf("MX BIND Processing Target %s", targEntry)
 			targHost := targEntry
 			var targPri int
 			targParts := strings.Split(targEntry, " ") // need to support target entry with/without priority
@@ -1603,7 +1603,7 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 				targPri = priority
 			}
 			if pri, ok := rdataTargetMap[targHost]; ok {
-				logger.Debug(fmt.Sprintf("MX BIND. %s in existing map", targEntry))
+				logger.Debugf("MX BIND. %s in existing map", targEntry)
 				// target already in rdata
 				if pri != targPri {
 					return dns.RecordBody{}, fmt.Errorf("MX Record Priority Mismatch. Target order must align with EdgeDNS")
@@ -1619,12 +1619,12 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 				priority += increment
 			}
 		}
-		logger.Debug(fmt.Sprintf("Appended new target to target array LEN %d %v", len(records), records))
+		logger.Debugf("Appended new target to target array LEN %d %v", len(records), records)
 		// append what ever is left ...
 		for targName, tPri := range rdataTargetMap {
 			records = append(records, strconv.Itoa(tPri)+" "+targName)
 		}
-		logger.Debug(fmt.Sprintf("Existing MX records to append to target before schema data LEN %d %v", len(rdata), records))
+		logger.Debugf("Existing MX records to append to target before schema data LEN %d %v", len(rdata), records)
 
 		sort.Strings(records)
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
@@ -1939,10 +1939,10 @@ func buildRecordsList(target []interface{}, recordType string, logger log.Interf
 		case RRTypeAaaa:
 			addr := net.ParseIP(recContentStr)
 			result := FullIPv6(addr)
-			logger.Debug(fmt.Sprintf("IPV6 full %s", result))
+			logger.Debugf("IPV6 full %s", result)
 			records = append(records, result)
 		case RRTypeLoc:
-			logger.Debug(fmt.Sprintf("LOC code format %s", recContentStr))
+			logger.Debugf("LOC code format %s", recContentStr)
 			str := padCoordinates(recContentStr, logger)
 			records = append(records, str)
 		case RRTypeSpf:
@@ -1951,14 +1951,14 @@ func buildRecordsList(target []interface{}, recordType string, logger log.Interf
 			}
 			records = append(records, recContentStr)
 		case RRTypeTxt:
-			logger.Debug(fmt.Sprintf("Bind TXT Data IN: [%s]", recContentStr))
+			logger.Debugf("Bind TXT Data IN: [%s]", recContentStr)
 			recContentStr = strings.Trim(recContentStr, `"`)
 			// look for and replace escaped embedded quotes
 			recContentStr = strings.ReplaceAll(recContentStr, `\\\"`, `\"`)
 			recContentStr = "\"" + recContentStr + "\""
 
-			logger.Debug(fmt.Sprintf("Bind TXT Data %s", recContentStr))
-			logger.Debug(fmt.Sprintf("Bind TXT Data OUT: [%s]", recContentStr))
+			logger.Debugf("Bind TXT Data %s", recContentStr)
+			logger.Debugf("Bind TXT Data OUT: [%s]", recContentStr)
 			records = append(records, recContentStr)
 		case RRTypeCaa:
 			caaparts := strings.Split(recContentStr, " ")
