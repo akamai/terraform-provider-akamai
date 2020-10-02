@@ -3,6 +3,7 @@ package property
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -46,7 +47,7 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 			return diag.Errorf("error looking up Contracts for group %q: %s", group, err)
 		}
 		if len(contracts.Contracts.Items) == 0 {
-			return diag.Errorf("%s", ErrNoContractsFound)
+			return diag.FromErr(fmt.Errorf("%w", ErrNoContractsFound))
 		}
 		d.SetId(contracts.Contracts.Items[0].ContractID)
 		return nil
@@ -65,11 +66,11 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 			continue
 		}
 		if len(g.ContractIDs) == 0 {
-			return diag.Errorf("%s: %s", ErrLookingUpContract, group)
+			return diag.FromErr(fmt.Errorf("%w: %s", ErrLookingUpContract, group))
 		}
 		d.SetId(g.ContractIDs[0])
 		return nil
 	}
 
-	return diag.Errorf("%s; groupID: %q", ErrNoContractsFound, group)
+	return diag.FromErr(fmt.Errorf("%w; groupID: %q", ErrNoContractsFound, group))
 }
