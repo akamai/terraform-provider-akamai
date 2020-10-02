@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: cp_code"
-subcategory: "Common"
+subcategory: "Provisioning"
 description: |-
  CP Code
 ---
@@ -9,7 +9,7 @@ description: |-
 # akamai_cp_code
 
 
-Use `akamai_cp_code` data source to retrieve a group id.
+Use `akamai_cp_code` data source to retrieve a cpcode id.
 
 ## Example Usage
 

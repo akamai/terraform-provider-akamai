@@ -9,7 +9,7 @@ description: |-
 # akamai_contract
 
 
-Use `akamai_contract` data source to retrieve a group id.
+Use `akamai_contract` data source to retrieve a contract id.
 
 ## Example Usage
 
