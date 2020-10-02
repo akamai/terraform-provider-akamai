@@ -10,6 +10,7 @@ import (
 	"time"
 
 	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
+        "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -119,7 +120,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 
 	if err := checkDNSv2Zone(d); err != nil {
@@ -152,7 +153,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	contract := strings.TrimPrefix(contractStr, "ctr_")
 	group := strings.TrimPrefix(groupStr, "grp_")
-	zoneQueryString := dns.ZoneQueryString{ctx: ctx, Contract: contract, Group: group}
+	zoneQueryString := dns.ZoneQueryString{Contract: contract, Group: group}
 	zoneCreate := &dns.ZoneCreate{Zone: hostname, Type: zoneType}
 	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
 		return diag.FromErr(err)
@@ -183,7 +184,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 	// no existing zone.
 	logger.Debugf("Creating new zone: %v", zoneCreate)
-	e = inst.Client(meta).zoneCreateZone(ctx, zoneCreate, zoneQueryString, true)
+	e = inst.Client(meta).CreateZone(ctx, zoneCreate, zoneQueryString, true)
 	if e != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -194,7 +195,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	if strings.ToUpper(zoneType) == "PRIMARY" {
 		time.Sleep(2 * time.Second)
 		// Indirectly create NS and SOA records
-		e = inst.Client(meta).SaveChangelist(ctx)
+		e = inst.Client(meta).SaveChangelist(ctx, zoneCreate)
 		if e != nil {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -203,7 +204,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 			})
 		}
 		time.Sleep(time.Second)
-		e = inst.Client(meta).SubmitChangelist(ctx)
+		e = inst.Client(meta).SubmitChangelist(ctx, zoneCreate)
 		if e != nil {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -212,7 +213,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 			})
 		}
 	}
-	zone, e := inst.Client(meta).GetZone(ctx, hostname)
+	zone, e = inst.Client(meta).GetZone(ctx, hostname)
 	if e != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -234,7 +235,7 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 	hostname, err := tools.GetStringValue("zone", d)
 	if err != nil {
@@ -303,7 +304,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 	logger.WithField("zone", hostname).Info("Zone Update")
 
@@ -326,7 +327,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	zoneQueryString := dns.ZoneQueryString{ctx: ctx, Contract: contract, Group: group}
+	zoneQueryString := dns.ZoneQueryString{Contract: contract, Group: group}
 
 	logger.Debugf("Searching for zone [%s]", hostname)
 	zone, e := inst.Client(meta).GetZone(ctx, hostname)
@@ -376,9 +377,10 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	meta := akamai.Meta(m)
 	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneImport")
 	// create a context with logging for api calls
+	ctx := context.TODO()
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 	logger.WithField("zone", hostname).Info("Zone Import")
 

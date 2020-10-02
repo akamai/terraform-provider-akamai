@@ -18,7 +18,12 @@ import (
 type (
 	provider struct {
 		*schema.Provider
+
+		client dns.DNS
 	}
+
+	// Option is a dns provider option
+	Option func(p *provider)
 )
 
 var (
@@ -80,7 +85,7 @@ func (p *provider) Client(meta akamai.OperationMeta) dns.DNS {
 	return dns.Client(meta.Session())
 }
 
-func getConfigDNSV2Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
+func getConfigDNSV2Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	var DNSv2Config edgegrid.Config
 	var err error
 	dns, err := tools.GetSetValue("dns", d)
@@ -89,15 +94,15 @@ func getConfigDNSV2Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error
 	}
 	if err == nil {
 		log.Infof("[DEBUG] Setting property config via HCL")
-		cfg := dns.List()[0].(map[string]interface{})
-		//dnsConfig := dns.List()
-		//if len(dnsConfig) == 0 {
-		//	return nil, fmt.Errorf("'dns' property in provider must have at least one entry")
-		//}
-		//configMap, ok := dnsConfig[0].(map[string]interface{})
-		//if !ok {
-		//	return nil, fmt.Errorf("dns config entry is of invalid type; should be 'map[string]interface{}'")
-		//}
+		//cfg := dns.List()[0].(map[string]interface{})
+		dnsConfig := dns.List()
+		if len(dnsConfig) == 0 {
+			return nil, fmt.Errorf("'dns' property in provider must have at least one entry")
+		}
+		configMap, ok := dnsConfig[0].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("dns config entry is of invalid type; should be 'map[string]interface{}'")
+		}
 		host, ok := configMap["host"].(string)
 		if !ok {
 			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
@@ -125,7 +130,6 @@ func getConfigDNSV2Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error
 			ClientSecret: clientSecret,
 			MaxBody:      maxBody,
 		}
-		dns.Init(DNSv2Config)
 		return &DNSv2Config, nil
 	}
 
@@ -151,9 +155,6 @@ func getConfigDNSV2Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error
 	if err != nil {
 		return nil, err
 	}
-
-	dns.Init(DNSv2Config)
-	edgegrid.SetupLogging()
 
 	return &DNSv2Config, nil
 }

@@ -3,11 +3,13 @@ package dns
 import (
 	"context"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/apex/log"
 	"sort"
 
+	"github.com/apex/log"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -43,7 +45,7 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 
 	zone, err := tools.GetStringValue("zone", d)

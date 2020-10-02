@@ -16,6 +16,7 @@ import (
 	"time"
 
 	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
+        "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -577,13 +578,13 @@ func getRecordLock(recordType string) *sync.Mutex {
 	return recordCreateLock[recordType]
 }
 
-func bumpSoaSerial(name string, d *schema.ResourceData, ctx context.Context, meta akamai.OperationMeta, zone, host string, logger log.Interface) (recordFunction, error) {
+func bumpSoaSerial(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta, zone, host string, logger log.Interface) (*dns.RecordBody, error) {
 	// Get SOA Record
 	recordset, err := inst.Client(meta).GetRecord(ctx, zone, host, "SOA")
 	if err != nil {
 		return nil, fmt.Errorf("error looking up SOA record for %s: %w", host, err)
 	}
-	rdataFieldMap := dns.ParseRData(ctx, "SOA", recordset.Target)
+	rdataFieldMap := inst.Client(meta).ParseRData(ctx, "SOA", recordset.Target)
 
 	serial, ok := rdataFieldMap["serial"].(int)
 	if !ok {
@@ -592,30 +593,42 @@ func bumpSoaSerial(name string, d *schema.ResourceData, ctx context.Context, met
 	if err := d.Set("serial", serial+1); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	newRecord, err := bindRecord(d, logger)
+	newRecord, err := bindRecord(ctx, meta, d, logger)
 	if err != nil {
 		return nil, err
 	}
-	if name == "CREATE" {
-		return inst.Client(meta).CreateRecord, nil
-	}
-	if name == "UPDATE" {
-		return inst.Client(meta).UpdateRecord, nil
-	}
-	return nil, fmt.Errorf("bad function: %s", name)
+	return &newRecord, nil
 }
 
-// Record function signature
-type recordFunction func(context.Context, dns.RecordBody, string, ...bool) error
+// Record op function
+func execFunc(ctx context.Context, meta akamai.OperationMeta, fn string, rec *dns.RecordBody, zone string, rlock bool) error {
 
-func executeRecordFunction(ctx context.Context, name string, d *schema.ResourceData, fn recordFunction, rec dns.RecordBody, zone, host, recordType string, logger log.Interface, rlock bool) error {
+        var e error
+        switch fn {
+        case "Create":
+                e = inst.Client(meta).CreateRecord(ctx, rec, zone, rlock)
+
+        case "Update":
+                e = inst.Client(meta).UpdateRecord(ctx, rec, zone, rlock)
+
+        case "Delete":
+                e = inst.Client(meta).DeleteRecord(ctx, rec, zone, rlock)
+
+        default:
+                e = fmt.Errorf("Invalid operation [%s]", fn)
+
+        }
+	return e
+}
+
+func executeRecordFunction(ctx context.Context, meta akamai.OperationMeta, name string, d *schema.ResourceData, fn string, rec *dns.RecordBody, zone, host, recordType string, logger log.Interface, rlock bool) error {
 
 	logger.Debugf("executeRecordFunction - zone: %s, host: %s, recordtype: %s", zone, host, recordType)
 	// DNS API can have Concurrency issues
 	opRetry := opRetryCount
-	e := fn(ctx, rec, zone, rlock)
+	e := execFunc(ctx, meta, fn, rec, zone, rlock)
 	for e != nil && opRetry > 0 {
-		apiError, ok := e.(session.NewAPIError)
+		apiError, ok := e.(session.APIError)
 		// prep failure or network failure?
 		if !ok || apiError.StatusCode < http.StatusBadRequest {
 			logger.Errorf("executeRecordFunction - %s Record failed for record [%s] [%s] [%s] ", name, zone, host, recordType)
@@ -625,22 +638,22 @@ func executeRecordFunction(ctx context.Context, name string, d *schema.ResourceD
 			logger.Debug("executeRecordFunction - Concurrency Conflict")
 			opRetry--
 			time.Sleep(100 * time.Millisecond)
-			e = fn(ctx, rec, zone, rlock)
+			e = execFunc(ctx, meta, fn, rec, zone, rlock)
 			continue
 		}
 		// relying on error string is not a good idea, better to introduce separate error variables for each cause or error codes
-		if (name == "CREATE" || name == "UPDATE") && strings.Contains(recErr.Error(), "SOA serial number must be incremented") {
+		if (name == "CREATE" || name == "UPDATE") && strings.Contains(e.Error(), "SOA serial number must be incremented") {
 			logger.Debug("executeRecordFunction - SOA Serial Number needs incrementing")
 			opRetry--
 			time.Sleep(5 * time.Second) // let things quiesce
-			fn, err := bumpSoaSerial(name, d, zone, host, logger)
+			rec, err := bumpSoaSerial(ctx, d, meta, zone, host, logger)
 			if err != nil {
 				return err
 			}
-			e = fn(ctx, rec, zone, rlock)
+			e = execFunc(ctx, meta, fn, rec, zone, rlock)
 			continue
 		}
-		if name == "DELETE" && apiError.StatusCode == http.StatusNotFound() {
+		if name == "DELETE" && apiError.StatusCode == http.StatusNotFound {
 			// record doesn't exist
 			d.SetId("")
 			logger.Debugf("executeRecordFunction - %s [WARNING] %s", name, "Record not found")
@@ -659,12 +672,12 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// in your config.tf which might overwrite each other
 
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordCreate")
+	logger := meta.Log("[Akamai DNS]", "resourc/eDNSRecordCreate")
 	logger.Info("Record Create.")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 
 	var zone, host, recordType string
@@ -721,7 +734,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 		}
 	}
 
-	recordCreate, err := bindRecord(d, logger)
+	recordCreate, err := bindRecord(ctx, meta, d, logger)
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -758,7 +771,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 		// record not found/404 we will create a new
 		logger.Debug("Creating new record")
 		// Save the zone to the API
-		e = executeRecordFunction(ctx, "CREATE", d, inst.Client(meta).CreateRecord, recordCreate, zone, host, recordType, logger, false)
+		e = executeRecordFunction(ctx, meta, "CREATE", d, "Create", &recordCreate, zone, host, recordType, logger, false)
 		if e != nil {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -769,7 +782,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	} else {
 		logger.Debug("Updating record")
 		if len(rdata) > 0 {
-			e = executeRecordFunction(ctx, "CREATE", d, inst.Client(meta).UpdateRecord, recordCreate, zone, host, recordType, logger, false)
+			e = executeRecordFunction(ctx, meta, "CREATE", d, "Update", &recordCreate, zone, host, recordType, logger, false)
 			if e != nil {
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
@@ -779,7 +792,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 			}
 		} else {
 			logger.Debug("Saving record")
-			e = executeRecordFunction("CREATE", d, recordCreate.Save, zone, host, recordType, logger, false)
+			e = executeRecordFunction(ctx, meta, "CREATE", d, "Create", &recordCreate, zone, host, recordType, logger, false)
 			if e != nil {
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
@@ -816,7 +829,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 
 	var zone, host, recordType string
@@ -894,7 +907,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		}
 	}
 
-	recordCreate, err := bindRecord(d, logger)
+	recordCreate, err := bindRecord(ctx, meta, d, logger)
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -937,13 +950,13 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		logger.Errorf("UPDATE [ERROR] %s", e.Error())
 		logger.Debugf("UPDATE Creating new record")
 		// Save the zone to the API
-		e = executeRecordFunction(ctx, "UPDATE", d, inst.Client(meta).CreateRecord, recordCreate, zone, host, recordType, logger, false)
+		e = executeRecordFunction(ctx, meta, "UPDATE", d, "Create", &recordCreate, zone, host, recordType, logger, false)
 		if e != nil {
 			return diag.FromErr(e)
 		}
 	} else {
 		logger.Debug("UPDATE Updating record")
-		e = executeRecordFunction(ctx, "UPDATE", d, inst.Client(meta).UpdateRecord, recordCreate, zone, host, recordType, logger, false)
+		e = executeRecordFunction(ctx, meta, "UPDATE", d, "Update", &recordCreate, zone, host, recordType, logger, false)
 		if e != nil {
 			return diag.FromErr(e)
 		}
@@ -970,7 +983,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 
 	var zone, host, recordType string
@@ -996,7 +1009,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		"recordtype": recordType,
 	}).Info("Record Read")
 
-	recordCreate, err := bindRecord(d, logger)
+	recordCreate, err := bindRecord(ctx, meta, d, logger)
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -1057,8 +1070,8 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		})
 	}
 	logger.Debugf("READ record data read JSON %s", string(b1))
-	rdataFieldMap := inst.Client(meta).ParseRData(recordType, record.Target) // returns map[string]interface{}
-	targets := inst.Client(meta).ProcessRdata(record.Target, recordType)
+	rdataFieldMap := inst.Client(meta).ParseRData(ctx, recordType, record.Target) // returns map[string]interface{}
+	targets := inst.Client(meta).ProcessRdata(ctx, record.Target, recordType)
 	switch recordType {
 	case RRTypeMx:
 		// calc rdata sha from read record
@@ -1188,9 +1201,12 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	meta := akamai.Meta(m)
 	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordImport")
 	// create a context with logging for api calls
+
+	// create context. TODO: *** Way to find TF context ***
+	ctx := context.TODO()
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 
 	idParts := strings.Split(d.Id(), "#")
@@ -1208,8 +1224,8 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 	recordset, e := inst.Client(meta).GetRecord(ctx, zone, recordName, recordType)
 	if e != nil {
-		apiError, ok := err.(session.APIError)
-		if !ok || apiError.StatusCode != http.StatusNotFound() {
+		apiError, ok := e.(session.APIError)
+		if !ok || apiError.StatusCode != http.StatusNotFound {
 			logger.Debugf("IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordName, recordType)
 			d.SetId("")
 			return []*schema.ResourceData{d}, e
@@ -1272,7 +1288,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 
 	zone, err := tools.GetStringValue("zone", d)
@@ -1316,7 +1332,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 
 	// Warning: Delete will expunge the ENTIRE Recordset regardless of whether user thought they were removing an instance
 
-	if err := executeRecordFunction(ctx, "DELETE", d, inst.Client(meta).DeleteRecord, recordcreate, zone, host, recordType, logger, false); err != nil {
+	if err := executeRecordFunction(ctx, meta, "DELETE", d, "Delete", &recordcreate, zone, host, recordType, logger, false); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
@@ -1360,7 +1376,7 @@ func padCoordinates(str string, logger log.Interface) string {
 	return fmt.Sprintf("%s %s %s %s %s %s %s %s %sm %sm %sm %sm", latD, latM, latS, latDir, longD, longM, longS, longDir, padvalue(altitude, logger), padvalue(size, logger), padvalue(horizPrecision, logger), padvalue(vertPrecision, logger))
 }
 
-func bindRecord(d *schema.ResourceData, logger log.Interface) (dns.RecordBody, error) {
+func bindRecord(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, logger log.Interface) (dns.RecordBody, error) {
 
 	var host, recordType string
 	var err error
@@ -1391,10 +1407,10 @@ func bindRecord(d *schema.ResourceData, logger log.Interface) (dns.RecordBody, e
 		sort.Strings(records)
 		return dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}, nil
 	}
-	return newRecordCreate(d, recordType, target, host, ttl, logger)
+	return newRecordCreate(ctx, meta, d, recordType, target, host, ttl, logger)
 }
 
-func newRecordCreate(d *schema.ResourceData, recordType string, target []interface{}, host string, ttl int, logger log.Interface) (dns.RecordBody, error) {
+func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, recordType string, target []interface{}, host string, ttl int, logger log.Interface) (dns.RecordBody, error) {
 	var recordCreate dns.RecordBody
 	switch recordType {
 	case RRTypeAfsdb:
@@ -1503,7 +1519,7 @@ func newRecordCreate(d *schema.ResourceData, recordType string, target []interfa
 		rdata := make([]string, 0, 0)
 		if e != nil {
 			apiError, ok := err.(session.APIError)
-			if !ok || apiError.StatusCode != http.StatusNotFound() {
+			if !ok || apiError.StatusCode != http.StatusNotFound {
 				// failure other than not found
 				return dns.RecordBody{}, fmt.Errorf(e.Error())
 			}
