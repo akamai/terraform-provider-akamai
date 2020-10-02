@@ -329,7 +329,7 @@ func unmarshalRules(d *schema.ResourceData) (papi.Rules, error) {
 
 			isSecure, ok := ruleTree["is_secure"].(bool)
 			if ok && isSecure {
-				propertyRules.Options = &papi.RuleOptions{IsSecure: isSecure}
+				propertyRules.Options = papi.RuleOptions{IsSecure: isSecure}
 			}
 		}
 

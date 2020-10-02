@@ -176,7 +176,7 @@ func TestAccAkamaiProperty_isSecureFalse(t *testing.T) {
 
 	d := schema.TestResourceDataRaw(t, inst.Provider.ResourcesMap["akamai_property"].Schema, config)
 	rules := unmarshalRulesFromJSON(d)
-	if !rules.Options.IsSecure {
+	if rules.Options.IsSecure {
 		t.Fail()
 	}
 }

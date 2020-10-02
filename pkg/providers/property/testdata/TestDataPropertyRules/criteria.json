@@ -1,7 +1,4 @@
 {
-  "accountId": "",
-  "contractId": "",
-  "groupId": "",
   "propertyId": "",
   "propertyVersion": 0,
   "etag": "",
@@ -17,7 +14,21 @@
         }
       }
     ],
+    "children": [
+      {
+        "criteria": [
+          {
+            "name": "criteriaAll",
+            "options": {}
+          }
+        ],
+        "name": "child",
+        "options": {},
+        "criteriaMustSatisfy": "all"
+      }
+    ],
     "name": "default",
+    "options": {},
     "criteriaMustSatisfy": "all"
   }
 }

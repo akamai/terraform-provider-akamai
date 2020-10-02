@@ -1,7 +1,4 @@
 {
-  "accountId": "",
-  "contractId": "",
-  "groupId": "",
   "propertyId": "",
   "propertyVersion": 0,
   "etag": "",
@@ -9,15 +6,16 @@
   "rules": {
     "behaviors": [
       {
-        "name": "cpCode",
+        "name": "siteShield",
         "options": {
-          "value": {
-            "id": 12345
+          "ssmap": {
+            "value": "mapname.akamai.net"
           }
         }
       }
     ],
     "name": "default",
+    "options": {},
     "criteriaMustSatisfy": "all"
   }
 }

@@ -1,13 +1,13 @@
 {
-   "accountId": "",
-   "contractId": "",
-   "groupId": "",
    "propertyId": "",
    "propertyVersion": 0,
    "etag": "",
    "ruleFormat": "",
    "rules": {
       "name": "default",
+      "options": {
+         "is_secure": true
+      },
       "criteriaMustSatisfy": "all"
    }
 }
