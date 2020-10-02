@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm_default_datacenter"
-subcategory: "docs-akamai-data-gtm_default_datacenter"
+subcategory: "Global Traffic Management"
 description: |-
  CP Code
 ---

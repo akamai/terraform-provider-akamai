@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: Get Started with DNS Zone Administration"
-subcategory: "docs-akamai-guide-get-started-dns-zone"
+subcategory: "DNS"
 description: |-
   Get Started with Akamai DNS Zone Administration using Terraform
 ---

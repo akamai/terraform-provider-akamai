@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: Appendix"
-subcategory: "docs-akamai-guide-appendix"
+subcategory: "Others"
 description: |-
   Appendix
 ---

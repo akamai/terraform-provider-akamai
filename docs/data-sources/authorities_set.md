@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: authorities_set"
-subcategory: "docs-akamai-data-authorities-set"
+subcategory: "DNS"
 description: |-
  DNS Authorities Set
 ---

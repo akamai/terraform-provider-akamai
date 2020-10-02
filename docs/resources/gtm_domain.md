@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm domain"
-subcategory: "docs-akamai-resource-gtm-domain"
+subcategory: "Global Traffic Management"
 description: |-
   GTM Domain
 ---

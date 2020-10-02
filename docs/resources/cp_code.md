@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: CP Code"
-subcategory: "docs-akamai-resource-cp-code"
+subcategory: "Common"
 description: |-
   CP Code
 ---

@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Provider: Akamai"
-subcategory: "docs-akamai-index"
+subcategory: "Akamai Provider"
 description: |-
   Akamai
 ---
@@ -11,7 +11,7 @@ description: |-
 The Akamai Terraform Provider is used to interact with Akamai and manage solutions for content
 delivery, security, and performance.
 
-Last updated: July 2020.
+Last updated: October 2020.
 
 ## Prerequisites
 

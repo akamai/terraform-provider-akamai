@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm datacenter"
-subcategory: "docs-akamai-resource-gtm-datacenter"
+subcategory: "Global Traffic Management"
 description: |-
   GTM Datacenter
 ---

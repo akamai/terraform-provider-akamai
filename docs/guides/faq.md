@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: FAQ (Frequently Asked Questions)"
-subcategory: "docs-akamai-guide-faq"
+subcategory: "Others"
 description: |-
   Frequently Asked Questions
 ---
