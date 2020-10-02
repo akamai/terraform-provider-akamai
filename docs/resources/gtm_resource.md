@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm resource"
-sidebar_current: "docs-akamai-resource-gtm-resource"  
+subcategory: "Global Traffic Management"  
 description: |-
   GTM Resource
 ---

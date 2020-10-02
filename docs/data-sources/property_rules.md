@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: property rules"
-sidebar_current: "docs-akamai-data-property-rules"
+subcategory: "Provisioning"
 description: |-
   Property Rules
 ---

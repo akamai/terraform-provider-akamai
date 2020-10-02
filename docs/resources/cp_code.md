@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: CP Code"
-sidebar_current: "docs-akamai-resource-cp-code"
+subcategory: "Provisioning"
 description: |-
   CP Code
 ---

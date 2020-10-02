@@ -1,14 +1,15 @@
 ---
 layout: "akamai"
 page_title: "Akamai: cp_code"
-sidebar_current: "docs-akamai-data-cpcode"
+subcategory: "Provisioning"
 description: |-
  CP Code
 ---
 
 # akamai_cp_code
 
-Use `akamai_cp_code` data source to retrieve a group id.
+
+Use `akamai_cp_code` data source to retrieve a cpcode id.
 
 ## Example Usage
 

@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm property"
-sidebar_current: "docs-akamai-resource-gtm-property"
+subcategory: "Global Traffic Management"
 description: |-
   GTM Property
 ---

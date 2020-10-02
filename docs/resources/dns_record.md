@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: dns record"
-sidebar_current: "docs-akamai-resource-dns-record"
+subcategory: "DNS"
 description: |-
   DNS Record
 ---

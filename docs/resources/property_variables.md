@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: property variables"
-sidebar_current: "docs-akamai-resource-property-variables"
+subcategory: "Provisioning"
 description: |-
   Property Variables
 ---

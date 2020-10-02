@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: dns zone"
-sidebar_current: "docs-akamai-resource-dns-zone"
+subcategory: "DNS"
 description: |-
   DNS Zone
 ---

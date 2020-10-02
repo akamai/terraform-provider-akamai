@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: gtm cidrmap"
-sidebar_current: "docs-akamai-resource-gtm-cidrmap"  
+subcategory: "Global Traffic Management"  
 description: |-
   GTM Cidr Map
 ---

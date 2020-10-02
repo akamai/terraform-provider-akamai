@@ -1,7 +1,6 @@
 ---
 layout: "akamai"
 page_title: "Akamai: FAQ (Frequently Asked Questions)"
-sidebar_current: "docs-akamai-guide-faq"
 description: |-
   Frequently Asked Questions
 ---

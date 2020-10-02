@@ -1,14 +1,15 @@
 ---
 layout: "akamai"
 page_title: "Akamai: contract"
-sidebar_current: "docs-akamai-data-contract"
+subcategory: "Common"
 description: |-
  Contract
 ---
 
 # akamai_contract
 
-Use `akamai_contract` data source to retrieve a group id.
+
+Use `akamai_contract` data source to retrieve a contract id.
 
 ## Example Usage
 

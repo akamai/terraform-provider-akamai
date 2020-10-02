@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: Get Started with GTM Domain Administration"
-sidebar_current: "docs-akamai-guide-get-started-gtm-domain"
+subcategory: "Global Traffic Management"
 description: |-
   Get Started with Akamai GTM Domain Administration using Terraform
 ---

@@ -1,7 +1,6 @@
 ---
 layout: "akamai"
 page_title: "Provider: Akamai"
-sidebar_current: "docs-akamai-index"
 description: |-
   Akamai
 ---
@@ -11,7 +10,7 @@ description: |-
 The Akamai Terraform Provider is used to interact with Akamai and manage solutions for content
 delivery, security, and performance.
 
-Last updated: July 2020.
+Last updated: October 2020.
 
 ## Prerequisites
 
@@ -36,6 +35,46 @@ The local .edgerc file can be referenced in the top of the Akamai Terraform conf
 
 
 ## Example Usage
+
+Terraform 0.13 and later:
+
+```hcl
+terraform {
+  required_providers {
+    akamai = {
+      source  = "hashicorp/akamai"
+      version = "~> 0.9.1"
+    }
+  }
+}
+
+# Configure the Akamai Provider
+provider "akamai" {
+  edgerc = "~/.edgerc"
+  papi_section = "papi"
+  dns_section = "dns"
+  gtm_section = "gtm"
+}
+
+# Create a Property
+resource "akamai_property" "example_property" {
+  name = "www.example.org"
+  
+  # ...
+}
+
+# Create a DNS Record
+resource "akamai_dns_record" "example_record" {
+  zone       = "example.org"
+  name       = "www.example.org"
+  recordtype = "CNAME"
+  active     = true
+  ttl        = 600
+  target     = ["example.org.akamaized.net."]
+}
+```
+
+Terraform 0.12 and earlier:
 
 ```hcl
 # Configure the Akamai Provider
@@ -127,8 +166,8 @@ If the section name is `default`, you can omit it, instead using:
 
 ## Guides
 
-* [Frequently Asked Questions](g/faq.html.markdown)
-* [Get Started with DNS Zone Administration](g/get_started_dns_zone.html.markdown)
-* [Get Started with GTM Domain Administration](g/get_started_gtm_domain.html.markdown)
-* [Get Started with Property Management](g/get_started_property.html.markdown)
-* [Appendix](g/appendix.html.markdown)
+* [Frequently Asked Questions](guides/faq.md)
+* [Get Started with DNS Zone Administration](guides/get_started_dns_zone.md)
+* [Get Started with GTM Domain Administration](guides/get_started_gtm_domain.md)
+* [Get Started with Property Management](guides/get_started_property.md)
+* [Appendix](guides/appendix.md)

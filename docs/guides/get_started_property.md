@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: Get Started with Property Management"
-sidebar_current: "docs-akamai-guide-get-started-property"
+subcategory: "Provisioning"
 description: |-
   Get Started with Akamai Property Management using Terraform
 ---
