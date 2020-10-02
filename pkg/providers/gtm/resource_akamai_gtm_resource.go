@@ -1,21 +1,23 @@
 package gtm
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceGTMv1Resource() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGTMv1ResourceCreate,
-		Read:   resourceGTMv1ResourceRead,
-		Update: resourceGTMv1ResourceUpdate,
-		Delete: resourceGTMv1ResourceDelete,
-		Exists: resourceGTMv1ResourceExists,
+		CreateContext: resourceGTMv1ResourceCreate,
+		ReadContext:   resourceGTMv1ResourceRead,
+		UpdateContext: resourceGTMv1ResourceUpdate,
+		DeleteContext: resourceGTMv1ResourceDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceGTMv1ResourceImport,
 		},
@@ -111,34 +113,47 @@ func resourceGTMv1Resource() *schema.Resource {
 }
 
 // Create a new GTM Resource
-func resourceGTMv1ResourceCreate(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1ResourceCreate")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceCreate")
 
 	domain, err := tools.GetStringValue("domain", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	name, _ := tools.GetStringValue("name", d)
-
+	name, err := tools.GetStringValue("name", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	var diags diag.Diagnostics
 	logger.Infof("Creating resource [%s] in domain [%s]", name, domain)
-	newRsrc := populateNewResourceObject(d)
+	newRsrc, err := populateNewResourceObject(d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	logger.Debugf("Proposed New Resource: [%v]", newRsrc)
 	cStatus, err := newRsrc.Create(domain)
 	if err != nil {
-		logger.Errorf("ResourceCreate failed: %s", err.Error())
-		return err
+		logger.Errorf("Resource Create failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Resource Create failed",
+			Detail:   err.Error(),
+		})
 	}
-	logger.Debugf("Resource Create status:")
-	logger.Debugf("%v", cStatus.Status)
+	logger.Debugf("Resource Create status: %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		return fmt.Errorf(cStatus.Status.Message)
+		logger.Errorf(cStatus.Status.Message)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  cStatus.Status.Message,
+		})
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {
@@ -150,36 +165,44 @@ func resourceGTMv1ResourceCreate(d *schema.ResourceData, m interface{}) error {
 				logger.Infof("Resource Create pending")
 			} else {
 				logger.Errorf("Resource Create failed [%s]", err.Error())
-				return err
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Resource Create failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
-
 	}
 
 	// Give terraform the ID. Format domain:resource
 	resourceId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	logger.Debugf("Generated Resource Resource Id: %s", resourceId)
+	logger.Debugf("Generated Resource. Resource Id: %s", resourceId)
 	d.SetId(resourceId)
-	return resourceGTMv1ResourceRead(d, m)
+	return resourceGTMv1ResourceRead(ctx, d, m)
 
 }
 
 // read resource. updates state with entire API result configuration.
-func resourceGTMv1ResourceRead(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1ResourceRead")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceRead")
 
-	logger.Debugf("READ")
 	logger.Debugf("Reading Resource: %s", d.Id())
+	var diags diag.Diagnostics
 	// retrieve the property and domain
 	domain, resource, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return fmt.Errorf("invalid resource resource ID")
+		logger.Errorf("Invalid resource Resource ID")
+		return diag.FromErr(err)
 	}
 	rsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
-		logger.Errorf("ResourceRead failed: %s", err.Error())
-		return err
+		logger.Errorf("Resource Read failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Resource Read error",
+			Detail:   err.Error(),
+		})
 	}
 	populateTerraformResourceState(d, rsrc, m)
 	logger.Debugf("READ %v", rsrc)
@@ -187,39 +210,54 @@ func resourceGTMv1ResourceRead(d *schema.ResourceData, m interface{}) error {
 }
 
 // Update GTM Resource
-func resourceGTMv1ResourceUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1ResourceUpdate")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceUpdate")
 
-	logger.Debugf("UPDATE")
+	logger.Infof("Updating Resource %s", d.Id())
+	var diags diag.Diagnostics
 	// pull domain and resource out of id
 	domain, resource, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return fmt.Errorf("invalid resource ID")
+		logger.Errorf("Invalid resource ID")
+		return diag.FromErr(err)
 	}
 	// Get existing property
 	existRsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
-		logger.Errorf("ResourceUpdate failed: %s", err.Error())
-		return err
+		logger.Errorf("Resource Update failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Update Resource Read error",
+			Detail:   err.Error(),
+		})
 	}
 	logger.Debugf("Updating Resource BEFORE: %v", existRsrc)
-	populateResourceObject(d, existRsrc)
+	if err = populateResourceObject(d, existRsrc, m); err != nil {
+		return diag.FromErr(err)
+	}
 	logger.Debugf("Updating Resource PROPOSED: %v", existRsrc)
 	uStat, err := existRsrc.Update(domain)
 	if err != nil {
-		logger.Errorf("ResourceUpdate failed: %s", err.Error())
-		return err
+		logger.Errorf("Resource Update failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Resource Update error",
+			Detail:   err.Error(),
+		})
 	}
-	logger.Debugf("Resource Update  status:")
-	logger.Debugf("%v", uStat)
+	logger.Debugf("Resource Update status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return fmt.Errorf(uStat.Message)
+		logger.Errorf(uStat.Message)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  uStat.Message,
+		})
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {
@@ -230,26 +268,29 @@ func resourceGTMv1ResourceUpdate(d *schema.ResourceData, m interface{}) error {
 			if err == nil {
 				logger.Infof("Resource update pending")
 			} else {
-				logger.Warnf("Resource update failed [%s]", err.Error())
-				return err
+				logger.Errorf("Resource update failed [%s]", err.Error())
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Resource Update failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
-
 	}
 
-	return resourceGTMv1ResourceRead(d, m)
+	return resourceGTMv1ResourceRead(ctx, d, m)
 }
 
 // Import GTM Resource.
 func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1ResourceImport")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceImport")
 
 	logger.Infof("Resource [%s] Import", d.Id())
 	// pull domain and resource out of resource id
 	domain, resource, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, fmt.Errorf("invalid resource resource ID")
+		return []*schema.ResourceData{d}, err
 	}
 	rsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
@@ -266,52 +307,67 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 }
 
 // Delete GTM Resource.
-func resourceGTMv1ResourceDelete(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1ResourceDelete")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceDelete")
 
-	logger.Debugf("DELETE")
 	logger.Debugf("Deleting Resource: %s", d.Id())
+	var diags diag.Diagnostics
 	// Get existing resource
 	domain, resource, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return fmt.Errorf("invalid resource ID")
+		logger.Errorf("Invalid resource ID")
+		return diag.FromErr(err)
 	}
 	existRsrc, err := gtm.GetResource(resource, domain)
 	if err != nil {
-		logger.Errorf("ResourceDelete failed: %s", err.Error())
-		return err
+		logger.Errorf("Resource Delete Read failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Delete Resource Read error",
+			Detail:   err.Error(),
+		})
 	}
 	logger.Debugf("Deleting Resource: %v", existRsrc)
 	uStat, err := existRsrc.Delete(domain)
 	if err != nil {
-		logger.Errorf("ResourceDelete failed: %s", err.Error())
-		return err
+		logger.Errorf("Resource Delete failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Delete Resource error",
+			Detail:   err.Error(),
+		})
 	}
-	logger.Debugf("Resource Delete status:")
-	logger.Debugf("%v", uStat)
+	logger.Debugf("Resource Delete status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return fmt.Errorf(uStat.Message)
+		logger.Errorf(uStat.Message)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  uStat.Message,
+		})
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {
 		done, err := waitForCompletion(domain, m)
 		if done {
-			logger.Infof("Resource delete completed")
+			logger.Infof("Resource Delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("Resource delete pending")
+				logger.Infof("Resource Delete pending")
 			} else {
-				logger.Errorf("Resource delete failed [%s]", err.Error())
-				return err
+				logger.Errorf("Resource Delete failed [%s]", err.Error())
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Resource Delete failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
-
 	}
 
 	// if successful ....
@@ -319,84 +375,130 @@ func resourceGTMv1ResourceDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-// Test GTM Resource existence
-func resourceGTMv1ResourceExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1ResourceExists")
-
-	logger.Debugf("Exists")
-	// pull domain and resource out of resource id
-	domain, resource, err := parseResourceStringId(d.Id())
-	if err != nil {
-		return false, fmt.Errorf("invalid resource resource ID")
-	}
-	logger.Debugf("Searching for existing resource [%s] in domain %s", resource, domain)
-	rsrc, err := gtm.GetResource(resource, domain)
-	return rsrc != nil, err
-}
-
 // Create and populate a new resource object from resource data
-func populateNewResourceObject(d *schema.ResourceData) *gtm.Resource {
+func populateNewResourceObject(d *schema.ResourceData, m interface{}) (*gtm.Resource, error) {
 
 	name, _ := tools.GetStringValue("name", d)
 	rsrcObj := gtm.NewResource(name)
 	rsrcObj.ResourceInstances = make([]*gtm.ResourceInstance, 0)
-	populateResourceObject(d, rsrcObj)
+	err := populateResourceObject(d, rsrcObj, m)
 
-	return rsrcObj
+	return rsrcObj, err
 
 }
 
 // Populate existing resource object from resource data
-func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource) {
+func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceDelete")
 
-	if v, err := tools.GetStringValue("name", d); err == nil {
-		rsrc.Name = v
+	vstr, err := tools.GetStringValue("name", d)
+	if err == nil {
+		rsrc.Name = vstr
 	}
-	if v, err := tools.GetStringValue("type", d); err == nil {
-		rsrc.Type = v
+	vstr, err = tools.GetStringValue("type", d)
+	if err == nil {
+		rsrc.Type = vstr
 	}
-	if v, err := tools.GetStringValue("host_header", d); err == nil || d.HasChange("host_header") {
-		rsrc.HostHeader = v
+	vstr, err = tools.GetStringValue("host_header", d)
+	if err == nil || d.HasChange("host_header") {
+		rsrc.HostHeader = vstr
 	}
-	if v, err := tools.GetFloat64Value("least_squares_decay", d); err == nil || d.HasChange("least_squares_decay") {
-		rsrc.LeastSquaresDecay = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() host_header failed: %v", err.Error())
+		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetIntValue("upper_bound", d); err == nil || d.HasChange("upper_bound") {
-		rsrc.UpperBound = v
+
+	vfloat, err := tools.GetFloat64Value("least_squares_decay", d)
+	if err == nil || d.HasChange("least_squares_decay") {
+		rsrc.LeastSquaresDecay = vfloat
 	}
-	if v, err := tools.GetStringValue("description", d); err == nil || d.HasChange("description") {
-		rsrc.Description = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() least_squares_decay failed: %v", err.Error())
+		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetStringValue("leader_string", d); err == nil || d.HasChange("leader_string") {
-		rsrc.LeaderString = v
+
+	vint, err := tools.GetIntValue("upper_bound", d)
+	if err == nil || d.HasChange("upper_bound") {
+		rsrc.UpperBound = vint
 	}
-	if v, err := tools.GetStringValue("constrained_property", d); err == nil || d.HasChange("constrained_property") {
-		rsrc.ConstrainedProperty = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() upper_bound failed: %v", err.Error())
+		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetStringValue("aggregation_type", d); err == nil {
-		rsrc.AggregationType = v
+
+	vstr, err = tools.GetStringValue("description", d)
+	if err == nil || d.HasChange("description") {
+		rsrc.Description = vstr
 	}
-	if v, err := tools.GetFloat64Value("load_imbalance_percentage", d); err == nil || d.HasChange("load_imbalance_percentage") {
-		rsrc.LoadImbalancePercentage = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() description failed: %v", err.Error())
+		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetFloat64Value("max_u_multiplicative_increment", d); err == nil || d.HasChange("max_u_multiplicative_increment") {
-		rsrc.MaxUMultiplicativeIncrement = v
+
+	vstr, err = tools.GetStringValue("leader_string", d)
+	if err == nil || d.HasChange("leader_string") {
+		rsrc.LeaderString = vstr
 	}
-	if v, err := tools.GetFloat64Value("decay_rate", d); err == nil || d.HasChange("decay_rate") {
-		rsrc.DecayRate = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() leader_string failed: %v", err.Error())
+		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
+
+	vstr, err = tools.GetStringValue("constrained_property", d)
+	if err == nil || d.HasChange("constrained_property") {
+		rsrc.ConstrainedProperty = vstr
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() constrained_property failed: %v", err.Error())
+		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+	}
+
+	vstr, err = tools.GetStringValue("aggregation_type", d)
+	if err == nil {
+		rsrc.AggregationType = vstr
+	}
+
+	vfloat, err = tools.GetFloat64Value("load_imbalance_percentage", d)
+	if err == nil || d.HasChange("load_imbalance_percentage") {
+		rsrc.LoadImbalancePercentage = vfloat
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
+		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+	}
+
+	vfloat, err = tools.GetFloat64Value("max_u_multiplicative_increment", d)
+	if err == nil || d.HasChange("max_u_multiplicative_increment") {
+		rsrc.MaxUMultiplicativeIncrement = vfloat
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() max_u_multiplicative_increment failed: %v", err.Error())
+		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+	}
+
+	vfloat, err = tools.GetFloat64Value("decay_rate", d)
+	if err == nil || d.HasChange("decay_rate") {
+		rsrc.DecayRate = vfloat
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() decay_rate failed: %v", err.Error())
+		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+	}
+
 	if _, ok := d.GetOk("resource_instance"); ok {
 		populateResourceInstancesObject(d, rsrc)
 	} else if d.HasChange("resource_instance") {
 		rsrc.ResourceInstances = make([]*gtm.ResourceInstance, 0)
 	}
+
+	return nil
 }
 
 // Populate Terraform state from provided Resource object
 func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "populateTerraformResourceState")
+	logger := meta.Log("Akamai GTM", "populateTerraformResourceState")
 
 	logger.Debugf("Entering populateTerraformResourceState")
 	// walk through all state elements
@@ -451,7 +553,7 @@ func populateResourceInstancesObject(d *schema.ResourceData, rsrc *gtm.Resource)
 // create and populate Terraform resource_instances schema
 func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "populateTerraformResourceInstancesState")
+	logger := meta.Log("Akamai GTM", "populateTerraformResourceInstancesState")
 
 	riObjectInventory := make(map[int]*gtm.ResourceInstance, len(rsrc.ResourceInstances))
 	if len(rsrc.ResourceInstances) > 0 {

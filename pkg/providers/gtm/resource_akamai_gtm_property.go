@@ -1,6 +1,8 @@
 package gtm
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -8,16 +10,16 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceGTMv1Property() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGTMv1PropertyCreate,
-		Read:   resourceGTMv1PropertyRead,
-		Update: resourceGTMv1PropertyUpdate,
-		Delete: resourceGTMv1PropertyDelete,
-		Exists: resourceGTMv1PropertyExists,
+		CreateContext: resourceGTMv1PropertyCreate,
+		ReadContext:   resourceGTMv1PropertyRead,
+		UpdateContext: resourceGTMv1PropertyUpdate,
+		DeleteContext: resourceGTMv1PropertyDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceGTMv1PropertyImport,
 		},
@@ -334,7 +336,7 @@ func parseResourceStringId(id string) (string, string, error) {
 
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return "", "", fmt.Errorf("invalid resource id")
+		return "", "", fmt.Errorf("Invalid resource id: %s", id)
 	}
 
 	return parts[0], parts[1], nil
@@ -342,38 +344,41 @@ func parseResourceStringId(id string) (string, string, error) {
 }
 
 // Create a new GTM Property
-func resourceGTMv1PropertyCreate(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyCreate")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyCreate")
 
 	domain, err := tools.GetStringValue("domain", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	propertyName, err := tools.GetStringValue("name", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
-	newProp := populateNewPropertyObject(d, m)
+	newProp, err := populateNewPropertyObject(d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	logger.Debugf("Proposed New Property: [%v]", newProp)
 	cStatus, err := newProp.Create(domain)
 	if err != nil {
-		logger.Errorf("PropertyCreate failed: %s", err.Error())
-		return err
+		logger.Errorf("Property Create failed: %s", err.Error())
+		return diag.FromErr(fmt.Errorf("Property Create failed: %s", err.Error()))
 	}
-	logger.Debugf("Property Create status:")
-	logger.Debugf("%v", cStatus.Status)
+	logger.Debugf("Property Create status: %v", cStatus.Status)
 
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		return fmt.Errorf(cStatus.Status.Message)
+		logger.Errorf(cStatus.Status.Message)
+		return diag.FromErr(fmt.Errorf(cStatus.Status.Message))
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {
@@ -385,36 +390,35 @@ func resourceGTMv1PropertyCreate(d *schema.ResourceData, m interface{}) error {
 				logger.Infof("Property Create pending")
 			} else {
 				logger.Errorf("Property Create failed [%s]", err.Error())
-				return err
+				return diag.FromErr(fmt.Errorf("Property Create failed [%s]", err.Error()))
 			}
 		}
 	}
 
 	// Give terraform the ID. Format domain::property
 	propertyId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	logger.Debugf("Generated Property Resource Id: %s", propertyId)
+	logger.Debugf("Generated Property resource Id: %s", propertyId)
 	d.SetId(propertyId)
-	return resourceGTMv1PropertyRead(d, m)
+	return resourceGTMv1PropertyRead(ctx, d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1PropertyRead(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyRead")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyRead")
 
-	logger.Debugf("READ")
 	logger.Debugf("Reading Property: %s", d.Id())
 	// retrieve the property and domain
 	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return fmt.Errorf("invalid property resource Id")
+		return diag.FromErr(err)
 	}
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
-		logger.Errorf("PropertyRead failed: %s", err.Error())
-		return err
+		logger.Errorf("Property Read failed: %s", err.Error())
+		return diag.FromErr(fmt.Errorf("Property Read failed: %s", err.Error()))
 	}
 	populateTerraformPropertyState(d, prop, m)
 	logger.Debugf("READ %v", prop)
@@ -422,69 +426,71 @@ func resourceGTMv1PropertyRead(d *schema.ResourceData, m interface{}) error {
 }
 
 // Update GTM Property
-func resourceGTMv1PropertyUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyUpdate")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyUpdate")
 
-	logger.Debugf("UPDATE")
 	logger.Debugf("Updating Property: %s", d.Id())
 	// pull domain and property out of resource id
 	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return fmt.Errorf("invalid property resource Id")
+		return diag.FromErr(err)
 	}
 	// Get existing property
 	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
-		logger.Errorf("PropertyUpdate failed: %s", err.Error())
-		return err
+		logger.Errorf("Property Update failed: %s", err.Error())
+		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Property BEFORE: %v", existProp)
-	populatePropertyObject(d, existProp, m)
+	err = populatePropertyObject(d, existProp, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	logger.Debugf("Updating Property PROPOSED: %v", existProp)
 	uStat, err := existProp.Update(domain)
 	if err != nil {
-		logger.Errorf("PropertyUpdate failed: %s", err.Error())
-		return err
+		logger.Errorf("Property Update failed: %s", err.Error())
+		return diag.FromErr(fmt.Errorf("Property Update failed: %s", err.Error()))
 	}
-	logger.Debugf("Property Update  status:")
-	logger.Debugf("%v", uStat)
+	logger.Debugf("Property Update  status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return fmt.Errorf(uStat.Message)
+		logger.Debugf(uStat.Message)
+		return diag.FromErr(fmt.Errorf(uStat.Message))
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {
 		done, err := waitForCompletion(domain, m)
 		if done {
-			logger.Infof("Property update completed")
+			logger.Infof("Property Update completed")
 		} else {
 			if err == nil {
-				logger.Infof("Property update pending")
+				logger.Infof("Property Update pending")
 			} else {
-				logger.Errorf("Property update failed [%s]", err.Error())
-				return err
+				logger.Errorf("Property Update failed [%s]", err.Error())
+				return diag.FromErr(fmt.Errorf("Property Update failed [%s]", err.Error()))
 			}
 		}
 	}
 
-	return resourceGTMv1PropertyRead(d, m)
+	return resourceGTMv1PropertyRead(ctx, d, m)
 }
 
 // Import GTM Property.
 func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyImport")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyImport")
 
 	logger.Infof("Property [%s] Import", d.Id())
 	// pull domain and property out of resource id
 	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return []*schema.ResourceData{d}, fmt.Errorf("invalid property resource Id")
+		return []*schema.ResourceData{d}, err
 	}
 	prop, err := gtm.GetProperty(property, domain)
 	if err != nil {
@@ -504,52 +510,50 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 }
 
 // Delete GTM Property.
-func resourceGTMv1PropertyDelete(d *schema.ResourceData, m interface{}) error {
+func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyDelete")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyDelete")
 
-	logger.Debugf("DELETE")
 	logger.Debugf("Deleting Property: %s", d.Id())
 	// Get existing property
 	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
-		return fmt.Errorf("invalid property resource Id")
+		return diag.FromErr(err)
 	}
 	existProp, err := gtm.GetProperty(property, domain)
 	if err != nil {
-		logger.Errorf("PropertyDelete failed: %s", err.Error())
-		return err
+		logger.Errorf("Property Delete failed: %s", err.Error())
+		return diag.FromErr(fmt.Errorf("Property Delete failed: %s", err.Error()))
 	}
 	logger.Debugf("Deleting Property: %v", existProp)
 	uStat, err := existProp.Delete(domain)
 	if err != nil {
-		logger.Errorf("PropertyDelete failed: %s", err.Error())
-		return err
+		logger.Errorf("Property Delete failed: %s", err.Error())
+		return diag.FromErr(fmt.Errorf("Property Delete failed: %s", err.Error()))
 	}
-	logger.Debugf("Property Delete status:")
-	logger.Debugf("%v", uStat)
+	logger.Debugf("Property Delete status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return fmt.Errorf(uStat.Message)
+		logger.Errorf(uStat.Message)
+		return diag.FromErr(fmt.Errorf(uStat.Message))
 	}
 
 	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if waitOnComplete {
 		done, err := waitForCompletion(domain, m)
 		if done {
-			logger.Infof("Property delete completed")
+			logger.Infof("Property Delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("Property delete pending")
+				logger.Infof("Property Delete pending")
 			} else {
-				logger.Errorf("Property delete failed [%s]", err.Error())
-				return err
+				logger.Errorf("Property Delete failed [%s]", err.Error())
+				return diag.FromErr(fmt.Errorf("Property Delete failed [%s]", err.Error()))
 			}
 		}
-
 	}
 
 	// if successful ....
@@ -557,135 +561,237 @@ func resourceGTMv1PropertyDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-// Test GTM Property existence
-func resourceGTMv1PropertyExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyExists")
-
-	logger.Debugf("Exists")
-	// pull domain and property out of resource id
-	domain, property, err := parseResourceStringId(d.Id())
-	if err != nil {
-		return false, fmt.Errorf("invalid property resource Id")
-	}
-	logger.Debugf("Searching for existing property [%s] in domain %s", property, domain)
-	prop, err := gtm.GetProperty(property, domain)
-	return prop != nil, err
-}
-
 // Populate existing property object from resource data
-func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "populatePropertyObject")
 
-	if v, err := tools.GetStringValue("name", d); err == nil {
-		prop.Name = v
+	vstr, err := tools.GetStringValue("name", d)
+	if err == nil {
+		prop.Name = vstr
 	}
-	if v, err := tools.GetStringValue("type", d); err == nil {
-		prop.Type = v
+	vstr, err = tools.GetStringValue("type", d)
+	if err == nil {
+		prop.Type = vstr
 	}
-	if v, err := tools.GetStringValue("score_aggregation_type", d); err == nil {
-		prop.ScoreAggregationType = v
+	vstr, err = tools.GetStringValue("score_aggregation_type", d)
+	if err == nil {
+		prop.ScoreAggregationType = vstr
 	}
-	if v, err := tools.GetIntValue("stickiness_bonus_percentage", d); err == nil || d.HasChange("stickiness_bonus_percentage") {
-		prop.StickinessBonusPercentage = v
+	vint, err := tools.GetIntValue("stickiness_bonus_percentage", d)
+	if err == nil || d.HasChange("stickiness_bonus_percentage") {
+		prop.StickinessBonusPercentage = vint
 	}
-	if v, err := tools.GetIntValue("stickiness_bonus_constant", d); err == nil || d.HasChange("stickiness_bonus_constant") {
-		prop.StickinessBonusConstant = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() stickiness_bonus_percentage failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetFloat64Value("health_threshold", d); err == nil || d.HasChange("health_threshold") {
-		prop.HealthThreshold = v
+
+	vint, err = tools.GetIntValue("stickiness_bonus_constant", d)
+	if err == nil || d.HasChange("stickiness_bonus_constant") {
+		prop.StickinessBonusConstant = vint
 	}
-	if v, err := tools.GetBoolValue("ipv6", d); err == nil {
-		prop.Ipv6 = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() stickiness_bonus_constant failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetBoolValue("use_computed_targets", d); err == nil {
-		prop.UseComputedTargets = v
+
+	vfloat, err := tools.GetFloat64Value("health_threshold", d)
+	if err == nil || d.HasChange("health_threshold") {
+		prop.HealthThreshold = vfloat
 	}
-	if v, err := tools.GetStringValue("backup_ip", d); err == nil || d.HasChange("backup_ip") {
-		prop.BackupIp = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() health_threshold failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetBoolValue("balance_by_download_score", d); err == nil {
-		prop.BalanceByDownloadScore = v
+
+	if ipv6, err := tools.GetBoolValue("ipv6", d); err == nil {
+		prop.Ipv6 = ipv6
 	}
-	if v, err := tools.GetIntValue("static_ttl", d); err == nil {
-		prop.StaticTTL = v
+	if uct, err := tools.GetBoolValue("use_computed_targets", d); err == nil {
+		prop.UseComputedTargets = uct
 	}
-	if v, err := tools.GetFloat64Value("unreachable_threshold", d); err == nil {
-		prop.UnreachableThreshold = v
+
+	vstr, err = tools.GetStringValue("backup_ip", d)
+	if err == nil || d.HasChange("backup_ip") {
+		prop.BackupIp = vstr
 	}
-	if v, err := tools.GetFloat64Value("min_live_fraction", d); err == nil || d.HasChange("min_live_fraction") {
-		prop.MinLiveFraction = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() backup_ip failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetFloat64Value("health_multiplier", d); err == nil || d.HasChange("health_multiplier") {
-		prop.HealthMultiplier = v
+
+	if bbds, err := tools.GetBoolValue("balance_by_download_score", d); err == nil {
+		prop.BalanceByDownloadScore = bbds
 	}
-	if v, err := tools.GetIntValue("dynamic_ttl", d); err == nil {
-		prop.DynamicTTL = v
+
+	vint, err = tools.GetIntValue("static_ttl", d)
+	if err == nil || d.HasChange("static_ttl") {
+		prop.StaticTTL = vint
 	}
-	if v, err := tools.GetIntValue("max_unreachable_penalty", d); err == nil || d.HasChange("max_unreachable_penalty") {
-		prop.MaxUnreachablePenalty = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() static_ttl failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetStringValue("map_name", d); err == nil || d.HasChange("map_name") {
-		prop.MapName = v
+
+	vfloat, err = tools.GetFloat64Value("unreachable_threshold", d)
+	if err == nil || d.HasChange("unreachable_threshold") {
+		prop.UnreachableThreshold = vfloat
 	}
-	if v, err := tools.GetIntValue("handout_limit", d); err == nil || d.HasChange("handout_limit") {
-		prop.HandoutLimit = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() unreachable_threshold failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetStringValue("handout_mode", d); err == nil {
-		prop.HandoutMode = v
+
+	vfloat, err = tools.GetFloat64Value("min_live_fraction", d)
+	if err == nil || d.HasChange("min_live_fraction") {
+		prop.MinLiveFraction = vfloat
 	}
-	if v, err := tools.GetFloat64Value("load_imbalance_percentage", d); err == nil || d.HasChange("load_imbalance_percentage") {
-		prop.LoadImbalancePercentage = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() min_live_fraction failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetIntValue("failover_delay", d); err == nil || d.HasChange("failover_delay") {
-		prop.FailoverDelay = v
+
+	vfloat, err = tools.GetFloat64Value("health_multiplier", d)
+	if err == nil || d.HasChange("health_multiplier") {
+		prop.HealthMultiplier = vfloat
 	}
-	if v, err := tools.GetStringValue("backup_cname", d); err == nil || d.HasChange("backup_cname") {
-		prop.BackupCName = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() health_multiplier failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetIntValue("failback_delay", d); err == nil || d.HasChange("failback_delay") {
-		prop.FailbackDelay = v
+
+	vint, err = tools.GetIntValue("dynamic_ttl", d)
+	if err == nil || d.HasChange("dynamic_ttl") {
+		prop.DynamicTTL = vint
 	}
-	if v, err := tools.GetFloat64Value("health_max", d); err == nil || d.HasChange("health_max") {
-		prop.HealthMax = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() dynamic_ttl failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetBoolValue("ghost_demand_reporting", d); err == nil {
-		prop.GhostDemandReporting = v
+
+	vint, err = tools.GetIntValue("max_unreachable_penalty", d)
+	if err == nil || d.HasChange("max_unreachable_penalty") {
+		prop.MaxUnreachablePenalty = vint
 	}
-	if v, err := tools.GetIntValue("weighted_hash_bits_for_ipv4", d); err == nil {
-		prop.WeightedHashBitsForIPv4 = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() max_unreachable_penalty failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetIntValue("weighted_hash_bits_for_ipv6", d); err == nil {
-		prop.WeightedHashBitsForIPv6 = v
+
+	vstr, err = tools.GetStringValue("map_name", d)
+	if err == nil || d.HasChange("map_name") {
+		prop.MapName = vstr
 	}
-	if v, err := tools.GetStringValue("cname", d); err == nil || d.HasChange("cname") {
-		prop.CName = v
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() map_name failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
-	if v, err := tools.GetStringValue("comments", d); err == nil || d.HasChange("comments") {
-		prop.Comments = v
+
+	if vint, err = tools.GetIntValue("handout_limit", d); err == nil || d.HasChange("handout_limit") {
+		prop.HandoutLimit = vint
 	}
+	if vstr, err = tools.GetStringValue("handout_mode", d); err == nil {
+		prop.HandoutMode = vstr
+	}
+
+	vfloat, err = tools.GetFloat64Value("load_imbalance_percentage", d)
+	if err == nil || d.HasChange("load_imbalance_percentage") {
+		prop.LoadImbalancePercentage = vfloat
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+	}
+
+	vint, err = tools.GetIntValue("failover_delay", d)
+	if err == nil || d.HasChange("failover_delay") {
+		prop.FailoverDelay = vint
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() failover_delay failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+	}
+
+	vstr, err = tools.GetStringValue("backup_cname", d)
+	if err == nil || d.HasChange("backup_cname") {
+		prop.BackupCName = vstr
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() backup_cname failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+	}
+
+	vint, err = tools.GetIntValue("failback_delay", d)
+	if err == nil || d.HasChange("failback_delay") {
+		prop.FailbackDelay = vint
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() failback_delay failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+	}
+
+	vfloat, err = tools.GetFloat64Value("health_max", d)
+	if err == nil || d.HasChange("health_max") {
+		prop.HealthMax = vfloat
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() health_max failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+	}
+
+	if gdr, err := tools.GetBoolValue("ghost_demand_reporting", d); err == nil {
+		prop.GhostDemandReporting = gdr
+	}
+	if vint, err = tools.GetIntValue("weighted_hash_bits_for_ipv4", d); err == nil {
+		prop.WeightedHashBitsForIPv4 = vint
+	}
+	if vint, err = tools.GetIntValue("weighted_hash_bits_for_ipv6", d); err == nil {
+		prop.WeightedHashBitsForIPv6 = vint
+	}
+
+	vstr, err = tools.GetStringValue("cname", d)
+	if err == nil || d.HasChange("cname") {
+		prop.CName = vstr
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() cname failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+	}
+
+	vstr, err = tools.GetStringValue("comments", d)
+	if err == nil || d.HasChange("comments") {
+		prop.Comments = vstr
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() comments failed: %v", err.Error())
+		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+	}
+
 	populateTrafficTargetObject(d, prop, m)
 	populateStaticRRSetObject(d, prop)
 	populateLivenessTestObject(d, prop)
 
+	return nil
 }
 
 // Create and populate a new property object from resource data
-func populateNewPropertyObject(d *schema.ResourceData, m interface{}) *gtm.Property {
+func populateNewPropertyObject(d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
 
 	name, _ := tools.GetStringValue("name", d)
 	propObj := gtm.NewProperty(name)
 	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
 	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
-	populatePropertyObject(d, propObj, m)
+	err := populatePropertyObject(d, propObj, m)
 
-	return propObj
+	return propObj, err
 
 }
 
 // Populate Terraform state from provided Property object
 func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "populateTerraformPropertyState")
+	logger := meta.Log("Akamai GTM", "populateTerraformPropertyState")
 
 	for stateKey, stateValue := range map[string]interface{}{
 		"name":                        prop.Name,
@@ -732,7 +838,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 // create and populate GTM Property TrafficTargets object
 func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "resourceGTMv1PropertyExists")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyExists")
 
 	// pull apart List
 	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
@@ -764,7 +870,7 @@ func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property, m i
 // create and populate Terraform traffic_targets schema
 func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "populateTerraformTrafficTargetState")
+	logger := meta.Log("Akamai GTM", "populateTerraformTrafficTargetState")
 
 	objectInventory := make(map[int]*gtm.TrafficTarget, len(prop.TrafficTargets))
 	if len(prop.TrafficTargets) > 0 {
@@ -837,7 +943,7 @@ func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 // create and populate Terraform static_rr_sets schema
 func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "populateTerraformStaticRRSetState")
+	logger := meta.Log("Akamai GTM", "populateTerraformStaticRRSetState")
 
 	objectInventory := make(map[string]*gtm.StaticRRSet, len(prop.StaticRRSets))
 	if len(prop.StaticRRSets) > 0 {
@@ -928,7 +1034,7 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 // create and populate Terraform liveness_test schema
 func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "populateTerraformLivenessTestState")
+	logger := meta.Log("Akamai GTM", "populateTerraformLivenessTestState")
 
 	objectInventory := make(map[string]*gtm.LivenessTest, len(prop.LivenessTests))
 	if len(prop.LivenessTests) > 0 {
