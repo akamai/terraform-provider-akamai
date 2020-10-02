@@ -11,6 +11,8 @@ var (
 	ErrNoGroupsFound = errors.New("no groups found")
 	// ErrGroupNotInContract is returned when none of the groups could be associated with given contractID
 	ErrGroupNotInContract = errors.New("group does not belong to contract")
+	ErrFetchingGroups     = errors.New("fetching groups")
+	ErrGroupNotFound      = errors.New("group not found")
 
 	// PAPI Contract errors
 
@@ -21,10 +23,14 @@ var (
 	//
 	ErrNoGroupProvided = errors.New("group not provided and it is a required input")
 	// ErrNoContractsFound is returned when no contracts were found
-	ErrNoContractsFound = errors.New("no contracts were found")
+	ErrNoContractsFound  = errors.New("no contracts were found")
+	ErrContractNotFound  = errors.New("contract not found")
+	ErrFetchingContracts = errors.New("fetching contracts")
 
 	// PAPI Product errors
 	ErrNoProductProvided = errors.New("product not provided and it is a required input")
+	ErrProductFetch      = errors.New("fetching product")
+	ErrProductNotFound   = errors.New("product not found")
 	// PAPI CP Code errors
 
 	// ErrLookingUpCPCode is returned when fetching CP Code from API client by contractID returned an error or no CP Code was found

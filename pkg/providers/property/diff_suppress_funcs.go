@@ -15,6 +15,9 @@ func suppressEquivalentJSONDiffs(_, old, new string, _ *schema.ResourceData) boo
 
 func compareRulesJSON(old, new string) bool {
 	var oldRules, newRules papi.GetRuleTreeResponse
+	if old == new {
+		return true
+	}
 	if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
 		return false
 	}
