@@ -48,10 +48,10 @@ func dataAkamaiPropertyRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	version, err := tools.GetIntValue("version", d)
-	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if err == nil {
 		prop.LatestVersion = version
 	}
 
