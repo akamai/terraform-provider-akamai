@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: edge hostname"
-subcategory: "Common"
+subcategory: "Provisioning"
 description: |-
   Edge Hostname
 ---

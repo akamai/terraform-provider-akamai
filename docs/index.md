@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Provider: Akamai"
-subcategory: "Akamai Provider"
+subcategory: ""
 description: |-
   Akamai
 ---
