@@ -672,7 +672,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// in your config.tf which might overwrite each other
 
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourc/eDNSRecordCreate")
+	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordCreate")
 	logger.Info("Record Create.")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
