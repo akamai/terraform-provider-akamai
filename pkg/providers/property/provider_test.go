@@ -18,7 +18,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 )
@@ -42,23 +41,6 @@ func TestProvider(t *testing.T) {
 
 func testAccPreCheck(t *testing.T) {
 	TODO(t, "Check not implemented")
-}
-
-// Only allow one test at a time to patch the client via useClient()
-var clientLock sync.Mutex
-
-// useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client papi.PAPI, f func()) {
-	clientLock.Lock()
-	orig := inst.client
-	inst.client = client
-
-	defer func() {
-		inst.client = orig
-		clientLock.Unlock()
-	}()
-
-	f()
 }
 
 func getTestProvider() *schema.Provider {

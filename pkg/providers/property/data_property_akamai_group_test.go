@@ -42,6 +42,7 @@ func testAccDataSourceGroupBasic() string {
 	return `
 		provider "akamai" {
 			papi_section = "papi"
+			edgerc = "~/.edgerc"
 		}
 		
 		data "akamai_group" "test" {
