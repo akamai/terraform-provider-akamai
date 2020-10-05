@@ -16,7 +16,6 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
-	v1 "github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -160,15 +159,15 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
-	group, err := getGroupV2(ctx, d, meta)
+	group, err := getGroup(ctx, d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contract, err := getContractV2(ctx, d, meta)
+	contract, err := getContract(ctx, d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	product, err := getProductV2(ctx, d, contract.ContractID, meta)
+	product, err := getProduct(ctx, d, contract.ContractID, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -348,7 +347,7 @@ func createProperty(ctx context.Context, contractID, groupID, productID string, 
 			return nil, err
 		}
 		if len(ruleFormats.RuleFormats.Items) == 0 {
-			return nil, fmt.Errorf("no rule formats found")
+			return nil, fmt.Errorf("%w", ErrRuleFormatsNotFound)
 		}
 		ruleFormat = ruleFormats.RuleFormats.Items[len(ruleFormats.RuleFormats.Items)-1]
 	}
@@ -657,93 +656,6 @@ func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff
 	return nil
 }
 
-// TODO this function should be removed and replaced with V2 version after the integration for edge hostnames is finished
-func getGroup(d *schema.ResourceData, correlationid string, logger log.Interface) (*v1.Group, error) {
-	logger.Debugf("Fetching groups")
-	groupID, err := tools.GetStringValue("group", d)
-	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return nil, err
-		}
-		return nil, ErrNoGroupProvided
-	}
-	groups := v1.NewGroups()
-	err = groups.GetGroups(correlationid)
-	if err != nil {
-		return nil, err
-	}
-	groupID, err = tools.AddPrefix(groupID, "grp_")
-	if err != nil {
-		return nil, err
-	}
-	group, err := groups.FindGroup(groupID)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Debugf("Group found: %s", group.GroupID)
-	return group, nil
-}
-
-// TODO this function should be removed and replaced with V2 version after the integration for edge hostnames is finished
-func getContract(d *schema.ResourceData, correlationid string, logger log.Interface) (*v1.Contract, error) {
-	logger.Debugf("Fetching contract")
-	contractID, err := tools.GetStringValue("contract", d)
-	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return nil, err
-		}
-		return nil, ErrNoContractProvided
-	}
-	contracts := v1.NewContracts()
-	err = contracts.GetContracts(correlationid)
-	if err != nil {
-		return nil, err
-	}
-	contractID, err = tools.AddPrefix(contractID, "ctr_")
-	if err != nil {
-		return nil, err
-	}
-	contract, err := contracts.FindContract(contractID)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Debugf("Contract found: %s", contract.ContractID)
-	return contract, nil
-}
-
-// TODO this function should be removed and replaced with V2 version after the integration for edge hostnames is finished
-func getProduct(d *schema.ResourceData, contract *v1.Contract, correlationid string, logger log.Interface) (*v1.Product, error) {
-	if contract == nil {
-		return nil, ErrNoContractProvided
-	}
-	logger.Debugf("Fetching product")
-	productID, err := tools.GetStringValue("product", d)
-	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return nil, err
-		}
-		return nil, ErrNoProductProvided
-	}
-	products := v1.NewProducts()
-	err = products.GetProducts(contract, correlationid)
-	if err != nil {
-		return nil, err
-	}
-	productID, err = tools.AddPrefix(productID, "prd_")
-	if err != nil {
-		return nil, err
-	}
-	product, err := products.FindProduct(productID)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Debugf("Product found: %s", product.ProductID)
-	return product, nil
-}
-
 // Helpers
 func getProperty(ctx context.Context, id string, meta akamai.OperationMeta) (*papi.Property, error) {
 	logger := meta.Log("PAPI", "getProperty")
@@ -758,8 +670,7 @@ func getProperty(ctx context.Context, id string, meta akamai.OperationMeta) (*pa
 	return res.Property, nil
 }
 
-// TODO this function should be renamed to getGroup after the integration for edge hostnames is finished
-func getGroupV2(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Group, error) {
+func getGroup(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Group, error) {
 	logger := meta.Log("PAPI", "getGroup")
 	client := inst.Client(meta)
 	logger.Debugf("Fetching groups")
@@ -795,8 +706,7 @@ func getGroupV2(ctx context.Context, d *schema.ResourceData, meta akamai.Operati
 	return group, nil
 }
 
-// TODO this function should be renamed to getContract after the integration for edge hostnames is finished
-func getContractV2(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Contract, error) {
+func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Contract, error) {
 	logger := meta.Log("PAPI", "getContract")
 	client := inst.Client(meta)
 	logger.Debugf("Fetching contract")
@@ -861,8 +771,7 @@ func getCPCode(ctx context.Context, d tools.ResourceDataFetcher, contractID, gro
 	return &cpCode.CPCode, nil
 }
 
-// TODO this function should be renamed to getProduct after the integration for edh=ge hostnames is finished
-func getProductV2(ctx context.Context, d *schema.ResourceData, contractID string, meta akamai.OperationMeta) (*papi.ProductItem, error) {
+func getProduct(ctx context.Context, d *schema.ResourceData, contractID string, meta akamai.OperationMeta) (*papi.ProductItem, error) {
 	logger := meta.Log("PAPI", "getProduct")
 	client := inst.Client(meta)
 	if contractID == "" {

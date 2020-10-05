@@ -11,8 +11,10 @@ var (
 	ErrNoGroupsFound = errors.New("no groups found")
 	// ErrGroupNotInContract is returned when none of the groups could be associated with given contractID
 	ErrGroupNotInContract = errors.New("group does not belong to contract")
-	ErrFetchingGroups     = errors.New("fetching groups")
-	ErrGroupNotFound      = errors.New("group not found")
+	// ErrFetchingGroups represents error while fetching groups
+	ErrFetchingGroups = errors.New("fetching groups")
+	// ErrGroupNotFound is returned when group with provided ID is not found
+	ErrGroupNotFound = errors.New("group not found")
 
 	// PAPI Contract errors
 
@@ -20,17 +22,24 @@ var (
 	ErrLookingUpContract = errors.New("looking up contract for provided group")
 	// ErrNoContractProvided is retured when no contract ID was provided but "name" was
 	ErrNoContractProvided = errors.New("contract ID is required for non-default name")
-	//
+	// ErrNoGroupProvided is returned when no "group" property is provided
 	ErrNoGroupProvided = errors.New("group not provided and it is a required input")
 	// ErrNoContractsFound is returned when no contracts were found
-	ErrNoContractsFound  = errors.New("no contracts were found")
-	ErrContractNotFound  = errors.New("contract not found")
+	ErrNoContractsFound = errors.New("no contracts were found")
+	// ErrContractNotFound is returned when contract with provided ID does not exist
+	ErrContractNotFound = errors.New("contract not found")
+	// ErrFetchingContracts represents error while fetching contracts
 	ErrFetchingContracts = errors.New("fetching contracts")
 
 	// PAPI Product errors
+
+	// ErrNoProductProvided is returned when no "product" property is provided
 	ErrNoProductProvided = errors.New("product not provided and it is a required input")
-	ErrProductFetch      = errors.New("fetching product")
-	ErrProductNotFound   = errors.New("product not found")
+	// ErrProductFetch represents error while fetching product
+	ErrProductFetch = errors.New("fetching product")
+	// ErrProductNotFound is returned when product with provided ID does not exist
+	ErrProductNotFound = errors.New("product not found")
+
 	// PAPI CP Code errors
 
 	// ErrLookingUpCPCode is returned when fetching CP Code from API client by contractID returned an error or no CP Code was found
@@ -46,6 +55,12 @@ var (
 	ErrRulesNotFound = errors.New("property rules not found")
 
 	// PAPI property version errors
-	ErrVersionNotFound = errors.New("property version not found")
-	ErrVersionCreate   = errors.New("creating property version")
+
+	// ErrVersionCreate represents an error while creating new property version
+	ErrVersionCreate = errors.New("creating property version")
+
+	// PAPI rule format errors
+
+	// ErrRuleFormatsNotFound is returned when no rule formats were found
+	ErrRuleFormatsNotFound = errors.New("no rule formats found")
 )
