@@ -13,6 +13,7 @@ import (
 var testAccAkamaiPropertyRulesConfig = `
 provider "akamai" {
   papi_section = "papi"
+  edgerc = "~/.edgerc"
 }
 
 output "json" {
@@ -116,12 +117,7 @@ func TestAccAkamaiPropertyRules_basic(t *testing.T) {
 
 var testAccAkamaiPropertyRulesSiteshield = `
 provider "akamai" {
-	property {
-		host = "test"
-		access_token = "test"
-		client_token = "test"
-		client_secret = "test"
-	}
+  edgerc = "~/.edgerc"
 }
 
 output "json" {
@@ -157,12 +153,7 @@ func TestAkamaiPropertyRules_siteshield(t *testing.T) {
 
 var testAccAkamaiPropertyRulesCPCode = `
 provider "akamai" {
-	property {
-		host = "test"
-		access_token = "test"
-		client_token = "test"
-		client_secret = "test"
-	}
+	  edgerc = "~/.edgerc"
 }
 
 output "json" {
@@ -198,12 +189,7 @@ func TestAkamaiPropertyRules_cpCode(t *testing.T) {
 
 var testAccAkamaiPropertyRulesIsSecure = `
 provider "akamai" {
-	property {
-		host = "test"
-		access_token = "test"
-		client_token = "test"
-		client_secret = "test"
-	}
+  edgerc = "~/.edgerc"
 }
 
 output "json" {

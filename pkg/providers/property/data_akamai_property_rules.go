@@ -245,7 +245,8 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-// TODO: discuss how property rules should be handled
+// TODO this function maps values from data source schema onto papi.Rules struct
+// it will not be needed if we use plain json for property rules (after rewrite)
 func unmarshalRules(d *schema.ResourceData) (papi.Rules, error) {
 	propertyRules := papi.Rules{Name: "default"}
 	// Default Rules

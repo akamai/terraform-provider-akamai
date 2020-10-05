@@ -657,6 +657,7 @@ func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff
 	return nil
 }
 
+// TODO this function should be removed and replaced with V2 version after the integration for edge hostnames is finished
 func getGroup(d *schema.ResourceData, correlationid string, logger log.Interface) (*v1.Group, error) {
 	logger.Debugf("Fetching groups")
 	groupID, err := tools.GetStringValue("group", d)
@@ -684,6 +685,7 @@ func getGroup(d *schema.ResourceData, correlationid string, logger log.Interface
 	return group, nil
 }
 
+// TODO this function should be removed and replaced with V2 version after the integration for edge hostnames is finished
 func getContract(d *schema.ResourceData, correlationid string, logger log.Interface) (*v1.Contract, error) {
 	logger.Debugf("Fetching contract")
 	contractID, err := tools.GetStringValue("contract", d)
@@ -711,6 +713,7 @@ func getContract(d *schema.ResourceData, correlationid string, logger log.Interf
 	return contract, nil
 }
 
+// TODO this function should be removed and replaced with V2 version after the integration for edge hostnames is finished
 func getProduct(d *schema.ResourceData, contract *v1.Contract, correlationid string, logger log.Interface) (*v1.Product, error) {
 	if contract == nil {
 		return nil, ErrNoContractProvided
@@ -755,6 +758,7 @@ func getProperty(ctx context.Context, id string, meta akamai.OperationMeta) (*pa
 	return res.Property, nil
 }
 
+// TODO this function should be renamed to getGroup after the integration for edge hostnames is finished
 func getGroupV2(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Group, error) {
 	logger := meta.Log("PAPI", "getGroup")
 	client := inst.Client(meta)
@@ -791,6 +795,7 @@ func getGroupV2(ctx context.Context, d *schema.ResourceData, meta akamai.Operati
 	return group, nil
 }
 
+// TODO this function should be renamed to getContract after the integration for edge hostnames is finished
 func getContractV2(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Contract, error) {
 	logger := meta.Log("PAPI", "getContract")
 	client := inst.Client(meta)
@@ -856,6 +861,7 @@ func getCPCode(ctx context.Context, d tools.ResourceDataFetcher, contractID, gro
 	return &cpCode.CPCode, nil
 }
 
+// TODO this function should be renamed to getProduct after the integration for edh=ge hostnames is finished
 func getProductV2(ctx context.Context, d *schema.ResourceData, contractID string, meta akamai.OperationMeta) (*papi.ProductItem, error) {
 	logger := meta.Log("PAPI", "getProduct")
 	client := inst.Client(meta)
@@ -1017,7 +1023,8 @@ func updateStandardBehaviors(behaviors []papi.RuleBehavior, cpCode *papi.CPCode,
 	return behaviors
 }
 
-// TODO: discuss how property rules should be handled
+// TODO this function unmarshals values from json into *papi.Rules struct
+// After rewrite, this should probably be replaced by a simple json.Unmarshal
 func unmarshalRulesFromJSON(d *schema.ResourceData) *papi.Rules {
 	// Default Rules
 	rules, ok := d.GetOk("rules")
