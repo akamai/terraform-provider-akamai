@@ -12,7 +12,8 @@ import (
 
 var testAccAkamaiPropertyRulesConfig = `
 provider "akamai" {
-  papi_section = "papi"
+	edgerc = "~/.edgerc"
+	papi_section = "papi"
 }
 
 output "json" {
@@ -23,51 +24,51 @@ resource "akamai_property_rules" "rules" {
  	rules {
 		behavior {
 			name = "origin"
-        	option { 
+        	option {
        			key ="cacheKeyHostname"
             	value = "ORIGIN_HOSTNAME"
         	}
-			option { 
+			option {
     			key ="compress"
      			value = true
      		}
-    		option { 
+    		option {
     			key ="enableTrueClientIp"
      			value = false
      		}
-    		option { 
+    		option {
     			key ="forwardHostHeader"
      			value = "REQUEST_HOST_HEADER"
      		}
-    		option { 
+    		option {
     			key ="hostname"
      			value = "exampleterraform.io"
      		}
-    		option { 
+    		option {
     			key ="httpPort"
      			value = 80
      		}
-    		option { 
+    		option {
     			key ="httpsPort"
      			value = 443
      		}
-    		option { 
+    		option {
     			key ="originSni"
      			value = true
      		}
-    		option { 
+    		option {
     			key ="originType"
      			value = "CUSTOMER"
      		}
-    		option { 
+    		option {
     			key ="verificationMode"
      			value = "PLATFORM_SETTINGS"
      		}
-    		option { 
+    		option {
     			key ="originCertificate"
      			value = ""
      		}
-    		option { 
+    		option {
     			key ="ports"
      			value = ""
      		}
@@ -116,6 +117,7 @@ func TestAccAkamaiPropertyRules_basic(t *testing.T) {
 
 var testAccAkamaiPropertyRulesSiteshield = `
 provider "akamai" {
+	edgerc = "~/.edgerc"
 	property {
 		host = "test"
 		access_token = "test"
@@ -130,10 +132,10 @@ output "json" {
 
 resource "akamai_property_rules" "rules" {
  	rules {
-		behavior { 
-			name = "siteShield" 
-			option { 
-				key = "ssmap" 
+		behavior {
+			name = "siteShield"
+			option {
+				key = "ssmap"
 				value = "mapname.akamai.net"
 			}
 		}
@@ -157,6 +159,7 @@ func TestAkamaiPropertyRules_siteshield(t *testing.T) {
 
 var testAccAkamaiPropertyRulesCPCode = `
 provider "akamai" {
+	edgerc = "~/.edgerc"
 	property {
 		host = "test"
 		access_token = "test"
@@ -171,10 +174,10 @@ output "json" {
 
 resource "akamai_property_rules" "rules" {
  	rules {
-		behavior { 
-			name = "cpCode" 
-			option { 
-				key = "id" 
+		behavior {
+			name = "cpCode"
+			option {
+				key = "id"
 				value = "cpc_12345"
 			}
 		}
@@ -198,6 +201,7 @@ func TestAkamaiPropertyRules_cpCode(t *testing.T) {
 
 var testAccAkamaiPropertyRulesIsSecure = `
 provider "akamai" {
+	edgerc = "~/.edgerc"
 	property {
 		host = "test"
 		access_token = "test"
