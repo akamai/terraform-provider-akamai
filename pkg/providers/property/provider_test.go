@@ -9,12 +9,14 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
@@ -24,35 +26,37 @@ var testAccProviders map[string]*schema.Provider
 var testProvider *schema.Provider
 
 func init() {
-	akamai.Provider(Subprovider(
-		WithClient(new(mockpapi)),
-	))
-
-	testProvider = inst.Provider
-	testProvider.Schema["edgerc"] = &schema.Schema{
-		Optional:    true,
-		Type:        schema.TypeString,
-		DefaultFunc: schema.EnvDefaultFunc("EDGERC", nil),
-	}
-	testProvider.Schema["config_section"] = &schema.Schema{
-		Description: "The section of the edgerc file to use for configuration",
-		Optional:    true,
-		Type:        schema.TypeString,
-		Default:     "default",
-	}
+	testProvider = akamai.Provider(Subprovider())()
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testProvider,
 	}
 }
 
 func TestProvider(t *testing.T) {
-	if err := inst.Provider.InternalValidate(); err != nil {
+	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func testAccPreCheck(t *testing.T) {
 
+}
+
+// Only allow one test at a time to patch the client via useClient()
+var clientLock sync.Mutex
+
+// useClient swaps out the client on the global instance for the duration of the given func
+func useClient(client papi.PAPI, f func()) {
+	clientLock.Lock()
+	orig := inst.client
+	inst.client = client
+
+	defer func() {
+		inst.client = orig
+		clientLock.Unlock()
+	}()
+
+	f()
 }
 
 func getTestProvider() *schema.Provider {
@@ -73,7 +77,7 @@ func getTestProvider() *schema.Provider {
 
 func Test_getPAPIV1Service(t *testing.T) {
 	type args struct {
-		schema tools.ResourceDataFetcher
+		schema *schema.ResourceData
 	}
 
 	tests := []struct {
@@ -355,7 +359,7 @@ func Test_getPAPIV1Service(t *testing.T) {
 }
 
 type args struct {
-	schema tools.ResourceDataFetcher
+	schema *schema.ResourceData
 }
 
 type testsStruct struct {

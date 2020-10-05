@@ -1,0 +1,21 @@
+{
+  "name": "",
+  "options": {},
+  "variables": [
+    {
+      "description": "desc",
+      "hidden": true,
+      "name": "var_1",
+      "sensitive": true,
+      "value": "val"
+    },
+    {
+      "description": "desc",
+      "hidden": false,
+      "name": "var_2",
+      "sensitive": false,
+      "value": "val_2"
+    }
+  ],
+  "criteriaMustSatisfy": ""
+}

@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -10,8 +11,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -74,10 +74,10 @@ var akamaiPropertyVariablesSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePropertyVariablesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyVariablesCreate")
-	rule := papi.NewRule()
+	rule := &papi.Rules{}
 	logger.Debugf("START Check for variables")
 	variables, err := tools.GetSetValue("variables", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -107,7 +107,7 @@ func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, 
 			logger.Debugf("  Check for variables LOOP  hidden %s", variableMap["hidden"])
 			logger.Debugf("  Check for variables LOOP  sensitive %s", variableMap["sensitive"])
 			logger.Debugf("  Check for variables LOOP  fqname %s", variableMap["fqname"])
-			newVariable := papi.NewVariable()
+			newVariable := papi.RuleVariable{}
 			name, ok := variableMap["name"].(string)
 			if !ok {
 				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string"))
@@ -133,11 +133,11 @@ func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, 
 			newVariable.Value = value
 			newVariable.Hidden = hidden
 			newVariable.Sensitive = sensitive
-			rule.AddVariable(newVariable)
+			rule.Variables = append(rule.Variables, newVariable)
 		}
 	}
 
-	body, err := jsonhooks.Marshal(rule)
+	body, err := json.Marshal(rule)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -150,7 +150,7 @@ func resourcePropertyVariablesCreate(_ context.Context, d *schema.ResourceData, 
 	d.SetId(sha)
 	logger.Debugf("Done")
 
-	return resourcePropertyVariablesRead(nil, d, m)
+	return resourcePropertyVariablesRead(ctx, d, m)
 }
 
 func resourcePropertyVariablesDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -162,18 +162,22 @@ func resourcePropertyVariablesDelete(_ context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourcePropertyVariablesImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	resourceID := d.Id()
-	propertyID := resourceID
+func resourcePropertyVariablesImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	propertyID := d.Id()
 
-	if !strings.HasPrefix(resourceID, "prp_") {
-		keys := []papi.SearchKey{
-			papi.SearchByPropertyName,
-			papi.SearchByHostname,
-			papi.SearchByEdgeHostname,
+	if !strings.HasPrefix(propertyID, "prp_") {
+		keys := []string{
+			papi.SearchKeyPropertyName,
+			papi.SearchKeyHostname,
+			papi.SearchKeyEdgeHostname,
 		}
 		for _, searchKey := range keys {
-			results, err := papi.Search(searchKey, resourceID, "") //<--correlationid
+			results, err := client.SearchProperties(ctx, papi.SearchRequest{
+				Key:   searchKey,
+				Value: propertyID,
+			})
 			if err != nil {
 				continue
 			}
@@ -185,28 +189,13 @@ func resourcePropertyVariablesImport(_ context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyID
-	err := property.GetProperty("")
+	res, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+		PropertyID: propertyID,
+	})
 	if err != nil {
 		return nil, err
 	}
-	if err := d.Set("account", property.AccountID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("contract", property.ContractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("group", property.GroupID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("name", property.PropertyName); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("version", property.LatestVersion); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	d.SetId(property.PropertyID)
+	d.SetId(res.Property.PropertyID)
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -228,13 +217,13 @@ func resourcePropertyVariablesRead(_ context.Context, _ *schema.ResourceData, _ 
 
 func resourcePropertyVariablesUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log(inst.Name())
+	logger := meta.Log(inst.Name(), "resourcePropertyVariablesUpdate")
 	logger.Debugf("UPDATING")
-	rule := papi.NewRule()
+	rule := &papi.Rules{}
 	logger.Debugf("START Check for variables")
 	variables, err := tools.GetSetValue("variables", d)
 	if err != nil {
-		if err != tools.ErrNotFound {
+		if !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		logger.Debugf("Done")
@@ -255,7 +244,7 @@ func resourcePropertyVariablesUpdate(_ context.Context, d *schema.ResourceData, 
 			if !ok {
 				continue
 			}
-			newVariable := papi.NewVariable()
+			newVariable := papi.RuleVariable{}
 			name, ok := variableMap["name"].(string)
 			if !ok {
 				return diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "name", "string"))
@@ -281,11 +270,11 @@ func resourcePropertyVariablesUpdate(_ context.Context, d *schema.ResourceData, 
 			newVariable.Value = value
 			newVariable.Hidden = hidden
 			newVariable.Sensitive = sensitive
-			rule.AddVariable(newVariable)
+			rule.Variables = append(rule.Variables, newVariable)
 		}
 	}
 
-	body, err := jsonhooks.Marshal(rule)
+	body, err := json.Marshal(rule)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -48,7 +48,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID: "43242",
@@ -103,7 +103,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID: "43242",
@@ -172,7 +172,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID: "43242",
@@ -237,7 +237,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID: "43242",
@@ -323,7 +323,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID:      "43242",
@@ -390,7 +390,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID:      "43242",
@@ -461,7 +461,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID:      "43242",
@@ -528,7 +528,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID:      "43242",
