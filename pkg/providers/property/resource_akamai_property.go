@@ -265,7 +265,7 @@ func getRules(ctx context.Context, d *schema.ResourceData, property *papi.Proper
 	}
 	req.Rules = *rules
 
-	cpCode, err := getCPCode(ctx, d, contract, group, meta)
+	cpCode, err := getCPCode(ctx, meta, contract, group, logger, d)
 	if err != nil {
 		return papi.UpdateRulesRequest{}, err
 	}
@@ -742,9 +742,7 @@ func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.Operat
 	return contract, nil
 }
 
-func getCPCode(ctx context.Context, d tools.ResourceDataFetcher, contractID, groupID string, meta akamai.OperationMeta) (*papi.CPCode, error) {
-	client := inst.Client(meta)
-	logger := meta.Log("PAPI", "getCPCode")
+func getCPCode(ctx context.Context, m akamai.OperationMeta, contractID, groupID string, logger log.Interface, d tools.ResourceDataFetcher) (*papi.CPCode, error) {
 	if contractID == "" {
 		return nil, ErrNoContractProvided
 	}
@@ -759,7 +757,8 @@ func getCPCode(ctx context.Context, d tools.ResourceDataFetcher, contractID, gro
 		return nil, nil
 	}
 	logger.Debugf("Fetching CP code")
-	cpCode, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
+
+	cpCodeResponse, err := inst.Client(m).GetCPCode(ctx, papi.GetCPCodeRequest{
 		CPCodeID:   cpCodeID,
 		ContractID: contractID,
 		GroupID:    groupID,
@@ -767,8 +766,8 @@ func getCPCode(ctx context.Context, d tools.ResourceDataFetcher, contractID, gro
 	if err != nil {
 		return nil, err
 	}
-	logger.Debugf("CP code found: %s", cpCode.CPCode.ID)
-	return &cpCode.CPCode, nil
+	logger.Debugf("CP code found: %s", cpCodeResponse.CPCode)
+	return &cpCodeResponse.CPCode, nil
 }
 
 func getProduct(ctx context.Context, d *schema.ResourceData, contractID string, meta akamai.OperationMeta) (*papi.ProductItem, error) {

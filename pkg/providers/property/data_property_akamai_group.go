@@ -90,9 +90,8 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 			var found bool
 
 			name += "-" + strings.TrimPrefix(contract, "ctr_")
-			for _, grp := range groups.Groups.Items {
-				if grp.GroupID == name {
-					group = grp
+			for _, group = range groups.Groups.Items {
+				if group.GroupID == name {
 					found = true
 					break
 				}

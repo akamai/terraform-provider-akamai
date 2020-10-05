@@ -81,6 +81,30 @@ func (p *mockpapi) GetCPCodes(ctx context.Context, r papi.GetCPCodesRequest) (*p
 	return args.Get(0).(*papi.GetCPCodesResponse), args.Error(1)
 }
 
+// Any function having the same signature as papi.GetCPCodes
+type GetCPCodesFn func(context.Context, papi.GetCPCodesRequest) (*papi.GetCPCodesResponse, error)
+
+// Expect a call to the mock's papi.GetCPCodes() where the return value is computed by the given function. The args
+// param are used to match calls on the mock as normal. If no args are given, then the expectation matches any calls
+// to mock.GetCPCodes()
+func (p *mockpapi) OnGetCPCodes(impl GetCPCodesFn, args ...interface{}) *mock.Call {
+	var call *mock.Call
+
+	runFn := func(callArgs mock.Arguments) {
+		ctx := callArgs.Get(0).(context.Context)
+		req := callArgs.Get(1).(papi.GetCPCodesRequest)
+
+		call.Return(impl(ctx, req))
+	}
+
+	if len(args) == 0 {
+		args = mock.Arguments{AnyCTX, mock.Anything}
+	}
+
+	call = p.On("GetCPCodes", args...).Run(runFn)
+	return call
+}
+
 func (p *mockpapi) GetCPCode(ctx context.Context, r papi.GetCPCodeRequest) (*papi.GetCPCodesResponse, error) {
 	args := p.Called(ctx, r)
 
@@ -99,6 +123,30 @@ func (p *mockpapi) CreateCPCode(ctx context.Context, r papi.CreateCPCodeRequest)
 	}
 
 	return args.Get(0).(*papi.CreateCPCodeResponse), args.Error(1)
+}
+
+// Any function having the same signature as papi.CreateCPCode
+type CreateCPCodeFn func(context.Context, papi.CreateCPCodeRequest) (*papi.CreateCPCodeResponse, error)
+
+// Expect a call to the mock's papi.CreateCPCode() where the return value is computed by the given function. The args
+// param are used to match calls on the mock as normal. If no args are given, then the expectation matches any calls
+// to mock.GetCPCodes()
+func (p *mockpapi) OnCreateCPCode(impl CreateCPCodeFn, args ...interface{}) *mock.Call {
+	var call *mock.Call
+
+	runFn := func(args mock.Arguments) {
+		ctx := args.Get(0).(context.Context)
+		req := args.Get(1).(papi.CreateCPCodeRequest)
+
+		call.Return(impl(ctx, req))
+	}
+
+	if len(args) == 0 {
+		args = mock.Arguments{AnyCTX, mock.Anything}
+	}
+
+	call = p.On("CreateCPCode", args...).Run(runFn)
+	return call
 }
 
 func (p *mockpapi) GetProperties(ctx context.Context, r papi.GetPropertiesRequest) (*papi.GetPropertiesResponse, error) {

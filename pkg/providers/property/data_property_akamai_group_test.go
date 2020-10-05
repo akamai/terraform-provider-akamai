@@ -42,11 +42,12 @@ func testAccDataSourceGroupBasic() string {
 	return `
 		provider "akamai" {
 			papi_section = "papi"
+			edgerc = "~/.edgerc"
 		}
-		
+
 		data "akamai_group" "test" {
 		}
-		
+
 		output "groupid" {
 			value = "${data.akamai_group.test.id}"
 		}
@@ -213,9 +214,12 @@ func TestFindGroupByName(t *testing.T) {
 			}
 			res, err := findGroupByName(test.givenName, test.givenContract, groups, test.isDefault)
 			if test.withError != nil {
+				assert.Error(t, err)
 				assert.True(t, errors.Is(err, test.withError), "expected: %s; got: %s", test.withError, err)
 				return
 			}
+			assert.NoError(t, err)
+			assert.NotNil(t, res)
 			require.NoError(t, err)
 			assert.Equal(t, test.expected.GroupID, res.GroupID)
 		})

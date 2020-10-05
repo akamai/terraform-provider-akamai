@@ -24,51 +24,51 @@ resource "akamai_property_rules" "rules" {
  	rules {
 		behavior {
 			name = "origin"
-        	option { 
+        	option {
        			key ="cacheKeyHostname"
             	value = "ORIGIN_HOSTNAME"
         	}
-			option { 
+			option {
     			key ="compress"
      			value = true
      		}
-    		option { 
+    		option {
     			key ="enableTrueClientIp"
      			value = false
      		}
-    		option { 
+    		option {
     			key ="forwardHostHeader"
      			value = "REQUEST_HOST_HEADER"
      		}
-    		option { 
+    		option {
     			key ="hostname"
      			value = "exampleterraform.io"
      		}
-    		option { 
+    		option {
     			key ="httpPort"
      			value = 80
      		}
-    		option { 
+    		option {
     			key ="httpsPort"
      			value = 443
      		}
-    		option { 
+    		option {
     			key ="originSni"
      			value = true
      		}
-    		option { 
+    		option {
     			key ="originType"
      			value = "CUSTOMER"
      		}
-    		option { 
+    		option {
     			key ="verificationMode"
      			value = "PLATFORM_SETTINGS"
      		}
-    		option { 
+    		option {
     			key ="originCertificate"
      			value = ""
      		}
-    		option { 
+    		option {
     			key ="ports"
      			value = ""
      		}
@@ -126,10 +126,10 @@ output "json" {
 
 resource "akamai_property_rules" "rules" {
  	rules {
-		behavior { 
-			name = "siteShield" 
-			option { 
-				key = "ssmap" 
+		behavior {
+			name = "siteShield"
+			option {
+				key = "ssmap"
 				value = "mapname.akamai.net"
 			}
 		}
@@ -162,10 +162,10 @@ output "json" {
 
 resource "akamai_property_rules" "rules" {
  	rules {
-		behavior { 
-			name = "cpCode" 
-			option { 
-				key = "id" 
+		behavior {
+			name = "cpCode"
+			option {
+				key = "id"
 				value = "cpc_12345"
 			}
 		}

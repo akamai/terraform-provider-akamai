@@ -12,17 +12,18 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 )
 
 var testAccProviders map[string]*schema.Provider
+
 var testProvider *schema.Provider
 
 func init() {
@@ -39,7 +40,11 @@ func TestProvider(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
+	TODO(t, "Check not implemented")
+}
 
+func getTestProvider() *schema.Provider {
+	return testProvider
 }
 
 // Only allow one test at a time to patch the client via useClient()
@@ -59,20 +64,17 @@ func useClient(client papi.PAPI, f func()) {
 	f()
 }
 
-func getTestProvider() *schema.Provider {
-	testProvider = inst.Provider
-	testProvider.Schema["edgerc"] = &schema.Schema{
-		Optional:    true,
-		Type:        schema.TypeString,
-		DefaultFunc: schema.EnvDefaultFunc("EDGERC", nil),
+// TODO marks a test as being in a "pending" state and logs a message telling the user why. Such tests are expected to
+// fail for the time being and may exist for the sake of unfinished/future features or to document known buggy cases
+// that won't be fixed right away. The failure of a pending test is not considered an error and the test will therefore
+// be skipped unless the TEST_TODO environment variable is set to a non-empty value.
+func TODO(t *testing.T, message string) {
+	t.Helper()
+	t.Log(fmt.Sprintf("TODO: %s", message))
+
+	if os.Getenv("TEST_TODO") == "" {
+		t.Skip("TODO: Set TEST_TODO=1 in env to run this test")
 	}
-	testProvider.Schema["config_section"] = &schema.Schema{
-		Description: "The section of the edgerc file to use for configuration",
-		Optional:    true,
-		Type:        schema.TypeString,
-		Default:     "default",
-	}
-	return testProvider
 }
 
 func Test_getPAPIV1Service(t *testing.T) {
