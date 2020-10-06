@@ -76,69 +76,26 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	client := inst.Client(meta)
 
-	groupName, err := tools.GetStringValue("group", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	contractID, err := tools.GetStringValue("contract", d)
+	group, err := getGroup(ctx, d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	groups, err := getGroups(ctx, meta)
+	contract, err := getContract(ctx, d, meta)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	group, err := findGroupByName(groupName, contractID, groups, false)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	contracts, err := client.GetContracts(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	var contract *papi.Contract
-	for _, c := range contracts.Contracts.Items {
-		if c.ContractID == contractID {
-			contract = c
-			break
-		}
-	}
-	if contract == nil {
-		return diag.FromErr(errors.New("contract must be specified to create a new Edge Hostname"))
 	}
 
 	logger.Debugf("  Edgehostnames GROUP = %v", group)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contract)
 
-	products, err := client.GetProducts(ctx, papi.GetProductsRequest{
-		ContractID: contractID,
-	})
+	product, err := getProduct(ctx, d, contract.ContractID, meta)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	productID, err := tools.GetStringValue("product", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	var product *papi.ProductItem
-	for _, p := range products.Products.Items {
-		if p.ProductID == productID {
-			product = &p
-			break
-		}
-	}
-	if product == nil {
-		return diag.FromErr(errors.New("product must be specified to create a new Edge Hostname"))
 	}
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-		ContractID: contractID,
+		ContractID: contract.ContractID,
 		GroupID:    group.GroupID,
 	})
 	if err != nil {
@@ -166,6 +123,17 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		newHostname.SecureNetwork = "SHARED_CERT"
 	}
 
+	if newHostname.DomainSuffix == "" && edgeHostname != "" {
+		newHostname.DomainSuffix = "edgesuite.net"
+		if strings.HasSuffix(edgeHostname, "edgekey.net") {
+			newHostname.DomainSuffix = "edgekey.net"
+		}
+	}
+
+	if newHostname.DomainPrefix == "" && edgeHostname != "" {
+		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
+	}
+
 	for _, h := range edgeHostnames.EdgeHostnames.Items {
 		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
 			d.SetId(h.ID)
@@ -184,7 +152,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if ipv4 && ipv6 {
 		newHostname.IPVersionBehavior = "IPV6_COMPLIANCE"
 	}
-	if !(ipv4 && ipv6) {
+	if !(ipv4 || ipv6) {
 		return diag.FromErr(fmt.Errorf("ipv4 or ipv6 must be specified to create a new Edge Hostname"))
 	}
 
@@ -208,6 +176,8 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	logger.Debugf("Creating new edge hostname: %#v", newHostname)
 	hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
 		EdgeHostname: newHostname,
+		ContractID:   contract.ContractID,
+		GroupID:      group.GroupID,
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -220,6 +190,7 @@ func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
 	logger.Debugf("DELETING")
+	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
 	d.SetId("")
 	logger.Debugf("DONE")
 	return nil
@@ -290,66 +261,37 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 
 	client := inst.Client(meta)
 
-	groupName, err := tools.GetStringValue("group", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	contractID, err := tools.GetStringValue("contract", d)
+	group, err := getGroup(ctx, d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	groups, err := getGroups(ctx, meta)
+	contract, err := getContract(ctx, d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	group, err := findGroupByName(groupName, contractID, groups, false)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	contracts, err := client.GetContracts(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	var contract *papi.Contract
-	for _, c := range contracts.Contracts.Items {
-		if c.ContractID == contractID {
-			contract = c
-			break
-		}
-	}
-	if contract == nil {
-		return diag.FromErr(errors.New("contract must be specified to create a new Edge Hostname"))
-	}
+	logger.Debugf("  Edgehostnames GROUP = %v", group)
+	logger.Debugf("Edgehostnames CONTRACT = %v", contract)
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-		ContractID: contractID,
+		ContractID: contract.ContractID,
 		GroupID:    group.GroupID,
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	defaultEdgeHostname := edgeHostnames.EdgeHostnames.Items[0]
+	defaultEdgeHostname := &edgeHostnames.EdgeHostnames.Items[0]
 
 	edgeHostname, err := tools.GetStringValue("edge_hostname", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	var edgeHostnameID string
-
 	if edgeHostname != "" {
-		for _, h := range edgeHostnames.EdgeHostnames.Items {
-			if h.Domain == edgeHostname {
-				defaultEdgeHostname = h
-				edgeHostnameID = h.ID
-
-				logger.Debugf("Default EdgeHostname %v", defaultEdgeHostname)
-				break
-			}
+		defaultEdgeHostname, err = findEdgeHostname(edgeHostnames.EdgeHostnames, "", edgeHostname, "", "")
+		if err != nil {
+			return diag.FromErr(err)
 		}
 	}
 
@@ -362,7 +304,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err := d.Set("edge_hostname", defaultEdgeHostname.Domain); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	d.SetId(edgeHostnameID)
+	d.SetId(defaultEdgeHostname.ID)
 
 	return nil
 }
