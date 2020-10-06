@@ -756,6 +756,10 @@ func getCPCode(ctx context.Context, m akamai.OperationMeta, contractID, groupID 
 		}
 		return nil, nil
 	}
+	cpCodeID, err = tools.AddPrefix(cpCodeID, "cpc_")
+	if err != nil {
+		return nil, err
+	}
 	logger.Debugf("Fetching CP code")
 
 	cpCodeResponse, err := inst.Client(m).GetCPCode(ctx, papi.GetCPCodeRequest{
