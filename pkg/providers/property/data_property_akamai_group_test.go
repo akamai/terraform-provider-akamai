@@ -6,12 +6,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccDataSourceGroup_basic(t *testing.T) {
@@ -41,12 +40,17 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 
 func testAccDataSourceGroupBasic() string {
 	return `
-data "akamai_group" "test" {
-}
+		provider "akamai" {
+			papi_section = "papi"
+			edgerc = "~/.edgerc"
+		}
 
-output "groupid" {
-value = "${data.akamai_group.test.id}"
-}
+		data "akamai_group" "test" {
+		}
+
+		output "groupid" {
+			value = "${data.akamai_group.test.id}"
+		}
 `
 }
 
@@ -193,22 +197,29 @@ func TestFindGroupByName(t *testing.T) {
 			givenGroups:            []*papi.Group{},
 			givenGroupsAccountName: "",
 			isDefault:              false,
-			withError:              ErrLookingUpGroupByName,
+			withError:              ErrGroupNotInContract,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			groups := papi.NewGroups()
+			groups := &papi.GetGroupsResponse{
+				Groups: papi.GroupItems{
+					Items: make([]*papi.Group, 0),
+				},
+			}
 			groups.AccountName = test.givenGroupsAccountName
 			for _, group := range test.givenGroups {
-				groups.AddGroup(group)
+				groups.Groups.Items = append(groups.Groups.Items, group)
 			}
 			res, err := findGroupByName(test.givenName, test.givenContract, groups, test.isDefault)
 			if test.withError != nil {
+				assert.Error(t, err)
 				assert.True(t, errors.Is(err, test.withError), "expected: %s; got: %s", test.withError, err)
 				return
 			}
+			assert.NoError(t, err)
+			assert.NotNil(t, res)
 			require.NoError(t, err)
 			assert.Equal(t, test.expected.GroupID, res.GroupID)
 		})

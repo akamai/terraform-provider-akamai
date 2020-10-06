@@ -71,7 +71,7 @@ resource "akamai_gtm_cidrmap" "test_cidr" {
         akamai_gtm_domain.test_domain,
         akamai_gtm_datacenter.test_cidr_datacenter
     ]
-}`, gtm_test_domain)
+}`, gtmTestDomain)
 
 var testAccAkamaiGTMCidrMapUpdateConfig = fmt.Sprintf(`
 provider "akamai" {
@@ -135,7 +135,7 @@ resource "akamai_gtm_cidrmap" "test_cidr" {
         akamai_gtm_datacenter.test_cidr_datacenter
     ]
  
-}`, gtm_test_domain)
+}`, gtmTestDomain)
 
 func TestAccAkamaiGTMCidrMap_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -167,7 +167,6 @@ func TestAccAkamaiGTMCidrMap_update(t *testing.T) {
 					testAccCheckAkamaiGTMCidrMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_cidrmap.test_cidr", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccAkamaiGTMCidrMapUpdateConfig,
@@ -175,7 +174,6 @@ func TestAccAkamaiGTMCidrMap_update(t *testing.T) {
 					testAccCheckAkamaiGTMCidrMapExists,
 					resource.TestCheckResourceAttr("akamai_gtm_cidrmap.test_cidr", "wait_on_complete", "false"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -184,8 +182,8 @@ func TestAccAkamaiGTMCidrMap_update(t *testing.T) {
 func testAccPreCheckCidr(t *testing.T) {
 
 	testAccPreCheckTF(t)
-	testCheckDeleteCidrMap("test_cidrmap", gtm_test_domain)
-	testAccDeleteDatacenterByNickname("test_cidr_datacenter", gtm_test_domain)
+	testCheckDeleteCidrMap("test_cidrmap", gtmTestDomain)
+	testAccDeleteDatacenterByNickname("test_cidr_datacenter", gtmTestDomain)
 
 }
 
@@ -229,6 +227,9 @@ func testAccCheckAkamaiGTMCidrMapExists(s *terraform.State) error {
 		}
 
 		cidrName, dom, err := parseStringID(rs.Primary.ID)
+		if err != nil {
+			return err
+		}
 		_, err = gtm.GetCidrMap(cidrName, dom)
 		if err != nil {
 			return err

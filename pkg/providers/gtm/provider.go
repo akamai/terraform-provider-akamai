@@ -164,7 +164,7 @@ func (p *provider) Name() string {
 	return "gtm"
 }
 
-// GtmProviderVersion update version string anytime provider adds new features
+// GtmProviderVersion update version string anytime provider adds new features.
 const GtmProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {

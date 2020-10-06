@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -61,6 +62,7 @@ func TestGetStringValue(t *testing.T) {
 				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
 				return
 			}
+			require.NoError(t, err)
 			assert.Equal(t, test.expected, res)
 		})
 	}
@@ -134,7 +136,7 @@ func TestGetBoolValue(t *testing.T) {
 			init: func(m *mocked) {
 				m.On("GetOk", "key").Return(false, false).Once()
 			},
-			withError: ErrNotFound,
+			expected: false,
 		},
 		"empty key passed": {
 			key:       "",

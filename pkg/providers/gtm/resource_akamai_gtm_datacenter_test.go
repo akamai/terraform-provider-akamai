@@ -51,7 +51,7 @@ resource "akamai_gtm_datacenter" "test_datacenter" {
          akamai_gtm_domain.test_domain
     ]
 }
-`, gtm_test_domain)
+`, gtmTestDomain)
 
 var testAccAkamaiGTMDatacenterUpdateConfig = fmt.Sprintf(`
 provider "akamai" {
@@ -92,7 +92,7 @@ resource "akamai_gtm_datacenter" "test_datacenter" {
          akamai_gtm_domain.test_domain
     ]    
 }   
-`, gtm_test_domain)
+`, gtmTestDomain)
 
 func TestAccAkamaiGTMDatacenter_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -106,7 +106,6 @@ func TestAccAkamaiGTMDatacenter_basic(t *testing.T) {
 					testAccCheckAkamaiGTMDatacenterExists,
 					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "continent", "EU"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -141,7 +140,7 @@ func TestAccAkamaiGTMDatacenter_update(t *testing.T) {
 func testAccPreCheckDC(t *testing.T) {
 
 	testAccPreCheckTF(t)
-	testAccDeleteDatacenterByNickname("test_datacenter", gtm_test_domain)
+	testAccDeleteDatacenterByNickname("test_datacenter", gtmTestDomain)
 
 }
 
@@ -197,7 +196,7 @@ func testAccDeleteDatacenter(dcid int, dom string) error {
 func parseIntID(id string) (int, string, error) {
 	idComp := strings.Split(id, ":")
 	if len(idComp) < 2 {
-		return 0, "", fmt.Errorf("Invalid Datacenter ID")
+		return 0, "", fmt.Errorf("invalid Datacenter ID")
 	}
 	dcid, err := strconv.Atoi(idComp[1])
 	if err != nil {
@@ -214,6 +213,9 @@ func testAccCheckAkamaiGTMDatacenterExists(s *terraform.State) error {
 		}
 
 		dcid, dom, err := parseIntID(rs.Primary.ID)
+		if err != nil {
+			return err
+		}
 		_, err = gtm.GetDatacenter(dcid, dom)
 		if err != nil {
 			return err

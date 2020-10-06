@@ -46,7 +46,7 @@ resource "akamai_gtm_resource" "test_resource" {
          	akamai_gtm_domain.test_domain
     	]
 }
-`, gtm_test_domain)
+`, gtmTestDomain)
 
 var testAccAkamaiGTMResourceUpdateConfig = fmt.Sprintf(`
 provider "akamai" {
@@ -84,7 +84,7 @@ resource "akamai_gtm_resource" "test_resource" {
                 akamai_gtm_domain.test_domain
         ]
 }
-`, gtm_test_domain)
+`, gtmTestDomain)
 
 func TestAccAkamaiGTMResource_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -98,7 +98,6 @@ func TestAccAkamaiGTMResource_basic(t *testing.T) {
 					testAccCheckAkamaiGTMResourceExists,
 					resource.TestCheckResourceAttr("akamai_gtm_resource.test_resource", "load_imbalance_percentage", "50"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -116,7 +115,6 @@ func TestAccAkamaiGTMResource_update(t *testing.T) {
 					testAccCheckAkamaiGTMResourceExists,
 					resource.TestCheckResourceAttr("akamai_gtm_resource.test_resource", "load_imbalance_percentage", "50"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: testAccAkamaiGTMResourceUpdateConfig,
@@ -124,7 +122,6 @@ func TestAccAkamaiGTMResource_update(t *testing.T) {
 					testAccCheckAkamaiGTMResourceExists,
 					resource.TestCheckResourceAttr("akamai_gtm_resource.test_resource", "load_imbalance_percentage", "70"),
 				),
-				//ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -133,7 +130,7 @@ func TestAccAkamaiGTMResource_update(t *testing.T) {
 func testAccPreCheckRsc(t *testing.T) {
 
 	testAccPreCheckTF(t)
-	testCheckDeleteResource("test_resource", gtm_test_domain)
+	testCheckDeleteResource("test_resource", gtmTestDomain)
 
 }
 
@@ -176,6 +173,9 @@ func testAccCheckAkamaiGTMResourceExists(s *terraform.State) error {
 			continue
 		}
 		rname, dom, err := parseStringID(rs.Primary.ID)
+		if err != nil {
+			return err
+		}
 		_, err = gtm.GetResource(rname, dom)
 		if err != nil {
 			return err

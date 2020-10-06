@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/spf13/cast"
 )
 
 var (
@@ -44,6 +45,56 @@ func GetStringValue(key string, rd ResourceDataFetcher) (string, error) {
 	return "", fmt.Errorf("%w: %s", ErrNotFound, key)
 }
 
+// GetInterfaceArrayValue fetches value with given key from ResourceData object and attempts type cast to []interface{}
+//
+// if value is not present on provided resource for key, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetInterfaceArrayValue(key string, rd ResourceDataFetcher) ([]interface{}, error) {
+	if key == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+
+	value, ok := rd.GetOk(key)
+	if ok {
+		interf, ok := value.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "[]interface{}")
+		}
+
+		return interf, nil
+	}
+
+	return nil, fmt.Errorf("%w: %s", ErrNotFound, key)
+}
+
+// GetStringSliceValue fetches value with given key from ResourceData object and attempts type cast to []interface{}
+// and then conver to []string
+//
+// if value is not present on provided resource for key, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetStringSliceValue(key string, rd ResourceDataFetcher) ([]string, error) {
+	if key == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+
+	rval := make([]string, 0)
+	value, ok := rd.GetOk(key)
+	if ok {
+		interf, ok := value.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "[]interface{}")
+		}
+
+		for _, s := range interf {
+			rval = append(rval, cast.ToString(s))
+		}
+
+		return rval, nil
+	}
+
+	return nil, fmt.Errorf("%w: %s", ErrNotFound, key)
+}
+
 // GetIntValue fetches value with given key from ResourceData object and attempts type cast to int
 //
 // if value is not present on provided resource, ErrNotFound is returned
@@ -63,6 +114,44 @@ func GetIntValue(key string, rd ResourceDataFetcher) (int, error) {
 	return num, nil
 }
 
+// GetFloat64Value fetches value with given key from ResourceData object and attempts type cast to float64
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetFloat64Value(key string, rd ResourceDataFetcher) (float64, error) {
+	if key == "" {
+		return 0, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+	value, ok := rd.GetOk(key)
+	if !ok {
+		return 0, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+	var num float64
+	if num, ok = value.(float64); !ok {
+		return 0, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "float64")
+	}
+	return num, nil
+}
+
+// GetFloat32Value fetches value with given key from ResourceData object and attempts type cast to float64
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetFloat32Value(key string, rd ResourceDataFetcher) (float32, error) {
+	if key == "" {
+		return 0, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+	value, ok := rd.GetOk(key)
+	if !ok {
+		return 0, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+	var num float32
+	if num, ok = value.(float32); !ok {
+		return 0, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "float32")
+	}
+	return num, nil
+}
+
 // GetBoolValue fetches value with given key from ResourceData object and attempts type cast to bool
 //
 // if value is not present on provided resource, ErrNotFound is returned
@@ -71,11 +160,9 @@ func GetBoolValue(key string, rd ResourceDataFetcher) (bool, error) {
 	if key == "" {
 		return false, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
-	value, ok := rd.GetOk(key)
-	if !ok {
-		return false, fmt.Errorf("%w: %s", ErrNotFound, key)
-	}
+	value, _ := rd.GetOk(key)
 	var val bool
+	var ok bool
 	if val, ok = value.(bool); !ok {
 		return false, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "bool")
 	}
@@ -90,13 +177,32 @@ func GetSetValue(key string, rd ResourceDataFetcher) (*schema.Set, error) {
 	if key == "" {
 		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
+	val := new(schema.Set)
 	value, ok := rd.GetOk(key)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrNotFound, key)
+		return val, fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
-	var val *schema.Set
 	if val, ok = value.(*schema.Set); !ok {
-		return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "*schema.Set")
+		return val, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "*schema.Set")
+	}
+	return val, nil
+}
+
+// GetListValue fetches value with given key from ResourceData object and attempts type cast to []interface{}
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetListValue(key string, rd ResourceDataFetcher) ([]interface{}, error) {
+	if key == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+	value, ok := rd.GetOk(key)
+	val := make([]interface{}, 0)
+	if !ok {
+		return val, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+	if val, ok = value.([]interface{}); !ok {
+		return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "[]interface{}")
 	}
 	return val, nil
 }

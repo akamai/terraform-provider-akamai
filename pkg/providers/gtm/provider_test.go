@@ -33,10 +33,6 @@ func TestProvider(t *testing.T) {
 	}
 }
 
-func testAccPreCheck(t *testing.T) {
-
-}
-
 type data struct {
 	data map[string]interface{}
 }
@@ -172,33 +168,6 @@ max_body = 2`,
 				MaxBody:      1,
 			},
 		},
-		/*
-			testsStruct{
-				name: "gtm block complete",
-				args: args{
-					schema: &data{
-						data: map[string]interface{}{
-							"gtm": &data{
-								data: map[string]interface{}{
-									"host":          "block",
-									"access_token":  "block",
-									"client_token":  "block",
-									"client_secret": "block",
-									"max_body":      1,
-								},
-							},
-						},
-					},
-				},
-				want: &edgegrid.Config{
-					Host:         "block",
-					AccessToken:  "block",
-					ClientToken:  "block",
-					ClientSecret: "block",
-					MaxBody:      1,
-				},
-			},
-		*/
 	}
 
 	// Invoke tests

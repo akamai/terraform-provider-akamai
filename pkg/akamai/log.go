@@ -45,6 +45,11 @@ func LogFromHCLog(l hclog.Logger) log.Interface {
 	return rval
 }
 
+// Log returns a global log object, there is no context like operation id
+func Log(args ...interface{}) log.Interface {
+	return LogFromHCLog(hclog.Default().With(args...))
+}
+
 // LogFromContext returns the logger from the context
 func LogFromContext(ctx context.Context, args ...interface{}) log.Interface {
 	return LogFromHCLog(hclog.FromContext(ctx).With(args...))

@@ -1,69 +1,64 @@
 terraform {
-	required_providers {
-		akamai = {
-			source = "akamai/akamai"
-		}
-	}
-	required_version = ">= 0.13"
+  required_version = ">= 0.12"
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-provider "akamai" {
-     edgerc = "~/.edgerc"
-     config_section = "papi"
+provider "akamai" {}
+
+resource "akamai_property" "prop" {
+  name    = "host.example.com"
+  product = "prd_SPM"
+  cp_code = "XXXXX"
+  contact = ["you@example.com"]
+  hostnames = {
+    examplehost = "host.example.com"
+  }
+
+  rules = data.akamai_property_rules.prop.json
 }
 
-variable "activate" {
-	default = false
-}
+data "akamai_property_rules" "prop" {
+  rules {
+    rule {
+      name    = "l10n"
+      comment = "Localize the default timezone"
 
-resource "akamai_property" "dshafik_sandbox" {
-	name = "dshafik.sandbox.akamaideveloper.com"
-	account_id = "act_XXXXXX"
-	product_id = "prd_SPM"
-	cp_code = "XXXXX"
-	contact = ["dshafik@akamai.com"]
-	hostname = ["dshafik.sandbox.akamaideveloper.com"]
-	network = "staging"
+      criteria {
+        name = "path"
 
-	rules {
-		rule {
-			name = "l10n"
-			comment = "Localize the default timezone"
+        option {
+          key   = "matchOperator"
+          value = "MATCHES_ONE_OF"
+        }
 
-			criteria {
-				name = "path"
+        option {
+          key   = "matchCaseSensitive"
+          value = "true"
+        }
 
-				option {
-					key = "matchOperator"
-					value = "MATCHES_ONE_OF"
-				}
+        option {
+          key    = "values"
+          values = ["/"]
+        }
+      }
 
-				option {
-					key = "matchCaseSensitive"
-					value = "true"
-				}
+      behavior {
+        name = "rewriteUrl"
 
-				option {
-					key = "values"
-					values = ["/"]
-				}
-			}
+        option {
+          key   = "behavior"
+          value = "REWRITE"
+        }
 
-			behavior {
-				name = "rewriteUrl"
-
-				option {
-					key = "behavior"
-					value = "REWRITE"
-				}
-
-				option {
-					key = "targetUrl"
-					value = "/America/Los_Angeles"
-				}
-			}
-		}
-	}
-
-    activate = var.activate
+        option {
+          key   = "targetUrl"
+          value = "/America/Los_Angeles"
+        }
+      }
+    }
+  }
 }

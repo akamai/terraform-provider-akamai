@@ -2,14 +2,13 @@ package property
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -21,7 +20,9 @@ func resourceCPCode() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceCPCodeCreate,
 		ReadContext:   resourceCPCodeRead,
-		DeleteContext: resourceCPCodeDelete,
+
+		// NB: CP Codes cannot be deleted https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
+		DeleteContext: schema.NoopContext,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -48,106 +49,113 @@ func resourceCPCode() *schema.Resource {
 	}
 }
 
-func resourceCPCodeCreate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourceCPCodeCreate")
-	CorrelationID := "[PAPI][resourceCPCodeCreate-" + meta.OperationID() + "]"
-
 	logger.Debugf("Creating CP Code")
+
 	name, err := tools.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	product, err := tools.GetStringValue("product", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	group, err := tools.GetStringValue("group", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	contract, err := tools.GetStringValue("contract", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
-	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
-	cpCode, err := cpCodes.FindCpCode(name, CorrelationID)
-	if cpCode == nil || err != nil {
-		cpCode = cpCodes.NewCpCode()
-		cpCode.ProductID = product
-		cpCode.CpcodeName = name
 
-		logger.Debugf("CPCode: %+v")
-		err := cpCode.Save(CorrelationID)
+	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
+	cpCode, err := findCPCode(ctx, name, contract, group)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("%s: %w", ErrLookingUpCPCode, err))
+	}
+
+	if cpCode == nil {
+		cpcID, err := createCPCode(ctx, name, product, contract, group)
 		if err != nil {
-			logger.Debugf("Error saving")
-			var apiError client.APIError
-			if errors.As(err, &apiError) {
-				logger.Debugf("%s", apiError.RawBody)
-			}
 			return diag.FromErr(err)
 		}
+
+		d.SetId(cpcID)
+	} else {
+		d.SetId(cpCode.ID)
 	}
 
 	logger.Debugf("Resulting CP Code: %#v", cpCode)
-	d.SetId(cpCode.CpcodeID)
-	return resourceCPCodeRead(nil, d, nil)
+	return resourceCPCodeRead(ctx, d, m)
 }
 
-func resourceCPCodeDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-
-	logger := meta.Log("PAPI", "resourceCPCodeDelete")
-
-	logger.Debugf("Deleting CP Code")
-	// No PAPI CP Code delete operation exists.
-	// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
-	return schema.NoopContext(nil, d, m)
-}
-
-func resourceCPCodeRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourceCPCodeRead")
-	CorrelationID := "[PAPI][resourceCPCodeRead-" + meta.OperationID() + "]"
-
 	logger.Debugf("Read CP Code")
+
 	name, err := tools.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	group, err := tools.GetStringValue("group", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	contract, err := tools.GetStringValue("contract", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	cpCodes := resourceCPCodePAPINewCPCodes(contract, group)
-	cpCode, err := cpCodes.FindCpCode(d.Id(), CorrelationID)
-	if cpCode == nil || err != nil {
-		cpCode, err = cpCodes.FindCpCode(name, CorrelationID)
+
+	// Attempt to find by ID first
+	cpCode, err := findCPCode(ctx, d.Id(), contract, group)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Otherwise attempt to find by name
+	if cpCode == nil {
+		// FIXME: I'm not clear how this could ever happen. A read couldn't happen until after TF created it and it had
+		//        been assigned an ID by PAPI and that ID was previously set in the resource, right?
+		cpCode, err := findCPCode(ctx, name, contract, group)
 		if err != nil {
 			return diag.FromErr(err)
 		}
+
+		// It really doesn't exist, give up
+		if cpCode == nil {
+			return diag.Errorf("Couldn't find the CP Code")
+		}
 	}
 
-	if cpCode == nil {
-		return nil
-	}
-
-	d.SetId(cpCode.CpcodeID)
+	d.SetId(cpCode.ID)
+	d.Set("name", cpCode.Name)
+	d.Set("product", cpCode.ProductID)
 	logger.Debugf("Read CP Code: %+v", cpCode)
 	return nil
 }
 
-func resourceCPCodePAPINewCPCodes(contractID, groupID string) *papi.CpCodes {
-	contract := &papi.Contract{
-		ContractID: contractID,
+// createCPCode attempts to create a CP Code and returns the CP Code ID
+func createCPCode(ctx context.Context, name, product, contract, group string) (string, error) {
+	r, err := inst.client.CreateCPCode(ctx, papi.CreateCPCodeRequest{
+		ContractID: contract,
+		GroupID:    group,
+		CPCode: papi.CreateCPCode{
+			ProductID:  product,
+			CPCodeName: name,
+		},
+	})
+	if err != nil {
+		return "", err
 	}
-	group := &papi.Group{
-		GroupID: groupID,
-	}
-	return papi.NewCpCodes(contract, group)
+
+	return r.CPCodeID, nil
 }

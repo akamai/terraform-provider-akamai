@@ -15,7 +15,7 @@ func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
 		CheckDestroy: testAccCheckAkamaiDNSv2RecordDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceDNSRecordSet_basic(),
+				Config: testAccDataSourceDNSRecordSetBasic(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(dataSourceName, "host", "exampleterraform.io"),
 				),
@@ -24,7 +24,7 @@ func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
 	})
 }
 
-func testAccDataSourceDNSRecordSet_basic() string {
+func testAccDataSourceDNSRecordSetBasic() string {
 	return `provider "akamai" {
   dns_section = "dns"
 }
