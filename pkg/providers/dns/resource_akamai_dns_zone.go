@@ -162,7 +162,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("Searching for zone [%s]", hostname)
 	zone, e := inst.Client(meta).GetZone(ctx, hostname)
 
-	apiError, ok := e.(session.APIError)
+	apiError, ok := e.(*dns.Error)
 	if !ok || apiError.StatusCode != http.StatusNotFound {
 		logger.Errorf("Create[ERROR] %w", e)
 		return append(diags, diag.Diagnostic{
@@ -262,7 +262,7 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 	logger.Debugf("Searching for zone [%s]", hostname)
 	zone, e := inst.Client(meta).GetZone(ctx, hostname)
 	if e != nil {
-		apiError, ok := e.(session.APIError)
+		apiError, ok := e.(*dns.Error)
 		if ok && apiError.StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diag.FromErr(e)
@@ -332,7 +332,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("Searching for zone [%s]", hostname)
 	zone, e := inst.Client(meta).GetZone(ctx, hostname)
 	if e != nil {
-		apiError, ok := e.(session.APIError)
+		apiError, ok := e.(*dns.Error)
 		if !ok && apiError.StatusCode != http.StatusOK {
 			logger.Debugf("Zone Update read faiiled: %s", e.Error())
 			return diag.Errorf("Update zone %s read failed: %w", hostname, e)
@@ -345,8 +345,8 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	zoneCreate.SignAndServe = zone.SignAndServe
 	zoneCreate.SignAndServeAlgorithm = zone.SignAndServeAlgorithm
 	zoneCreate.Target = zone.Target
-	zoneCreate.EndCustomerId = zone.EndCustomerId
-	zoneCreate.ContractId = zone.ContractId
+	zoneCreate.EndCustomerID = zone.EndCustomerID
+	zoneCreate.ContractID = zone.ContractID
 	zoneCreate.TsigKey = zone.TsigKey
 	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
 		return diag.FromErr(err)
@@ -449,7 +449,7 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.ZoneResponse) 
 	if err := d.Set("target", zoneresp.Target); err != nil {
 		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("end_customer_id", zoneresp.EndCustomerId); err != nil {
+	if err := d.Set("end_customer_id", zoneresp.EndCustomerID); err != nil {
 		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	tsigListNew := make([]interface{}, 0)
@@ -523,7 +523,7 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logge
 		return err
 	}
 	if err == nil || d.HasChange("end_customer_id") {
-		zone.EndCustomerId = endCustomerID
+		zone.EndCustomerID = endCustomerID
 	}
 	tsigKey, err := tools.GetListValue("tsig_key", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

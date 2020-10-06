@@ -628,7 +628,7 @@ func executeRecordFunction(ctx context.Context, meta akamai.OperationMeta, name 
 	opRetry := opRetryCount
 	e := execFunc(ctx, meta, fn, rec, zone, rlock)
 	for e != nil && opRetry > 0 {
-		apiError, ok := e.(session.APIError)
+		apiError, ok := e.(*dns.Error)
 		// prep failure or network failure?
 		if !ok || apiError.StatusCode < http.StatusBadRequest {
 			logger.Errorf("executeRecordFunction - %s Record failed for record [%s] [%s] [%s] ", name, zone, host, recordType)
@@ -724,7 +724,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 			}
 		} else {
-			apiError, ok := err.(session.APIError)
+			apiError, ok := err.(*dns.Error)
 			if ok && apiError.StatusCode == http.StatusNotFound {
 				logger.Debug("SOA Record not found. Initialize serial")
 				if err := d.Set("serial", 1); err != nil {
@@ -754,7 +754,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	rdata := make([]string, 0)
 	recordSet, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 	if e != nil {
-		apiError, ok := e.(session.APIError)
+		apiError, ok := e.(*dns.Error)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -885,7 +885,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		// need to get current serial and increment as part of update
 		record, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 		if e != nil {
-			apiError, ok := e.(session.APIError)
+			apiError, ok := e.(*dns.Error)
 			if !ok || apiError.StatusCode != http.StatusNotFound {
 				logger.Error(fmt.Sprintf("UPDATE Read [ERROR] %s", e.Error()))
 				return diag.FromErr(e)
@@ -924,7 +924,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	rdata := make([]string, 0, 0)
 	recordset, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 	if e != nil {
-		apiError, ok := e.(session.APIError)
+		apiError, ok := e.(*dns.Error)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -1042,7 +1042,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	record, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 	if e != nil {
-		apiError, ok := e.(session.APIError)
+		apiError, ok := e.(*dns.Error)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
 			logger.Errorf("RECORD READ. error looking up %s records for %q: %s", recordType, host, e.Error())
 			return append(diags, diag.Diagnostic{
@@ -1224,7 +1224,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 	recordset, e := inst.Client(meta).GetRecord(ctx, zone, recordName, recordType)
 	if e != nil {
-		apiError, ok := e.(session.APIError)
+		apiError, ok := e.(*dns.Error)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
 			logger.Debugf("IMPORT Record read failed for record [%s] [%s] [%s] ", zone, recordName, recordType)
 			d.SetId("")
@@ -1518,7 +1518,7 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordset, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 		rdata := make([]string, 0, 0)
 		if e != nil {
-			apiError, ok := err.(session.APIError)
+			apiError, ok := err.(*dns.Error)
 			if !ok || apiError.StatusCode != http.StatusNotFound {
 				// failure other than not found
 				return dns.RecordBody{}, fmt.Errorf(e.Error())
