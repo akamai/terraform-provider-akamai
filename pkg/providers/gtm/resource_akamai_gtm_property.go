@@ -9,7 +9,8 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -347,6 +348,11 @@ func parseResourceStringId(id string) (string, string, error) {
 func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyCreate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	domain, err := tools.GetStringValue("domain", d)
 	if err != nil {
@@ -359,12 +365,12 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
-	newProp, err := populateNewPropertyObject(d, m)
+	newProp, err := populateNewPropertyObject(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Property: [%v]", newProp)
-	cStatus, err := newProp.Create(domain)
+	cStatus, err := inst.Client(meta).CreateProperty(ctx, newProp, domain)
 	if err != nil {
 		logger.Errorf("Property Create failed: %s", err.Error())
 		return diag.FromErr(fmt.Errorf("Property Create failed: %s", err.Error()))
@@ -382,7 +388,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(domain, m)
+		done, err := waitForCompletion(ctx, domain, m)
 		if done {
 			logger.Infof("Property Create completed")
 		} else {
@@ -408,6 +414,11 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyRead")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Reading Property: %s", d.Id())
 	// retrieve the property and domain
@@ -415,7 +426,7 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	prop, err := gtm.GetProperty(property, domain)
+	prop, err := inst.Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
 		logger.Errorf("Property Read failed: %s", err.Error())
 		return diag.FromErr(fmt.Errorf("Property Read failed: %s", err.Error()))
@@ -429,6 +440,11 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyUpdate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Updating Property: %s", d.Id())
 	// pull domain and property out of resource id
@@ -437,7 +453,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Get existing property
-	existProp, err := gtm.GetProperty(property, domain)
+	existProp, err := inst.Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
 		logger.Errorf("Property Update failed: %s", err.Error())
 		return diag.FromErr(err)
@@ -448,7 +464,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Property PROPOSED: %v", existProp)
-	uStat, err := existProp.Update(domain)
+	uStat, err := inst.Client(meta).UpdateProperty(ctx, existProp, domain)
 	if err != nil {
 		logger.Errorf("Property Update failed: %s", err.Error())
 		return diag.FromErr(fmt.Errorf("Property Update failed: %s", err.Error()))
@@ -465,7 +481,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(domain, m)
+		done, err := waitForCompletion(ctx, domain, m)
 		if done {
 			logger.Infof("Property Update completed")
 		} else {
@@ -485,14 +501,19 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyImport")
-
+	// create a context with logging for api calls
+	ctx := context.Background()
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 	logger.Infof("Property [%s] Import", d.Id())
 	// pull domain and property out of resource id
 	domain, property, err := parseResourceStringId(d.Id())
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	prop, err := gtm.GetProperty(property, domain)
+	prop, err := inst.Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -513,6 +534,11 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyDelete")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Deleting Property: %s", d.Id())
 	// Get existing property
@@ -520,13 +546,13 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	existProp, err := gtm.GetProperty(property, domain)
+	existProp, err := inst.Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
 		logger.Errorf("Property Delete failed: %s", err.Error())
 		return diag.FromErr(fmt.Errorf("Property Delete failed: %s", err.Error()))
 	}
 	logger.Debugf("Deleting Property: %v", existProp)
-	uStat, err := existProp.Delete(domain)
+	uStat, err := inst.Client(meta).DeleteProperty(ctx, existProp, domain)
 	if err != nil {
 		logger.Errorf("Property Delete failed: %s", err.Error())
 		return diag.FromErr(fmt.Errorf("Property Delete failed: %s", err.Error()))
@@ -543,7 +569,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(domain, m)
+		done, err := waitForCompletion(ctx, domain, m)
 		if done {
 			logger.Infof("Property Delete completed")
 		} else {
@@ -776,10 +802,10 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interf
 }
 
 // Create and populate a new property object from resource data
-func populateNewPropertyObject(d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
+func populateNewPropertyObject(ctx, d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
 
 	name, _ := tools.GetStringValue("name", d)
-	propObj := gtm.NewProperty(name)
+	propObj := inst.Client(meta).NewProperty(ctx, name)
 	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
 	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
 	err := populatePropertyObject(d, propObj, m)
