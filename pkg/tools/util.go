@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // GetSHAString returns a sha1 from the string
@@ -40,6 +40,8 @@ func SetToStringSlice(s *schema.Set) []string {
 		list[i] = v.(string)
 	}
 	return list
+}
+
 // MaxDuration returns the larger of x or y.
 func MaxDuration(x, y time.Duration) time.Duration {
 	if x < y {
