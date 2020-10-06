@@ -4,14 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/configgtm"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -217,7 +219,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	logger.Infof("Creating domain [%s]", dname)
-	newDom, err := populateNewDomainObject(d, m)
+	newDom, err := populateNewDomainObject(ctx, meta, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -436,7 +438,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	uStat, err := existDom.Delete()
+	uStat, err := inst.Client(meta).DeleteDomain(ctx, existDom)
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
@@ -514,7 +516,7 @@ func validateDomainType(v interface{}, _ string) (ws []string, es []error) {
 }
 
 // Create and populate a new domain object from resource data
-func populateNewDomainObject(d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
+func populateNewDomainObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
 
 	name, _ := tools.GetStringValue("name", d)
 	domObj := inst.Client(meta).NewDomain(ctx, name, d.Get("type").(string))

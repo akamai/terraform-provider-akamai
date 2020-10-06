@@ -365,7 +365,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
-	newProp, err := populateNewPropertyObject(ctx, d, m)
+	newProp, err := populateNewPropertyObject(ctx, meta, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -459,7 +459,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Property BEFORE: %v", existProp)
-	err = populatePropertyObject(d, existProp, m)
+	err = populatePropertyObject(ctx, d, existProp, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -588,7 +588,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 }
 
 // Populate existing property object from resource data
-func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
+func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "populatePropertyObject")
 
@@ -794,21 +794,21 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interf
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	populateTrafficTargetObject(d, prop, m)
-	populateStaticRRSetObject(d, prop)
-	populateLivenessTestObject(d, prop)
+	populateTrafficTargetObject(ctx, d, prop, m)
+	populateStaticRRSetObject(ctx, meta, d, prop)
+	populateLivenessTestObject(ctx, meta, d, prop)
 
 	return nil
 }
 
 // Create and populate a new property object from resource data
-func populateNewPropertyObject(ctx, d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
+func populateNewPropertyObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
 
 	name, _ := tools.GetStringValue("name", d)
 	propObj := inst.Client(meta).NewProperty(ctx, name)
 	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
 	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
-	err := populatePropertyObject(d, propObj, m)
+	err := populatePropertyObject(ctx, d, propObj, m)
 
 	return propObj, err
 
@@ -862,7 +862,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 }
 
 // create and populate GTM Property TrafficTargets object
-func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyExists")
 
@@ -872,7 +872,7 @@ func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property, m i
 		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
 		for i, v := range traffTargList {
 			ttMap := v.(map[string]interface{})
-			trafficTarget := prop.NewTrafficTarget() // create new object
+			trafficTarget := inst.Client(meta).NewTrafficTarget(ctx) // create new object
 			trafficTarget.DatacenterId = ttMap["datacenter_id"].(int)
 			trafficTarget.Enabled = ttMap["enabled"].(bool)
 			trafficTarget.Weight = ttMap["weight"].(float64)
@@ -942,7 +942,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 }
 
 // Populate existing static_rr_sets object from resource data
-func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
+func populateStaticRRSetObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, prop *gtm.Property) {
 
 	// pull apart List
 	staticSetList, err := tools.GetInterfaceArrayValue("static_rr_set", d)
@@ -950,7 +950,7 @@ func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 		staticObjList := make([]*gtm.StaticRRSet, len(staticSetList)) // create new object list
 		for i, v := range staticSetList {
 			recMap := v.(map[string]interface{})
-			record := prop.NewStaticRRSet() // create new object
+			record := inst.Client(meta).NewStaticRRSet(ctx) // create new object
 			record.TTL = recMap["ttl"].(int)
 			record.Type = recMap["type"].(string)
 			if recMap["rdata"] != nil {
@@ -1009,14 +1009,14 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 }
 
 // Populate existing Liveness test  object from resource data
-func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
+func populateLivenessTestObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, prop *gtm.Property) {
 
 	liveTestList, err := tools.GetInterfaceArrayValue("liveness_test", d)
 	if err == nil {
 		liveTestObjList := make([]*gtm.LivenessTest, len(liveTestList)) // create new object list
 		for i, l := range liveTestList {
 			v := l.(map[string]interface{})
-			lt := prop.NewLivenessTest(v["name"].(string),
+			lt := inst.Client(meta).NewLivenessTest(ctx, v["name"].(string),
 				v["test_object_protocol"].(string),
 				v["test_interval"].(int),
 				float32(v["test_timeout"].(float64))) // create new object

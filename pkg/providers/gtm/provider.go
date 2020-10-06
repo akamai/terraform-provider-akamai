@@ -63,19 +63,19 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_gtm_domain":     resourceGTMv1Domain(),
-			"akamai_gtm_property":   resourceDNSv1Propery(),
-			"akamai_gtm_datacenter": resourceDNSv1Datacenter(),
-			"akamai_gtm_resource":   resourceDNSv1Resource(),
-			"akamai_gtm_asmap":      resourceDNSv1ASmap(),
-			"akamai_gtm_geomap":     resourceDNSv1Geomap(),
-			"akamai_gtm_cidrmap":    resourceDNSv1Cidrmap(),
+			"akamai_gtm_property":   resourceGTMv1Property(),
+			"akamai_gtm_datacenter": resourceGTMv1Datacenter(),
+			"akamai_gtm_resource":   resourceGTMv1Resource(),
+			"akamai_gtm_asmap":      resourceGTMv1ASmap(),
+			"akamai_gtm_geomap":     resourceGTMv1Geomap(),
+			"akamai_gtm_cidrmap":    resourceGTMv1Cidrmap(),
 		},
 	}
 	return provider
 }
 
 // WithClient sets the client interface function, used for mocking and testing
-func WithClient(c gtm.DNS) Option {
+func WithClient(c gtm.GTM) Option {
 	return func(p *provider) {
 		p.client = c
 	}

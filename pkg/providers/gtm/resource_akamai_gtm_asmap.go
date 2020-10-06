@@ -3,6 +3,7 @@ package gtm
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
@@ -80,7 +81,7 @@ func resourceGTMv1ASmap() *schema.Resource {
 }
 
 // Util method to validate default datacenter and create if necessary
-func validateDefaultDC(ctx context.Context, ddcField []interface{}, domain string) error {
+func validateDefaultDC(ctx context.Context, meta akamai.OperationMeta, ddcField []interface{}, domain string) error {
 
 	if len(ddcField) == 0 {
 		return fmt.Errorf("default Datacenter invalid")
@@ -102,7 +103,8 @@ func validateDefaultDC(ctx context.Context, ddcField []interface{}, domain strin
 	dc, err := inst.Client(meta).GetDatacenter(ctx, dcId, domain)
 	if dc == nil {
 		if err != nil {
-			if _, ok := err.(gtm.CommonError); !ok {
+			apiError, ok := err.(*gtm.Error)
+			if !ok || apiError.StatusCode != http.StatusNotFound {
 				return fmt.Errorf("MapCreate Unexpected error verifying Default Datacenter exists: %s", err.Error())
 			}
 		}
@@ -149,7 +151,7 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	var diags diag.Diagnostics
-	if err = validateDefaultDC(ctx, interfaceArray, domain); err != nil {
+	if err = validateDefaultDC(ctx, meta, interfaceArray, domain); err != nil {
 		logger.Errorf("Default datacenter validation error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -158,7 +160,7 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 
-	newAS := populateNewASmapObject(ctx, d, m)
+	newAS := populateNewASmapObject(ctx, meta, d, m)
 	logger.Debugf("Proposed New asMap: [%v]", newAS)
 	cStatus, err := inst.Client(meta).CreateAsMap(ctx, newAS, domain)
 	if err != nil {
@@ -393,7 +395,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	if waitOnComplete {
-		done, err := waitForCompletion(domain, m)
+		done, err := waitForCompletion(ctx, domain, m)
 		if done {
 			logger.Infof("asMap Delete completed")
 		} else {
@@ -416,7 +418,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 }
 
 // Create and populate a new asMap object from asMap data
-func populateNewASmapObject(ctx context.Context, d *schema.ResourceData, m interface{}) *gtm.AsMap {
+func populateNewASmapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.AsMap {
 
 	asMapName, _ := tools.GetStringValue("name", d)
 	asObj := inst.Client(meta).NewAsMap(ctx, asMapName)

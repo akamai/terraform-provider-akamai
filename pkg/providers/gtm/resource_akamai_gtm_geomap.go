@@ -107,7 +107,7 @@ func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	var diags diag.Diagnostics
-	if err = validateDefaultDC(ctx, geoDefaultDCList, domain); err != nil {
+	if err = validateDefaultDC(ctx, meta, geoDefaultDCList, domain); err != nil {
 		logger.Errorf("Default datacenter validation error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -116,7 +116,7 @@ func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 
-	newGeo := populateNewGeoMapObject(ctx, d, m)
+	newGeo := populateNewGeoMapObject(ctx, meta, d, m)
 	logger.Debugf("Proposed New geoMap: [%v]", newGeo)
 	cStatus, err := inst.Client(meta).CreateGeoMap(ctx, newGeo, domain)
 	if err != nil {
@@ -385,7 +385,7 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 // Create and populate a new geoMap object from geoMap data
-func populateNewGeoMapObject(ctx context.Context, d *schema.ResourceData, m interface{}) *gtm.GeoMap {
+func populateNewGeoMapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.GeoMap {
 
 	name, _ := tools.GetStringValue("name", d)
 	geoObj := inst.Client(meta).NewGeoMap(ctx, name)

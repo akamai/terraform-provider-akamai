@@ -179,7 +179,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	var diags diag.Diagnostics
 	logger.Infof("Creating datacenter [%s] in domain [%s]", datacenterName, domain)
-	newDC, err := populateNewDatacenterObject(ctx, d, m)
+	newDC, err := populateNewDatacenterObject(ctx, meta, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -306,7 +306,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Datacenter PROPOSED: %v", existDC)
-	uStat, err := inst.Client(meta).UpdateDatacenter(ctx, exisatDC, domain)
+	uStat, err := inst.Client(meta).UpdateDatacenter(ctx, existDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -455,7 +455,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 // Create and populate a new datacenter object from resource data
-func populateNewDatacenterObject(ctx context.Context, d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
+func populateNewDatacenterObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
 
 	dcObj := inst.Client(meta).NewDatacenter(ctx)
 	dcObj.DefaultLoadObject = gtm.NewLoadObject()

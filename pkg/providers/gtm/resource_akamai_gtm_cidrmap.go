@@ -105,7 +105,7 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if validateDefaultDC(ctx, defaultDatacenter, domain) != nil {
+	if validateDefaultDC(ctx, meta, defaultDatacenter, domain) != nil {
 		logger.Errorf("Default datacenter validation error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -114,7 +114,7 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		})
 	}
 
-	newCidr := populateNewCidrMapObject(ctx, d, m)
+	newCidr := populateNewCidrMapObject(ctx, meta, d, m)
 	logger.Debugf("Proposed New CidrMap: [%v]", newCidr)
 	cStatus, err := inst.Client(meta).CreateCidrMap(ctx, newCidr, domain)
 	if err != nil {
@@ -374,8 +374,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 }
 
 // Create and populate a new cidrMap object from cidrMap data
-func populateNewCidrMapObject(ctx context.Context, d *schema.ResourceData, m interface{}) *gtm.CidrMap {
-	meta := akamai.Meta(m)
+func populateNewCidrMapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.CidrMap {
 	logger := meta.Log("Akamai GTM", "populateNewCidrMapObject")
 
 	cidrMapName, err := tools.GetStringValue("name", d)
