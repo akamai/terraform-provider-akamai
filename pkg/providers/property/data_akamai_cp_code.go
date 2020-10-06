@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -33,48 +33,62 @@ func dataSourceCPCode() *schema.Resource {
 	}
 }
 
-func dataSourceCPCodeRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	log := meta.Log("PAPI", "dataSourceCPCodeRead")
 
-	CorrelationID := "[PAPI][dataSourceCPCodeRead-" + meta.OperationID() + "]"
 	log.Debug("Read CP Code")
 
 	var name, group, contract string
 	var err error
+
 	if name, err = tools.GetStringValue("name", d); err != nil {
 		return diag.FromErr(err)
 	}
+
 	if group, err = tools.GetStringValue("group", d); err != nil {
 		return diag.FromErr(err)
 	}
+
 	if contract, err = tools.GetStringValue("contract", d); err != nil {
 		return diag.FromErr(err)
 	}
-	cpCodes := datasourceCPCodePAPINewCPCodes(contract, group)
-	cpCode, err := cpCodes.FindCpCode(name, CorrelationID)
+
+	cpCode, err := findCPCode(ctx, name, contract, group)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", ErrLookingUpCPCode, err.Error()))
+		return diag.FromErr(fmt.Errorf("could not load CP codes: %w", err))
 	}
+
 	if cpCode == nil {
 		return diag.FromErr(fmt.Errorf("%w: invalid CP Code", ErrLookingUpCPCode))
 	}
 
-	if err := d.Set("name", cpCode.CpcodeName); err != nil {
+	if err := d.Set("name", cpCode.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	d.SetId(cpCode.CpcodeID)
+
+	d.SetId(cpCode.ID)
 
 	log.Debugf("Read CP Code: %+v", cpCode)
 	return nil
 }
 
-func datasourceCPCodePAPINewCPCodes(contractID, groupID string) *papi.CpCodes {
-	contract := &papi.Contract{
+// findCPCode searches all CP codes for a match against given nameOrID
+func findCPCode(ctx context.Context, nameOrID, contractID, groupID string) (*papi.CPCode, error) {
+	r, err := inst.client.GetCPCodes(ctx, papi.GetCPCodesRequest{
 		ContractID: contractID,
+		GroupID:    groupID,
+	})
+
+	if err != nil {
+		return nil, err
 	}
-	group := &papi.Group{
-		GroupID: groupID,
+
+	for _, cpc := range r.CPCodes.Items {
+		if cpc.ID == nameOrID || cpc.ID == "cpc_"+nameOrID || cpc.Name == nameOrID {
+			return &cpc, nil
+		}
 	}
-	return papi.NewCpCodes(contract, group)
+
+	return nil, nil
 }

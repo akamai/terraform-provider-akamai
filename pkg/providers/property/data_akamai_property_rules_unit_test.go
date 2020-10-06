@@ -1,83 +1,59 @@
 package property
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAkamaiDataPropertyRules_siteshield(t *testing.T) {
-	expectJS := compactJSON(loadFixtureBytes("testdata/TestAkamaiDataPropertyRules_siteshield.json"))
-
-	resource.Test(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Destroy: false,
-				Config:  loadFixtureString("testdata/TestAkamaiDataPropertyRules_siteshield.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", expectJS),
-					resource.TestCheckResourceAttrSet("data.akamai_property_rules.rules", "json"),
-				),
-			},
+func TestDataPropertyRules(t *testing.T) {
+	tests := map[string]struct {
+		givenTF  string
+		expectJS string
+	}{
+		"siteshield": {
+			givenTF:  "siteshield.tf",
+			expectJS: "siteshield.json",
 		},
-	})
-}
-
-func TestAkamaiDataPropertyRules_cpCode(t *testing.T) {
-	expectJS := compactJSON(loadFixtureBytes("testdata/TestAkamaiDataPropertyRules_cpCode.json"))
-
-	resource.Test(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Destroy: false,
-				Config:  loadFixtureString("testdata/TestAkamaiDataPropertyRules_cpCode.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", expectJS),
-					resource.TestCheckResourceAttrSet("data.akamai_property_rules.rules", "json"),
-				),
-			},
+		"cpcode": {
+			givenTF:  "cpCode.tf",
+			expectJS: "cpCode.json",
 		},
-	})
-}
-
-func TestAkamaiDataPropertyRules_isSecureTrue(t *testing.T) {
-	expectJS := compactJSON(loadFixtureBytes("testdata/TestAkamaiDataPropertyRules_isSecureTrue.json"))
-
-	resource.Test(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Destroy: false,
-				Config:  loadFixtureString("testdata/TestAkamaiDataPropertyRules_isSecureTrue.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", expectJS),
-					resource.TestCheckResourceAttrSet("data.akamai_property_rules.rules", "json"),
-				),
-			},
+		"criteria": {
+			givenTF:  "criteria.tf",
+			expectJS: "criteria.json",
 		},
-	})
-}
-
-func TestAkamaiDataPropertyRules_isSecureFalse(t *testing.T) {
-	expectJS := compactJSON(loadFixtureBytes("testdata/TestAkamaiDataPropertyRules_isSecureFalse.json"))
-
-	resource.Test(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Destroy: false,
-				Config:  loadFixtureString("testdata/TestAkamaiDataPropertyRules_isSecureFalse.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", expectJS),
-					resource.TestCheckResourceAttrSet("data.akamai_property_rules.rules", "json"),
-				),
-			},
+		"is secure false": {
+			givenTF:  "isSecureFalse.tf",
+			expectJS: "isSecureFalse.json",
 		},
-	})
+		"is secure true": {
+			givenTF:  "isSecureTrue.tf",
+			expectJS: "isSecureTrue.json",
+		},
+		"variables": {
+			givenTF:  "variables.tf",
+			expectJS: "variables.json",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			expectJS := compactJSON(loadFixtureBytes(fmt.Sprintf("testdata/TestDataPropertyRules/%s", test.expectJS)))
+			resource.Test(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Destroy: false,
+						Config:  loadFixtureString(fmt.Sprintf("testdata/TestDataPropertyRules/%s", test.givenTF)),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", expectJS),
+							resource.TestCheckResourceAttrSet("data.akamai_property_rules.rules", "json"),
+						),
+					},
+				},
+			})
+		})
+	}
 }

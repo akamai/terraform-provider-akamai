@@ -1,0 +1,11 @@
+{
+   "propertyId": "",
+   "propertyVersion": 0,
+   "etag": "",
+   "ruleFormat": "",
+   "rules": {
+      "name": "default",
+      "options": {},
+      "criteriaMustSatisfy": "all"
+   }
+}

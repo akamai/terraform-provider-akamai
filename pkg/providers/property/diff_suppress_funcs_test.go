@@ -1,9 +1,10 @@
 package property
 
 import (
+	"testing"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/tj/assert"
-	"testing"
 )
 
 func TestCompareRules(t *testing.T) {
@@ -48,7 +49,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID: "43242",
@@ -103,7 +104,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID: "43242",
@@ -172,7 +173,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID: "43242",
@@ -237,7 +238,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID: "43242",
@@ -323,7 +324,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID:      "43242",
@@ -390,7 +391,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID:      "43242",
@@ -461,7 +462,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID:      "43242",
@@ -528,7 +529,7 @@ func TestCompareRules(t *testing.T) {
 					OverrideID: "1234",
 				},
 				Name: "A",
-				Options: &papi.RuleOptions{
+				Options: papi.RuleOptions{
 					IsSecure: true,
 				},
 				UUID:      "43242",

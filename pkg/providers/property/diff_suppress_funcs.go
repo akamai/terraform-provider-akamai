@@ -15,6 +15,9 @@ func suppressEquivalentJSONDiffs(_, old, new string, _ *schema.ResourceData) boo
 
 func compareRulesJSON(old, new string) bool {
 	var oldRules, newRules papi.GetRuleTreeResponse
+	if old == new {
+		return true
+	}
 	if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
 		return false
 	}
@@ -36,6 +39,13 @@ func compareRules(old, new *papi.Rules) bool {
 	}
 	if len(old.Children) > 0 {
 		for i := range old.Children {
+			// currently the provider uses "all" as default value for criteriaMustSatisfy field but the API does not return it, so we have to ignore it in the comparison
+			if old.Children[i].CriteriaMustSatisfy == papi.RuleCriteriaMustSatisfyAll {
+				old.Children[i].CriteriaMustSatisfy = ""
+			}
+			if new.Children[i].CriteriaMustSatisfy == papi.RuleCriteriaMustSatisfyAll {
+				new.Children[i].CriteriaMustSatisfy = ""
+			}
 			if !compareRules(&old.Children[i], &new.Children[i]) {
 				return false
 			}

@@ -5,8 +5,10 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 // GetSHAString returns a sha1 from the string
@@ -28,4 +30,20 @@ func CreateNonce() string {
 		return ""
 	}
 	return uuid.String()
+}
+
+// MaxDuration returns the larger of x or y.
+func MaxDuration(x, y time.Duration) time.Duration {
+	if x < y {
+		return y
+	}
+	return x
+}
+
+// DiagsWithErrors appends several errors to a diag.Diagnostics
+func DiagsWithErrors(d diag.Diagnostics, errs ...error) diag.Diagnostics {
+	for _, e := range errs {
+		d = append(d, diag.FromErr(e)...)
+	}
+	return d
 }
