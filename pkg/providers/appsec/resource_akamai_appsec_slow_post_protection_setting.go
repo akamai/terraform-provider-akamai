@@ -1,13 +1,12 @@
 package appsec
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -17,10 +16,10 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceSlowPostProtectionSetting() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceSlowPostProtectionSettingUpdate,
-		Read:   resourceSlowPostProtectionSettingRead,
-		Update: resourceSlowPostProtectionSettingUpdate,
-		Delete: resourceSlowPostProtectionSettingDelete,
+		CreateContext: resourceSlowPostProtectionSettingUpdate,
+		ReadContext:   resourceSlowPostProtectionSettingRead,
+		UpdateContext: resourceSlowPostProtectionSettingUpdate,
+		DeleteContext: resourceSlowPostProtectionSettingDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -62,56 +61,56 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 	}
 }
 
-func resourceSlowPostProtectionSettingRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceSlowPostProtectionSettingRead-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read SlowPostProtectionSetting")
+func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingRead")
 
-	slowpostprotectionsetting := appsec.NewSlowPostProtectionSettingResponse()
+	getSlowPostProtectionSetting := v2.GetSlowPostProtectionSettingRequest{}
 
-	configid := d.Get("config_id").(int)
-	version := d.Get("version").(int)
-	policyid := d.Get("policy_id").(string)
+	getSlowPostProtectionSetting.ConfigID = d.Get("config_id").(int)
+	getSlowPostProtectionSetting.Version = d.Get("version").(int)
+	getSlowPostProtectionSetting.PolicyID = d.Get("policy_id").(string)
 
-	err := slowpostprotectionsetting.GetSlowPostProtectionSetting(configid, version, policyid, CorrelationID)
+	_, err := client.GetSlowPostProtectionSetting(ctx, getSlowPostProtectionSetting)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getSlowPostProtectionSetting': %s", err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configid))
+	d.SetId(strconv.Itoa(getSlowPostProtectionSetting.ConfigID))
 
 	return nil
 }
 
-func resourceSlowPostProtectionSettingDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceSlowPostProtectionSettingDelete-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting SlowPostProtectionSetting")
+func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	//meta := akamai.Meta(m)
+	//client := inst.Client(meta)
+	//logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingRemove")
 
-	return schema.Noop(d, meta)
+	return schema.NoopContext(nil, d, m)
 }
 
-func resourceSlowPostProtectionSettingUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceSlowPostProtectionSettingUpdate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Updating SlowPostProtectionSetting")
+func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
 
-	slowpostprotectionsetting := appsec.NewSlowPostProtectionSettingResponse()
+	updateSlowPostProtectionSetting := v2.UpdateSlowPostProtectionSettingRequest{}
 
-	slowpostprotectionsettingspost := appsec.NewSlowPostProtectionSettingsPost()
+	//slowpostprotectionsettingspost := appsec.NewSlowPostProtectionSettingsPost()
 
-	configid := d.Get("config_id").(int)
-	version := d.Get("version").(int)
-	policyid := d.Get("policy_id").(string)
-	slowpostprotectionsettingspost.Action = d.Get("slow_rate_action").(string)
-	slowpostprotectionsettingspost.SlowRateThreshold.Rate = d.Get("slow_rate_threshold_rate").(int)
-	slowpostprotectionsettingspost.SlowRateThreshold.Period = d.Get("slow_rate_threshold_period").(int)
-	slowpostprotectionsettingspost.DurationThreshold.Timeout = d.Get("duration_threshold_timeout").(int)
+	updateSlowPostProtectionSetting.ConfigID = d.Get("config_id").(int)
+	updateSlowPostProtectionSetting.Version = d.Get("version").(int)
+	updateSlowPostProtectionSetting.PolicyID = d.Get("policy_id").(string)
+	updateSlowPostProtectionSetting.Action = d.Get("slow_rate_action").(string)
+	updateSlowPostProtectionSetting.SlowRateThreshold.Rate = d.Get("slow_rate_threshold_rate").(int)
+	updateSlowPostProtectionSetting.SlowRateThreshold.Period = d.Get("slow_rate_threshold_period").(int)
+	updateSlowPostProtectionSetting.DurationThreshold.Timeout = d.Get("duration_threshold_timeout").(int)
 
-	err := slowpostprotectionsetting.UpdateSlowPostProtectionSetting(configid, version, policyid, slowpostprotectionsettingspost, CorrelationID)
+	_, err := client.UpdateSlowPostProtectionSetting(ctx, updateSlowPostProtectionSetting)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return err
+		logger.Warnf("calling 'updateSlowPostProtectionSetting': %s", err.Error())
 	}
 
-	return resourceSlowPostProtectionSettingRead(d, meta)
-
+	return resourceSlowPostProtectionSettingRead(ctx, d, m)
 }

@@ -1,18 +1,20 @@
 package appsec
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCustomRules() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceCustomRulesRead,
+		ReadContext: dataSourceCustomRulesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -27,21 +29,20 @@ func dataSourceCustomRules() *schema.Resource {
 	}
 }
 
-func dataSourceCustomRulesRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceCustomRulesRead-" + tools.CreateNonce() + "]"
+func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceCustomRulesRead")
+	CorrelationID := "[APPSEC][resourceCustomRules-" + meta.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CustomRules")
+	getCustomRules := v2.GetCustomRulesRequest{}
 
-	customrules := appsec.NewCustomRulesResponse()
-	configid := d.Get("config_id").(int)
+	getCustomRules.ConfigID = d.Get("config_id").(int)
 
-	err := customrules.GetCustomRules(configid, CorrelationID)
+	customrules, err := client.GetCustomRules(ctx, getCustomRules)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getCustomRules': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CustomRules   %v\n", customrules))
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
@@ -52,7 +53,7 @@ func dataSourceCustomRulesRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("output_text", outputtext)
 	}
 
-	d.SetId(strconv.Itoa(configid))
+	d.SetId(strconv.Itoa(getCustomRules.ConfigID))
 
 	return nil
 }

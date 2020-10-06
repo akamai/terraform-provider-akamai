@@ -1,12 +1,12 @@
 package appsec
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -16,10 +16,10 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceCustomRuleAction() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceCustomRuleActionUpdate,
-		Read:   resourceCustomRuleActionRead,
-		Update: resourceCustomRuleActionUpdate,
-		Delete: resourceCustomRuleActionDelete,
+		CreateContext: resourceCustomRuleActionUpdate,
+		ReadContext:   resourceCustomRuleActionRead,
+		UpdateContext: resourceCustomRuleActionUpdate,
+		DeleteContext: resourceCustomRuleActionDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -53,70 +53,69 @@ func resourceCustomRuleAction() *schema.Resource {
 	}
 }
 
-func resourceCustomRuleActionRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceCustomRuleActionRead-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CustomRuleAction")
+func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
 
-	customruleaction := appsec.NewCustomRuleActionResponse()
+	getCustomRuleAction := v2.GetCustomRuleActionRequest{}
 
-	configid := d.Get("config_id").(int)
-	version := d.Get("version").(int)
-	policyid := d.Get("policy_id").(string)
-	ruleid := d.Get("rule_id").(int)
+	getCustomRuleAction.ConfigID = d.Get("config_id").(int)
+	getCustomRuleAction.Version = d.Get("version").(int)
+	getCustomRuleAction.PolicyID = d.Get("policy_id").(string)
+	getCustomRuleAction.ID = d.Get("rule_id").(int)
 
-	err := customruleaction.GetCustomRuleAction(configid, version, policyid, CorrelationID)
+	customruleaction, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getCustomRuleAction': %s", err.Error())
 	}
 
-	d.Set("rule_id", ruleid)
-	d.SetId(strconv.Itoa(ruleid))
-	return nil
-}
-
-func resourceCustomRuleActionDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceCustomRuleActionDelete-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting CustomRuleAction")
-
-	customruleaction := appsec.NewCustomRuleActionResponse()
-	customruleactionpost := appsec.NewCustomRuleActionPost()
-
-	configid := d.Get("config_id").(int)
-	version := d.Get("version").(int)
-	policyid := d.Get("policy_id").(string)
-	ruleid := d.Get("rule_id").(int)
-	customruleactionpost.Action = d.Get("custom_rule_action").(string)
-
-	err := customruleaction.UpdateCustomRuleAction(configid, version, policyid, ruleid, customruleactionpost, CorrelationID)
-	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return err
-	}
+	d.Set("rule_id", getCustomRuleAction.ID)
+	d.SetId(strconv.Itoa(customruleaction.RuleID))
 
 	return nil
 }
 
-func resourceCustomRuleActionUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceCustomRuleActionUpdate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Updating CustomRuleAction")
+func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceCustomRuleActionRemove")
 
-	customruleaction := appsec.NewCustomRuleActionResponse()
+	updateCustomRuleAction := v2.UpdateCustomRuleActionRequest{}
 
-	customruleactionpost := appsec.NewCustomRuleActionPost()
+	updateCustomRuleAction.ConfigID = d.Get("config_id").(int)
+	updateCustomRuleAction.Version = d.Get("version").(int)
+	updateCustomRuleAction.PolicyID = d.Get("policy_id").(string)
+	updateCustomRuleAction.ID = d.Get("rule_id").(int)
+	updateCustomRuleAction.Action = "none"
 
-	configid := d.Get("config_id").(int)
-	version := d.Get("version").(int)
-	policyid := d.Get("policy_id").(string)
-	ruleid := d.Get("rule_id").(int)
-	customruleactionpost.Action = d.Get("custom_rule_action").(string)
-
-	err := customruleaction.UpdateCustomRuleAction(configid, version, policyid, ruleid, customruleactionpost, CorrelationID)
+	_, err := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return err
+		logger.Warnf("calling 'removeCustomRuleAction': %s", err.Error())
 	}
 
-	return resourceCustomRuleActionRead(d, meta)
+	d.SetId("")
 
+	return nil
+}
+
+func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
+
+	updateCustomRuleAction := v2.UpdateCustomRuleActionRequest{}
+
+	updateCustomRuleAction.ConfigID = d.Get("config_id").(int)
+	updateCustomRuleAction.Version = d.Get("version").(int)
+	updateCustomRuleAction.PolicyID = d.Get("policy_id").(string)
+	updateCustomRuleAction.ID = d.Get("rule_id").(int)
+	updateCustomRuleAction.Action = d.Get("custom_rule_action").(string)
+
+	_, erru := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
+	if erru != nil {
+		logger.Warnf("calling 'updateCustomRuleAction': %s", erru.Error())
+	}
+
+	return resourceCustomRuleActionRead(ctx, d, m)
 }

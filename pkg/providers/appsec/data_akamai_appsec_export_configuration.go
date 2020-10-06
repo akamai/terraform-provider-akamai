@@ -1,20 +1,20 @@
 package appsec
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceExportConfiguration() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceExportConfigurationRead,
+		ReadContext: dataSourceExportConfigurationRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -43,26 +43,24 @@ func dataSourceExportConfiguration() *schema.Resource {
 	}
 }
 
-func dataSourceExportConfigurationRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceExportConfigurationRead-" + tools.CreateNonce() + "]"
+func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceExportConfigurationRead")
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read ExportConfiguration")
+	getExportConfiguration := v2.GetExportConfigurationsRequest{}
 
-	exportconfiguration := appsec.NewExportConfigurationResponse()
-	exportconfiguration.ConfigID = d.Get("config_id").(int)
-	exportconfiguration.Version = d.Get("version").(int)
+	getExportConfiguration.ConfigID = d.Get("config_id").(int)
+	getExportConfiguration.Version = d.Get("version").(int)
 
-	err := exportconfiguration.GetExportConfiguration(CorrelationID)
+	exportconfiguration, err := client.GetExportConfigurations(ctx, getExportConfiguration)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getExportConfiguration': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("ExportConfiguration   %v\n", exportconfiguration))
 
 	jsonBody, err := jsonhooks.Marshal(exportconfiguration)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.Set("json", string(jsonBody))

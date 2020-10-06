@@ -1,20 +1,22 @@
 package appsec
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceSelectedHostnames() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceSelectedHostnamesRead,
+		ReadContext: dataSourceSelectedHostnamesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -44,36 +46,33 @@ func dataSourceSelectedHostnames() *schema.Resource {
 	}
 }
 
-func dataSourceSelectedHostnamesRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceSelectedHostnamesRead-" + tools.CreateNonce() + "]"
+func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSelectedHostnamesRead")
+	CorrelationID := "[APPSEC][resourceSelectedHostnames-" + meta.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read SelectedHostnames")
+	getSelectedHostnames := v2.GetSelectedHostnamesRequest{}
 
-	selectedhostnames := appsec.NewSelectedHostnamesResponse()
-	var configid int
-	var version int
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Read SelectedHostnames D.ID %v", d.Id()))
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
-		configid, _ = strconv.Atoi(s[0])
-		version, _ = strconv.Atoi(s[1])
+		getSelectedHostnames.ConfigID, _ = strconv.Atoi(s[0])
+		getSelectedHostnames.Version, _ = strconv.Atoi(s[1])
 	} else {
-		configid = d.Get("config_id").(int)
-		version = d.Get("version").(int)
+		getSelectedHostnames.ConfigID = d.Get("config_id").(int)
+		getSelectedHostnames.Version = d.Get("version").(int)
 	}
 
-	err := selectedhostnames.GetSelectedHostnames(configid, version, CorrelationID)
+	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getSelectedHostnames': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("SelectedHostnames   %v\n", selectedhostnames))
 
 	jsonBody, err := jsonhooks.Marshal(selectedhostnames)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.Set("hostnames_json", string(jsonBody))
@@ -85,8 +84,8 @@ func dataSourceSelectedHostnamesRead(d *schema.ResourceData, meta interface{}) e
 	}
 
 	d.Set("hostnames", newhdata)
-	d.Set("config_id", configid)
-	d.Set("version", version)
+	d.Set("config_id", getSelectedHostnames.ConfigID)
+	d.Set("version", getSelectedHostnames.Version)
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
@@ -97,7 +96,7 @@ func dataSourceSelectedHostnamesRead(d *schema.ResourceData, meta interface{}) e
 		d.Set("output_text", outputtext)
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d", configid, version))
+	d.SetId(fmt.Sprintf("%d:%d", getSelectedHostnames.ConfigID, getSelectedHostnames.Version))
 
 	return nil
 }

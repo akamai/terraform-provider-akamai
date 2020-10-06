@@ -1,14 +1,15 @@
 package appsec
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -17,10 +18,10 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceMatchTarget() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMatchTargetCreate,
-		Read:   resourceMatchTargetRead,
-		Update: resourceMatchTargetUpdate,
-		Delete: resourceMatchTargetDelete,
+		CreateContext: resourceMatchTargetCreate,
+		ReadContext:   resourceMatchTargetRead,
+		UpdateContext: resourceMatchTargetUpdate,
+		DeleteContext: resourceMatchTargetDelete,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -101,102 +102,102 @@ func resourceMatchTarget() *schema.Resource {
 	}
 }
 
-func resourceMatchTargetCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceMatchTargetCreate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating MatchTarget")
+func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceMatchTargetCreate")
 
-	matchtarget := appsec.NewMatchTargetResponse()
+	createMatchTarget := v2.CreateMatchTargetRequest{}
 
 	jsonpostpayload, ok := d.GetOk("json")
 	if ok {
 
-		json.Unmarshal([]byte(jsonpostpayload.(string)), &matchtarget)
+		json.Unmarshal([]byte(jsonpostpayload.(string)), &createMatchTarget)
 	} else {
-		matchtarget.ConfigID = d.Get("config_id").(int)
-		matchtarget.ConfigVersion = d.Get("version").(int)
-		matchtarget.Type = d.Get("type").(string)
-		matchtarget.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
-		matchtarget.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
-		matchtarget.DefaultFile = d.Get("default_file").(string)
-		matchtarget.Hostnames = tools.SetToStringSlice(d.Get("hostnames").(*schema.Set))
-		matchtarget.FilePaths = tools.SetToStringSlice(d.Get("file_paths").(*schema.Set))
-		matchtarget.FileExtensions = tools.SetToStringSlice(d.Get("file_extensions").(*schema.Set))
-		matchtarget.SecurityPolicy.PolicyID = d.Get("security_policy").(string)
+		createMatchTarget.ConfigID = d.Get("config_id").(int)
+		createMatchTarget.ConfigVersion = d.Get("version").(int)
+		createMatchTarget.Type = d.Get("type").(string)
+		createMatchTarget.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
+		createMatchTarget.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
+		createMatchTarget.DefaultFile = d.Get("default_file").(string)
+		createMatchTarget.Hostnames = tools.SetToStringSlice(d.Get("hostnames").(*schema.Set))
+		createMatchTarget.FilePaths = tools.SetToStringSlice(d.Get("file_paths").(*schema.Set))
+		createMatchTarget.FileExtensions = tools.SetToStringSlice(d.Get("file_extensions").(*schema.Set))
+		createMatchTarget.SecurityPolicy.PolicyID = d.Get("security_policy").(string)
 		bypassnetworklists := d.Get("bypass_network_lists").(*schema.Set).List()
 
 		for _, b := range bypassnetworklists {
 			bl := appsec.BypassNetworkList{}
 			bl.ID = b.(string)
-			matchtarget.BypassNetworkLists = append(matchtarget.BypassNetworkLists, bl)
+			createMatchTarget.BypassNetworkLists = append(createMatchTarget.BypassNetworkLists, bl)
 		}
 	}
 
-	postresp, err := matchtarget.SaveMatchTarget(CorrelationID)
+	postresp, err := client.CreateMatchTarget(ctx, createMatchTarget)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return err
+		logger.Warnf("calling 'createMatchTarget': %s", err.Error())
 	}
 
 	d.SetId(strconv.Itoa(postresp.TargetID))
 
-	return resourceMatchTargetRead(d, meta)
+	return resourceMatchTargetRead(ctx, d, m)
 }
 
-func resourceMatchTargetUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceMatchTargetUpdate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Updating MatchTarget")
+func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceMatchTargetUpdate")
 
-	matchtarget := appsec.NewMatchTargetResponse()
+	updateMatchTarget := v2.UpdateMatchTargetRequest{}
 
 	jsonpostpayload, ok := d.GetOk("json")
 	if ok {
 
-		json.Unmarshal([]byte(jsonpostpayload.(string)), &matchtarget)
-		matchtarget.TargetID, _ = strconv.Atoi(d.Id())
+		json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTarget)
+		updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
 	} else {
-		matchtarget.ConfigID = d.Get("config_id").(int)
-		matchtarget.ConfigVersion = d.Get("version").(int)
-		matchtarget.TargetID, _ = strconv.Atoi(d.Id())
-		matchtarget.Type = d.Get("type").(string)
-		matchtarget.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
-		matchtarget.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
-		matchtarget.DefaultFile = d.Get("default_file").(string)
-		matchtarget.Hostnames = tools.SetToStringSlice(d.Get("hostnames").(*schema.Set))
-		matchtarget.FilePaths = tools.SetToStringSlice(d.Get("file_paths").(*schema.Set))
-		matchtarget.FileExtensions = tools.SetToStringSlice(d.Get("file_extensions").(*schema.Set))
-		matchtarget.SecurityPolicy.PolicyID = d.Get("security_policy").(string)
+		updateMatchTarget.ConfigID = d.Get("config_id").(int)
+		updateMatchTarget.ConfigVersion = d.Get("version").(int)
+		updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
+		updateMatchTarget.Type = d.Get("type").(string)
+		updateMatchTarget.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
+		updateMatchTarget.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
+		updateMatchTarget.DefaultFile = d.Get("default_file").(string)
+		updateMatchTarget.Hostnames = tools.SetToStringSlice(d.Get("hostnames").(*schema.Set))
+		updateMatchTarget.FilePaths = tools.SetToStringSlice(d.Get("file_paths").(*schema.Set))
+		updateMatchTarget.FileExtensions = tools.SetToStringSlice(d.Get("file_extensions").(*schema.Set))
+		updateMatchTarget.SecurityPolicy.PolicyID = d.Get("security_policy").(string)
 		bypassnetworklists := d.Get("bypass_network_lists").(*schema.Set).List()
 
 		for _, b := range bypassnetworklists {
 			bl := appsec.BypassNetworkList{}
 			bl.ID = b.(string)
-			matchtarget.BypassNetworkLists = append(matchtarget.BypassNetworkLists, bl)
+			updateMatchTarget.BypassNetworkLists = append(updateMatchTarget.BypassNetworkLists, bl)
 		}
 	}
 
-	err := matchtarget.UpdateMatchTarget(CorrelationID)
+	_, err := client.UpdateMatchTarget(ctx, updateMatchTarget)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'updateMatchTarget': %s", err.Error())
 	}
 
-	return resourceMatchTargetRead(d, meta)
+	return resourceMatchTargetRead(ctx, d, m)
 }
 
-func resourceMatchTargetDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceMatchTargetDelete-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting MatchTarget")
+func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceMatchTargetRemove")
 
-	matchtarget := appsec.NewMatchTargetResponse()
+	removeMatchTarget := v2.RemoveMatchTargetRequest{}
 
-	matchtarget.ConfigID = d.Get("config_id").(int)
-	matchtarget.ConfigVersion = d.Get("version").(int)
-	matchtarget.TargetID, _ = strconv.Atoi(d.Id())
+	removeMatchTarget.ConfigID = d.Get("config_id").(int)
+	removeMatchTarget.ConfigVersion = d.Get("version").(int)
+	removeMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
 
-	err := matchtarget.DeleteMatchTarget(CorrelationID)
+	_, err := client.RemoveMatchTarget(ctx, removeMatchTarget)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'removeMatchTarget': %s", err.Error())
 	}
 
 	d.SetId("")
@@ -204,23 +205,22 @@ func resourceMatchTargetDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceMatchTargetRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceMatchTargetRead-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read MatchTarget")
+func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceMatchTargetRead")
 
-	matchtarget := appsec.NewMatchTargetResponse()
+	getMatchTarget := v2.GetMatchTargetRequest{}
 
-	matchtarget.ConfigID = d.Get("config_id").(int)
-	matchtarget.ConfigVersion = d.Get("version").(int)
-	matchtarget.TargetID, _ = strconv.Atoi(d.Id())
+	getMatchTarget.ConfigID = d.Get("config_id").(int)
+	getMatchTarget.ConfigVersion = d.Get("version").(int)
+	getMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
 
-	err := matchtarget.GetMatchTarget(CorrelationID)
+	matchtarget, err := client.GetMatchTarget(ctx, getMatchTarget)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return err
+		logger.Warnf("calling 'getMatchTarget': %s", err.Error())
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CONFIG value  %v\n", matchtarget.TargetID))
 	d.Set("type", matchtarget.Type)
 	d.Set("is_negative_path_match", matchtarget.IsNegativePathMatch)
 	d.Set("is_negative_file_extension_match", matchtarget.IsNegativeFileExtensionMatch)

@@ -1,18 +1,20 @@
 package appsec
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceMatchTargets() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceMatchTargetsRead,
+		ReadContext: dataSourceMatchTargetsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -31,22 +33,21 @@ func dataSourceMatchTargets() *schema.Resource {
 	}
 }
 
-func dataSourceMatchTargetsRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceMatchTargetsRead-" + tools.CreateNonce() + "]"
+func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceMatchTargetsRead")
+	CorrelationID := "[APPSEC][resourceMatchTargets-" + meta.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read MatchTargets")
+	getMatchTargets := v2.GetMatchTargetsRequest{}
 
-	matchtargets := appsec.NewMatchTargetsResponse()
-	configid := d.Get("config_id").(int)
-	version := d.Get("version").(int)
+	getMatchTargets.ConfigID = d.Get("config_id").(int)
+	getMatchTargets.ConfigVersion = d.Get("version").(int)
 
-	err := matchtargets.GetMatchTargets(configid, version, CorrelationID)
+	matchtargets, err := client.GetMatchTargets(ctx, getMatchTargets)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getMatchTargets': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("MatchTargets   %v\n", matchtargets))
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
@@ -57,7 +58,7 @@ func dataSourceMatchTargetsRead(d *schema.ResourceData, meta interface{}) error 
 		d.Set("output_text", outputtext)
 	}
 
-	d.SetId(strconv.Itoa(configid))
+	d.SetId(strconv.Itoa(getMatchTargets.ConfigID))
 
 	return nil
 }

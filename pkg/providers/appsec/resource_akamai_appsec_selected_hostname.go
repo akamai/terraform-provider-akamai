@@ -1,0 +1,167 @@
+package appsec
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+	"strings"
+
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+)
+
+// appsec v1
+//
+// https://developer.akamai.com/api/cloud_security/application_security/v1.html
+func resourceSelectedHostname() *schema.Resource {
+	return &schema.Resource{
+		CreateContext: resourceSelectedHostnameUpdate,
+		ReadContext:   resourceSelectedHostnameRead,
+		UpdateContext: resourceSelectedHostnameUpdate,
+		DeleteContext: resourceSelectedHostnameDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
+		Schema: map[string]*schema.Schema{
+			"config_id": {
+				Type:     schema.TypeInt,
+				Required: true,
+			},
+			"version": {
+				Type:     schema.TypeInt,
+				Required: true,
+			},
+			"hostnames": {
+				Type:     schema.TypeList,
+				Required: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"mode": {
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					Append,
+					Replace,
+					Remove,
+				}, false),
+			},
+		},
+	}
+}
+
+func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSelectedHostnameRead")
+
+	getSelectedHostname := v2.GetSelectedHostnameRequest{}
+
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
+		getSelectedHostname.ConfigID, _ = strconv.Atoi(s[0])
+		getSelectedHostname.Version, _ = strconv.Atoi(s[1])
+	} else {
+		getSelectedHostname.ConfigID = d.Get("config_id").(int)
+		getSelectedHostname.Version = d.Get("version").(int)
+	}
+
+	selectedhostname, err := client.GetSelectedHostname(ctx, getSelectedHostname)
+	if err != nil {
+		logger.Warnf("calling 'getSelectedHostname': %s", err.Error())
+	}
+
+	newhdata := make([]string, 0, len(selectedhostname.HostnameList))
+	for _, hosts := range selectedhostname.HostnameList {
+		newhdata = append(newhdata, hosts.Hostname)
+	}
+
+	d.Set("hostnames", newhdata)
+	d.Set("config_id", getSelectedHostname.ConfigID)
+	d.Set("version", getSelectedHostname.Version)
+	d.SetId(fmt.Sprintf("%d:%d", getSelectedHostname.ConfigID, getSelectedHostname.Version))
+
+	return nil
+}
+
+func resourceSelectedHostnameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+
+	return schema.NoopContext(nil, d, m)
+}
+
+func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSelectedHostnameUpdate")
+
+	updateSelectedHostname := v2.UpdateSelectedHostnameRequest{}
+
+	updateSelectedHostname.ConfigID = d.Get("config_id").(int)
+	updateSelectedHostname.Version = d.Get("version").(int)
+	mode := d.Get("mode").(string)
+
+	hn := v2.GetSelectedHostnamesRequest{}
+
+	hostnamelist := d.Get("hostnames").([]interface{})
+
+	for _, h := range hostnamelist {
+		h1 := v2.Hostname{}
+		h1.Hostname = h.(string)
+		hn.HostnameList = append(hn.HostnameList, h1)
+	}
+
+	getSelectedHostnames := v2.GetSelectedHostnamesRequest{}
+	getSelectedHostnames.ConfigID = d.Get("config_id").(int)
+	getSelectedHostnames.Version = d.Get("version").(int)
+
+	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
+	if err != nil {
+		logger.Warnf("calling 'getSelectedHostnames': %s", err.Error())
+	}
+
+	switch mode {
+	case Remove:
+		for idx, h := range selectedhostnames.HostnameList {
+
+			for _, hl := range hostnamelist {
+				if h.Hostname == hl.(string) {
+					RemoveIndex(selectedhostnames.HostnameList, idx)
+				}
+			}
+		}
+	case Append:
+		for _, h := range selectedhostnames.HostnameList {
+			m := v2.Hostname{}
+			m.Hostname = h.Hostname
+			hn.HostnameList = append(hn.HostnameList, m)
+		}
+		selectedhostnames.HostnameList = hn.HostnameList
+	case Replace:
+		selectedhostnames.HostnameList = hn.HostnameList
+	default:
+		selectedhostnames.HostnameList = hn.HostnameList
+	}
+
+	updateSelectedHostname.HostnameList = selectedhostnames.HostnameList
+
+	_, erru := client.UpdateSelectedHostname(ctx, updateSelectedHostname)
+	if erru != nil {
+		logger.Warnf("calling 'updateSelectedHostname': %s", erru.Error())
+	}
+
+	return resourceSelectedHostnameRead(ctx, d, m)
+}
+
+//RemoveIndex reemove host from list
+func RemoveIndex(hl []v2.Hostname, index int) []v2.Hostname {
+	return append(hl[:index], hl[index+1:]...)
+}
+
+// Append Replace Remove mode flags
+const (
+	Append  = "APPEND"
+	Replace = "REPLACE"
+	Remove  = "REMOVE"
+)

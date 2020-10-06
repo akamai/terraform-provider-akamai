@@ -4,8 +4,11 @@ import (
 	"errors"
 	"sync"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
+	appsecv1 "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
+	//v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -17,7 +20,11 @@ import (
 type (
 	provider struct {
 		*schema.Provider
+
+		client appsec.APPSEC
 	}
+	// Option is a appsec provider option
+	Option func(p *provider)
 )
 
 var (
@@ -67,16 +74,16 @@ func Provider() *schema.Provider {
 			"akamai_appsec_slow_post":             dataSourceSlowPostProtectionSettings(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_appsec_configuration_version_clone": resourceConfigurationVersionClone(),
-			"akamai_appsec_selected_hostnames":          resourceSelectedHostnames(),
+			"akamai_appsec_configuration_version_clone": resourceConfigurationClone(),
+			"akamai_appsec_selected_hostnames":          resourceSelectedHostname(),
 			"akamai_appsec_security_policy_clone":       resourceSecurityPolicyClone(),
 			"akamai_appsec_match_target":                resourceMatchTarget(),
 			"akamai_appsec_custom_rule":                 resourceCustomRule(),
 			"akamai_appsec_custom_rule_action":          resourceCustomRuleAction(),
-			"akamai_appsec_activations":                 resourceActivations(),
-			"akamai_appsec_rate_policy":                 resourceRatePolicy(),
-			"akamai_appsec_rate_policy_action":          resourceRatePolicyAction(),
-			"akamai_appsec_slow_post":                   resourceSlowPostProtectionSetting(),
+			//"akamai_appsec_activations":                 resourceActivations(),
+			"akamai_appsec_rate_policy":        resourceRatePolicy(),
+			"akamai_appsec_rate_policy_action": resourceRatePolicyAction(),
+			"akamai_appsec_slow_post":          resourceSlowPostProtectionSetting(),
 		},
 	}
 	return provider
@@ -89,6 +96,21 @@ type resourceData interface {
 
 type set interface {
 	List() []interface{}
+}
+
+// WithClient sets the client interface function, used for mocking and testing
+func WithClient(c appsec.APPSEC) Option {
+	return func(p *provider) {
+		p.client = c
+	}
+}
+
+// Client returns the PAPI interface
+func (p *provider) Client(meta akamai.OperationMeta) appsec.APPSEC {
+	if p.client != nil {
+		return p.client
+	}
+	return appsec.Client(meta.Session())
 }
 
 func getAPPSECV1Service(d resourceData) (*edgegrid.Config, error) {
@@ -105,7 +127,7 @@ func getAPPSECV1Service(d resourceData) (*edgegrid.Config, error) {
 			MaxBody:      config["max_body"].(int),
 		}
 
-		appsec.Init(APPSECv1Config)
+		appsecv1.Init(APPSECv1Config)
 		return &APPSECv1Config, nil
 	}
 
@@ -127,7 +149,7 @@ func getAPPSECV1Service(d resourceData) (*edgegrid.Config, error) {
 		return nil, err
 	}
 
-	appsec.Init(APPSECv1Config)
+	appsecv1.Init(APPSECv1Config)
 	edgegrid.SetupLogging()
 	return &APPSECv1Config, nil
 }

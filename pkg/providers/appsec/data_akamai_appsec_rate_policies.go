@@ -1,18 +1,20 @@
 package appsec
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceRatePolicies() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceRatePoliciesRead,
+		ReadContext: dataSourceRatePoliciesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -31,22 +33,21 @@ func dataSourceRatePolicies() *schema.Resource {
 	}
 }
 
-func dataSourceRatePoliciesRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceRatePoliciesRead-" + tools.CreateNonce() + "]"
+func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceRatePoliciesRead")
+	CorrelationID := "[APPSEC][resourceRatePolicies-" + meta.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read RatePolicies")
+	getRatePolicies := v2.GetRatePoliciesRequest{}
 
-	ratepolicies := appsec.NewRatePoliciesResponse()
-	configid := d.Get("config_id").(int)
-	version := d.Get("version").(int)
+	getRatePolicies.ConfigID = d.Get("config_id").(int)
+	getRatePolicies.ConfigVersion = d.Get("version").(int)
 
-	err := ratepolicies.GetRatePolicies(configid, version, CorrelationID)
+	ratepolicies, err := client.GetRatePolicies(ctx, getRatePolicies)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getRatePolicies': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("RatePolicies   %v\n", ratepolicies))
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
@@ -57,7 +58,7 @@ func dataSourceRatePoliciesRead(d *schema.ResourceData, meta interface{}) error 
 		d.Set("output_text", outputtext)
 	}
 
-	d.SetId(strconv.Itoa(configid))
+	d.SetId(strconv.Itoa(getRatePolicies.ConfigID))
 
 	return nil
 }

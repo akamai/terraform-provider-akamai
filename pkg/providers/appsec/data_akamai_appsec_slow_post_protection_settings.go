@@ -1,18 +1,18 @@
 package appsec
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceSlowPostProtectionSettings() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceSlowPostProtectionSettingsRead,
+		ReadContext: dataSourceSlowPostProtectionSettingsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -35,34 +35,33 @@ func dataSourceSlowPostProtectionSettings() *schema.Resource {
 	}
 }
 
-func dataSourceSlowPostProtectionSettingsRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceSlowPostProtectionSettingsRead-" + tools.CreateNonce() + "]"
+func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingsRead")
+	//CorrelationID := "[APPSEC][resourceSlowPostProtectionSettings-" + meta.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read SlowPostProtectionSettings")
+	getSlowPostProtectionSettings := v2.GetSlowPostProtectionSettingsRequest{}
 
-	slowpostprotectionsettings := appsec.NewSlowPostProtectionSettingsResponse()
-	configid := d.Get("config_id").(int)
-	version := d.Get("version").(int)
-	policyid := d.Get("policy_id").(string)
+	getSlowPostProtectionSettings.ConfigID = d.Get("config_id").(int)
+	getSlowPostProtectionSettings.Version = d.Get("version").(int)
+	getSlowPostProtectionSettings.PolicyID = d.Get("policy_id").(string)
 
-	err := slowpostprotectionsettings.GetSlowPostProtectionSettings(configid, version, policyid, CorrelationID)
+	slowpostprotectionsettings, err := client.GetSlowPostProtectionSettings(ctx, getSlowPostProtectionSettings)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getSlowPostProtectionSettings': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("SlowPostProtectionSettings   %v\n", slowpostprotectionsettings))
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "slowPostDS", slowpostprotectionsettings)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("slowPost outputtext   %v\n", outputtext))
+	//edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("slowPost outputtext   %v\n", outputtext))
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}
 
-	d.SetId(strconv.Itoa(configid))
+	d.SetId(strconv.Itoa(getSlowPostProtectionSettings.ConfigID))
 
 	return nil
 }

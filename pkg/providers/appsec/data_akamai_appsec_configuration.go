@@ -1,18 +1,18 @@
 package appsec
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceConfiguration() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceConfigurationRead,
+		ReadContext: dataSourceConfigurationRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -47,21 +47,19 @@ func dataSourceConfiguration() *schema.Resource {
 	}
 }
 
-func dataSourceConfigurationRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceConfigurationRead-" + tools.CreateNonce() + "]"
+func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceConfigurationRead")
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read Configuration")
+	getConfiguration := v2.GetConfigurationsRequest{}
 
-	configuration := appsec.NewConfigurationResponse()
 	configName := d.Get("name").(string)
 
-	err := configuration.GetConfiguration(CorrelationID)
+	configuration, err := client.GetConfigurations(ctx, getConfiguration)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getConfiguration': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Configuration   %v\n", configuration))
 
 	var configlist string
 	var configidfound int
@@ -82,7 +80,6 @@ func dataSourceConfigurationRead(d *schema.ResourceData, meta interface{}) error
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "configuration", configuration)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Configuration outputtext   %v\n", outputtext))
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}

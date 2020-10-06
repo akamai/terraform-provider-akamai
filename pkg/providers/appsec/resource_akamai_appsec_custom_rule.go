@@ -1,14 +1,13 @@
 package appsec
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -18,10 +17,10 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceCustomRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceCustomRuleCreate,
-		Read:   resourceCustomRuleRead,
-		Update: resourceCustomRuleUpdate,
-		Delete: resourceCustomRuleDelete,
+		CreateContext: resourceCustomRuleCreate,
+		ReadContext:   resourceCustomRuleRead,
+		UpdateContext: resourceCustomRuleUpdate,
+		DeleteContext: resourceCustomRuleDelete,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -40,61 +39,61 @@ func resourceCustomRule() *schema.Resource {
 	}
 }
 
-func resourceCustomRuleCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceCustomRuleCreate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating CustomRule")
+func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceCustomRuleCreate")
 
-	customrule := appsec.NewCustomRuleResponse()
+	createCustomRule := v2.CreateCustomRuleRequest{}
 
-	configid := d.Get("config_id").(int)
+	createCustomRule.ConfigID = d.Get("config_id").(int)
 	jsonpostpayload := d.Get("rules").(string)
-	json.Unmarshal([]byte(jsonpostpayload), &customrule)
+	json.Unmarshal([]byte(jsonpostpayload), &createCustomRule)
 
-	err := customrule.SaveCustomRule(configid, CorrelationID)
+	customrule, err := client.CreateCustomRule(ctx, createCustomRule)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return err
+		logger.Warnf("calling 'createCustomRule': %s", err.Error())
 	}
 
 	d.Set("rule_id", customrule.ID)
 	d.SetId(strconv.Itoa(customrule.ID))
 
-	return resourceCustomRuleRead(d, meta)
+	return resourceCustomRuleRead(ctx, d, m)
 }
 
-func resourceCustomRuleUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceCustomRuleUpdate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Updating CustomRule")
+func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceCustomRuleUpdate")
 
-	customrule := appsec.NewCustomRuleResponse()
+	updateCustomRule := v2.UpdateCustomRuleRequest{}
 
-	configid := d.Get("config_id").(int)
-	ruleid, _ := strconv.Atoi(d.Id())
+	updateCustomRule.ConfigID = d.Get("config_id").(int)
+	updateCustomRule.ID, _ = strconv.Atoi(d.Id())
 	jsonpostpayload := d.Get("rules").(string)
-	json.Unmarshal([]byte(jsonpostpayload), &customrule)
+	json.Unmarshal([]byte(jsonpostpayload), &updateCustomRule)
 
-	err := customrule.UpdateCustomRule(configid, ruleid, CorrelationID)
+	_, err := client.UpdateCustomRule(ctx, updateCustomRule)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'updateCustomRule': %s", err.Error())
 	}
 
-	return resourceCustomRuleRead(d, meta)
+	return resourceCustomRuleRead(ctx, d, m)
 }
 
-func resourceCustomRuleDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceCustomRuleDelete-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting CustomRule")
+func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceCustomRuleRemove")
 
-	customrule := appsec.NewCustomRuleResponse()
+	removeCustomRule := v2.RemoveCustomRuleRequest{}
 
-	configid := d.Get("config_id").(int)
-	ruleid, _ := strconv.Atoi(d.Id())
+	removeCustomRule.ConfigID = d.Get("config_id").(int)
+	removeCustomRule.ID, _ = strconv.Atoi(d.Id())
 
-	err := customrule.DeleteCustomRule(configid, ruleid, CorrelationID)
+	_, err := client.RemoveCustomRule(ctx, removeCustomRule)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'removeCustomRule': %s", err.Error())
 	}
 
 	d.SetId("")
@@ -102,23 +101,23 @@ func resourceCustomRuleDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceCustomRuleRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceCustomRuleRead-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read CustomRule")
+func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceCustomRuleRead")
 
-	customrule := appsec.NewCustomRuleResponse()
+	getCustomRule := v2.GetCustomRuleRequest{}
 
-	configid := d.Get("config_id").(int)
-	ruleid, _ := strconv.Atoi(d.Id())
+	getCustomRule.ConfigID = d.Get("config_id").(int)
+	getCustomRule.ID, _ = strconv.Atoi(d.Id())
 
-	err := customrule.GetCustomRule(configid, ruleid, CorrelationID)
+	customrule, err := client.GetCustomRule(ctx, getCustomRule)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return err
+		logger.Warnf("calling 'getCustomRule': %s", err.Error())
 	}
 
-	d.Set("rule_id", ruleid)
-	d.SetId(strconv.Itoa(ruleid))
+	d.Set("rule_id", customrule.ID)
+	d.SetId(strconv.Itoa(customrule.ID))
 
 	return nil
 }

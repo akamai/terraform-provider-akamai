@@ -1,18 +1,20 @@
 package appsec
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceRatePolicyActions() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceRatePolicyActionsRead,
+		ReadContext: dataSourceRatePolicyActionsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -35,23 +37,22 @@ func dataSourceRatePolicyActions() *schema.Resource {
 	}
 }
 
-func dataSourceRatePolicyActionsRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceRatePolicyActionsRead-" + tools.CreateNonce() + "]"
+func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceRatePolicyActionsRead")
+	CorrelationID := "[APPSEC][resourceRatePolicyActions-" + meta.OperationID() + "]"
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read RatePolicyActions")
+	getRatePolicyActions := v2.GetRatePolicyActionsRequest{}
 
-	ratepolicyactions := appsec.NewRatePolicyActionsResponse()
-	configid := d.Get("config_id").(int)
-	version := d.Get("version").(int)
-	policyid := d.Get("policy_id").(string)
+	getRatePolicyActions.ConfigID = d.Get("config_id").(int)
+	getRatePolicyActions.Version = d.Get("version").(int)
+	getRatePolicyActions.PolicyID = d.Get("policy_id").(string)
 
-	err := ratepolicyactions.GetRatePolicyActions(configid, version, policyid, CorrelationID)
+	ratepolicyactions, err := client.GetRatePolicyActions(ctx, getRatePolicyActions)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getRatePolicyActions': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("RatePolicyActions   %v\n", ratepolicyactions))
 
 	for _, configval := range ratepolicyactions.RatePolicyActions {
 		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("ratepolicyaction  configval %v\n", configval.ID))

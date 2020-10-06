@@ -1,17 +1,18 @@
 package appsec
 
 import (
+	"context"
 	"fmt"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceSecurityPolicy() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceSecurityPolicyRead,
+		ReadContext: dataSourceSecurityPolicyRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -36,32 +37,34 @@ func dataSourceSecurityPolicy() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Policy ID List",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text Export representation",
+			},
 		},
 	}
 }
 
-func dataSourceSecurityPolicyRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceSecurityPolicyRead-" + tools.CreateNonce() + "]"
+func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read SecurityPolicy")
+	getSecurityPolicy := v2.GetSecurityPoliciesRequest{}
 
-	securitypolicy := appsec.NewSecurityPolicyResponse()
 	configName := d.Get("name").(string)
-	securitypolicy.ConfigID = d.Get("config_id").(int)
-	securitypolicy.Version = d.Get("version").(int)
+	getSecurityPolicy.ConfigID = d.Get("config_id").(int)
+	getSecurityPolicy.Version = d.Get("version").(int)
 
-	err := securitypolicy.GetSecurityPolicy(CorrelationID)
+	securitypolicy, err := client.GetSecurityPolicies(ctx, getSecurityPolicy)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getSecurityPolicy': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("SecurityPolicy   %v\n", securitypolicy))
 
 	secpolicylist := make([]string, 0, len(securitypolicy.Policies))
 
 	for _, configval := range securitypolicy.Policies {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CONFIG value  %v\n", configval.PolicyID))
 		secpolicylist = append(secpolicylist, configval.PolicyID)
 		if configval.PolicyName == configName {
 			d.Set("policy_id", configval.PolicyID)
@@ -69,6 +72,16 @@ func dataSourceSecurityPolicyRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	d.Set("policy_list", secpolicylist)
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "securityPoliciesDS", securitypolicy)
+
+	if err == nil {
+		d.Set("output_text", outputtext)
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d", securitypolicy.ConfigID, securitypolicy.Version))
 
 	return nil

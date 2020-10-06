@@ -1,18 +1,18 @@
 package appsec
 
 import (
-	"fmt"
+	"context"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceConfigurationVersion() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceConfigurationVersionRead,
+		ReadContext: dataSourceConfigurationVersionRead,
 		Schema: map[string]*schema.Schema{
 			"version": {
 				Type:     schema.TypeInt,
@@ -43,28 +43,25 @@ func dataSourceConfigurationVersion() *schema.Resource {
 	}
 }
 
-func dataSourceConfigurationVersionRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][dataSourceConfigurationVersionRead-" + tools.CreateNonce() + "]"
+func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceConfigurationVersionRead")
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read ConfigurationVersion")
+	getConfigurationVersion := v2.GetConfigurationVersionsRequest{}
 
-	configurationversion := appsec.NewConfigurationVersionResponse()
-	configurationversion.ConfigID = d.Get("config_id").(int)
+	getConfigurationVersion.ConfigID = d.Get("config_id").(int)
 	configVersion := d.Get("version").(int)
 
-	err := configurationversion.GetConfigurationVersion(CorrelationID)
+	configurationversion, err := client.GetConfigurationVersions(ctx, getConfigurationVersion)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getConfigurationVersion': %s", err.Error())
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("ConfigurationVersion   %v\n", configurationversion))
 
 	d.Set("latest_version", configurationversion.LastCreatedVersion)
 
 	for _, configval := range configurationversion.VersionList {
 
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CONFIG value  %v\n", configval.Version))
 		if configval.Version == configVersion {
 			d.Set("config_id", configval.ConfigID)
 			d.Set("staging_status", configval.Staging.Status)
@@ -77,7 +74,6 @@ func dataSourceConfigurationVersionRead(d *schema.ResourceData, meta interface{}
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "configurationVersion", configurationversion)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("ConfigurationVesion outputtext   %v\n", outputtext))
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}
