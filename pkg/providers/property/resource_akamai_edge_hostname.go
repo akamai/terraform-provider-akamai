@@ -112,22 +112,19 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	case strings.HasSuffix(edgeHostname, ".edgesuite.net"):
 		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgesuite.net")
 		newHostname.DomainSuffix = "edgesuite.net"
-		newHostname.SecureNetwork = "STANDARD_TLS"
+		newHostname.SecureNetwork = papi.EHSecureNetworkStandardTLS
 	case strings.HasSuffix(edgeHostname, ".edgekey.net"):
 		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgekey.net")
 		newHostname.DomainSuffix = "edgekey.net"
-		newHostname.SecureNetwork = "ENHANCED_TLS"
+		newHostname.SecureNetwork = papi.EHSecureNetworkEnhancedTLS
 	case strings.HasSuffix(edgeHostname, ".akamaized.net"):
 		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, ".akamaized.net")
 		newHostname.DomainSuffix = "akamaized.net"
-		newHostname.SecureNetwork = "SHARED_CERT"
+		newHostname.SecureNetwork = papi.EHSecureNetworkSharedCert
 	}
 
 	if newHostname.DomainSuffix == "" && edgeHostname != "" {
 		newHostname.DomainSuffix = "edgesuite.net"
-		if strings.HasSuffix(edgeHostname, "edgekey.net") {
-			newHostname.DomainSuffix = "edgekey.net"
-		}
 	}
 
 	if newHostname.DomainPrefix == "" && edgeHostname != "" {
@@ -142,7 +139,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	ipv4, _ := tools.GetBoolValue("ipv4", d)
-	if ipv4 {
+	if ipv4, _ := tools.GetBoolValue("ipv4", d); ipv4 {
 		newHostname.IPVersionBehavior = "IPV4"
 	}
 	ipv6, _ := tools.GetBoolValue("ipv6", d)
@@ -166,7 +163,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 		if newHostname.SecureNetwork == "ENHANCED_TLS" {
-			return diag.FromErr(errors.New("A certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames"))
+			return diag.FromErr(fmt.Errorf("A certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames"))
 		}
 	}
 
@@ -235,19 +232,13 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, err
 	}
 
-	if err := d.Set("account", prop.Property.AccountID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
 	if err := d.Set("contract", prop.Property.ContractID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group", prop.Property.GroupID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("name", prop.Property.PropertyName); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("version", prop.Property.LatestVersion); err != nil {
+	if err := d.Set("edge_hostname", prop.Property.GroupID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	d.SetId(prop.Property.PropertyID)
@@ -289,9 +280,12 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if edgeHostname != "" {
-		defaultEdgeHostname, err = findEdgeHostname(edgeHostnames.EdgeHostnames, "", edgeHostname, "", "")
-		if err != nil {
+		found, err := findEdgeHostname(edgeHostnames.EdgeHostnames, "", edgeHostname, "", "")
+		if err != nil && !errors.Is(err, ErrEdgeHostnameNotFound) {
 			return diag.FromErr(err)
+		}
+		if err == nil {
+			defaultEdgeHostname = found
 		}
 	}
 

@@ -63,4 +63,7 @@ var (
 
 	// ErrRuleFormatsNotFound is returned when no rule formats were found
 	ErrRuleFormatsNotFound = errors.New("no rule formats found")
+
+	// PAPI edge hostnames errors
+	ErrEdgeHostnameNotFound = errors.New("unable to find edge hostname")
 )

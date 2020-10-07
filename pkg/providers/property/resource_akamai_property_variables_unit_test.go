@@ -55,9 +55,8 @@ func TestResourcePropertyVariables_Create(t *testing.T) {
 
 func TestResourcePropertyVariables_WithImport(t *testing.T) {
 	tests := map[string]struct {
-		givenTF   string
-		init      func(*mockpapi)
-		expectID  string
+		givenTF          string
+		init             func(*mockpapi)
 		expectAttributes map[string]string
 	}{
 		"valid property ID": {
@@ -92,7 +91,9 @@ func TestResourcePropertyVariables_WithImport(t *testing.T) {
 					PropertyName:  "property_name",
 				}}, nil)
 			},
-			expectID: "id",
+			expectAttributes: map[string]string{
+				"id": "id",
+			},
 		},
 	}
 	for name, test := range tests {
@@ -109,8 +110,8 @@ func TestResourcePropertyVariables_WithImport(t *testing.T) {
 					Providers:  testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Destroy:     false,
-							Config:      loadFixtureString(fmt.Sprintf("testdata/TestResourcePorpertyVariables/%s", test.givenTF)),
+							Destroy: false,
+							Config:  loadFixtureString(fmt.Sprintf("testdata/TestResourcePorpertyVariables/%s", test.givenTF)),
 						},
 						{
 							ImportState:       true,
