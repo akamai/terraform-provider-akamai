@@ -49,7 +49,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"network": {
 		Type:     schema.TypeString,
 		Optional: true,
-		Default:  "staging",
+		Default:  "STAGING",
 	},
 	"activate": {
 		Type:       schema.TypeBool,
