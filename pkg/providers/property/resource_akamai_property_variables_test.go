@@ -1,7 +1,6 @@
 package property
 
-import
-(
+import (
 	"fmt"
 	"log"
 	"testing"

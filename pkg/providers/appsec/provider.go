@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	appsecv1 "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-	//v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -34,9 +34,12 @@ var (
 )
 
 // Subprovider returns a core sub provider
-func Subprovider() akamai.Subprovider {
+func Subprovider(opts ...Option) akamai.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
+		for _, opt := range opts {
+			opt(inst)
+		}
 	})
 
 	return inst
@@ -89,6 +92,7 @@ func Provider() *schema.Provider {
 	return provider
 }
 
+/*
 type resourceData interface {
 	GetOk(string) (interface{}, bool)
 	Get(string) interface{}
@@ -97,7 +101,7 @@ type resourceData interface {
 type set interface {
 	List() []interface{}
 }
-
+*/
 // WithClient sets the client interface function, used for mocking and testing
 func WithClient(c appsec.APPSEC) Option {
 	return func(p *provider) {
@@ -113,18 +117,22 @@ func (p *provider) Client(meta akamai.OperationMeta) appsec.APPSEC {
 	return appsec.Client(meta.Session())
 }
 
-func getAPPSECV1Service(d resourceData) (*edgegrid.Config, error) {
+func getAPPSECV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	var APPSECv1Config edgegrid.Config
 	var err error
-	if _, ok := d.GetOk("appsec"); ok {
-		config := d.Get("appsec").(set).List()[0].(map[string]interface{})
+	appsec, err := tools.GetSetValue("appsec", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
+	if err == nil {
+		cfg := appsec.List()[0].(map[string]interface{})
 
 		APPSECv1Config = edgegrid.Config{
-			Host:         config["host"].(string),
-			AccessToken:  config["access_token"].(string),
-			ClientToken:  config["client_token"].(string),
-			ClientSecret: config["client_secret"].(string),
-			MaxBody:      config["max_body"].(int),
+			Host:         cfg["host"].(string),
+			AccessToken:  cfg["access_token"].(string),
+			ClientToken:  cfg["client_token"].(string),
+			ClientSecret: cfg["client_secret"].(string),
+			MaxBody:      cfg["max_body"].(int),
 		}
 
 		appsecv1.Init(APPSECv1Config)
@@ -144,13 +152,18 @@ func getAPPSECV1Service(d resourceData) (*edgegrid.Config, error) {
 			break
 		}
 	}
+
+	if section != "" {
+		d.Set("config_section", section)
+	}
+
 	APPSECv1Config, err = edgegrid.Init(edgerc, section)
 	if err != nil {
 		return nil, err
 	}
-
-	appsecv1.Init(APPSECv1Config)
 	edgegrid.SetupLogging()
+	appsecv1.Init(APPSECv1Config)
+
 	return &APPSECv1Config, nil
 }
 

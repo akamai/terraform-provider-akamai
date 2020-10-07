@@ -1,8 +1,24 @@
+terraform {
+  required_version = ">= 0.12"
+  required_providers {
+    akamai = {
+      source = "akava.io/akava/akamai"
+      version = "0.9.1"
+    }
+    local = {
+      source = "hashicorp/local"
+    }
+
+  }
+}
+
+
 provider "akamai" {
   edgerc = "~/.edgerc"
-  alias = "appsec"
+  //alias  = "appsec"
   //appsec_section = "global"
 }
+
 /*
 data "akamai_appsec_security_policy" "appsecsecuritypolicy" {
   name = "akamaitools"
@@ -17,7 +33,7 @@ output "securitypolicies" {
 }
 */
 data "akamai_appsec_configuration" "appsecconfigedge" {
-  name = "Akamai Tools" //Example for EDGE
+  name    = "Akamai Tools" //Example for EDGE
   version = 3
 }
 output "configsedge_prodversion" {
@@ -41,16 +57,16 @@ resource "akamai_appsec_configuration_clone" "appsecconfigurationclone" {
 */
 
 data "akamai_appsec_selectable_hostnames" "appsecselectablehostnames" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
-   // active_in_staging = true
-   // active_in_production = false
- //    active_in_staging = false
- //   active_in_production = false
- //   active_in_staging = true
-   // active_in_production = true
- //  active_in_staging = false
-   // active_in_production = true
+  config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+  version   = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+  // active_in_staging = true
+  // active_in_production = false
+  //    active_in_staging = false
+  //   active_in_production = false
+  //   active_in_staging = true
+  // active_in_production = true
+  //  active_in_staging = false
+  // active_in_production = true
 }
 
 
@@ -97,18 +113,18 @@ output "exportconfig" {
 }
 */
 resource "akamai_appsec_selected_hostnames" "appsecselectedhostnames" {
-   config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-   version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
-   hostnames = ["rinaldi.sandbox.akamaideveloper.com","sujala.sandbox.akamaideveloper.com"]
-// hostnames = data.akamai_appsec_selected_hostnames.dataappsecselectedhostnames.hostnames
-// hostnames = ["rinaldi.sandbox.akamaideveloper.com"]
-   mode = "REPLACE"
+  config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+  version   = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+  hostnames = ["rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"]
+  // hostnames = data.akamai_appsec_selected_hostnames.dataappsecselectedhostnames.hostnames
+  // hostnames = ["rinaldi.sandbox.akamaideveloper.com"]
+  mode = "REPLACE"
   // mode = "APPEND"
   // mode = "REMOVE"
 }
 data "akamai_appsec_selected_hostnames" "dataappsecselectedhostnames" {
- config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+  config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+  version   = data.akamai_appsec_configuration.appsecconfigedge.latest_version
 }
 output "selectedhosts" {
   value = data.akamai_appsec_selected_hostnames.dataappsecselectedhostnames.hostnames
