@@ -8,7 +8,7 @@ data "akamai_property_rules" "rules" {
       name = "cpCode"
       option {
         key   = "id"
-        value = "cpc_12345"
+        value = "12345"
       }
     }
   }

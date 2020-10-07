@@ -8,20 +8,20 @@ import (
 
 func ConvertToString(data interface{}) (res string) {
 	switch v := data.(type) {
-	case float64:
-		res = fmt.Sprint(data.(float64))
-	case float32:
-		res = fmt.Sprint(data.(float32))
-	case int, int64:
-		res = strconv.Itoa(data.(int))
+	case float32, float64:
+		res = fmt.Sprintf("%g", v)
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		res = fmt.Sprintf("%d", v)
 	case json.Number:
-		res = data.(json.Number).String()
+		res = v.String()
 	case string:
-		res = data.(string)
+		res = v
 	case []byte:
 		res = string(v)
+	case bool:
+		res = strconv.FormatBool(v)
 	default:
-		res = ""
+		res = fmt.Sprintf("%v", data)
 	}
 	return
 }
