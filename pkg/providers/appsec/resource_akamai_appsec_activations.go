@@ -1,14 +1,18 @@
 package appsec
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -17,9 +21,9 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceActivations() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceActivationsCreate,
-		Read:   resourceActivationsRead,
-		Delete: resourceActivationsDelete,
+		CreateContext: resourceActivationsCreate,
+		ReadContext:   resourceActivationsRead,
+		DeleteContext: resourceActivationsDelete,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -63,126 +67,203 @@ func resourceActivations() *schema.Resource {
 	}
 }
 
-func resourceActivationsCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceActivationsCreate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating Activations")
+const (
+	// ActivationPollMinimum is the minumum polling interval for activation creation
+	ActivationPollMinimum = time.Minute
+)
 
-	activations := appsec.NewActivationsResponse()
+var (
+	// ActivationPollInterval is the interval for polling an activation status on creation
+	ActivationPollInterval = ActivationPollMinimum
+)
 
-	postpayload := appsec.NewActivationsPost()
-	ap := appsec.ActivationConfigs{}
-	ap.ConfigID = d.Get("config_id").(int)
-	ap.ConfigVersion = d.Get("version").(int)
-	postpayload.Network = d.Get("network").(string)
-	postpayload.Action = "ACTIVATE"
-	postpayload.ActivationConfigs = append(postpayload.ActivationConfigs, ap)
-	postpayload.NotificationEmails = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
+func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceActivationsCreate")
 
-	if d.Get("activate").(bool) {
-
-		postresp, err := activations.SaveActivations(postpayload, true, CorrelationID)
-		if err != nil {
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-			return err
-		}
-
-		d.SetId(strconv.Itoa(postresp.ActivationID))
-		d.Set("status", string(postresp.Status))
-		go activations.PollStatus(postresp.ActivationID, CorrelationID)
-
-	polling:
-		for activations.Status != appsec.StatusActive {
-			select {
-			case statusChanged := <-activations.StatusChange:
-				edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Activation Status: %s\n", postresp.Status))
-				if statusChanged == false {
-					break polling
-				}
-				continue polling
-			case <-time.After(time.Minute * 40):
-				edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Activation Timeout (40 minutes)")
-				break polling
-			}
-		}
-	} else {
+	activate, err := tools.GetBoolValue("activate", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if !activate {
 		d.SetId("none")
+		logger.Debugf("Done")
+		return nil
 	}
 
-	return resourceActivationsRead(d, meta)
+	createActivations := v2.CreateActivationsRequest{}
+
+	createActivationsreq := v2.GetActivationsRequest{}
+
+	ap := v2.ActivationConfigs{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	ap.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	ap.ConfigVersion = version
+
+	network, err := tools.GetStringValue("network", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createActivations.Network = network
+
+	createActivations.Action = "ACTIVATE"
+	createActivations.ActivationConfigs = append(createActivations.ActivationConfigs, ap)
+	createActivations.NotificationEmails = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
+
+	postresp, err := client.CreateActivations(ctx, createActivations, true)
+	if err != nil {
+		logger.Warnf("calling 'createActivations': %s", err.Error())
+	}
+
+	d.SetId(strconv.Itoa(postresp.ActivationID))
+	d.Set("status", string(postresp.Status))
+
+	createActivationsreq.ActivationID = postresp.ActivationID
+	activation, err := lookupActivation(ctx, client, createActivationsreq)
+	for activation.Status != v2.StatusActive {
+		select {
+		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			act, err := client.GetActivations(ctx, createActivationsreq)
+
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			activation = act
+
+		case <-ctx.Done():
+			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+		}
+	}
+
+	return resourceActivationsRead(ctx, d, m)
 }
 
-func resourceActivationsDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceActivationsDelete-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting Activations")
+func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceActivationsRemove")
+	CorrelationID := "[APPSEC][resourceMatchTargets-" + meta.OperationID() + "]"
 
-	activations := appsec.NewActivationsResponse()
+	activate, err := tools.GetBoolValue("activate", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if !activate {
+		d.SetId("none")
+		logger.Debugf("Done")
+		return nil
+	}
+
+	removeActivations := v2.RemoveActivationsRequest{}
+	createActivationsreq := v2.GetActivationsRequest{}
 
 	if d.Id() == "" {
 		return nil
 	}
 
-	activationid, _ := strconv.Atoi(d.Id())
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("activationid  %v\n", activationid))
-	postpayload := appsec.NewActivationsPost()
-	ap := appsec.ActivationConfigs{}
-	ap.ConfigID = d.Get("config_id").(int)
-	ap.ConfigVersion = d.Get("version").(int)
-	postpayload.Network = d.Get("network").(string)
-	postpayload.NotificationEmails = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
+	removeActivations.ActivationID, _ = strconv.Atoi(d.Id())
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("activationid  %v\n", removeActivations.ActivationID))
+	//postpayload := appsec.NewActivationsPost()
+	ap := v2.ActivationConfigs{}
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	ap.ConfigID = configid
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Deactivating %s \n", postpayload.Network))
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	ap.ConfigVersion = version
 
-	postpayload.Action = "DEACTIVATE"
+	network, err := tools.GetStringValue("network", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeActivations.Network = network
 
-	postpayload.ActivationConfigs = append(postpayload.ActivationConfigs, ap)
+	removeActivations.NotificationEmails = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
 
-	postresp, err := activations.DeactivateActivations(postpayload, CorrelationID)
+	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Deactivating %s \n", removeActivations.Network))
+
+	removeActivations.Action = "DEACTIVATE"
+
+	removeActivations.ActivationConfigs = append(removeActivations.ActivationConfigs, ap)
+
+	postresp, err := client.RemoveActivations(ctx, removeActivations)
+
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'removeActivations': %s", err.Error())
 	}
 
-	go activations.PollStatus(postresp.ActivationID, CorrelationID)
+	d.SetId(strconv.Itoa(postresp.ActivationID))
+	d.Set("status", string(postresp.Status))
+	createActivationsreq.ActivationID = postresp.ActivationID
 
-polling:
-	for activations.Status != appsec.StatusDeactivated {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Activation Status: %s\n", activations.Status))
+	activation, err := lookupActivation(ctx, client, createActivationsreq)
+	for activation.Status != v2.StatusDeactivated {
 		select {
-		case statusChanged := <-activations.StatusChange:
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" Activation Status: %s\n", activations.Status))
-			if statusChanged == false {
-				break polling
+		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			act, err := client.GetActivations(ctx, createActivationsreq)
+
+			if err != nil {
+				return diag.FromErr(err)
 			}
-			continue polling
-		case <-time.After(time.Minute * 40):
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Activation Timeout (40 minutes)")
-			break polling
+			activation = act
+
+		case <-ctx.Done():
+			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
 	}
 
-	d.Set("status", string(activations.Status))
+	d.Set("status", string(activation.Status))
 
 	d.SetId("")
 
 	return nil
 }
 
-func resourceActivationsRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceActivationsRead-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read Activations")
+func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceActivationsRead")
 
-	activations := appsec.NewActivationsResponse()
+	getActivations := v2.GetActivationsRequest{}
 
-	activationid, _ := strconv.Atoi(d.Id())
+	getActivations.ActivationID, _ = strconv.Atoi(d.Id())
 
-	_, err := activations.GetActivations(activationid, CorrelationID)
+	activations, err := client.GetActivations(ctx, getActivations)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+		logger.Warnf("calling 'getActivations': %s", err.Error())
 	}
 
 	d.Set("status", activations.Status)
 	d.SetId(strconv.Itoa(activations.ActivationID))
 
 	return nil
+}
+
+func lookupActivation(ctx context.Context, client v2.APPSEC, query v2.GetActivationsRequest) (*v2.GetActivationsResponse, error) {
+	activations, err := client.GetActivations(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// There is an activation in progress, if it's for the same version/network/type we can re-use it
+	//if activations.Action == query.activationType && activations.Network == query.network {
+	return activations, nil
+	//}
+
+	return nil, nil
 }

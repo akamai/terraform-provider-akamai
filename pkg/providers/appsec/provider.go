@@ -83,10 +83,10 @@ func Provider() *schema.Provider {
 			"akamai_appsec_match_target":                resourceMatchTarget(),
 			"akamai_appsec_custom_rule":                 resourceCustomRule(),
 			"akamai_appsec_custom_rule_action":          resourceCustomRuleAction(),
-			//"akamai_appsec_activations":                 resourceActivations(),
-			"akamai_appsec_rate_policy":        resourceRatePolicy(),
-			"akamai_appsec_rate_policy_action": resourceRatePolicyAction(),
-			"akamai_appsec_slow_post":          resourceSlowPostProtectionSetting(),
+			"akamai_appsec_activations":                 resourceActivations(),
+			"akamai_appsec_rate_policy":                 resourceRatePolicy(),
+			"akamai_appsec_rate_policy_action":          resourceRatePolicyAction(),
+			"akamai_appsec_slow_post":                   resourceSlowPostProtectionSetting(),
 		},
 	}
 	return provider
