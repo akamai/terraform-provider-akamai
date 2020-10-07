@@ -735,7 +735,7 @@ func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.Operat
 		}
 	}
 	if !contractFound {
-		return nil, fmt.Errorf("%w: %s", ErrNoContractsFound, contractID)
+		return nil, fmt.Errorf("%w: %s", ErrContractNotFound, contractID)
 	}
 
 	logger.Debugf("Contract found: %s", contract.ContractID)
@@ -1497,5 +1497,5 @@ func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, id, domain, suffix, 
 		}
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("%w: %s", ErrEdgeHostnameNotFound, domain)
 }
