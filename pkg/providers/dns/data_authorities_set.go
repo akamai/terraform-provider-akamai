@@ -33,7 +33,7 @@ func dataSourceAuthoritiesSet() *schema.Resource {
 
 func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "dataSourceDNSAuthoritiesRead")
+	logger := meta.Log("AkamaiDNS", "dataSourceDNSAuthoritiesRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,

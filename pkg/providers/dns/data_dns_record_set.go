@@ -41,7 +41,7 @@ func dataSourceDNSRecordSet() *schema.Resource {
 
 func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "dataSourceDNSRecordSetRead")
+	logger := meta.Log("AkamaiDNS", "dataSourceDNSRecordSetRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,

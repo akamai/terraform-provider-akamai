@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/apex/log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/apex/log"
+
 	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
-        "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -116,7 +117,7 @@ func resourceDNSv2Zone() *schema.Resource {
 func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneCreate")
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -231,7 +232,7 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	hostname := d.Get("zone").(string)
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneRead")
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -300,7 +301,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	hostname := d.Get("zone").(string)
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneUpdate")
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -375,7 +376,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	hostname := d.Id()
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneImport")
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneImport")
 	// create a context with logging for api calls
 	ctx := context.TODO()
 	ctx = session.ContextWithOptions(
@@ -414,7 +415,7 @@ func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSZoneDelete")
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneDelete")
 	logger.WithField("zone", hostname).Info("Zone Import")
 	logger.Warn("DNS Zone deletion not allowed")
 

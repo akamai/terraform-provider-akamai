@@ -1,12 +1,14 @@
 package dns
 
 import (
+	"context"
 	"fmt"
+	"log"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log"
 
 	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -841,7 +843,16 @@ func TestNewRecordCreate(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			res, err := newRecordCreate(test.givenData, test.givenRecordType, test.givenTarget, test.givenHost, test.givenTTL, akamai.Log())
+			res, err := newRecordCreate(
+				context.Background(),
+				nil,
+				test.givenData,
+				test.givenRecordType,
+				test.givenTarget,
+				test.givenHost,
+				test.givenTTL,
+				akamai.Log(),
+			)
 			if test.withError {
 				assert.Error(t, err)
 				return
