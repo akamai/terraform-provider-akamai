@@ -43,9 +43,10 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"edge_hostname": {
-		Type:     schema.TypeString,
-		Required: true,
-		ForceNew: true,
+		Type:             schema.TypeString,
+		Required:         true,
+		ForceNew:         true,
+		DiffSuppressFunc: suppressEdgeHostnameDomain,
 	},
 	"ipv4": {
 		Type:     schema.TypeBool,
@@ -107,36 +108,20 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	newHostname := papi.EdgeHostnameCreate{}
 	newHostname.ProductID = product.ProductID
+	newHostname.DomainSuffix = "edgesuite.net"
 
 	switch {
 	case strings.HasSuffix(edgeHostname, ".edgesuite.net"):
-		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgesuite.net")
 		newHostname.DomainSuffix = "edgesuite.net"
 		newHostname.SecureNetwork = papi.EHSecureNetworkStandardTLS
 	case strings.HasSuffix(edgeHostname, ".edgekey.net"):
-		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgekey.net")
 		newHostname.DomainSuffix = "edgekey.net"
 		newHostname.SecureNetwork = papi.EHSecureNetworkEnhancedTLS
 	case strings.HasSuffix(edgeHostname, ".akamaized.net"):
-		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, ".akamaized.net")
 		newHostname.DomainSuffix = "akamaized.net"
 		newHostname.SecureNetwork = papi.EHSecureNetworkSharedCert
 	}
-
-	if newHostname.DomainSuffix == "" && edgeHostname != "" {
-		newHostname.DomainSuffix = "edgesuite.net"
-	}
-
-	if newHostname.DomainPrefix == "" && edgeHostname != "" {
-		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
-	}
-
-	for _, h := range edgeHostnames.EdgeHostnames.Items {
-		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
-			d.SetId(h.ID)
-			return nil
-		}
-	}
+	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
 
 	ipv4, _ := tools.GetBoolValue("ipv4", d)
 	if ipv4, _ := tools.GetBoolValue("ipv4", d); ipv4 {
@@ -155,6 +140,13 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	if err := d.Set("ip_behavior", newHostname.IPVersionBehavior); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	for _, h := range edgeHostnames.EdgeHostnames.Items {
+		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
+			d.SetId(h.ID)
+			return nil
+		}
 	}
 
 	certEnrollmentID, err := tools.GetIntValue("certificate", d)
@@ -180,7 +172,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	d.SetId(hostname.EdgeHostnameID)
-	return nil
+	return resourceSecureEdgeHostNameRead(ctx, d, meta)
 }
 
 func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -280,7 +272,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if edgeHostname != "" {
-		found, err := findEdgeHostname(edgeHostnames.EdgeHostnames, "", edgeHostname, "", "")
+		found, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostname)
 		if err != nil && !errors.Is(err, ErrEdgeHostnameNotFound) {
 			return diag.FromErr(err)
 		}
@@ -301,4 +293,36 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	d.SetId(defaultEdgeHostname.ID)
 
 	return nil
+}
+
+func suppressEdgeHostnameDomain(_, old, new string, _ *schema.ResourceData) bool {
+	if old == new {
+		return true
+	}
+	if !(strings.HasSuffix(new, "edgekey.net") || strings.HasSuffix(new, "edgesuite.net") || strings.HasSuffix(new, "akamaized.net")) {
+		return old == fmt.Sprintf("%s.edgesuite.net", new)
+	}
+	return false
+}
+
+func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*papi.EdgeHostnameGetItem, error) {
+	var prefix string
+	suffix := "edgesuite.net"
+	if domain != "" {
+		if strings.HasSuffix(domain, "edgekey.net") {
+			suffix = "edgekey.net"
+		}
+		if strings.HasSuffix(domain, "akamaized.net") {
+			suffix = "akamaized.net"
+		}
+		prefix = strings.TrimSuffix(domain, "."+suffix)
+	}
+
+	for _, eHn := range edgeHostnames.Items {
+		if eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix {
+			return &eHn, nil
+		}
+	}
+
+	return nil, fmt.Errorf("%w: %s", ErrEdgeHostnameNotFound, domain)
 }

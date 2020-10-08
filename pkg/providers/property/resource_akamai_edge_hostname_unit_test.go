@@ -1,10 +1,13 @@
 package property
 
 import (
+	"errors"
 	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"github.com/tj/assert"
 	"regexp"
 	"testing"
 )
@@ -60,7 +63,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							DomainSuffix: "edgesuite.net",
 						},
 					}},
-				}, nil)
+				}, nil).Once()
 				m.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -75,6 +78,36 @@ func TestResourceEdgeHostname(t *testing.T) {
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
+				}, nil)
+				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_1",
+							Domain:       "test2.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test2",
+							DomainSuffix: "edgesuite.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test3.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test3",
+							DomainSuffix: "edgesuite.net",
+						},
+						{
+							ID:           "eh_123",
+							Domain:       "test.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "edgesuite.net",
+						},
+					}},
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
@@ -129,7 +162,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							DomainSuffix: "edgesuite.net",
 						},
 					}},
-				}, nil)
+				}, nil).Once()
 				m.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -144,6 +177,36 @@ func TestResourceEdgeHostname(t *testing.T) {
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
+				}, nil)
+				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_1",
+							Domain:       "test2.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test2",
+							DomainSuffix: "edgesuite.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test3.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test3",
+							DomainSuffix: "edgesuite.net",
+						},
+						{
+							ID:           "eh_123",
+							Domain:       "test.edgekey.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "edgekey.net",
+						},
+					}},
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
@@ -198,7 +261,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							DomainSuffix: "edgesuite.net",
 						},
 					}},
-				}, nil)
+				}, nil).Once()
 				m.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -211,6 +274,36 @@ func TestResourceEdgeHostname(t *testing.T) {
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
+				}, nil)
+				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_1",
+							Domain:       "test2.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test2",
+							DomainSuffix: "edgesuite.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test3.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test3",
+							DomainSuffix: "edgesuite.net",
+						},
+						{
+							ID:           "eh_123",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+					}},
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
@@ -265,7 +358,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							DomainSuffix: "edgesuite.net",
 						},
 					}},
-				}, nil)
+				}, nil).Once()
 				m.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -279,13 +372,43 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
 				}, nil)
+				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_1",
+							Domain:       "test2.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test2",
+							DomainSuffix: "edgesuite.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test3.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test3",
+							DomainSuffix: "edgesuite.net",
+						},
+						{
+							ID:           "eh_123",
+							Domain:       "test.aka.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test.aka",
+							DomainSuffix: "edgesuite.net",
+						},
+					}},
+				}, nil)
 			},
 			expectedAttributes: map[string]string{
 				"id":            "eh_123",
 				"ip_behavior":   "IPV4",
 				"contract":      "ctr_2",
 				"group":         "grp_2",
-				"edge_hostname": "test.aka",
+				"edge_hostname": "test.aka.edgesuite.net",
 			},
 		},
 		"edge hostname exists": {
@@ -696,6 +819,166 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 				})
 			})
 			client.AssertExpectations(t)
+		})
+	}
+}
+
+func TestFindEdgeHostname(t *testing.T) {
+	tests := map[string]struct {
+		hostnames papi.EdgeHostnameItems
+		domain    string
+		expected  *papi.EdgeHostnameGetItem
+		withError error
+	}{
+		"edge hostname found, different domain": {
+			hostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:           "eh_1",
+					Domain:       "some.domain.edgesuite.net",
+					DomainPrefix: "some.domain",
+					DomainSuffix: "edgesuite.net",
+				},
+				{
+					ID:           "eh_2",
+					Domain:       "test.domain.edgesuite.net",
+					DomainPrefix: "test.domain",
+					DomainSuffix: "edgesuite.net",
+				},
+			}},
+			domain: "some.domain",
+			expected: &papi.EdgeHostnameGetItem{
+				ID:           "eh_1",
+				Domain:       "some.domain.edgesuite.net",
+				DomainPrefix: "some.domain",
+				DomainSuffix: "edgesuite.net",
+			},
+		},
+		"edge hostname found, edgesuite domain": {
+			hostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:           "eh_1",
+					Domain:       "some.domain.edgesuite.net",
+					DomainPrefix: "some.domain",
+					DomainSuffix: "edgesuite.net",
+				},
+				{
+					ID:           "eh_2",
+					Domain:       "test.domain.edgesuite.net",
+					DomainPrefix: "test.domain",
+					DomainSuffix: "edgesuite.net",
+				},
+			}},
+			domain: "some.domain.edgesuite.net",
+			expected: &papi.EdgeHostnameGetItem{
+				ID:           "eh_1",
+				Domain:       "some.domain.edgesuite.net",
+				DomainPrefix: "some.domain",
+				DomainSuffix: "edgesuite.net",
+			},
+		},
+		"edge hostname found, edgekey domain": {
+			hostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:           "eh_1",
+					Domain:       "some.domain.edgekey.net",
+					DomainPrefix: "some.domain",
+					DomainSuffix: "edgekey.net",
+				},
+				{
+					ID:           "eh_2",
+					Domain:       "test.domain.edgesuite.net",
+					DomainPrefix: "test.domain",
+					DomainSuffix: "edgesuite.net",
+				},
+			}},
+			domain: "some.domain.edgekey.net",
+			expected: &papi.EdgeHostnameGetItem{
+				ID:           "eh_1",
+				Domain:       "some.domain.edgekey.net",
+				DomainPrefix: "some.domain",
+				DomainSuffix: "edgekey.net",
+			},
+		},
+		"edge hostname found, akamaized domain": {
+			hostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:           "eh_1",
+					Domain:       "some.domain.akamaized.net",
+					DomainPrefix: "some.domain",
+					DomainSuffix: "akamaized.net",
+				},
+				{
+					ID:           "eh_2",
+					Domain:       "test.domain.edgesuite.net",
+					DomainPrefix: "test.domain",
+					DomainSuffix: "edgesuite.net",
+				},
+			}},
+			domain: "some.domain.akamaized.net",
+			expected: &papi.EdgeHostnameGetItem{
+				ID:           "eh_1",
+				Domain:       "some.domain.akamaized.net",
+				DomainPrefix: "some.domain",
+				DomainSuffix: "akamaized.net",
+			},
+		},
+		"edge hostname not found": {
+			hostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:           "eh_1",
+					Domain:       "some.domain.akamaized.net",
+					DomainPrefix: "some.domain",
+					DomainSuffix: "akamaized.net",
+				},
+				{
+					ID:           "eh_2",
+					Domain:       "test.domain.edgesuite.net",
+					DomainPrefix: "test.domain",
+					DomainSuffix: "edgesuite.net",
+				},
+			}},
+			domain:    "other.domain.akamaized.net",
+			withError: ErrEdgeHostnameNotFound,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			res, err := findEdgeHostname(test.hostnames, test.domain)
+			if test.withError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, test.withError), "want: %v; got: %v", test.withError, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, res)
+		})
+	}
+}
+
+func TestSuppressEdgeHostnameDomain(t *testing.T) {
+	tests := map[string]struct {
+		old, new string
+		expected bool
+	}{
+		"equal domains": {
+			old:      "test.com",
+			new:      "test.com",
+			expected: true,
+		},
+		"domain defaulting to edgesuite.net": {
+			old:      "test.com.edgesuite.net",
+			new:      "test.com",
+			expected: true,
+		},
+		"different domains": {
+			old:      "test.com.akamaized.net",
+			new:      "test1.com.akamaized.net",
+			expected: false,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expected, suppressEdgeHostnameDomain("", test.old, test.new, nil))
 		})
 	}
 }

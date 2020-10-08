@@ -306,7 +306,7 @@ func setHostnames(ctx context.Context, property *papi.Property, d *schema.Resour
 			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "edge_hostname", "string")
 		}
 		logger.Debugf("Searching for edge hostname: %s, for hostname: %s", edgeHostNameStr, public)
-		newEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, "", edgeHostNameStr, "", "")
+		newEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostNameStr)
 		if err != nil {
 			return nil, fmt.Errorf("edge hostname not found: %s", edgeHostNameStr)
 		}
@@ -1477,29 +1477,4 @@ func findRule(path string, rules *papi.Rules) (*papi.Rules, error) {
 	}
 
 	return currentRule, nil
-}
-
-func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, id, domain, suffix, prefix string) (*papi.EdgeHostnameGetItem, error) {
-	if suffix == "" && domain != "" {
-		suffix = "edgesuite.net"
-		if strings.HasSuffix(domain, "edgekey.net") {
-			suffix = "edgekey.net"
-		}
-	}
-
-	if prefix == "" && domain != "" {
-		prefix = strings.TrimSuffix(domain, "."+suffix)
-	}
-
-	if len(edgeHostnames.Items) == 0 {
-		return nil, errors.New("no hostnames found, did you call GetHostnames()?")
-	}
-
-	for _, eHn := range edgeHostnames.Items {
-		if (eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix) || eHn.ID == id {
-			return &eHn, nil
-		}
-	}
-
-	return nil, fmt.Errorf("%w: %s", ErrEdgeHostnameNotFound, domain)
 }
