@@ -136,9 +136,14 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 		}
 	}
 
+	if err := d.Set("name", cpCode.Name); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	// we use the first value returned.  Most cpcodes have but a single product and we need to pick one for comparison.
+	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(cpCode.ID)
-	d.Set("name", cpCode.Name)
-	d.Set("product", cpCode.ProductID)
 	logger.Debugf("Read CP Code: %+v", cpCode)
 	return nil
 }
