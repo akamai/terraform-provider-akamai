@@ -161,15 +161,15 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
 	group, err := getGroup(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating property: %w", err))
 	}
 	contract, err := getContract(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating property: %w", err))
 	}
 	product, err := getProduct(ctx, d, contract.ContractID, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating property: %w", err))
 	}
 
 	name, err := tools.GetStringValue("name", d)

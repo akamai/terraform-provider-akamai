@@ -78,12 +78,12 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	group, err := getGroup(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
 	}
 
 	contract, err := getContract(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
 	}
 
 	logger.Debugf("  Edgehostnames GROUP = %v", group)
@@ -91,7 +91,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	product, err := getProduct(ctx, d, contract.ContractID, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
 	}
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
@@ -254,12 +254,12 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 
 	group, err := getGroup(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("updating edge hostname: %w", err))
 	}
 
 	contract, err := getContract(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("updating edge hostname: %w", err))
 	}
 
 	logger.Debugf("  Edgehostnames GROUP = %v", group)

@@ -21,9 +21,9 @@ var (
 	// ErrLookingUpContract is returned when fetching contract from API client by contractID returned an error or no contract was found
 	ErrLookingUpContract = errors.New("looking up contract for provided group")
 	// ErrNoContractProvided is retured when no contract ID was provided but "name" was
-	ErrNoContractProvided = errors.New("contract ID is required for non-default name")
+	ErrNoContractProvided = errors.New("'contractId' is required for non-default name")
 	// ErrNoGroupProvided is returned when no "group" property is provided
-	ErrNoGroupProvided = errors.New("group not provided and it is a required input")
+	ErrNoGroupProvided = errors.New("'group' not provided and it is a required input")
 	// ErrNoContractsFound is returned when no contracts were found
 	ErrNoContractsFound = errors.New("no contracts were found")
 	// ErrContractNotFound is returned when contract with provided ID does not exist
@@ -34,7 +34,7 @@ var (
 	// PAPI Product errors
 
 	// ErrNoProductProvided is returned when no "product" property is provided
-	ErrNoProductProvided = errors.New("product not provided and it is a required input")
+	ErrNoProductProvided = errors.New("'product' not provided and it is a required input")
 	// ErrProductFetch represents error while fetching product
 	ErrProductFetch = errors.New("fetching product")
 	// ErrProductNotFound is returned when product with provided ID does not exist
