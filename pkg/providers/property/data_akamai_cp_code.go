@@ -29,6 +29,10 @@ func dataSourceCPCode() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"product": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
