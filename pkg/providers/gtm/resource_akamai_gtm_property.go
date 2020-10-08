@@ -77,7 +77,7 @@ func resourceGTMv1Property() *schema.Resource {
 			"static_ttl": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Default:  300,
+				Default:  600,
 			},
 			"static_rr_set": {
 				Type:     schema.TypeList,
@@ -821,6 +821,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 
 	for stateKey, stateValue := range map[string]interface{}{
 		"name":                        prop.Name,
+		"type":                        prop.Type,
 		"ipv6":                        prop.Ipv6,
 		"score_aggregation_type":      prop.ScoreAggregationType,
 		"stickiness_bonus_percentage": prop.StickinessBonusPercentage,
