@@ -30,7 +30,7 @@ func dataSourceCPCode() *schema.Resource {
 				ForceNew: true,
 			},
 			"product_ids": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
