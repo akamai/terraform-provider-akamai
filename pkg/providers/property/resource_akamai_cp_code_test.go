@@ -89,6 +89,40 @@ func TestResCPCode(t *testing.T) {
 		})
 	})
 
+	t.Run("use existing CP Code with multiple products", func(t *testing.T) {
+		client := &mockpapi{}
+		defer client.AssertExpectations(t)
+
+		// Contains CP Codes known to mock PAPI
+		CPCodes := []papi.CPCode{
+			{ID: "cpc_test2", Name: "test cpcode", ProductIDs: []string{"prd_test", "prd_wrong", "another_wrong"}}, // Matches name from fixture
+		}
+
+		// Values are from fixture:
+		expectGet(client, "ctr_test", "grp_test", &CPCodes)
+		// No mock behavior for create because we're using an existing CP code
+
+		// No mock behavior for delete because there is no delete operation for CP Codes
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{{
+					Config: loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_test2"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_test"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_test"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_test"),
+					),
+				}},
+				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
+			})
+		})
+	})
+
+
 	t.Run("use existing CP Code", func(t *testing.T) {
 		client := &mockpapi{}
 		defer client.AssertExpectations(t)
