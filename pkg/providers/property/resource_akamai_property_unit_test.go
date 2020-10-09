@@ -123,7 +123,7 @@ func TestResourceProperty(t *testing.T) {
 					CPCode: papi.CPCode{
 						ID:        "cpc_1",
 						Name:      "cpc_name",
-						ProductID: "prd_2",
+						ProductIDs: []string{"prd_2"},
 					},
 				}, nil)
 				m.On("GetProperty", mock.Anything, papi.GetPropertyRequest{

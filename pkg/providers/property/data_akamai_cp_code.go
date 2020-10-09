@@ -29,9 +29,10 @@ func dataSourceCPCode() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"product": {
-				Type:     schema.TypeString,
+			"product_ids": {
+				Type:     schema.TypeSet,
 				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
@@ -71,6 +72,9 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("product_ids", cpCode.ProductIDs); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(cpCode.ID)
 
 	log.Debugf("Read CP Code: %+v", cpCode)
