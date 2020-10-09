@@ -148,20 +148,21 @@ func TestResourceProperty(t *testing.T) {
 				m.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 2,
-					Rules: papi.Rules{
-						Behaviors: []papi.RuleBehavior{
-							{
-								Name: "cpCode",
-								Options: papi.RuleOptionsMap{
-									"value": papi.RuleOptionsMap{
-										"id": "cpc_1",
+					Rules: papi.RulesUpdate{
+						Rules: papi.Rules{
+							Behaviors: []papi.RuleBehavior{
+								{
+									Name: "cpCode",
+									Options: papi.RuleOptionsMap{
+										"value": papi.RuleOptionsMap{
+											"id": 1,
+										},
 									},
 								},
 							},
+							Name: "default",
 						},
-						Name: "default",
-					},
-				}).Return(&papi.UpdateRulesResponse{
+					}}).Return(&papi.UpdateRulesResponse{
 					ContractID:      "ctr_2",
 					GroupID:         "grp_2",
 					PropertyID:      "prp_123",
@@ -202,14 +203,14 @@ func TestResourceProperty(t *testing.T) {
 					PropertyVersion: 2,
 					ContractID:      "ctr_2",
 					GroupID:         "grp_2",
-					Hostnames: papi.HostnameRequestItems{Items: []papi.Hostname{
+					Hostnames: []papi.Hostname{
 						{
 							CnameType:      papi.HostnameCnameTypeEdgeHostname,
 							EdgeHostnameID: "eh_1",
 							CnameFrom:      "cnamefrom",
 							CnameTo:        "akamai.edgesuite.net",
 						},
-					}},
+					},
 				}).Return(&papi.UpdatePropertyVersionHostnamesResponse{
 					ContractID:      "ctr_2",
 					GroupID:         "grp_2",

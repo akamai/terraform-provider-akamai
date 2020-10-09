@@ -249,7 +249,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 func getRules(ctx context.Context, d *schema.ResourceData, property *papi.Property, contract, group string, meta akamai.OperationMeta) (papi.UpdateRulesRequest, error) {
 	req := papi.UpdateRulesRequest{}
 	logger := meta.Log("PAPI", "getRules")
-	req.Rules.Name = "default"
+	req.Rules.Rules.Name = "default"
 	req.PropertyID = d.Id()
 	req.PropertyVersion = property.LatestVersion
 	origin, err := createOrigin(d, logger)
@@ -263,7 +263,7 @@ func getRules(ctx context.Context, d *schema.ResourceData, property *papi.Proper
 		logger.Debugf("Unmarshal Rules from JSON")
 		rules = unmarshalRulesFromJSON(d)
 	}
-	req.Rules = *rules
+	req.Rules.Rules = *rules
 
 	cpCode, err := getCPCode(ctx, meta, contract, group, logger, d)
 	if err != nil {
@@ -271,7 +271,7 @@ func getRules(ctx context.Context, d *schema.ResourceData, property *papi.Proper
 	}
 
 	logger.Debugf("updateStandardBehaviors")
-	req.Rules.Behaviors = updateStandardBehaviors(rules.Behaviors, cpCode, origin, logger)
+	req.Rules.Rules.Behaviors = updateStandardBehaviors(rules.Behaviors, cpCode, origin, logger)
 	logger.Debugf("fixupPerformanceBehaviors")
 	fixupPerformanceBehaviors(rules, logger)
 
@@ -312,7 +312,7 @@ func setHostnames(ctx context.Context, property *papi.Property, d *schema.Resour
 		}
 		logger.Debugf("Found edge hostname: %s", newEdgeHostname.Domain)
 
-		hostname.Hostnames.Items = append(hostname.Hostnames.Items, papi.Hostname{
+		hostname.Hostnames = append(hostname.Hostnames, papi.Hostname{
 			CnameType:      papi.HostnameCnameTypeEdgeHostname,
 			EdgeHostnameID: newEdgeHostname.ID,
 			CnameFrom:      public,
@@ -914,11 +914,15 @@ func fixupPerformanceBehaviors(rules *papi.Rules, logger log.Interface) {
 func updateStandardBehaviors(behaviors []papi.RuleBehavior, cpCode *papi.CPCode, origin *papi.RuleOptionsMap, logger log.Interface) []papi.RuleBehavior {
 	logger.Debugf("cpCode: %#v", cpCode)
 	if cpCode != nil {
+		cpCodeID, err := tools.GetIntID(cpCode.ID, "cpc_")
+		if err != nil {
+			return nil
+		}
 		b := papi.RuleBehavior{
 			Name: "cpCode",
 			Options: papi.RuleOptionsMap{
 				"value": papi.RuleOptionsMap{
-					"id": cpCode.ID,
+					"id": cpCodeID,
 				},
 			},
 		}

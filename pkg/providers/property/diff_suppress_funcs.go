@@ -37,6 +37,12 @@ func compareRules(old, new *papi.Rules) bool {
 		len(old.Children) != len(new.Children) {
 		return false
 	}
+	if new.CriteriaMustSatisfy == papi.RuleCriteriaMustSatisfyAll {
+		new.CriteriaMustSatisfy = ""
+	}
+	if old.CriteriaMustSatisfy == papi.RuleCriteriaMustSatisfyAll {
+		old.CriteriaMustSatisfy = ""
+	}
 	if len(old.Children) > 0 {
 		for i := range old.Children {
 			// currently the provider uses "all" as default value for criteriaMustSatisfy field but the API does not return it, so we have to ignore it in the comparison

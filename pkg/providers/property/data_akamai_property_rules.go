@@ -276,7 +276,7 @@ func unmarshalRules(d *schema.ResourceData) (papi.Rules, error) {
 						// Fixup CPCode
 						if beh.Name == "cpCode" {
 							if cpCodeOption, ok := beh.Options["id"]; ok {
-								cpCodeID, err := tools.AddPrefix(tools.ConvertToString(cpCodeOption), "cpc_")
+								cpCodeID, err := tools.GetIntID(tools.ConvertToString(cpCodeOption), "cpc_")
 								if err != nil {
 									return papi.Rules{}, err
 								}

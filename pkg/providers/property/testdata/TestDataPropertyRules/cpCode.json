@@ -9,7 +9,7 @@
         "name": "cpCode",
         "options": {
           "value": {
-            "id": "cpc_12345"
+            "id": 12345
           }
         }
       }
