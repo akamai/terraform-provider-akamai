@@ -140,6 +140,9 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	// we use the first value returned.  Most cpcodes have but a single product and we need to pick one for comparison.
+	if len(cpCode.ProductIDs) == 0 {
+		return diag.Errorf("Couldn't find product id on the CP Code")
+	}
 	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
