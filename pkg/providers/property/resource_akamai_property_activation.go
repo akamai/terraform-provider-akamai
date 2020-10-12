@@ -74,6 +74,8 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
 	client := inst.Client(meta)
 
+	log.Debug("resourcePropertyActivationCreate call")
+
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -140,7 +142,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			// handle errors with no title since summary is required field
 			errorSummary := e.Title
 			if len(errorSummary) == 0 {
-				errorSummary = "Untitled Papi error message"
+				errorSummary = "Papi error message shown below"
 			}
 
 			diags = append(diags, diag.Diagnostic{
@@ -238,6 +240,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	log := meta.Log("PAPI", "resourcePropertyActivationDelete")
 	client := inst.Client(meta)
+
+	log.Debug("resourcePropertyActivationDelete call")
 
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -348,6 +352,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	log := meta.Log("PAPI", "resourcePropertyActivationRead")
 	client := inst.Client(meta)
 
+	log.Debug("resourcePropertyActivationRead call")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -374,9 +379,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 		version = property.Property.LatestVersion
 		log.Debugf("Version missing for read - computed as %+v", version)
 	}
-	if err != nil {
-		return diag.FromErr(err)
-	}
+
 	network, err := networkAlias(d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -390,6 +393,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	for _, act := range resp.Activations.Items {
+
 		if act.Network == papi.ActivationNetwork(network) && act.PropertyVersion == version {
 			log.Debugf("Found Existing Activation %s version %d", network, version)
 
@@ -399,7 +403,6 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 			if err := d.Set("version", act.PropertyVersion); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
-
 			d.SetId(act.ActivationID)
 
 			break
@@ -414,6 +417,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
 	client := inst.Client(meta)
 
+	log.Debug("resourcePropertyActivationUpdate call")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -480,7 +484,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			// handle errors with no title since summary is required field
 			errorSummary := e.Title
 			if len(errorSummary) == 0 {
-				errorSummary = "Untitled Papi error message"
+				errorSummary = "Papi error message shown below"
 			}
 
 			diags = append(diags, diag.Diagnostic{
