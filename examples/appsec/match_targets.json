@@ -1,7 +1,7 @@
 {
     "type": "website",
     "configId": 43253,
-    "configVersion": 5,
+    "configVersion":  15,
     "defaultFile": "NO_MATCH",
     "effectiveSecurityControls": {
         "applyApplicationLayerControls": true,

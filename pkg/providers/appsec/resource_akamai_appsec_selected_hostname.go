@@ -2,12 +2,14 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -64,8 +66,18 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		getSelectedHostname.ConfigID, _ = strconv.Atoi(s[0])
 		getSelectedHostname.Version, _ = strconv.Atoi(s[1])
 	} else {
-		getSelectedHostname.ConfigID = d.Get("config_id").(int)
-		getSelectedHostname.Version = d.Get("version").(int)
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getSelectedHostname.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getSelectedHostname.Version = version
+
 	}
 
 	selectedhostname, err := client.GetSelectedHostname(ctx, getSelectedHostname)
@@ -98,8 +110,18 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 
 	updateSelectedHostname := v2.UpdateSelectedHostnameRequest{}
 
-	updateSelectedHostname.ConfigID = d.Get("config_id").(int)
-	updateSelectedHostname.Version = d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSelectedHostname.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSelectedHostname.Version = version
+
 	mode := d.Get("mode").(string)
 
 	hn := v2.GetSelectedHostnamesRequest{}
@@ -113,8 +135,8 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	getSelectedHostnames := v2.GetSelectedHostnamesRequest{}
-	getSelectedHostnames.ConfigID = d.Get("config_id").(int)
-	getSelectedHostnames.Version = d.Get("version").(int)
+	getSelectedHostnames.ConfigID = configid
+	getSelectedHostnames.Version = version
 
 	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
 	if err != nil {

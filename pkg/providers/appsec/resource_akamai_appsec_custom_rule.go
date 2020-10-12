@@ -3,10 +3,12 @@ package appsec
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -46,7 +48,12 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	createCustomRule := v2.CreateCustomRuleRequest{}
 
-	createCustomRule.ConfigID = d.Get("config_id").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createCustomRule.ConfigID = configid
+
 	jsonpostpayload := d.Get("rules").(string)
 	json.Unmarshal([]byte(jsonpostpayload), &createCustomRule)
 
@@ -68,14 +75,19 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	updateCustomRule := v2.UpdateCustomRuleRequest{}
 
-	updateCustomRule.ConfigID = d.Get("config_id").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRule.ConfigID = configid
+
 	updateCustomRule.ID, _ = strconv.Atoi(d.Id())
 	jsonpostpayload := d.Get("rules").(string)
 	json.Unmarshal([]byte(jsonpostpayload), &updateCustomRule)
 
-	_, err := client.UpdateCustomRule(ctx, updateCustomRule)
-	if err != nil {
-		logger.Warnf("calling 'updateCustomRule': %s", err.Error())
+	_, erru := client.UpdateCustomRule(ctx, updateCustomRule)
+	if erru != nil {
+		logger.Warnf("calling 'updateCustomRule': %s", erru.Error())
 	}
 
 	return resourceCustomRuleRead(ctx, d, m)
@@ -88,12 +100,17 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	removeCustomRule := v2.RemoveCustomRuleRequest{}
 
-	removeCustomRule.ConfigID = d.Get("config_id").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeCustomRule.ConfigID = configid
+
 	removeCustomRule.ID, _ = strconv.Atoi(d.Id())
 
-	_, err := client.RemoveCustomRule(ctx, removeCustomRule)
-	if err != nil {
-		logger.Warnf("calling 'removeCustomRule': %s", err.Error())
+	_, errd := client.RemoveCustomRule(ctx, removeCustomRule)
+	if errd != nil {
+		logger.Warnf("calling 'removeCustomRule': %s", errd.Error())
 	}
 
 	d.SetId("")
@@ -108,7 +125,12 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	getCustomRule := v2.GetCustomRuleRequest{}
 
-	getCustomRule.ConfigID = d.Get("config_id").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getCustomRule.ConfigID = configid
+
 	getCustomRule.ID, _ = strconv.Atoi(d.Id())
 
 	customrule, err := client.GetCustomRule(ctx, getCustomRule)

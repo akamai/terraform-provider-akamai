@@ -1,14 +1,17 @@
 package appsec
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"strconv"
 
-	appsec "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -17,10 +20,10 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceRatePolicy() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRatePolicyCreate,
-		Read:   resourceRatePolicyRead,
-		Update: resourceRatePolicyUpdate,
-		Delete: resourceRatePolicyDelete,
+		CreateContext: resourceRatePolicyCreate,
+		ReadContext:   resourceRatePolicyRead,
+		UpdateContext: resourceRatePolicyUpdate,
+		DeleteContext: resourceRatePolicyDelete,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -42,63 +45,101 @@ func resourceRatePolicy() *schema.Resource {
 	}
 }
 
-func resourceRatePolicyCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceRatePolicyCreate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Creating RatePolicy")
+func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceRatePolicyCreate")
 
-	ratepolicy := appsec.NewRatePolicyResponse()
+	createRatePolicy := v2.CreateRatePolicyRequest{}
 
 	jsonpostpayload := d.Get("json")
-	json.Unmarshal([]byte(jsonpostpayload.(string)), &ratepolicy)
-	ratepolicy.ConfigID = d.Get("config_id").(int)
-	ratepolicy.ConfigVersion = d.Get("version").(int)
+	json.Unmarshal([]byte(jsonpostpayload.(string)), &createRatePolicy)
 
-	err := ratepolicy.SaveRatePolicy(CorrelationID)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createRatePolicy.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createRatePolicy.ConfigVersion = version
+
+	ratepolicy, err := client.CreateRatePolicy(ctx, createRatePolicy)
 	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return err
+		logger.Warnf("calling 'createRatePolicyAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.Itoa(ratepolicy.ID))
 
-	return resourceRatePolicyRead(d, meta)
+	return resourceRatePolicyRead(ctx, d, meta)
 }
 
-func resourceRatePolicyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceRatePolicyUpdate")
 	CorrelationID := "[APPSEC][resourceRatePolicyUpdate-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Updating RatePolicy")
 
-	ratepolicy := appsec.NewRatePolicyResponse()
+	updateRatePolicy := v2.UpdateRatePolicyRequest{}
 
 	jsonpostpayload := d.Get("json")
-	json.Unmarshal([]byte(jsonpostpayload.(string)), &ratepolicy)
-	ratepolicy.ConfigID = d.Get("config_id").(int)
-	ratepolicy.ConfigVersion = d.Get("version").(int)
-	ratepolicy.ID, _ = strconv.Atoi(d.Id())
+	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateRatePolicy)
 
-	err := ratepolicy.UpdateRatePolicy(CorrelationID)
-	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateRatePolicy.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateRatePolicy.ConfigVersion = version
+
+	updateRatePolicy.RatePolicyID, _ = strconv.Atoi(d.Id())
+
+	_, erru := client.UpdateRatePolicy(ctx, updateRatePolicy)
+	if erru != nil {
+		logger.Warnf("calling 'updateRatePolicyAction': %s", erru.Error())
+		return diag.FromErr(erru)
 	}
 
-	return resourceRatePolicyRead(d, meta)
+	return resourceRatePolicyRead(ctx, d, meta)
 }
 
-func resourceRatePolicyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceRatePolicyDelete")
 	CorrelationID := "[APPSEC][resourceRatePolicyDelete-" + tools.CreateNonce() + "]"
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Deleting RatePolicy")
 
-	ratepolicy := appsec.NewRatePolicyResponse()
+	deleteRatePolicy := v2.RemoveRatePolicyRequest{}
 
-	ratepolicy.ConfigID = d.Get("config_id").(int)
-	ratepolicy.ConfigVersion = d.Get("version").(int)
-	ratepolicy.ID, _ = strconv.Atoi(d.Id())
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	deleteRatePolicy.ConfigID = configid
 
-	err := ratepolicy.DeleteRatePolicy(CorrelationID)
-	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return nil
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	deleteRatePolicy.ConfigVersion = version
+
+	deleteRatePolicy.RatePolicyID, _ = strconv.Atoi(d.Id())
+
+	_, errd := client.RemoveRatePolicy(ctx, deleteRatePolicy)
+	if errd != nil {
+		logger.Warnf("calling 'removeRatePolicyAction': %s", errd.Error())
+		return diag.FromErr(errd)
 	}
 
 	d.SetId("")
@@ -106,20 +147,31 @@ func resourceRatePolicyDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceRatePolicyRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[APPSEC][resourceRatePolicyRead-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "  Read RatePolicy")
+func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceRatePolicyRead")
 
-	ratepolicy := appsec.NewRatePolicyResponse()
+	getRatePolicy := v2.GetRatePolicyRequest{}
 
-	ratepolicy.ConfigID = d.Get("config_id").(int)
-	ratepolicy.ConfigVersion = d.Get("version").(int)
-	ratepolicy.ID, _ = strconv.Atoi(d.Id())
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getRatePolicy.ConfigID = configid
 
-	err := ratepolicy.GetRatePolicy(CorrelationID)
-	if err != nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Error  %v\n", err))
-		return err
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getRatePolicy.ConfigVersion = version
+
+	getRatePolicy.RatePolicyID, _ = strconv.Atoi(d.Id())
+
+	ratepolicy, errd := client.GetRatePolicy(ctx, getRatePolicy)
+	if errd != nil {
+		logger.Warnf("calling 'getRatePolicyAction': %s", errd.Error())
+		return diag.FromErr(errd)
 	}
 
 	d.SetId(strconv.Itoa(ratepolicy.ID))

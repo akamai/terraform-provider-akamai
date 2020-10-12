@@ -81,6 +81,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_selected_hostnames":          resourceSelectedHostname(),
 			"akamai_appsec_security_policy_clone":       resourceSecurityPolicyClone(),
 			"akamai_appsec_match_target":                resourceMatchTarget(),
+			"akamai_appsec_match_target_sequence":       resourceMatchTargetSequence(),
 			"akamai_appsec_custom_rule":                 resourceCustomRule(),
 			"akamai_appsec_custom_rule_action":          resourceCustomRuleAction(),
 			"akamai_appsec_activations":                 resourceActivations(),

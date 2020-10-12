@@ -2,10 +2,12 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -50,8 +52,17 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 
 	getConfigurationVersion := v2.GetConfigurationVersionsRequest{}
 
-	getConfigurationVersion.ConfigID = d.Get("config_id").(int)
-	configVersion := d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getConfigurationVersion.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getConfigurationVersion.ConfigVersion = version
 
 	configurationversion, err := client.GetConfigurationVersions(ctx, getConfigurationVersion)
 	if err != nil {
@@ -62,7 +73,7 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 
 	for _, configval := range configurationversion.VersionList {
 
-		if configval.Version == configVersion {
+		if configval.Version == version {
 			d.Set("config_id", configval.ConfigID)
 			d.Set("staging_status", configval.Staging.Status)
 			d.Set("production_status", configval.Production.Status)

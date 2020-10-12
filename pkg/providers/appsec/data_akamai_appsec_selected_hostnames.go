@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -61,8 +63,17 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 		getSelectedHostnames.ConfigID, _ = strconv.Atoi(s[0])
 		getSelectedHostnames.Version, _ = strconv.Atoi(s[1])
 	} else {
-		getSelectedHostnames.ConfigID = d.Get("config_id").(int)
-		getSelectedHostnames.Version = d.Get("version").(int)
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getSelectedHostnames.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getSelectedHostnames.Version = version
 	}
 
 	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)

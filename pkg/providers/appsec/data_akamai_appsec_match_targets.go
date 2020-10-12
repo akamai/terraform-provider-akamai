@@ -2,12 +2,14 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
 	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -41,8 +43,17 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getMatchTargets := v2.GetMatchTargetsRequest{}
 
-	getMatchTargets.ConfigID = d.Get("config_id").(int)
-	getMatchTargets.ConfigVersion = d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getMatchTargets.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getMatchTargets.ConfigVersion = version
 
 	matchtargets, err := client.GetMatchTargets(ctx, getMatchTargets)
 	if err != nil {

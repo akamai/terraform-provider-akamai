@@ -2,9 +2,11 @@ package appsec
 
 import (
 	"context"
+	"errors"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -56,11 +58,35 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 
 	createSecurityPolicyClone := v2.CreateSecurityPolicyCloneRequest{}
 
-	createSecurityPolicyClone.ConfigID = d.Get("config_id").(int)
-	createSecurityPolicyClone.Version = d.Get("version").(int)
-	createSecurityPolicyClone.CreateFromSecurityPolicy = d.Get("create_from_security_policy").(string)
-	createSecurityPolicyClone.PolicyName = d.Get("policy_name").(string)
-	createSecurityPolicyClone.PolicyPrefix = d.Get("policy_prefix").(string)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createSecurityPolicyClone.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createSecurityPolicyClone.Version = version
+
+	createfromsecuritypolicy, err := tools.GetStringValue("create_from_security_policy", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createSecurityPolicyClone.CreateFromSecurityPolicy = createfromsecuritypolicy
+
+	policyname, err := tools.GetStringValue("policy_name", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createSecurityPolicyClone.PolicyName = policyname
+
+	policyprefix, err := tools.GetStringValue("policy_prefix", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createSecurityPolicyClone.PolicyPrefix = policyprefix
 
 	spcr, err := client.CreateSecurityPolicyClone(ctx, createSecurityPolicyClone)
 	if err != nil {
@@ -82,8 +108,18 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 
 	getSecurityPolicyClone := v2.GetSecurityPolicyCloneRequest{}
 
-	getSecurityPolicyClone.ConfigID = d.Get("config_id").(int)
-	getSecurityPolicyClone.Version = d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getSecurityPolicyClone.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getSecurityPolicyClone.Version = version
+
 	getSecurityPolicyClone.PolicyID = d.Id()
 
 	securitypolicyclone, err := client.GetSecurityPolicyClone(ctx, getSecurityPolicyClone)

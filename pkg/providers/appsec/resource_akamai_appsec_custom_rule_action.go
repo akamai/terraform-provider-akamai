@@ -2,10 +2,12 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -60,10 +62,29 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 
 	getCustomRuleAction := v2.GetCustomRuleActionRequest{}
 
-	getCustomRuleAction.ConfigID = d.Get("config_id").(int)
-	getCustomRuleAction.Version = d.Get("version").(int)
-	getCustomRuleAction.PolicyID = d.Get("policy_id").(string)
-	getCustomRuleAction.ID = d.Get("rule_id").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getCustomRuleAction.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getCustomRuleAction.Version = version
+
+	policyid, err := tools.GetStringValue("policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getCustomRuleAction.PolicyID = policyid
+
+	ruleid, err := tools.GetIntValue("rule_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getCustomRuleAction.ID = ruleid
 
 	customruleaction, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
 	if err != nil {
@@ -83,15 +104,35 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 
 	updateCustomRuleAction := v2.UpdateCustomRuleActionRequest{}
 
-	updateCustomRuleAction.ConfigID = d.Get("config_id").(int)
-	updateCustomRuleAction.Version = d.Get("version").(int)
-	updateCustomRuleAction.PolicyID = d.Get("policy_id").(string)
-	updateCustomRuleAction.ID = d.Get("rule_id").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRuleAction.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRuleAction.Version = version
+
+	policyid, err := tools.GetStringValue("policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRuleAction.PolicyID = policyid
+
+	ruleid, err := tools.GetIntValue("rule_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRuleAction.ID = ruleid
+
 	updateCustomRuleAction.Action = "none"
 
-	_, err := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
-	if err != nil {
-		logger.Warnf("calling 'removeCustomRuleAction': %s", err.Error())
+	_, errd := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
+	if errd != nil {
+		logger.Warnf("calling 'removeCustomRuleAction': %s", errd.Error())
 	}
 
 	d.SetId("")
@@ -106,11 +147,35 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 
 	updateCustomRuleAction := v2.UpdateCustomRuleActionRequest{}
 
-	updateCustomRuleAction.ConfigID = d.Get("config_id").(int)
-	updateCustomRuleAction.Version = d.Get("version").(int)
-	updateCustomRuleAction.PolicyID = d.Get("policy_id").(string)
-	updateCustomRuleAction.ID = d.Get("rule_id").(int)
-	updateCustomRuleAction.Action = d.Get("custom_rule_action").(string)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRuleAction.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRuleAction.Version = version
+
+	policyid, err := tools.GetStringValue("policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRuleAction.PolicyID = policyid
+
+	ruleid, err := tools.GetIntValue("rule_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRuleAction.ID = ruleid
+
+	customruleaction, err := tools.GetStringValue("custom_rule_action", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateCustomRuleAction.Action = customruleaction
 
 	_, erru := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if erru != nil {

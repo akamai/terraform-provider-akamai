@@ -2,11 +2,13 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -50,8 +52,17 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 
 	getExportConfiguration := v2.GetExportConfigurationsRequest{}
 
-	getExportConfiguration.ConfigID = d.Get("config_id").(int)
-	getExportConfiguration.Version = d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getExportConfiguration.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getExportConfiguration.Version = version
 
 	exportconfiguration, err := client.GetExportConfigurations(ctx, getExportConfiguration)
 	if err != nil {

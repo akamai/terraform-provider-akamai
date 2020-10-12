@@ -2,10 +2,12 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -50,8 +52,17 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 
 	createConfigurationClone := v2.CreateConfigurationCloneRequest{}
 
-	createConfigurationClone.ConfigID = d.Get("config_id").(int)
-	createConfigurationClone.CreateFromVersion = d.Get("create_from_version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createConfigurationClone.ConfigID = configid
+
+	version, err := tools.GetIntValue("create_from_version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createConfigurationClone.CreateFromVersion = version
 
 	ccr, err := client.CreateConfigurationClone(ctx, createConfigurationClone)
 	if err != nil {
@@ -71,8 +82,17 @@ func resourceConfigurationCloneRead(ctx context.Context, d *schema.ResourceData,
 
 	getConfigurationClone := v2.GetConfigurationCloneRequest{}
 
-	getConfigurationClone.ConfigID = d.Get("config_id").(int)
-	getConfigurationClone.Version = d.Get("create_from_version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getConfigurationClone.ConfigID = configid
+
+	version, err := tools.GetIntValue("create_from_version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getConfigurationClone.Version = version
 
 	configurationclone, err := client.GetConfigurationClone(ctx, getConfigurationClone)
 	if err != nil {

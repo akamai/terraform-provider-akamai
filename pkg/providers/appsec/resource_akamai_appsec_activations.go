@@ -175,6 +175,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("activationid  %v\n", removeActivations.ActivationID))
 	//postpayload := appsec.NewActivationsPost()
 	ap := v2.ActivationConfigs{}
+
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

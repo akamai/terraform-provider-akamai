@@ -2,10 +2,12 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -68,13 +70,27 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 
 	getSlowPostProtectionSetting := v2.GetSlowPostProtectionSettingRequest{}
 
-	getSlowPostProtectionSetting.ConfigID = d.Get("config_id").(int)
-	getSlowPostProtectionSetting.Version = d.Get("version").(int)
-	getSlowPostProtectionSetting.PolicyID = d.Get("policy_id").(string)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getSlowPostProtectionSetting.ConfigID = configid
 
-	_, err := client.GetSlowPostProtectionSetting(ctx, getSlowPostProtectionSetting)
-	if err != nil {
-		logger.Warnf("calling 'getSlowPostProtectionSetting': %s", err.Error())
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getSlowPostProtectionSetting.Version = version
+
+	policyid, err := tools.GetStringValue("policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getSlowPostProtectionSetting.PolicyID = policyid
+
+	_, errg := client.GetSlowPostProtectionSetting(ctx, getSlowPostProtectionSetting)
+	if errg != nil {
+		logger.Warnf("calling 'getSlowPostProtectionSetting': %s", errg.Error())
 	}
 
 	d.SetId(strconv.Itoa(getSlowPostProtectionSetting.ConfigID))
@@ -83,9 +99,6 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 }
 
 func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	//meta := akamai.Meta(m)
-	//client := inst.Client(meta)
-	//logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingRemove")
 
 	return schema.NoopContext(nil, d, m)
 }
@@ -97,19 +110,51 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 
 	updateSlowPostProtectionSetting := v2.UpdateSlowPostProtectionSettingRequest{}
 
-	//slowpostprotectionsettingspost := appsec.NewSlowPostProtectionSettingsPost()
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtectionSetting.ConfigID = configid
 
-	updateSlowPostProtectionSetting.ConfigID = d.Get("config_id").(int)
-	updateSlowPostProtectionSetting.Version = d.Get("version").(int)
-	updateSlowPostProtectionSetting.PolicyID = d.Get("policy_id").(string)
-	updateSlowPostProtectionSetting.Action = d.Get("slow_rate_action").(string)
-	updateSlowPostProtectionSetting.SlowRateThreshold.Rate = d.Get("slow_rate_threshold_rate").(int)
-	updateSlowPostProtectionSetting.SlowRateThreshold.Period = d.Get("slow_rate_threshold_period").(int)
-	updateSlowPostProtectionSetting.DurationThreshold.Timeout = d.Get("duration_threshold_timeout").(int)
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtectionSetting.Version = version
 
-	_, err := client.UpdateSlowPostProtectionSetting(ctx, updateSlowPostProtectionSetting)
-	if err != nil {
-		logger.Warnf("calling 'updateSlowPostProtectionSetting': %s", err.Error())
+	policyid, err := tools.GetStringValue("policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtectionSetting.PolicyID = policyid
+
+	slowrateaction, err := tools.GetStringValue("slow_rate_action", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtectionSetting.Action = slowrateaction
+
+	slowratethresholdrate, err := tools.GetIntValue("slow_rate_threshold_rate", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtectionSetting.SlowRateThreshold.Rate = slowratethresholdrate
+
+	slowratethresholdperiod, err := tools.GetIntValue("slow_rate_threshold_period", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtectionSetting.SlowRateThreshold.Period = slowratethresholdperiod
+
+	durationthresholdtimeout, err := tools.GetIntValue("duration_threshold_timeout", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtectionSetting.DurationThreshold.Timeout = durationthresholdtimeout
+
+	_, erru := client.UpdateSlowPostProtectionSetting(ctx, updateSlowPostProtectionSetting)
+	if erru != nil {
+		logger.Warnf("calling 'updateSlowPostProtectionSetting': %s", erru.Error())
 	}
 
 	return resourceSlowPostProtectionSettingRead(ctx, d, m)
