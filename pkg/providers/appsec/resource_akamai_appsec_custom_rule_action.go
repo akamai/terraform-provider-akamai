@@ -187,3 +187,9 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 
 	return resourceCustomRuleActionRead(ctx, d, m)
 }
+
+const (
+	Alert = "alert"
+	Deny  = "deny"
+	None  = "none"
+)
