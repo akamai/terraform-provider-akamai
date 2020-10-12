@@ -1,6 +1,10 @@
 package property
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+)
 
 var (
 	// PAPI group errors
@@ -66,4 +70,32 @@ var (
 
 	// PAPI edge hostnames errors
 	ErrEdgeHostnameNotFound = errors.New("unable to find edge hostname")
+
+	// DiagWarnActivationTimeout returned on activation poll timeout
+	DiagWarnActivationTimeout = diag.Diagnostic{
+		Severity: diag.Warning,
+		Summary:  "Timeout waiting for activation status",
+		Detail: `
+The activation creation request has been started successfully, however the operation timeout was 
+exceeded while waiting for the remote resource to update. You may retry the operation to continue 
+to wait for the final status.
+
+It is recommended that the timeout for activation resources be set to 90 minutes.
+See: https://www.terraform.io/docs/configuration/resources.html#operation-timeouts
+`,
+	}
+
+	// DiagWarnActivationCanceled is returned on activation poll cancel
+	DiagWarnActivationCanceled = diag.Diagnostic{
+		Severity: diag.Warning,
+		Summary:  "Operation canceled while waiting for activation status",
+		Detail: `
+The activation creation request has been started successfully, however the a cancellation was recived
+while waiting for the remote resource to update. You may retry the operation to continue to wait for 
+the final status.
+
+It is recommended that the timeout for activation resources be set to 90 minutes.
+See: https://www.terraform.io/docs/configuration/resources.html#operation-timeouts
+`,
+	}
 )

@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/spf13/cast"
 	"strings"
 	"time"
+
+	"github.com/spf13/cast"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -25,6 +26,9 @@ func resourcePropertyActivation() *schema.Resource {
 		UpdateContext: resourcePropertyActivationUpdate,
 		DeleteContext: resourcePropertyActivationDelete,
 		Schema:        akamaiPropertyActivationSchema,
+		Timeouts: &schema.ResourceTimeout{
+			Default: &PropertyResourceTimeout,
+		},
 	}
 }
 
@@ -36,6 +40,9 @@ const (
 var (
 	// ActivationPollInterval is the interval for polling an activation status on creation
 	ActivationPollInterval = ActivationPollMinimum
+
+	// PropertyResourceTimeout is the default timeout for the resource operations
+	PropertyResourceTimeout = time.Minute * 90
 )
 
 var akamaiPropertyActivationSchema = map[string]*schema.Schema{
@@ -79,6 +86,10 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		ctx,
 		session.WithContextLog(logger),
 	)
+
+	if dead, ok := ctx.Deadline(); ok {
+		logger.Debugf("activation create with deadline in %s", dead.Sub(time.Now()).String())
+	}
 
 	activate, err := tools.GetBoolValue("activate", d)
 	if err != nil {
@@ -211,6 +222,11 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			activation = act.Activation
 
 		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return diag.Diagnostics{DiagWarnActivationTimeout}
+			} else if errors.Is(ctx.Err(), context.Canceled) {
+				return diag.Diagnostics{DiagWarnActivationCanceled}
+			}
 			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
 	}
