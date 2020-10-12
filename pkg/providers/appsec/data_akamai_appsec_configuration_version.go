@@ -67,6 +67,7 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 	configurationversion, err := client.GetConfigurationVersions(ctx, getConfigurationVersion)
 	if err != nil {
 		logger.Warnf("calling 'getConfigurationVersion': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.Set("latest_version", configurationversion.LastCreatedVersion)

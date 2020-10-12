@@ -102,6 +102,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	_, err := client.UpdateMatchTargetSequence(ctx, updateMatchTargetSequence)
 	if err != nil {
 		logger.Warnf("calling 'updateMatchTargetSequence': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceMatchTargetSequenceRead(ctx, d, m)
@@ -138,6 +139,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	matchtargetsequences, err := client.GetMatchTargetSequences(ctx, getMatchTargetSequences)
 	if err != nil {
 		logger.Warnf("calling 'getMatchTargetSequence': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.Set("type", matchtargetsequences.MatchTargets.APITargets[0].Type)

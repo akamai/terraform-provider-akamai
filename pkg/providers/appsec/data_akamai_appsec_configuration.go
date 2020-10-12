@@ -59,6 +59,7 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 	configuration, err := client.GetConfigurations(ctx, getConfiguration)
 	if err != nil {
 		logger.Warnf("calling 'getConfiguration': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	var configlist string

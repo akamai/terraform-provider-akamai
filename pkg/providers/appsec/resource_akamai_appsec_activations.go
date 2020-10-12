@@ -123,6 +123,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	postresp, err := client.CreateActivations(ctx, createActivations, true)
 	if err != nil {
 		logger.Warnf("calling 'createActivations': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.Itoa(postresp.ActivationID))
@@ -206,6 +207,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	if err != nil {
 		logger.Warnf("calling 'removeActivations': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.Itoa(postresp.ActivationID))
@@ -247,6 +249,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	activations, err := client.GetActivations(ctx, getActivations)
 	if err != nil {
 		logger.Warnf("calling 'getActivations': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.Set("status", activations.Status)

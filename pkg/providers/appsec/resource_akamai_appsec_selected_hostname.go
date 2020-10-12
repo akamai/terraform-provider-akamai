@@ -83,6 +83,7 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 	selectedhostname, err := client.GetSelectedHostname(ctx, getSelectedHostname)
 	if err != nil {
 		logger.Warnf("calling 'getSelectedHostname': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	newhdata := make([]string, 0, len(selectedhostname.HostnameList))
@@ -141,6 +142,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
 	if err != nil {
 		logger.Warnf("calling 'getSelectedHostnames': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	switch mode {

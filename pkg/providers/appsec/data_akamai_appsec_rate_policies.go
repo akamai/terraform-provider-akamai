@@ -58,6 +58,7 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	ratepolicies, err := client.GetRatePolicies(ctx, getRatePolicies)
 	if err != nil {
 		logger.Warnf("calling 'getRatePolicies': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}

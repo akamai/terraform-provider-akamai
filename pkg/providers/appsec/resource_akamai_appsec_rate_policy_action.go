@@ -77,6 +77,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	ratepolicyaction, err := client.GetRatePolicyAction(ctx, getRatePolicyAction)
 	if err != nil {
 		logger.Warnf("calling 'getRatePolicyAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	for _, configval := range ratepolicyaction.RatePolicyActions {
@@ -103,6 +104,7 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	_, err := client.UpdateRatePolicyAction(ctx, updateRatePolicyAction)
 	if err != nil {
 		logger.Warnf("calling 'removeRatePolicyAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -127,6 +129,7 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	_, erru := client.UpdateRatePolicyAction(ctx, updateRatePolicyAction)
 	if erru != nil {
 		logger.Warnf("calling 'updateRatePolicyAction': %s", erru.Error())
+		return diag.FromErr(erru)
 	}
 
 	return resourceRatePolicyActionRead(ctx, d, m)

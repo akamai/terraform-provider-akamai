@@ -91,6 +91,7 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 	spcr, err := client.CreateSecurityPolicyClone(ctx, createSecurityPolicyClone)
 	if err != nil {
 		logger.Warnf("calling 'createSecurityPolicyClone': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.Set("policy_id", spcr.PolicyID)
@@ -125,6 +126,7 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 	securitypolicyclone, err := client.GetSecurityPolicyClone(ctx, getSecurityPolicyClone)
 	if err != nil {
 		logger.Warnf("calling 'getSecurityPolicyClone': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.Set("policy_name", securitypolicyclone.PolicyName)

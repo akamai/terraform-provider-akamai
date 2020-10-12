@@ -68,6 +68,7 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	customruleactions, err := client.GetCustomRuleActions(ctx, getCustomRuleActions)
 	if err != nil {
 		logger.Warnf("calling 'getCustomRuleActions': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}

@@ -67,6 +67,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	exportconfiguration, err := client.GetExportConfigurations(ctx, getExportConfiguration)
 	if err != nil {
 		logger.Warnf("calling 'getExportConfiguration': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	jsonBody, err := jsonhooks.Marshal(exportconfiguration)

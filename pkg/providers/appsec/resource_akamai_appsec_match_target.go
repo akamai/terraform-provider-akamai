@@ -136,6 +136,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	postresp, err := client.CreateMatchTarget(ctx, createMatchTarget)
 	if err != nil {
 		logger.Warnf("calling 'createMatchTarget': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.Itoa(postresp.TargetID))
@@ -179,6 +180,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	_, err := client.UpdateMatchTarget(ctx, updateMatchTarget)
 	if err != nil {
 		logger.Warnf("calling 'updateMatchTarget': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceMatchTargetRead(ctx, d, m)
@@ -198,6 +200,7 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	_, err := client.RemoveMatchTarget(ctx, removeMatchTarget)
 	if err != nil {
 		logger.Warnf("calling 'removeMatchTarget': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -219,6 +222,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	matchtarget, err := client.GetMatchTarget(ctx, getMatchTarget)
 	if err != nil {
 		logger.Warnf("calling 'getMatchTarget': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.Set("type", matchtarget.Type)

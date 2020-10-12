@@ -66,6 +66,7 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 	slowpostprotectionsettings, err := client.GetSlowPostProtectionSettings(ctx, getSlowPostProtectionSettings)
 	if err != nil {
 		logger.Warnf("calling 'getSlowPostProtectionSettings': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}

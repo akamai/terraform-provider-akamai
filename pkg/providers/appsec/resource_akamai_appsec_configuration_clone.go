@@ -67,6 +67,7 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 	ccr, err := client.CreateConfigurationClone(ctx, createConfigurationClone)
 	if err != nil {
 		logger.Warnf("calling 'createConfigurationClone': %s", err.Error())
+		return diag.FromErr(err)
 	}
 	logger.Warnf("calling 'createConfigurationClone CCR ': %v", ccr)
 	//	d.Set("version", ccr.Version)
@@ -97,6 +98,7 @@ func resourceConfigurationCloneRead(ctx context.Context, d *schema.ResourceData,
 	configurationclone, err := client.GetConfigurationClone(ctx, getConfigurationClone)
 	if err != nil {
 		logger.Warnf("calling 'getConfigurationClone': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.Itoa(configurationclone.ConfigID))

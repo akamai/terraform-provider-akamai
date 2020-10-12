@@ -72,6 +72,7 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	securitypolicy, err := client.GetSecurityPolicies(ctx, getSecurityPolicy)
 	if err != nil {
 		logger.Warnf("calling 'getSecurityPolicy': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	secpolicylist := make([]string, 0, len(securitypolicy.Policies))
