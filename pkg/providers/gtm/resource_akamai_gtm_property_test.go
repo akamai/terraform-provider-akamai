@@ -1,12 +1,14 @@
 package gtm
 
+/*
+
 import (
 	"fmt"
 	"log"
 	"strings"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -302,3 +304,5 @@ func testAccCheckAkamaiGTMPropertyExists(s *terraform.State) error {
 	}
 	return nil
 }
+
+*/
