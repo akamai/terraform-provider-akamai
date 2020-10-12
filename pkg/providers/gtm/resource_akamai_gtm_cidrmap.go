@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -80,6 +82,11 @@ func resourceGTMv1Cidrmap() *schema.Resource {
 func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapCreate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	domain, err := tools.GetStringValue("domain", d)
 	if err != nil {
@@ -98,7 +105,7 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if validateDefaultDC(defaultDatacenter, domain) != nil {
+	if validateDefaultDC(ctx, meta, defaultDatacenter, domain) != nil {
 		logger.Errorf("Default datacenter validation error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -107,9 +114,9 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		})
 	}
 
-	newCidr := populateNewCidrMapObject(d, m)
+	newCidr := populateNewCidrMapObject(ctx, meta, d, m)
 	logger.Debugf("Proposed New CidrMap: [%v]", newCidr)
-	cStatus, err := newCidr.Create(domain)
+	cStatus, err := inst.Client(meta).CreateCidrMap(ctx, newCidr, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -129,7 +136,7 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	} else {
 		if waitOnComplete {
-			done, err := waitForCompletion(domain, m)
+			done, err := waitForCompletion(ctx, domain, m)
 			if done {
 				logger.Infof("cidrMap Create completed")
 			} else {
@@ -159,6 +166,11 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 func resourceGTMv1CidrMapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapRead")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Reading cidrMap: %s", d.Id())
 	var diags diag.Diagnostics
@@ -168,7 +180,7 @@ func resourceGTMv1CidrMapRead(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("Invalid cidrMap ID: %s", d.Id())
 		return diag.FromErr(err)
 	}
-	cidr, err := gtm.GetCidrMap(cidrMap, domain)
+	cidr, err := inst.Client(meta).GetCidrMap(ctx, cidrMap, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -186,6 +198,11 @@ func resourceGTMv1CidrMapRead(ctx context.Context, d *schema.ResourceData, m int
 func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapUpdate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Updating cidrMap: %s", d.Id())
 	var diags diag.Diagnostics
@@ -196,7 +213,7 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	// Get existingCidrMap
-	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
+	existCidr, err := inst.Client(meta).GetCidrMap(ctx, cidrMap, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Update read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -208,7 +225,7 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("Updating cidrMap BEFORE: %v", existCidr)
 	populateCidrMapObject(d, existCidr, m)
 	logger.Debugf("Updating cidrMap PROPOSED: %v", existCidr)
-	uStat, err := existCidr.Update(domain)
+	uStat, err := inst.Client(meta).UpdateCidrMap(ctx, existCidr, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -229,7 +246,7 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	} else {
 		if waitOnComplete {
-			done, err := waitForCompletion(domain, m)
+			done, err := waitForCompletion(ctx, domain, m)
 			if done {
 				logger.Infof("cidrMap Update completed")
 			} else {
@@ -254,6 +271,12 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 func resourceGTMv1CidrMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapImport")
+	// create a context with logging for api calls
+	ctx := context.Background()
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Infof("cidrMap [%s] Import", d.Id())
 	// pull domain and cidrMap out of cidrMap id
@@ -261,7 +284,7 @@ func resourceGTMv1CidrMapImport(d *schema.ResourceData, m interface{}) ([]*schem
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	cidr, err := gtm.GetCidrMap(cidrMap, domain)
+	cidr, err := inst.Client(meta).GetCidrMap(ctx, cidrMap, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -282,6 +305,11 @@ func resourceGTMv1CidrMapImport(d *schema.ResourceData, m interface{}) ([]*schem
 func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapDelete")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Deleting cidrMap: %s", d.Id())
 	var diags diag.Diagnostics
@@ -291,7 +319,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 		logger.Errorf("Invalid cidrMap ID: %s", d.Id())
 		return diag.FromErr(err)
 	}
-	existCidr, err := gtm.GetCidrMap(cidrMap, domain)
+	existCidr, err := inst.Client(meta).GetCidrMap(ctx, cidrMap, domain)
 	if err != nil {
 		logger.Errorf("CidrMapDelete cidrMap doesn't exist: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -301,7 +329,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 		})
 	}
 	logger.Debugf("Deleting cidrMap: %v", existCidr)
-	uStat, err := existCidr.Delete(domain)
+	uStat, err := inst.Client(meta).DeleteCidrMap(ctx, existCidr, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -322,7 +350,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	} else {
 		if waitOnComplete {
-			done, err := waitForCompletion(domain, m)
+			done, err := waitForCompletion(ctx, domain, m)
 			if done {
 				logger.Infof("CidrMap Delete completed")
 			} else {
@@ -346,8 +374,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 }
 
 // Create and populate a new cidrMap object from cidrMap data
-func populateNewCidrMapObject(d *schema.ResourceData, m interface{}) *gtm.CidrMap {
-	meta := akamai.Meta(m)
+func populateNewCidrMapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.CidrMap {
 	logger := meta.Log("Akamai GTM", "populateNewCidrMapObject")
 
 	cidrMapName, err := tools.GetStringValue("name", d)
@@ -355,7 +382,7 @@ func populateNewCidrMapObject(d *schema.ResourceData, m interface{}) *gtm.CidrMa
 		logger.Errorf("cidrMap name not found in ResourceData: %s", err.Error())
 	}
 
-	cidrObj := gtm.NewCidrMap(cidrMapName)
+	cidrObj := inst.Client(meta).NewCidrMap(ctx, cidrMapName)
 	cidrObj.DefaultDatacenter = &gtm.DatacenterBase{}
 	cidrObj.Assignments = make([]*gtm.CidrAssignment, 0)
 	cidrObj.Links = make([]*gtm.Link, 1)
