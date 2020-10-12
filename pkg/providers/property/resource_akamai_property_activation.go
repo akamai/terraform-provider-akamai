@@ -63,7 +63,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Type:       schema.TypeBool,
 		Optional:   true,
 		Default:    true,
-		Deprecated: "the activate flag has been deprecated, activation will no always be performed",
+		Deprecated: "the activate flag has been deprecated, in future activation will always be performed",
 	},
 	"contact": {
 		Type:     schema.TypeSet,
@@ -81,6 +81,8 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
 	client := inst.Client(meta)
 
+	log.Debug("resourcePropertyActivationCreate call")
+
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -97,19 +99,11 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	if !activate {
 		d.SetId("none")
-		logger.Debugf("Done")
+		logger.Debugf("Done - activate=false")
 		return nil
 	}
 
 	propertyID, err := tools.GetStringValue("property", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// get the property
-	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
-		PropertyID: propertyID,
-	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,8 +113,17 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if version == 0 {
+		// get the property - so we can determine latest version
+		property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+			PropertyID: propertyID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
 		// use the latest version for the property
 		version = property.Property.LatestVersion
+		logger.Debugf("Version missing during create - computed as %+v", version)
 	}
 
 	// check to see if this tree has any issues
@@ -138,19 +141,26 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		diags := make([]diag.Diagnostic, 0)
 
 		for _, e := range rules.Errors {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  e.Title,
-				Detail:   e.Detail,
-			})
-
 			logger.WithFields(log.Fields{
 				"type":         e.Type,
 				"title":        e.Title,
 				"detail":       e.Detail,
 				"instance":     e.Instance,
+				"errorLocation":e.ErrorLocation,
 				"behaviorName": e.BehaviorName,
-			}).Debug("property rule error")
+			}).Warn("property rule error")
+
+			// handle errors with no title since summary is required field
+			errorSummary := e.Title
+			if len(errorSummary) == 0 {
+				errorSummary = "Papi error message shown below"
+			}
+
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  errorSummary,
+				Detail:   e.Detail,
+			})
 		}
 
 		return diags
@@ -246,6 +256,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	log := meta.Log("PAPI", "resourcePropertyActivationDelete")
 	client := inst.Client(meta)
+
+	log.Debug("resourcePropertyActivationDelete call")
 
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -354,7 +366,9 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	log := meta.Log("PAPI", "resourcePropertyActivationRead")
+	client := inst.Client(meta)
 
+	log.Debug("resourcePropertyActivationRead call")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -366,15 +380,28 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	version, err := tools.GetIntValue("version", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	if version == 0 {
+		// get the property - so we can determine latest version
+		property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+			PropertyID: propertyID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		// use the latest version for the property
+		version = property.Property.LatestVersion
+		log.Debugf("Version missing for read - computed as %+v", version)
+	}
+
 	network, err := networkAlias(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	resp, err := inst.Client(meta).GetActivations(ctx, papi.GetActivationsRequest{
+	resp, err := client.GetActivations(ctx, papi.GetActivationsRequest{
 		PropertyID: propertyID,
 	})
 	if err != nil {
@@ -382,6 +409,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	for _, act := range resp.Activations.Items {
+
 		if act.Network == papi.ActivationNetwork(network) && act.PropertyVersion == version {
 			log.Debugf("Found Existing Activation %s version %d", network, version)
 
@@ -391,7 +419,6 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 			if err := d.Set("version", act.PropertyVersion); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
-
 			d.SetId(act.ActivationID)
 
 			break
@@ -406,6 +433,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
 	client := inst.Client(meta)
 
+	log.Debug("resourcePropertyActivationUpdate call")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -427,21 +455,22 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	// get the property
-	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
-		PropertyID: propertyID,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if version == 0 {
+		// get the property - so we can determine latest version
+		property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+			PropertyID: propertyID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
 		// use the latest version for the property
 		version = property.Property.LatestVersion
+		logger.Debugf("Version missing for update - computed as %+v", version)
 	}
 
 	// check to see if this tree has any issues
@@ -459,19 +488,26 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		diags := make([]diag.Diagnostic, 0)
 
 		for _, e := range rules.Errors {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  e.Title,
-				Detail:   e.Detail,
-			})
-
 			logger.WithFields(log.Fields{
 				"type":         e.Type,
 				"title":        e.Title,
 				"detail":       e.Detail,
 				"instance":     e.Instance,
+				"errorLocation":e.ErrorLocation,
 				"behaviorName": e.BehaviorName,
-			}).Debug("property rule error")
+			}).Warn("property rule error")
+
+			// handle errors with no title since summary is required field
+			errorSummary := e.Title
+			if len(errorSummary) == 0 {
+				errorSummary = "Papi error message shown below"
+			}
+
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  errorSummary,
+				Detail:   e.Detail,
+			})
 		}
 
 		return diags
