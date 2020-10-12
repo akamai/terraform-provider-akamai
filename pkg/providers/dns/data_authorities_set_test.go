@@ -2,16 +2,14 @@ package dns
 
 import (
 	"errors"
-	"log"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
+func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		client := &mockdns{}
 
@@ -24,9 +22,8 @@ func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:     func() { testAccPreCheck(t) },
-				Providers:    testAccProviders,
-				CheckDestroy: testAccCheckAuthoritiesSetDestroy,
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDataSetAuthorities/basic.tf"),
@@ -46,9 +43,8 @@ func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:     func() { testAccPreCheck(t) },
-				Providers:    testAccProviders,
-				CheckDestroy: testAccCheckAuthoritiesSetDestroy,
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDataSetAuthorities/missing_contract.tf"),
@@ -71,9 +67,8 @@ func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:     func() { testAccPreCheck(t) },
-				Providers:    testAccProviders,
-				CheckDestroy: testAccCheckAuthoritiesSetDestroy,
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDataSetAuthorities/basic.tf"),
@@ -85,10 +80,4 @@ func TestAccDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-}
-
-func testAccCheckAuthoritiesSetDestroy(*terraform.State) error {
-	log.Printf("[Group] Searching for AuthoritiesSet Delete skipped ")
-
-	return nil
 }

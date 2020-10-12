@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
+func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 	t.Run("basic", func(t *testing.T) {
 		client := &mockdns{}
@@ -25,9 +25,8 @@ func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:     func() { testAccPreCheck(t) },
-				Providers:    testAccProviders,
-				CheckDestroy: testAccCheckAuthoritiesSetDestroy,
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDataDnsRecordSet/basic.tf"),
@@ -54,9 +53,8 @@ func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:     func() { testAccPreCheck(t) },
-				Providers:    testAccProviders,
-				CheckDestroy: testAccCheckAuthoritiesSetDestroy,
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDataDnsRecordSet/basic.tf"),

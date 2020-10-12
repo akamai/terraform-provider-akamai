@@ -293,7 +293,7 @@ func (d *mockdns) GetRdata(ctx context.Context, param string, param2 string, par
 }
 
 func (d *mockdns) ProcessRdata(ctx context.Context, param []string, param2 string) []string {
-	args := d.Called(ctx, param)
+	args := d.Called(ctx, param, param2)
 	if args.Get(0) == nil {
 		return nil
 	}
@@ -301,7 +301,7 @@ func (d *mockdns) ProcessRdata(ctx context.Context, param []string, param2 strin
 }
 
 func (d *mockdns) ParseRData(ctx context.Context, param string, param2 []string) map[string]interface{} {
-	args := d.Called(ctx, param)
+	args := d.Called(ctx, param, param2)
 	if args.Get(0) == nil {
 		return nil
 	}
