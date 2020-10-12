@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/spf13/cast"
 	"strings"
 	"time"
 
@@ -160,9 +161,13 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if activation == nil {
-		notify, err := tools.GetStringSliceValue("contact", d)
+		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
+		}
+		var notify []string
+		for _, contact := range notifySet.List() {
+			notify = append(notify, cast.ToString(contact))
 		}
 
 		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
@@ -182,6 +187,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		// query the activation to retreive the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: create.ActivationID,
+			PropertyID:   propertyID,
 		})
 		if err != nil {
 			return diag.FromErr(err)
@@ -197,6 +203,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
+				PropertyID:   propertyID,
 			})
 			if err != nil {
 				return diag.FromErr(err)
@@ -271,9 +278,13 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if activation == nil {
-		notify, err := tools.GetStringSliceValue("contact", d)
+		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
+		}
+		var notify []string
+		for _, contact := range notifySet.List() {
+			notify = append(notify, cast.ToString(contact))
 		}
 
 		delete, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
@@ -293,6 +304,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		// query the activation to retreive the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: delete.ActivationID,
+			PropertyID:   propertyID,
 		})
 		if err != nil {
 			return diag.FromErr(err)
@@ -306,6 +318,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
+				PropertyID:   propertyID,
 			})
 			if err != nil {
 				return diag.FromErr(err)
@@ -456,7 +469,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID:     propertyID,
 		version:        version,
-		network:        papi.ActivationNetwork(network),
+		network:        network,
 		activationType: papi.ActivationTypeActivate,
 	})
 	if err != nil {
@@ -464,16 +477,20 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if activation == nil {
-		notify, err := tools.GetStringSliceValue("contact", d)
+		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
+		}
+		var notify []string
+		for _, contact := range notifySet.List() {
+			notify = append(notify, cast.ToString(contact))
 		}
 
 		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
 			PropertyID: propertyID,
 			Activation: papi.Activation{
 				ActivationType:         papi.ActivationTypeActivate,
-				Network:                papi.ActivationNetwork(network),
+				Network:                network,
 				PropertyVersion:        version,
 				NotifyEmails:           notify,
 				AcknowledgeAllWarnings: true,
@@ -486,6 +503,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		// query the activation to retreive the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: create.ActivationID,
+			PropertyID:   propertyID,
 		})
 		if err != nil {
 			return diag.FromErr(err)
@@ -501,6 +519,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
+				PropertyID:   propertyID,
 			})
 			if err != nil {
 				return diag.FromErr(err)
