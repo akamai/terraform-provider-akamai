@@ -336,7 +336,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		apiError, ok := e.(*dns.Error)
 		if !ok && apiError.StatusCode != http.StatusOK {
 			logger.Debugf("Zone Update read faiiled: %s", e.Error())
-			return diag.Errorf("Update zone %s read failed: %w", hostname, e)
+			return diag.FromErr(fmt.Errorf("Update zone %s read failed: %w", hostname, e))
 		}
 	}
 	// Create Zone Post obj and copy Received vals over

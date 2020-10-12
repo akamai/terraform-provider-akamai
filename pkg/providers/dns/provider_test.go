@@ -2,16 +2,19 @@ package dns
 
 import (
 	"errors"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
@@ -21,12 +24,27 @@ var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	akamai.Provider(Subprovider())
-
-	testAccProvider = inst.Provider
+	testAccProvider = akamai.Provider(Subprovider())()
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testAccProvider,
 	}
+}
+
+// Only allow one test at a time to patch the client via useClient()
+var clientLock sync.Mutex
+
+// useClient swaps out the client on the global instance for the duration of the given func
+func useClient(client dns.DNS, f func()) {
+	clientLock.Lock()
+	orig := inst.client
+	inst.client = client
+
+	defer func() {
+		inst.client = orig
+		clientLock.Unlock()
+	}()
+
+	f()
 }
 
 func TestProvider(t *testing.T) {
@@ -328,4 +346,18 @@ func restoreEnv(env []string) {
 		envVar := strings.Split(value, "=")
 		os.Setenv(envVar[0], envVar[1])
 	}
+}
+
+// loadFixtureBytes returns the entire contents of the given file as a byte slice
+func loadFixtureBytes(path string) []byte {
+	contents, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return contents
+}
+
+// loadFixtureString returns the entire contents of the given file as a string
+func loadFixtureString(path string) string {
+	return string(loadFixtureBytes(path))
 }
