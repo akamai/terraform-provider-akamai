@@ -308,7 +308,16 @@ func setHostnames(ctx context.Context, property *papi.Property, d *schema.Resour
 		logger.Debugf("Searching for edge hostname: %s, for hostname: %s", edgeHostNameStr, public)
 		newEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostNameStr)
 		if err != nil {
-			return nil, fmt.Errorf("edge hostname not found: %s", edgeHostNameStr)
+			_, err = client.RemoveProperty(ctx, papi.RemovePropertyRequest{
+				PropertyID: property.PropertyID,
+				ContractID: property.ContractID,
+				GroupID:    property.GroupID,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("edge hostname not found and property cleanup failed: %s", edgeHostNameStr)
+			}
+			d.SetId("")
+			return nil, fmt.Errorf("edge hostname not found and property create failed: %s", edgeHostNameStr)
 		}
 		logger.Debugf("Found edge hostname: %s", newEdgeHostname.Domain)
 
