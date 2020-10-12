@@ -80,7 +80,7 @@ The activation creation request has been started successfully, however the opera
 exceeded while waiting for the remote resource to update. You may retry the operation to continue 
 to wait for the final status.
 
-It is recommended that the timeout for activation resources be set to 90 minutes.
+It is recommended that the timeout for activation resources be set to greater than 90 minutes.
 See: https://www.terraform.io/docs/configuration/resources.html#operation-timeouts
 `,
 	}
@@ -94,7 +94,7 @@ The activation creation request has been started successfully, however the a can
 while waiting for the remote resource to update. You may retry the operation to continue to wait for 
 the final status.
 
-It is recommended that the timeout for activation resources be set to 90 minutes.
+It is recommended that the timeout for activation resources be set to greater than 90 minutes.
 See: https://www.terraform.io/docs/configuration/resources.html#operation-timeouts
 `,
 	}
