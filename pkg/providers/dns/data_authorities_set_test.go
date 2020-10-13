@@ -3,6 +3,7 @@ package dns
 import (
 	"errors"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -13,12 +14,15 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		client := &mockdns{}
 
+		dataSourceName := "data.akamai_authorities_set.test"
+		outputName := "authorities"
+
+		authorities := []string{"ns1.exampleterraform.io", "ns2.exampleterraform.io"}
+
 		client.On("GetNameServerRecordList",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
-		).Return([]string{}, nil)
-
-		dataSourceName := "data.akamai_authorities_set.test"
+		).Return(authorities, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -29,6 +33,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 						Config: loadFixtureString("testdata/TestDataSetAuthorities/basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttrSet(dataSourceName, "id"),
+							resource.TestCheckOutput(outputName, strings.Join(authorities, ",")),
 						),
 					},
 				},
