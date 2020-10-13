@@ -1013,11 +1013,21 @@ func unmarshalRulesFromJSON(d *schema.ResourceData) *papi.Rules {
 				variableMap, ok := value.Value().(map[string]interface{})
 				if ok {
 					newVariable := papi.RuleVariable{}
-					newVariable.Name = variableMap["name"].(string)
-					newVariable.Description = variableMap["description"].(string)
-					newVariable.Value = variableMap["value"].(string)
-					newVariable.Hidden = variableMap["hidden"].(bool)
-					newVariable.Sensitive = variableMap["sensitive"].(bool)
+					if val, ok := variableMap["name"].(string); ok {
+						newVariable.Name = val
+					}
+					if val, ok := variableMap["description"].(string); ok {
+						newVariable.Description = val
+					}
+					if val, ok := variableMap["value"].(string); ok {
+						newVariable.Value = val
+					}
+					if val, ok := variableMap["hidden"].(bool); ok {
+						newVariable.Hidden = val
+					}
+					if val, ok := variableMap["sensitive"].(bool); ok {
+						newVariable.Sensitive = val
+					}
 					propertyRules.Variables = addVariable(propertyRules.Variables, newVariable)
 				}
 				return true
@@ -1049,11 +1059,21 @@ func unmarshalRulesFromJSON(d *schema.ResourceData) *papi.Rules {
 			variableMap, ok := value.Value().(map[string]interface{})
 			if ok {
 				newVariable := papi.RuleVariable{}
-				newVariable.Name = variableMap["name"].(string)
-				newVariable.Description = variableMap["description"].(string)
-				newVariable.Value = variableMap["value"].(string)
-				newVariable.Hidden = variableMap["hidden"].(bool)
-				newVariable.Sensitive = variableMap["sensitive"].(bool)
+				if val, ok := variableMap["name"].(string); ok {
+					newVariable.Name = val
+				}
+				if val, ok := variableMap["description"].(string); ok {
+					newVariable.Description = val
+				}
+				if val, ok := variableMap["value"].(string); ok {
+					newVariable.Value = val
+				}
+				if val, ok := variableMap["hidden"].(bool); ok {
+					newVariable.Hidden = val
+				}
+				if val, ok := variableMap["sensitive"].(bool); ok {
+					newVariable.Sensitive = val
+				}
 				propertyRules.Variables = addVariable(propertyRules.Variables, newVariable)
 			}
 			return true
