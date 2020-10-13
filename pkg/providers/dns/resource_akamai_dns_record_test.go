@@ -74,12 +74,12 @@ func TestResDnsRecord(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*dns.RecordBody"),
 			mock.AnythingOfType("string"),
-			mock.Anything,
+			mock.AnythingOfType("[]bool"),
 		).Return(nil).Run(func(mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{nil, notFound}
 		})
 
-		dataSourceName := "akamai_dns_record.a_record"
+		dataSourceName := "akamai_dns_record.soa_record"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -87,19 +87,19 @@ func TestResDnsRecord(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/create_a.tf"),
+						Config: loadFixtureString("testdata/TestResDnsRecord/create_soa.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
-							resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
-							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
+							//resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
+							//resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "SOA"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/update_a.tf"),
+						Config: loadFixtureString("testdata/TestResDnsRecord/create_soa.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
-							resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
-							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
+							//resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
+							//resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "SOA"),
 						),
 					},
 				},

@@ -10,7 +10,6 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-hclog v0.9.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
-	github.com/kr/pretty v0.2.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
@@ -27,7 +26,7 @@ require (
 )
 
 replace (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 => ../AkamaiOPEN-edgegrid-golang
+	//github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 => ../AkamaiOPEN-edgegrid-golang
 
 	// https://github.com/golang/lint/issues/446
 	github.com/golang/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422
