@@ -141,14 +141,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		diags := make([]diag.Diagnostic, 0)
 
 		for _, e := range rules.Errors {
-			logger.WithFields(log.Fields{
-				"type":         e.Type,
-				"title":        e.Title,
-				"detail":       e.Detail,
-				"instance":     e.Instance,
-				"errorLocation":e.ErrorLocation,
-				"behaviorName": e.BehaviorName,
-			}).Warn("property rule error")
+			logger.Warnf("property rule error %s", e.Error())
 
 			// handle errors with no title since summary is required field
 			errorSummary := e.Title
@@ -159,7 +152,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  errorSummary,
-				Detail:   e.Detail,
+				Detail:   e.Error(),
 			})
 		}
 
@@ -488,14 +481,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		diags := make([]diag.Diagnostic, 0)
 
 		for _, e := range rules.Errors {
-			logger.WithFields(log.Fields{
-				"type":         e.Type,
-				"title":        e.Title,
-				"detail":       e.Detail,
-				"instance":     e.Instance,
-				"errorLocation":e.ErrorLocation,
-				"behaviorName": e.BehaviorName,
-			}).Warn("property rule error")
+			logger.Warnf("property rule error %s", e.Error())
 
 			// handle errors with no title since summary is required field
 			errorSummary := e.Title
@@ -506,7 +492,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  errorSummary,
-				Detail:   e.Detail,
+				Detail:   e.Error(),
 			})
 		}
 
