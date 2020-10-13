@@ -3,7 +3,7 @@ layout: "akamai"
 page_title: "Akamai: Get Started with Property Management"
 subcategory: "Provisioning"
 description: |-
-  Get Started with Akamai Property Management using Terraform
+	Get Started with Akamai Property Management using Terraform
 ---
 
 # Get Started with Property Management
@@ -26,8 +26,8 @@ Set up your .edgerc credential files as described in [Get Started with Akamai AP
 
 ```hcl
 provider "akamai" {
-    edgerc = "~/.edgerc"
-    papi_section = "papi"
+	edgerc = "~/.edgerc"
+	config_section = "papi"
 }
 ```
 
@@ -57,7 +57,7 @@ Alternatively, if you have multiple contracts, you can specify the `group` which
 
 ```hcl
 data "akamai_contract" "default" {
-  group = "default"
+	group = "default"
 }
 ```
 
@@ -65,11 +65,11 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ## Retrieving The Group ID
 
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](/docs/providers/akamai/d/group.html). To fetch the default group ID no attributes need to be set:
+Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](/docs/providers/akamai/d/group.html). To fetch the default group ID no attributes other than contract need to be set:
 
 ```hcl
 data "akamai_group" "default" {
-
+	contract = data.akamai_contract.default.id
 }
 ``` 
 
@@ -77,7 +77,8 @@ To fetch a specific group, you can specify the `name` argument:
 
 ```hcl
 data "akamai_group" "default" {
-  name = "example"
+	name = "example"
+	contract = data.akamai_contract.default.id
 }
 ```
 
@@ -89,10 +90,10 @@ Whether you are reusing an existing Edge Hostname or creating a new one, you use
 
 ```hcl
 resource "akamai_edge_hostname" "example" {
-    group = "${data.akamai_group.default.id}"
+	group = "${data.akamai_group.default.id}"
 	contract = "${data.akamai_contract.default.id}"
 	product = "prd_SPM"
-    edge_hostname = "example.com.edgesuite.net"
+	edge_hostname = "example.com.edgesuite.net"
 }
 ```
 
@@ -102,11 +103,11 @@ This will create a non-secure hostname, to create a secure hostname, you must sp
 
 ```hcl
 resource "akamai_edge_hostname" "example" {
-    group = "${data.akamai_group.default.id}"
+	group = "${data.akamai_group.default.id}"
 	contract = "${data.akamai_contract.default.id}"
 	product = "prd_SPM"
-    edge_hostname = "example.com.edgesuite.net"
-    certificate = "<CERTIFICATE ENROLLMENT ID>"
+	edge_hostname = "example.com.edgesuite.net"
+	certificate = "<CERTIFICATE ENROLLMENT ID>"
 }
 ```
 
@@ -124,7 +125,7 @@ We recommend storing the rules JSON as a JSON file on disk and ingesting it usin
 
 ```hcl
 data "local_file" "rules" {
-    filename = "rules.json"
+	filename = "rules.json"
 }
 ```
 
@@ -151,10 +152,10 @@ resource "akamai_property" "example" {
 	group    = "${data.akamai_group.default.id}"    # Group ID variable
 	contract = "${data.akamai_contract.default.id}" # Contract ID variable
 	hostnames = {                                   # Hostname configuration
-	    # "public hostname" = "edge hostname"
-        "example.com" = "example.com.edgesuite.net"
-        "www.example.com" = "example.com.edgesuite.net"
-    }
+		# "public hostname" = "edge hostname"
+		"example.com" = "example.com.edgesuite.net"
+		"www.example.com" = "example.com.edgesuite.net"
+	}
 	rule_format = "v2018-02-27"                     # Rule Format
 	rules = "${data.local_file.rules.content}"      # JSON Rule tree
 }

@@ -1,7 +1,7 @@
 provider "akamai" {
   #Credentials can be provided inline using services such as Terraform Vault or by via an .edgerc file
   edgerc       = "../../.edgerc"
-  papi_section = "papi"
+  config_section = "papi"
   #  property {
   #        host = "${var.akamai_host}"
   #        access_token = "${var.akamai_access_token}"
@@ -11,11 +11,12 @@ provider "akamai" {
 }
 
 data "akamai_group" "group" {
-  name = "grp_xxxx"
+  name = "test"
+  contract = data.akamai_contract.contract.id
 }
 
 data "akamai_contract" "contract" {
-  group = "${data.akamai_group.group.name}"
+  group = "test"
 }
 
 data "akamai_cp_code" "cp_code" {

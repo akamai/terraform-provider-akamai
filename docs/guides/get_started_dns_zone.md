@@ -61,7 +61,7 @@ Alternatively, if you have multiple contracts, you can specify the `group` which
 
 ```hcl
 data "akamai_contract" "default" {
-  group = "default"
+	group = "default"
 }
 ```
 
@@ -69,11 +69,11 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ## Retrieving The Group ID
 
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](/docs/providers/akamai/d/group.html). To fetch the default group ID no attributes need to be set:
+Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](/docs/providers/akamai/d/group.html). To fetch the default group ID no attributes other than contract need to be set:
 
 ```hcl
 data "akamai_group" "default" {
-
+	contract = data.akamai_contract.default.id
 }
 ``` 
 
@@ -81,7 +81,8 @@ To fetch a specific group, you can specify the `name` argument:
 
 ```hcl
 data "akamai_group" "default" {
-  name = "example"
+	name = "example"
+	contract = data.akamai_contract.default.id
 }
 ```
 
@@ -99,26 +100,26 @@ Once you’re done, your zone configuration file should look like this:
 
 ```hcl
 locals {
-  section     = "default"
+	section     = "default"
 }
 
 provider "akamai" {
-  edgerc = "~/.edgerc"
-  dns_section = local.section
-  property_section = local.section
+	edgerc = "~/.edgerc"
+	config_section = local.section
 }
 
 data "akamai_contract" "default" { }
 
 data "akamai_group" "default" {
+	contract = data.akamai_contract.default.id
 }
 
 resource "akamai_dns_zone" "example" {
-        zone = "examplezone.com"                        # Zone Name
-        type = "secondary"				# Zone type
-        master = [ "1.2.3.4" ]				# Zone master(s)
-        group    = data.akamai_group.default.id         # Group ID variable
-        contract = data.akamai_contract.default.id      # Contract ID variable
+	zone = "examplezone.com"                        # Zone Name
+	type = "secondary"				# Zone type
+	master = [ "1.2.3.4" ]				# Zone master(s)
+	group    = data.akamai_group.default.id         # Group ID variable
+	contract = data.akamai_contract.default.id      # Contract ID variable
 	comment = "example zone demo"
 }
 ```
@@ -138,27 +139,27 @@ Example configuration:
 
 ```hcl
 locals {
-  section     = "default"
-  zone        = "example_primary_zone.com"
+	section     = "default"
+	zone        = "example_primary_zone.com"
 }
 
 provider "akamai" {
-  edgerc = "~/.edgerc"
-  dns_section = local.section
-  property_section = local.section
+	edgerc = "~/.edgerc"
+	config_section = local.section
 }
 
 data "akamai_contract" "default" { }
 
 data "akamai_group" "default" {
+	contract = data.akamai_contract.default.id
 }
 
 resource "akamai_dns_zone" "primary_example" {
-        zone = local.zone
-        type = "primary"
-        group    = data.akamai_group.default.id
-        contract = data.akamai_contract.default.id
-        comment = "example primary zone and records"
+	zone = local.zone
+	type = "primary"
+	group    = data.akamai_group.default.id
+	contract = data.akamai_contract.default.id
+	comment = "example primary zone and records"
 }
 ```
 
@@ -202,33 +203,33 @@ The zone configuration file, example_primary_zone_com.tf, will be updated with t
 
 ```
 resource "akamai_dns_zone" "primary_example" {
-        zone = "local.zone
-        type = "primary"
-        group    = data.akamai_group.default.id
-        contract = data.akamai_contract.default.id
-        comment = "example primary zone and records"
+	zone = "local.zone
+	type = "primary"
+	group    = data.akamai_group.default.id
+	contract = data.akamai_contract.default.id
+	comment = "example primary zone and records"
 }
 
 resource "akamai_dns_record" "example_primary_zone_com_example_primary_zone_com_NS" {
-    zone = local.zone
-    recordtype = "NS"
-    ttl = 86400
-    target = ["ax-xx.akam.net.", "axx-xx.akam.net.", "axx-xx.akam.net.", "ax-xx.akam.net.", "ax-xx.akam.net.", "ax-xx.akam.net."]
-    name = "example_primary_zone.com"
+	zone = local.zone
+	recordtype = "NS"
+	ttl = 86400
+	target = ["ax-xx.akam.net.", "axx-xx.akam.net.", "axx-xx.akam.net.", "ax-xx.akam.net.", "ax-xx.akam.net.", "ax-xx.akam.net."]
+	name = "example_primary_zone.com"
 }
 
 resource "akamai_dns_record" "example_primary_zone_com_example_primary_zone_com_SOA" {
-    zone = local.zone
-    expiry = 604800
-    nxdomain_ttl = 300
-    name = "example_primary_zone.com"
-    target = []
-    name_server = "ax-xx.akam.net."
-    email_address = "hostmaster.example_primary_zone.com."
-    refresh = 3600
-    retry = 600
-    recordtype = "SOA"
-    ttl = 86400
+	zone = local.zone
+	expiry = 604800
+	nxdomain_ttl = 300
+	name = "example_primary_zone.com"
+	target = []
+	name_server = "ax-xx.akam.net."
+	email_address = "hostmaster.example_primary_zone.com."
+	refresh = 3600
+	retry = 600
+	recordtype = "SOA"
+	ttl = 86400
 }
 ```
 Note: Name server targets have been masked. Also, a default dnsvars.tf file is generated. It can be ignored, deleted or used.
@@ -241,8 +242,8 @@ $ akamai terraform create-zone example_primary_zone.com --importscript
 
 The file example_primary_zone.com_resource_import.script is generated with the following content:
 
-```hcl
-form init
+```bash
+terraform init
 terraform import akamai_dns_zone.egl_clidns_primary_test_com egl_clidns_primary_test.com
 terraform import akamai_dns_record.egl_clidns_primary_test_com_egl_clidns_primary_test_com_NS egl_clidns_primary_test.com#egl_clidns_primary_test.com#NS
 terraform import akamai_dns_record.egl_clidns_primary_test_com_egl_clidns_primary_test_com_SOA egl_clidns_primary_test.com#egl_clidns_primary_test.com#SOA
@@ -278,11 +279,11 @@ Once you’re done, your record configuration should look like this:
 
 ```hcl
 resource "akamai_dns_record" "example_a_record" {
-    zone = akamai_dns_zone.example.zone
-    target = ["10.0.0.2"]
-    name = "example_a_record"
-    recordtype = "A"
-    ttl = 3600
+	zone = akamai_dns_zone.example.zone
+	target = ["10.0.0.2"]
+	name = "example_a_record"
+	recordtype = "A"
+	ttl = 3600
 }
 ```
 
@@ -337,11 +338,11 @@ With this configuration style, each target entry includes both the priority and 
 
 ```
 resource "akamai_dns_record" "mx_record_self_contained" {
-    zone = local.zone
-    target = ["0 smtp-0.example.com.", "10 smtp-1.example.com."]
-    name = "mx_record_self_contained.example.com"
-    recordtype = "MX"
-    ttl = 300
+	zone = local.zone
+	target = ["0 smtp-0.example.com.", "10 smtp-1.example.com."]
+	name = "mx_record_self_contained.example.com"
+	recordtype = "MX"
+	ttl = 300
 }
 ```
 will produce a recordset rdata value of 
@@ -357,13 +358,13 @@ will construct the rdata values by incrementally pairing and incrementing the pr
 
 ```
 resource "akamai_dns_record" "mx_record_pri_increment" {
-    zone = local.zone
-    target = ["smtp-1.example.com.", "smtp-2.example.com.", "smtp-3.example.com."]
-    priority = 10
-    priority_increment = 10
-    name = "mx_pri_increment.example.com"
-    recordtype = "MX"
-    ttl = 900
+	zone = local.zone
+	target = ["smtp-1.example.com.", "smtp-2.example.com.", "smtp-3.example.com."]
+	priority = 10
+	priority_increment = 10
+	name = "mx_pri_increment.example.com"
+	recordtype = "MX"
+	ttl = 900
 }
 ```
 will produce a recordset rdata value of 
@@ -378,13 +379,13 @@ With this configuration style, a number of host instances can be generated by us
 
 ```
 resource "akamai_dns_record" "mx_record_instances" {
-    zone = local.zone
-    name = "mx_record.example.com"
-    recordtype =  "MX"
-    ttl =  500
-    count = 3
-    target = ["smtp-${count.index}.example.com."]
-    priority = count.index*10
+	zone = local.zone
+	name = "mx_record.example.com"
+	recordtype =  "MX"
+	ttl =  500
+	count = 3
+	target = ["smtp-${count.index}.example.com."]
+	priority = count.index*10
 }
 ```
 will produce three distinct resource instances, each with a single target and priority, and an aggregated recordset rdata value of 

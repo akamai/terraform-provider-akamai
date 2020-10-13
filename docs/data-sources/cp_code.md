@@ -41,3 +41,4 @@ The following arguments are supported:
 The following are the return attributes:
 
 * `id` — The CP code ID.
+* `product_ids` - An array of product ids associated with this cpcode
