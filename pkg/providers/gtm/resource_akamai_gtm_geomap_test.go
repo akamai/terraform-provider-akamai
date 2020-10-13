@@ -1,12 +1,13 @@
 package gtm
 
 import (
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"regexp"
 	"testing"
+
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 var geo = gtm.GeoMap{
@@ -26,7 +27,7 @@ var geo = gtm.GeoMap{
 	},
 }
 
-func TestResGtmGeoMap(t *testing.T) {
+func TestResGtmGeomap(t *testing.T) {
 
 	t.Run("create geomap", func(t *testing.T) {
 		client := &mockgtm{}
@@ -74,13 +75,13 @@ func TestResGtmGeoMap(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmGeoMap/create_basic.tf"),
+						Config: loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmGeoMap/update_basic.tf"),
+						Config: loadFixtureString("testdata/TestResGtmGeomap/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
 						),
@@ -109,7 +110,7 @@ func TestResGtmGeoMap(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmGeoMap/create_basic.tf"),
+						Config:      loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("geoMap Create failed"),
 					},
 				},
@@ -137,7 +138,7 @@ func TestResGtmGeoMap(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmGeoMap/create_basic.tf"),
+						Config:      loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 					},
 				},

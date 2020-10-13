@@ -1,12 +1,13 @@
 package gtm
 
 import (
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"regexp"
 	"testing"
+
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 var cidr = gtm.CidrMap{
@@ -26,7 +27,7 @@ var cidr = gtm.CidrMap{
 	},
 }
 
-func TestResGtmCidrMap(t *testing.T) {
+func TestResGtmCidrmap(t *testing.T) {
 
 	t.Run("create cidrmap", func(t *testing.T) {
 		client := &mockgtm{}
@@ -74,13 +75,13 @@ func TestResGtmCidrMap(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmCidrMap/create_basic.tf"),
+						Config: loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_cidrmap_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmCidrMap/update_basic.tf"),
+						Config: loadFixtureString("testdata/TestResGtmCidrmap/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_cidrmap_1"),
 						),
@@ -109,7 +110,7 @@ func TestResGtmCidrMap(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmCidrMap/create_basic.tf"),
+						Config:      loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("geoMap Create failed"),
 					},
 				},
@@ -137,7 +138,7 @@ func TestResGtmCidrMap(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmCidrMap/create_basic.tf"),
+						Config:      loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 					},
 				},

@@ -1,12 +1,13 @@
 package gtm
 
 import (
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"regexp"
 	"testing"
+
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 var asmap = gtm.AsMap{
@@ -33,7 +34,7 @@ var asmap = gtm.AsMap{
 	},
 }
 
-func TestResGtmAsMap(t *testing.T) {
+func TestResGtmAsmap(t *testing.T) {
 
 	t.Run("create asmap", func(t *testing.T) {
 		client := &mockgtm{}
@@ -81,13 +82,13 @@ func TestResGtmAsMap(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmAsMap/create_basic.tf"),
+						Config: loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_asmap_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmAsMap/update_basic.tf"),
+						Config: loadFixtureString("testdata/TestResGtmAsmap/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_asmap_1"),
 						),
@@ -116,7 +117,7 @@ func TestResGtmAsMap(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmAsMap/create_basic.tf"),
+						Config:      loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("asMap Create failed"),
 					},
 				},
@@ -144,7 +145,7 @@ func TestResGtmAsMap(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmAsMap/create_basic.tf"),
+						Config:      loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 					},
 				},
