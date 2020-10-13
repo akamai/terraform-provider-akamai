@@ -1335,6 +1335,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if err := executeRecordFunction(ctx, meta, "DELETE", d, "Delete", &recordcreate, zone, host, recordType, logger, false); err != nil {
 		return diag.FromErr(err)
 	}
+	d.SetId("")
 	return nil
 }
 

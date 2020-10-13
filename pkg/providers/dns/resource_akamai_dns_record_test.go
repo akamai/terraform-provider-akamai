@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestDnsRecordCreate(t *testing.T) {
+func TestResDnsRecord(t *testing.T) {
 	parseRData := dns.Client(session.Must(session.New())).ParseRData
 
 	rec := &dns.RecordBody{
@@ -22,10 +22,12 @@ func TestDnsRecordCreate(t *testing.T) {
 		Active:     true,
 	}
 
-	parsedData := parseRData(context.Background(), "A", []string{"10.0.0.2", "10.0.0.3"})
+	parsedData := parseRData(context.Background(), "A", rec.Target)
 
+	// This test peforms a full life-cycle (CRUD) test
 	t.Run("create record", func(t *testing.T) {
 		client := &mockdns{}
+		stage := 0
 
 		client.On("GetRecord",
 			mock.Anything, // ctx is irrelevant for this test
@@ -40,13 +42,20 @@ func TestDnsRecordCreate(t *testing.T) {
 				"exampleterraform.io",
 				"exampleterraform.io",
 				"A",
-			).Return(rec, nil)
+			).Return(rec, nil).Run(func(mock.Arguments) {
+				if stage < 1 {
+					stage++
+				}
+				rec.Target = []string{"10.0.0.4", "10.0.0.5"}
+
+				parsedData = parseRData(context.Background(), "A", rec.Target)
+			})
 
 			client.On("ProcessRdata",
 				mock.Anything, // ctx is irrelevant for this test
-				[]string{"10.0.0.2", "10.0.0.3"},
+				mock.AnythingOfType("[]string"),
 				"A",
-			).Return([]string{"10.0.0.2", "10.0.0.3"}, nil)
+			).Return(rec.Target, nil)
 		})
 
 		client.On("CreateRecord",
@@ -55,57 +64,6 @@ func TestDnsRecordCreate(t *testing.T) {
 			"exampleterraform.io",
 			mock.Anything,
 		).Return(nil)
-
-		client.On("ParseRData",
-			mock.Anything,
-			"A",
-			[]string{"10.0.0.2", "10.0.0.3"},
-		).Return(parsedData)
-
-		client.On("DeleteRecord",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*dns.RecordBody"),
-			"exampleterraform.io",
-			mock.Anything,
-		).Return(nil)
-
-		dataSourceName := "akamai_dns_record.a_record"
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
-							resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
-							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
-						),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("update record", func(t *testing.T) {
-		client := &mockdns{}
-
-		client.On("GetRecord",
-			mock.Anything, // ctx is irrelevant for this test
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"A",
-		).Return(rec, nil)
-
-		client.On("ProcessRdata",
-			mock.Anything, // ctx is irrelevant for this test
-			[]string{"10.0.0.2", "10.0.0.3"},
-			"A",
-		).Return([]string{"10.0.0.2", "10.0.0.3"}, nil)
 
 		client.On("UpdateRecord",
 			mock.Anything, // ctx is irrelevant for this test
@@ -117,7 +75,7 @@ func TestDnsRecordCreate(t *testing.T) {
 		client.On("ParseRData",
 			mock.Anything,
 			"A",
-			[]string{"10.0.0.2", "10.0.0.3"},
+			mock.AnythingOfType("[]string"),
 		).Return(parsedData)
 
 		client.On("DeleteRecord",
@@ -142,6 +100,15 @@ func TestDnsRecordCreate(t *testing.T) {
 							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
 						),
 					},
+					{
+						Config: loadFixtureString("testdata/TestResDnsRecord/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
+						),
+						ExpectNonEmptyPlan: true,
+					},
 				},
 			})
 		})
@@ -149,6 +116,69 @@ func TestDnsRecordCreate(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	// This example tests attempting to create an A record that already exists on the server
+	// It is not a full lifecycle test as the "update" occurs in the create method
+	t.Run("update existing record", func(t *testing.T) {
+		client := &mockdns{}
+
+		client.On("GetRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"A",
+		).Return(rec, nil)
+
+		client.On("ProcessRdata",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("[]string"),
+			"A",
+		).Return(rec.Target, nil)
+
+		client.On("UpdateRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*dns.RecordBody"),
+			"exampleterraform.io",
+			mock.Anything,
+		).Return(nil)
+
+		client.On("ParseRData",
+			mock.Anything,
+			"A",
+			mock.AnythingOfType("[]string"),
+		).Return(parsedData)
+
+		client.On("DeleteRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*dns.RecordBody"),
+			"exampleterraform.io",
+			mock.Anything,
+		).Return(nil)
+
+		dataSourceName := "akamai_dns_record.a_record"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						// use the update config because the rec value was changed in the previous example
+						Config: loadFixtureString("testdata/TestResDnsRecord/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	// This test does an "update" by returning empty rdata which forces a new record overrite
+	// It is not a full lifecycle test as the "update" occurs in the create method
 	t.Run("save record", func(t *testing.T) {
 		client := &mockdns{}
 
@@ -162,15 +192,15 @@ func TestDnsRecordCreate(t *testing.T) {
 		// return empty rdata to trigger the "save" codepath
 		client.On("ProcessRdata",
 			mock.Anything, // ctx is irrelevant for this test
-			[]string{"10.0.0.2", "10.0.0.3"},
+			rec.Target,
 			"A",
 		).Return([]string{}, nil).Once().Run(func(mock.Arguments) {
 			// return valid rdata so save succeeds
 			client.On("ProcessRdata",
 				mock.Anything, // ctx is irrelevant for this test
-				[]string{"10.0.0.2", "10.0.0.3"},
+				mock.AnythingOfType("[]string"),
 				"A",
-			).Return([]string{"10.0.0.2", "10.0.0.3"}, nil)
+			).Return(rec.Target, nil)
 		})
 
 		client.On("CreateRecord",
@@ -183,7 +213,7 @@ func TestDnsRecordCreate(t *testing.T) {
 		client.On("ParseRData",
 			mock.Anything,
 			"A",
-			[]string{"10.0.0.2", "10.0.0.3"},
+			mock.AnythingOfType("[]string"),
 		).Return(parsedData)
 
 		client.On("DeleteRecord",
@@ -201,7 +231,7 @@ func TestDnsRecordCreate(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic.tf"),
+						Config: loadFixtureString("testdata/TestResDnsRecord/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
 							resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
@@ -214,6 +244,13 @@ func TestDnsRecordCreate(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	soaRec := &dns.RecordBody{
+		RecordType: "SOA",
+		Name:       "exampleterraform.io",
+		Target:     []string{"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600"},
+		TTL:        300,
+	}
 
 	t.Run("create soa record", func(t *testing.T) {
 		client := &mockdns{}
@@ -237,18 +274,13 @@ func TestDnsRecordCreate(t *testing.T) {
 				"exampleterraform.io",
 				"@",
 				"SOA",
-			).Return(&dns.RecordBody{
-				RecordType: "SOA",
-				Name:       "exampleterraform.io",
-				Target:     []string{"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600"},
-				TTL:        300,
-			}, nil)
+			).Return(soaRec, nil)
 
 			client.On("ProcessRdata",
 				mock.Anything, // ctx is irrelevant for this test
-				[]string{"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600"},
+				mock.AnythingOfType("[]string"),
 				"SOA",
-			).Return([]string{"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600"}, nil)
+			).Return(soaRec.Target, nil)
 		})
 
 		client.On("CreateRecord",
@@ -261,10 +293,8 @@ func TestDnsRecordCreate(t *testing.T) {
 		client.On("ParseRData",
 			mock.Anything,
 			"SOA",
-			[]string{"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600"},
-		).Return(parseRData(context.Background(), "SOA", []string{
-			"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600",
-		}))
+			mock.AnythingOfType("[]string"),
+		).Return(parseRData(context.Background(), "SOA", soaRec.Target))
 
 		client.On("DeleteRecord",
 			mock.Anything, // ctx is irrelevant for this test
@@ -281,7 +311,7 @@ func TestDnsRecordCreate(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic_soa.tf"),
+						Config: loadFixtureString("testdata/TestResDnsRecord/create_soa.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
 							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "SOA"),
@@ -302,18 +332,13 @@ func TestDnsRecordCreate(t *testing.T) {
 			"exampleterraform.io",
 			"@",
 			"SOA",
-		).Return(&dns.RecordBody{
-			RecordType: "SOA",
-			Name:       "exampleterraform.io",
-			Target:     []string{"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600"},
-			TTL:        300,
-		}, nil)
+		).Return(soaRec, nil)
 
 		client.On("ProcessRdata",
 			mock.Anything, // ctx is irrelevant for this test
-			[]string{"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600"},
+			mock.AnythingOfType("[]string"),
 			"SOA",
-		).Return([]string{"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600"}, nil)
+		).Return(soaRec.Target, nil)
 
 		client.On("UpdateRecord",
 			mock.Anything, // ctx is irrelevant for this test
@@ -325,10 +350,8 @@ func TestDnsRecordCreate(t *testing.T) {
 		client.On("ParseRData",
 			mock.Anything,
 			"SOA",
-			[]string{"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600"},
-		).Return(parseRData(context.Background(), "SOA", []string{
-			"ns1.exampleterraform.io root@exampleterraform.io 123456789 3600 600 3600 3600",
-		}))
+			mock.AnythingOfType("[]string"),
+		).Return(parseRData(context.Background(), "SOA", soaRec.Target))
 
 		client.On("DeleteRecord",
 			mock.Anything, // ctx is irrelevant for this test
@@ -345,7 +368,7 @@ func TestDnsRecordCreate(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic_soa.tf"),
+						Config: loadFixtureString("testdata/TestResDnsRecord/create_soa.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
 							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "SOA"),

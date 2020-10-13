@@ -29,9 +29,8 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:   func() { testAccPreCheck(t) },
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDataDnsRecordSet/basic.tf"),
