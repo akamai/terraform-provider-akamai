@@ -242,8 +242,8 @@ $ akamai terraform create-zone example_primary_zone.com --importscript
 
 The file example_primary_zone.com_resource_import.script is generated with the following content:
 
-```hcl
-form init
+```bash
+terraform init
 terraform import akamai_dns_zone.egl_clidns_primary_test_com egl_clidns_primary_test.com
 terraform import akamai_dns_record.egl_clidns_primary_test_com_egl_clidns_primary_test_com_NS egl_clidns_primary_test.com#egl_clidns_primary_test.com#NS
 terraform import akamai_dns_record.egl_clidns_primary_test_com_egl_clidns_primary_test_com_SOA egl_clidns_primary_test.com#egl_clidns_primary_test.com#SOA

@@ -28,12 +28,14 @@ Next, we need to configure the provider with our credentials. This is done using
 
 ```hcl
 provider "akamai" {
-    gtm {
-        host = "..."
-        access_token = "..."
-        client_token = "..."
-        client_secret = "..."
-    }
+	edgerc = "~/.edgerc"
+	config_section = "default"
+	gtm {
+		host = "..."
+		access_token = "..."
+		client_token = "..."
+		client_secret = "..."
+	}
 }
 ```
 
@@ -60,7 +62,7 @@ Alternatively, if you have multiple contracts, you can specify the `group` which
 
 ```hcl
 data "akamai_contract" "default" {
-  group = "default"
+	group = "default"
 }
 ```
 
@@ -68,11 +70,11 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ## Retrieving The Group ID
 
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](/docs/providers/akamai/d/group.html). To fetch the default group ID no attributes need to be set:
+Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](/docs/providers/akamai/d/group.html). To fetch the default group ID no attributes other than contract need to be set:
 
 ```hcl
 data "akamai_group" "default" {
-
+	contract = data.akamai_contract.default.id
 }
 ``` 
 
@@ -80,7 +82,8 @@ To fetch a specific group, you can specify the `name` argument:
 
 ```hcl
 data "akamai_group" "default" {
-  name = "example"
+	name = "example"
+	contract = data.akamai_contract.default.id
 }
 ```
 
@@ -98,11 +101,11 @@ Once you’re done, your domain configuration should look like this:
 
 ```hcl
 resource "akamai_gtm_domain" "example" {
-        name = "example.akadns.net"                     # Domain Name
-        type = "weighted"				# Domain type
-        group    = data.akamai_group.default.id         # Group ID variable
-        contract = data.akamai_contract.default.id      # Contract ID variable
-        email_notification_list = [user@demo.me]        # email notification list
+	name = "example.akadns.net"                     # Domain Name
+	type = "weighted"				# Domain type
+	group    = data.akamai_group.default.id         # Group ID variable
+	contract = data.akamai_contract.default.id      # Contract ID variable
+	email_notification_list = [user@demo.me]        # email notification list
 	comment = "example domain demo"
 }
 ```
@@ -121,7 +124,7 @@ Once you’re done, your datacenter configuration should look like this:
 ```hcl
 resource "akamai_gtm_datacenter" "example_dc" {
 	domain = akamai_gtm_domain.example.name		# domain
-        nickname = "datacenter_1"   			# Datacenter Nickname
+	nickname = "datacenter_1"   			# Datacenter Nickname
 	depends_on = [akamai_gtm_domain.example]
 }
 ```
@@ -138,52 +141,52 @@ Once you’re done, your property configuration should look like this:
 
 ```hcl
 resource "akamai_gtm_property" "example_prop" {
-        domain = akamai_gtm_domain.example.name         # domain
-        name = "example_prop_1"                         # Property Name
-    	type = "weighted-round-robin"
-    	score_aggregation_type = "median"
-    	handout_limit = 5
-    	handout_mode = "normal"
-        failover_delay = 0 
-        failback_delay = 0
-    	traffic_target = {
-        	datacenter_id = akamai_gtm_datacenter.example_dc.datacenter_id
-        	enabled = true
-        	weight = 100
-        	servers = ["1.2.3.4"]
-        	name = ""
-        	handout_cname = ""
-        }
-    	liveness_test = {
-        	name = "lt1"
-        	test_interval = 10
-        	test_object_protocol = "HTTP"
-        	test_timeout = 20
-        	answer_required = false
-        	disable_nonstandard_port_warning = false
-        	error_penalty = 0
-        	host_header = ""
-        	http_error3xx = false
-        	http_error4xx = false
-        	http_error5xx = false
-        	disabled = false
-        	peer_certificate_verification = false
-        	recursion_requested = false
-        	request_string = ""
-        	resource_type = ""
-        	response_string = ""
-        	ssl_client_certificate = ""
-        	ssl_client_private_key = ""
-        	test_object = "/junk"
-        	test_object_password = ""
-        	test_object_port = 1
-        	test_object_username = ""
-        	timeout_penalty = 0
-        }
-    	depends_on = [
-         	akamai_gtm_domain.example,
-         	akamai_gtm_datacenter.example_dc
-    	]
+	domain = akamai_gtm_domain.example.name         # domain
+	name = "example_prop_1"                         # Property Name
+	type = "weighted-round-robin"
+	score_aggregation_type = "median"
+	handout_limit = 5
+	handout_mode = "normal"
+	failover_delay = 0 
+	failback_delay = 0
+	traffic_target = {
+		datacenter_id = akamai_gtm_datacenter.example_dc.datacenter_id
+		enabled = true
+		weight = 100
+		servers = ["1.2.3.4"]
+		name = ""
+		handout_cname = ""
+	}
+	liveness_test = {
+		name = "lt1"
+		test_interval = 10
+		test_object_protocol = "HTTP"
+		test_timeout = 20
+		answer_required = false
+		disable_nonstandard_port_warning = false
+		error_penalty = 0
+		host_header = ""
+		http_error3xx = false
+		http_error4xx = false
+		http_error5xx = false
+		disabled = false
+		peer_certificate_verification = false
+		recursion_requested = false
+		request_string = ""
+		resource_type = ""
+		response_string = ""
+		ssl_client_certificate = ""
+		ssl_client_private_key = ""
+		test_object = "/junk"
+		test_object_password = ""
+		test_object_port = 1
+		test_object_username = ""
+		timeout_penalty = 0
+	}
+	depends_on = [
+		akamai_gtm_domain.example,
+		akamai_gtm_datacenter.example_dc
+	]
 }
 ```
 
