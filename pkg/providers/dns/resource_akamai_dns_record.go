@@ -16,7 +16,7 @@ import (
 	"time"
 
 	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
-        "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -603,21 +603,21 @@ func bumpSoaSerial(ctx context.Context, d *schema.ResourceData, meta akamai.Oper
 // Record op function
 func execFunc(ctx context.Context, meta akamai.OperationMeta, fn string, rec *dns.RecordBody, zone string, rlock bool) error {
 
-        var e error
-        switch fn {
-        case "Create":
-                e = inst.Client(meta).CreateRecord(ctx, rec, zone, rlock)
+	var e error
+	switch fn {
+	case "Create":
+		e = inst.Client(meta).CreateRecord(ctx, rec, zone, rlock)
 
-        case "Update":
-                e = inst.Client(meta).UpdateRecord(ctx, rec, zone, rlock)
+	case "Update":
+		e = inst.Client(meta).UpdateRecord(ctx, rec, zone, rlock)
 
-        case "Delete":
-                e = inst.Client(meta).DeleteRecord(ctx, rec, zone, rlock)
+	case "Delete":
+		e = inst.Client(meta).DeleteRecord(ctx, rec, zone, rlock)
 
-        default:
-                e = fmt.Errorf("Invalid operation [%s]", fn)
+	default:
+		e = fmt.Errorf("Invalid operation [%s]", fn)
 
-        }
+	}
 	return e
 }
 
@@ -672,7 +672,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// in your config.tf which might overwrite each other
 
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordCreate")
+	logger := meta.Log("AkamaiDNS", "resourceDNSRecordCreate")
 	logger.Info("Record Create.")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -825,7 +825,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	// in your config.tf which might overwrite each other
 
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordUpdate")
+	logger := meta.Log("AkamaiDNS", "resourceDNSRecordUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -978,7 +978,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordRead")
+	logger := meta.Log("AkamaiDNS", "resourceDNSRecordRead")
 	logger.Info("Record Read")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -1199,7 +1199,7 @@ func validateSOARecord(d *schema.ResourceData, logger log.Interface) bool {
 
 func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordImport")
+	logger := meta.Log("AkamaiDNS", "resourceDNSRecordImport")
 	// create a context with logging for api calls
 
 	// create context. TODO: *** Way to find TF context ***
@@ -1284,7 +1284,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("[Akamai DNS]", "resourceDNSRecordUpdate")
+	logger := meta.Log("AkamaiDNS", "resourceDNSRecordUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -1335,6 +1335,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if err := executeRecordFunction(ctx, meta, "DELETE", d, "Delete", &recordcreate, zone, host, recordType, logger, false); err != nil {
 		return diag.FromErr(err)
 	}
+	d.SetId("")
 	return nil
 }
 

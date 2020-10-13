@@ -85,7 +85,7 @@ func (p *provider) Client(meta akamai.OperationMeta) dns.DNS {
 	return dns.Client(meta.Session())
 }
 
-func getConfigDNSV2Service(d *schema.ResourceData) (*edgegrid.Config, error) {
+func getConfigDNSV2Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
 	var DNSv2Config edgegrid.Config
 	var err error
 	dns, err := tools.GetSetValue("dns", d)
@@ -148,7 +148,9 @@ func getConfigDNSV2Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 	}
 
 	if section != "" {
-		d.Set("config_section", section)
+		if s, ok := d.(*schema.ResourceData); ok {
+			s.Set("config_section", section)
+		}
 	}
 
 	DNSv2Config, err = edgegrid.Init(edgerc, section)
