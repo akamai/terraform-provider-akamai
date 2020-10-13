@@ -1,230 +1,158 @@
 package gtm
 
-/*
-
 import (
-	"fmt"
-	"log"
-	"strconv"
-	"strings"
-	"testing"
-
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/mock"
+	"net/http"
+	"regexp"
+	"testing"
 )
 
-var testAccAkamaiGTMDatacenterConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-}
-
-locals {
-  	domain = "%s"
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-	contract = data.akamai_contract.contract.id
-	comment =  "This is a test domain"
-	group  = data.akamai_group.group.id
-	load_imbalance_percentage = 10
-	wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_datacenter"
-    continent = "EU"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]
-}
-`, gtmTestDomain)
-
-var testAccAkamaiGTMDatacenterUpdateConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-} 
-
-locals {
-        domain = "%s"
-}       
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-        contract = data.akamai_contract.contract.id
-        comment =  "This is a test domain"
-        group  = "${data.akamai_group.group.id}"
-        load_imbalance_percentage = 10
-        wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_datacenter"
-    continent = "NA"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }  
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]    
-}   
-`, gtmTestDomain)
-
-func TestAccAkamaiGTMDatacenter_basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckDC(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMDatacenterDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMDatacenterConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMDatacenterExists,
-					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "continent", "EU"),
-				),
-			},
+var dc = gtm.Datacenter{
+	City:                 "Snæfellsjökull",
+	CloudServerTargeting: false,
+	Continent:            "EU",
+	Country:              "IS",
+	DatacenterId:         3132,
+	DefaultLoadObject: &gtm.LoadObject{
+		LoadObject:     "/test",
+		LoadObjectPort: 80,
+		LoadServers:    make([]string, 0),
+	},
+	Latitude: 64.808,
+	Links: []*gtm.Link{
+		{
+			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/datacenters/3132",
+			Rel:  "self",
 		},
+	},
+	Longitude:       -23.776,
+	Nickname:        "tfexample_dc_1",
+	StateOrProvince: "",
+	Virtual:         true,
+}
+
+func TestResGtmDatacenter(t *testing.T) {
+
+	t.Run("create datacenter", func(t *testing.T) {
+		client := &mockgtm{}
+
+		getCall := client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			dc.DatacenterId,
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		resp := gtm.DatacenterResponse{}
+		resp.Resource = &dc
+		resp.Status = &pendingResponseStatus
+		client.On("CreateDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Datacenter"),
+			gtmTestDomain,
+		).Return(nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+		})
+
+		client.On("GetDomainStatus",
+			mock.Anything, // ctx is irrelevant for this test
+			gtmTestDomain,
+		).Return(&completeResponseStatus, nil)
+
+		client.On("UpdateDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Datacenter"),
+			gtmTestDomain,
+		).Return(&completeResponseStatus, nil)
+
+		client.On("DeleteDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Datacenter"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_datacenter.tfexample_dc_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmDatacenter/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "continent", "EU"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResGtmDatacenter/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "continent", "EU"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create datacenter failed", func(t *testing.T) {
+		client := &mockgtm{}
+
+		client.On("CreateDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Datacenter"),
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusBadRequest,
+		})
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmDatacenter/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Datacenter Create failed"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create datacenter denied", func(t *testing.T) {
+		client := &mockgtm{}
+
+		dr := gtm.DatacenterResponse{}
+		dr.Resource = &dc
+		dr.Status = &deniedResponseStatus
+		client.On("CreateDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Datacenter"),
+			gtmTestDomain,
+		).Return(&dr, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmDatacenter/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
 }
-
-func TestAccAkamaiGTMDatacenter_update(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckDC(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMDatacenterDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMDatacenterConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMDatacenterExists,
-					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "continent", "EU"),
-				),
-				//ExpectNonEmptyPlan: true,
-			},
-			{
-				Config: testAccAkamaiGTMDatacenterUpdateConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMDatacenterExists,
-					resource.TestCheckResourceAttr("akamai_gtm_datacenter.test_datacenter", "continent", "NA"),
-				),
-				//ExpectNonEmptyPlan: true,
-			},
-		},
-	})
-}
-
-func testAccPreCheckDC(t *testing.T) {
-
-	testAccPreCheckTF(t)
-	testAccDeleteDatacenterByNickname("test_datacenter", gtmTestDomain)
-
-}
-
-func testAccCheckAkamaiGTMDatacenterDestroy(s *terraform.State) error {
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_datacenter" {
-			continue
-		}
-
-		dcid, dom, _ := parseIntID(rs.Primary.ID)
-		if err := testAccDeleteDatacenter(dcid, dom); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func testAccDeleteDatacenterByNickname(nickname string, dom string) error {
-
-	dcList, err := gtm.ListDatacenters(dom)
-	if dcList == nil || err != nil {
-		return err
-	}
-	for _, dc := range dcList {
-		if dc.Nickname == nickname {
-			_, err := dc.Delete(dom)
-			return err
-		}
-	}
-	return nil
-
-}
-
-func testAccDeleteDatacenter(dcid int, dom string) error {
-
-	dc, err := gtm.GetDatacenter(dcid, dom)
-	if dc == nil {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test datacenter [%v]", dcid)
-	_, err = dc.Delete(dom)
-	if err != nil {
-		return fmt.Errorf("datacenter was not deleted %d. Error: %s", dcid, err.Error())
-	}
-	return nil
-
-}
-
-func parseIntID(id string) (int, string, error) {
-	idComp := strings.Split(id, ":")
-	if len(idComp) < 2 {
-		return 0, "", fmt.Errorf("invalid Datacenter ID")
-	}
-	dcid, err := strconv.Atoi(idComp[1])
-	if err != nil {
-		return 0, "", err
-	}
-	return dcid, idComp[0], nil
-
-}
-
-func testAccCheckAkamaiGTMDatacenterExists(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_datacenter" {
-			continue
-		}
-
-		dcid, dom, err := parseIntID(rs.Primary.ID)
-		if err != nil {
-			return err
-		}
-		_, err = gtm.GetDatacenter(dcid, dom)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-*/
-

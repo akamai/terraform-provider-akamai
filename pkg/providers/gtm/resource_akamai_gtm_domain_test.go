@@ -1,13 +1,13 @@
 package gtm
 
 import (
-	"log"
-	"net/http"
-	"testing"
-	"regexp"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"log"
+	"net/http"
+	"regexp"
+	"testing"
 )
 
 var gtmTestDomain = "gtm_terra_testdomain.akadns.net"
@@ -212,7 +212,7 @@ func TestResGtmDomain(t *testing.T) {
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
-		
+
 		dr := gtm.DomainResponse{}
 		dr.Resource = &dom
 		dr.Status = &pendingResponseStatus
@@ -229,11 +229,11 @@ func TestResGtmDomain(t *testing.T) {
 			gtmTestDomain,
 		).Return(&completeResponseStatus, nil)
 
-                client.On("UpdateDomain",
-                        mock.Anything, // ctx is irrelevant for this test
-                        mock.AnythingOfType("*gtm.Domain"),
-                        mock.AnythingOfType("map[string]string"),
-                ).Return(&completeResponseStatus, nil)
+		client.On("UpdateDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Domain"),
+			mock.AnythingOfType("map[string]string"),
+		).Return(&completeResponseStatus, nil)
 
 		client.On("DeleteDomain",
 			mock.Anything, // ctx is irrelevant for this test
@@ -255,12 +255,12 @@ func TestResGtmDomain(t *testing.T) {
 							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "10.0"),
 						),
 					},
-					{                                                
+					{
 						Config: loadFixtureString("testdata/TestResGtmDomain/update_basic.tf"),
-                                                Check: resource.ComposeTestCheckFunc(
-                                                        resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
-                                                        resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
-                                                        resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "20.0"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
+							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
+							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "20.0"),
 						),
 					},
 				},

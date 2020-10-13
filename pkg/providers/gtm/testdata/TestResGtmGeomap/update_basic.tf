@@ -14,11 +14,11 @@ resource "akamai_gtm_geomap" "tfexample_geomap_1" {
     nickname      = "default datacenter"
   }
   assignment {
-    datacenter_id = 3131 
-    nickname      = "tfexample_dc_1"
+    datacenter_id = 3132 
+    nickname      = "tfexample_dc_2"
     // Optional
-    countries = ["GB"]
+    countries = ["US"]
   }
-  wait_on_complete = false
+  wait_on_complete = true
 }
 

@@ -12,11 +12,11 @@ resource "akamai_gtm_resource" "tfexample_resource_1" {
   aggregation_type = "latest"
   type             = "XML load object via HTTP"
   resource_instance {
-    datacenter_id           = 3131 
+    datacenter_id           = 3132 
     use_default_load_object = false
-    load_object             = "/test1"
-    load_servers            = ["1.2.3.4"]
+    load_object             = "/test2"
+    load_servers            = ["1.2.3.5"]
     load_object_port        = 80
   }
-  wait_on_complete = false
+  wait_on_complete = true 
 }
