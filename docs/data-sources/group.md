@@ -18,8 +18,12 @@ Basic usage:
 ```hcl
 data "akamai_group" "example" {
     name = "group name"
+    contract = data.akamai_contract.example.id
 }
 
+data "akamai_contract" "example" {
+     group = "group name"
+}
 
 resource "akamai_property" "example" {
     group    = "${data.akamai_group.example.id}"
@@ -32,7 +36,7 @@ resource "akamai_property" "example" {
 The following arguments are supported:
 
 * `name` — (Required) The group name.
-* `contract` — (Optional) The contract ID
+* `contract` — (Required) The contract ID
 
 ## Attributes Reference
 

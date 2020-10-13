@@ -30,7 +30,7 @@ resource "akamai_property" "example" {
 
 The following arguments are supported:
 
-* `group` — (Optional) The group within which the contract can be found.
+* `group` — (Optional) The group within which the contract can be found. Used to keep group and contract selections in synch when using an API that requires both.
 
 ## Attributes Reference
 

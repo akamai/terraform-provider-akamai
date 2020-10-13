@@ -19,7 +19,7 @@ Basic usage:
 resource "akamai_property" "example" {
     name    = "terraform-demo"
     contact = ["user@example.org"]
-
+    account  = "prd_SPM"
     product  = "prd_SPM"
     contract = "ctr_####"
     group    = "grp_####"
@@ -43,13 +43,12 @@ The following arguments are supported:
 
 ### Property Basics
 
-* `account` — (Required) The account ID.
-* `contract` — (Optional) The contract ID.
-* `group` — (Optional) The group ID.
-* `product` — (Optional) The product ID. (Default: `prd_SPM` for Ion)
 * `name` — (Required) The property name.
 * `contact` — (Required) One or more email addresses to inform about activation changes.
 * `hostnames` — (Required) A map of public hostnames to edge hostnames (e.g. `{"example.org" = "example.org.edgesuite.net"}`)
+* `contract` — (Optional) The contract ID.
+* `group` — (Optional) The group ID.
+* `product` — (Optional) The product ID. (Default: `prd_SPM` for Ion)
 * `is_secure` — (Optional) Whether the property is a secure (Enhanced TLS) property or not.
 
 ### Property Rules
