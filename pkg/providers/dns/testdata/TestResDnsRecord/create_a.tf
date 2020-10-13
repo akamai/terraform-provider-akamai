@@ -10,3 +10,4 @@ resource "akamai_dns_record" "a_record" {
 	ttl = 300
 	target = ["10.0.0.2","10.0.0.3"]
 }
+
