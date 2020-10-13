@@ -29,13 +29,18 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
+				PreCheck:   func() { testAccPreCheck(t) },
+				IsUnitTest: true,
+				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDataDnsRecordSet/basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "host", "exampleterraform.io"),
+							// check the values set in dataSourceDNSRecordSetRead
+							// rdata is an array that becomes rdata.0 and rdata.1 in tf state
+							resource.TestCheckResourceAttrSet(dataSourceName, "rdata.0"),
+							resource.TestCheckResourceAttrSet(dataSourceName, "rdata.1"),
+							resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 							resource.TestCheckOutput(outputName, strings.Join(rdata, ",")),
 						),
 					},

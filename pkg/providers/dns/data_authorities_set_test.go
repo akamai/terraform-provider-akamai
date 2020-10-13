@@ -32,6 +32,10 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDataSetAuthorities/basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
+							// check the values set in dataSourceAuthoritiesSetRead
+							// authorities is an array that becomes authorities.0 and authorities.1 in tf state
+							resource.TestCheckResourceAttrSet(dataSourceName, "authorities.0"),
+							resource.TestCheckResourceAttrSet(dataSourceName, "authorities.1"),
 							resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 							resource.TestCheckOutput(outputName, strings.Join(authorities, ",")),
 						),

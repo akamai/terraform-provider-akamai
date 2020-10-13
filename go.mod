@@ -10,6 +10,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-hclog v0.9.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
+	github.com/kr/pretty v0.2.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
