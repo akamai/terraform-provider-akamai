@@ -1,239 +1,150 @@
 package gtm
 
 import (
-	"fmt"
-	"log"
+	"net/http"
+	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/mock"
 )
 
-var testAccAkamaiGTMCidrMapConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-}
-
-locals {
-  	domain = "%s"
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter = 5400
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-    name = local.domain
-    type = "weighted"
-    contract = data.akamai_contract.contract.id
-    comment =  "This is a test zone"
-    group  = data.akamai_group.group.id
-    load_imbalance_percentage = 10
-    wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_cidr_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_cidr_datacenter"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]
-}
-
-resource "akamai_gtm_cidrmap" "test_cidr" {
-    domain = akamai_gtm_domain.test_domain.name
-    name = "test_cidrmap"
-    default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
-    }
-    assignment {
-        datacenter_id = akamai_gtm_datacenter.test_cidr_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_cidr_datacenter.nickname
-        blocks = ["1.2.3.9/24"]
-    }
-    wait_on_complete = false
-    depends_on = [
-        akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_cidr_datacenter
-    ]
-}`, gtmTestDomain)
-
-var testAccAkamaiGTMCidrMapUpdateConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-}
-
-locals {
-        domain = "%s"
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter = 5400
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-    name = local.domain
-    type = "weighted"
-    contract = data.akamai_contract.contract.id
-    comment =  "This is a test domain"
-    group  = data.akamai_group.group.id
-    load_imbalance_percentage = 10
-    wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_cidr_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_cidr_datacenter"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }  
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]    
-}  
-
-resource "akamai_gtm_cidrmap" "test_cidr" {
-    domain = akamai_gtm_domain.test_domain.name
-    name = "test_cidrmap"
-    default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
-    }
-    assignment {
-        datacenter_id = akamai_gtm_datacenter.test_cidr_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_cidr_datacenter.nickname
-        blocks = ["1.2.3.9/24"]
-    }
-    wait_on_complete = false
-    depends_on = [
-        akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_cidr_datacenter
-    ]
- 
-}`, gtmTestDomain)
-
-func TestAccAkamaiGTMCidrMap_basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckCidr(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMCidrMapDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMCidrMapConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMCidrMapExists,
-					resource.TestCheckResourceAttr("akamai_gtm_cidrmap.test_cidr", "wait_on_complete", "false"),
-				),
-				//ExpectNonEmptyPlan: true,
+var cidr = gtm.CidrMap{
+	Name: "tfexample_cidrmap_1",
+	DefaultDatacenter: &gtm.DatacenterBase{
+		DatacenterId: 5400,
+		Nickname:     "default datacenter",
+	},
+	Assignments: []*gtm.CidrAssignment{
+		{
+			DatacenterBase: gtm.DatacenterBase{
+				DatacenterId: 3131,
+				Nickname:     "tfexample_dc_1",
 			},
+			Blocks: []string{"1.2.3.9/24"},
 		},
+	},
+}
+
+func TestResGtmCidrmap(t *testing.T) {
+
+	t.Run("create cidrmap", func(t *testing.T) {
+		client := &mockgtm{}
+
+		getCall := client.On("GetCidrMap",
+			mock.Anything, // ctx is irrelevant for this test
+			cidr.Name,
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		resp := gtm.CidrMapResponse{}
+		resp.Resource = &cidr
+		resp.Status = &pendingResponseStatus
+		client.On("CreateCidrMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.CidrMap"),
+			gtmTestDomain,
+		).Return(nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+		})
+
+		client.On("GetDomainStatus",
+			mock.Anything, // ctx is irrelevant for this test
+			gtmTestDomain,
+		).Return(&completeResponseStatus, nil)
+
+		client.On("UpdateCidrMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.CidrMap"),
+			gtmTestDomain,
+		).Return(&completeResponseStatus, nil)
+
+		client.On("DeleteCidrMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.CidrMap"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_cidrmap_1"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResGtmCidrmap/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_cidrmap_1"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
-}
 
-func TestAccAkamaiGTMCidrMap_update(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckCidr(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMCidrMapDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMCidrMapConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMCidrMapExists,
-					resource.TestCheckResourceAttr("akamai_gtm_cidrmap.test_cidr", "wait_on_complete", "false"),
-				),
-			},
-			{
-				Config: testAccAkamaiGTMCidrMapUpdateConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMCidrMapExists,
-					resource.TestCheckResourceAttr("akamai_gtm_cidrmap.test_cidr", "wait_on_complete", "false"),
-				),
-			},
-		},
+	t.Run("create cidrmap failed", func(t *testing.T) {
+		client := &mockgtm{}
+
+		client.On("CreateCidrMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.CidrMap"),
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusBadRequest,
+		})
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
+						ExpectError: regexp.MustCompile("geoMap Create failed"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
-}
 
-func testAccPreCheckCidr(t *testing.T) {
+	t.Run("create cidrmap denied", func(t *testing.T) {
+		client := &mockgtm{}
 
-	testAccPreCheckTF(t)
-	testCheckDeleteCidrMap("test_cidrmap", gtmTestDomain)
-	testAccDeleteDatacenterByNickname("test_cidr_datacenter", gtmTestDomain)
+		dr := gtm.CidrMapResponse{}
+		dr.Resource = &cidr
+		dr.Status = &deniedResponseStatus
+		client.On("CreateCidrMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.CidrMap"),
+			gtmTestDomain,
+		).Return(&dr, nil)
 
-}
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+					},
+				},
+			})
+		})
 
-func testCheckDeleteCidrMap(cidrName string, dom string) error {
-
-	cidr, err := gtm.GetCidrMap(cidrName, dom)
-	if cidr == nil {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test cidrmap [%v]", cidrName)
-	_, err = cidr.Delete(dom)
-	if err != nil {
-		return fmt.Errorf("cidrmap was not deleted %s. Error: %s", cidrName, err.Error())
-	}
-	return nil
-
-}
-
-func testAccCheckAkamaiGTMCidrMapDestroy(s *terraform.State) error {
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_cidrmap" {
-			continue
-		}
-
-		cidrName, dom, _ := parseStringID(rs.Primary.ID)
-		if err := testCheckDeleteCidrMap(cidrName, dom); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func testAccCheckAkamaiGTMCidrMapExists(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_cidrmap" {
-			continue
-		}
-
-		cidrName, dom, err := parseStringID(rs.Primary.ID)
-		if err != nil {
-			return err
-		}
-		_, err = gtm.GetCidrMap(cidrName, dom)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+		client.AssertExpectations(t)
+	})
 }
