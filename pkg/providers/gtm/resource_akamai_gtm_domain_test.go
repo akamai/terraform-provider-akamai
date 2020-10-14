@@ -1,13 +1,14 @@
 package gtm
 
 import (
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"log"
 	"net/http"
 	"regexp"
 	"testing"
+
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 var gtmTestDomain = "gtm_terra_testdomain.akadns.net"
@@ -220,20 +221,28 @@ func TestResGtmDomain(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Domain"),
 			mock.AnythingOfType("map[string]string"),
-		).Return(nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&dr, nil}
+		).Return(&dr, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
 		})
+
+		client.On("NewDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&dom)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		client.On("UpdateDomain",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Domain"),
 			mock.AnythingOfType("map[string]string"),
-		).Return(&completeResponseStatus, nil)
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+		})
 
 		client.On("DeleteDomain",
 			mock.Anything, // ctx is irrelevant for this test
@@ -252,7 +261,7 @@ func TestResGtmDomain(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "10.0"),
+							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "10"),
 						),
 					},
 					{
@@ -260,7 +269,7 @@ func TestResGtmDomain(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "20.0"),
+							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "20"),
 						),
 					},
 				},
@@ -280,6 +289,12 @@ func TestResGtmDomain(t *testing.T) {
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
 		})
+
+		client.On("NewDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&dom)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -309,6 +324,12 @@ func TestResGtmDomain(t *testing.T) {
 			mock.AnythingOfType("map[string]string"),
 		).Return(&dr, nil)
 
+		client.On("NewDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&dom)
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				PreCheck:  func() { testAccPreCheck(t) },
@@ -317,52 +338,6 @@ func TestResGtmDomain(t *testing.T) {
 					{
 						Config:      loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-}
-
-func TestGtmDomainUpdate(t *testing.T) {
-
-	t.Run("update domain", func(t *testing.T) {
-		client := &mockgtm{}
-
-		client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
-		).Return(&dom, nil)
-
-		rs := gtm.ResponseStatus{}
-		client.On("UpdateDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&rs, nil)
-
-		rs = gtm.ResponseStatus{}
-		client.On("DeleteDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-		).Return(&rs, nil)
-
-		dataSourceName := "akamai_gtm_domain.testdomain"
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString("testdata/TestResDnsDomain/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
-							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
-							//resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", 10),
-						),
 					},
 				},
 			})

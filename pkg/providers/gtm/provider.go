@@ -1,11 +1,8 @@
 package gtm
 
 import (
-	"errors"
-	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
@@ -89,58 +86,7 @@ func (p *provider) Client(meta akamai.OperationMeta) gtm.GTM {
 	return gtm.Client(meta.Session())
 }
 
-func getConfigGTMV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
-	var GTMv1Config edgegrid.Config
-	var err error
-	gtm, err := tools.GetSetValue("gtm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
-	}
-	if err == nil {
-		log.Infof("[DEBUG] Setting property config via HCL")
-		//cfg := gtm.List()[0].(map[string]interface{})
-		gtmConfig := gtm.List()
-		if len(gtmConfig) == 0 {
-			return nil, fmt.Errorf("'gtm' property in provider must have at least one entry")
-		}
-		configMap, ok := gtmConfig[0].(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("gtm config entry is of invalid type; should be 'map[string]interface{}'")
-		}
-		host, ok := configMap["host"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
-		}
-		accessToken, ok := configMap["access_token"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "access_token", "string")
-		}
-		clientToken, ok := configMap["client_token"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_token", "string")
-		}
-		clientSecret, ok := configMap["client_secret"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_secret", "string")
-		}
-		maxBody, ok := configMap["max_body"].(int)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "max_body", "int")
-		}
-		GTMv1Config = edgegrid.Config{
-			Host:         host,
-			AccessToken:  accessToken,
-			ClientToken:  clientToken,
-			ClientSecret: clientSecret,
-			MaxBody:      maxBody,
-		}
-		return &GTMv1Config, nil
-	}
-
-	edgerc, err := tools.GetStringValue("edgerc", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
-	}
+func getConfigGTMV1Service(d *schema.ResourceData) (interface{}, error) {
 
 	var section string
 
@@ -155,12 +101,7 @@ func getConfigGTMV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 		d.Set("config_section", section)
 	}
 
-	GTMv1Config, err = edgegrid.Init(edgerc, section)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GTMv1Config, nil
+	return nil, nil
 }
 
 func (p *provider) Name() string {

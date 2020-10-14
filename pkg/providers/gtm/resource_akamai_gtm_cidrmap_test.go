@@ -28,14 +28,15 @@ var cidr = gtm.CidrMap{
 }
 
 func TestResGtmCidrmap(t *testing.T) {
+	dc := gtm.Datacenter{}
 
 	t.Run("create cidrmap", func(t *testing.T) {
 		client := &mockgtm{}
 
 		getCall := client.On("GetCidrMap",
 			mock.Anything, // ctx is irrelevant for this test
-			cidr.Name,
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
@@ -46,25 +47,37 @@ func TestResGtmCidrmap(t *testing.T) {
 		client.On("CreateCidrMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.CidrMap"),
-			gtmTestDomain,
-		).Return(nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{resp.Resource, nil}
 		})
+
+		client.On("NewCidrMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&cidr, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		client.On("UpdateCidrMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.CidrMap"),
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		client.On("DeleteCidrMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.CidrMap"),
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		dataSourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
@@ -104,6 +117,17 @@ func TestResGtmCidrmap(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
+		client.On("NewCidrMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&cidr, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				PreCheck:  func() { testAccPreCheck(t) },
@@ -111,7 +135,7 @@ func TestResGtmCidrmap(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("geoMap Create failed"),
+						ExpectError: regexp.MustCompile("cidrMap Create failed"),
 					},
 				},
 			})
@@ -131,6 +155,17 @@ func TestResGtmCidrmap(t *testing.T) {
 			mock.AnythingOfType("*gtm.CidrMap"),
 			gtmTestDomain,
 		).Return(&dr, nil)
+
+		client.On("NewCidrMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&cidr, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

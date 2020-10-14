@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/tidwall/gjson"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -624,7 +623,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 			return diag.FromErr(err)
 		}
 		res.Etag = ""
-		body, err = jsonhooks.Marshal(res)
+		body, err = json.Marshal(res)
 		if err != nil {
 			return diag.FromErr(err)
 		}

@@ -79,7 +79,7 @@ func TestResDnsRecord(t *testing.T) {
 			getCall.ReturnArguments = mock.Arguments{nil, notFound}
 		})
 
-		dataSourceName := "akamai_dns_record.soa_record"
+		dataSourceName := "akamai_dns_record.a_record"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -87,19 +87,15 @@ func TestResDnsRecord(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/create_soa.tf"),
+						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							//resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
-							//resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
-							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "SOA"),
+							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/create_soa.tf"),
+						Config: loadFixtureString("testdata/TestResDnsRecord/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							//resource.TestCheckResourceAttr(dataSourceName, "zone", "exampleterraform.io"),
-							//resource.TestCheckResourceAttr(dataSourceName, "name", "exampleterraform.io"),
-							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "SOA"),
+							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
 						),
 					},
 				},
@@ -108,5 +104,4 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-
 }

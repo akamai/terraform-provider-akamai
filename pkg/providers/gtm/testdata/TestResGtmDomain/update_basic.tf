@@ -8,5 +8,5 @@ resource "akamai_gtm_domain" "testdomain" {
         contract = "1-2ABCDEF"
         comment =  "Test"
         group     = "123ABC" 
-        load_imbalance_percentage = 20
+        load_imbalance_percentage = 20.0
 }

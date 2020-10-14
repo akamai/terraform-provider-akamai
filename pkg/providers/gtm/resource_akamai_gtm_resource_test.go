@@ -1,12 +1,13 @@
 package gtm
 
 import (
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"regexp"
 	"testing"
+
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 var rsrc = gtm.Resource{
@@ -33,8 +34,8 @@ func TestResGtmResource(t *testing.T) {
 
 		getCall := client.On("GetResource",
 			mock.Anything, // ctx is irrelevant for this test
-			rsrc.Name,
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
@@ -45,25 +46,55 @@ func TestResGtmResource(t *testing.T) {
 		client.On("CreateResource",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Resource"),
-			gtmTestDomain,
-		).Return(nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
 		})
+
+		resCall := client.On("NewResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		)
+
+		resCall.RunFn = func(args mock.Arguments) {
+			resCall.ReturnArguments = mock.Arguments{
+				&gtm.Resource{
+					Name: args.String(1),
+				},
+			}
+		}
+
+		resInstCall := client.On("NewResourceInstance",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("int"),
+		)
+
+		resInstCall.RunFn = func(args mock.Arguments) {
+			resInstCall.ReturnArguments = mock.Arguments{
+				&gtm.ResourceInstance{
+					DatacenterId: args.Int(2),
+				},
+			}
+		}
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		client.On("UpdateResource",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Resource"),
-			gtmTestDomain,
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
+		})
 
 		client.On("DeleteResource",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		dataSourceName := "akamai_gtm_resource.tfexample_resource_1"
@@ -105,6 +136,33 @@ func TestResGtmResource(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
+		resCall := client.On("NewResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		)
+
+		resCall.RunFn = func(args mock.Arguments) {
+			resCall.ReturnArguments = mock.Arguments{
+				&gtm.Resource{
+					Name: args.String(1),
+				},
+			}
+		}
+
+		resInstCall := client.On("NewResourceInstance",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("int"),
+		)
+
+		resInstCall.RunFn = func(args mock.Arguments) {
+			resInstCall.ReturnArguments = mock.Arguments{
+				&gtm.ResourceInstance{
+					DatacenterId: args.Int(2),
+				},
+			}
+		}
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				PreCheck:  func() { testAccPreCheck(t) },
@@ -132,6 +190,33 @@ func TestResGtmResource(t *testing.T) {
 			mock.AnythingOfType("*gtm.Resource"),
 			gtmTestDomain,
 		).Return(&dr, nil)
+
+		resCall := client.On("NewResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		)
+
+		resCall.RunFn = func(args mock.Arguments) {
+			resCall.ReturnArguments = mock.Arguments{
+				&gtm.Resource{
+					Name: args.String(1),
+				},
+			}
+		}
+
+		resInstCall := client.On("NewResourceInstance",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("int"),
+		)
+
+		resInstCall.RunFn = func(args mock.Arguments) {
+			resInstCall.ReturnArguments = mock.Arguments{
+				&gtm.ResourceInstance{
+					DatacenterId: args.Int(2),
+				},
+			}
+		}
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

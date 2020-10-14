@@ -28,14 +28,18 @@ var geo = gtm.GeoMap{
 }
 
 func TestResGtmGeomap(t *testing.T) {
+	dc := gtm.Datacenter{
+		DatacenterId: geo.DefaultDatacenter.DatacenterId,
+		Nickname:     geo.DefaultDatacenter.Nickname,
+	}
 
 	t.Run("create geomap", func(t *testing.T) {
 		client := &mockgtm{}
 
 		getCall := client.On("GetGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
-			geo.Name,
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
@@ -46,25 +50,39 @@ func TestResGtmGeomap(t *testing.T) {
 		client.On("CreateGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.GeoMap"),
-			gtmTestDomain,
-		).Return(nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
 		})
+
+		client.On("NewGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&geo, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		client.On("UpdateGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.GeoMap"),
-			gtmTestDomain,
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
+		})
 
 		client.On("DeleteGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.GeoMap"),
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		dataSourceName := "akamai_gtm_geomap.tfexample_geomap_1"
@@ -104,6 +122,17 @@ func TestResGtmGeomap(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
+		client.On("NewGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&geo, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				PreCheck:  func() { testAccPreCheck(t) },
@@ -131,6 +160,17 @@ func TestResGtmGeomap(t *testing.T) {
 			mock.AnythingOfType("*gtm.GeoMap"),
 			gtmTestDomain,
 		).Return(&dr, nil)
+
+		client.On("NewGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&geo, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

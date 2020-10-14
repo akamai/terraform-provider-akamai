@@ -1,12 +1,13 @@
 package gtm
 
 import (
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"regexp"
 	"testing"
+
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 var dc = gtm.Datacenter{
@@ -40,8 +41,8 @@ func TestResGtmDatacenter(t *testing.T) {
 
 		getCall := client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
-			dc.DatacenterId,
-			gtmTestDomain,
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
@@ -52,25 +53,32 @@ func TestResGtmDatacenter(t *testing.T) {
 		client.On("CreateDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Datacenter"),
-			gtmTestDomain,
-		).Return(nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Datacenter), nil}
 		})
+
+		client.On("NewDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.Datacenter{})
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		client.On("UpdateDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Datacenter"),
-			gtmTestDomain,
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Datacenter), nil}
+		})
 
 		client.On("DeleteDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Datacenter"),
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		dataSourceName := "akamai_gtm_datacenter.tfexample_dc_1"
@@ -91,7 +99,7 @@ func TestResGtmDatacenter(t *testing.T) {
 						Config: loadFixtureString("testdata/TestResGtmDatacenter/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "continent", "EU"),
+							resource.TestCheckResourceAttr(dataSourceName, "continent", "NA"),
 						),
 					},
 				},
@@ -111,6 +119,10 @@ func TestResGtmDatacenter(t *testing.T) {
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
 		})
+
+		client.On("NewDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&dc)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -139,6 +151,10 @@ func TestResGtmDatacenter(t *testing.T) {
 			mock.AnythingOfType("*gtm.Datacenter"),
 			gtmTestDomain,
 		).Return(&dr, nil)
+
+		client.On("NewDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&dc)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

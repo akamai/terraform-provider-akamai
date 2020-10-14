@@ -35,14 +35,18 @@ var asmap = gtm.AsMap{
 }
 
 func TestResGtmAsmap(t *testing.T) {
+	dc := gtm.Datacenter{
+		DatacenterId: asmap.DefaultDatacenter.DatacenterId,
+		Nickname:     asmap.DefaultDatacenter.Nickname,
+	}
 
 	t.Run("create asmap", func(t *testing.T) {
 		client := &mockgtm{}
 
 		getCall := client.On("GetAsMap",
 			mock.Anything, // ctx is irrelevant for this test
-			asmap.Name,
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
@@ -50,31 +54,47 @@ func TestResGtmAsmap(t *testing.T) {
 		resp := gtm.AsMapResponse{}
 		resp.Resource = &asmap
 		resp.Status = &pendingResponseStatus
+
+		client.On("NewAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&asmap, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
+
 		client.On("CreateAsMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.AsMap"),
-			gtmTestDomain,
-		).Return(nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+			mock.AnythingOfType("string"),
+		).Return(&gtm.AsMapResponse{
+			Resource: &asmap,
+			Status:   &gtm.ResponseStatus{},
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{resp.Resource, nil}
 		})
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		client.On("UpdateAsMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.AsMap"),
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		client.On("DeleteAsMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.AsMap"),
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
-		dataSourceName := "akamai_gtm_asmap.tfexample_asmap_1"
+		dataSourceName := "akamai_gtm_asmap.tfexample_as_1"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -84,13 +104,13 @@ func TestResGtmAsmap(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_asmap_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
 						),
 					},
 					{
 						Config: loadFixtureString("testdata/TestResGtmAsmap/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_asmap_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
 						),
 					},
 				},
@@ -110,6 +130,17 @@ func TestResGtmAsmap(t *testing.T) {
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
 		})
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
+
+		client.On("NewAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&asmap, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -138,6 +169,17 @@ func TestResGtmAsmap(t *testing.T) {
 			mock.AnythingOfType("*gtm.AsMap"),
 			gtmTestDomain,
 		).Return(&dr, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
+
+		client.On("NewAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&asmap, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

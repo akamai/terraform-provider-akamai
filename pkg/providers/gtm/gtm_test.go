@@ -32,7 +32,7 @@ func (p *mockgtm) NewDomain(ctx context.Context, domain string, dtype string) *g
 }
 
 func (p *mockgtm) GetDomainStatus(ctx context.Context, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -52,7 +52,7 @@ func (p *mockgtm) ListDomains(ctx context.Context) ([]*gtm.DomainItem, error) {
 }
 
 func (p *mockgtm) GetDomain(ctx context.Context, domain string) (*gtm.Domain, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -62,7 +62,7 @@ func (p *mockgtm) GetDomain(ctx context.Context, domain string) (*gtm.Domain, er
 }
 
 func (p *mockgtm) CreateDomain(ctx context.Context, domain *gtm.Domain, queryArgs map[string]string) (*gtm.DomainResponse, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain, queryArgs)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -72,7 +72,7 @@ func (p *mockgtm) CreateDomain(ctx context.Context, domain *gtm.Domain, queryArg
 }
 
 func (p *mockgtm) DeleteDomain(ctx context.Context, domain *gtm.Domain) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -82,7 +82,7 @@ func (p *mockgtm) DeleteDomain(ctx context.Context, domain *gtm.Domain) (*gtm.Re
 }
 
 func (p *mockgtm) UpdateDomain(ctx context.Context, domain *gtm.Domain, queryArgs map[string]string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain, queryArgs)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -92,7 +92,7 @@ func (p *mockgtm) UpdateDomain(ctx context.Context, domain *gtm.Domain, queryArg
 }
 
 func (p *mockgtm) GetProperty(ctx context.Context, prop string, domain string) (*gtm.Property, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, prop, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -102,7 +102,7 @@ func (p *mockgtm) GetProperty(ctx context.Context, prop string, domain string) (
 }
 
 func (p *mockgtm) DeleteProperty(ctx context.Context, prop *gtm.Property, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, prop, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -112,7 +112,7 @@ func (p *mockgtm) DeleteProperty(ctx context.Context, prop *gtm.Property, domain
 }
 
 func (p *mockgtm) CreateProperty(ctx context.Context, prop *gtm.Property, domain string) (*gtm.PropertyResponse, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, prop, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -122,7 +122,7 @@ func (p *mockgtm) CreateProperty(ctx context.Context, prop *gtm.Property, domain
 }
 
 func (p *mockgtm) UpdateProperty(ctx context.Context, prop *gtm.Property, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, prop, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -152,7 +152,7 @@ func (p *mockgtm) NewStaticRRSet(ctx context.Context) *gtm.StaticRRSet {
 }
 
 func (p *mockgtm) NewLivenessTest(ctx context.Context, a string, b string, c int, d float32) *gtm.LivenessTest {
-	args := p.Called(ctx)
+	args := p.Called(ctx, a, b, c, d)
 
 	if args.Get(0) == nil {
 		return nil
@@ -162,7 +162,7 @@ func (p *mockgtm) NewLivenessTest(ctx context.Context, a string, b string, c int
 }
 
 func (p *mockgtm) NewProperty(ctx context.Context, prop string) *gtm.Property {
-	args := p.Called(ctx)
+	args := p.Called(ctx, prop)
 
 	if args.Get(0) == nil {
 		return nil
@@ -172,7 +172,7 @@ func (p *mockgtm) NewProperty(ctx context.Context, prop string) *gtm.Property {
 }
 
 func (p *mockgtm) ListProperties(ctx context.Context, domain string) ([]*gtm.Property, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -182,7 +182,7 @@ func (p *mockgtm) ListProperties(ctx context.Context, domain string) ([]*gtm.Pro
 }
 
 func (p *mockgtm) GetDatacenter(ctx context.Context, dcid int, domain string) (*gtm.Datacenter, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, dcid, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -192,7 +192,7 @@ func (p *mockgtm) GetDatacenter(ctx context.Context, dcid int, domain string) (*
 }
 
 func (p *mockgtm) CreateDatacenter(ctx context.Context, dc *gtm.Datacenter, domain string) (*gtm.DatacenterResponse, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, dc, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -202,7 +202,7 @@ func (p *mockgtm) CreateDatacenter(ctx context.Context, dc *gtm.Datacenter, doma
 }
 
 func (p *mockgtm) DeleteDatacenter(ctx context.Context, dc *gtm.Datacenter, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, dc, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -212,7 +212,7 @@ func (p *mockgtm) DeleteDatacenter(ctx context.Context, dc *gtm.Datacenter, doma
 }
 
 func (p *mockgtm) UpdateDatacenter(ctx context.Context, dc *gtm.Datacenter, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, dc, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -242,7 +242,7 @@ func (p *mockgtm) NewDatacenter(ctx context.Context) *gtm.Datacenter {
 }
 
 func (p *mockgtm) ListDatacenters(ctx context.Context, domain string) ([]*gtm.Datacenter, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -252,7 +252,7 @@ func (p *mockgtm) ListDatacenters(ctx context.Context, domain string) ([]*gtm.Da
 }
 
 func (p *mockgtm) CreateIPv4DefaultDatacenter(ctx context.Context, domain string) (*gtm.Datacenter, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -262,7 +262,7 @@ func (p *mockgtm) CreateIPv4DefaultDatacenter(ctx context.Context, domain string
 }
 
 func (p *mockgtm) CreateIPv6DefaultDatacenter(ctx context.Context, domain string) (*gtm.Datacenter, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -272,7 +272,7 @@ func (p *mockgtm) CreateIPv6DefaultDatacenter(ctx context.Context, domain string
 }
 
 func (p *mockgtm) CreateMapsDefaultDatacenter(ctx context.Context, domainName string) (*gtm.Datacenter, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domainName)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -282,7 +282,7 @@ func (p *mockgtm) CreateMapsDefaultDatacenter(ctx context.Context, domainName st
 }
 
 func (p *mockgtm) GetResource(ctx context.Context, rsrc string, domain string) (*gtm.Resource, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, rsrc, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -292,7 +292,7 @@ func (p *mockgtm) GetResource(ctx context.Context, rsrc string, domain string) (
 }
 
 func (p *mockgtm) CreateResource(ctx context.Context, rsrc *gtm.Resource, domain string) (*gtm.ResourceResponse, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, rsrc, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -302,7 +302,7 @@ func (p *mockgtm) CreateResource(ctx context.Context, rsrc *gtm.Resource, domain
 }
 
 func (p *mockgtm) DeleteResource(ctx context.Context, rsrc *gtm.Resource, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, rsrc, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -312,7 +312,7 @@ func (p *mockgtm) DeleteResource(ctx context.Context, rsrc *gtm.Resource, domain
 }
 
 func (p *mockgtm) UpdateResource(ctx context.Context, rsrc *gtm.Resource, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, rsrc, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -322,7 +322,7 @@ func (p *mockgtm) UpdateResource(ctx context.Context, rsrc *gtm.Resource, domain
 }
 
 func (p *mockgtm) NewResourceInstance(ctx context.Context, ri *gtm.Resource, a int) *gtm.ResourceInstance {
-	args := p.Called(ctx)
+	args := p.Called(ctx, ri, a)
 
 	if args.Get(0) == nil {
 		return nil
@@ -332,7 +332,7 @@ func (p *mockgtm) NewResourceInstance(ctx context.Context, ri *gtm.Resource, a i
 }
 
 func (p *mockgtm) NewResource(ctx context.Context, rname string) *gtm.Resource {
-	args := p.Called(ctx)
+	args := p.Called(ctx, rname)
 
 	if args.Get(0) == nil {
 		return nil
@@ -342,7 +342,7 @@ func (p *mockgtm) NewResource(ctx context.Context, rname string) *gtm.Resource {
 }
 
 func (p *mockgtm) ListResources(ctx context.Context, domain string) ([]*gtm.Resource, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -352,7 +352,7 @@ func (p *mockgtm) ListResources(ctx context.Context, domain string) ([]*gtm.Reso
 }
 
 func (p *mockgtm) GetAsMap(ctx context.Context, asmap string, domain string) (*gtm.AsMap, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, asmap, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -362,7 +362,7 @@ func (p *mockgtm) GetAsMap(ctx context.Context, asmap string, domain string) (*g
 }
 
 func (p *mockgtm) CreateAsMap(ctx context.Context, asmap *gtm.AsMap, domain string) (*gtm.AsMapResponse, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, asmap, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -372,7 +372,7 @@ func (p *mockgtm) CreateAsMap(ctx context.Context, asmap *gtm.AsMap, domain stri
 }
 
 func (p *mockgtm) DeleteAsMap(ctx context.Context, asmap *gtm.AsMap, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, asmap, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -383,7 +383,7 @@ func (p *mockgtm) DeleteAsMap(ctx context.Context, asmap *gtm.AsMap, domain stri
 
 func (p *mockgtm) UpdateAsMap(ctx context.Context, asmap *gtm.AsMap, domain string) (*gtm.ResponseStatus, error) {
 
-	args := p.Called(ctx)
+	args := p.Called(ctx, asmap, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -393,7 +393,7 @@ func (p *mockgtm) UpdateAsMap(ctx context.Context, asmap *gtm.AsMap, domain stri
 }
 
 func (p *mockgtm) NewAsMap(ctx context.Context, mname string) *gtm.AsMap {
-	args := p.Called(ctx)
+	args := p.Called(ctx, mname)
 
 	if args.Get(0) == nil {
 		return nil
@@ -403,7 +403,7 @@ func (p *mockgtm) NewAsMap(ctx context.Context, mname string) *gtm.AsMap {
 }
 
 func (p *mockgtm) NewASAssignment(ctx context.Context, as *gtm.AsMap, a int, b string) *gtm.AsAssignment {
-	args := p.Called(ctx)
+	args := p.Called(ctx, as, a, b)
 
 	if args.Get(0) == nil {
 		return nil
@@ -413,7 +413,7 @@ func (p *mockgtm) NewASAssignment(ctx context.Context, as *gtm.AsMap, a int, b s
 }
 
 func (p *mockgtm) ListAsMaps(ctx context.Context, domain string) ([]*gtm.AsMap, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -423,7 +423,7 @@ func (p *mockgtm) ListAsMaps(ctx context.Context, domain string) ([]*gtm.AsMap, 
 }
 
 func (p *mockgtm) GetGeoMap(ctx context.Context, geo string, domain string) (*gtm.GeoMap, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, geo, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -433,7 +433,7 @@ func (p *mockgtm) GetGeoMap(ctx context.Context, geo string, domain string) (*gt
 }
 
 func (p *mockgtm) CreateGeoMap(ctx context.Context, geo *gtm.GeoMap, domain string) (*gtm.GeoMapResponse, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, geo, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -443,7 +443,7 @@ func (p *mockgtm) CreateGeoMap(ctx context.Context, geo *gtm.GeoMap, domain stri
 }
 
 func (p *mockgtm) DeleteGeoMap(ctx context.Context, geo *gtm.GeoMap, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, geo, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -453,7 +453,7 @@ func (p *mockgtm) DeleteGeoMap(ctx context.Context, geo *gtm.GeoMap, domain stri
 }
 
 func (p *mockgtm) UpdateGeoMap(ctx context.Context, geo *gtm.GeoMap, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, geo, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -463,7 +463,7 @@ func (p *mockgtm) UpdateGeoMap(ctx context.Context, geo *gtm.GeoMap, domain stri
 }
 
 func (p *mockgtm) NewGeoMap(ctx context.Context, mname string) *gtm.GeoMap {
-	args := p.Called(ctx)
+	args := p.Called(ctx, mname)
 
 	if args.Get(0) == nil {
 		return nil
@@ -473,7 +473,7 @@ func (p *mockgtm) NewGeoMap(ctx context.Context, mname string) *gtm.GeoMap {
 }
 
 func (p *mockgtm) NewGeoAssignment(ctx context.Context, as *gtm.GeoMap, a int, b string) *gtm.GeoAssignment {
-	args := p.Called(ctx)
+	args := p.Called(ctx, as, a, b)
 
 	if args.Get(0) == nil {
 		return nil
@@ -483,7 +483,7 @@ func (p *mockgtm) NewGeoAssignment(ctx context.Context, as *gtm.GeoMap, a int, b
 }
 
 func (p *mockgtm) ListGeoMaps(ctx context.Context, domain string) ([]*gtm.GeoMap, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -493,7 +493,7 @@ func (p *mockgtm) ListGeoMaps(ctx context.Context, domain string) ([]*gtm.GeoMap
 }
 
 func (p *mockgtm) GetCidrMap(ctx context.Context, cidr string, domain string) (*gtm.CidrMap, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, cidr, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -503,7 +503,7 @@ func (p *mockgtm) GetCidrMap(ctx context.Context, cidr string, domain string) (*
 }
 
 func (p *mockgtm) CreateCidrMap(ctx context.Context, cidr *gtm.CidrMap, domain string) (*gtm.CidrMapResponse, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, cidr, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -513,7 +513,7 @@ func (p *mockgtm) CreateCidrMap(ctx context.Context, cidr *gtm.CidrMap, domain s
 }
 
 func (p *mockgtm) DeleteCidrMap(ctx context.Context, cidr *gtm.CidrMap, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, cidr, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -523,7 +523,7 @@ func (p *mockgtm) DeleteCidrMap(ctx context.Context, cidr *gtm.CidrMap, domain s
 }
 
 func (p *mockgtm) UpdateCidrMap(ctx context.Context, cidr *gtm.CidrMap, domain string) (*gtm.ResponseStatus, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, cidr, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -533,7 +533,7 @@ func (p *mockgtm) UpdateCidrMap(ctx context.Context, cidr *gtm.CidrMap, domain s
 }
 
 func (p *mockgtm) NewCidrMap(ctx context.Context, mname string) *gtm.CidrMap {
-	args := p.Called(ctx)
+	args := p.Called(ctx, mname)
 
 	if args.Get(0) == nil {
 		return nil
@@ -543,7 +543,7 @@ func (p *mockgtm) NewCidrMap(ctx context.Context, mname string) *gtm.CidrMap {
 }
 
 func (p *mockgtm) NewCidrAssignment(ctx context.Context, as *gtm.CidrMap, a int, b string) *gtm.CidrAssignment {
-	args := p.Called(ctx)
+	args := p.Called(ctx, as, a, b)
 
 	if args.Get(0) == nil {
 		return nil
@@ -553,7 +553,7 @@ func (p *mockgtm) NewCidrAssignment(ctx context.Context, as *gtm.CidrMap, a int,
 }
 
 func (p *mockgtm) ListCidrMaps(ctx context.Context, domain string) ([]*gtm.CidrMap, error) {
-	args := p.Called(ctx)
+	args := p.Called(ctx, domain)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

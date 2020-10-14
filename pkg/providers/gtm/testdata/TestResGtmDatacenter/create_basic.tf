@@ -15,4 +15,5 @@ resource "akamai_gtm_datacenter" "tfexample_dc_1" {
     load_object_port = 80
     load_servers     = ["1.2.3.4", "1.2.3.9"]
   }
+  continent = "EU"
 }

@@ -12,11 +12,18 @@ func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		client := &mockgtm{}
 
-		dc := gtm.Datacenter{}
+		dc := gtm.Datacenter{
+			DatacenterId: 1000,
+		}
+
 		client.On("CreateMapsDefaultDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
 		).Return(&dc, nil)
+
+		client.On("NewDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&dc)
 
 		dataSourceName := "data.akamai_gtm_default_datacenter.test"
 

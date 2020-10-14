@@ -1,12 +1,13 @@
 package gtm
 
 import (
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"regexp"
 	"testing"
+
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 var prop = gtm.Property{
@@ -83,8 +84,8 @@ func TestResGtmProperty(t *testing.T) {
 
 		getCall := client.On("GetProperty",
 			mock.Anything, // ctx is irrelevant for this test
-			prop.Name,
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
@@ -95,25 +96,63 @@ func TestResGtmProperty(t *testing.T) {
 		client.On("CreateProperty",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Property"),
-			gtmTestDomain,
-		).Return(nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		})
+
+		client.On("NewProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.Property{
+			Name: "tfexample_prop_1",
 		})
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
+
+		client.On("NewTrafficTarget",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.TrafficTarget{})
+
+		client.On("NewStaticRRSet",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.StaticRRSet{})
+
+		liveCall := client.On("NewLivenessTest",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("float32"),
+		)
+
+		liveCall.RunFn = func(args mock.Arguments) {
+			liveCall.ReturnArguments = mock.Arguments{
+				&gtm.LivenessTest{
+					Name:               args.String(1),
+					TestObjectProtocol: args.String(2),
+					TestInterval:       args.Int(3),
+					TestTimeout:        args.Get(4).(float32),
+				},
+			}
+		}
 
 		client.On("UpdateProperty",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Property"),
-			gtmTestDomain,
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		})
 
 		client.On("DeleteProperty",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		dataSourceName := "akamai_gtm_property.tfexample_prop_1"
@@ -155,6 +194,41 @@ func TestResGtmProperty(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
+		client.On("NewProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.Property{
+			Name: "tfexample_prop_1",
+		})
+
+		client.On("NewTrafficTarget",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.TrafficTarget{})
+
+		client.On("NewStaticRRSet",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.StaticRRSet{})
+
+		liveCall := client.On("NewLivenessTest",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("float32"),
+		)
+
+		liveCall.RunFn = func(args mock.Arguments) {
+			liveCall.ReturnArguments = mock.Arguments{
+				&gtm.LivenessTest{
+					Name:               args.String(1),
+					TestObjectProtocol: args.String(2),
+					TestInterval:       args.Int(3),
+					TestTimeout:        args.Get(4).(float32),
+				},
+			}
+		}
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				PreCheck:  func() { testAccPreCheck(t) },
@@ -182,6 +256,41 @@ func TestResGtmProperty(t *testing.T) {
 			mock.AnythingOfType("*gtm.Property"),
 			gtmTestDomain,
 		).Return(&dr, nil)
+
+		client.On("NewProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.Property{
+			Name: "tfexample_prop_1",
+		})
+
+		client.On("NewTrafficTarget",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.TrafficTarget{})
+
+		client.On("NewStaticRRSet",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.StaticRRSet{})
+
+		liveCall := client.On("NewLivenessTest",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("float32"),
+		)
+
+		liveCall.RunFn = func(args mock.Arguments) {
+			liveCall.ReturnArguments = mock.Arguments{
+				&gtm.LivenessTest{
+					Name:               args.String(1),
+					TestObjectProtocol: args.String(2),
+					TestInterval:       args.Int(3),
+					TestTimeout:        args.Get(4).(float32),
+				},
+			}
+		}
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

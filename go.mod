@@ -1,7 +1,6 @@
 module github.com/akamai/terraform-provider-akamai/v2
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.18
 	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.0-00010101000000-000000000000
 	github.com/allegro/bigcache v1.2.1
 	github.com/apex/log v1.9.0
@@ -11,9 +10,7 @@ require (
 	github.com/hashicorp/go-hclog v0.9.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
 	github.com/kr/text v0.2.0 // indirect
-	github.com/mitchellh/go-homedir v1.1.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
-	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/gjson v1.2.1
