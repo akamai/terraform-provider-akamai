@@ -202,7 +202,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	rules, err := getRules(ctx, d, prop, contract.ContractID, group.GroupID, meta)
 	if err != nil {
-		if err = cleanUpProperty(ctx, prop, meta); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
 			return diag.FromErr(fmt.Errorf("%s , %s", "getRules produced errors and property clean up failed", err.Error()))
 		}
 		d.SetId("")
@@ -672,7 +672,7 @@ func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff
 	logger.Debugf("OLD: %s", oldStr)
 	logger.Debugf("NEW: %s", newStr)
 	if !compareRulesJSON(oldStr, newStr) {
-		logger.Debugf("CHANGED VALUES: %s %s " + oldStr + " " + newStr)
+		logger.Debugf("CHANGED VALUES: %s %s ", oldStr, newStr)
 		if err := d.SetNewComputed("version"); err != nil {
 			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
