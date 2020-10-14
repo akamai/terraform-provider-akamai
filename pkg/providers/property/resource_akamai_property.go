@@ -201,14 +201,14 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	rules, err := getRules(ctx, d, prop, contract.ContractID, group.GroupID, meta)
 	if err != nil {
-		if err = cleanUpProperty(ctx, prop, meta); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
 			return diag.FromErr(fmt.Errorf("%s , %s", "getRules produced errors and property clean up failed", err.Error()))
 		}
 		d.SetId("")
 		return diag.FromErr(err)
 	}
 	if _, err := client.UpdateRuleTree(ctx, rules); err != nil {
-		if err = cleanUpProperty(ctx, prop, meta); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
 			return diag.FromErr(fmt.Errorf("%s , %s", "UpdateRuleTree produced errors and property clean up failed", err.Error()))
 		}
 		d.SetId("")
@@ -230,7 +230,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		GroupID:         prop.GroupID,
 	})
 	if err != nil {
-		if err = cleanUpProperty(ctx, prop, meta); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
 			return diag.FromErr(fmt.Errorf("%s , %s", "GetRuleTree produced errors and property clean up failed", err.Error()))
 		}
 		d.SetId("")
@@ -247,7 +247,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	logger.Debugf("CREATE Check rules after unmarshal from JSON %s", string(body))
 
 	if err := d.Set("rulessha", sha1hashAPI); err != nil {
-		if err = cleanUpProperty(ctx, prop, meta); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
 			return diag.FromErr(fmt.Errorf("%s , %s", "GetRuleTree produced errors and property clean up failed", err.Error()))
 		}
 		d.SetId("")
@@ -255,7 +255,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	d.SetId(fmt.Sprintf("%s", prop.PropertyID))
 	if err := d.Set("rules", string(body)); err != nil {
-		if err = cleanUpProperty(ctx, prop, meta); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
 			return diag.FromErr(fmt.Errorf("%s , %s", "GetRuleTree produced errors and property clean up failed", err.Error()))
 		}
 		d.SetId("")
@@ -327,7 +327,7 @@ func setHostnames(ctx context.Context, property *papi.Property, d *schema.Resour
 		logger.Debugf("Searching for edge hostname: %s, for hostname: %s", edgeHostNameStr, public)
 		newEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostNameStr)
 		if err != nil {
-			if err = cleanUpProperty(ctx, property, meta); err != nil {
+			if err := cleanUpProperty(ctx, property, meta); err != nil {
 				return nil, fmt.Errorf("edge hostname not found and property cleanup might have failed: %s", edgeHostNameStr)
 			}
 			d.SetId("")
@@ -671,7 +671,7 @@ func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff
 	logger.Debugf("OLD: %s", oldStr)
 	logger.Debugf("NEW: %s", newStr)
 	if !compareRulesJSON(oldStr, newStr) {
-		logger.Debugf("CHANGED VALUES: %s %s " + oldStr + " " + newStr)
+		logger.Debugf("CHANGED VALUES: %s %s ", oldStr, newStr)
 		if err := d.SetNewComputed("version"); err != nil {
 			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}

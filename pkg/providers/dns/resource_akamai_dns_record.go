@@ -869,7 +869,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		"recordtype": recordType,
 	}).Info("record Update")
 
-	if err = validateRecord(d); err != nil {
+	if err := validateRecord(d); err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("DNS record validation failure for %s", host),

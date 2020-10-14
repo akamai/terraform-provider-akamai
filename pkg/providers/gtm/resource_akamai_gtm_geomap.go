@@ -107,7 +107,7 @@ func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	var diags diag.Diagnostics
-	if err = validateDefaultDC(ctx, meta, geoDefaultDCList, domain); err != nil {
+	if err := validateDefaultDC(ctx, meta, geoDefaultDCList, domain); err != nil {
 		logger.Errorf("Default datacenter validation error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,

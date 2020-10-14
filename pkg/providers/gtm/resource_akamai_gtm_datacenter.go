@@ -302,7 +302,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	logger.Debugf("Updating Datacenter BEFORE: %v", existDC)
-	if err = populateDatacenterObject(d, existDC, m); err != nil {
+	if err := populateDatacenterObject(d, existDC, m); err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Datacenter PROPOSED: %v", existDC)
