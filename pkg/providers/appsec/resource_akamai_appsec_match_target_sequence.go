@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -34,18 +36,17 @@ func resourceMatchTargetSequence() *schema.Resource {
 			"json": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				ConflictsWith: []string{"type", "sequence_map"},
+				ConflictsWith: []string{"sequence_map"},
 			},
 			"type": {
 				Type:             schema.TypeString,
-				Optional:         true,
-				ConflictsWith:    []string{"json"},
+				Required:         true,
 				DiffSuppressFunc: suppressJsonProvided,
 			},
 			"sequence_map": {
 				Type:             schema.TypeMap,
 				Optional:         true,
-				Elem:             &schema.Schema{Type: schema.TypeInt},
+				Elem:             &schema.Schema{Type: schema.TypeString},
 				ConflictsWith:    []string{"json"},
 				DiffSuppressFunc: suppressJsonProvided,
 			},
@@ -65,7 +66,21 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	if ok {
 
 		json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTargetSequence)
-		//updateMatchTargetSequence.TargetSequence.TargetID, _ = strconv.Atoi(d.Id())
+
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateMatchTargetSequence.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateMatchTargetSequence.ConfigVersion = version
+
+		d.Set("type", updateMatchTargetSequence.Type)
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -79,32 +94,53 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 		}
 		updateMatchTargetSequence.ConfigVersion = version
 
-		//var ts []v2.TargetSequence
-		sequenceMap, ok := d.Get("sequence_map").(map[int]interface{})
-		if !ok {
+		matchtargetseqtype, err := tools.GetStringValue("type", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
+		updateMatchTargetSequence.Type = matchtargetseqtype
 
-		//sequenceMaps := make(map[int]int, len(sequenceMap))
+		d.Set("type", updateMatchTargetSequence.Type)
+
+		sequenceMap, ok := d.Get("sequence_map").(map[string]interface{})
+		if !ok {
+			logger.Warnf("get map  'updateMatchTargetSequence': %s", err.Error())
+			return diag.FromErr(err)
+		}
+		logger.Warnf("calling 'getMatchTargetSequence SEQ MAP': %s", sequenceMap)
+
 		for target, sequence := range sequenceMap {
-			targetsequence.TargetID = target
-			targetsequence.Sequence = sequence.(int)
-			//ts = append(ts, targetsequence)
+			logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP': %s", target)
+			targetsequence.TargetID, _ = strconv.Atoi(target)
+
+			targetsequence.Sequence, _ = strconv.Atoi(sequence.(string))
+
 			updateMatchTargetSequence.TargetSequence = append(updateMatchTargetSequence.TargetSequence, targetsequence)
 
 		}
-
-		//updateMatchTargetSequence.TargetID, _ = strconv.Atoi(d.Id())
-		updateMatchTargetSequence.Type = d.Get("type").(string)
-
+		logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP EXIT ': %s", updateMatchTargetSequence)
 	}
 
-	_, err := client.UpdateMatchTargetSequence(ctx, updateMatchTargetSequence)
+	updatematchtargetsequence, err := client.UpdateMatchTargetSequence(ctx, updateMatchTargetSequence)
 	if err != nil {
 		logger.Warnf("calling 'updateMatchTargetSequence': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
+	targetsequence = v2.TargetSequence{}
+	sequencemap := []v2.TargetSequence{}
+
+	for _, targets := range updatematchtargetsequence.TargetSequence {
+		logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP': %s", targets)
+		targetsequence.TargetID = targets.TargetID
+		targetsequence.Sequence = targets.Sequence
+		sequencemap = append(sequencemap, targetsequence)
+
+	}
+
+	d.Set("sequence_map", sequenceToMap(sequencemap))
+
+	d.SetId(fmt.Sprintf("%d:%d", updateMatchTargetSequence.ConfigID, updateMatchTargetSequence.ConfigVersion))
 	return resourceMatchTargetSequenceRead(ctx, d, m)
 }
 
@@ -121,31 +157,87 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
 
 	getMatchTargetSequences := v2.GetMatchTargetSequencesRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
+		getMatchTargetSequences.ConfigID, _ = strconv.Atoi(s[0])
+		getMatchTargetSequences.ConfigVersion, _ = strconv.Atoi(s[1])
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		matchtargetseqtype, err := tools.GetStringValue("type", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getMatchTargetSequences.Type = matchtargetseqtype
+		d.Set("type", getMatchTargetSequences.Type)
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getMatchTargetSequences.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getMatchTargetSequences.ConfigVersion = version
+
+		matchtargetseqtype, err := tools.GetStringValue("type", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getMatchTargetSequences.Type = matchtargetseqtype
+		d.Set("type", getMatchTargetSequences.Type)
 	}
-	getMatchTargetSequences.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getMatchTargetSequences.ConfigVersion = version
-
-	getMatchTargetSequences.ConfigID, _ = strconv.Atoi(d.Id())
 
 	matchtargetsequences, err := client.GetMatchTargetSequences(ctx, getMatchTargetSequences)
 	if err != nil {
 		logger.Warnf("calling 'getMatchTargetSequence': %s", err.Error())
-		return diag.FromErr(err)
 	}
 
-	d.Set("type", matchtargetsequences.MatchTargets.APITargets[0].Type)
+	logger.Warnf("calling 'getMatchTargetSequence': %s", matchtargetsequences.MatchTargets.WebsiteTargets)
+	targetsequence := v2.TargetSequence{}
+	sequencemap := []v2.TargetSequence{}
 
-	d.Set("target_id", matchtargetsequences.MatchTargets.WebsiteTargets[0].TargetID)
-	d.SetId(strconv.Itoa(matchtargetsequences.MatchTargets.WebsiteTargets[0].TargetID))
+	if getMatchTargetSequences.Type == "website" {
+		for _, targets := range matchtargetsequences.MatchTargets.WebsiteTargets {
+			logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP': %s", targets)
+			targetsequence.TargetID = targets.TargetID
+			targetsequence.Sequence = targets.Sequence
+			sequencemap = append(sequencemap, targetsequence)
+
+		}
+	}
+
+	if getMatchTargetSequences.Type == "api" {
+		for _, targets := range matchtargetsequences.MatchTargets.APITargets {
+			logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP': %s", targets)
+			targetsequence.TargetID = targets.TargetID
+			targetsequence.Sequence = targets.Sequence
+			sequencemap = append(sequencemap, targetsequence)
+
+		}
+	}
+
+	logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP EXIT ': %s", sequencemap)
+	d.Set("sequence_map", sequenceToMap(sequencemap))
+
+	d.Set("type", getMatchTargetSequences.Type)
+
+	d.SetId(fmt.Sprintf("%d:%d", getMatchTargetSequences.ConfigID, getMatchTargetSequences.ConfigVersion))
 
 	return nil
+}
+
+func sequenceToMap(sequenceMap []v2.TargetSequence) map[string]interface{} {
+	var sequencemap = make(map[string]interface{})
+	if len(sequenceMap) > 0 {
+		for _, seqs := range sequenceMap {
+			target := strconv.Itoa(seqs.TargetID)
+			seq := strconv.Itoa(seqs.Sequence)
+			sequencemap[target] = seq
+
+		}
+	}
+	return sequencemap
 }

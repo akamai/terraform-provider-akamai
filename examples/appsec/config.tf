@@ -147,7 +147,7 @@ data "akamai_contract" "contract" {
 data "akamai_group" "group" {
 }
 */
-/*
+
 resource "akamai_appsec_match_target" "appsecmatchtargets" {
   config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
   version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
@@ -163,11 +163,22 @@ resource "akamai_appsec_match_target" "appsecmatchtargets" {
     file_extensions = ["wmls","jpeg","pws","carb","pdf","js","hdml","cct","swf","pct"]
     security_policy = "AAAA_81230"
 */
-/*
+
     //bypass_network_lists = ["888518_ACDDCKERS","1304427_AAXXBBLIST"]
 }
-*/
-/*
+
+resource "akamai_appsec_match_target_sequence" "appsecmatchtargetsequence" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = 11 //data.akamai_appsec_configuration.appsecconfigedge.latest_version  
+    type = "website"
+   // json = file("${path.module}/match_target_sequence.json")
+    sequence_map = {
+      2971336 = 1
+      2052813 = 2
+    }  
+    depends_on = ["akamai_appsec_match_target.appsecmatchtargets"]
+}
+
 data "akamai_appsec_match_targets" "appsecmatchtargets" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
@@ -175,7 +186,7 @@ data "akamai_appsec_match_targets" "appsecmatchtargets" {
 output "ds_match_targets" {
   value = data.akamai_appsec_match_targets.appsecmatchtargets.output_text
 }
-*/
+
 /*
 data "local_file" "rules" {
   filename = "${path.module}/custom_rules_simple.json"
@@ -185,21 +196,21 @@ resource "akamai_appsec_custom_rule" "appseccustomrule" {
     rules = data.local_file.rules.content
 }
 */
-/*
+
 resource "akamai_appsec_custom_rule" "appseccustomrule1" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     rules = file("${path.module}/custom_rules_simple1.json")
 }
-*/
-/*
+
+
 data "akamai_appsec_custom_rules" "appseccustomrule" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
 }
 output "appseccustomrules" {
   value = data.akamai_appsec_custom_rules.appseccustomrule.output_text
 }
-*/
 
+/*
 resource "akamai_appsec_activations" "appsecactivations" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = 4 //data.akamai_appsec_configuration.appsecconfigedge.version
@@ -207,7 +218,7 @@ resource "akamai_appsec_activations" "appsecactivations" {
     notes  = "TEST Notes"
     activate = true
     notification_emails = ["martin@akava.io"]
-}
+}*/
 /*
 resource "akamai_appsec_rate_policy" "appsecratepolicy" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
@@ -215,7 +226,7 @@ resource "akamai_appsec_rate_policy" "appsecratepolicy" {
     json =  file("${path.module}/rate_policy.json")
 }
 */
-
+/*
 data "akamai_appsec_rate_policies" "appsecreatepolicies" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
@@ -223,7 +234,7 @@ data "akamai_appsec_rate_policies" "appsecreatepolicies" {
 output "ds_rate_policies" {
   value = data.akamai_appsec_rate_policies.appsecreatepolicies.output_text
 }
-
+*/
 /*
 resource  "akamai_appsec_rate_policy_action" "appsecreatepolicysaction" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
