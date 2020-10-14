@@ -62,7 +62,7 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `config_id` - The ID of the specified configuration. Returned only if `name` was specified.
+* `config_id` - The ID of the specified security configuration. Returned only if `name` was specified.
 
 * `output_text` - A tabular listing showing the following information about all available security configurations: config_id, name, latest version, version active in staging, and version active in production.
 
