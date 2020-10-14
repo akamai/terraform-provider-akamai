@@ -250,7 +250,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 	logger.Debugf("Updating Resource BEFORE: %v", existRsrc)
-	if err = populateResourceObject(ctx, d, existRsrc, m); err != nil {
+	if err := populateResourceObject(ctx, d, existRsrc, m); err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Resource PROPOSED: %v", existRsrc)
