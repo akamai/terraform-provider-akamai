@@ -319,8 +319,10 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			},
 		})
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("create activation failed: %w", err))
+			return diag.FromErr(fmt.Errorf("create deactivation failed: %w", err))
 		}
+		// update with id we are now polling on
+		d.SetId(delete.ActivationID)
 
 		// query the activation to retreive the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
@@ -334,7 +336,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		activation = act.Activation
 	}
 
-	for activation.Status != papi.ActivationStatusDeactivated {
+	// deactivations appear to use Active for when they are fully processed
+	for activation.Status != papi.ActivationStatusDeactivated && activation.Status != papi.ActivationStatusActive {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
