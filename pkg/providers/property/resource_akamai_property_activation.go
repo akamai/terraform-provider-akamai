@@ -213,6 +213,12 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	d.SetId(activation.ActivationID)
 
 	for activation.Status != papi.ActivationStatusActive {
+		if activation.Status == papi.ActivationStatusAborted {
+			return diag.FromErr(fmt.Errorf("activation request aborted"))
+		}
+		if activation.Status == papi.ActivationStatusFailed {
+			return diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
+		}
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
@@ -338,6 +344,12 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 
 	// deactivations also use status Active for when they are fully processed
 	for activation.Status != papi.ActivationStatusActive {
+		if activation.Status == papi.ActivationStatusAborted {
+			return diag.FromErr(fmt.Errorf("deactivation request aborted"))
+		}
+		if activation.Status == papi.ActivationStatusFailed {
+			return diag.FromErr(fmt.Errorf("deactivation request failed in downstream system"))
+		}
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
@@ -556,6 +568,12 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	d.SetId(activation.ActivationID)
 
 	for activation.Status != papi.ActivationStatusActive {
+		if activation.Status == papi.ActivationStatusAborted {
+			return diag.FromErr(fmt.Errorf("activation request aborted"))
+		}
+		if activation.Status == papi.ActivationStatusFailed {
+			return diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
+		}
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
