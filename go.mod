@@ -1,7 +1,7 @@
 module github.com/akamai/terraform-provider-akamai/v2
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.0-00010101000000-000000000000
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.0
 	github.com/allegro/bigcache v1.2.1
 	github.com/apex/log v1.9.0
 	github.com/aws/aws-sdk-go v1.30.12 // indirect
