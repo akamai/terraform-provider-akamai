@@ -336,8 +336,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		activation = act.Activation
 	}
 
-	// deactivations appear to use Active for when they are fully processed
-	for activation.Status != papi.ActivationStatusDeactivated && activation.Status != papi.ActivationStatusActive {
+	// deactivations also use status Active for when they are fully processed
+	for activation.Status != papi.ActivationStatusActive {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
