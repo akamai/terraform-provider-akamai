@@ -1,11 +1,10 @@
 # RELEASE NOTES
 
-## 0.10.0 (Unreleased)
+## 0.10.0 (Oct 20,2020)
 
-####BREAKING CHANGES:
 ####NOTES:
 * provider: The backing edgegrid library was entirely rewritten.  Provider behavior should be preserved but there is chance of incidental changes due to the project size.
-####FEATURES:
+* resources/akamai_edge_hostname: edge_hostname field should be provided with an ending of edgesuite.net, edgekey.net, akamaized.net.  If a required suffix is not provided edgesuite.net is appended as default.
 ####ENHANCEMENTS:
 * provider: improved error handling and improved message consistency
 * provider: release notes categorize updates according to Terraform best practices guide.
