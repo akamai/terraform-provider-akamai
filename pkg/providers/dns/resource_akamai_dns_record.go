@@ -1519,7 +1519,9 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordset, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 		rdata := make([]string, 0, 0)
 		if e != nil {
-			apiError, ok := err.(*dns.Error)
+			logger.Debugf("MX Get Error Type: %T", e)
+			logger.Debugf("BIND MX Error: %v", e)
+			apiError, ok := e.(*dns.Error)
 			if !ok || apiError.StatusCode != http.StatusNotFound {
 				// failure other than not found
 				return dns.RecordBody{}, fmt.Errorf(e.Error())
