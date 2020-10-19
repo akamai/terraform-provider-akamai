@@ -41,6 +41,8 @@ github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki
 github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412/go.mod h1:WPjqKcmVOxf0XSf3YxCJs6N6AOSrOx3obionmG7T0y0=
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.18 h1:KyEv96ncdgOIJRTKMcWlIqM0umf8X3LQP6oOyg0hNsM=
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.18/go.mod h1:L+HB2uBoDgi3+r1pJEJcbGwyyHhd2QXaGsKLbDwtm8Q=
+github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.0 h1:pJ0QYGgCSZNnm5rg0qtCX/BzqUBpavJAdaeC1HGQuvA=
+github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.0/go.mod h1:NYv9/tgSBZzzB4/raW1CjKbRgytc1yvfP96Eff4OVrQ=
 github.com/allegro/bigcache v1.2.1 h1:hg1sY1raCwic3Vnsvje6TT7/pnZba83LeFck5NrFKSc=
 github.com/allegro/bigcache v1.2.1/go.mod h1:Cb/ax3seSYIx7SuZdm2G2xzfwmv3TPSk2ucNfQESPXM=
 github.com/apex/log v1.9.0 h1:FHtw/xuaM8AgmvDDTI9fiwoAL25Sq2cxojnZICUU8l0=
