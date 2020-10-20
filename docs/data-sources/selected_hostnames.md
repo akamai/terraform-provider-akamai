@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_selected_hostnames
 
-Use `akamai_appsec_selected_hostnames` data source to retrieve a selected_hostnames id.
+Use the `akamai_appsec_selected_hostnames` data source to retrieve a list of the hostnames that are currently protected under a given security configuration and version.
 
 ## Example Usage
 
@@ -19,38 +19,44 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-data "akamai_appsec_configuration" "appsecconfigedge" {
-  name = "Example for EDGE"
-  
+data "akamai_appsec_configuration" "configuration" {
+  name = "Akamai Tools"
 }
 
-
-
-output "configsedge" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_id
+data "akamai_appsec_selected_hostnames" "selected_hostnames" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
-data "akamai_appsec_selected_hostnames" "appsecselectedhostnames" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version  
+output "selected_hostnames" {
+  value = data.akamai_appsec_selected_hostnames.selected_hostnames.hostnames
 }
 
+output "selected_hostnames_json" {
+  value = data.akamai_appsec_selected_hostnames.selected_hostnames.hostnames_json
+}
 
+output "selected_hostnames_output_text" {
+  value = data.akamai_appsec_selected_hostnames.selected_hostnames.output_text
+}
 ```
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `config_id`- (Required) The Configuration ID
+* `config_id` - (Required) The ID of the security configuration to use.
 
-* `version` - (Required) The Version Number of configuration
+* `version` - (Required) The version number of the security configuration to use.
 
-# Attributes Reference
 
-The following are the return attributes:
+## Attributes Reference
 
-* `Hostnames` - Set of selected hostnames
+In addition to the arguments above, the following attributes are exported:
 
-* `Hostnames_json` - Set of selected hostnames in json format
+* `hostnames` - The list of selected hostnames.
+
+* `hostnames_json` - The list of selected hostnames in json format.
+
+* `output_text` - A tabular list of the selected hostnames.
 

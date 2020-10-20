@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_selectable_hostnames
 
-Use `akamai_appsec_selectable_hostnames` data source to retrieve a selectable_hostnames id.
+Use the `akamai_appsec_selectable_hostnames` data source to retrieve the list of hostnames that may be protected under a given security configuration and version.
 
 ## Example Usage
 
@@ -19,24 +19,25 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-data "akamai_appsec_configuration" "appsecconfigedge" {
-  name = "Example for EDGE"
-  
+data "akamai_appsec_configuration" "configuration" {
+  name = "Akamai Tools"
 }
 
-
-
-output "configsedge" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_id
+data "akamai_appsec_selectable_hostnames" "selectable_hostnames" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
-data "akamai_appsec_selectable_hostnames" "appsecselectablehostnames" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version   
+output "selectable_hostnames" {
+  value = data.akamai_appsec_selectable_hostnames.selectable_hostnames.hostnames
 }
 
-output "selectablehostnames" {
-  value = data.akamai_appsec_selectable_hostnames.appsecselectablehostnames.hostnames
+output "selectable_hostnames_json" {
+  value = data.akamai_appsec_selectable_hostnames.selectable_hostnames.hostnames_json
+}
+
+output "selectable_hostnames_output_text" {
+  value = data.akamai_appsec_selectable_hostnames.selectable_hostnames.output_text
 }
 
 ```
@@ -45,20 +46,18 @@ output "selectablehostnames" {
 
 The following arguments are supported:
 
-* `config_id`- (Required) The Configuration ID
+* `config_id` - (Required) The ID of the security configuration to use.
 
-* `version` - (Required) The Version Number of configuration
-
-* `active_in_staging` - (Optional) Active in staging
-
-* `active_in_production` - (Optional) Active in production
+* `version` - (Required) The version number of the security configuration to use.
 
 
-# Attributes Reference
+## Attributes Reference
 
-The following are the return attributes:
+In addition to the arguments above, the following attributes are exported:
 
-* `Hostnames` - Set of selectable hostnames
+* `hostnames` - The list of selectable hostnames
 
-* `Hostnames_json` - Set of selectable hostnames in json format
+* `hostnames_json` - The list of selectable hostnames in json format
+
+* `output_text` - A tabular list of selectable hostnames showing the name and config_id of the security configuration under which the host is protected in production, or '-' if the host is not protected in production
 
