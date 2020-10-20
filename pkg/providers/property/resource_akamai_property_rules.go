@@ -55,8 +55,9 @@ var akamaiPropertyRulesSchema = map[string]*schema.Schema{
 		Description: "JSON Rule representation",
 	},
 	"rule_format": {
-		Type:     schema.TypeString,
-		Optional: true,
+		Type:        schema.TypeString,
+		Optional:    true,
+		Description: "TODO: this field is currently not used due to an issue in akamaized-edgegrid-client v2 library",
 	},
 	"version": {
 		Type:        schema.TypeInt,
@@ -81,21 +82,15 @@ func resourcePropertyRulesCreate(ctx context.Context, d *schema.ResourceData, m 
 	if contractID, err = tools.GetStringValue("contract_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if contractID, err = tools.AddPrefix(contractID, "ctr_"); err != nil {
-		return diag.FromErr(err)
-	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
 	if groupID, err = tools.GetStringValue("group_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if groupID, err = tools.AddPrefix(groupID, "grp_"); err != nil {
-		return diag.FromErr(err)
-	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 	if propertyID, err = tools.GetStringValue("property_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if propertyID, err = tools.AddPrefix(propertyID, "prp_"); err != nil {
-		return diag.FromErr(err)
-	}
+	propertyID = tools.AddPrefix(propertyID, "prp_")
 	latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
 		PropertyID: propertyID,
 		ContractID: contractID,
@@ -148,21 +143,15 @@ func resourcePropertyRulesRead(ctx context.Context, d *schema.ResourceData, m in
 	if contractID, err = tools.GetStringValue("contract_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if contractID, err = tools.AddPrefix(contractID, "ctr_"); err != nil {
-		return diag.FromErr(err)
-	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
 	if groupID, err = tools.GetStringValue("group_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if groupID, err = tools.AddPrefix(groupID, "grp_"); err != nil {
-		return diag.FromErr(err)
-	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 	if propertyID, err = tools.GetStringValue("property_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if propertyID, err = tools.AddPrefix(propertyID, "prp_"); err != nil {
-		return diag.FromErr(err)
-	}
+	propertyID = tools.AddPrefix(propertyID, "prp_")
 	latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
 		PropertyID: propertyID,
 		ContractID: contractID,
@@ -208,34 +197,28 @@ func resourcePropertyRulesUpdate(ctx context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	if d.HasChange("contract_id") {
-		return diag.Errorf("TODO")
+		return diag.Errorf("contract_id field is immutable and cannot be updated")
 	}
 	if d.HasChange("group_id") {
-		return diag.Errorf("TODO")
+		return diag.Errorf("group_id field is immutable and cannot be updated")
 	}
 	if d.HasChange("property_id") {
-		return diag.Errorf("TODO")
+		return diag.Errorf("property_id field is immutable and cannot be updated")
 	}
 	var contractID, groupID, propertyID, rulesJSON string
 	var err error
 	if contractID, err = tools.GetStringValue("contract_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if contractID, err = tools.AddPrefix(contractID, "ctr_"); err != nil {
-		return diag.FromErr(err)
-	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
 	if groupID, err = tools.GetStringValue("group_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if groupID, err = tools.AddPrefix(groupID, "grp_"); err != nil {
-		return diag.FromErr(err)
-	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 	if propertyID, err = tools.GetStringValue("property_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if propertyID, err = tools.AddPrefix(propertyID, "prp_"); err != nil {
-		return diag.FromErr(err)
-	}
+	propertyID = tools.AddPrefix(propertyID, "prp_")
 	latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
 		PropertyID: propertyID,
 		ContractID: contractID,
@@ -313,23 +296,22 @@ func addPrefixToState(pre string) schema.SchemaStateFunc {
 		if !ok {
 			panic("interface should be string")
 		}
-		res, err := tools.AddPrefix(str, pre)
-		if err != nil {
-			panic(err)
-		}
-		return res
+		return tools.AddPrefix(str, pre)
 	}
 }
 
 func suppressRulesJSON(_, old, new string, _ *schema.ResourceData) bool {
 	logger := akamai.Log("PAPI", "suppressRulesJSON")
 	var oldRules, newRules papi.Rules
+	if old == "" || new == "" {
+		return old == new
+	}
 	if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
 		logger.Errorf("Unable to unmarshal 'old' JSON rules: %s", err)
 		return false
 	}
 	if err := json.Unmarshal([]byte(new), &newRules); err != nil {
-		logger.Errorf("Unable to unmarshal 'old' JSON rules: %s", err)
+		logger.Errorf("Unable to unmarshal 'new' JSON rules: %s", err)
 		return false
 	}
 	return compareRules(&oldRules, &newRules)
