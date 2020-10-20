@@ -105,7 +105,7 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if validateDefaultDC(ctx, meta, defaultDatacenter, domain) != nil {
+	if err = validateDefaultDC(ctx, meta, defaultDatacenter, domain); err != nil {
 		logger.Errorf("Default datacenter validation error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
