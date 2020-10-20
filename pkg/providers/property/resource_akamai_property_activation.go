@@ -7,16 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cast"
-
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/spf13/cast"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func resourcePropertyActivation() *schema.Resource {
@@ -286,8 +285,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 
 	// get the property version
 	resp, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
-		PropertyID:  propertyID,
-		ActivatedOn: network,
+		PropertyID: propertyID,
 	})
 	if err != nil {
 		return diag.FromErr(err)
