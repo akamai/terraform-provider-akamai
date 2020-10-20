@@ -13,6 +13,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -99,8 +100,8 @@ func loadFixtureBytes(path string) []byte {
 }
 
 // loadFixtureString returns the entire contents of the given file as a string
-func loadFixtureString(path string) string {
-	return string(loadFixtureBytes(path))
+func loadFixtureString(format string, args ...interface{}) string {
+	return string(loadFixtureBytes(fmt.Sprintf(format, args...)))
 }
 
 // compactJSON converts a JSON-encoded byte slice to a compact form (so our JSON fixtures can be readable)
@@ -111,4 +112,18 @@ func compactJSON(encoded []byte) string {
 	}
 
 	return buf.String()
+}
+
+// suppressLogging prevents logging output during the given func unless TEST_LOGGING env var is not empty. Use this
+// to keep log messages from polluting test output. Not thread-safe.
+func suppressLogging(t *testing.T, f func()) {
+	t.Helper()
+
+	if os.Getenv("TEST_LOGGING") == "" {
+		orig := hclog.SetDefault(hclog.NewNullLogger())
+		defer func() { hclog.SetDefault(orig) }()
+		t.Log("Logging is suppressed. Set TEST_LOGGING=1 in env to see logged messages during test")
+	}
+
+	f()
 }
