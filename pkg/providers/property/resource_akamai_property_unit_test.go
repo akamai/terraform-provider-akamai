@@ -121,8 +121,8 @@ func TestResourceProperty(t *testing.T) {
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
 					CPCode: papi.CPCode{
-						ID:        "cpc_1",
-						Name:      "cpc_name",
+						ID:         "cpc_1",
+						Name:       "cpc_name",
 						ProductIDs: []string{"prd_2"},
 					},
 				}, nil)
