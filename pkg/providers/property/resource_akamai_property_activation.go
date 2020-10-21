@@ -32,7 +32,7 @@ func resourcePropertyActivation() *schema.Resource {
 }
 
 const (
-	// ActivationPollMinimum is the minumum polling interval for activation creation
+	// ActivationPollMinimum is the minimum polling interval for activation creation
 	ActivationPollMinimum = time.Minute
 )
 
@@ -164,16 +164,20 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
-		propertyID:     propertyID,
-		version:        version,
-		network:        papi.ActivationNetwork(network),
-		activationType: papi.ActivationTypeActivate,
+		propertyID: propertyID,
+		version:    version,
+		network:    papi.ActivationNetwork(network),
+		activationType: map[papi.ActivationType]struct{}{
+			papi.ActivationTypeActivate:   {},
+			papi.ActivationTypeDeactivate: {},
+		},
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if activation == nil {
+	// we create a new property activation in case of no previous activation, or deleted activation
+	if activation == nil || activation.ActivationType == papi.ActivationTypeDeactivate {
 		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
@@ -293,16 +297,19 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	version := resp.Versions.Items[0].PropertyVersion
 
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
-		propertyID:     propertyID,
-		version:        version,
-		network:        papi.ActivationNetwork(network),
-		activationType: papi.ActivationTypeDeactivate,
+		propertyID: propertyID,
+		version:    version,
+		network:    papi.ActivationNetwork(network),
+		activationType: map[papi.ActivationType]struct{}{
+			papi.ActivationTypeDeactivate: {},
+			papi.ActivationTypeActivate:   {},
+		},
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if activation == nil {
+	if activation == nil || activation.ActivationType == papi.ActivationTypeActivate {
 		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
@@ -312,7 +319,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			notify = append(notify, cast.ToString(contact))
 		}
 
-		delete, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
+		deleteActivation, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
 			PropertyID: propertyID,
 			Activation: papi.Activation{
 				ActivationType:         papi.ActivationTypeDeactivate,
@@ -326,11 +333,11 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(fmt.Errorf("create deactivation failed: %w", err))
 		}
 		// update with id we are now polling on
-		d.SetId(delete.ActivationID)
+		d.SetId(deleteActivation.ActivationID)
 
 		// query the activation to retreive the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
-			ActivationID: delete.ActivationID,
+			ActivationID: deleteActivation.ActivationID,
 			PropertyID:   propertyID,
 		})
 		if err != nil {
@@ -416,7 +423,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 
 	for _, act := range resp.Activations.Items {
 
-		if act.Network == papi.ActivationNetwork(network) && act.PropertyVersion == version {
+		if act.Network == network && act.PropertyVersion == version {
 			log.Debugf("Found Existing Activation %s version %d", network, version)
 
 			if err := d.Set("status", string(act.Status)); err != nil {
@@ -517,17 +524,19 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
-		propertyID:     propertyID,
-		version:        version,
-		network:        network,
-		activationType: papi.ActivationTypeActivate,
+	propertyActivation, err := lookupActivation(ctx, client, lookupActivationRequest{
+		propertyID: propertyID,
+		version:    version,
+		network:    network,
+		activationType: map[papi.ActivationType]struct{}{
+			papi.ActivationTypeActivate: {},
+		},
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if activation == nil {
+	if propertyActivation == nil {
 		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
@@ -551,7 +560,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(fmt.Errorf("create activation failed: %w", err))
 		}
 
-		// query the activation to retreive the initial status
+		// query the activation to retrieve the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: create.ActivationID,
 			PropertyID:   propertyID,
@@ -560,39 +569,39 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 
-		activation = act.Activation
+		propertyActivation = act.Activation
 	}
 
-	d.SetId(activation.ActivationID)
+	d.SetId(propertyActivation.ActivationID)
 
-	for activation.Status != papi.ActivationStatusActive {
-		if activation.Status == papi.ActivationStatusAborted {
+	for propertyActivation.Status != papi.ActivationStatusActive {
+		if propertyActivation.Status == papi.ActivationStatusAborted {
 			return diag.FromErr(fmt.Errorf("activation request aborted"))
 		}
-		if activation.Status == papi.ActivationStatusFailed {
+		if propertyActivation.Status == papi.ActivationStatusFailed {
 			return diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
 		}
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
-				ActivationID: activation.ActivationID,
+				ActivationID: propertyActivation.ActivationID,
 				PropertyID:   propertyID,
 			})
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			activation = act.Activation
+			propertyActivation = act.Activation
 
 		case <-ctx.Done():
 			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
 	}
 
-	if err := d.Set("version", activation.PropertyVersion); err != nil {
+	if err := d.Set("version", propertyActivation.PropertyVersion); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("status", string(activation.Status)); err != nil {
+	if err := d.Set("status", string(propertyActivation.Status)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -603,9 +612,10 @@ type lookupActivationRequest struct {
 	propertyID     string
 	version        int
 	network        papi.ActivationNetwork
-	activationType papi.ActivationType
+	activationType map[papi.ActivationType]struct{}
 }
 
+// returns the most recent property activation (by SubmitDate) for the given query.
 func lookupActivation(ctx context.Context, client papi.PAPI, query lookupActivationRequest) (*papi.Activation, error) {
 	activations, err := client.GetActivations(ctx, papi.GetActivationsRequest{
 		PropertyID: query.propertyID,
@@ -624,14 +634,39 @@ func lookupActivation(ctx context.Context, client papi.PAPI, query lookupActivat
 		papi.ActivationStatusZone3:        true,
 	}
 
+	var bestMatch *papi.Activation
+	var bestMatchSubmitDate time.Time
+
 	for _, a := range activations.Activations.Items {
 		if _, ok := inProgressStates[a.Status]; !ok {
 			continue
 		}
 
 		// There is an activation in progress, if it's for the same version/network/type we can re-use it
-		if a.PropertyVersion == query.version && a.ActivationType == query.activationType && a.Network == query.network {
-			return a, nil
+		_, matchingActivationType := query.activationType[a.ActivationType]
+		if a.PropertyVersion == query.version && matchingActivationType && a.Network == query.network {
+			// find the most recent activation
+
+			var aSubmitDate, err = tools.ParseDate(tools.DateTimeFormat, a.SubmitDate)
+			if err != nil {
+				return nil, err
+			}
+
+			if bestMatchSubmitDate.Equal(time.Time{}) || bestMatchSubmitDate.Before(aSubmitDate) {
+				bestMatch = a
+				bestMatchSubmitDate, err = tools.ParseDate(tools.DateTimeFormat, bestMatch.SubmitDate)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+	// only return activation if bestMatch.ActivationType == query.ActivationType
+
+	if bestMatch != nil {
+		_, matchingActivationType := query.activationType[bestMatch.ActivationType]
+		if matchingActivationType {
+			return bestMatch, nil
 		}
 	}
 	return nil, nil
