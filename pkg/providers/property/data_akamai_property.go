@@ -1,17 +1,21 @@
 package property
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceAkamaiProperty() *schema.Resource {
 	return &schema.Resource{
-		Read: dataAkamaiPropertyRead,
+		ReadContext: dataAkamaiPropertyRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -29,30 +33,55 @@ func dataSourceAkamaiProperty() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertyRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][dataAkamaiPropertyRead-" + tools.CreateNonce() + "]"
+func dataAkamaiPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	log := meta.Log("PAPI", "dataAkamaiPropertyRead")
+	log.Debug("Reading Property")
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, " Reading Property")
-	property := findProperty(d, CorrelationID)
-	if property == nil {
-		return fmt.Errorf("Can't find property")
-	}
-
-	_, ok := d.GetOk("version")
-	if ok {
-		property.LatestVersion = d.Get("version").(int)
-	}
-
-	rules, err := property.GetRules(CorrelationID)
+	name, err := tools.GetStringValue("name", d)
 	if err != nil {
-		return fmt.Errorf("Can't get rules for property")
+		return diag.FromErr(err)
+	}
+	prop, err := findProperty(ctx, name, meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	jsonBody, err := json.Marshal(rules)
-	buf := bytes.NewBufferString("")
-	buf.Write(jsonBody)
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if err == nil {
+		prop.LatestVersion = version
+	}
 
-	d.SetId(property.PropertyID)
-	d.Set("rules", buf.String())
+	rules, err := getRulesForProperty(ctx, prop, meta)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", ErrRulesNotFound, err.Error()))
+	}
+
+	body, err := json.Marshal(rules)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("rules", string(body)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error()))
+	}
+	d.SetId(prop.PropertyID)
 	return nil
+}
+
+func getRulesForProperty(ctx context.Context, property *papi.Property, meta akamai.OperationMeta) (*papi.GetRuleTreeResponse, error) {
+	client := inst.Client(meta)
+	req := papi.GetRuleTreeRequest{
+		PropertyID:      property.PropertyID,
+		PropertyVersion: property.LatestVersion,
+		ContractID:      property.ContractID,
+		GroupID:         property.GroupID,
+	}
+	rules, err := client.GetRuleTree(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrRulesNotFound, err.Error())
+	}
+	return rules, nil
 }

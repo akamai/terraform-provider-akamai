@@ -1,169 +1,107 @@
 package dns
 
 import (
-	"fmt"
-	"log"
-
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
-	//"strings"
+	"context"
+	"net/http"
 	"testing"
+
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
-var testAccAkamaiDNSv2RecordConfig = fmt.Sprintf(`
-provider "akamai" {
-  papi_section = "dns"
-  dns_section = "dns"
-}
+func TestResDnsRecord(t *testing.T) {
+	dnsClient := dns.Client(session.Must(session.New()))
 
-data "akamai_contract" "contract" {
-}
+	var rec *dns.RecordBody
 
-data "akamai_group" "group" {
-}
-
-resource "akamai_dns_zone" "test_zone" {
-	contract = "${data.akamai_contract.contract.id}"
-	zone = "exampleterraform.io"
-	type = "primary"
-	comment =  "This is a test zone"
-	group     = "${data.akamai_group.group.id}"
-	sign_and_serve = false
-}
-
-resource "akamai_dns_record" "a_record" {
-	zone = "${akamai_dns_zone.test_zone.zone}"
-	name = "exampleterraform.io"
-	recordtype =  "A"
-	active = true
-	ttl = 300
-	target = ["10.0.0.2","10.0.0.3"]
-}
-`)
-
-var testAccAkamaiDNSv2RecordConfigWithCounter = fmt.Sprintf(`
-provider "akamai" {
-  papi_section = "dns"
-  dns_section = "dns"
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-resource "akamai_dns_zone" "test_zone" {
-	contract = "${data.akamai_contract.contract.id}"
-	zone = "exampleterraform.io"
-	type = "primary"
-	comment =  "This is a test zone"
-	group     = "${data.akamai_group.group.id}"
-	sign_and_serve = false
-}
-
-resource "akamai_dns_record" "a_record" {
-	count = 3
-	zone = "${akamai_dns_zone.test_zone.zone}"
-	name = "${count.index}.exampleterraform.io"
-	recordtype =  "A"
-	active = true
-	ttl = 300
-	target = ["10.0.0.2","10.0.0.3"]
-}
-`)
-
-func TestAccAkamaiDNSv2Record_basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiDNSv2RecordDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiDNSv2RecordConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiDNSv2RecordExists,
-				),
-			},
-		},
-	})
-}
-
-func TestAccAkamaiDNSv2Record_counter(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiDNSv2RecordDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiDNSv2RecordConfigWithCounter,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiDNSv2RecordExists,
-				),
-			},
-		},
-	})
-}
-
-func testAccCheckAkamaiDNSv2RecordDestroy(s *terraform.State) error {
-	//conn := testAccProvider.Meta().(*Config)
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_dns_record" {
-			continue
-		}
-
-		log.Printf("[DEBUG] [Akamai DNSv2] Searching for zone [%v]", rs.Type)
-		//request := &
-		//hostname := strings.Split(rs.Primary.ID, "#")[2]
-		//zone, err := dnsv2.GetZone(hostname)
-		//if err != nil {
-		//		return err
-		//}
-		//log.Printf("[DEBUG] [Akamai DNSv2] Searching for zone [%v]", zone)
-		log.Printf("[DEBUG] [Akamai DNSv2] Searching for zone [%s]" + rs.Primary.Attributes["zone"])
-		var zone string
-		var host string
-		var recordtype string
-
-		zone = rs.Primary.Attributes["zone"]
-		host = rs.Primary.Attributes["host"]
-		recordtype = rs.Primary.Attributes["recordtype"]
-
-		rdata, err := dnsv2.GetRdata(zone, host, recordtype)
-		if err != nil {
-			return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, err)
-		}
-
-		log.Printf("[DEBUG] [Akamai DNSv2] Searching for records [%v]", rdata)
-
+	notFound := &dns.Error{
+		StatusCode: http.StatusNotFound,
 	}
-	return nil
 
-}
+	// This test peforms a full life-cycle (CRUD) test
+	t.Run("lifecycle test", func(t *testing.T) {
+		client := &mockdns{}
 
-func testAccCheckAkamaiDNSv2RecordExists(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_dns_record" {
-			continue
+		getCall := client.On("GetRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(nil, notFound)
+
+		parseCall := client.On("ParseRData",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]string"),
+		).Return(nil)
+
+		procCall := client.On("ProcessRdata",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("[]string"),
+			mock.AnythingOfType("string"),
+		).Return(nil, nil)
+
+		updateArguments := func(args mock.Arguments) {
+			rec = args.Get(1).(*dns.RecordBody)
+			getCall.ReturnArguments = mock.Arguments{rec, nil}
+			parseCall.ReturnArguments = mock.Arguments{
+				dnsClient.ParseRData(context.Background(), rec.RecordType, rec.Target),
+			}
+			procCall.ReturnArguments = mock.Arguments{rec.Target, nil}
 		}
 
-		var zone string
-		var host string
-		var recordtype string
+		client.On("CreateRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*dns.RecordBody"),
+			mock.AnythingOfType("string"),
+			mock.Anything,
+		).Return(nil).Run(func(args mock.Arguments) {
+			updateArguments(args)
+		})
 
-		zone = rs.Primary.Attributes["zone"]
-		host = rs.Primary.Attributes["host"]
-		recordtype = rs.Primary.Attributes["recordtype"]
+		client.On("UpdateRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*dns.RecordBody"),
+			mock.AnythingOfType("string"),
+			mock.Anything,
+		).Return(nil).Run(func(args mock.Arguments) {
+			updateArguments(args)
+		})
 
-		rdata, err := dnsv2.GetRdata(zone, host, recordtype)
-		if err != nil {
-			return fmt.Errorf("error looking up "+recordtype+" records for %q: %s", host, err)
-		}
+		client.On("DeleteRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*dns.RecordBody"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]bool"),
+		).Return(nil).Run(func(mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{nil, notFound}
+		})
 
-		log.Printf("[DEBUG] [Akamai DNSv2] Searching for records [%v]", rdata)
+		dataSourceName := "akamai_dns_record.a_record"
 
-	}
-	return nil
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResDnsRecord/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 }

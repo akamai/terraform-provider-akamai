@@ -2,96 +2,95 @@ package property
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"log"
 	"strconv"
 	"strings"
 
-	//log "github.com/sirupsen/logrus"
+	"github.com/apex/log"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/tidwall/gjson"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func resourceProperty() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePropertyCreate,
-		Read:   resourcePropertyRead,
-		Update: resourcePropertyUpdate,
-		Delete: resourcePropertyDelete,
-		//Exists: resourcePropertyExists,
+		CreateContext: resourcePropertyCreate,
+		ReadContext:   resourcePropertyRead,
+		UpdateContext: resourcePropertyUpdate,
+		DeleteContext: resourcePropertyDelete,
 		CustomizeDiff: resourceCustomDiffCustomizeDiff,
 		Importer: &schema.ResourceImporter{
-			State: resourcePropertyImport,
+			StateContext: resourcePropertyImport,
 		},
 		Schema: akamaiPropertySchema,
 	}
 }
 
 var akamaiPropertySchema = map[string]*schema.Schema{
-	"account": &schema.Schema{
+	"account": {
 		Type:     schema.TypeString,
 		Computed: true,
 	},
-	"contract": &schema.Schema{
+	"contract": {
 		Type:     schema.TypeString,
 		Optional: true,
 		ForceNew: true,
 	},
-	"group": &schema.Schema{
+	"group": {
 		Type:     schema.TypeString,
 		Optional: true,
 		ForceNew: true,
 	},
-	"product": &schema.Schema{
+	"product": {
 		Type:     schema.TypeString,
 		Optional: true,
-		Default:  "prd_SPM",
 		ForceNew: true,
 	},
-	"rule_format": &schema.Schema{
+	"rule_format": {
 		Type:     schema.TypeString,
 		Optional: true,
 	},
 	// Will get added to the default rule
-	"cp_code": &schema.Schema{
+	"cp_code": {
 		Type:     schema.TypeString,
 		Optional: true,
 	},
-	"name": &schema.Schema{
+	"name": {
 		Type:     schema.TypeString,
 		Required: true,
 		ForceNew: true,
 	},
-	"version": &schema.Schema{
+	"version": {
 		Type:     schema.TypeInt,
 		Computed: true,
 	},
-	"staging_version": &schema.Schema{
+	"staging_version": {
 		Type:     schema.TypeInt,
 		Computed: true,
 	},
-	"production_version": &schema.Schema{
+	"production_version": {
 		Type:     schema.TypeInt,
 		Computed: true,
 	},
-	"contact": &schema.Schema{
+	"contact": {
 		Type:     schema.TypeSet,
 		Required: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
-	"edge_hostnames": &schema.Schema{
+	"edge_hostnames": {
 		Type:     schema.TypeMap,
 		Computed: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 	},
-	"hostnames": &schema.Schema{
+	"hostnames": {
 		Type:     schema.TypeMap,
 		Required: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
@@ -143,272 +142,327 @@ var akamaiPropertySchema = map[string]*schema.Schema{
 		Type:             schema.TypeString,
 		Optional:         true,
 		ValidateFunc:     validation.StringIsJSON,
-		DiffSuppressFunc: suppressEquivalentJsonDiffs,
+		DiffSuppressFunc: suppressEquivalentJSONDiffs,
 	},
 	"variables": {
 		Type:     schema.TypeString,
 		Optional: true,
 	},
-	"rulessha": &schema.Schema{
+	"rulessha": {
 		Type:     schema.TypeString,
 		Computed: true,
 	},
 }
 
-func resourcePropertyCreate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyCreate-" + tools.CreateNonce() + "]"
-
-	d.Partial(true)
-
-	group, err := getGroup(d, CorrelationID)
+func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("PAPI", "resourcePropertyCreate")
+	group, err := getGroup(ctx, d, meta)
 	if err != nil {
-		return err
+		return diag.FromErr(fmt.Errorf("creating property: %w", err))
+	}
+	contract, err := getContract(ctx, d, meta)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("creating property: %w", err))
+	}
+	product, err := getProduct(ctx, d, contract.ContractID, meta)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("creating property: %w", err))
 	}
 
-	contract, err := getContract(d, CorrelationID)
+	name, err := tools.GetStringValue("name", d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-
-	product, err := getProduct(d, contract, CorrelationID)
+	prop, err := findProperty(ctx, name, meta)
 	if err != nil {
-		return err
-	}
-
-	var property *papi.Property
-	if property = findProperty(d, CorrelationID); property == nil {
-		if product == nil {
-			return errors.New("product must be specified to create a new property")
+		if !errors.Is(err, ErrPropertyNotFound) {
+			return diag.FromErr(err)
 		}
-
-		property, err = createProperty(contract, group, product, d, CorrelationID)
+		prop, err = createProperty(ctx, contract.ContractID, group.GroupID, product.ProductID, d, meta)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
-	err = ensureEditableVersion(property, CorrelationID)
+	prop, err = ensureEditableVersion(ctx, prop, meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-	d.Set("account", property.AccountID)
-	d.Set("version", property.LatestVersion)
-
-	// The API now has data, so save the partial state
-	d.SetId(property.PropertyID)
-
-	rules, err := getRules(d, property, contract, group, CorrelationID)
-	if err != nil {
-		return err
+	if err := d.Set("account", prop.AccountID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	err = rules.Save(CorrelationID)
+	if err := d.Set("version", prop.LatestVersion); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(prop.PropertyID)
+
+	rules, err := getRules(ctx, d, prop, contract.ContractID, group.GroupID, meta)
 	if err != nil {
-		if err == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
-			var msg string
-			for _, v := range rules.Errors {
-				msg = msg + fmt.Sprintf("\n Rule validation error: %s %s %s %s %s", v.Type, v.Title, v.Detail, v.Instance, v.BehaviorName)
-			}
-			return errors.New("Error - Invalid Property Rules" + msg)
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "getRules produced errors and property clean up failed", err.Error()))
 		}
-		return err
+		d.SetId("")
+		return diag.FromErr(err)
+	}
+	if _, err := client.UpdateRuleTree(ctx, rules); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "UpdateRuleTree produced errors and property clean up failed", err.Error()))
+		}
+		d.SetId("")
+		return diag.FromErr(err)
 	}
 
-	ehnMap, err := setHostnames(property, d, CorrelationID)
+	hostnames, err := setHostnames(ctx, prop, d, meta)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("%s", err.Error()))
+	}
 
-	d.Set("edge_hostnames", ehnMap)
-
-	rulesAPI, err := property.GetRules(CorrelationID)
+	if err := d.Set("edge_hostnames", hostnames); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	rulesAPI, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+		PropertyID:      prop.PropertyID,
+		PropertyVersion: prop.LatestVersion,
+		ContractID:      prop.ContractID,
+		GroupID:         prop.GroupID,
+	})
+	if err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "GetRuleTree produced errors and property clean up failed", err.Error()))
+		}
+		d.SetId("")
+		return diag.FromErr(err)
+	}
 	rulesAPI.Etag = ""
-	jsonBody, err := jsonhooks.Marshal(rulesAPI)
+	body, err := json.Marshal(rulesAPI)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	sha1hashAPI := tools.GetSHAString(string(jsonBody))
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CREATE SHA from Json %s\n", sha1hashAPI))
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("CREATE Check rules after unmarshal from Json %s\n", string(jsonBody)))
+	sha1hashAPI := tools.GetSHAString(string(body))
+	logger.Debugf("CREATE SHA from JSON %s", sha1hashAPI)
+	logger.Debugf("CREATE Check rules after unmarshal from JSON %s", string(body))
 
-	d.Set("rulessha", sha1hashAPI)
-	//d.SetId(fmt.Sprintf("%s-%s", property.PropertyID, sha1hashAPI))
-	d.SetId(fmt.Sprintf("%s", property.PropertyID))
-
-	if err == nil {
-		d.Set("rules", string(jsonBody))
+	if err := d.Set("rulessha", sha1hashAPI); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "GetRuleTree produced errors and property clean up failed", err.Error()))
+		}
+		d.SetId("")
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
-	d.Partial(false)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
-	return resourcePropertyRead(d, meta)
+	d.SetId(fmt.Sprintf("%s", prop.PropertyID))
+	if err := d.Set("rules", string(body)); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "GetRuleTree produced errors and property clean up failed", err.Error()))
+		}
+		d.SetId("")
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	logger.Debugf("Property create Done")
+	return resourcePropertyRead(ctx, d, m)
 }
 
-func getRules(d *schema.ResourceData, property *papi.Property, contract *papi.Contract, group *papi.Group, correlationid string) (*papi.Rules, error) {
-	rules := papi.NewRules()
-	rules.Rule.Name = "default"
-	rules.PropertyID = d.Id()
-	rules.PropertyVersion = property.LatestVersion
-
-	origin, err := createOrigin(d, correlationid)
+func getRules(ctx context.Context, d *schema.ResourceData, property *papi.Property, contract, group string, meta akamai.OperationMeta) (papi.UpdateRulesRequest, error) {
+	req := papi.UpdateRulesRequest{}
+	logger := meta.Log("PAPI", "getRules")
+	req.Rules.Rules.Name = "default"
+	req.PropertyID = d.Id()
+	req.PropertyVersion = property.LatestVersion
+	origin, err := createOrigin(d, logger)
 	if err != nil {
-		return nil, err
+		return papi.UpdateRulesRequest{}, err
 	}
 
-	// get rules from the TF config
-
-	//rulecheck
 	_, ok := d.GetOk("rules")
-
+	rules := &papi.Rules{Name: "default"}
 	if ok {
-		edge.PrintfCorrelation("[DEBUG]", correlationid, "Unmarshal Rules from JSON")
-		unmarshalRulesFromJSON(d, rules)
+		logger.Debugf("Unmarshal Rules from JSON")
+		rules = unmarshalRulesFromJSON(d)
 	}
+	req.Rules.Rules = *rules
 
-	if ruleFormat, ok := d.GetOk("rule_format"); ok {
-		rules.RuleFormat = ruleFormat.(string)
-	} else {
-		ruleFormats := papi.NewRuleFormats()
-		rules.RuleFormat, err = ruleFormats.GetLatest(correlationid)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if ok := d.HasChange("rule_format"); ok {
-	}
-
-	cpCode, err := getCPCode(d, contract, group, correlationid)
+	cpCode, err := getCPCode(ctx, meta, contract, group, logger, d)
 	if err != nil {
-		return nil, err
+		return papi.UpdateRulesRequest{}, err
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", correlationid, "updateStandardBehaviors")
-	updateStandardBehaviors(rules, cpCode, origin, correlationid)
-	edge.PrintfCorrelation("[DEBUG]", correlationid, "fixupPerformanceBehaviors")
-	fixupPerformanceBehaviors(rules, correlationid)
+	logger.Debugf("updateStandardBehaviors")
+	req.Rules.Rules.Behaviors = updateStandardBehaviors(rules.Behaviors, cpCode, origin, logger)
+	logger.Debugf("fixupPerformanceBehaviors")
+	fixupPerformanceBehaviors(rules, logger)
 
-	return rules, nil
+	return req, nil
 }
 
-func setHostnames(property *papi.Property, d *schema.ResourceData, correlationid string) (map[string]string, error) {
-	hostnameEdgeHostnames := d.Get("hostnames").(map[string]interface{})
+func setHostnames(ctx context.Context, property *papi.Property, d *schema.ResourceData, meta akamai.OperationMeta) (map[string]string, error) {
+	logger := meta.Log("PAPI", "setHostnames")
+	client := inst.Client(meta)
+	hostnameEdgeHostnames, ok := d.Get("hostnames").(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "hostnames", "map[string]interface{}")
+	}
 
-	ehns, err := papi.GetEdgeHostnames(property.Contract, property.Group, "")
+	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
+		ContractID: property.ContractID,
+		GroupID:    property.GroupID,
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	hostnames := papi.NewHostnames()
-	hostnames.PropertyVersion = property.LatestVersion
-	hostnames.PropertyID = property.PropertyID
-
-	ehnMap := make(map[string]string, len(hostnameEdgeHostnames))
+	hostname := papi.UpdatePropertyVersionHostnamesRequest{
+		PropertyID:      property.PropertyID,
+		PropertyVersion: property.LatestVersion,
+		ContractID:      property.ContractID,
+		GroupID:         property.GroupID,
+	}
+	edgeHostnamesMap := make(map[string]string, len(hostnameEdgeHostnames))
 	for public, edgeHostname := range hostnameEdgeHostnames {
-		ehn := ehns.NewEdgeHostname()
-		ehn.EdgeHostnameDomain = edgeHostname.(string)
-		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" Searching for edge hostname: %s, for hostname: %s", edgeHostname.(string), public))
-		ehn, err = ehns.FindEdgeHostname(ehn)
-		edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" Found edge hostname: %s", ehn.EdgeHostnameDomain))
-		if err != nil {
-			return nil, fmt.Errorf("edge hostname not found: %s", ehn.EdgeHostnameDomain)
+		edgeHostNameStr, ok := edgeHostname.(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "edge_hostname", "string")
 		}
+		logger.Debugf("Searching for edge hostname: %s, for hostname: %s", edgeHostNameStr, public)
+		newEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostNameStr)
+		if err != nil {
+			if err := cleanUpProperty(ctx, property, meta); err != nil {
+				return nil, fmt.Errorf("edge hostname not found and property cleanup might have failed: %s", edgeHostNameStr)
+			}
+			d.SetId("")
+			return nil, fmt.Errorf("edge hostname not found and property create failed: %s", edgeHostNameStr)
+		}
+		logger.Debugf("Found edge hostname: %s", newEdgeHostname.Domain)
 
-		hostname := hostnames.NewHostname()
-		hostname.EdgeHostnameID = ehn.EdgeHostnameID
-		hostname.CnameFrom = public
-		hostname.CnameTo = ehn.EdgeHostnameDomain
-
-		ehnMap[public] = ehn.EdgeHostnameDomain
+		hostname.Hostnames = append(hostname.Hostnames, papi.Hostname{
+			CnameType:      papi.HostnameCnameTypeEdgeHostname,
+			EdgeHostnameID: newEdgeHostname.ID,
+			CnameFrom:      public,
+			CnameTo:        newEdgeHostname.Domain,
+		})
+		edgeHostnamesMap[public] = newEdgeHostname.Domain
 	}
 
-	err = hostnames.Save()
+	_, err = client.UpdatePropertyVersionHostnames(ctx, hostname)
 	if err != nil {
 		return nil, err
 	}
-
-	return ehnMap, nil
+	return edgeHostnamesMap, nil
 }
 
-func createProperty(contract *papi.Contract, group *papi.Group, product *papi.Product, d *schema.ResourceData, correlationid string) (*papi.Property, error) {
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Creating property")
+func createProperty(ctx context.Context, contractID, groupID, productID string, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Property, error) {
+	logger := meta.Log("PAPI", "createProperty")
+	logger.Debugf("Creating property")
 
-	property, err := group.NewProperty(contract)
+	client := inst.Client(meta)
+	propertyName, err := tools.GetStringValue("name", d)
 	if err != nil {
 		return nil, err
 	}
-
-	property.ProductID = product.ProductID
-	property.PropertyName = d.Get("name").(string)
-
-	if ruleFormat, ok := d.GetOk("rule_format"); ok {
-		property.RuleFormat = ruleFormat.(string)
-	} else {
-		ruleFormats := papi.NewRuleFormats()
-		property.RuleFormat, err = ruleFormats.GetLatest(correlationid)
+	ruleFormat, err := tools.GetStringValue("rule_format", d)
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return nil, err
+		}
+		ruleFormats, err := client.GetRuleFormats(ctx)
 		if err != nil {
 			return nil, err
 		}
+		if len(ruleFormats.RuleFormats.Items) == 0 {
+			return nil, fmt.Errorf("%w", ErrRuleFormatsNotFound)
+		}
+		ruleFormat = ruleFormats.RuleFormats.Items[len(ruleFormats.RuleFormats.Items)-1]
 	}
-
-	err = property.Save(correlationid)
+	prop, err := client.CreateProperty(ctx, papi.CreatePropertyRequest{
+		ContractID: contractID,
+		GroupID:    groupID,
+		Property: papi.PropertyCreate{
+			ProductID:    productID,
+			PropertyName: propertyName,
+			RuleFormat:   ruleFormat,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("Property created: %s\n", property.PropertyID))
-	return property, nil
+	newProperty, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+		ContractID: contractID,
+		GroupID:    groupID,
+		PropertyID: prop.PropertyID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debugf("Property created: %s", prop.PropertyID)
+	return newProperty.Property, nil
 }
 
-func resourcePropertyDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyDelete-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "DELETING")
-	contractID, ok := d.GetOk("contract")
-	if !ok {
-		return errors.New("missing contract ID")
+func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyDelete")
+	client := inst.Client(meta)
+	logger.Debugf("DELETING")
+	contractID, err := tools.GetStringValue("contract", d)
+	//Todo clean up redundant checks and bubble up errors
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		return diag.FromErr(errors.New("missing contract ID"))
 	}
-	groupID, ok := d.GetOk("group")
-	if !ok {
-		return errors.New("missing group ID")
-	}
-
-	propertyID := d.Id()
-
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyID
-	property.Contract = &papi.Contract{ContractID: contractID.(string)}
-	property.Group = &papi.Group{GroupID: groupID.(string)}
-
-	e := property.GetProperty(CorrelationID)
-	if e != nil {
-		return e
+	groupID, err := tools.GetStringValue("group", d)
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		return diag.FromErr(errors.New("missing group ID"))
 	}
 
-	if property.StagingVersion != 0 {
-		return fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkStaging)
+	resp, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+		ContractID: contractID,
+		GroupID:    groupID,
+		PropertyID: d.Id(),
+	})
+	if err != nil {
+		return diag.FromErr(err)
 	}
-
-	if property.ProductionVersion != 0 {
-		return fmt.Errorf("property is still active on %s and cannot be deleted", papi.NetworkProduction)
+	property := resp.Property
+	if property.StagingVersion != nil && *property.StagingVersion != 0 {
+		return diag.FromErr(fmt.Errorf("property is still active on %s and cannot be deleted", papi.VersionStaging))
 	}
-
-	e = property.Delete(CorrelationID)
-	if e != nil {
-		return e
+	if property.ProductionVersion != nil && *property.ProductionVersion != 0 {
+		return diag.FromErr(fmt.Errorf("property is still active on %s and cannot be deleted", papi.VersionProduction))
 	}
-
+	_, err = client.RemoveProperty(ctx, papi.RemovePropertyRequest{
+		PropertyID: d.Id(),
+		ContractID: contractID,
+		GroupID:    groupID,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	d.SetId("")
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
+	logger.Debugf("Done")
 	return nil
 }
 
-func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-
+func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
 	propertyID := d.Id()
 
 	if !strings.HasPrefix(propertyID, "prp_") {
-		for _, searchKey := range []papi.SearchKey{papi.SearchByPropertyName, papi.SearchByHostname, papi.SearchByEdgeHostname} {
-			results, err := papi.Search(searchKey, propertyID, "") //<--correlationid
+		keys := []string{papi.SearchKeyPropertyName, papi.SearchKeyHostname, papi.SearchKeyEdgeHostname}
+		for _, searchKey := range keys {
+			results, err := client.SearchProperties(ctx, papi.SearchRequest{
+				Key:   searchKey,
+				Value: propertyID,
+			})
 			if err != nil {
-				continue
+				return nil, err
 			}
 
 			if results != nil && len(results.Versions.Items) > 0 {
@@ -417,649 +471,721 @@ func resourcePropertyImport(d *schema.ResourceData, meta interface{}) ([]*schema
 			}
 		}
 	}
-
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyID
-	e := property.GetProperty("")
-	if e != nil {
-		return nil, e
+	res, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+		PropertyID: propertyID,
+	})
+	if err != nil {
+		return nil, err
 	}
+	property := res.Property
 
-	d.Set("account", property.AccountID)
-	d.Set("contract", property.ContractID)
-	d.Set("group", property.GroupID)
-
-	d.Set("name", property.PropertyName)
-	d.Set("version", property.LatestVersion)
+	if err := d.Set("account", property.AccountID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("contract", property.ContractID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("group", property.GroupID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("name", property.PropertyName); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("version", property.LatestVersion); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	d.SetId(property.PropertyID)
-
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourcePropertyRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyRead-" + tools.CreateNonce() + "]"
-	d.Partial(true)
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = d.Id()
-	err := property.GetProperty(CorrelationID)
+func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("PAPI", "resourcePropertyRead")
+	res, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+		PropertyID: d.Id(),
+	})
 	if err != nil {
-		return err
+		return diag.FromErr(err)
+	}
+	property := res.Property
+	if err := d.Set("account", property.AccountID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("contract", property.ContractID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("group", property.GroupID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("name", property.PropertyName); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.Set("account", property.AccountID)
-	d.Set("contract", property.ContractID)
-	d.Set("group", property.GroupID)
-	d.Set("name", property.PropertyName)
-	d.Set("note", property.Note)
-
-	rules, err := property.GetRules(CorrelationID)
+	getRulesRequest := papi.GetRuleTreeRequest{
+		PropertyID:      property.PropertyID,
+		PropertyVersion: property.LatestVersion,
+		ContractID:      property.ContractID,
+		GroupID:         property.GroupID,
+	}
+	rules, err := client.GetRuleTree(ctx, getRulesRequest)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	rules.Etag = ""
-	jsonBody, err := jsonhooks.Marshal(rules)
+	body, err := json.Marshal(rules)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-
-	sha1hashAPI := tools.GetSHAString(string(jsonBody))
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("READ SHA from Json %s\n", sha1hashAPI))
-	if err == nil {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf(" READ Rules from API : %s\n", string(jsonBody)))
-		d.Set("rules", string(jsonBody))
+	sha1hashAPI := tools.GetSHAString(string(body))
+	logger.Debugf("READ SHA from Json %s", sha1hashAPI)
+	logger.Debugf("READ Rules from API : %s", string(body))
+	if err := d.Set("rules", string(body)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	d.Set("rulessha", sha1hashAPI)
+	if err := d.Set("rulessha", sha1hashAPI); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	if rules.RuleFormat != "" {
-		d.Set("rule_format", rules.RuleFormat)
+		if err := d.Set("rule_format", rules.RuleFormat); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	} else {
-		d.Set("rule_format", property.RuleFormat)
+		if err := d.Set("rule_format", property.RuleFormat); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Property RuleFormat from API : %s\n", property.RuleFormat))
-	d.Set("version", property.LatestVersion)
-	if property.StagingVersion > 0 {
-		d.Set("staging_version", property.StagingVersion)
+	logger.Debugf("Property RuleFormat from API : %s", property.RuleFormat)
+	if err := d.Set("version", property.LatestVersion); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if property.ProductionVersion > 0 {
-		d.Set("production_version", property.ProductionVersion)
+	if property.StagingVersion != nil && *property.StagingVersion > 0 {
+		if err := d.Set("staging_version", property.StagingVersion); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
-
-	d.Partial(false)
+	if property.ProductionVersion != nil && *property.ProductionVersion > 0 {
+		if err := d.Set("production_version", property.ProductionVersion); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+	}
 	return nil
 }
 
-func resourcePropertyUpdate(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyUpdate-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "   UPDATING")
-	d.Partial(true)
-
-	property, e := getProperty(d, CorrelationID)
-	if e != nil {
-		return e
-	}
-
-	err := ensureEditableVersion(property, CorrelationID)
+func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("PAPI", "resourcePropertyUpdate")
+	logger.Debugf("UPDATING")
+	property, err := getProperty(ctx, d.Id(), meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
+	}
+	property, err = ensureEditableVersion(ctx, property, meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	rules, err := getRules(d, property, property.Contract, property.Group, CorrelationID)
-
+	rules, err := getRules(ctx, d, property, property.ContractID, property.GroupID, meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	if d.HasChange("rule_format") || d.HasChange("rules") {
-		if ruleFormat, ok := d.GetOk("rule_format"); ok {
-			property.RuleFormat = ruleFormat.(string)
-			rules.RuleFormat = ruleFormat.(string)
-		}
-
-		jsonBody, err := jsonhooks.Marshal(rules)
+		ruleFormat, err := tools.GetStringValue("rule_format", d)
 		if err != nil {
-			return err
-		}
-		if err == nil {
-			d.Set("rules", string(jsonBody))
-		}
-
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  UPDATE Check rules after unmarshal from Json %s\n", string(jsonBody)))
-		e = rules.Save(CorrelationID)
-		if e != nil {
-			if e == papi.ErrorMap[papi.ErrInvalidRules] && len(rules.Errors) > 0 {
-				var msg string
-				for _, v := range rules.Errors {
-					msg = msg + fmt.Sprintf("\n Rule validation error: %s %s %s %s %s", v.Type, v.Title, v.Detail, v.Instance, v.BehaviorName)
-				}
-				return errors.New("Error - Invalid Property Rules" + msg)
+			if !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
 			}
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("update rules.Save err: %#v", e))
-			return fmt.Errorf("update rules.Save err: %#v", e)
+		} else {
+			property.RuleFormat = ruleFormat
 		}
-
-		rules, err = property.GetRules(CorrelationID)
-		rules.Etag = ""
-		jsonBody, err = jsonhooks.Marshal(rules)
+		body, err := json.Marshal(rules)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
+		}
+		if err := d.Set("rules", string(body)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+		logger.Debugf("UPDATE Check rules after unmarshal from Json %s", string(body))
+		if _, err := client.UpdateRuleTree(ctx, rules); err != nil {
+			logger.Debugf("update rules.Save err: %#v", err)
+			return diag.FromErr(err)
 		}
 
-		sha1hashAPI := tools.GetSHAString(string(jsonBody))
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  UPDATE SHA from Json %s\n", sha1hashAPI))
-		d.Set("rulessha", sha1hashAPI)
+		res, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+			PropertyID:      property.PropertyID,
+			PropertyVersion: property.LatestVersion,
+			ContractID:      property.ContractID,
+			GroupID:         property.GroupID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		res.Etag = ""
+		body, err = json.Marshal(res)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
+		sha1hashAPI := tools.GetSHAString(string(body))
+		logger.Debugf("UPDATE SHA from Json %s", sha1hashAPI)
+		if err := d.Set("rulessha", sha1hashAPI); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
-
-	d.Set("version", property.LatestVersion)
+	if err := d.Set("version", property.LatestVersion); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	if d.HasChange("hostnames") {
-		ehnMap, err := setHostnames(property, d, CorrelationID)
+		edgeHostnamesMap, err := setHostnames(ctx, property, d, meta)
 		if err != nil {
-			return fmt.Errorf("setHostnames err: %#v", err)
+			return diag.FromErr(fmt.Errorf("setHostnames err: %#v", err))
 		}
-
-		d.Set("edge_hostnames", ehnMap)
+		if err := d.Set("edge_hostnames", edgeHostnamesMap); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
-	d.Partial(false)
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
-	return resourcePropertyRead(d, meta)
+	logger.Debugf("Done")
+	return resourcePropertyRead(ctx, d, m)
 }
 
-func resourceCustomDiffCustomizeDiff(_ context.Context, d *schema.ResourceDiff, meta interface{}) error {
-	CorrelationID := "[PAPI][resourcePropertyUpdate-" + tools.CreateNonce() + "]"
-	//Println("[DEBUG] resourceCustomDiffCustomizeDiff " + d.Id())
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  resourceCustomDiffCustomizeDiff "+d.Id()))
+func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceCustomDiffCustomizeDiff")
+
+	logger.Debugf("ID: %s", d.Id())
 	// Note that this gets put into state after the update, regardless of whether
 	// or not anything is acted upon in the diff.
-
 	old, new := d.GetChange("rules")
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  resourceCustomDiffCustomizeDiff OLD "+old.(string)))
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  resourceCustomDiffCustomizeDiff NEW "+new.(string)))
-	if !suppressEquivalentJsonPendingDiffs(old.(string), new.(string), d) {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  resourceCustomDiffCustomizeDiff CHANGED VALUES "+old.(string)+" "+new.(string)))
-		d.SetNewComputed("version")
+	oldStr, ok := old.(string)
+	if !ok {
+		return fmt.Errorf("value is of invalid type: %v; should be %s", old, "string")
 	}
-
+	newStr, ok := new.(string)
+	if !ok {
+		return fmt.Errorf("value is of invalid type: %v; should be %s", new, "string")
+	}
+	logger.Debugf("OLD: %s", oldStr)
+	logger.Debugf("NEW: %s", newStr)
+	if !compareRulesJSON(oldStr, newStr) {
+		logger.Debugf("CHANGED VALUES: %s %s ", oldStr, newStr)
+		if err := d.SetNewComputed("version"); err != nil {
+			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		}
+	}
 	return nil
 }
 
 // Helpers
-func getProperty(d interface{}, correlationid string) (*papi.Property, error) {
-	//	log.Println("[DEBUG] Fetching property")
-	edge.PrintfCorrelation("[DEBUG]", correlationid, "Fetching property")
-	var propertyID string
-
-	switch d.(type) {
-	case *schema.ResourceData:
-		propertyID = d.(*schema.ResourceData).Id()
-	case *schema.ResourceDiff:
-		propertyID = d.(*schema.ResourceDiff).Id()
-	default:
-		propertyID = d.(*schema.ResourceData).Id()
+func getProperty(ctx context.Context, id string, meta akamai.OperationMeta) (*papi.Property, error) {
+	logger := meta.Log("PAPI", "getProperty")
+	client := inst.Client(meta)
+	logger.Debugf("Fetching property")
+	res, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+		PropertyID: id,
+	})
+	if err != nil {
+		return nil, err
 	}
-
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyID
-	e := property.GetProperty(correlationid)
-	return property, e
+	return res.Property, nil
 }
 
-func getGroup(d *schema.ResourceData, correlationid string) (*papi.Group, error) {
-	//log.Println("[DEBUG] Fetching groups")
-	edge.PrintfCorrelation("[DEBUG]", correlationid, "Fetching groups")
-	groupID, ok := d.GetOk("group")
-
-	if !ok {
-		return nil, nil
+func getGroup(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Group, error) {
+	logger := meta.Log("PAPI", "getGroup")
+	client := inst.Client(meta)
+	logger.Debugf("Fetching groups")
+	groupID, err := tools.GetStringValue("group", d)
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return nil, err
+		}
+		return nil, ErrNoGroupProvided
+	}
+	res, err := client.GetGroups(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrFetchingGroups, err.Error())
+	}
+	groupID, err = tools.AddPrefix(groupID, "grp_")
+	if err != nil {
+		return nil, err
 	}
 
-	groups := papi.NewGroups()
-	e := groups.GetGroups(correlationid)
-	if e != nil {
-		return nil, e
+	var group *papi.Group
+	var groupFound bool
+	for _, g := range res.Groups.Items {
+		if g.GroupID == groupID {
+			group = g
+			groupFound = true
+			break
+		}
 	}
-
-	group, e := groups.FindGroup(groupID.(string))
-	if e != nil {
-		return nil, e
+	if !groupFound {
+		return nil, fmt.Errorf("%w: %s", ErrGroupNotFound, groupID)
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" Group found: %s\n", group.GroupID))
+	logger.Debugf("Group found: %s", group.GroupID)
 	return group, nil
 }
 
-func getContract(d *schema.ResourceData, correlationid string) (*papi.Contract, error) {
-	edge.PrintfCorrelation("[DEBUG]", correlationid, "  Fetching contract")
-	contractID, ok := d.GetOk("contract")
-	if !ok {
-		return nil, nil
+func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Contract, error) {
+	logger := meta.Log("PAPI", "getContract")
+	client := inst.Client(meta)
+	logger.Debugf("Fetching contract")
+	contractID, err := tools.GetStringValue("contract", d)
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return nil, err
+		}
+		return nil, ErrNoContractProvided
+	}
+	res, err := client.GetContracts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrFetchingContracts, err.Error())
+	}
+	contractID, err = tools.AddPrefix(contractID, "ctr_")
+	if err != nil {
+		return nil, err
+	}
+	var contract *papi.Contract
+	var contractFound bool
+	for _, c := range res.Contracts.Items {
+		if c.ContractID == contractID {
+			contract = c
+			contractFound = true
+			break
+		}
+	}
+	if !contractFound {
+		return nil, fmt.Errorf("%w: %s", ErrContractNotFound, contractID)
 	}
 
-	contracts := papi.NewContracts()
-	e := contracts.GetContracts(correlationid)
-	if e != nil {
-		return nil, e
-	}
-
-	contract, e := contracts.FindContract(contractID.(string))
-	if e != nil {
-		return nil, e
-	}
-
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Contract found: %s\n", contract.ContractID))
+	logger.Debugf("Contract found: %s", contract.ContractID)
 	return contract, nil
 }
 
-func getCPCode(d interface{}, contract *papi.Contract, group *papi.Group, correlationid string) (*papi.CpCode, error) {
-	if contract == nil || group == nil {
+func getCPCode(ctx context.Context, m akamai.OperationMeta, contractID, groupID string, logger log.Interface, d tools.ResourceDataFetcher) (*papi.CPCode, error) {
+	if contractID == "" {
+		return nil, ErrNoContractProvided
+	}
+	if groupID == "" {
+		return nil, ErrNoGroupProvided
+	}
+	cpCodeID, err := tools.GetStringValue("cp_code", d)
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return nil, err
+		}
 		return nil, nil
 	}
-	var cpCodeID interface{}
-	var ok bool
-
-	switch d.(type) {
-	case *schema.ResourceData:
-		cpCodeID, ok = d.(*schema.ResourceData).GetOk("cp_code")
-	case *schema.ResourceDiff:
-		cpCodeID, ok = d.(*schema.ResourceDiff).GetOk("cp_code")
-	default:
-		cpCodeID, ok = d.(*schema.ResourceData).GetOk("cp_code")
-	}
-
-	//cpCodeID, ok := d.GetOk("cp_code")
-	if !ok {
-		return nil, nil
-	}
-
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Fetching CP code")
-	cpCode := papi.NewCpCodes(contract, group).NewCpCode()
-	cpCode.CpcodeID = cpCodeID.(string)
-	err := cpCode.GetCpCode()
+	cpCodeID, err = tools.AddPrefix(cpCodeID, "cpc_")
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("Fetching CP code")
 
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  CP code found: %s\n", cpCode.CpcodeID))
-	return cpCode, nil
-}
-
-func getCPCodeDiff(d *schema.ResourceDiff, contract *papi.Contract, group *papi.Group, correlationid string) (*papi.CpCode, error) {
-	if contract == nil || group == nil {
-		return nil, nil
-	}
-
-	cpCodeID, ok := d.GetOk("cp_code")
-	if !ok {
-		return nil, nil
-	}
-
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Fetching CP code")
-	cpCode := papi.NewCpCodes(contract, group).NewCpCode()
-	cpCode.CpcodeID = cpCodeID.(string)
-	err := cpCode.GetCpCode()
+	cpCodeResponse, err := inst.Client(m).GetCPCode(ctx, papi.GetCPCodeRequest{
+		CPCodeID:   cpCodeID,
+		ContractID: contractID,
+		GroupID:    groupID,
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  CP code found: %s\n", cpCode.CpcodeID))
-	return cpCode, nil
+	logger.Debugf("CP code found: %s", cpCodeResponse.CPCode)
+	return &cpCodeResponse.CPCode, nil
 }
 
-func getProduct(d *schema.ResourceData, contract *papi.Contract, correlationid string) (*papi.Product, error) {
-	if contract == nil {
-		return nil, nil
+func getProduct(ctx context.Context, d *schema.ResourceData, contractID string, meta akamai.OperationMeta) (*papi.ProductItem, error) {
+	logger := meta.Log("PAPI", "getProduct")
+	client := inst.Client(meta)
+	if contractID == "" {
+		return nil, ErrNoContractProvided
+	}
+	logger.Debugf("Fetching product")
+	productID, err := tools.GetStringValue("product", d)
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return nil, err
+		}
+		return nil, ErrNoProductProvided
+	}
+	res, err := client.GetProducts(ctx, papi.GetProductsRequest{ContractID: contractID})
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrProductFetch, err.Error())
+	}
+	productID, err = tools.AddPrefix(productID, "prd_")
+	if err != nil {
+		return nil, err
+	}
+	var productFound bool
+	var product papi.ProductItem
+	for _, p := range res.Products.Items {
+		if p.ProductID == productID {
+			product = p
+			productFound = true
+			break
+		}
+	}
+	if !productFound {
+		return nil, fmt.Errorf("%w: %s", ErrProductNotFound, productID)
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Fetching product")
-	productID, ok := d.GetOk("product")
-	if !ok {
-		return nil, nil
-	}
-
-	products := papi.NewProducts()
-	e := products.GetProducts(contract, correlationid)
-	if e != nil {
-		return nil, e
-	}
-
-	product, e := products.FindProduct(productID.(string))
-	if e != nil {
-		return nil, e
-	}
-
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Product found: %s\n", product.ProductID))
-	return product, nil
+	logger.Debugf("Product found: %s", product.ProductID)
+	return &product, nil
 }
 
-func createOrigin(d interface{}, correlationid string) (*papi.OptionValue, error) {
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Setting origin")
-	var origin interface{}
-	var ok bool
+func createOrigin(d interface{}, logger log.Interface) (*papi.RuleOptionsMap, error) {
+	logger.Debugf("Setting origin")
+	var origin *schema.Set
+	var err error
 
 	switch d.(type) {
 	case *schema.ResourceData:
-		origin, ok = d.(*schema.ResourceData).GetOk("origin")
+		origin, err = tools.GetSetValue("origin", d.(*schema.ResourceData))
 	case *schema.ResourceDiff:
-		origin, ok = d.(*schema.ResourceDiff).GetOk("origin")
+		origin, err = tools.GetSetValue("origin", d.(*schema.ResourceDiff))
 	default:
-		origin, ok = d.(*schema.ResourceData).GetOk("origin")
+		return nil, fmt.Errorf("resource is of invalid type; should be '*schema.ResourceDiff' or '*schema.ResourceData'")
 	}
 
-	//if origin, ok := rd.GetOk("origin"); ok {
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return nil, err
+		}
+		return nil, nil
+	}
+	if origin.Len() == 0 {
+		return nil, fmt.Errorf("'origin' property must have at least one value")
+	}
+	originConfig, ok := origin.List()[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("origin set value is of invalid type; should be 'map[string]interface{}'")
+	}
+
+	originValues := make(map[string]interface{})
+
+	originValues["originType"] = "CUSTOMER"
+	if val, ok := originConfig["hostname"]; ok {
+		originValues["hostname"], ok = val.(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "hostname", "string")
+		}
+	}
+
+	if val, ok := originConfig["port"]; ok {
+		originValues["httpPort"], ok = val.(int)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "httpPort", "int")
+		}
+	}
+
+	if val, ok := originConfig["cache_key_hostname"]; ok {
+		originValues["cacheKeyHostname"], ok = val.(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "cacheKeyHostname", "string")
+		}
+	}
+
+	if val, ok := originConfig["compress"]; ok {
+		originValues["compress"], ok = val.(bool)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "compress", "bool")
+		}
+	}
+
+	if val, ok := originConfig["enable_true_client_ip"]; ok {
+		originValues["enableTrueClientIp"], ok = val.(bool)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "enableTrueClientIp", "bool")
+		}
+	}
+
+	forwardHostname, ok := originConfig["forward_hostname"].(string)
 	if ok {
-		originConfig := origin.(*schema.Set).List()[0].(map[string]interface{})
-
-		forwardHostname, forwardHostnameOk := originConfig["forward_hostname"].(string)
-		originValues := make(map[string]interface{})
-
-		originValues["originType"] = "CUSTOMER"
-		if val, ok := originConfig["hostname"]; ok {
-			originValues["hostname"] = val.(string)
-		}
-
-		if val, ok := originConfig["port"]; ok {
-			originValues["httpPort"] = val.(int)
-		}
-
-		if val, ok := originConfig["cache_key_hostname"]; ok {
-			originValues["cacheKeyHostname"] = val.(string)
-		}
-
-		if val, ok := originConfig["compress"]; ok {
-			originValues["compress"] = val.(bool)
-		}
-
-		if val, ok := originConfig["enable_true_client_ip"]; ok {
-			originValues["enableTrueClientIp"] = val.(bool)
-		}
-
-		if forwardHostnameOk && (forwardHostname == "ORIGIN_HOSTNAME" || forwardHostname == "REQUEST_HOST_HEADER") {
-			edge.PrintfCorrelation("[DEBUG]", correlationid, " Setting non-custom forward hostname")
+		if forwardHostname == "ORIGIN_HOSTNAME" || forwardHostname == "REQUEST_HOST_HEADER" {
+			logger.Debugf("Setting non-custom forward hostname")
 
 			originValues["forwardHostHeader"] = forwardHostname
-		} else if forwardHostnameOk {
-			edge.PrintfCorrelation("[DEBUG]", correlationid, " Setting custom forward hostname")
+		} else {
+			logger.Debugf("Setting custom forward hostname")
 
 			originValues["forwardHostHeader"] = "CUSTOM"
 			originValues["customForwardHostHeader"] = forwardHostname
 		}
 
-		ov := papi.OptionValue(originValues)
-		return &ov, nil
 	}
-	return nil, nil
+	ov := papi.RuleOptionsMap(originValues)
+	return &ov, nil
 }
 
-func fixupPerformanceBehaviors(rules *papi.Rules, correlationid string) {
-	behavior, err := rules.FindBehavior("/Performance/sureRoute")
-	if err != nil || behavior == nil || (behavior != nil && behavior.Options["testObjectUrl"] != "") {
+func fixupPerformanceBehaviors(rules *papi.Rules, logger log.Interface) {
+	behavior, err := findBehavior("/Performance/sureRoute", rules)
+	if err != nil || behavior.Options["testObjectUrl"] != "" {
 		return
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Fixing Up SureRoute Behavior")
-	behavior.MergeOptions(papi.OptionValue{
+	logger.Debugf("Fixing Up SureRoute Behavior")
+	behavior.Options = mergeOptions(behavior.Options, papi.RuleOptionsMap{
 		"testObjectUrl":   "/akamai/sureroute-testobject.html",
 		"enableCustomKey": false,
 		"enabled":         false,
 	})
 }
 
-func fixupAdaptiveImageCompression(rules *papi.Rules, correlationid string) {
-	edge.PrintfCorrelation("[DEBUG]", correlationid, " Start Fixing Up adaptiveImageCompression Behavior")
-	behavior, err := rules.FindBehavior("/Performance/JPEG Images/adaptiveImageCompression")
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  Start Fixing Up adaptiveImageCompression Behavior %v %v", behavior, err))
-	if err != nil || behavior == nil { //} || (behavior != nil && behavior.Options["compressMobile"] != "") {
-		edge.PrintfCorrelation("[DEBUG]", correlationid, "  Fixing Up adaptiveImageCompression Behavior Leave early")
-		return
-	}
-
-	edge.PrintfCorrelation("[DEBUG]", correlationid, "Fixing Up adaptiveImageCompression Behavior")
-	behavior.MergeOptions(papi.OptionValue{
-		"excellentConnectionOption": "Adapt Images",
-		"goodConnectionOption":      "Adapt Images",
-	})
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf("  tart Fixing Up adaptiveImageCompression Behavior %v ", behavior))
-}
-
-func updateStandardBehaviors(rules *papi.Rules, cpCode *papi.CpCode, origin *papi.OptionValue, correlationid string) {
-	edge.PrintfCorrelation("[DEBUG]", correlationid, fmt.Sprintf(" cpCode: %#v", cpCode))
-
+func updateStandardBehaviors(behaviors []papi.RuleBehavior, cpCode *papi.CPCode, origin *papi.RuleOptionsMap, logger log.Interface) []papi.RuleBehavior {
+	logger.Debugf("cpCode: %#v", cpCode)
 	if cpCode != nil {
-		b := papi.NewBehavior()
-		b.Name = "cpCode"
-		b.Options = papi.OptionValue{
-			"value": papi.OptionValue{
-				"id": cpCode.ID(),
+		cpCodeID, err := tools.GetIntID(cpCode.ID, "cpc_")
+		if err != nil {
+			return nil
+		}
+		b := papi.RuleBehavior{
+			Name: "cpCode",
+			Options: papi.RuleOptionsMap{
+				"value": papi.RuleOptionsMap{
+					"id": cpCodeID,
+				},
 			},
 		}
-		rules.Rule.MergeBehavior(b)
+		behaviors = mergeBehaviors(behaviors, b)
 	}
 
 	if origin != nil {
-		b := papi.NewBehavior()
-		b.Name = "origin"
-		b.Options = *origin
-		rules.Rule.MergeBehavior(b)
+		b := papi.RuleBehavior{
+			Name:    "origin",
+			Options: *origin,
+		}
+		behaviors = mergeBehaviors(behaviors, b)
 	}
+	return behaviors
 }
 
-func unmarshalRulesFromJSON(d *schema.ResourceData, propertyRules *papi.Rules) {
+// TODO this function unmarshals values from json into *papi.Rules struct
+// After rewrite, this should probably be replaced by a simple json.Unmarshal
+func unmarshalRulesFromJSON(d *schema.ResourceData) *papi.Rules {
 	// Default Rules
 	rules, ok := d.GetOk("rules")
-	if ok {
-		propertyRules.Rule = &papi.Rule{Name: "default"}
-		//		log.Println("[DEBUG] RulesJson")
+	if !ok {
+		return nil
+	}
 
-		rulesJSON := gjson.Get(rules.(string), "rules")
-		rulesJSON.ForEach(func(key, value gjson.Result) bool {
-			//			log.Println("[DEBUG] unmarshalRulesFromJson KEY RULES KEY = " + key.String() + " VAL " + value.String())
-
-			if key.String() == "behaviors" {
-				behavior := gjson.Parse(value.String())
-				//				log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR " + behavior.String())
-				if gjson.Get(behavior.String(), "#.name").Exists() {
-
-					behavior.ForEach(func(key, value gjson.Result) bool {
-						//						log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR LOOP KEY =" + key.String() + " VAL " + value.String())
-
-						bb, ok := value.Value().(map[string]interface{})
-						if ok {
-							//							log.Println("[DEBUG] unmarshalRulesFromJson BEHAVIOR MAP  ", bb)
-							for k, v := range bb {
-								log.Println("k:", k, "v:", v)
-							}
-
-							beh := papi.NewBehavior()
-
-							beh.Name = bb["name"].(string)
-							boptions, ok := bb["options"]
-							//							log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR BOPTIONS ", boptions)
-							if ok {
-								beh.Options = boptions.(map[string]interface{})
-								//								log.Println("[DEBUG] unmarshalRulesFromJson KEY BEHAVIOR EXTRACT BOPTIONS ", beh.Options)
-							}
-
-							propertyRules.Rule.MergeBehavior(beh)
-						}
-
-						return true // keep iterating
-					}) // behavior list loop
-
-				}
-
-				if key.String() == "criteria" {
-					criteria := gjson.Parse(value.String())
-
-					criteria.ForEach(func(key, value gjson.Result) bool {
-						//						log.Println("[DEBUG] unmarshalRulesFromJson KEY CRITERIA " + key.String() + " VAL " + value.String())
-
-						cc, ok := value.Value().(map[string]interface{})
-						if ok {
-							//							log.Println("[DEBUG] unmarshalRulesFromJson CRITERIA MAP  ", cc)
-							newCriteria := papi.NewCriteria()
-							newCriteria.Name = cc["name"].(string)
-
-							coptions, ok := cc["option"]
-							if ok {
-								//								println("OPTIONS ", coptions)
-								newCriteria.Options = coptions.(map[string]interface{})
-							}
-							propertyRules.Rule.MergeCriteria(newCriteria)
-						}
-						return true
-					})
-				} // if ok criteria
-			} /// if ok behaviors
-
-			if key.String() == "children" {
-				childRules := gjson.Parse(value.String())
-				//				println("CHILD RULES " + childRules.String())
-
-				for _, rule := range extractRulesJSON(d, childRules) {
-					propertyRules.Rule.MergeChildRule(rule)
-				}
-			}
-
-			if key.String() == "variables" {
-
-				//				log.Println("unmarshalRulesFromJson VARS from JSON ", value.String())
-				variables := gjson.Parse(value.String())
-
-				variables.ForEach(func(key, value gjson.Result) bool {
-					//					log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
-					variableMap, ok := value.Value().(map[string]interface{})
-					//					log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
-					//					log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
+	propertyRules := &papi.Rules{Name: "default"}
+	rulesJSON := gjson.Get(rules.(string), "rules")
+	rulesJSON.ForEach(func(key, value gjson.Result) bool {
+		if key.String() == "behaviors" {
+			behavior := gjson.Parse(value.String())
+			if gjson.Get(behavior.String(), "#.name").Exists() {
+				behavior.ForEach(func(key, value gjson.Result) bool {
+					bb, ok := value.Value().(map[string]interface{})
 					if ok {
-						newVariable := papi.NewVariable()
-						newVariable.Name = variableMap["name"].(string)
-						newVariable.Description = variableMap["description"].(string)
-						newVariable.Value = variableMap["value"].(string)
-						newVariable.Hidden = variableMap["hidden"].(bool)
-						newVariable.Sensitive = variableMap["sensitive"].(bool)
-						propertyRules.Rule.AddVariable(newVariable)
-					}
-					return true
-				}) //variables
+						for k, v := range bb {
+							log.Debugf("k:", k, "v:", v)
+						}
 
+						beh := papi.RuleBehavior{Options: papi.RuleOptionsMap{}}
+
+						beh.Name = bb["name"].(string)
+						boptions, ok := bb["options"]
+						if ok {
+							beh.Options = boptions.(map[string]interface{})
+						}
+
+						propertyRules.Behaviors = mergeBehaviors(propertyRules.Behaviors, beh)
+					}
+
+					return true // keep iterating
+				}) // behavior list loop
 			}
 
-			if key.String() == "options" {
-				//				log.Println("unmarshalRulesFromJson OPTIONS from JSON", value.String())
-				options := gjson.Parse(value.String())
-				options.ForEach(func(key, value gjson.Result) bool {
-					switch {
-					case key.String() == "is_secure" && value.Bool():
-						propertyRules.Rule.Options.IsSecure = value.Bool()
-					}
+			if key.String() == "criteria" {
+				criteria := gjson.Parse(value.String())
 
+				criteria.ForEach(func(key, value gjson.Result) bool {
+					//						log.Println("[DEBUG] unmarshalRulesFromJson KEY CRITERIA " + key.String() + " VAL " + value.String())
+
+					cc, ok := value.Value().(map[string]interface{})
+					if ok {
+						//							log.Println("[DEBUG] unmarshalRulesFromJson CRITERIA MAP  ", cc)
+						newCriteria := papi.RuleBehavior{Options: papi.RuleOptionsMap{}}
+						newCriteria.Name = cc["name"].(string)
+
+						coptions, ok := cc["option"]
+						if ok {
+							//								println("OPTIONS ", coptions)
+							newCriteria.Options = coptions.(map[string]interface{})
+						}
+						propertyRules.Criteria = append(propertyRules.Criteria, newCriteria)
+					}
 					return true
 				})
+			} // if ok criteria
+		} /// if ok behaviors
+
+		if key.String() == "children" {
+			childRules := gjson.Parse(value.String())
+			for _, rule := range extractRulesJSON(d, childRules) {
+				propertyRules.Children = append(propertyRules.Children, rule)
 			}
+		}
 
-			return true // keep iterating
-		}) // for loop rules
-
-		// ADD vars from variables resource
-		jsonvars, ok := d.GetOk("variables")
-		if ok {
-			//			log.Println("unmarshalRulesFromJson VARS from JSON ", jsonvars)
-			variables := gjson.Parse(jsonvars.(string))
-			result := gjson.Get(variables.String(), "variables")
-			//			log.Println("unmarshalRulesFromJson VARS from JSON VARIABLES ", result)
-
-			result.ForEach(func(key, value gjson.Result) bool {
-				//				log.Println("unmarshalRulesFromJson VARS from JSON LOOP ", value)
+		if key.String() == "variables" {
+			variables := gjson.Parse(value.String())
+			variables.ForEach(func(key, value gjson.Result) bool {
 				variableMap, ok := value.Value().(map[string]interface{})
-				//				log.Println("unmarshalRulesFromJson VARS from JSON LOOP NAME ", variableMap["name"].(string))
-				//				log.Println("unmarshalRulesFromJson VARS from JSON LOOP DESC ", variableMap["description"].(string))
 				if ok {
-					newVariable := papi.NewVariable()
-					newVariable.Name = variableMap["name"].(string)
-					newVariable.Description = variableMap["description"].(string)
-					newVariable.Value = variableMap["value"].(string)
-					newVariable.Hidden = variableMap["hidden"].(bool)
-					newVariable.Sensitive = variableMap["sensitive"].(bool)
-					propertyRules.Rule.AddVariable(newVariable)
+					newVariable := papi.RuleVariable{}
+					if val, ok := variableMap["name"].(string); ok {
+						newVariable.Name = val
+					}
+					if val, ok := variableMap["description"].(string); ok {
+						newVariable.Description = val
+					}
+					if val, ok := variableMap["value"].(string); ok {
+						newVariable.Value = val
+					}
+					if val, ok := variableMap["hidden"].(bool); ok {
+						newVariable.Hidden = val
+					}
+					if val, ok := variableMap["sensitive"].(bool); ok {
+						newVariable.Sensitive = val
+					}
+					propertyRules.Variables = addVariable(propertyRules.Variables, newVariable)
 				}
 				return true
 			}) //variables
+
 		}
 
-		// ADD is_secure from resource
-		is_secure, set := d.GetOkExists("is_secure")
-		if set && is_secure.(bool) {
-			propertyRules.Rule.Options.IsSecure = true
-		} else if set && !is_secure.(bool) {
-			propertyRules.Rule.Options.IsSecure = false
-		}
-
-		// ADD cp_code from resource
-		cp_code, set := d.GetOk("cp_code")
-		if set {
-			beh := papi.NewBehavior()
-			beh.Name = "cpCode"
-			beh.Options = papi.OptionValue{
-				"value": papi.OptionValue{
-					"id": cp_code.(string),
-				},
-			}
-			propertyRules.Rule.MergeBehavior(beh)
-		}
-	}
-}
-
-func extractOptions(options *schema.Set) map[string]interface{} {
-	optv := make(map[string]interface{})
-	for _, o := range options.List() {
-		oo, ok := o.(map[string]interface{})
-		if ok {
-			vals, ok := oo["values"]
-			if ok && vals.(*schema.Set).Len() > 0 {
-				op := make([]interface{}, 0)
-				for _, v := range vals.(*schema.Set).List() {
-					op = append(op, numberify(v.(string)))
+		if key.String() == "options" {
+			options := gjson.Parse(value.String())
+			options.ForEach(func(key, value gjson.Result) bool {
+				switch {
+				case key.String() == "is_secure" && value.Bool():
+					propertyRules.Options.IsSecure = value.Bool()
 				}
 
-				optv[oo["key"].(string)] = op
-			} else {
-				optv[oo["key"].(string)] = numberify(oo["value"].(string))
-			}
+				return true
+			})
 		}
+
+		return true // keep iterating
+	}) // for loop rules
+
+	// ADD vars from variables resource
+	jsonvars, ok := d.GetOk("variables")
+	if ok {
+		variables := gjson.Parse(jsonvars.(string))
+		result := gjson.Get(variables.String(), "variables")
+		result.ForEach(func(key, value gjson.Result) bool {
+			variableMap, ok := value.Value().(map[string]interface{})
+			if ok {
+				newVariable := papi.RuleVariable{}
+				if val, ok := variableMap["name"].(string); ok {
+					newVariable.Name = val
+				}
+				if val, ok := variableMap["description"].(string); ok {
+					newVariable.Description = val
+				}
+				if val, ok := variableMap["value"].(string); ok {
+					newVariable.Value = val
+				}
+				if val, ok := variableMap["hidden"].(bool); ok {
+					newVariable.Hidden = val
+				}
+				if val, ok := variableMap["sensitive"].(bool); ok {
+					newVariable.Sensitive = val
+				}
+				propertyRules.Variables = addVariable(propertyRules.Variables, newVariable)
+			}
+			return true
+		}) //variables
 	}
-	return optv
+
+	// ADD isSecure from resource
+	isSecure, set := d.GetOkExists("is_secure")
+	if set && isSecure.(bool) {
+		propertyRules.Options.IsSecure = true
+	} else if set && !isSecure.(bool) {
+		propertyRules.Options.IsSecure = false
+	}
+
+	// ADD cpCode from resource
+	cpCode, set := d.GetOk("cp_code")
+	if set {
+		beh := papi.RuleBehavior{Options: papi.RuleOptionsMap{}}
+		beh.Name = "cpCode"
+		beh.Options = papi.RuleOptionsMap{
+			"value": map[string]interface{}{
+				"id": cpCode.(string),
+			},
+		}
+		propertyRules.Behaviors = mergeBehaviors(propertyRules.Behaviors, beh)
+	}
+	return propertyRules
 }
 
-func numberify(v string) interface{} {
-	f1, err := strconv.ParseFloat(v, 64)
-	if err == nil {
+func extractOptions(options *schema.Set) (map[string]interface{}, error) {
+	optv := make(map[string]interface{})
+	for _, option := range options.List() {
+		optionMap, ok := option.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if val, ok := optionMap["value"].(string); ok && val != "" {
+			optv[optionMap["key"].(string)] = convertString(val)
+			continue
+		}
+		vals, ok := optionMap["values"]
+		if !ok {
+			continue
+		}
+		valsSet, ok := vals.(*schema.Set)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "values", "*schema.Set")
+		}
+		if valsSet.Len() == 0 {
+			optv[optionMap["key"].(string)] = convertString(optionMap["value"].(string))
+			continue
+		}
+		if valsSet.Len() > 0 {
+			op := make([]interface{}, 0)
+			for _, v := range vals.(*schema.Set).List() {
+				op = append(op, convertString(v.(string)))
+			}
+
+			optv[optionMap["key"].(string)] = op
+		}
+	}
+	return optv, nil
+}
+
+func convertString(v string) interface{} {
+	if f1, err := strconv.ParseFloat(v, 64); err == nil {
 		return f1
 	}
-
-	f2, err := strconv.ParseInt(v, 10, 64)
-	if err == nil {
+	// FIXME: execution will never reach this as every int representation will be captured by ParseFloat() above
+	// this should either be moved above ParseFloat block or removed
+	if f2, err := strconv.ParseInt(v, 10, 64); err == nil {
 		return f2
 	}
-
-	f3, err := strconv.ParseBool(v)
-	if err == nil {
+	if f3, err := strconv.ParseBool(v); err == nil {
 		return f3
 	}
-
-	f4, err := strconv.Atoi(v)
-	if err == nil {
-		return f4
-	}
-
 	return v
 }
 
-func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
-	var rules []*papi.Rule
+// TODO: discuss how property rules should be handled
+func extractRulesJSON(d interface{}, drules gjson.Result) []papi.Rules {
+	var rules []papi.Rules
 	drules.ForEach(func(key, value gjson.Result) bool {
-		rule := papi.NewRule()
+		rule := papi.Rules{Name: "default"}
 		vv, ok := value.Value().(map[string]interface{})
 		if ok {
 			rule.Name, _ = vv["name"].(string)
-			rule.Comments, _ = vv["comments"].(string)
-			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
+			rule.Comment, _ = vv["comments"].(string)
+			criteriaMustSatisfy, ok := vv["criteria_match"]
 			if ok {
 				if criteriaMustSatisfy.(string) == "all" {
 					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
@@ -1069,7 +1195,7 @@ func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
 				}
 			}
-			log.Println("[DEBUG] extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comments)
+			log.Debugf("extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comment)
 
 			ruledetail := gjson.Parse(value.String())
 			//			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
@@ -1085,13 +1211,13 @@ func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 						//						log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE LOOP KEY = " + key.String() + " VAL " + value.String())
 						behaviorMap, ok := value.Value().(map[string]interface{})
 						if ok {
-							newBehavior := papi.NewBehavior()
+							newBehavior := papi.RuleBehavior{Options: papi.RuleOptionsMap{}}
 							newBehavior.Name = behaviorMap["name"].(string)
 							behaviorOptions, ok := behaviorMap["options"]
 							if ok {
 								newBehavior.Options = behaviorOptions.(map[string]interface{})
 							}
-							rule.MergeBehavior(newBehavior)
+							rule.Behaviors = mergeBehaviors(rule.Behaviors, newBehavior)
 						}
 						return true
 					}) //behaviors
@@ -1103,13 +1229,13 @@ func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 					criterias.ForEach(func(key, value gjson.Result) bool {
 						criteriaMap, ok := value.Value().(map[string]interface{})
 						if ok {
-							newCriteria := papi.NewCriteria()
+							newCriteria := papi.RuleBehavior{Options: papi.RuleOptionsMap{}}
 							newCriteria.Name = criteriaMap["name"].(string)
 							criteriaOptions, ok := criteriaMap["options"]
 							if ok {
 								newCriteria.Options = criteriaOptions.(map[string]interface{})
 							}
-							rule.MergeCriteria(newCriteria)
+							rule.Criteria = append(rule.Criteria, newCriteria)
 						}
 						return true
 					}) //criteria
@@ -1121,13 +1247,13 @@ func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 					variables.ForEach(func(key, value gjson.Result) bool {
 						variableMap, ok := value.Value().(map[string]interface{})
 						if ok {
-							newVariable := papi.NewVariable()
+							newVariable := papi.RuleVariable{}
 							newVariable.Name = variableMap["name"].(string)
 							newVariable.Description = variableMap["description"].(string)
 							newVariable.Value = variableMap["value"].(string)
 							newVariable.Hidden = variableMap["hidden"].(bool)
 							newVariable.Sensitive = variableMap["sensitive"].(bool)
-							rule.AddVariable(newVariable)
+							rule.Variables = addVariable(rule.Variables, newVariable)
 						}
 						return true
 					}) //variables
@@ -1135,9 +1261,8 @@ func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 
 				if key.String() == "children" {
 					childRules := gjson.Parse(value.String())
-					//					println("CHILD RULES " + childRules.String())
 					for _, newRule := range extractRulesJSON(d, childRules) {
-						rule.MergeChildRule(newRule)
+						rule.Children = append(rule.Children, newRule)
 					}
 				} //len > 0
 
@@ -1153,119 +1278,17 @@ func extractRulesJSON(d interface{}, drules gjson.Result) []*papi.Rule {
 	return rules
 }
 
-func extractRulesJSONDiff(d *schema.ResourceDiff, drules gjson.Result) []*papi.Rule {
-	var rules []*papi.Rule
-	drules.ForEach(func(key, value gjson.Result) bool {
-		rule := papi.NewRule()
-		vv, ok := value.Value().(map[string]interface{})
-		if ok {
-			rule.Name, _ = vv["name"].(string)
-			rule.Comments, _ = vv["comments"].(string)
-			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
-			if ok {
-				if criteriaMustSatisfy.(string) == "all" {
-					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
-				}
+func extractRules(drules *schema.Set) ([]papi.Rules, error) {
 
-				if criteriaMustSatisfy.(string) == "any" {
-					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
-				}
-			}
-			//log.Println("[DEBUG] extractRulesJSON Set criteriaMustSatisfy RESULT RULE value set " + string(rule.CriteriaMustSatisfy) + " " + rule.Name + " " + rule.Comments)
-
-			ruledetail := gjson.Parse(value.String())
-			//			log.Println("[DEBUG] RULE DETAILS ", ruledetail)
-
-			ruledetail.ForEach(func(key, value gjson.Result) bool {
-
-				if key.String() == "behaviors" {
-					//					log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE ", key.String())
-
-					behaviors := gjson.Parse(value.String())
-					//					log.Println("[DEBUG] BEHAVIORS NAME ", behaviors)
-					behaviors.ForEach(func(key, value gjson.Result) bool {
-						//						log.Println("[DEBUG] BEHAVIORS KEY CHILD RULE LOOP KEY = " + key.String() + " VAL " + value.String())
-						behaviorMap, ok := value.Value().(map[string]interface{})
-						if ok {
-							newBehavior := papi.NewBehavior()
-							newBehavior.Name = behaviorMap["name"].(string)
-							behaviorOptions, ok := behaviorMap["options"]
-							if ok {
-								newBehavior.Options = behaviorOptions.(map[string]interface{})
-							}
-							rule.MergeBehavior(newBehavior)
-						}
-						return true
-					}) //behaviors
-				}
-
-				if key.String() == "criteria" {
-					//					log.Println("[DEBUG] CRITERIA KEY CHILD RULE ", key.String())
-					criterias := gjson.Parse(value.String())
-					criterias.ForEach(func(key, value gjson.Result) bool {
-						criteriaMap, ok := value.Value().(map[string]interface{})
-						if ok {
-							newCriteria := papi.NewCriteria()
-							newCriteria.Name = criteriaMap["name"].(string)
-							criteriaOptions, ok := criteriaMap["options"]
-							if ok {
-								newCriteria.Options = criteriaOptions.(map[string]interface{})
-							}
-							rule.MergeCriteria(newCriteria)
-						}
-						return true
-					}) //criteria
-				}
-
-				if key.String() == "variables" {
-					//					log.Println("[DEBUG] VARIABLES KEY CHILD RULE ", key.String())
-					variables := gjson.Parse(value.String())
-					variables.ForEach(func(key, value gjson.Result) bool {
-						variableMap, ok := value.Value().(map[string]interface{})
-						if ok {
-							newVariable := papi.NewVariable()
-							newVariable.Name = variableMap["name"].(string)
-							newVariable.Description = variableMap["description"].(string)
-							newVariable.Value = variableMap["value"].(string)
-							newVariable.Hidden = variableMap["hidden"].(bool)
-							newVariable.Sensitive = variableMap["sensitive"].(bool)
-							rule.AddVariable(newVariable)
-						}
-						return true
-					}) //variables
-				}
-
-				if key.String() == "children" {
-					childRules := gjson.Parse(value.String())
-					//					println("CHILD RULES " + childRules.String())
-					for _, newRule := range extractRulesJSONDiff(d, childRules) {
-						rule.MergeChildRule(newRule)
-					}
-				} //len > 0
-
-				return true
-			}) //Loop Detail
-
-		}
-		rules = append(rules, rule)
-
-		return true
-	})
-
-	return rules
-}
-
-func extractRules(drules *schema.Set) []*papi.Rule {
-
-	var rules []*papi.Rule
+	var rules []papi.Rules
 	for _, v := range drules.List() {
-		rule := papi.NewRule()
+		rule := papi.Rules{Name: "default"}
 		vv, ok := v.(map[string]interface{})
 		if ok {
 			rule.Name = vv["name"].(string)
-			rule.Comments = vv["comment"].(string)
+			rule.Comment = vv["comment"].(string)
 
-			criteriaMustSatisfy, ok := vv["criteriaMustSatisfy"]
+			criteriaMustSatisfy, ok := vv["criteria_match"]
 			if ok {
 				if criteriaMustSatisfy.(string) == "all" {
 					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
@@ -1280,13 +1303,17 @@ func extractRules(drules *schema.Set) []*papi.Rule {
 				for _, behavior := range behaviors.(*schema.Set).List() {
 					behaviorMap, ok := behavior.(map[string]interface{})
 					if ok {
-						newBehavior := papi.NewBehavior()
+						newBehavior := papi.RuleBehavior{}
 						newBehavior.Name = behaviorMap["name"].(string)
 						behaviorOptions, ok := behaviorMap["option"]
 						if ok {
-							newBehavior.Options = extractOptions(behaviorOptions.(*schema.Set))
+							opts, err := extractOptions(behaviorOptions.(*schema.Set))
+							if err != nil {
+								return nil, err
+							}
+							newBehavior.Options = opts
 						}
-						rule.MergeBehavior(newBehavior)
+						rule.Behaviors = mergeBehaviors(rule.Behaviors, newBehavior)
 					}
 				}
 			}
@@ -1296,13 +1323,17 @@ func extractRules(drules *schema.Set) []*papi.Rule {
 				for _, criteria := range criterias.(*schema.Set).List() {
 					criteriaMap, ok := criteria.(map[string]interface{})
 					if ok {
-						newCriteria := papi.NewCriteria()
+						newCriteria := papi.RuleBehavior{}
 						newCriteria.Name = criteriaMap["name"].(string)
 						criteriaOptions, ok := criteriaMap["option"]
 						if ok {
-							newCriteria.Options = extractOptions(criteriaOptions.(*schema.Set))
+							crit, err := extractOptions(criteriaOptions.(*schema.Set))
+							if err != nil {
+								return nil, err
+							}
+							newCriteria.Options = crit
 						}
-						rule.MergeCriteria(newCriteria)
+						rule.Criteria = append(rule.Criteria, newCriteria)
 					}
 				}
 			}
@@ -1312,77 +1343,195 @@ func extractRules(drules *schema.Set) []*papi.Rule {
 				for _, variable := range variables.(*schema.Set).List() {
 					variableMap, ok := variable.(map[string]interface{})
 					if ok {
-						newVariable := papi.NewVariable()
+						newVariable := papi.RuleVariable{}
 						newVariable.Name = variableMap["name"].(string)
 						newVariable.Description = variableMap["description"].(string)
 						newVariable.Value = variableMap["value"].(string)
 						newVariable.Hidden = variableMap["hidden"].(bool)
 						newVariable.Sensitive = variableMap["sensitive"].(bool)
-						rule.AddVariable(newVariable)
+						rule.Variables = addVariable(rule.Variables, newVariable)
 					}
 				}
 			}
 
 			childRules, ok := vv["rule"]
 			if ok && childRules.(*schema.Set).Len() > 0 {
-				for _, newRule := range extractRules(childRules.(*schema.Set)) {
-					rule.MergeChildRule(newRule)
+				rules, err := extractRules(childRules.(*schema.Set))
+				if err != nil {
+					return nil, err
+				}
+				for _, newRule := range rules {
+					rule.Children = append(rule.Children, newRule)
 				}
 			}
 		}
 		rules = append(rules, rule)
 	}
 
-	return rules
+	return rules, nil
 }
 
-func findProperty(d *schema.ResourceData, correlationid string) *papi.Property {
-	results, err := papi.Search(papi.SearchByPropertyName, d.Get("name").(string), correlationid)
+func findProperty(ctx context.Context, name string, meta akamai.OperationMeta) (*papi.Property, error) {
+	client := inst.Client(meta)
+	results, err := client.SearchProperties(ctx, papi.SearchRequest{Key: papi.SearchKeyPropertyName, Value: name})
 	if err != nil {
-		return nil
+		return nil, err
+	}
+	if len(results.Versions.Items) == 0 {
+		return nil, fmt.Errorf("%w: %s", ErrPropertyNotFound, name)
 	}
 
-	if err != nil || results == nil {
-		return nil
-	}
-
-	property := &papi.Property{
+	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+		ContractID: results.Versions.Items[0].ContractID,
+		GroupID:    results.Versions.Items[0].GroupID,
 		PropertyID: results.Versions.Items[0].PropertyID,
-		Group: &papi.Group{
-			GroupID: results.Versions.Items[0].GroupID,
-		},
-		Contract: &papi.Contract{
-			ContractID: results.Versions.Items[0].ContractID,
-		},
-	}
-
-	err = property.GetProperty(correlationid)
+	})
 	if err != nil {
-		return nil
+		return nil, err
 	}
-
-	return property
+	if len(property.Properties.Items) == 0 {
+		return nil, fmt.Errorf("%w: %s", ErrPropertyNotFound, name)
+	}
+	return property.Properties.Items[0], nil
 }
 
-func ensureEditableVersion(property *papi.Property, correlationid string) error {
-	latestVersion, err := property.GetLatestVersion("", correlationid)
+func ensureEditableVersion(ctx context.Context, property *papi.Property, meta akamai.OperationMeta) (*papi.Property, error) {
+	client := inst.Client(meta)
+	latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
+		PropertyID: property.PropertyID,
+		ContractID: property.ContractID,
+		GroupID:    property.GroupID,
+	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	versions, err := property.GetVersions(correlationid)
-	if err != nil {
-		return err
-	}
-
-	if latestVersion.ProductionStatus != papi.StatusInactive || latestVersion.StagingStatus != papi.StatusInactive {
+	if latestVersion.Version.ProductionStatus != papi.VersionStatusInactive ||
+		latestVersion.Version.StagingStatus != papi.VersionStatusInactive {
 		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
-		newVersion := versions.NewVersion(latestVersion, false, correlationid)
-		err = newVersion.Save(correlationid)
+		_, err := client.CreatePropertyVersion(ctx, papi.CreatePropertyVersionRequest{
+			PropertyID: property.PropertyID,
+			ContractID: property.ContractID,
+			GroupID:    property.GroupID,
+			Version: papi.PropertyVersionCreate{
+				CreateFromVersion: latestVersion.Version.PropertyVersion,
+			},
+		})
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("%w: %s", ErrVersionCreate, err.Error())
+		}
+	}
+	res, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+		ContractID: property.ContractID,
+		GroupID:    property.GroupID,
+		PropertyID: property.PropertyID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res.Property, nil
+}
+
+func mergeBehaviors(old []papi.RuleBehavior, new papi.RuleBehavior) []papi.RuleBehavior {
+	for i := range old {
+		if new.Name == "cpCode" || new.Name == "origin" {
+			if old[i].Name == new.Name {
+				old[i].Options = mergeOptions(old[i].Options, new.Options)
+				return old
+			}
 		}
 	}
 
-	return property.GetProperty(correlationid)
+	return append(old, new)
+}
+
+// MergeOptions merges the given options with the existing options
+func mergeOptions(old, new papi.RuleOptionsMap) papi.RuleOptionsMap {
+	options := make(papi.RuleOptionsMap)
+	for k, v := range old {
+		options[k] = v
+	}
+	for k, v := range new {
+		options[k] = v
+	}
+	return options
+}
+
+func addVariable(old []papi.RuleVariable, new papi.RuleVariable) []papi.RuleVariable {
+	for i := range old {
+		if old[i].Name == new.Name {
+			old[i] = new
+			return old
+		}
+	}
+
+	return append(old, new)
+}
+
+// FindBehavior locates a specific behavior by path
+func findBehavior(path string, rules *papi.Rules) (papi.RuleBehavior, error) {
+	if len(path) <= 1 {
+		return papi.RuleBehavior{}, fmt.Errorf("invalid path: %s", path)
+	}
+
+	rule, err := findParentRule(path, rules)
+	if err != nil {
+		return papi.RuleBehavior{}, err
+	}
+
+	sep := "/"
+	segments := strings.Split(path, sep)
+	behaviorName := strings.ToLower(segments[len(segments)-1])
+	for _, behavior := range rule.Behaviors {
+		if strings.ToLower(behavior.Name) == behaviorName {
+			return behavior, nil
+		}
+	}
+
+	return papi.RuleBehavior{}, fmt.Errorf("behavior not found for path: %s", path)
+}
+
+// Find the parent rule for a given rule, criteria, or behavior path
+func findParentRule(path string, rules *papi.Rules) (*papi.Rules, error) {
+	sep := "/"
+	segments := strings.Split(strings.ToLower(strings.TrimPrefix(path, sep)), sep)
+	parentPath := strings.Join(segments[0:len(segments)-1], sep)
+
+	return findRule(parentPath, rules)
+}
+
+// FindRule locates a specific rule by path
+func findRule(path string, rules *papi.Rules) (*papi.Rules, error) {
+	if path == "" {
+		return rules, nil
+	}
+
+	sep := "/"
+	segments := strings.Split(path, sep)
+
+	currentRule := rules
+	for _, segment := range segments {
+		found := false
+		for _, rule := range currentRule.Children {
+			if strings.ToLower(rule.Name) == segment {
+				currentRule = &rule
+				found = true
+			}
+		}
+		if !found {
+			return nil, ErrRulesNotFound
+		}
+	}
+
+	return currentRule, nil
+}
+
+func cleanUpProperty(ctx context.Context, property *papi.Property, meta akamai.OperationMeta) error {
+	client := inst.Client(meta)
+	_, err := client.RemoveProperty(ctx, papi.RemovePropertyRequest{
+		PropertyID: property.PropertyID,
+		ContractID: property.ContractID,
+		GroupID:    property.GroupID,
+	})
+	return err
 }

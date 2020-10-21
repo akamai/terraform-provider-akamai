@@ -1,14 +1,13 @@
 package gtm
 
 import (
-	"context"
 	"sync"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
-	"github.com/hashicorp/go-hclog"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -16,7 +15,12 @@ import (
 type (
 	provider struct {
 		*schema.Provider
+
+		client gtm.GTM
 	}
+
+	// Option is a gtm provider option
+	Option func(p *provider)
 )
 
 var (
@@ -56,69 +60,59 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_gtm_domain":     resourceGTMv1Domain(),
-			"akamai_gtm_datacenter": resourceGTMv1Datacenter(),
 			"akamai_gtm_property":   resourceGTMv1Property(),
+			"akamai_gtm_datacenter": resourceGTMv1Datacenter(),
 			"akamai_gtm_resource":   resourceGTMv1Resource(),
-			"akamai_gtm_cidrmap":    resourceGTMv1Cidrmap(),
-			"akamai_gtm_geomap":     resourceGTMv1Geomap(),
 			"akamai_gtm_asmap":      resourceGTMv1ASmap(),
+			"akamai_gtm_geomap":     resourceGTMv1Geomap(),
+			"akamai_gtm_cidrmap":    resourceGTMv1Cidrmap(),
 		},
 	}
-
 	return provider
 }
 
-type resourceData interface {
-	GetOk(string) (interface{}, bool)
-	Get(string) interface{}
+// WithClient sets the client interface function, used for mocking and testing
+func WithClient(c gtm.GTM) Option {
+	return func(p *provider) {
+		p.client = c
+	}
 }
 
-type set interface {
-	List() []interface{}
+// Client returns the DNS interface
+func (p *provider) Client(meta akamai.OperationMeta) gtm.GTM {
+	if p.client != nil {
+		return p.client
+	}
+	return gtm.Client(meta.Session())
 }
 
-func getConfigGTMV1Service(d resourceData) (*edgegrid.Config, error) {
-	var GTMv1Config edgegrid.Config
-	var err error
-	if _, ok := d.GetOk("gtm"); ok {
-		config := d.Get("gtm").(set).List()[0].(map[string]interface{})
+func getConfigGTMV1Service(d *schema.ResourceData) (interface{}, error) {
 
-		GTMv1Config = edgegrid.Config{
-			Host:         config["host"].(string),
-			AccessToken:  config["access_token"].(string),
-			ClientToken:  config["client_token"].(string),
-			ClientSecret: config["client_secret"].(string),
-			MaxBody:      config["max_body"].(int),
+	var section string
+
+	for _, s := range tools.FindStringValues(d, "gtm_section", "config_section") {
+		if s != "default" {
+			section = s
+			break
 		}
-
-		gtm.Init(GTMv1Config)
-		edgegrid.SetupLogging()
-		return &GTMv1Config, nil
 	}
 
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("gtm_section").(string)
-	if section == "" {
-		section = d.Get("config_section").(string)
-	}
-	GTMv1Config, err = edgegrid.Init(edgerc, section)
-	if err != nil {
-		return nil, err
+	if section != "" {
+		d.Set("config_section", section)
 	}
 
-	gtm.Init(GTMv1Config)
-	return &GTMv1Config, nil
+	return nil, nil
 }
 
 func (p *provider) Name() string {
 	return "gtm"
 }
 
-// GtmProviderVersion update version string anytime provider adds new features
-const GtmProviderVersion string = "v0.8.3"
+// GTMProviderVersion update version string anytime provider adds new features
+const GTMProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-    return GtmProviderVersion
+	return GTMProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
@@ -133,13 +127,12 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(ctx context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	log.Named(p.Name()).Debug("START Configure")
+func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+	log.Debug("START Configure")
 
-	cfg, err := getConfigGTMV1Service(d)
+	_, err := getConfigGTMV1Service(d)
 	if err != nil {
-		return nil, nil
+		return nil
 	}
-
-	return cfg, nil
+	return nil
 }

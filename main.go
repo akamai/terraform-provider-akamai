@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
 
 	// Load the providers
 	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers"
@@ -21,15 +20,11 @@ func main() {
 	flag.BoolVar(&debugMode, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
-	// init the standard logger here so we can pass it to the provider
-	logger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Trace,
-		Output:     os.Stderr,
-		JSONFormat: true,
-	})
+	// We set this to trace because logs are passed via grpc to the terraform server
+	// Anything lower and we risk losing those values to the ether
+	hclog.Default().SetLevel(hclog.Trace)
 
 	prov := akamai.Provider(
-		logger,
 		registry.AllProviders()...,
 	)
 
@@ -37,7 +32,6 @@ func main() {
 		err := plugin.Debug(context.Background(), akamai.ProviderRegistryPath,
 			&plugin.ServeOpts{
 				ProviderFunc: prov,
-				Logger:       logger,
 			})
 		if err != nil {
 			panic(err)
@@ -45,7 +39,6 @@ func main() {
 	} else {
 		plugin.Serve(&plugin.ServeOpts{
 			ProviderFunc: prov,
-			Logger:       logger,
 		})
 	}
 }

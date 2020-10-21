@@ -2,18 +2,21 @@ package akamai
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/allegro/bigcache"
+	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mr-tron/base58"
+	"github.com/spf13/cast"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
@@ -46,42 +49,13 @@ type (
 		DataSources() map[string]*schema.Resource
 
 		// Configure returns the subprovider opaque state object
-		Configure(context.Context, hclog.Logger, *schema.ResourceData) (interface{}, diag.Diagnostics)
-	}
-
-	// Context provides logging and other support services to the adapters
-	Context interface {
-		// Log returns a named logger for the subprovider
-		Log(prefix ...string) hclog.Logger
-
-		// Meta returns this providers internal meta object
-		Meta() interface{}
-
-		// CacheSet sets an object in the meta cache
-		CacheSet(key string, value interface{}) error
-
-		// CacheGet gets an object from the meta cache
-		CacheGet(key string, out interface{}) error
-
-		// OperationID is a unique id for an operation
-		OperationID() string
-
-		// TerraformVersion returns the version from the core provider
-		TerraformVersion() string
+		Configure(log.Interface, *schema.ResourceData) diag.Diagnostics
 	}
 
 	provider struct {
 		schema.Provider
-		log    hclog.Logger
-		subs   map[string]Subprovider
-		states map[string]interface{}
-		cache  *bigcache.BigCache
-	}
-
-	akaContext struct {
-		operationID string
-		log         hclog.Logger
-		meta        interface{}
+		subs  map[string]Subprovider
+		cache *bigcache.BigCache
 	}
 )
 
@@ -92,7 +66,7 @@ var (
 )
 
 // Provider returns the provider function to terraform
-func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
+func Provider(provs ...Subprovider) plugin.ProviderFunc {
 	once.Do(func() {
 		instance = &provider{
 			Provider: schema.Provider{
@@ -113,9 +87,7 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 				DataSourcesMap:     make(map[string]*schema.Resource),
 				ProviderMetaSchema: make(map[string]*schema.Schema),
 			},
-			subs:   make(map[string]Subprovider),
-			states: make(map[string]interface{}),
-			log:    log,
+			subs: make(map[string]Subprovider),
 		}
 
 		cache, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
@@ -146,28 +118,67 @@ func Provider(log hclog.Logger, provs ...Subprovider) plugin.ProviderFunc {
 		}
 
 		instance.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-			var stateSet bool
+			// generate an operation id so we can correlate all calls to this provider
+			opid := uuid.Must(uuid.NewRandom()).String()
 
+			// create a log from the hclog in the context
+			log := hclog.FromContext(ctx).With(
+				"OperationID", opid,
+			)
+
+			// configure sub-providers
 			for _, p := range instance.subs {
-				state, err := p.Configure(ctx, log, d)
-				if err != nil {
+				if err := p.Configure(LogFromHCLog(log), d); err != nil {
 					return nil, err
 				}
-
-				if state != nil {
-					stateSet = true
-					instance.states[p.Name()] = state
-				}
 			}
 
-			if !stateSet {
-				return nil, ErrNoConfiguredProviders.Diagnostics()
+			edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
+
+			edgercPath, err := tools.GetStringValue("edgerc", d)
+			if err != nil && !IsNotFoundError(err) {
+				return nil, diag.FromErr(err)
+			}
+			if edgercPath != "" {
+				edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
+			} else {
+				edgercOps = append(edgercOps, edgegrid.WithFile(edgegrid.DefaultConfigFile))
+			}
+			environment, err := tools.GetStringValue("config_section", d)
+			if err != nil && !IsNotFoundError(err) {
+				return nil, diag.FromErr(err)
+			}
+			if environment != "" {
+				edgercOps = append(edgercOps, edgegrid.WithSection(environment))
 			}
 
-			// TODO: once the client is update this will be done elsewhere
-			client.UserAgent = instance.UserAgent(ProviderName, instance.TerraformVersion)
+			edgercSection, err := tools.GetStringValue("config_section", d)
+			if err != nil && !IsNotFoundError(err) {
+				return nil, diag.FromErr(err)
+			}
+			edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
 
-			return &instance, nil
+			edgerc, err := edgegrid.New(edgercOps...)
+			if err != nil {
+				return nil, diag.FromErr(fmt.Errorf("failed to load edgegrid config: %w", err))
+			}
+
+			userAgent := instance.UserAgent(ProviderName, instance.TerraformVersion)
+
+			sess, err := session.New(
+				session.WithSigner(edgerc),
+				session.WithUserAgent(userAgent),
+				session.WithLog(LogFromHCLog(log)),
+				session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
+			)
+
+			meta := &meta{
+				log:         log,
+				operationID: opid,
+				sess:        sess,
+			}
+
+			return meta, nil
 		}
 	})
 
@@ -194,79 +205,4 @@ func mergeResource(from, to map[string]*schema.Resource) (map[string]*schema.Res
 		to[k] = v
 	}
 	return to, nil
-}
-
-// ContextGet returns the context object from the passed interface
-func ContextGet(name string) Context {
-	sub, ok := instance.subs[name]
-	if !ok {
-		panic(ErrProviderNotLoaded(name))
-	}
-
-	coid := uuid.Must(uuid.NewRandom())
-	opid := base58.Encode(coid[:])
-	m := akaContext{
-		operationID: opid,
-		log:         instance.log.Named(sub.Name()).Named(sub.Version()).Named(opid),
-	}
-
-	if state, ok := instance.states[name]; ok {
-		m.meta = state
-	}
-
-	return &m
-}
-
-func (c *akaContext) Log(prefix ...string) hclog.Logger {
-	if len(prefix) > 0 {
-		log := c.log
-		for _, p := range prefix {
-			log = log.Named(p)
-		}
-		return log
-	}
-	return c.log
-}
-
-func (c *akaContext) Meta() interface{} {
-	return c.meta
-}
-
-func (c *akaContext) OperationID() string {
-	return c.operationID
-}
-
-func (c *akaContext) TerraformVersion() string {
-	return instance.TerraformVersion
-}
-
-func (c *akaContext) CacheSet(key string, val interface{}) error {
-	var in []byte
-
-	switch v := val.(type) {
-	case []byte:
-		in = v
-	default:
-		data, err := json.Marshal(val)
-		if err != nil {
-			return err
-		}
-
-		in = data
-	}
-
-	return instance.cache.Set(key, in)
-}
-
-func (c *akaContext) CacheGet(key string, out interface{}) error {
-	data, err := instance.cache.Get(key)
-	if err != nil {
-		if err == bigcache.ErrEntryNotFound {
-			return ErrCacheEntryNotFound(key)
-		}
-
-		return err
-	}
-
-	return json.Unmarshal(data, out)
 }

@@ -1,185 +1,236 @@
 package gtm
 
 import (
-	"fmt"
-	"log"
+	"net/http"
+	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/mock"
 )
 
-var testAccAkamaiGTMResourceConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-}
-
-locals {
-  	domain = "%s"
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-	contract = data.akamai_contract.contract.id
-	comment =  "This is a test domain"
-	group  = data.akamai_group.group.id
-        load_imbalance_percentage = 10
-	wait_on_complete = false
-}
-
-resource "akamai_gtm_resource" "test_resource" {
-	domain = local.domain
-    	name = "test_resource_1"
-    	aggregation_type = "latest"
-    	type = "XML load object via HTTP"
-    	load_imbalance_percentage = 50
-    	wait_on_complete = false
-    	depends_on = [
-         	akamai_gtm_domain.test_domain
-    	]
-}
-`, gtm_test_domain)
-
-var testAccAkamaiGTMResourceUpdateConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-} 
-
-locals {
-        domain = "%s"
-}       
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = "${local.domain}"
-        type = "weighted"
-        contract = data.akamai_contract.contract.id
-        comment =  "This is a test zone"
-        group  = data.akamai_group.group.id
-        load_imbalance_percentage = 10
-        wait_on_complete = false
-}
-
-resource "akamai_gtm_resource" "test_resource" {
-        domain = local.domain
-        name = "test_resource_1"
-        aggregation_type = "latest"
-        type = "XML load object via HTTP"
-        load_imbalance_percentage = 70
-        wait_on_complete = false
-        depends_on = [
-                akamai_gtm_domain.test_domain
-        ]
-}
-`, gtm_test_domain)
-
-func TestAccAkamaiGTMResource_basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckRsc(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMResourceDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMResourceConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMResourceExists,
-					resource.TestCheckResourceAttr("akamai_gtm_resource.test_resource", "load_imbalance_percentage", "50"),
-				),
-				//ExpectNonEmptyPlan: true,
+var rsrc = gtm.Resource{
+	Name:            "tfexample_resource_1",
+	AggregationType: "latest",
+	Type:            "XML load object via HTTP",
+	ResourceInstances: []*gtm.ResourceInstance{
+		{
+			DatacenterId:         3131,
+			UseDefaultLoadObject: false,
+			LoadObject: gtm.LoadObject{
+				LoadObject:     "/test1",
+				LoadServers:    []string{"1.2.3.4"},
+				LoadObjectPort: 80,
 			},
 		},
+	},
+}
+
+func TestResGtmResource(t *testing.T) {
+
+	t.Run("create resource", func(t *testing.T) {
+		client := &mockgtm{}
+
+		getCall := client.On("GetResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		resp := gtm.ResourceResponse{}
+		resp.Resource = &rsrc
+		resp.Status = &pendingResponseStatus
+		client.On("CreateResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
+		})
+
+		resCall := client.On("NewResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		)
+
+		resCall.RunFn = func(args mock.Arguments) {
+			resCall.ReturnArguments = mock.Arguments{
+				&gtm.Resource{
+					Name: args.String(1),
+				},
+			}
+		}
+
+		resInstCall := client.On("NewResourceInstance",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("int"),
+		)
+
+		resInstCall.RunFn = func(args mock.Arguments) {
+			resInstCall.ReturnArguments = mock.Arguments{
+				&gtm.ResourceInstance{
+					DatacenterId: args.Int(2),
+				},
+			}
+		}
+
+		client.On("GetDomainStatus",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		client.On("UpdateResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
+		})
+
+		client.On("DeleteResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_resource.tfexample_resource_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmResource/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "aggregation_type", "latest"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResGtmResource/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "aggregation_type", "latest"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
-}
 
-func TestAccAkamaiGTMResource_update(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckRsc(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMResourceDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMResourceConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMResourceExists,
-					resource.TestCheckResourceAttr("akamai_gtm_resource.test_resource", "load_imbalance_percentage", "50"),
-				),
-				//ExpectNonEmptyPlan: true,
-			},
-			{
-				Config: testAccAkamaiGTMResourceUpdateConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMResourceExists,
-					resource.TestCheckResourceAttr("akamai_gtm_resource.test_resource", "load_imbalance_percentage", "70"),
-				),
-				//ExpectNonEmptyPlan: true,
-			},
-		},
+	t.Run("create resource failed", func(t *testing.T) {
+		client := &mockgtm{}
+
+		client.On("CreateResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusBadRequest,
+		})
+
+		resCall := client.On("NewResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		)
+
+		resCall.RunFn = func(args mock.Arguments) {
+			resCall.ReturnArguments = mock.Arguments{
+				&gtm.Resource{
+					Name: args.String(1),
+				},
+			}
+		}
+
+		resInstCall := client.On("NewResourceInstance",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("int"),
+		)
+
+		resInstCall.RunFn = func(args mock.Arguments) {
+			resInstCall.ReturnArguments = mock.Arguments{
+				&gtm.ResourceInstance{
+					DatacenterId: args.Int(2),
+				},
+			}
+		}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmResource/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Resource Create failed"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
-}
 
-func testAccPreCheckRsc(t *testing.T) {
+	t.Run("create resource denied", func(t *testing.T) {
+		client := &mockgtm{}
 
-	testAccPreCheckTF(t)
-	testCheckDeleteResource("test_resource", gtm_test_domain)
+		dr := gtm.ResourceResponse{}
+		dr.Resource = &rsrc
+		dr.Status = &deniedResponseStatus
+		client.On("CreateResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			gtmTestDomain,
+		).Return(&dr, nil)
 
-}
+		resCall := client.On("NewResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		)
 
-func testCheckDeleteResource(rscName string, dom string) error {
-
-	rsc, err := gtm.GetResource(rscName, dom)
-	if rsc == nil {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test resource [%v]", rscName)
-	_, err = rsc.Delete(dom)
-	if err != nil {
-		return fmt.Errorf("resource was not deleted %s. Error: %s", rscName, err.Error())
-	}
-	return nil
-
-}
-
-func testAccCheckAkamaiGTMResourceDestroy(s *terraform.State) error {
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_resource" {
-			continue
+		resCall.RunFn = func(args mock.Arguments) {
+			resCall.ReturnArguments = mock.Arguments{
+				&gtm.Resource{
+					Name: args.String(1),
+				},
+			}
 		}
 
-		rscName, dom, _ := parseStringID(rs.Primary.ID)
-		if err := testCheckDeleteResource(rscName, dom); err != nil {
-			return err
-		}
-	}
-	return nil
-}
+		resInstCall := client.On("NewResourceInstance",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Resource"),
+			mock.AnythingOfType("int"),
+		)
 
-func testAccCheckAkamaiGTMResourceExists(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_resource" {
-			continue
+		resInstCall.RunFn = func(args mock.Arguments) {
+			resInstCall.ReturnArguments = mock.Arguments{
+				&gtm.ResourceInstance{
+					DatacenterId: args.Int(2),
+				},
+			}
 		}
-		rname, dom, err := parseStringID(rs.Primary.ID)
-		_, err = gtm.GetResource(rname, dom)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmResource/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 }

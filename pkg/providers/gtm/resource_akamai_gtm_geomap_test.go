@@ -1,238 +1,190 @@
 package gtm
 
 import (
-	"fmt"
-	"log"
+	"net/http"
+	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/mock"
 )
 
-var testAccAkamaiGTMGeoMapConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-}
-
-locals {
-  	domain = "%s"
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter = 5400
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-	contract = data.akamai_contract.contract.id
-	comment =  "This is a test zone"
-	group  = data.akamai_group.group.id
-        load_imbalance_percentage = 10
-	wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_geo_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_geo_datacenter"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]
-}
-
-resource "akamai_gtm_geomap" "test_geo" {
-    domain = akamai_gtm_domain.test_domain.name
-    name = "test_geomap"
-    default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
-    }
-    assignment {
-        datacenter_id = akamai_gtm_datacenter.test_geo_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_geo_datacenter.nickname
-	countries = ["US"]
-    }
-    wait_on_complete = false
-    depends_on = [
-        akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_geo_datacenter
-    ]
-}`, gtm_test_domain)
-
-var testAccAkamaiGTMGeoMapUpdateConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-} 
-
-locals {
-        domain = "%s"
-}       
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter = 5400
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-        contract = data.akamai_contract.contract.id
-        comment =  "This is a test zone"
-        group  = data.akamai_group.group.id
-        load_imbalance_percentage = 10
-        wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_geo_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_geo_datacenter"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }  
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]    
-}  
-
-resource "akamai_gtm_geomap" "test_geo" {
-    domain = akamai_gtm_domain.test_domain.name
-    name = "test_geomap"
-    default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
-    }
-    assignment {
-        datacenter_id = akamai_gtm_datacenter.test_geo_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_geo_datacenter.nickname
-        countries = ["US"]
-    }
-    wait_on_complete = false
-    depends_on = [
-        akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_geo_datacenter
-    ]
- 
-}`, gtm_test_domain)
-
-func TestAccAkamaiGTMGeoMap_basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckGeo(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMGeoMapDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMGeoMapConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMGeoMapExists,
-					resource.TestCheckResourceAttr("akamai_gtm_geomap.test_geo", "wait_on_complete", "false"),
-				),
-				//ExpectNonEmptyPlan: true,
+var geo = gtm.GeoMap{
+	Name: "tfexample_geomap_1",
+	DefaultDatacenter: &gtm.DatacenterBase{
+		DatacenterId: 5400,
+		Nickname:     "default datacenter",
+	},
+	Assignments: []*gtm.GeoAssignment{
+		{
+			DatacenterBase: gtm.DatacenterBase{
+				DatacenterId: 3131,
+				Nickname:     "tfexample_dc_1",
 			},
+			Countries: []string{"GB"},
 		},
+	},
+}
+
+func TestResGtmGeomap(t *testing.T) {
+	dc := gtm.Datacenter{
+		DatacenterId: geo.DefaultDatacenter.DatacenterId,
+		Nickname:     geo.DefaultDatacenter.Nickname,
+	}
+
+	t.Run("create geomap", func(t *testing.T) {
+		client := &mockgtm{}
+
+		getCall := client.On("GetGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		resp := gtm.GeoMapResponse{}
+		resp.Resource = &geo
+		resp.Status = &pendingResponseStatus
+		client.On("CreateGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.GeoMap"),
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
+		})
+
+		client.On("NewGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&geo, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
+
+		client.On("GetDomainStatus",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		client.On("UpdateGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.GeoMap"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
+		})
+
+		client.On("DeleteGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.GeoMap"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_geomap.tfexample_geomap_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResGtmGeomap/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
-}
 
-func TestAccAkamaiGTMGeoMap_update(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckGeo(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMGeoMapDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMGeoMapConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMGeoMapExists,
-					resource.TestCheckResourceAttr("akamai_gtm_geomap.test_geo", "wait_on_complete", "false"),
-				),
-				//ExpectNonEmptyPlan: true,
-			},
-			{
-				Config: testAccAkamaiGTMGeoMapUpdateConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMGeoMapExists,
-					resource.TestCheckResourceAttr("akamai_gtm_geomap.test_geo", "wait_on_complete", "false"),
-				),
-				//ExpectNonEmptyPlan: true,
-			},
-		},
+	t.Run("create geomap failed", func(t *testing.T) {
+		client := &mockgtm{}
+
+		client.On("CreateGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.GeoMap"),
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusBadRequest,
+		})
+
+		client.On("NewGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&geo, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
+						ExpectError: regexp.MustCompile("geoMap Create failed"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
-}
 
-func testAccPreCheckGeo(t *testing.T) {
+	t.Run("create geomap denied", func(t *testing.T) {
+		client := &mockgtm{}
 
-	testAccPreCheckTF(t)
-	testCheckDeleteGeoMap("test_geomap", gtm_test_domain)
-	testAccDeleteDatacenterByNickname("test_geo_datacenter", gtm_test_domain)
+		dr := gtm.GeoMapResponse{}
+		dr.Resource = &geo
+		dr.Status = &deniedResponseStatus
+		client.On("CreateGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.GeoMap"),
+			gtmTestDomain,
+		).Return(&dr, nil)
 
-}
+		client.On("NewGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&geo, nil)
 
-func testCheckDeleteGeoMap(geoName string, dom string) error {
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
 
-	geo, err := gtm.GetGeoMap(geoName, dom)
-	if geo == nil {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test geomap [%v]", geoName)
-	_, err = geo.Delete(dom)
-	if err != nil {
-		return fmt.Errorf("geomap was not deleted %s. Error: %s", geoName, err.Error())
-	}
-	return nil
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+					},
+				},
+			})
+		})
 
-}
-
-func testAccCheckAkamaiGTMGeoMapDestroy(s *terraform.State) error {
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_geomap" {
-			continue
-		}
-
-		geoName, dom, _ := parseStringID(rs.Primary.ID)
-		if err := testCheckDeleteGeoMap(geoName, dom); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func testAccCheckAkamaiGTMGeoMapExists(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_geomap" {
-			continue
-		}
-
-		geoName, dom, err := parseStringID(rs.Primary.ID)
-		_, err = gtm.GetGeoMap(geoName, dom)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+		client.AssertExpectations(t)
+	})
 }

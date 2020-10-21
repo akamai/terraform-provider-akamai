@@ -4,9 +4,9 @@ package tools
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"log"
+	"time"
 
-	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 // GetSHAString returns a sha1 from the string
@@ -19,13 +19,18 @@ func GetSHAString(rdata string) string {
 	return sha1hashtest
 }
 
-// CreateNonce returns a random uuid string
-// Deprecated: CreateNonce is deprecated, providers should use akactx.OperationID()
-func CreateNonce() string {
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		log.Printf("[DEBUG] Generate Uuid failed %s", err)
-		return ""
+// MaxDuration returns the larger of x or y.
+func MaxDuration(x, y time.Duration) time.Duration {
+	if x < y {
+		return y
 	}
-	return uuid.String()
+	return x
+}
+
+// DiagsWithErrors appends several errors to a diag.Diagnostics
+func DiagsWithErrors(d diag.Diagnostics, errs ...error) diag.Diagnostics {
+	for _, e := range errs {
+		d = append(d, diag.FromErr(e)...)
+	}
+	return d
 }

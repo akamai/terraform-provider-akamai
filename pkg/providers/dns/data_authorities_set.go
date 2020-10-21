@@ -1,18 +1,22 @@
 package dns
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceAuthoritiesSet() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceAuthoritiesSetRead,
+		ReadContext: dataSourceAuthoritiesSetRead,
 		Schema: map[string]*schema.Schema{
 			"contract": {
 				Type:     schema.TypeString,
@@ -27,22 +31,39 @@ func dataSourceAuthoritiesSet() *schema.Resource {
 	}
 }
 
-func dataSourceAuthoritiesSetRead(d *schema.ResourceData, meta interface{}) error {
-	contractid := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
+func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("AkamaiDNS", "dataSourceDNSAuthoritiesRead")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
-	log.Printf("[DEBUG] [Akamai DNSv2] Start Searching for authority records %s ", contractid)
-
-	ns, err := dnsv2.GetNameServerRecordList(contractid)
+	contract, err := tools.GetStringValue("contract", d)
 	if err != nil {
-		return fmt.Errorf("error looking up A records for %q: %s", contractid, err)
+		diag.FromErr(err)
 	}
+	contractID := strings.TrimPrefix(contract, "ctr_")
+	// Warning or Errors can be collected in a slice type
+	var diags diag.Diagnostics
 
-	log.Printf("[DEBUG] [Akamai DNSv2] Searching for records [%v]", ns)
+	logger.WithField("contractid", contractID).Debug("Start Searching for authority records")
+
+	ns, err := inst.Client(meta).GetNameServerRecordList(ctx, contractID)
+	if err != nil {
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("error looking up ns records for %s", contractID),
+			Detail:   err.Error(),
+		})
+	}
+	logger.WithField("records", ns).Debug("Searching for records")
 
 	sort.Strings(ns)
-
-	d.Set("authorities", ns)
-	d.SetId(contractid)
-
-	return nil
+	if err := d.Set("authorities", ns); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	d.SetId(contractID)
+	return diags
 }

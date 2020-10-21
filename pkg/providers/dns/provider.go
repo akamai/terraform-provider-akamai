@@ -1,14 +1,13 @@
 package dns
 
 import (
-	"context"
 	"sync"
 
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
-	"github.com/hashicorp/go-hclog"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -16,7 +15,12 @@ import (
 type (
 	provider struct {
 		*schema.Provider
+
+		client dns.DNS
 	}
+
+	// Option is a dns provider option
+	Option func(p *provider)
 )
 
 var (
@@ -63,57 +67,50 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-type resourceData interface {
-	GetOk(string) (interface{}, bool)
-	Get(string) interface{}
+// WithClient sets the client interface function, used for mocking and testing
+func WithClient(c dns.DNS) Option {
+	return func(p *provider) {
+		p.client = c
+	}
 }
 
-type set interface {
-	List() []interface{}
+// Client returns the DNS interface
+func (p *provider) Client(meta akamai.OperationMeta) dns.DNS {
+	if p.client != nil {
+		return p.client
+	}
+	return dns.Client(meta.Session())
 }
 
-func getConfigDNSV2Service(d resourceData) (*edgegrid.Config, error) {
-	var DNSv2Config edgegrid.Config
-	var err error
-	if _, ok := d.GetOk("dns"); ok {
-		config := d.Get("dns").(set).List()[0].(map[string]interface{})
+func getConfigDNSV2Service(d tools.ResourceDataFetcher) (interface{}, error) {
 
-		DNSv2Config = edgegrid.Config{
-			Host:         config["host"].(string),
-			AccessToken:  config["access_token"].(string),
-			ClientToken:  config["client_token"].(string),
-			ClientSecret: config["client_secret"].(string),
-			MaxBody:      config["max_body"].(int),
+	var section string
+
+	for _, s := range tools.FindStringValues(d, "dns_section", "config_section") {
+		if s != "default" {
+			section = s
+			break
 		}
-
-		dnsv2.Init(DNSv2Config)
-		return &DNSv2Config, nil
 	}
 
-	edgerc := d.Get("edgerc").(string)
-	section := d.Get("dns_section").(string)
-	if section == "" {
-		section = d.Get("config_section").(string)
-	}
-	DNSv2Config, err = edgegrid.Init(edgerc, section)
-	if err != nil {
-		return nil, err
+	if section != "" {
+		if s, ok := d.(*schema.ResourceData); ok {
+			s.Set("config_section", section)
+		}
 	}
 
-	dnsv2.Init(DNSv2Config)
-	edgegrid.SetupLogging()
-	return &DNSv2Config, nil
+	return nil, nil
 }
 
 func (p *provider) Name() string {
 	return "dns"
 }
 
-// DnsProviderVersion update version string anytime provider adds new features
-const DnsProviderVersion string = "v0.8.3"
+// DNSProviderVersion update version string anytime provider adds new features
+const DNSProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-    return DnsProviderVersion
+	return DNSProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
@@ -128,12 +125,12 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(ctx context.Context, log hclog.Logger, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	log.Named(p.Name()).Debug("START Configure")
+func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+	log.Debug("START Configure")
 
-	cfg, err := getConfigDNSV2Service(d)
+	_, err := getConfigDNSV2Service(d)
 	if err != nil {
-		return nil, nil
+		return nil
 	}
-	return cfg, nil
+	return nil
 }

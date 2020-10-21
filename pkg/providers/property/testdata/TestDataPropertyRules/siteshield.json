@@ -1,0 +1,21 @@
+{
+  "propertyId": "",
+  "propertyVersion": 0,
+  "etag": "",
+  "ruleFormat": "",
+  "rules": {
+    "behaviors": [
+      {
+        "name": "siteShield",
+        "options": {
+          "ssmap": {
+            "value": "mapname.akamai.net"
+          }
+        }
+      }
+    ],
+    "name": "default",
+    "options": {},
+    "criteriaMustSatisfy": "all"
+  }
+}

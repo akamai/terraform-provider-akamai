@@ -1,7 +1,6 @@
 package property
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -20,51 +19,51 @@ data "akamai_property_rules" "rules" {
  	rules {
 		behavior {
 			name = "origin"
-        	option { 
+        	option {
        			key ="cacheKeyHostname"
             	value = "ORIGIN_HOSTNAME"
         	}
-			option { 
+			option {
     			key ="compress"
      			value = true
      		}
-    		option { 
+    		option {
     			key ="enableTrueClientIp"
      			value = false
      		}
-    		option { 
+    		option {
     			key ="forwardHostHeader"
      			value = "REQUEST_HOST_HEADER"
      		}
-    		option { 
+    		option {
     			key ="hostname"
      			value = "exampleterraform.io"
      		}
-    		option { 
+    		option {
     			key ="httpPort"
      			value = 80
      		}
-    		option { 
+    		option {
     			key ="httpsPort"
      			value = 443
      		}
-    		option { 
+    		option {
     			key ="originSni"
      			value = true
      		}
-    		option { 
+    		option {
     			key ="originType"
      			value = "CUSTOMER"
      		}
-    		option { 
+    		option {
     			key ="verificationMode"
      			value = "PLATFORM_SETTINGS"
      		}
-    		option { 
+    		option {
     			key ="originCertificate"
      			value = ""
      		}
-    		option { 
+    		option {
     			key ="ports"
      			value = ""
      		}
@@ -103,157 +102,6 @@ func TestAccAkamaiDataPropertyRules_basic(t *testing.T) {
 			{
 				Config: testAccAkamaiDataPropertyRulesConfig,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(
-						"data.akamai_property_rules.rules", "json",
-					),
-				),
-			},
-		},
-	})
-}
-
-var testAccAkamaiDataPropertyRulesSiteshield = `
-provider "akamai" {
-	property {
-		host = "test"
-		access_token = "test"
-		client_token = "test"
-		client_secret = "test"
-	}
-}
-
-output "json" {
-	value = "${data.akamai_property_rules.rules.json}"
-}
-
-data "akamai_property_rules" "rules" {
- 	rules {
-		behavior { 
-			name = "siteShield" 
-			option { 
-				key = "ssmap" 
-				value = "mapname.akamai.net"
-			}
-		}
-	}
-}
-`
-
-func TestAkamaiDataPropertyRules_siteshield(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Destroy: false,
-				Config:  testAccAkamaiDataPropertyRulesSiteshield,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"siteShield\",\"options\":{\"ssmap\":{\"value\":\"mapname.akamai.net\"}}}],\"options\":{}}}"),
-					resource.TestCheckResourceAttrSet(
-						"data.akamai_property_rules.rules", "json",
-					),
-				),
-			},
-		},
-	})
-}
-
-var testAccAkamaiDataPropertyRulesCPCode = `
-provider "akamai" {
-	property {
-		host = "test"
-		access_token = "test"
-		client_token = "test"
-		client_secret = "test"
-	}
-}
-
-output "json" {
-	value = "${data.akamai_property_rules.rules.json}"
-}
-
-data "akamai_property_rules" "rules" {
- 	rules {
-		behavior { 
-			name = "cpCode" 
-			option { 
-				key = "id" 
-				value = "cpc_12345"
-			}
-		}
-	}
-}
-`
-
-func TestAkamaiDataPropertyRules_cpCode(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Destroy: false,
-				Config:  testAccAkamaiDataPropertyRulesCPCode,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"behaviors\":[{\"name\":\"cpCode\",\"options\":{\"value\":{\"id\":12345}}}],\"options\":{}}}"),
-					resource.TestCheckResourceAttrSet(
-						"data.akamai_property_rules.rules", "json",
-					),
-				),
-			},
-		},
-	})
-}
-
-var testAccAkamaiDataPropertyRulesIsSecure = `
-provider "akamai" {
-	property {
-		host = "test"
-		access_token = "test"
-		client_token = "test"
-		client_secret = "test"
-	}
-}
-
-output "json" {
-	value = "${data.akamai_property_rules.rules.json}"
-}
-
-data "akamai_property_rules" "rules" {
- 	rules {
-		is_secure = %s
-	}
-}
-`
-
-func TestAkamaiDataPropertyRules_isSecureTrue(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Destroy: false,
-				Config:  fmt.Sprintf(testAccAkamaiDataPropertyRulesIsSecure, "true"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{\"is_secure\":true}}}"),
-					resource.TestCheckResourceAttrSet(
-						"data.akamai_property_rules.rules", "json",
-					),
-				),
-			},
-		},
-	})
-}
-
-func TestAkamaiDataPropertyRules_isSecureFalse(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Destroy: false,
-				Config:  fmt.Sprintf(testAccAkamaiDataPropertyRulesIsSecure, "false"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "json", "{\"accountId\":\"\",\"contractId\":\"\",\"groupId\":\"\",\"propertyId\":\"\",\"propertyVersion\":0,\"etag\":\"\",\"ruleFormat\":\"\",\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 					resource.TestCheckResourceAttrSet(
 						"data.akamai_property_rules.rules", "json",
 					),

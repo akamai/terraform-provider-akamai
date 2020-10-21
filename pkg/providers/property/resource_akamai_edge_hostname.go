@@ -1,25 +1,26 @@
 package property
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"strings"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceSecureEdgeHostNameCreate,
-		Read:   resourceSecureEdgeHostNameRead,
-		Delete: resourceSecureEdgeHostNameDelete,
-		Exists: resourceSecureEdgeHostNameExists,
+		CreateContext: resourceSecureEdgeHostNameCreate,
+		ReadContext:   resourceSecureEdgeHostNameRead,
+		DeleteContext: resourceSecureEdgeHostNameDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceSecureEdgeHostNameImport,
+			StateContext: resourceSecureEdgeHostNameImport,
 		},
 		Schema: akamaiSecureEdgeHostNameSchema,
 	}
@@ -42,9 +43,10 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"edge_hostname": {
-		Type:     schema.TypeString,
-		Required: true,
-		ForceNew: true,
+		Type:             schema.TypeString,
+		Required:         true,
+		ForceNew:         true,
+		DiffSuppressFunc: suppressEdgeHostnameDomain,
 	},
 	"ipv4": {
 		Type:     schema.TypeBool,
@@ -69,132 +71,142 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourceSecureEdgeHostNameCreate(d *schema.ResourceData, meta interface{}) error {
-	d.Partial(true)
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + tools.CreateNonce() + "]"
-	group, e := getGroup(d, CorrelationID)
-	if e != nil {
-		return e
-	}
-	//	log.Println("[DEBUG] Edgehostnames GROUP = ", group)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Edgehostnames GROUP = %v", group))
-	contract, e := getContract(d, CorrelationID)
-	if e != nil {
-		return e
-	}
-	//log.Println("[DEBUG] Edgehostnames CONTRACT = ", contract)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Edgehostnames CONTRACT = %v", contract))
-	product, e := getProduct(d, contract, CorrelationID)
-	if e != nil {
-		return e
-	}
+func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 
-	if group == nil {
-		return errors.New("group must be specified to create a new Edge Hostname")
-	}
+	client := inst.Client(meta)
 
-	if contract == nil {
-		return errors.New("contract must be specified to create a new Edge Hostname")
-	}
-
-	if product == nil {
-		return errors.New("product must be specified to create a new Edge Hostname")
-	}
-
-	edgeHostnames, err := papi.GetEdgeHostnames(contract, group, "")
+	group, err := getGroup(ctx, d, meta)
 	if err != nil {
-		return err
+		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
 	}
 
-	edgeHostname := d.Get("edge_hostname").(string)
+	contract, err := getContract(ctx, d, meta)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
+	}
 
-	ehn := edgeHostnames.NewEdgeHostname()
-	ehn.ProductID = product.ProductID
-	ehn.EdgeHostnameDomain = edgeHostname
+	logger.Debugf("  Edgehostnames GROUP = %v", group)
+	logger.Debugf("Edgehostnames CONTRACT = %v", contract)
+
+	product, err := getProduct(ctx, d, contract.ContractID, meta)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
+	}
+
+	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
+		ContractID: contract.ContractID,
+		GroupID:    group.GroupID,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	edgeHostname, err := tools.GetStringValue("edge_hostname", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	newHostname := papi.EdgeHostnameCreate{}
+	newHostname.ProductID = product.ProductID
+	newHostname.DomainSuffix = "edgesuite.net"
 
 	switch {
 	case strings.HasSuffix(edgeHostname, ".edgesuite.net"):
-		ehn.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgesuite.net")
-		ehn.DomainSuffix = "edgesuite.net"
-		ehn.SecureNetwork = "STANDARD_TLS"
+		newHostname.DomainSuffix = "edgesuite.net"
+		newHostname.SecureNetwork = papi.EHSecureNetworkStandardTLS
 	case strings.HasSuffix(edgeHostname, ".edgekey.net"):
-		ehn.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgekey.net")
-		ehn.DomainSuffix = "edgekey.net"
-		ehn.SecureNetwork = "ENHANCED_TLS"
+		newHostname.DomainSuffix = "edgekey.net"
+		newHostname.SecureNetwork = papi.EHSecureNetworkEnhancedTLS
 	case strings.HasSuffix(edgeHostname, ".akamaized.net"):
-		ehn.DomainPrefix = strings.TrimSuffix(edgeHostname, ".akamaized.net")
-		ehn.DomainSuffix = "akamaized.net"
-		ehn.SecureNetwork = "SHARED_CERT"
+		newHostname.DomainSuffix = "akamaized.net"
+		newHostname.SecureNetwork = papi.EHSecureNetworkSharedCert
 	}
+	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
 
-	ipv4 := d.Get("ipv4").(bool)
-	if ipv4 {
-		ehn.IPVersionBehavior = "IPV4"
+	ipv4, _ := tools.GetBoolValue("ipv4", d)
+	if ipv4, _ := tools.GetBoolValue("ipv4", d); ipv4 {
+		newHostname.IPVersionBehavior = "IPV4"
 	}
-
-	ipv6 := d.Get("ipv6").(bool)
+	ipv6, _ := tools.GetBoolValue("ipv6", d)
 	if ipv6 {
-		ehn.IPVersionBehavior = "IPV6"
+		newHostname.IPVersionBehavior = "IPV6"
 	}
-
 	if ipv4 && ipv6 {
-		ehn.IPVersionBehavior = "IPV6_COMPLIANCE"
+		newHostname.IPVersionBehavior = "IPV6_COMPLIANCE"
+	}
+	if !(ipv4 || ipv6) {
+		return diag.FromErr(fmt.Errorf("ipv4 or ipv6 must be specified to create a new Edge Hostname"))
 	}
 
-	d.Set("ip_behavior", ehn.IPVersionBehavior)
-
-	if certEnrollmentId, ok := d.GetOk("certificate"); ok {
-		ehn.CertEnrollmentId = certEnrollmentId.(int)
-		ehn.SlotNumber = certEnrollmentId.(int)
-	} else if ehn.SecureNetwork == "ENHANCED_TLS" {
-		return errors.New("A certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames")
+	if err := d.Set("ip_behavior", newHostname.IPVersionBehavior); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if ehnFound, err := edgeHostnames.FindEdgeHostname(ehn); ehnFound != nil && ehnFound.EdgeHostnameID != "" {
-
-		jsonBody, e := jsonhooks.Marshal(ehnFound)
-		if e == nil {
-			edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("EHN Found = %s\n", jsonBody))
+	for _, h := range edgeHostnames.EdgeHostnames.Items {
+		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
+			d.SetId(h.ID)
+			return nil
 		}
-
-		if ehnFound.IPVersionBehavior != ehn.IPVersionBehavior {
-			return fmt.Errorf("existing edge hostname found with incompatible IP version (%s vs %s). You must use the same settings, or try a different edge hostname", ehnFound.IPVersionBehavior, ehn.IPVersionBehavior)
-		}
-
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Existing edge hostname FOUND = %s", ehnFound.EdgeHostnameID))
-		d.SetId(ehnFound.EdgeHostnameID)
-	} else {
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Creating new edge hostname: %#v\n\n", ehn))
-		err = ehn.Save("", CorrelationID)
-		if err != nil {
-			return err
-		}
-		d.SetId(ehn.EdgeHostnameID)
 	}
 
-	d.Partial(false)
+	certEnrollmentID, err := tools.GetIntValue("certificate", d)
+	if err != nil {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		if newHostname.SecureNetwork == "ENHANCED_TLS" {
+			return diag.FromErr(fmt.Errorf("A certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames"))
+		}
+	}
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
-	return nil
+	newHostname.CertEnrollmentID = certEnrollmentID
+	newHostname.SlotNumber = certEnrollmentID
+
+	logger.Debugf("Creating new edge hostname: %#v", newHostname)
+	hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
+		EdgeHostname: newHostname,
+		ContractID:   contract.ContractID,
+		GroupID:      group.GroupID,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(hostname.EdgeHostnameID)
+	return resourceSecureEdgeHostNameRead(ctx, d, meta)
 }
 
-func resourceSecureEdgeHostNameDelete(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameDelete-" + tools.CreateNonce() + "]"
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "DELETING")
+func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
+	logger.Debugf("DELETING")
+	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
 	d.SetId("")
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Done")
+	logger.Debugf("DONE")
 	return nil
 }
 
-func resourceSecureEdgeHostNameImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameImport")
 	resourceID := d.Id()
 	propertyID := resourceID
 
+	client := inst.Client(meta)
+
 	if !strings.HasPrefix(resourceID, "prp_") {
-		for _, searchKey := range []papi.SearchKey{papi.SearchByPropertyName, papi.SearchByHostname, papi.SearchByEdgeHostname} {
-			results, err := papi.Search(searchKey, resourceID, "") //<--correlationid
+		keys := []string{
+			papi.SearchKeyPropertyName,
+			papi.SearchKeyHostname,
+			papi.SearchKeyEdgeHostname,
+		}
+		for _, searchKey := range keys {
+			results, err := client.SearchProperties(ctx, papi.SearchRequest{
+				Key:   searchKey,
+				Value: resourceID,
+			})
 			if err != nil {
+				// TODO determine why is this error ignored
+				logger.Debugf("searching by key: %s: %w", searchKey, err)
 				continue
 			}
 
@@ -205,105 +217,112 @@ func resourceSecureEdgeHostNameImport(d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
-	property := papi.NewProperty(papi.NewProperties())
-	property.PropertyID = propertyID
-	e := property.GetProperty("")
-	if e != nil {
-		return nil, e
+	prop, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+		PropertyID: propertyID,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	d.Set("account", property.AccountID)
-	d.Set("contract", property.ContractID)
-	d.Set("group", property.GroupID)
-
-	d.Set("name", property.PropertyName)
-	d.Set("version", property.LatestVersion)
-	d.SetId(property.PropertyID)
+	if err := d.Set("contract", prop.Property.ContractID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("group", prop.Property.GroupID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("edge_hostname", prop.Property.GroupID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	d.SetId(prop.Property.PropertyID)
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceSecureEdgeHostNameExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + tools.CreateNonce() + "]"
-	group, e := getGroup(d, CorrelationID)
-	if e != nil {
-		return false, e
-	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames GROUP = %v", group))
-	contract, e := getContract(d, CorrelationID)
-	if e != nil {
-		return false, e
-	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames CONTRACT = %v", contract))
-	property := papi.NewProperty(papi.NewProperties())
-	property.Group = group
-	property.Contract = contract
+	client := inst.Client(meta)
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames %v", d.Id()))
-	edgeHostnames := papi.NewEdgeHostnames()
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("NewEdgeHostnames empty struct  %s", edgeHostnames.ContractID))
-	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, d.Id(), CorrelationID)
+	group, err := getGroup(ctx, d, meta)
 	if err != nil {
-		return false, err
-	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "Edgehostname EXISTS in contract ")
-
-	return true, nil
-}
-
-func resourceSecureEdgeHostNameRead(d *schema.ResourceData, meta interface{}) error {
-	CorrelationID := "[PAPI][resourceSecureEdgeHostNameCreate-" + tools.CreateNonce() + "]"
-	d.Partial(true)
-
-	group, e := getGroup(d, CorrelationID)
-	if e != nil {
-		return e
-	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames GROUP = %v", group))
-	contract, e := getContract(d, CorrelationID)
-	if e != nil {
-		return e
+		return diag.FromErr(fmt.Errorf("updating edge hostname: %w", err))
 	}
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames CONTRACT = %v", contract))
-	property := papi.NewProperty(papi.NewProperties())
-	property.Group = group
-	property.Contract = contract
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Figuring out edgehostnames %v", d.Id()))
-	edgeHostnames := papi.NewEdgeHostnames()
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("NewEdgeHostnames empty struct %v ", edgeHostnames.ContractID))
-	err := edgeHostnames.GetEdgeHostnames(property.Contract, property.Group, "", CorrelationID)
+	contract, err := getContract(ctx, d, meta)
 	if err != nil {
-		return err
+		return diag.FromErr(fmt.Errorf("updating edge hostname: %w", err))
 	}
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, "EdgeHostnames exist in contract  ")
 
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Edgehostnames Default host %v", edgeHostnames.EdgeHostnames.Items[0]))
-	defaultEdgeHostname := edgeHostnames.EdgeHostnames.Items[0]
+	logger.Debugf("  Edgehostnames GROUP = %v", group)
+	logger.Debugf("Edgehostnames CONTRACT = %v", contract)
 
-	foundEdgeHostname := false
-	var edgeHostnameID string
-	edgeHostname, edgeHostnameOk := d.GetOk("edge_hostname")
+	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
+		ContractID: contract.ContractID,
+		GroupID:    group.GroupID,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	defaultEdgeHostname := &edgeHostnames.EdgeHostnames.Items[0]
 
-	if edgeHostnameOk {
-		for _, eHn := range edgeHostnames.EdgeHostnames.Items {
+	edgeHostname, err := tools.GetStringValue("edge_hostname", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-			if eHn.EdgeHostnameDomain == edgeHostname.(string) {
-				foundEdgeHostname = true
-				defaultEdgeHostname = eHn
-				edgeHostnameID = eHn.EdgeHostnameID
-			}
+	if edgeHostname != "" {
+		found, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostname)
+		if err != nil && !errors.Is(err, ErrEdgeHostnameNotFound) {
+			return diag.FromErr(err)
 		}
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Found EdgeHostname %v", foundEdgeHostname))
-		edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("Default EdgeHostname %v", defaultEdgeHostname))
+		if err == nil {
+			defaultEdgeHostname = found
+		}
 	}
 
-	d.Set("contract", contract)
-	d.Set("group", group)
-
-	d.SetId(edgeHostnameID)
+	if err := d.Set("contract", contract.ContractID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("group", group.GroupID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("edge_hostname", defaultEdgeHostname.Domain); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	d.SetId(defaultEdgeHostname.ID)
 
 	return nil
+}
+
+func suppressEdgeHostnameDomain(_, old, new string, _ *schema.ResourceData) bool {
+	if old == new {
+		return true
+	}
+	if !(strings.HasSuffix(new, "edgekey.net") || strings.HasSuffix(new, "edgesuite.net") || strings.HasSuffix(new, "akamaized.net")) {
+		return old == fmt.Sprintf("%s.edgesuite.net", new)
+	}
+	return false
+}
+
+func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*papi.EdgeHostnameGetItem, error) {
+	var prefix string
+	suffix := "edgesuite.net"
+	if domain != "" {
+		if strings.HasSuffix(domain, "edgekey.net") {
+			suffix = "edgekey.net"
+		}
+		if strings.HasSuffix(domain, "akamaized.net") {
+			suffix = "akamaized.net"
+		}
+		prefix = strings.TrimSuffix(domain, "."+suffix)
+	}
+
+	for _, eHn := range edgeHostnames.Items {
+		if eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix {
+			return &eHn, nil
+		}
+	}
+
+	return nil, fmt.Errorf("%w: %s", ErrEdgeHostnameNotFound, domain)
 }

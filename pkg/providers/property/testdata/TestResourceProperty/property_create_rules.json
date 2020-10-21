@@ -1,0 +1,22 @@
+{
+  "contractId": "ctr_2",
+  "groupId": "grp_2",
+  "propertyId": "prp_123",
+  "propertyVersion": 2,
+  "etag": "",
+  "ruleFormat": "rule_format",
+  "rules": {
+    "behaviors": [
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "id": 1
+          }
+        }
+      }
+    ],
+    "name": "default",
+    "options": {}
+  }
+}

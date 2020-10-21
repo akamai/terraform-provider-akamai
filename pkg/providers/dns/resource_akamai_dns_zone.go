@@ -1,26 +1,30 @@
 package dns
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
-	"sync"
 	"time"
 
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
+	"github.com/apex/log"
+
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var dnsWriteLock sync.Mutex
-
 func resourceDNSv2Zone() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDNSv2ZoneCreate,
-		Read:   resourceDNSv2ZoneRead,
-		Update: resourceDNSv2ZoneUpdate,
-		Delete: resourceDNSv2ZoneDelete,
-		Exists: resourceDNSv2ZoneExists,
+		CreateContext: resourceDNSv2ZoneCreate,
+		ReadContext:   resourceDNSv2ZoneRead,
+		UpdateContext: resourceDNSv2ZoneUpdate,
+		DeleteContext: resourceDNSv2ZoneDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceDNSv2ZoneImport,
 		},
@@ -73,7 +77,7 @@ func resourceDNSv2Zone() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"tsig_key": &schema.Schema{
+			"tsig_key": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
@@ -110,112 +114,179 @@ func resourceDNSv2Zone() *schema.Resource {
 	}
 }
 
-func resourceDNSv2ZoneCreate(d *schema.ResourceData, meta interface{}) error {
-	// only allow one record to be created at a time
-	// this prevents lost data if you are using a counter/dynamic variables
-	// in your config.tf which might overwrite each other
+func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+	meta := akamai.Meta(m)
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneCreate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	if err := checkDNSv2Zone(d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-	hostname := d.Get("zone").(string)
-	zonetype := d.Get("type").(string)
-	masterlist := d.Get("masters").(*schema.Set).List()
-	if zonetype == "SECONDARY" && len(masterlist) == 0 {
-		return fmt.Errorf("DNS Secondary zone requires masters for zone %v", hostname)
+	hostname, err := tools.GetStringValue("zone", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	contract := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
-	group := strings.TrimPrefix(d.Get("group").(string), "grp_")
-	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
-	zonecreate := &dnsv2.ZoneCreate{Zone: hostname, Type: zonetype}
-	populateDNSv2ZoneObject(d, zonecreate)
-
+	logger.WithField("zone", hostname).Info("Zone Create")
+	zoneType, err := tools.GetStringValue("type", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	masterSet, err := tools.GetSetValue("masters", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	masterlist := masterSet.List()
+	if strings.ToUpper(zoneType) == "SECONDARY" && len(masterlist) == 0 {
+		return diag.Errorf("DNS Secondary zone requires masters for zone %v", hostname)
+	}
+	contractStr, err := tools.GetStringValue("contract", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	groupStr, err := tools.GetStringValue("group", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	contract := strings.TrimPrefix(contractStr, "ctr_")
+	group := strings.TrimPrefix(groupStr, "grp_")
+	zoneQueryString := dns.ZoneQueryString{Contract: contract, Group: group}
+	zoneCreate := &dns.ZoneCreate{Zone: hostname, Type: zoneType}
+	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
+		return diag.FromErr(err)
+	}
 	// First try to get the zone from the API
-	log.Printf("[DEBUG] [Akamai DNSv2] Searching for zone [%s]", hostname)
-	log.Printf("[DEBUG] [Akamai DNSv2] Searching for zone [%v]", zonecreate)
-	log.Printf("[INFO] [Akamai DNSv2] Searching for zone [%s]", hostname)
-	zone, e := dnsv2.GetZone(hostname)
+	logger.Debugf("Searching for zone [%s]", hostname)
+	zone, e := inst.Client(meta).GetZone(ctx, hostname)
 
+	apiError, ok := e.(*dns.Error)
+	if !ok || apiError.StatusCode != http.StatusNotFound {
+		logger.Errorf("Create[ERROR] %w", e)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Create API falure",
+			Detail:   e.Error(),
+		})
+	}
+
+	if e == nil {
+		// Not a good idea to overwrite an existing zone. Needs to be imported.
+		logger.Errorf("Zone exists [ERROR] %w", e)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Zone exists. Please import.",
+			Detail:   e.Error(),
+		})
+	}
+
+	// no existing zone.
+	logger.Debugf("Creating new zone: %v", zoneCreate)
+	e = inst.Client(meta).CreateZone(ctx, zoneCreate, zoneQueryString, true)
 	if e != nil {
-		// If there's no existing zone we'll create a blank one
-		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
-			// if the zone is not found/404 we will create a new
-			// blank zone for the records to be added to and continue
-			log.Printf("[DEBUG] [Akamai DNS] [ERROR] %s", e.Error())
-			log.Printf("[DEBUG] [Akamai DNS] Creating new zone: %v", zonecreate)
-			e = zonecreate.Save(zonequerystring, true)
-			if e != nil {
-				return e
-			}
-			if strings.ToUpper(zonetype) == "PRIMARY" {
-				time.Sleep(2 * time.Second)
-				// Indirectly create NS and SOA records
-				e = zonecreate.SaveChangelist()
-				if e != nil {
-					return e
-				}
-				time.Sleep(time.Second)
-				e = zonecreate.SubmitChangelist()
-				if e != nil {
-					return e
-				}
-			}
-			zone, e := dnsv2.GetZone(hostname)
-			if e != nil {
-				return e
-			}
-			d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
-			return resourceDNSv2ZoneRead(d, meta)
-		} else {
-			return e
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Zone create failure",
+			Detail:   e.Error(),
+		})
+	}
+	if strings.ToUpper(zoneType) == "PRIMARY" {
+		time.Sleep(2 * time.Second)
+		// Indirectly create NS and SOA records
+		e = inst.Client(meta).SaveChangelist(ctx, zoneCreate)
+		if e != nil {
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Zone create failure",
+				Detail:   e.Error(),
+			})
+		}
+		time.Sleep(time.Second)
+		e = inst.Client(meta).SubmitChangelist(ctx, zoneCreate)
+		if e != nil {
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Zone create failure",
+				Detail:   e.Error(),
+			})
 		}
 	}
-
-	// Save the zone to the API
-	log.Printf("[DEBUG] [Akamai DNSv2] Updating zone %v", zonecreate)
-	// Give terraform the ID
-	if d.Id() == "" || strings.Contains(d.Id(), "#") {
-		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
-	} else {
-		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+	zone, e = inst.Client(meta).GetZone(ctx, hostname)
+	if e != nil {
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Zone read after create failure",
+			Detail:   e.Error(),
+		})
 	}
-	return resourceDNSv2ZoneRead(d, meta)
+	d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
+	return resourceDNSv2ZoneRead(ctx, d, meta)
 
 }
 
-// Only ever save data from the tf config in the tf state file, to help with
-// api issues. See func unmarshalResourceData for more info.
-func resourceDNSv2ZoneRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] [Akamai DNSv2] READ")
-
-	log.Printf("[DEBUG] Reading [Akamai DNSv2] Record: %s", d.Id())
+func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 
 	hostname := d.Get("zone").(string)
-
-	masterlist := d.Get("masters").(*schema.Set).List()
+	meta := akamai.Meta(m)
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneRead")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+	hostname, err := tools.GetStringValue("zone", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	logger.WithField("zone", hostname).Info("Zone Read")
+	masterSet, err := tools.GetSetValue("masters", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	masterlist := masterSet.List()
 	masters := make([]string, 0, len(masterlist))
 	if len(masterlist) > 0 {
 		for _, master := range masterlist {
-			masters = append(masters, master.(string))
+			masterStr, ok := master.(string)
+			if !ok {
+				return diag.Errorf("'master' is of invalid type; should be 'string'")
+			}
+			masters = append(masters, masterStr)
 		}
 
 	}
 	// find the zone first
-	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
-	zone, e := dnsv2.GetZone(hostname)
+	logger.Debugf("Searching for zone [%s]", hostname)
+	zone, e := inst.Client(meta).GetZone(ctx, hostname)
 	if e != nil {
-		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() {
+		apiError, ok := e.(*dns.Error)
+		if ok && apiError.StatusCode == http.StatusNotFound {
 			d.SetId("")
+			return diag.FromErr(e)
 		}
-		return e
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Zone read failure",
+			Detail:   e.Error(),
+		})
 	}
 	// Populate state with returned field values ... except zone and type
-	if strings.ToUpper(zone.Type) != strings.ToUpper(d.Get("type").(string)) {
-		return errors.New(fmt.Sprintf("Zone type has changed from %s to %s", d.Get("type").(string), zone.Type))
+	zoneType, err := tools.GetStringValue("type", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	populateDNSv2ZoneState(d, zone)
+	if strings.ToUpper(zone.Type) != strings.ToUpper(zoneType) {
+		return diag.Errorf("zone type has changed from %s to %s", zoneType, zone.Type)
+	}
+	if err := populateDNSv2ZoneState(d, zone); err != nil {
+		return diag.FromErr(err)
+	}
 
-	log.Printf("[DEBUG] [Akamai DNSv2] READ %v", zone)
+	logger.Debugf("READ content: %v", zone)
 	if strings.Contains(d.Id(), "#") {
 		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
 	} else {
@@ -225,49 +296,71 @@ func resourceDNSv2ZoneRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 // Update DNS Zone
-func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
-	// only allow one record to be created at a time
-	// this prevents lost data if you are using a counter/dynamic variables
-	// in your config.tf which might overwrite each other
+func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	hostname := d.Get("zone").(string)
+	meta := akamai.Meta(m)
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneUpdate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+	logger.WithField("zone", hostname).Info("Zone Update")
 
 	if err := checkDNSv2Zone(d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-	hostname := d.Get("zone").(string)
-	contract := d.Get("contract").(string)
-	group := d.Get("group").(string)
-	zonetype := d.Get("type").(string)
-	zonequerystring := dnsv2.ZoneQueryString{Contract: contract, Group: group}
+	hostname, err := tools.GetStringValue("zone", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	contract, err := tools.GetStringValue("contract", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	group, err := tools.GetStringValue("group", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	zoneType, err := tools.GetStringValue("type", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	zoneQueryString := dns.ZoneQueryString{Contract: contract, Group: group}
 
-	log.Printf("[INFO] [Akamai DNSv2] Searching for zone [%s]", hostname)
-	zone, e := dnsv2.GetZone(hostname)
+	logger.Debugf("Searching for zone [%s]", hostname)
+	zone, e := inst.Client(meta).GetZone(ctx, hostname)
 	if e != nil {
-		// If there's no existing zone we'll create a blank one
-		if dnsv2.IsConfigDNSError(e) && e.(dnsv2.ConfigDNSError).NotFound() == true {
-			log.Printf("[DEBUG] [Akamai DNS] [ERROR] %s", e.Error())
-			// Something drastically wrong if we are trying to update a non existent zone!
-			return errors.New(fmt.Sprintf("Attempt to update non existent zone: %s", hostname))
-		} else {
-			return e
+		apiError, ok := e.(*dns.Error)
+		if !ok && apiError.StatusCode != http.StatusOK {
+			logger.Debugf("Zone Update read faiiled: %s", e.Error())
+			return diag.FromErr(fmt.Errorf("Update zone %s read failed: %w", hostname, e))
 		}
 	}
 	// Create Zone Post obj and copy Received vals over
-	zonecreate := &dnsv2.ZoneCreate{Zone: hostname, Type: zonetype}
-	zonecreate.Masters = zone.Masters
-	zonecreate.Comment = zone.Comment
-	zonecreate.SignAndServe = zone.SignAndServe
-	zonecreate.SignAndServeAlgorithm = zone.SignAndServeAlgorithm
-	zonecreate.Target = zone.Target
-	zonecreate.EndCustomerId = zone.EndCustomerId
-	zonecreate.ContractId = zone.ContractId
-	zonecreate.TsigKey = zone.TsigKey
-	populateDNSv2ZoneObject(d, zonecreate)
-
+	zoneCreate := &dns.ZoneCreate{Zone: hostname, Type: zoneType}
+	zoneCreate.Masters = zone.Masters
+	zoneCreate.Comment = zone.Comment
+	zoneCreate.SignAndServe = zone.SignAndServe
+	zoneCreate.SignAndServeAlgorithm = zone.SignAndServeAlgorithm
+	zoneCreate.Target = zone.Target
+	zoneCreate.EndCustomerID = zone.EndCustomerID
+	zoneCreate.ContractID = zone.ContractID
+	zoneCreate.TsigKey = zone.TsigKey
+	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
+		return diag.FromErr(err)
+	}
 	// Save the zone to the API
-	log.Printf("[DEBUG] [Akamai DNSv2] Saving zone %v", zonecreate)
-	e = zonecreate.Update(zonequerystring)
+	logger.Debugf("Saving zone %v", zoneCreate)
+	e = inst.Client(meta).UpdateZone(ctx, zoneCreate, zoneQueryString)
 	if e != nil {
-		return e
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Zone update failure",
+			Detail:   e.Error(),
+		})
 	}
 
 	// Give terraform the ID
@@ -276,22 +369,38 @@ func resourceDNSv2ZoneUpdate(d *schema.ResourceData, meta interface{}) error {
 	} else {
 		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
 	}
-	return resourceDNSv2ZoneRead(d, meta)
+	return resourceDNSv2ZoneRead(ctx, d, meta)
 }
 
 // Import Zone. Id is the zone
-func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	hostname := d.Id()
+	meta := akamai.Meta(m)
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneImport")
+	// create a context with logging for api calls
+	ctx := context.TODO()
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+	logger.WithField("zone", hostname).Info("Zone Import")
+
 	// find the zone first
-	log.Printf("[INFO] [Akamai DNS] Searching for zone [%s]", hostname)
-	zone, err := dnsv2.GetZone(hostname)
+	logger.Debugf("Searching for zone [%s]", hostname)
+	zone, err := inst.Client(meta).GetZone(ctx, hostname)
 	if err != nil {
 		return nil, err
 	}
 
-	d.Set("zone", zone.Zone)
-	d.Set("type", zone.Type)
-	populateDNSv2ZoneState(d, zone)
+	if err := d.Set("zone", zone.Zone); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("type", zone.Type); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := populateDNSv2ZoneState(d, zone); err != nil {
+		return nil, err
+	}
 
 	// Give terraform the ID
 	d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
@@ -299,42 +408,23 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDNSv2ZoneDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] Deleting DNS Zone")
+func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+
+	hostname, err := tools.GetStringValue("zone", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	meta := akamai.Meta(m)
+	logger := meta.Log("AkamaiDNS", "resourceDNSZoneDelete")
+	logger.WithField("zone", hostname).Info("Zone Import")
+	logger.Warn("DNS Zone deletion not allowed")
 
 	// No ZONE delete operation permitted.
-
-	return schema.Noop(d, meta)
-}
-
-func resourceDNSv2ZoneExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-
-	hostname := d.Get("zone").(string)
-	masterlist := d.Get("masters").(*schema.Set).List()
-	masters := make([]string, 0, len(masterlist))
-	if len(masterlist) > 0 {
-		for _, master := range masterlist {
-			masters = append(masters, master.(string))
-		}
-
-	}
-
-	zm, err := dnsv2.GetMasterZoneFile(hostname)
-	log.Printf("[DEBUG] [Akamai DNSV2] Existing zone master %s", zm)
-
-	log.Printf("[DEBUG] [Akamai DNSV2] Searching for zone [%s]", hostname)
-	// try to get the zone from the API
-	log.Printf("[INFO] [Akamai DNSV2] Searching for zone [%s]", hostname)
-	zone, err := dnsv2.GetZone(hostname)
-	if dnsv2.IsConfigDNSError(err) && err.(dnsv2.ConfigDNSError).NotFound() == true {
-		return false, nil
-	}
-	log.Printf("[DEBUG] [Akamai DNSV2] Searching for Existing zone result [%v]", zone)
-	return zone != nil, err
+	return schema.NoopContext(ctx, d, meta)
 }
 
 // validateZoneType is a SchemaValidateFunc to validate the Zone type.
-func validateZoneType(v interface{}, k string) (ws []string, es []error) {
+func validateZoneType(v interface{}, _ string) (ws []string, es []error) {
 	value := strings.ToUpper(v.(string))
 	if value != "PRIMARY" && value != "SECONDARY" && value != "ALIAS" {
 		es = append(es, fmt.Errorf("Type must be PRIMARY, SECONDARY, or ALIAS"))
@@ -343,14 +433,26 @@ func validateZoneType(v interface{}, k string) (ws []string, es []error) {
 }
 
 // populate zone state based on API response.
-func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dnsv2.ZoneResponse) {
+func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.ZoneResponse) error {
 
-	d.Set("masters", zoneresp.Masters)
-	d.Set("comment", zoneresp.Comment)
-	d.Set("sign_and_serve", zoneresp.SignAndServe)
-	d.Set("sign_and_serve_algorithm", zoneresp.SignAndServeAlgorithm)
-	d.Set("target", zoneresp.Target)
-	d.Set("end_customer_id", zoneresp.EndCustomerId)
+	if err := d.Set("masters", zoneresp.Masters); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("comment", zoneresp.Comment); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("sign_and_serve", zoneresp.SignAndServe); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("sign_and_serve_algorithm", zoneresp.SignAndServeAlgorithm); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("target", zoneresp.Target); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("end_customer_id", zoneresp.EndCustomerID); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	tsigListNew := make([]interface{}, 0)
 	if zoneresp.TsigKey != nil {
 		tsigNew := map[string]interface{}{
@@ -360,68 +462,122 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dnsv2.ZoneResponse
 		}
 		tsigListNew = append(tsigListNew, tsigNew)
 	}
-	d.Set("tsig_key", tsigListNew)
-	d.Set("activation_state", zoneresp.ActivationState)
-	d.Set("alias_count", zoneresp.AliasCount)
-	d.Set("version_id", zoneresp.VersionId)
+	if err := d.Set("tsig_key", tsigListNew); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("activation_state", zoneresp.ActivationState); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("alias_count", zoneresp.AliasCount); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("version_id", zoneresp.VersionId); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	return nil
 }
 
 // populate zone object based on current config.
-func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dnsv2.ZoneCreate) {
-
-	v := d.Get("masters")
-	masterlist := v.(*schema.Set).List()
+func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logger log.Interface) error {
+	masterSet, err := tools.GetSetValue("masters", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	masterlist := masterSet.List()
 	masters := make([]string, 0, len(masterlist))
 	for _, master := range masterlist {
-		masters = append(masters, master.(string))
+		masterStr, ok := master.(string)
+		if !ok {
+			return fmt.Errorf("'master' is of invalid type; should be 'string'")
+		}
+		masters = append(masters, masterStr)
 	}
 	zone.Masters = masters
-	if v, ok := d.GetOk("comment"); ok {
-		zone.Comment = v.(string)
-	} else if d.HasChange("comment") {
-		zone.Comment = v.(string)
+	comment, err := tools.GetStringValue("comment", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
 	}
-	zone.SignAndServe = d.Get("sign_and_serve").(bool)
-	if v, ok := d.GetOk("sign_and_serve_algorithm"); ok {
-		zone.SignAndServeAlgorithm = v.(string)
-	} else if d.HasChange("sign_and_serve_algorithm") {
-		zone.SignAndServeAlgorithm = v.(string)
+	if err == nil || d.HasChange("comment") {
+		zone.Comment = comment
 	}
-	if v, ok := d.GetOk("target"); ok {
-		zone.Target = v.(string)
-	} else if d.HasChange("target") {
-		zone.Target = v.(string)
+	signAndServe, err := tools.GetBoolValue("sign_and_serve", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
 	}
-	if v, ok := d.GetOk("end_customer_id"); ok {
-		zone.EndCustomerId = v.(string)
-	} else if d.HasChange("end_customer_id") {
-		zone.EndCustomerId = v.(string)
+	zone.SignAndServe = signAndServe
+	signAndServeAlgorithm, err := tools.GetStringValue("sign_and_serve_algorithm", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
 	}
-	v = d.Get("tsig_key")
-	if v != nil && len(v.([]interface{})) > 0 {
-		tsigKeyList := v.([]interface{})
-		tsigKeyMap := tsigKeyList[0].(map[string]interface{})
-		zone.TsigKey = &dnsv2.TSIGKey{
-			Name:      tsigKeyMap["name"].(string),
-			Algorithm: tsigKeyMap["algorithm"].(string),
-			Secret:    tsigKeyMap["secret"].(string),
+	if err == nil || d.HasChange("sign_and_serve_algorithm") {
+		zone.SignAndServeAlgorithm = signAndServeAlgorithm
+	}
+	target, err := tools.GetStringValue("target", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	if err == nil || d.HasChange("target") {
+		zone.Target = target
+	}
+	endCustomerID, err := tools.GetStringValue("end_customer_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	if err == nil || d.HasChange("end_customer_id") {
+		zone.EndCustomerID = endCustomerID
+	}
+	tsigKey, err := tools.GetListValue("tsig_key", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		if !errors.Is(err, tools.ErrNotFound) {
+			return err
 		}
-		log.Printf("[DEBUG] [Akamai DNSV2] Generated TsigKey [%v]", zone.TsigKey)
-	} else {
 		zone.TsigKey = nil
+		return nil
 	}
+	if len(tsigKey) == 0 {
+		return nil
+	}
+	tsigKeyMap, ok := tsigKey[0].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("'tsig_key' entry is of invalid type; should be 'map[string]interface{}'")
+	}
+	zone.TsigKey = &dns.TSIGKey{
+		Name:      tsigKeyMap["name"].(string),
+		Algorithm: tsigKeyMap["algorithm"].(string),
+		Secret:    tsigKeyMap["secret"].(string),
+	}
+	logger.Debugf("Generated TsigKey [%v]", zone.TsigKey)
+	return nil
 }
 
 // utility method to verify zone config fields based on type. not worrying about required fields ....
-func checkDNSv2Zone(d *schema.ResourceData) error {
-
-	zone := d.Get("zone").(string)
-	ztype := strings.ToUpper(d.Get("type").(string))
-	masters := d.Get("masters").(*schema.Set).List()
-	target := d.Get("target").(string)
-	tsig := d.Get("tsig_key").([]interface{})
-	signandserve := d.Get("sign_and_serve").(bool)
-	//signandservealgo := d.Get("sign_and_serve_algorithm").(string)
+func checkDNSv2Zone(d tools.ResourceDataFetcher) error {
+	zone, err := tools.GetStringValue("zone", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	zoneType, err := tools.GetStringValue("type", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	mastersSet, err := tools.GetSetValue("masters", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	target, err := tools.GetStringValue("target", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	tsig, err := tools.GetListValue("tsig_key", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	signandserve, err := tools.GetBoolValue("sign_and_serve", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	ztype := strings.ToUpper(zoneType)
+	masters := mastersSet.List()
 	if ztype == "SECONDARY" && len(masters) == 0 {
 		return fmt.Errorf("masters list must be populated in  Secondary zone %s configuration", zone)
 	}

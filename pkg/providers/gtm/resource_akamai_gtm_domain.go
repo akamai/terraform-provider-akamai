@@ -1,14 +1,20 @@
 package gtm
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 	"time"
 
-	client "github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -17,11 +23,10 @@ var HashiAcc = false
 
 func resourceGTMv1Domain() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGTMv1DomainCreate,
-		Read:   resourceGTMv1DomainRead,
-		Update: resourceGTMv1DomainUpdate,
-		Delete: resourceGTMv1DomainDelete,
-		Exists: resourceGTMv1DomainExists,
+		CreateContext: resourceGTMv1DomainCreate,
+		ReadContext:   resourceGTMv1DomainRead,
+		UpdateContext: resourceGTMv1DomainUpdate,
+		DeleteContext: resourceGTMv1DomainDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -175,192 +180,323 @@ func resourceGTMv1Domain() *schema.Resource {
 }
 
 // Retrieve optional query args. contractId, groupId [and accountSwitchKey] supported.
-func GetQueryArgs(d *schema.ResourceData) map[string]string {
+func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
 
 	qArgs := make(map[string]string)
-	contract := strings.TrimPrefix(d.Get("contract").(string), "ctr_")
+	contractName, err := tools.GetStringValue("contract", d)
+	if err != nil {
+		return nil, fmt.Errorf("contract not present in resource data: %v", err.Error())
+	}
+	contract := strings.TrimPrefix(contractName, "ctr_")
 	if contract != "" && len(contract) > 0 {
 		qArgs["contractId"] = contract
 	}
-	groupId := strings.TrimPrefix(d.Get("group").(string), "grp_")
+	groupName, err := tools.GetStringValue("group", d)
+	if err != nil {
+		return nil, fmt.Errorf("group not present in resource data: %v", err.Error())
+	}
+	groupId := strings.TrimPrefix(groupName, "grp_")
 	if groupId != "" && len(groupId) > 0 {
 		qArgs["gid"] = groupId
 	}
-	//accountSwitch := d.Get("account_switch_key").(string)
-	// if accountSwitch != nil && len(accountSwitch) > 0 {
-	//        qArgs["accountSwitchKey"] = accountSwitch
-	//}
 
-	return qArgs
-
+	return qArgs, nil
 }
 
 // Create a new GTM Domain
-func resourceGTMv1DomainCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainCreate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
-	dname := d.Get("name").(string)
-	log.Printf("[INFO] [Akamai GTM] Creating domain [%s]", dname)
-	newDom := populateNewDomainObject(d)
-	log.Printf("[DEBUG] [Akamai GTMv1] Domain: [%v]", newDom)
-
-	cStatus, err := newDom.Create(GetQueryArgs(d))
-
+	dname, err := tools.GetStringValue("name", d)
+	if err != nil {
+		logger.Errorf("Domain name not found in ResourceData")
+		return diag.FromErr(err)
+	}
+	logger.Infof("Creating domain [%s]", dname)
+	newDom, err := populateNewDomainObject(ctx, meta, d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	logger.Debugf("Domain: [%v]", newDom)
+	var diags diag.Diagnostics
+	queryArgs, err := GetQueryArgs(d)
+	if err != nil {
+		logger.Errorf("Domain Create failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain Create failed",
+			Detail:   err.Error(),
+		})
+	}
+	cStatus, err := inst.Client(meta).CreateDomain(ctx, newDom, queryArgs)
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
-			log.Printf("[ERROR] DomainCreate failed: %s", err.Error())
-			return err
+			logger.Errorf("Domain Create failed: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Create failed",
+				Detail:   err.Error(),
+			})
 		}
-		if _, ok := err.(gtm.CommonError); !ok {
-			log.Printf("[ERROR] DomainCreate failed: %s", err.Error())
-			return err
+		apiError, ok := err.(*gtm.Error)
+		if !ok && apiError.StatusCode != http.StatusBadRequest {
+			logger.Errorf("Domain Create failed: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Create failed",
+				Detail:   err.Error(),
+			})
 		}
-		origErr, ok := err.(gtm.CommonError).GetItem("err").(client.APIError)
-		if !ok {
-			log.Printf("[ERROR] DomainCreate failed: %s", err.Error())
-			return err
-		}
-		if origErr.Status == 400 && strings.Contains(origErr.RawBody, "proposed domain name") && strings.Contains(origErr.RawBody, "Domain Validation Error") {
+		if strings.Contains(apiError.Detail, "proposed domain name") && strings.Contains(apiError.Detail, "Domain Validation Error") {
 			// Already exists
-			log.Printf("[WARNING] [Akamai GTMv1] : Domain %s already exists. Ignoring error (Hashicorp).", dname)
+			logger.Warnf("Domain %s already exists. Ignoring error (Hashicorp).", dname)
 		} else {
-			log.Printf("[ERROR] [Akamai GTM] Error creating domain [%s]", err.Error())
-			return err
+			logger.Errorf("Error creating Domain [%s]", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Create failed",
+				Detail:   err.Error(),
+			})
 		}
 	} else {
-		log.Printf("[DEBUG] [Akamai GTMv1] Create status:")
-		log.Printf("[DEBUG] [Akamai GTMv1] %v", cStatus.Status)
+		logger.Debugf("Create status: %v", cStatus.Status)
 		if cStatus.Status.PropagationStatus == "DENIED" {
-			return errors.New(cStatus.Status.Message)
+			logger.Errorf(cStatus.Status.Message)
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  cStatus.Status.Message,
+			})
 		}
-		if d.Get("wait_on_complete").(bool) {
-			done, err := waitForCompletion(dname)
+
+		waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if waitOnComplete {
+			done, err := waitForCompletion(ctx, dname, m)
 			if done {
-				log.Printf("[INFO] [Akamai GTMv1] Domain Create completed")
+				logger.Infof("Domain Create completed")
 			} else {
 				if err == nil {
-					log.Printf("[INFO] [Akamai GTMv1] Domain Create pending")
+					logger.Infof("Domain Create pending")
 				} else {
-					log.Printf("[WARNING] [Akamai GTMv1] Domain Create failed [%s]", err.Error())
-					return err
+					logger.Errorf("Domain Create failed [%s]", err.Error())
+					return append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Domain Create failed",
+						Detail:   err.Error(),
+					})
 				}
 			}
 		}
 	}
 	// Give terraform the ID
 	d.SetId(dname)
-	return resourceGTMv1DomainRead(d, meta)
+	return resourceGTMv1DomainRead(ctx, d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DomainRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] [Akamai GTMv1] READ")
-	log.Printf("[DEBUG] Reading [Akamai GTMv1] Domain: %s", d.Id())
+func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainRead")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+
+	logger.Debugf("Reading Domain: %s", d.Id())
+	var diags diag.Diagnostics
 	// retrieve the domain
-	dom, err := gtm.GetDomain(d.Id())
+	dom, err := inst.Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
-		log.Printf("[ERROR] DomainRead error: %s", err.Error())
-		return err
+		logger.Errorf("Domain Read error: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain Read error",
+			Detail:   err.Error(),
+		})
 	}
-	populateTerraformState(d, dom)
-	log.Printf("[DEBUG] [Akamai GTMv1] READ %v", dom)
+	populateTerraformState(d, dom, m)
+	logger.Debugf("READ %v", dom)
 	return nil
 }
 
 // Update GTM Domain
-func resourceGTMv1DomainUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainUpdate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
-	log.Printf("[DEBUG] [Akamai GTMv1] UPDATE")
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Domain: %s", d.Id())
+	logger.Debugf("Updating Domain: %s", d.Id())
+	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := gtm.GetDomain(d.Id())
+	existDom, err := inst.Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
-		log.Printf("[ERROR] DomainUpdate failed: %s", err.Error())
-		return err
+		logger.Errorf("Domain Update failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Update Domain read failed",
+			Detail:   err.Error(),
+		})
 	}
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Domain BEFORE: %v", existDom)
-	populateDomainObject(d, existDom)
-	log.Printf("[DEBUG] Updating [Akamai GTMv1] Domain PROPOSED: %v", existDom)
+	logger.Debugf("Updating Domain BEFORE: %v", existDom)
+	err = populateDomainObject(d, existDom, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	logger.Debugf("Updating Domain PROPOSED: %v", existDom)
 	//existDom := populateNewDomainObject(d)
-	uStat, err := existDom.Update(GetQueryArgs(d))
+	args, err := GetQueryArgs(d)
 	if err != nil {
-		log.Printf("[ERROR] DomainUpdate failed: %s", err.Error())
-		return err
+		logger.Errorf("Domain Update failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain Update error",
+			Detail:   err.Error(),
+		})
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Update status:")
-	log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+	uStat, err := inst.Client(meta).UpdateDomain(ctx, existDom, args)
+	if err != nil {
+		logger.Errorf("Domain Update failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain Update error",
+			Detail:   err.Error(),
+		})
+	}
+	logger.Debugf("Update status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
-		return errors.New(uStat.Message)
+		logger.Errorf(uStat.Message)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  uStat.Message,
+		})
 	}
-	if d.Get("wait_on_complete").(bool) {
-		done, err := waitForCompletion(d.Id())
+
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if waitOnComplete {
+		done, err := waitForCompletion(ctx, d.Id(), m)
 		if done {
-			log.Printf("[INFO] [Akamai GTMv1] Domain update completed")
+			logger.Infof("Domain Update completed")
 		} else {
 			if err == nil {
-				log.Printf("[INFO] [Akamai GTMv1] Domain update pending")
+				logger.Infof("Domain Update pending")
 			} else {
-				log.Printf("[WARNING] [Akamai GTMv1] Domain update failed [%s]", err.Error())
-				return err
+				logger.Errorf("Domain Update failed [%s]", err.Error())
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "domain Update failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
 
 	}
 
-	return resourceGTMv1DomainRead(d, meta)
+	return resourceGTMv1DomainRead(ctx, d, m)
 
 }
 
-// Delete GTM Domain. Admin priviledges required in current API version.
-func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] Deleting GTM Domain")
-	log.Printf("[DEBUG] [Akamai GTMv1] Domain: %s", d.Id())
+// Delete GTM Domain. Admin privileges required in current API version.
+func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainDelete")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+
+	logger.Debugf("Deleting GTM Domain: %s", d.Id())
+	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := gtm.GetDomain(d.Id())
+	existDom, err := inst.Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
-		log.Printf("[ERROR] DomainDelete failed: %s", err.Error())
-		return err
+		logger.Errorf("Domain Delete failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Invalid domain ID: %s", d.Id()),
+			Detail:   err.Error(),
+		})
 	}
-	uStat, err := existDom.Delete()
+	uStat, err := inst.Client(meta).DeleteDomain(ctx, existDom)
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
-			log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
-			return err
+			logger.Errorf("Error Domain Delete: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Delete error",
+				Detail:   err.Error(),
+			})
 		}
-		if _, ok := err.(gtm.CommonError); !ok {
-			log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
-			return err
+		apiError, ok := err.(*gtm.Error)
+		if !ok && apiError.StatusCode != http.StatusMethodNotAllowed {
+			logger.Errorf("Error Domain Delete: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Delete error",
+				Detail:   err.Error(),
+			})
 		}
-		origErr, ok := err.(gtm.CommonError).GetItem("err").(client.APIError)
-		if !ok {
-			log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
-			return err
-		}
-		if origErr.Status == 405 && strings.Contains(origErr.RawBody, "Bad Request") && strings.Contains(origErr.RawBody, "DELETE method is not supported") {
-			log.Printf("[Warning] [Akamai GTMv1] : Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
+		if strings.Contains(apiError.Detail, "Bad Request") && strings.Contains(apiError.Detail, "DELETE method is not supported") {
+			logger.Warnf(": Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
 		} else {
-			log.Printf("[ERROR] Error DomainDelete: %s", err.Error())
-			return err
+			logger.Errorf("Error Domain Delete: %s", err.Error())
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Domain Delete error",
+				Detail:   err.Error(),
+			})
 		}
 	} else {
-		log.Printf("[DEBUG] [Akamai GTMv1] Delete status:")
-		log.Printf("[DEBUG] [Akamai GTMv1] %v", uStat)
+		logger.Debugf("Delete status: %v", uStat)
 		if uStat.PropagationStatus == "DENIED" {
-			return errors.New(uStat.Message)
+			logger.Errorf(uStat.Message)
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  uStat.Message,
+			})
 		}
-		if d.Get("wait_on_complete").(bool) {
-			done, err := waitForCompletion(d.Id())
+
+		waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if waitOnComplete {
+			done, err := waitForCompletion(ctx, d.Id(), m)
 			if done {
-				log.Printf("[INFO] [Akamai GTMv1] Domain delete completed")
+				logger.Infof("Domain Delete completed")
 			} else {
 				if err == nil {
-					log.Printf("[INFO] [Akamai GTMv1] Domain delete pending")
+					logger.Infof("Domain Delete pending")
 				} else {
-					log.Printf("[WARNING] [Akamai GTMv1] Domain delete failed [%s]", err.Error())
-					return err
+					logger.Errorf("Domain Delete failed [%s]", err.Error())
+					return append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Domain Delete failed",
+						Detail:   err.Error(),
+					})
 				}
 			}
 		}
@@ -370,229 +506,286 @@ func resourceGTMv1DomainDelete(d *schema.ResourceData, meta interface{}) error {
 
 }
 
-// Test GTM Domain existance
-func resourceGTMv1DomainExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-
-	name := d.Get("name").(string)
-	log.Printf("[DEBUG] [Akamai GTMv1] Searching for domain [%s]", name)
-	domain, err := gtm.GetDomain(name)
-	log.Printf("[DEBUG] [Akamai GTMv1] Searching for Existing domain result [%v]", domain)
-	return domain != nil, err
-}
-
 // validateDomainType is a SchemaValidateFunc to validate the Domain type.
-func validateDomainType(v interface{}, k string) (ws []string, es []error) {
+func validateDomainType(v interface{}, _ string) (ws []string, es []error) {
 	value := strings.ToUpper(v.(string))
 	if value != "BASIC" && value != "FULL" && value != "WEIGHTED" && value != "STATIC" && value != "FAILOVER-ONLY" {
-		es = append(es, fmt.Errorf("Type must be basic, full, weighted, static, or failover-only"))
+		es = append(es, fmt.Errorf("type must be basic, full, weighted, static, or failover-only"))
 	}
 	return
 }
 
 // Create and populate a new domain object from resource data
-func populateNewDomainObject(d *schema.ResourceData) *gtm.Domain {
+func populateNewDomainObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
 
-	domObj := gtm.NewDomain(d.Get("name").(string), d.Get("type").(string))
-	populateDomainObject(d, domObj)
+	name, _ := tools.GetStringValue("name", d)
+	domObj := inst.Client(meta).NewDomain(ctx, name, d.Get("type").(string))
+	err := populateDomainObject(d, domObj, m)
 
-	return domObj
+	return domObj, err
 
 }
 
 // Populate existing domain object from resource data
-func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain) {
+func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "populateDomainObject")
 
-	if d.Get("name").(string) != dom.Name {
-		dom.Name = d.Get("name").(string)
-		log.Printf("[WARNING] [Akamai GTMv1] Domain [%s] state and GTM names inconsistent!", dom.Name)
+	domainName, err := tools.GetStringValue("name", d)
+	if err != nil {
+		// Should be caught earlier ...
+		logger.Warnf("Domain name not set: %s", err.Error())
 	}
-	if v, ok := d.GetOk("type"); ok {
-		if v != dom.Type {
-			dom.Type = v.(string)
+
+	if domainName != dom.Name {
+		dom.Name = domainName
+		logger.Errorf("Domain [%s] state and GTM names inconsistent!", dom.Name)
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+	}
+
+	vstr, err := tools.GetStringValue("type", d)
+	if err == nil {
+		if vstr != dom.Type {
+			dom.Type = vstr
 		}
 	}
-	if v, ok := d.GetOk("default_unreachable_threshold"); ok {
-		dom.DefaultUnreachableThreshold = v.(float32)
+	vfl32, err := tools.GetFloat32Value("default_unreachable_threshold", d)
+	if err == nil {
+		dom.DefaultUnreachableThreshold = vfl32
 	}
-	if v, ok := d.GetOk("email_notification_list"); ok {
-		ls := make([]string, len(v.([]interface{})))
-		for i, sl := range v.([]interface{}) {
+	vlist, err := tools.GetInterfaceArrayValue("email_notification_list", d)
+	if err == nil {
+		ls := make([]string, len(vlist))
+		for i, sl := range vlist {
 			ls[i] = sl.(string)
 		}
 		dom.EmailNotificationList = ls
 	} else if d.HasChange("email_notification_list") {
-		dom.EmailNotificationList = make([]string, 0, 0)
+		dom.EmailNotificationList = make([]string, 0)
 	}
-	if v, ok := d.GetOk("min_pingable_region_fraction"); ok {
-		dom.MinPingableRegionFraction = v.(float32)
+	vfl32, err = tools.GetFloat32Value("min_pingable_region_fraction", d)
+	if err == nil {
+		dom.MinPingableRegionFraction = vfl32
 	}
-	if v, ok := d.GetOk("default_timeout_penalty"); ok {
-		dom.DefaultTimeoutPenalty = v.(int)
-	} else if d.HasChange("default_timeout_penalty") {
-		dom.DefaultTimeoutPenalty = v.(int)
+	vint, err := tools.GetIntValue("default_timeout_penalty", d)
+	if err == nil || d.HasChange("default_timeout_penalty") {
+		dom.DefaultTimeoutPenalty = vint
 	}
-	if v, ok := d.GetOk("servermonitor_liveness_count"); ok {
-		dom.ServermonitorLivenessCount = v.(int)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() default_timeout_penalty failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
-	if v, ok := d.GetOk("round_robin_prefix"); ok {
-		dom.RoundRobinPrefix = v.(string)
+
+	vint, err = tools.GetIntValue("servermonitor_liveness_count", d)
+	if err == nil {
+		dom.ServermonitorLivenessCount = vint
 	}
-	if v, ok := d.GetOk("servermonitor_load_count"); ok {
-		dom.ServermonitorLoadCount = v.(int)
+	vstr, err = tools.GetStringValue("round_robin_prefix", d)
+	if err == nil {
+		dom.RoundRobinPrefix = vstr
 	}
-	if v, ok := d.GetOk("ping_interval"); ok {
-		dom.PingInterval = v.(int)
+	vint, err = tools.GetIntValue("servermonitor_load_count", d)
+	if err == nil {
+		dom.ServermonitorLoadCount = vint
 	}
-	if v, ok := d.GetOk("max_ttl"); ok {
-		dom.MaxTTL = int64(v.(int))
+	vint, err = tools.GetIntValue("ping_interval", d)
+	if err == nil {
+		dom.PingInterval = vint
 	}
-	if v, ok := d.GetOk("load_imbalance_percentage"); ok {
-		dom.LoadImbalancePercentage = v.(float64)
+	vint, err = tools.GetIntValue("max_ttl", d)
+	if err == nil {
+		dom.MaxTTL = int64(vint)
 	}
-	if v, ok := d.GetOk("default_health_max"); ok {
-		dom.DefaultHealthMax = v.(float64)
+	vfloat, err := tools.GetFloat64Value("load_imbalance_percentage", d)
+	if err == nil {
+		dom.LoadImbalancePercentage = vfloat
 	}
-	if v, ok := d.GetOk("map_update_interval"); ok {
-		dom.MapUpdateInterval = v.(int)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
-	if v, ok := d.GetOk("max_properties"); ok {
-		dom.MaxProperties = v.(int)
+
+	vfloat, err = tools.GetFloat64Value("default_health_max", d)
+	if err == nil {
+		dom.DefaultHealthMax = vfloat
 	}
-	if v, ok := d.GetOk("max_resources"); ok {
-		dom.MaxResources = v.(int)
+	vint, err = tools.GetIntValue("map_update_interval", d)
+	if err == nil {
+		dom.MapUpdateInterval = vint
 	}
-	if v, ok := d.GetOk("default_ssl_client_private_key"); ok {
-		dom.DefaultSslClientPrivateKey = v.(string)
-	} else if d.HasChange("default_ssl_client_private_key") {
-		dom.DefaultSslClientPrivateKey = v.(string)
+	vint, err = tools.GetIntValue("max_properties", d)
+	if err == nil {
+		dom.MaxProperties = vint
 	}
-	if v, ok := d.GetOk("default_error_penalty"); ok {
-		dom.DefaultErrorPenalty = v.(int)
-	} else if d.HasChange("default_error_penalty") {
-		dom.DefaultErrorPenalty = v.(int)
+	vint, err = tools.GetIntValue("max_resources", d)
+	if err == nil {
+		dom.MaxResources = vint
 	}
-	if v, ok := d.GetOk("max_test_timeout"); ok {
-		dom.MaxTestTimeout = v.(float64)
+	vstr, err = tools.GetStringValue("default_ssl_client_private_key", d)
+	if err == nil || d.HasChange("default_ssl_client_private_key") {
+		dom.DefaultSslClientPrivateKey = vstr
 	}
-	v := d.Get("cname_coalescing_enabled")
-	dom.CnameCoalescingEnabled = v.(bool)
-	if v, ok := d.GetOk("default_health_multiplier"); ok {
-		dom.DefaultHealthMultiplier = v.(float64)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() default_ssl_client_private_key failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
-	if v, ok := d.GetOk("servermonitor_pool"); ok {
-		dom.ServermonitorPool = v.(string)
+
+	vint, err = tools.GetIntValue("default_error_penalty", d)
+	if err == nil || d.HasChange("default_error_penalty") {
+		dom.DefaultErrorPenalty = vint
 	}
-	v = d.Get("load_feedback")
-	dom.LoadFeedback = v.(bool)
-	if v, ok := d.GetOk("min_ttl"); ok {
-		dom.MinTTL = int64(v.(int))
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() default_error_penalty failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
-	if v, ok := d.GetOk("default_max_unreachable_penalty"); ok {
-		dom.DefaultMaxUnreachablePenalty = v.(int)
+
+	vfloat, err = tools.GetFloat64Value("max_test_timeout", d)
+	if err == nil {
+		dom.MaxTestTimeout = vfloat
 	}
-	if v, ok := d.GetOk("default_health_threshold"); ok {
-		dom.DefaultHealthThreshold = v.(float64)
+	if cnameCoalescingEnabled, err := tools.GetBoolValue("cname_coalescing_enabled", d); err == nil {
+		dom.CnameCoalescingEnabled = cnameCoalescingEnabled
 	}
-	// Want??
-	//if v, ok := d.GetOk("last_modified_by"); ok { dom.LastModifiedBy = v.(string) }
-	// Want?
-	if v, ok := d.GetOk("modification_comments"); ok {
-		dom.ModificationComments = v.(string)
+	vfloat, err = tools.GetFloat64Value("default_health_multiplier", d)
+	if err == nil {
+		dom.DefaultHealthMultiplier = vfloat
 	}
-	if v, ok := d.GetOk("min_test_interval"); ok {
-		dom.MinTestInterval = v.(int)
+	vstr, err = tools.GetStringValue("servermonitor_pool", d)
+	if err == nil {
+		dom.ServermonitorPool = vstr
 	}
-	if v, ok := d.GetOk("ping_packet_size"); ok {
-		dom.PingPacketSize = v.(int)
+	if loadFeedback, err := tools.GetBoolValue("load_feedback", d); err == nil {
+		dom.LoadFeedback = loadFeedback
 	}
-	if v, ok := d.GetOk("default_ssl_client_certificate"); ok {
-		dom.DefaultSslClientCertificate = v.(string)
-	} else if d.HasChange("default_ssl_client_certificate") {
-		dom.DefaultSslClientCertificate = v.(string)
+	vint, err = tools.GetIntValue("min_ttl", d)
+	if err == nil {
+		dom.MinTTL = int64(vint)
 	}
-	if v, ok := d.GetOk("end_user_mapping_enabled"); ok {
-		dom.EndUserMappingEnabled = v.(bool)
+	vint, err = tools.GetIntValue("default_max_unreachable_penalty", d)
+	if err == nil {
+		dom.DefaultMaxUnreachablePenalty = vint
 	}
+	vfloat, err = tools.GetFloat64Value("default_health_threshold", d)
+	if err == nil {
+		dom.DefaultHealthThreshold = vfloat
+	}
+	vstr, err = tools.GetStringValue("comment", d)
+	if err == nil || d.HasChange("comment") {
+		dom.ModificationComments = vstr
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() comment failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+	}
+
+	vint, err = tools.GetIntValue("min_test_interval", d)
+	if err == nil {
+		dom.MinTestInterval = vint
+	}
+	vint, err = tools.GetIntValue("ping_packet_size", d)
+	if err == nil {
+		dom.PingPacketSize = vint
+	}
+	vstr, err = tools.GetStringValue("default_ssl_client_certificate", d)
+	if err == nil || d.HasChange("default_ssl_client_certificate") {
+		dom.DefaultSslClientCertificate = vstr
+	}
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		logger.Errorf("populateResourceObject() default_ssl_client_certificate failed: %v", err.Error())
+		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+	}
+
+	if vbool, err := tools.GetBoolValue("end_user_mapping_enabled", d); err == nil {
+		dom.EndUserMappingEnabled = vbool
+	}
+
+	return nil
 
 }
 
 // Populate Terraform state from provided Domain object
-func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain) {
+func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "populateTerraformState")
 
-	// walk thru all state elements
-	d.Set("name", dom.Name)
-	d.Set("type", dom.Type)
-	d.Set("default_unreachable_threshold", dom.DefaultUnreachableThreshold)
-	d.Set("email_notification_list", dom.EmailNotificationList)
-	d.Set("min_pingable_region_fraction", dom.MinPingableRegionFraction)
-	d.Set("default_timeout_penalty", dom.DefaultTimeoutPenalty)
-	d.Set("servermonitor_liveness_count", dom.ServermonitorLivenessCount)
-	d.Set("round_robin_prefix", dom.RoundRobinPrefix)
-	d.Set("servermonitor_load_count", dom.ServermonitorLoadCount)
-	d.Set("ping_interval", dom.PingInterval)
-	d.Set("max_ttl", dom.MaxTTL)
-	d.Set("load_imbalance_percentage", dom.LoadImbalancePercentage)
-	d.Set("default_health_max", dom.DefaultHealthMax)
-	d.Set("map_update_interval", dom.MapUpdateInterval)
-	d.Set("max_properties", dom.MaxProperties)
-	d.Set("max_resources", dom.MaxResources)
-	d.Set("default_ssl_client_private_key", dom.DefaultSslClientPrivateKey)
-	d.Set("default_error_penalty", dom.DefaultErrorPenalty)
-	d.Set("max_test_timeout", dom.MaxTestTimeout)
-	d.Set("cname_coalescing_enabled", dom.CnameCoalescingEnabled)
-	d.Set("default_health_multiplier", dom.DefaultHealthMultiplier)
-	d.Set("servermonitor_pool", dom.ServermonitorPool)
-	d.Set("load_feedback", dom.LoadFeedback)
-	d.Set("min_ttl", dom.MinTTL)
-	d.Set("default_max_unreachable_penalty", dom.DefaultMaxUnreachablePenalty)
-	d.Set("default_health_threshold", dom.DefaultHealthThreshold)
-	// Want??
-	//d.Set("last_modified_by", dom.LastModifiedBy)
-	// Want?
-	d.Set("modification_comments", dom.ModificationComments)
-	d.Set("min_test_interval", dom.MinTestInterval)
-	d.Set("ping_packet_size", dom.PingPacketSize)
-	d.Set("default_ssl_client_certificate", dom.DefaultSslClientCertificate)
-	d.Set("end_user_mapping_enabled", dom.EndUserMappingEnabled)
-
+	for stateKey, stateValue := range map[string]interface{}{
+		"name":                            dom.Name,
+		"type":                            dom.Type,
+		"default_unreachable_threshold":   dom.DefaultUnreachableThreshold,
+		"email_notification_list":         dom.EmailNotificationList,
+		"min_pingable_region_fraction":    dom.MinPingableRegionFraction,
+		"default_timeout_penalty":         dom.DefaultTimeoutPenalty,
+		"servermonitor_liveness_count":    dom.ServermonitorLivenessCount,
+		"round_robin_prefix":              dom.RoundRobinPrefix,
+		"servermonitor_load_count":        dom.ServermonitorLoadCount,
+		"ping_interval":                   dom.PingInterval,
+		"max_ttl":                         dom.MaxTTL,
+		"load_imbalance_percentage":       dom.LoadImbalancePercentage,
+		"default_health_max":              dom.DefaultHealthMax,
+		"map_update_interval":             dom.MapUpdateInterval,
+		"max_properties":                  dom.MaxProperties,
+		"max_resources":                   dom.MaxResources,
+		"default_ssl_client_private_key":  dom.DefaultSslClientPrivateKey,
+		"default_error_penalty":           dom.DefaultErrorPenalty,
+		"max_test_timeout":                dom.MaxTestTimeout,
+		"cname_coalescing_enabled":        dom.CnameCoalescingEnabled,
+		"default_health_multiplier":       dom.DefaultHealthMultiplier,
+		"servermonitor_pool":              dom.ServermonitorPool,
+		"load_feedback":                   dom.LoadFeedback,
+		"min_ttl":                         dom.MinTTL,
+		"default_max_unreachable_penalty": dom.DefaultMaxUnreachablePenalty,
+		"default_health_threshold":        dom.DefaultHealthThreshold,
+		"comment":                         dom.ModificationComments,
+		"min_test_interval":               dom.MinTestInterval,
+		"ping_packet_size":                dom.PingPacketSize,
+		"default_ssl_client_certificate":  dom.DefaultSslClientCertificate,
+		"end_user_mapping_enabled":        dom.EndUserMappingEnabled} {
+		// walk through all state elements
+		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			logger.Errorf("populateTerraformState failed: %s", err.Error())
+		}
+	}
 }
 
 // Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)
-func waitForCompletion(domain string) (bool, error) {
+func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTMv1", "waitForCompletion")
 
-	var defaultInterval time.Duration = 5 * time.Second
-	var defaultTimeout time.Duration = 300 * time.Second
-	var sleepInterval time.Duration = defaultInterval // seconds. TODO:Should be configurable by user ...
-	var sleepTimeout time.Duration = defaultTimeout   // seconds. TODO: Should be configurable by user ...
+	var defaultInterval = 5 * time.Second
+	var defaultTimeout = 300 * time.Second
+	var sleepInterval = defaultInterval // seconds. TODO:Should be configurable by user ...
+	var sleepTimeout = defaultTimeout   // seconds. TODO: Should be configurable by user ...
 	if HashiAcc {
 		// Override for ACC tests
 		sleepTimeout = sleepInterval
 	}
-	log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Interval [%v]", sleepInterval/time.Second)
-	log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Timeout [%v]", sleepTimeout/time.Second)
+	logger.Debugf("WAIT: Sleep Interval [%v]", sleepInterval/time.Second)
+	logger.Debugf("WAIT: Sleep Timeout [%v]", sleepTimeout/time.Second)
 	for {
-		propStat, err := gtm.GetDomainStatus(domain)
+		propStat, err := inst.Client(meta).GetDomainStatus(ctx, domain)
 		if err != nil {
 			return false, err
 		}
-		log.Printf("[DEBUG] [Akamai GTMv1] WAIT: propStat.PropagationStatus [%v]", propStat.PropagationStatus)
+		logger.Debugf("WAIT: propStat.PropagationStatus [%v]", propStat.PropagationStatus)
 		switch propStat.PropagationStatus {
 		case "COMPLETE":
-			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return COMPLETE")
+			logger.Debugf("WAIT: Return COMPLETE")
 			return true, nil
 		case "DENIED":
-			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return DENIED")
-			return false, errors.New(propStat.Message)
+			logger.Debugf("WAIT: Return DENIED")
+			return false, fmt.Errorf(propStat.Message)
 		case "PENDING":
 			if sleepTimeout <= 0 {
-				log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Return TIMED OUT")
+				logger.Debugf("WAIT: Return TIMED OUT")
 				return false, nil
 			}
 			time.Sleep(sleepInterval)
 			sleepTimeout -= sleepInterval
-			log.Printf("[DEBUG] [Akamai GTMv1] WAIT: Sleep Time Remaining [%v]", sleepTimeout/time.Second)
+			logger.Debugf("WAIT: Sleep Time Remaining [%v]", sleepTimeout/time.Second)
 		default:
-			return false, errors.New("Unknown propagationStatus while waiting for change completion") // don't know how/why we would have broken out.
+			return false, fmt.Errorf("unknown propagationStatus while waiting for change completion") // don't know how/why we would have broken out.
 		}
 	}
 }

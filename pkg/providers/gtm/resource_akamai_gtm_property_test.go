@@ -1,302 +1,310 @@
 package gtm
 
 import (
-	"errors"
-	"fmt"
-	"log"
-	"strings"
+	"net/http"
+	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/mock"
 )
 
-var testAccAkamaiGTMPropertyConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-}
-
-locals {
-  	domain = "%s"
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-	contract = data.akamai_contract.contract.id
-	comment =  "This is a test domain"
-	group = data.akamai_group.group.id
-	wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_prop_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_prop_datacenter"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]
-}   
-
-resource "akamai_gtm_property" "test_property" {
-    domain = akamai_gtm_domain.test_domain.name
-    name = "test_property"
-    type = "weighted-round-robin"
-    score_aggregation_type = "median"
-    handout_limit = 5
-    handout_mode = "normal"
-    traffic_target {
-        datacenter_id = akamai_gtm_datacenter.test_prop_datacenter.datacenter_id
-        enabled = true
-        weight = 100
-        servers = ["1.2.3.4"]
-        // optional
-        name = ""
-        handout_cname = ""
-    }
-    liveness_test {
-        name = "lt1"
-        test_interval = 30
-        test_object_protocol = "HTTP"
-        test_timeout = 20
-        test_object = "junk"
-        //
-        answers_required = false
-        disable_nonstandard_port_warning = false
-        error_penalty = 0
-        http_error3xx = false
-        http_error4xx = false
-        http_error5xx = false
-	disabled = true
-        peer_certificate_verification = false
-        recursion_requested = false
-        request_string = ""
-        resource_type = ""
-        response_string = ""
-        ssl_client_certificate = ""
-        ssl_client_private_key = ""
-        test_object_password = ""
-        test_object_port = 1
-        test_object_username = ""
-        timeout_penalty = 0
-    }
-    depends_on = [
-        akamai_gtm_domain.test_domain,
-	akamai_gtm_datacenter.test_prop_datacenter
-    ]
-}
-`, gtm_test_domain)
-
-var testAccAkamaiGTMPropertyUpdateConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-} 
-
-locals {
-        domain = "%s"
-}       
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-        contract = data.akamai_contract.contract.id
-        comment =  "This is a test domain"
-        group   = data.akamai_group.group.id
-        wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_prop_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_prop_datacenter"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]
-}
-
-resource "akamai_gtm_property" "test_property" {
-    domain = akamai_gtm_domain.test_domain.name
-    name = "test_property"
-    type = "weighted-round-robin"
-    score_aggregation_type = "median"
-    handout_limit = 6
-    handout_mode = "normal"
-    traffic_target {
-        datacenter_id = akamai_gtm_datacenter.test_prop_datacenter.datacenter_id
-        enabled = true
-        weight = 100
-        servers = ["1.2.3.4"]
-        // optional
-        name = ""
-        handout_cname = ""
-    }
-    liveness_test {
-        name = "lt1"
-        test_interval = 30
-        test_object_protocol = "HTTP"
-        test_timeout = 20
-        test_object = "/junk"
-	//
-        answers_required = false
-        disable_nonstandard_port_warning = false
-        error_penalty = 0
-        disabled = false
-        http_error3xx = false
-        http_error4xx = false
-        http_error5xx = false
-        peer_certificate_verification = false
-        recursion_requested = false
-        request_string = ""
-        resource_type = ""
-        response_string = ""
-        ssl_client_certificate = ""
-        ssl_client_private_key = ""
-        test_object_password = ""
-        test_object_port = 1
-        test_object_username = ""
-        timeout_penalty = 0
-    }
-    depends_on = [
-        akamai_gtm_domain.test_domain,
-	akamai_gtm_datacenter.test_prop_datacenter
-    ]    
-}   
-`, gtm_test_domain)
-
-func TestAccAkamaiGTMProperty_basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckProp(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMPropertyDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMPropertyConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMPropertyExists,
-					resource.TestCheckResourceAttr("akamai_gtm_property.test_property", "handout_limit", "5"),
-				),
-				ExpectNonEmptyPlan: true,
-			},
+var prop = gtm.Property{
+	BackupCName:            "",
+	BackupIp:               "",
+	BalanceByDownloadScore: false,
+	CName:                  "www.boo.wow",
+	Comments:               "",
+	DynamicTTL:             300,
+	FailbackDelay:          0,
+	FailoverDelay:          0,
+	HandoutMode:            "normal",
+	HealthMax:              0,
+	HealthMultiplier:       0,
+	HealthThreshold:        0,
+	Ipv6:                   false,
+	LastModified:           "2019-04-25T14:53:12.000+00:00",
+	Links: []*gtm.Link{
+		{
+			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/properties/test_property",
+			Rel:  "self",
 		},
-	})
-}
-
-func TestAccAkamaiGTMProperty_update(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckProp(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMPropertyDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMPropertyConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMPropertyExists,
-					resource.TestCheckResourceAttr("akamai_gtm_property.test_property", "handout_limit", "5"),
-				),
-				ExpectNonEmptyPlan: true,
-			},
-			{
-				Config: testAccAkamaiGTMPropertyUpdateConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMPropertyExists,
-					resource.TestCheckResourceAttr("akamai_gtm_property.test_property", "handout_limit", "6"),
-				),
-				ExpectNonEmptyPlan: true,
-			},
+	},
+	LivenessTests: []*gtm.LivenessTest{
+		{
+			DisableNonstandardPortWarning: false,
+			HttpError3xx:                  true,
+			HttpError4xx:                  true,
+			HttpError5xx:                  true,
+			Name:                          "health check",
+			RequestString:                 "",
+			ResponseString:                "",
+			SslClientCertificate:          "",
+			SslClientPrivateKey:           "",
+			TestInterval:                  60,
+			TestObject:                    "/status",
+			TestObjectPassword:            "",
+			TestObjectPort:                80,
+			TestObjectProtocol:            "HTTP",
+			TestObjectUsername:            "",
+			TestTimeout:                   25.0,
 		},
+	},
+	LoadImbalancePercentage:   10.0,
+	MapName:                   "",
+	MaxUnreachablePenalty:     0,
+	Name:                      "tfexample_prop_1",
+	ScoreAggregationType:      "mean",
+	StaticTTL:                 600,
+	StickinessBonusConstant:   0,
+	StickinessBonusPercentage: 50,
+	TrafficTargets: []*gtm.TrafficTarget{
+		{
+			DatacenterId: 3131,
+			Enabled:      true,
+			HandoutCName: "",
+			Name:         "",
+			Servers: []string{
+				"1.2.3.4",
+				"1.2.3.5",
+			},
+			Weight: 50.0,
+		},
+	},
+	Type:                 "weighted-round-robin",
+	UnreachableThreshold: 0,
+	UseComputedTargets:   false,
+}
+
+func TestResGtmProperty(t *testing.T) {
+
+	t.Run("create property", func(t *testing.T) {
+		client := &mockgtm{}
+
+		getCall := client.On("GetProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		resp := gtm.PropertyResponse{}
+		resp.Resource = &prop
+		resp.Status = &pendingResponseStatus
+		client.On("CreateProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		})
+
+		client.On("NewProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.Property{
+			Name: "tfexample_prop_1",
+		})
+
+		client.On("GetDomainStatus",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		client.On("NewTrafficTarget",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.TrafficTarget{})
+
+		client.On("NewStaticRRSet",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.StaticRRSet{})
+
+		liveCall := client.On("NewLivenessTest",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("float32"),
+		)
+
+		liveCall.RunFn = func(args mock.Arguments) {
+			liveCall.ReturnArguments = mock.Arguments{
+				&gtm.LivenessTest{
+					Name:               args.String(1),
+					TestObjectProtocol: args.String(2),
+					TestInterval:       args.Int(3),
+					TestTimeout:        args.Get(4).(float32),
+				},
+			}
+		}
+
+		client.On("UpdateProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		})
+
+		client.On("DeleteProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_property.tfexample_prop_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmProperty/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResGtmProperty/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
-}
 
-func testAccPreCheckProp(t *testing.T) {
+	t.Run("create property failed", func(t *testing.T) {
+		client := &mockgtm{}
 
-	testAccPreCheckTF(t)
-	testCheckDeleteProperty("test_property", gtm_test_domain)
-	testAccDeleteDatacenterByNickname("test_prop_datacenter", gtm_test_domain)
+		client.On("CreateProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Property"),
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusBadRequest,
+		})
 
-}
+		client.On("NewProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.Property{
+			Name: "tfexample_prop_1",
+		})
 
-func testCheckDeleteProperty(propName string, dom string) error {
+		client.On("NewTrafficTarget",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.TrafficTarget{})
 
-	prop, err := gtm.GetProperty(propName, dom)
-	if prop == nil {
-		return nil
-	}
-	if err != nil {
-		_, ok := err.(gtm.CommonError)
-		if ok {
-			return nil
-		} else {
-			return err
-		}
-	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test property [%v]", propName)
-	_, err = prop.Delete(dom)
-	if err != nil {
-		return fmt.Errorf("property was not deleted %s. Error: %s", propName, err.Error())
-	}
-	return nil
+		client.On("NewStaticRRSet",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.StaticRRSet{})
 
-}
+		liveCall := client.On("NewLivenessTest",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("float32"),
+		)
 
-func testAccCheckAkamaiGTMPropertyDestroy(s *terraform.State) error {
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_property" {
-			continue
-		}
-
-		propName, dom, _ := parseStringID(rs.Primary.ID)
-		if err := testCheckDeleteProperty(propName, dom); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func parseStringID(id string) (string, string, error) {
-	idComp := strings.Split(id, ":")
-	if len(idComp) < 2 {
-		return "", "", errors.New("Invalid Property ID")
-	}
-
-	return idComp[1], idComp[0], nil
-
-}
-
-func testAccCheckAkamaiGTMPropertyExists(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_property" {
-			continue
+		liveCall.RunFn = func(args mock.Arguments) {
+			liveCall.ReturnArguments = mock.Arguments{
+				&gtm.LivenessTest{
+					Name:               args.String(1),
+					TestObjectProtocol: args.String(2),
+					TestInterval:       args.Int(3),
+					TestTimeout:        args.Get(4).(float32),
+				},
+			}
 		}
 
-		prop, dom, err := parseStringID(rs.Primary.ID)
-		_, err = gtm.GetProperty(prop, dom)
-		if err != nil {
-			return err
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmProperty/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Property Create failed"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create property denied", func(t *testing.T) {
+		client := &mockgtm{}
+
+		dr := gtm.PropertyResponse{}
+		dr.Resource = &prop
+		dr.Status = &deniedResponseStatus
+		client.On("CreateProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Property"),
+			gtmTestDomain,
+		).Return(&dr, nil)
+
+		client.On("NewProperty",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.Property{
+			Name: "tfexample_prop_1",
+		})
+
+		client.On("NewTrafficTarget",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.TrafficTarget{})
+
+		client.On("NewStaticRRSet",
+			mock.Anything, // ctx is irrelevant for this test
+		).Return(&gtm.StaticRRSet{})
+
+		liveCall := client.On("NewLivenessTest",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("float32"),
+		)
+
+		liveCall.RunFn = func(args mock.Arguments) {
+			liveCall.ReturnArguments = mock.Arguments{
+				&gtm.LivenessTest{
+					Name:               args.String(1),
+					TestObjectProtocol: args.String(2),
+					TestInterval:       args.Int(3),
+					TestTimeout:        args.Get(4).(float32),
+				},
+			}
 		}
-	}
-	return nil
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmProperty/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 }

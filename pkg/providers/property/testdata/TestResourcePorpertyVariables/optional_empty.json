@@ -1,0 +1,11 @@
+{
+  "name": "",
+  "options": {},
+  "variables": [
+    {
+      "hidden": true,
+      "name": "var_1",
+      "sensitive": true
+    }
+  ]
+}
