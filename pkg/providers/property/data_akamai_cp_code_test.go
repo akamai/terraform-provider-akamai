@@ -16,7 +16,7 @@ func TestDSCPCode(t *testing.T) {
 		// name provided by fixture is "test cpcode"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_test1", Name: "wrong CP code"},
-			{ID: "cpc_test2", Name: "test cpcode", ProductIDs:[]string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_test2", Name: "test cpcode", ProductIDs: []string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
@@ -48,7 +48,7 @@ func TestDSCPCode(t *testing.T) {
 		// name provided by fixture is "test cpcode"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_test1", Name: "wrong CP code"},
-			{ID: "cpc_test2", Name: "test cpcode", ProductIDs:[]string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_test2", Name: "test cpcode", ProductIDs: []string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
@@ -82,7 +82,7 @@ func TestDSCPCode(t *testing.T) {
 		// name provided by fixture is "cpc_test2"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_test1", Name: "wrong CP code"},
-			{ID: "cpc_test2", Name: "test cpcode", ProductIDs:[]string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_test2", Name: "test cpcode", ProductIDs: []string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
@@ -114,7 +114,7 @@ func TestDSCPCode(t *testing.T) {
 		// name provided by fixture is "test2"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_test1", Name: "wrong CP code"},
-			{ID: "cpc_test2", Name: "test cpcode", ProductIDs:[]string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_test2", Name: "test cpcode", ProductIDs: []string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
