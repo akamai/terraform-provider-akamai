@@ -2,7 +2,7 @@
 layout: "akamai"
 page_title: "Akamai: Get Started with Property Management"
 description: |-
-	Get Started with Akamai Property Management using Terraform
+  Get Started with Akamai Property Management using Terraform
 ---
 
 # Get Started with Property Management
