@@ -1,5 +1,23 @@
 # RELEASE NOTES
 
+## 1.0.0 (Unreleased) Provisioning redesign
+
+#### BREAKING CHANGES:
+* resources/akamai_property restructured into several related resources to better represent associated APIs.  Property resource is now broken into three different resources : akamai_property, akamai_property_rules, and akamai_property_hostnames.  Following fields are no longer supported : cp_code, origin, rules, variables, is_secure, hostnames, contact.
+* datasource/akamai_property_rules removed in favor of using templated json object to better work with other tools and documentation that is all json based.
+* resources/akamai_property_variables removed in favor of directly managing the variable segment as part of ruletree object.
+* resources/akamai_property_activation activate attribute was dropped.
+#### NOTES:
+* provider/papi: we changed attribute names in papi to distinguishing objects and names from ids.  Where before "group" could represent a name, an id, or an object - we now distinguish between them by having distinct field names groupName, groupId and group.
+* resources/akamai_property renamed property to propertyId. contract to contractId, and product to productId and account to accountId.  Now return following additional fields : prodVersion, stageVersion, and latestVersion
+* resources/akamai_property_activation renamed property to propertyId. Now return following additional fields : targetVersion, warnings, errors, activationId, and status
+#### FEATURES:
+* resources/akamai_property api now directly manages PAPI property endpoint.  Hostname Versioning and Ruletree data are managed separated by the associated resources.  This simplifies state and make error determination and correction much simpler.
+* resources/akamai_property_rules manages property versioning and ruletree data.  These two concepts are closely related and need to be managed as a single resource.
+* resources/akamai_property_hostnames manages property hostname associations.
+#### ENHANCEMENTS:
+#### BUG FIXES:
+
 ## 0.10.2 (Oct 22,2020)
 #### NOTES:
 * Documentation formatting
