@@ -29,6 +29,11 @@ func dataSourceCPCode() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"product_ids": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
 		},
 	}
 }
@@ -54,7 +59,7 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	cpCode, err := findCPCode(ctx, name, contract, group)
+	cpCode, err := findCPCode(ctx, name, contract, group, meta)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("could not load CP codes: %w", err))
 	}
@@ -67,6 +72,9 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("product_ids", cpCode.ProductIDs); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(cpCode.ID)
 
 	log.Debugf("Read CP Code: %+v", cpCode)
@@ -74,8 +82,9 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 // findCPCode searches all CP codes for a match against given nameOrID
-func findCPCode(ctx context.Context, nameOrID, contractID, groupID string) (*papi.CPCode, error) {
-	r, err := inst.client.GetCPCodes(ctx, papi.GetCPCodesRequest{
+func findCPCode(ctx context.Context, nameOrID, contractID, groupID string, meta akamai.OperationMeta) (*papi.CPCode, error) {
+	client := inst.Client(meta)
+	r, err := client.GetCPCodes(ctx, papi.GetCPCodesRequest{
 		ContractID: contractID,
 		GroupID:    groupID,
 	})

@@ -4,14 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -205,6 +207,11 @@ func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
 func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainCreate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	dname, err := tools.GetStringValue("name", d)
 	if err != nil {
@@ -212,7 +219,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	logger.Infof("Creating domain [%s]", dname)
-	newDom, err := populateNewDomainObject(d, m)
+	newDom, err := populateNewDomainObject(ctx, meta, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -227,7 +234,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	cStatus, err := newDom.Create(queryArgs)
+	cStatus, err := inst.Client(meta).CreateDomain(ctx, newDom, queryArgs)
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
@@ -238,7 +245,8 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 				Detail:   err.Error(),
 			})
 		}
-		if _, ok := err.(gtm.CommonError); !ok {
+		apiError, ok := err.(*gtm.Error)
+		if !ok && apiError.StatusCode != http.StatusBadRequest {
 			logger.Errorf("Domain Create failed: %s", err.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -246,16 +254,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 				Detail:   err.Error(),
 			})
 		}
-		origErr, ok := err.(gtm.CommonError).GetItem("err").(client.APIError)
-		if !ok {
-			logger.Errorf("DomainCreate failed: %s", err.Error())
-			return append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Domain Create failed",
-				Detail:   err.Error(),
-			})
-		}
-		if origErr.Status == 400 && strings.Contains(origErr.RawBody, "proposed domain name") && strings.Contains(origErr.RawBody, "Domain Validation Error") {
+		if strings.Contains(apiError.Detail, "proposed domain name") && strings.Contains(apiError.Detail, "Domain Validation Error") {
 			// Already exists
 			logger.Warnf("Domain %s already exists. Ignoring error (Hashicorp).", dname)
 		} else {
@@ -282,7 +281,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		}
 
 		if waitOnComplete {
-			done, err := waitForCompletion(dname, m)
+			done, err := waitForCompletion(ctx, dname, m)
 			if done {
 				logger.Infof("Domain Create completed")
 			} else {
@@ -310,11 +309,16 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainRead")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Reading Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the domain
-	dom, err := gtm.GetDomain(d.Id())
+	dom, err := inst.Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
 		logger.Errorf("Domain Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -332,11 +336,16 @@ func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m inte
 func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainUpdate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Updating Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := gtm.GetDomain(d.Id())
+	existDom, err := inst.Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
 		logger.Errorf("Domain Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -361,7 +370,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	uStat, err := existDom.Update(args)
+	uStat, err := inst.Client(meta).UpdateDomain(ctx, existDom, args)
 	if err != nil {
 		logger.Errorf("Domain Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -385,7 +394,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(d.Id(), m)
+		done, err := waitForCompletion(ctx, d.Id(), m)
 		if done {
 			logger.Infof("Domain Update completed")
 		} else {
@@ -411,11 +420,16 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainDelete")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Deleting GTM Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := gtm.GetDomain(d.Id())
+	existDom, err := inst.Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
 		logger.Errorf("Domain Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -424,7 +438,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	uStat, err := existDom.Delete()
+	uStat, err := inst.Client(meta).DeleteDomain(ctx, existDom)
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
@@ -435,7 +449,8 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 				Detail:   err.Error(),
 			})
 		}
-		if _, ok := err.(gtm.CommonError); !ok {
+		apiError, ok := err.(*gtm.Error)
+		if !ok && apiError.StatusCode != http.StatusMethodNotAllowed {
 			logger.Errorf("Error Domain Delete: %s", err.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -443,16 +458,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 				Detail:   err.Error(),
 			})
 		}
-		origErr, ok := err.(gtm.CommonError).GetItem("err").(client.APIError)
-		if !ok {
-			logger.Errorf("Error Domain Delete: %s", err.Error())
-			return append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Domain Delete error",
-				Detail:   err.Error(),
-			})
-		}
-		if origErr.Status == 405 && strings.Contains(origErr.RawBody, "Bad Request") && strings.Contains(origErr.RawBody, "DELETE method is not supported") {
+		if strings.Contains(apiError.Detail, "Bad Request") && strings.Contains(apiError.Detail, "DELETE method is not supported") {
 			logger.Warnf(": Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
 		} else {
 			logger.Errorf("Error Domain Delete: %s", err.Error())
@@ -478,7 +484,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 		}
 
 		if waitOnComplete {
-			done, err := waitForCompletion(d.Id(), m)
+			done, err := waitForCompletion(ctx, d.Id(), m)
 			if done {
 				logger.Infof("Domain Delete completed")
 			} else {
@@ -510,10 +516,10 @@ func validateDomainType(v interface{}, _ string) (ws []string, es []error) {
 }
 
 // Create and populate a new domain object from resource data
-func populateNewDomainObject(d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
+func populateNewDomainObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
 
 	name, _ := tools.GetStringValue("name", d)
-	domObj := gtm.NewDomain(name, d.Get("type").(string))
+	domObj := inst.Client(meta).NewDomain(ctx, name, d.Get("type").(string))
 	err := populateDomainObject(d, domObj, m)
 
 	return domObj, err
@@ -743,7 +749,7 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface
 }
 
 // Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)
-func waitForCompletion(domain string, m interface{}) (bool, error) {
+func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTMv1", "waitForCompletion")
 
@@ -758,7 +764,7 @@ func waitForCompletion(domain string, m interface{}) (bool, error) {
 	logger.Debugf("WAIT: Sleep Interval [%v]", sleepInterval/time.Second)
 	logger.Debugf("WAIT: Sleep Timeout [%v]", sleepTimeout/time.Second)
 	for {
-		propStat, err := gtm.GetDomainStatus(domain)
+		propStat, err := inst.Client(meta).GetDomainStatus(ctx, domain)
 		if err != nil {
 			return false, err
 		}

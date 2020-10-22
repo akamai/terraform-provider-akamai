@@ -1,0 +1,13 @@
+{
+  "behaviors": [
+    {
+      "name": "beh_1",
+      "options": null
+    }
+  ],
+  "name": "default",
+  "options": {
+    "is_secure": true
+  },
+  "criteriaMustSatisfy": "all"
+}

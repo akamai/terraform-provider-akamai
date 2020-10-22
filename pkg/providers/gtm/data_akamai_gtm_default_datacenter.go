@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/apex/log"
@@ -47,6 +49,12 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "dataSourceGTMDefaultDatacenterRead")
 
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+
 	domain, err := tools.GetStringValue("domain", d)
 	if err != nil {
 		logger.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
@@ -67,14 +75,14 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 		"dcid":   dcid,
 	}).Debug("Start Default Datacenter Retrieval")
 
-	var defaultDC = gtm.NewDatacenter()
+	var defaultDC = inst.Client(meta).NewDatacenter(ctx)
 	switch dcid {
 	case gtm.MapDefaultDC:
-		defaultDC, err = gtm.CreateMapsDefaultDatacenter(domain)
+		defaultDC, err = inst.Client(meta).CreateMapsDefaultDatacenter(ctx, domain)
 	case gtm.Ipv4DefaultDC:
-		defaultDC, err = gtm.CreateIPv4DefaultDatacenter(domain)
+		defaultDC, err = inst.Client(meta).CreateIPv4DefaultDatacenter(ctx, domain)
 	case gtm.Ipv6DefaultDC:
-		defaultDC, err = gtm.CreateIPv6DefaultDatacenter(domain)
+		defaultDC, err = inst.Client(meta).CreateIPv6DefaultDatacenter(ctx, domain)
 	default:
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,

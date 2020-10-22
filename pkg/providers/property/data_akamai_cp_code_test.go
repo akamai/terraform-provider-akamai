@@ -16,7 +16,7 @@ func TestDSCPCode(t *testing.T) {
 		// name provided by fixture is "test cpcode"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_test1", Name: "wrong CP code"},
-			{ID: "cpc_test2", Name: "test cpcode"},
+			{ID: "cpc_test2", Name: "test cpcode", ProductIDs:[]string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
@@ -31,6 +31,43 @@ func TestDSCPCode(t *testing.T) {
 					Config: loadFixtureString("testdata/TestDSCPCode/match_by_name.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "cpc_test2"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group", "grp_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract", "ctr_test"),
+					),
+				}},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("match by name output products", func(t *testing.T) {
+		client := &mockpapi{}
+
+		// name provided by fixture is "test cpcode"
+		cpc := papi.CPCodeItems{Items: []papi.CPCode{
+			{ID: "cpc_test1", Name: "wrong CP code"},
+			{ID: "cpc_test2", Name: "test cpcode", ProductIDs:[]string{"prd_test1", "prd_test2"}},
+		}}
+
+		client.On("GetCPCodes",
+			mock.Anything, // ctx is irrelevant for this test
+			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
+		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{{
+					Config: loadFixtureString("testdata/TestDSCPCode/match_by_name_output_products.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "cpc_test2"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group", "grp_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract", "ctr_test"),
+						resource.TestCheckOutput("product1", "prd_test1"),
+						resource.TestCheckOutput("product2", "prd_test2"),
 					),
 				}},
 			})
@@ -45,7 +82,7 @@ func TestDSCPCode(t *testing.T) {
 		// name provided by fixture is "cpc_test2"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_test1", Name: "wrong CP code"},
-			{ID: "cpc_test2", Name: "test cpcode"},
+			{ID: "cpc_test2", Name: "test cpcode", ProductIDs:[]string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
@@ -60,6 +97,9 @@ func TestDSCPCode(t *testing.T) {
 					Config: loadFixtureString("testdata/TestDSCPCode/match_by_full_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "cpc_test2"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group", "grp_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract", "ctr_test"),
 					),
 				}},
 			})
@@ -74,7 +114,7 @@ func TestDSCPCode(t *testing.T) {
 		// name provided by fixture is "test2"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_test1", Name: "wrong CP code"},
-			{ID: "cpc_test2", Name: "test cpcode"},
+			{ID: "cpc_test2", Name: "test cpcode", ProductIDs:[]string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",

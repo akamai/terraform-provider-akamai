@@ -3,11 +3,8 @@ package property
 import (
 	"fmt"
 	"log"
-	"strconv"
-	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -328,74 +325,11 @@ func testAccCheckAkamaiPropertyActivationDestroy(s *terraform.State) error {
 }
 
 func testAccCheckAkamaiPropertyActivationExists(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_property_activation" {
-			continue
-		}
-
-		propertyID := rs.Primary.Attributes["property"]
-
-		property := papi.NewProperty(papi.NewProperties())
-		property.PropertyID = propertyID
-		property.Contract = &papi.Contract{ContractID: rs.Primary.Attributes["contract"]}
-		property.Group = &papi.Group{GroupID: rs.Primary.Attributes["group"]}
-
-		e := property.GetProperty("CORRELATIONID")
-		if e != nil {
-			return e
-		}
-
-		log.Printf("[DEBUG] GET ACTIVATION PROPERTY %v", property)
-
-		activations, e := property.GetActivations()
-		if e != nil {
-			return e
-		}
-		log.Printf("[DEBUG] ACTIVATION activations %v", activations)
-		activation, e := activations.GetLatestActivation(papi.NetworkValue(strings.ToUpper(rs.Primary.Attributes["network"])), papi.StatusActive)
-		if e != nil {
-			return e
-		}
-		log.Printf("[DEBUG] ACTIVATION activations get latest %v", activations)
-		log.Printf("[DEBUG] ACTIVATION activation get latest %v", activation)
-	}
+	// TODO: rewrite for v2???
 	return nil
 }
 
 func testAccCheckAkamaiPropertyActivationLatest(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_property_activation" {
-			continue
-		}
-
-		propertyID := rs.Primary.Attributes["property"]
-
-		property := papi.NewProperty(papi.NewProperties())
-		property.PropertyID = propertyID
-		property.Contract = &papi.Contract{ContractID: rs.Primary.Attributes["contract"]}
-		property.Group = &papi.Group{GroupID: rs.Primary.Attributes["group"]}
-
-		e := property.GetProperty("CORRELATIONID")
-		if e != nil {
-			return e
-		}
-
-		log.Printf("[DEBUG] GET ACTIVATION PROPERTY %v", property)
-
-		activations, e := property.GetActivations()
-		if e != nil {
-			return e
-		}
-		log.Printf("[DEBUG] ACTIVATION activations %v", activations)
-		activation, e := activations.GetLatestActivation(papi.NetworkValue(strings.ToUpper(rs.Primary.Attributes["network"])), papi.StatusActive)
-		if e != nil {
-			return e
-		}
-
-		version := strconv.Itoa(activation.PropertyVersion)
-		resource.TestCheckResourceAttr("akamai_property.property", "version", version)
-		log.Printf("[DEBUG] ACTIVATION activations get latest %v", activations)
-		log.Printf("[DEBUG] ACTIVATION activation get latest %v", activation)
-	}
+	// TODO: rewrite for v2???
 	return nil
 }

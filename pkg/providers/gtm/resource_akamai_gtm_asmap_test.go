@@ -1,302 +1,199 @@
 package gtm
 
 import (
-	"fmt"
-	"log"
-	"strconv"
+	"net/http"
+	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/mock"
 )
 
-var testAccAkamaiGTMAsMapConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-}
-
-locals {
-  	domain = "%s"
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter = 5400
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-	contract = data.akamai_contract.contract.id
-	comment =  "This is a test zone"
-	group  = data.akamai_group.group.id
-        load_imbalance_percentage = 10
-	wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_as_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_as_datacenter"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]
-}
-
-resource "akamai_gtm_asmap" "test_as" {
-    domain = akamai_gtm_domain.test_domain.name
-    name = "test_asmap"
-    default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
-    }
-    assignment {
-        datacenter_id = akamai_gtm_datacenter.test_as_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_as_datacenter.nickname
-        as_numbers = [17334]
-    }
-    wait_on_complete = false
-    depends_on = [
-        akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_as_datacenter
-    ]
-}`, gtmTestDomain)
-
-var testAccAkamaiGTMAsMapUpdateConfig = fmt.Sprintf(`
-provider "akamai" {
-  gtm_section = "gtm"
-} 
-
-locals {
-        domain = "%s"
-}       
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-data "akamai_gtm_default_datacenter" "default_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    datacenter = 5400
-}
-
-resource "akamai_gtm_domain" "test_domain" {
-        name = local.domain
-        type = "weighted"
-        contract = data.akamai_contract.contract.id
-        comment =  "This is a test zone"
-        group  = data.akamai_group.group.id
-        load_imbalance_percentage = 10
-        wait_on_complete = false
-}
-
-resource "akamai_gtm_datacenter" "test_as_datacenter" {
-    domain = akamai_gtm_domain.test_domain.name
-    nickname = "test_as_datacenter"
-    wait_on_complete = false
-    default_load_object {
-        load_object = "test"
-        load_object_port = 80
-        load_servers = ["1.2.3.4", "1.2.3.5"]
-    }  
-    depends_on = [
-         akamai_gtm_domain.test_domain
-    ]    
-}  
-
-resource "akamai_gtm_asmap" "test_as" {
-    domain = akamai_gtm_domain.test_domain.name
-    name = "test_asmap"
-    default_datacenter {
-        datacenter_id = data.akamai_gtm_default_datacenter.default_datacenter.datacenter_id
-        nickname = data.akamai_gtm_default_datacenter.default_datacenter.nickname
-    }
-    assignment {
-        datacenter_id = akamai_gtm_datacenter.test_as_datacenter.datacenter_id
-        nickname = akamai_gtm_datacenter.test_as_datacenter.nickname
-        as_numbers = [17334]
-    }
-    wait_on_complete = false
-    depends_on = [
-        akamai_gtm_domain.test_domain,
-        akamai_gtm_datacenter.test_as_datacenter
-    ]
- 
-}`, gtmTestDomain)
-
-var asMap *gtm.AsMap
-
-func TestAccAkamaiGTMAsMap_basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckAS(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMAsMapDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMAsMapConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMAsMapExists,
-					testAccCheckNumbersValues,
-					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
-				),
+var asmap = gtm.AsMap{
+	Name: "tfexample_as_1",
+	DefaultDatacenter: &gtm.DatacenterBase{
+		DatacenterId: 5400,
+		Nickname:     "default datacenter",
+	},
+	Assignments: []*gtm.AsAssignment{
+		{
+			DatacenterBase: gtm.DatacenterBase{
+				DatacenterId: 3131,
+				Nickname:     "tfexample_dc_1",
 			},
+			AsNumbers: []int64{12222, 16702, 17334},
 		},
-	})
-}
-
-func TestAccAkamaiGTMAsMap_update(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckAS(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiGTMAsMapDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAkamaiGTMAsMapConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMAsMapExists,
-					testAccCheckNumbersValues,
-					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
-				),
+		{
+			DatacenterBase: gtm.DatacenterBase{
+				DatacenterId: 3132,
+				Nickname:     "tfexample_dc_2",
 			},
-			{
-				Config: testAccAkamaiGTMAsMapUpdateConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiGTMAsMapExists,
-					testAccCheckNumbersValues,
-					resource.TestCheckResourceAttr("akamai_gtm_asmap.test_as", "wait_on_complete", "false"),
-				),
-			},
+			AsNumbers: []int64{12229, 16703, 17335},
 		},
+	},
+}
+
+func TestResGtmAsmap(t *testing.T) {
+	dc := gtm.Datacenter{
+		DatacenterId: asmap.DefaultDatacenter.DatacenterId,
+		Nickname:     asmap.DefaultDatacenter.Nickname,
+	}
+
+	t.Run("create asmap", func(t *testing.T) {
+		client := &mockgtm{}
+
+		getCall := client.On("GetAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		resp := gtm.AsMapResponse{}
+		resp.Resource = &asmap
+		resp.Status = &pendingResponseStatus
+
+		client.On("NewAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&asmap, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
+
+		client.On("CreateAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.AsMap"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.AsMapResponse{
+			Resource: &asmap,
+			Status:   &gtm.ResponseStatus{},
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{resp.Resource, nil}
+		})
+
+		client.On("GetDomainStatus",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		client.On("UpdateAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.AsMap"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		client.On("DeleteAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.AsMap"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_asmap.tfexample_as_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResGtmAsmap/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
-}
 
-func testAccPreCheckAS(t *testing.T) {
+	t.Run("create asmap failed", func(t *testing.T) {
+		client := &mockgtm{}
 
-	testAccPreCheckTF(t)
-	testCheckDeleteAsMap("test_asmap", gtmTestDomain)
-	testAccDeleteDatacenterByNickname("test_as_datacenter", gtmTestDomain)
+		client.On("CreateAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.AsMap"),
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusBadRequest,
+		})
 
-}
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
 
-func testCheckDeleteAsMap(asName string, dom string) error {
+		client.On("NewAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&asmap, nil)
 
-	as, err := gtm.GetAsMap(asName, dom)
-	if as == nil {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	log.Printf("[DEBUG] [Akamai GTMv1] Deleting test asmap [%v]", asName)
-	_, err = as.Delete(dom)
-	if err != nil {
-		return fmt.Errorf("asmap was not deleted %s. Error: %s", asName, err.Error())
-	}
-	return nil
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
+						ExpectError: regexp.MustCompile("asMap Create failed"),
+					},
+				},
+			})
+		})
 
-}
+		client.AssertExpectations(t)
+	})
 
-func testAccCheckAkamaiGTMAsMapDestroy(s *terraform.State) error {
+	t.Run("create asmap denied", func(t *testing.T) {
+		client := &mockgtm{}
 
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_asmap" {
-			continue
-		}
+		dr := gtm.AsMapResponse{}
+		dr.Resource = &asmap
+		dr.Status = &deniedResponseStatus
+		client.On("CreateAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.AsMap"),
+			gtmTestDomain,
+		).Return(&dr, nil)
 
-		asName, dom, _ := parseStringID(rs.Primary.ID)
-		if err := testCheckDeleteAsMap(asName, dom); err != nil {
-			return err
-		}
-	}
-	return nil
-}
+		client.On("GetDatacenter",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
 
-func testAccCheckNumbersValues(s *terraform.State) error {
+		client.On("NewAsMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&asmap, nil)
 
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_asmap" {
-			continue
-		}
-		if asMap == nil {
-			return fmt.Errorf("asmap was not found for as_Numbers check")
-		}
-		log.Printf("[DEBUG] [Akamai GTMV1_3] ASMAP Validating as_numbers")
-		// Walk through all attributes
-		mapAttribs := rs.Primary.Attributes
-		assignEntries, err := strconv.Atoi(mapAttribs["assignment.#"])
-		if err != nil {
-			return fmt.Errorf("assignments attribute was not found")
-		}
-		// Construct a list to compare
-		assignMap := make(map[int][]int)
-		for i := 0; i < assignEntries; i++ {
-			iString := strconv.Itoa(i)
-			assignBaseIndex := "assignments." + iString + "."
-			dcid, _ := strconv.Atoi(mapAttribs[assignBaseIndex+"datacenter_id"])
-			numbersEntries, _ := strconv.Atoi(mapAttribs[assignBaseIndex+"as_numbers.#"])
-			var numbersMap []int
-			numbersBaseIndex := assignBaseIndex + "as_numbers."
-			for j := 0; j < numbersEntries; j++ {
-				jString := strconv.Itoa(j)
-				numEntry, _ := strconv.Atoi(mapAttribs[numbersBaseIndex+jString])
-				numbersMap = append(numbersMap, numEntry)
-			}
-			assignMap[dcid] = numbersMap
-		}
-		for id, entry := range assignMap {
-			for _, rAssignment := range asMap.Assignments {
-				if id != rAssignment.DatacenterId {
-					continue
-				}
-				compares := 0
-				for _, n := range entry {
-					for _, rasn := range rAssignment.AsNumbers {
-						if rasn == int64(n) {
-							compares += 1
-							continue
-						}
-					}
-				}
-				if compares != len(entry) {
-					return fmt.Errorf("assignments numbers mismatch")
-				}
-				log.Printf("[DEBUG] [Akamai GTMV1_3] ASMAP assignment numbers DC match [%v]", id)
-			}
-		}
-		return nil // only one
-	}
-	return fmt.Errorf("AsMap resource not found in state")
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+					},
+				},
+			})
+		})
 
-}
-
-func testAccCheckAkamaiGTMAsMapExists(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_gtm_asmap" {
-			continue
-		}
-
-		asName, dom, err := parseStringID(rs.Primary.ID)
-		if err != nil {
-			return err
-		}
-		asMap, err = gtm.GetAsMap(asName, dom)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+		client.AssertExpectations(t)
+	})
 }

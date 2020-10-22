@@ -276,14 +276,12 @@ func unmarshalRules(d *schema.ResourceData) (papi.Rules, error) {
 
 						// Fixup CPCode
 						if beh.Name == "cpCode" {
-							if _, ok := beh.Options["value"]; !ok {
-								if _, ok := beh.Options["id"]; ok {
-									cpCodeID, err := tools.GetIntID(beh.Options["id"].(string), "cpc_")
-									if err != nil {
-										return papi.Rules{}, err
-									}
-									beh.Options = papi.RuleOptionsMap{"value": map[string]interface{}{"id": cpCodeID}}
+							if cpCodeOption, ok := beh.Options["id"]; ok {
+								cpCodeID, err := tools.GetIntID(tools.ConvertToString(cpCodeOption), "cpc_")
+								if err != nil {
+									return papi.Rules{}, err
 								}
+								beh.Options = papi.RuleOptionsMap{"value": map[string]interface{}{"id": cpCodeID}}
 							}
 						}
 

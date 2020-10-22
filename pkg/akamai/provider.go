@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -178,9 +177,6 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				operationID: opid,
 				sess:        sess,
 			}
-
-			// DEPRECATED: once the client is updated to v2 this will be done elsewhere
-			client.UserAgent = userAgent
 
 			return meta, nil
 		}

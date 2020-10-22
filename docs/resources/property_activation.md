@@ -30,11 +30,11 @@ The following arguments are supported:
 * `property` — (Required) The property ID.
 * `version` — (Optional) The version to activate. When unset it will activate the latest version of the property.
 * `network` — (Optional) Akamai network to activate on. Allowed values `staging` or `production` (Default: `staging`).
-* `activate` — (Optional, boolean) Whether to activate the property on the network. (Default: `true`).
+* `activate` — (Deprecated, Optional, boolean) Whether to activate the property on the network. (Default: `true`).
 * `contact` — (Required) One or more email addresses to inform about activation changes.
 
 ## Attribute Reference
 
-The follwing attributes are returned:
+The following attributes are returned:
 
 * `status` — the current activation status

@@ -43,9 +43,10 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"edge_hostname": {
-		Type:     schema.TypeString,
-		Required: true,
-		ForceNew: true,
+		Type:             schema.TypeString,
+		Required:         true,
+		ForceNew:         true,
+		DiffSuppressFunc: suppressEdgeHostnameDomain,
 	},
 	"ipv4": {
 		Type:     schema.TypeBool,
@@ -76,69 +77,26 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	client := inst.Client(meta)
 
-	groupName, err := tools.GetStringValue("group", d)
+	group, err := getGroup(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-	contractID, err := tools.GetStringValue("contract", d)
-	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
 	}
 
-	groups, err := getGroups(ctx, meta)
+	contract, err := getContract(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	group, err := findGroupByName(groupName, contractID, groups, false)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	contracts, err := client.GetContracts(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	var contract *papi.Contract
-	for _, c := range contracts.Contracts.Items {
-		if c.ContractID == contractID {
-			contract = c
-			break
-		}
-	}
-	if contract == nil {
-		return diag.FromErr(errors.New("contract must be specified to create a new Edge Hostname"))
+		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
 	}
 
 	logger.Debugf("  Edgehostnames GROUP = %v", group)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contract)
 
-	products, err := client.GetProducts(ctx, papi.GetProductsRequest{
-		ContractID: contractID,
-	})
+	product, err := getProduct(ctx, d, contract.ContractID, meta)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	productID, err := tools.GetStringValue("product", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	var product *papi.ProductItem
-	for _, p := range products.Products.Items {
-		if p.ProductID == productID {
-			product = &p
-			break
-		}
-	}
-	if product == nil {
-		return diag.FromErr(errors.New("product must be specified to create a new Edge Hostname"))
+		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
 	}
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-		ContractID: contractID,
+		ContractID: contract.ContractID,
 		GroupID:    group.GroupID,
 	})
 	if err != nil {
@@ -150,31 +108,23 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	newHostname := papi.EdgeHostnameCreate{}
 	newHostname.ProductID = product.ProductID
+	newHostname.DomainSuffix = "edgesuite.net"
 
 	switch {
 	case strings.HasSuffix(edgeHostname, ".edgesuite.net"):
-		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgesuite.net")
 		newHostname.DomainSuffix = "edgesuite.net"
-		newHostname.SecureNetwork = "STANDARD_TLS"
+		newHostname.SecureNetwork = papi.EHSecureNetworkStandardTLS
 	case strings.HasSuffix(edgeHostname, ".edgekey.net"):
-		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, ".edgekey.net")
 		newHostname.DomainSuffix = "edgekey.net"
-		newHostname.SecureNetwork = "ENHANCED_TLS"
+		newHostname.SecureNetwork = papi.EHSecureNetworkEnhancedTLS
 	case strings.HasSuffix(edgeHostname, ".akamaized.net"):
-		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, ".akamaized.net")
 		newHostname.DomainSuffix = "akamaized.net"
-		newHostname.SecureNetwork = "SHARED_CERT"
+		newHostname.SecureNetwork = papi.EHSecureNetworkSharedCert
 	}
-
-	for _, h := range edgeHostnames.EdgeHostnames.Items {
-		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
-			d.SetId(h.ID)
-			return nil
-		}
-	}
+	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
 
 	ipv4, _ := tools.GetBoolValue("ipv4", d)
-	if ipv4 {
+	if ipv4, _ := tools.GetBoolValue("ipv4", d); ipv4 {
 		newHostname.IPVersionBehavior = "IPV4"
 	}
 	ipv6, _ := tools.GetBoolValue("ipv6", d)
@@ -184,12 +134,19 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if ipv4 && ipv6 {
 		newHostname.IPVersionBehavior = "IPV6_COMPLIANCE"
 	}
-	if !(ipv4 && ipv6) {
+	if !(ipv4 || ipv6) {
 		return diag.FromErr(fmt.Errorf("ipv4 or ipv6 must be specified to create a new Edge Hostname"))
 	}
 
 	if err := d.Set("ip_behavior", newHostname.IPVersionBehavior); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	for _, h := range edgeHostnames.EdgeHostnames.Items {
+		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
+			d.SetId(h.ID)
+			return nil
+		}
 	}
 
 	certEnrollmentID, err := tools.GetIntValue("certificate", d)
@@ -198,7 +155,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 		if newHostname.SecureNetwork == "ENHANCED_TLS" {
-			return diag.FromErr(errors.New("A certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames"))
+			return diag.FromErr(fmt.Errorf("A certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames"))
 		}
 	}
 
@@ -208,18 +165,21 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	logger.Debugf("Creating new edge hostname: %#v", newHostname)
 	hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
 		EdgeHostname: newHostname,
+		ContractID:   contract.ContractID,
+		GroupID:      group.GroupID,
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(hostname.EdgeHostnameID)
-	return nil
+	return resourceSecureEdgeHostNameRead(ctx, d, meta)
 }
 
 func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
 	logger.Debugf("DELETING")
+	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
 	d.SetId("")
 	logger.Debugf("DONE")
 	return nil
@@ -264,19 +224,13 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, err
 	}
 
-	if err := d.Set("account", prop.Property.AccountID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
 	if err := d.Set("contract", prop.Property.ContractID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group", prop.Property.GroupID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("name", prop.Property.PropertyName); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("version", prop.Property.LatestVersion); err != nil {
+	if err := d.Set("edge_hostname", prop.Property.GroupID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	d.SetId(prop.Property.PropertyID)
@@ -290,66 +244,40 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 
 	client := inst.Client(meta)
 
-	groupName, err := tools.GetStringValue("group", d)
+	group, err := getGroup(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-	contractID, err := tools.GetStringValue("contract", d)
-	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("updating edge hostname: %w", err))
 	}
 
-	groups, err := getGroups(ctx, meta)
+	contract, err := getContract(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("updating edge hostname: %w", err))
 	}
 
-	group, err := findGroupByName(groupName, contractID, groups, false)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	contracts, err := client.GetContracts(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	var contract *papi.Contract
-	for _, c := range contracts.Contracts.Items {
-		if c.ContractID == contractID {
-			contract = c
-			break
-		}
-	}
-	if contract == nil {
-		return diag.FromErr(errors.New("contract must be specified to create a new Edge Hostname"))
-	}
+	logger.Debugf("  Edgehostnames GROUP = %v", group)
+	logger.Debugf("Edgehostnames CONTRACT = %v", contract)
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-		ContractID: contractID,
+		ContractID: contract.ContractID,
 		GroupID:    group.GroupID,
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	defaultEdgeHostname := edgeHostnames.EdgeHostnames.Items[0]
+	defaultEdgeHostname := &edgeHostnames.EdgeHostnames.Items[0]
 
 	edgeHostname, err := tools.GetStringValue("edge_hostname", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	var edgeHostnameID string
-
 	if edgeHostname != "" {
-		for _, h := range edgeHostnames.EdgeHostnames.Items {
-			if h.Domain == edgeHostname {
-				defaultEdgeHostname = h
-				edgeHostnameID = h.ID
-
-				logger.Debugf("Default EdgeHostname %v", defaultEdgeHostname)
-				break
-			}
+		found, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostname)
+		if err != nil && !errors.Is(err, ErrEdgeHostnameNotFound) {
+			return diag.FromErr(err)
+		}
+		if err == nil {
+			defaultEdgeHostname = found
 		}
 	}
 
@@ -362,7 +290,39 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err := d.Set("edge_hostname", defaultEdgeHostname.Domain); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	d.SetId(edgeHostnameID)
+	d.SetId(defaultEdgeHostname.ID)
 
 	return nil
+}
+
+func suppressEdgeHostnameDomain(_, old, new string, _ *schema.ResourceData) bool {
+	if old == new {
+		return true
+	}
+	if !(strings.HasSuffix(new, "edgekey.net") || strings.HasSuffix(new, "edgesuite.net") || strings.HasSuffix(new, "akamaized.net")) {
+		return old == fmt.Sprintf("%s.edgesuite.net", new)
+	}
+	return false
+}
+
+func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*papi.EdgeHostnameGetItem, error) {
+	var prefix string
+	suffix := "edgesuite.net"
+	if domain != "" {
+		if strings.HasSuffix(domain, "edgekey.net") {
+			suffix = "edgekey.net"
+		}
+		if strings.HasSuffix(domain, "akamaized.net") {
+			suffix = "akamaized.net"
+		}
+		prefix = strings.TrimSuffix(domain, "."+suffix)
+	}
+
+	for _, eHn := range edgeHostnames.Items {
+		if eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix {
+			return &eHn, nil
+		}
+	}
+
+	return nil, fmt.Errorf("%w: %s", ErrEdgeHostnameNotFound, domain)
 }

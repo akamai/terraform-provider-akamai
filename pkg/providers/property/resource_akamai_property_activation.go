@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cast"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/apex/log"
@@ -24,6 +26,9 @@ func resourcePropertyActivation() *schema.Resource {
 		UpdateContext: resourcePropertyActivationUpdate,
 		DeleteContext: resourcePropertyActivationDelete,
 		Schema:        akamaiPropertyActivationSchema,
+		Timeouts: &schema.ResourceTimeout{
+			Default: &PropertyResourceTimeout,
+		},
 	}
 }
 
@@ -35,6 +40,9 @@ const (
 var (
 	// ActivationPollInterval is the interval for polling an activation status on creation
 	ActivationPollInterval = ActivationPollMinimum
+
+	// PropertyResourceTimeout is the default timeout for the resource operations
+	PropertyResourceTimeout = time.Minute * 90
 )
 
 var akamaiPropertyActivationSchema = map[string]*schema.Schema{
@@ -49,13 +57,13 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"network": {
 		Type:     schema.TypeString,
 		Optional: true,
-		Default:  "staging",
+		Default:  "STAGING",
 	},
 	"activate": {
 		Type:       schema.TypeBool,
 		Optional:   true,
 		Default:    true,
-		Deprecated: "the activate flag has been deprecated, activation will no always be performed",
+		Deprecated: "the activate flag has been deprecated, in future activation will always be performed",
 	},
 	"contact": {
 		Type:     schema.TypeSet,
@@ -73,11 +81,17 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
 	client := inst.Client(meta)
 
+	log.Debug("resourcePropertyActivationCreate call")
+
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
 	)
+
+	if dead, ok := ctx.Deadline(); ok {
+		logger.Debugf("activation create with deadline in %s", dead.Sub(time.Now()).String())
+	}
 
 	activate, err := tools.GetBoolValue("activate", d)
 	if err != nil {
@@ -85,19 +99,11 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	if !activate {
 		d.SetId("none")
-		logger.Debugf("Done")
+		logger.Debugf("Done - activate=false")
 		return nil
 	}
 
 	propertyID, err := tools.GetStringValue("property", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// get the property
-	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
-		PropertyID: propertyID,
-	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -107,8 +113,17 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if version == 0 {
+		// get the property - so we can determine latest version
+		property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+			PropertyID: propertyID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
 		// use the latest version for the property
 		version = property.Property.LatestVersion
+		logger.Debugf("Version missing during create - computed as %+v", version)
 	}
 
 	// check to see if this tree has any issues
@@ -126,19 +141,19 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		diags := make([]diag.Diagnostic, 0)
 
 		for _, e := range rules.Errors {
+			logger.Warnf("property rule error %s", e.Error())
+
+			// handle errors with no title since summary is required field
+			errorSummary := e.Title
+			if len(errorSummary) == 0 {
+				errorSummary = "Papi error message shown below"
+			}
+
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  e.Title,
-				Detail:   e.Detail,
+				Summary:  errorSummary,
+				Detail:   e.Error(),
 			})
-
-			logger.WithFields(log.Fields{
-				"type":         e.Type,
-				"title":        e.Title,
-				"detail":       e.Detail,
-				"instance":     e.Instance,
-				"behaviorName": e.BehaviorName,
-			}).Debug("property rule error")
 		}
 
 		return diags
@@ -160,9 +175,13 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if activation == nil {
-		notify, err := tools.GetStringSliceValue("contact", d)
+		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
+		}
+		var notify []string
+		for _, contact := range notifySet.List() {
+			notify = append(notify, cast.ToString(contact))
 		}
 
 		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
@@ -182,6 +201,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		// query the activation to retreive the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: create.ActivationID,
+			PropertyID:   propertyID,
 		})
 		if err != nil {
 			return diag.FromErr(err)
@@ -193,10 +213,17 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	d.SetId(activation.ActivationID)
 
 	for activation.Status != papi.ActivationStatusActive {
+		if activation.Status == papi.ActivationStatusAborted {
+			return diag.FromErr(fmt.Errorf("activation request aborted"))
+		}
+		if activation.Status == papi.ActivationStatusFailed {
+			return diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
+		}
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
+				PropertyID:   propertyID,
 			})
 			if err != nil {
 				return diag.FromErr(err)
@@ -204,6 +231,11 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			activation = act.Activation
 
 		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return diag.Diagnostics{DiagWarnActivationTimeout}
+			} else if errors.Is(ctx.Err(), context.Canceled) {
+				return diag.Diagnostics{DiagWarnActivationCanceled}
+			}
 			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
 	}
@@ -223,6 +255,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	log := meta.Log("PAPI", "resourcePropertyActivationDelete")
 	client := inst.Client(meta)
+
+	log.Debug("resourcePropertyActivationDelete call")
 
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -271,9 +305,13 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if activation == nil {
-		notify, err := tools.GetStringSliceValue("contact", d)
+		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
+		}
+		var notify []string
+		for _, contact := range notifySet.List() {
+			notify = append(notify, cast.ToString(contact))
 		}
 
 		delete, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
@@ -287,12 +325,15 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			},
 		})
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("create activation failed: %w", err))
+			return diag.FromErr(fmt.Errorf("create deactivation failed: %w", err))
 		}
+		// update with id we are now polling on
+		d.SetId(delete.ActivationID)
 
 		// query the activation to retreive the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: delete.ActivationID,
+			PropertyID:   propertyID,
 		})
 		if err != nil {
 			return diag.FromErr(err)
@@ -301,11 +342,19 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		activation = act.Activation
 	}
 
-	for activation.Status != papi.ActivationStatusDeactivated {
+	// deactivations also use status Active for when they are fully processed
+	for activation.Status != papi.ActivationStatusActive {
+		if activation.Status == papi.ActivationStatusAborted {
+			return diag.FromErr(fmt.Errorf("deactivation request aborted"))
+		}
+		if activation.Status == papi.ActivationStatusFailed {
+			return diag.FromErr(fmt.Errorf("deactivation request failed in downstream system"))
+		}
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
+				PropertyID:   propertyID,
 			})
 			if err != nil {
 				return diag.FromErr(err)
@@ -325,7 +374,9 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	log := meta.Log("PAPI", "resourcePropertyActivationRead")
+	client := inst.Client(meta)
 
+	log.Debug("resourcePropertyActivationRead call")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -337,15 +388,28 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	version, err := tools.GetIntValue("version", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	if version == 0 {
+		// get the property - so we can determine latest version
+		property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+			PropertyID: propertyID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		// use the latest version for the property
+		version = property.Property.LatestVersion
+		log.Debugf("Version missing for read - computed as %+v", version)
+	}
+
 	network, err := networkAlias(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	resp, err := inst.Client(meta).GetActivations(ctx, papi.GetActivationsRequest{
+	resp, err := client.GetActivations(ctx, papi.GetActivationsRequest{
 		PropertyID: propertyID,
 	})
 	if err != nil {
@@ -353,6 +417,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	for _, act := range resp.Activations.Items {
+
 		if act.Network == papi.ActivationNetwork(network) && act.PropertyVersion == version {
 			log.Debugf("Found Existing Activation %s version %d", network, version)
 
@@ -362,7 +427,6 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 			if err := d.Set("version", act.PropertyVersion); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
-
 			d.SetId(act.ActivationID)
 
 			break
@@ -377,6 +441,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
 	client := inst.Client(meta)
 
+	log.Debug("resourcePropertyActivationUpdate call")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -398,21 +463,22 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	// get the property
-	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
-		PropertyID: propertyID,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if version == 0 {
+		// get the property - so we can determine latest version
+		property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+			PropertyID: propertyID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
 		// use the latest version for the property
 		version = property.Property.LatestVersion
+		logger.Debugf("Version missing for update - computed as %+v", version)
 	}
 
 	// check to see if this tree has any issues
@@ -430,19 +496,19 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		diags := make([]diag.Diagnostic, 0)
 
 		for _, e := range rules.Errors {
+			logger.Warnf("property rule error %s", e.Error())
+
+			// handle errors with no title since summary is required field
+			errorSummary := e.Title
+			if len(errorSummary) == 0 {
+				errorSummary = "Papi error message shown below"
+			}
+
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  e.Title,
-				Detail:   e.Detail,
+				Summary:  errorSummary,
+				Detail:   e.Error(),
 			})
-
-			logger.WithFields(log.Fields{
-				"type":         e.Type,
-				"title":        e.Title,
-				"detail":       e.Detail,
-				"instance":     e.Instance,
-				"behaviorName": e.BehaviorName,
-			}).Debug("property rule error")
 		}
 
 		return diags
@@ -456,7 +522,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID:     propertyID,
 		version:        version,
-		network:        papi.ActivationNetwork(network),
+		network:        network,
 		activationType: papi.ActivationTypeActivate,
 	})
 	if err != nil {
@@ -464,16 +530,20 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if activation == nil {
-		notify, err := tools.GetStringSliceValue("contact", d)
+		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
+		}
+		var notify []string
+		for _, contact := range notifySet.List() {
+			notify = append(notify, cast.ToString(contact))
 		}
 
 		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
 			PropertyID: propertyID,
 			Activation: papi.Activation{
 				ActivationType:         papi.ActivationTypeActivate,
-				Network:                papi.ActivationNetwork(network),
+				Network:                network,
 				PropertyVersion:        version,
 				NotifyEmails:           notify,
 				AcknowledgeAllWarnings: true,
@@ -486,6 +556,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		// query the activation to retreive the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: create.ActivationID,
+			PropertyID:   propertyID,
 		})
 		if err != nil {
 			return diag.FromErr(err)
@@ -497,10 +568,17 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	d.SetId(activation.ActivationID)
 
 	for activation.Status != papi.ActivationStatusActive {
+		if activation.Status == papi.ActivationStatusAborted {
+			return diag.FromErr(fmt.Errorf("activation request aborted"))
+		}
+		if activation.Status == papi.ActivationStatusFailed {
+			return diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
+		}
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
+				PropertyID:   propertyID,
 			})
 			if err != nil {
 				return diag.FromErr(err)

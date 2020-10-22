@@ -64,7 +64,7 @@ func dataAkamaiPropertyRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err = d.Set("rules", string(body)); err != nil {
+	if err := d.Set("rules", string(body)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error()))
 	}
 	d.SetId(prop.PropertyID)
