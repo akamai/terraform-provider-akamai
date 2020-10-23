@@ -1,18 +1,15 @@
 package appsec
 
 import (
-	"errors"
 	"sync"
 
-	appsecv1 "github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/apex/log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/apex/log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -23,7 +20,8 @@ type (
 
 		client appsec.APPSEC
 	}
-	// Option is a appsec provider option
+
+	// Option is a papi provider option
 	Option func(p *provider)
 )
 
@@ -37,6 +35,7 @@ var (
 func Subprovider(opts ...Option) akamai.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
+
 		for _, opt := range opts {
 			opt(inst)
 		}
@@ -47,7 +46,6 @@ func Subprovider(opts ...Option) akamai.Subprovider {
 
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
-
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"appsec_section": {
@@ -57,9 +55,10 @@ func Provider() *schema.Provider {
 				Deprecated: akamai.NoticeDeprecatedUseAlias("appsec_section"),
 			},
 			"appsec": {
-				Optional: true,
-				Type:     schema.TypeSet,
-				Elem:     config.Options("appsec"),
+				Optional:   true,
+				Type:       schema.TypeSet,
+				Elem:       config.Options("appsec"),
+				Deprecated: akamai.NoticeDeprecatedUseAlias("appsec"),
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -93,16 +92,6 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-/*
-type resourceData interface {
-	GetOk(string) (interface{}, bool)
-	Get(string) interface{}
-}
-
-type set interface {
-	List() []interface{}
-}
-*/
 // WithClient sets the client interface function, used for mocking and testing
 func WithClient(c appsec.APPSEC) Option {
 	return func(p *provider) {
@@ -118,33 +107,7 @@ func (p *provider) Client(meta akamai.OperationMeta) appsec.APPSEC {
 	return appsec.Client(meta.Session())
 }
 
-func getAPPSECV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
-	var APPSECv1Config edgegrid.Config
-	var err error
-	appsec, err := tools.GetSetValue("appsec", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
-	}
-	if err == nil {
-		cfg := appsec.List()[0].(map[string]interface{})
-
-		APPSECv1Config = edgegrid.Config{
-			Host:         cfg["host"].(string),
-			AccessToken:  cfg["access_token"].(string),
-			ClientToken:  cfg["client_token"].(string),
-			ClientSecret: cfg["client_secret"].(string),
-			MaxBody:      cfg["max_body"].(int),
-		}
-
-		appsecv1.Init(APPSECv1Config)
-		return &APPSECv1Config, nil
-	}
-
-	edgerc, err := tools.GetStringValue("edgerc", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
-	}
-
+func getAPPSECV1Service(d *schema.ResourceData) (interface{}, error) {
 	var section string
 
 	for _, s := range tools.FindStringValues(d, "appsec_section", "config_section") {
@@ -158,25 +121,18 @@ func getAPPSECV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 		d.Set("config_section", section)
 	}
 
-	APPSECv1Config, err = edgegrid.Init(edgerc, section)
-	if err != nil {
-		return nil, err
-	}
-	edgegrid.SetupLogging()
-	appsecv1.Init(APPSECv1Config)
-
-	return &APPSECv1Config, nil
+	return nil, nil
 }
 
 func (p *provider) Name() string {
 	return "appsec"
 }
 
-// DnsProviderVersion update version string anytime provider adds new features
-const AppSecProviderVersion string = "v0.8.3"
+// ProviderVersion update version string anytime provider adds new features
+const ProviderVersion string = "v0.8.3"
 
 func (p *provider) Version() string {
-	return AppSecProviderVersion
+	return ProviderVersion
 }
 
 func (p *provider) Schema() map[string]*schema.Schema {
@@ -198,5 +154,6 @@ func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Dia
 	if err != nil {
 		return nil
 	}
+
 	return nil
 }

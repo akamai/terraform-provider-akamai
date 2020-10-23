@@ -31,7 +31,7 @@ Authentication of Terraform configurations relies on the Akamai EdgeGrid authent
 
 Your Akamai API Client will require read-write permissions to either the Property Manager API, DNS API and/or Traffic Management API depending on your use-case for using the Akamai Terraform Provider. Note: Without these permissions, your Terraform configurations won’t execute.
 
-The local .edgerc file can be referenced in the top of the Akamai Terraform configuration with edgerc = "~/.edgerc". Note: ~/.edgerc is the location of your file on your local machine. You are able to reference individual sections inside the .edgerc file by referencing papi_section = "default". Note: "default" is the name of the section stored in brackets in your .edgerc file.
+The local .edgerc file can be referenced in the top of the Akamai Terraform configuration with edgerc = "~/.edgerc". Note: ~/.edgerc is the location of your file on your local machine. You are able to reference individual sections inside the .edgerc file by referencing config_section = "default". Note: "default" is the name of the section stored in brackets in your .edgerc file.
 
 
 ## Example Usage
@@ -43,7 +43,7 @@ terraform {
   required_providers {
     akamai = {
       source  = "hashicorp/akamai"
-      version = "~> 0.9.1"
+      version = "~> 0.10.0"
     }
   }
 }
@@ -51,9 +51,7 @@ terraform {
 # Configure the Akamai Provider
 provider "akamai" {
   edgerc = "~/.edgerc"
-  papi_section = "papi"
-  dns_section = "dns"
-  gtm_section = "gtm"
+  config_section = "default"
 }
 
 # Create a Property
@@ -80,9 +78,7 @@ Terraform 0.12 and earlier:
 # Configure the Akamai Provider
 provider "akamai" {
   edgerc = "~/.edgerc"
-  papi_section = "papi"
-  dns_section = "dns"
-  gtm_section = "gtm"
+  config_section = "default"
 }
 
 # Create a Property
@@ -109,9 +105,10 @@ resource "akamai_dns_record" "example_record" {
 The following arguments are supported in the `provider` block:
 
 * `edgerc` - (Optional) The location of the `.edgerc` file containing credentials. Default: `$HOME/.edgerc`
-* `property_section` — (Optional) The credential section to use for the Property Manager API (PAPI). Default: `default`.
-* `dns_section` — (Optional) The credential section to use for the Config DNS API. Default: `default`.
-* `gtm_section` — (Optional) The credential section to use for the Config GTM API. Default: `default`.
+* `config_section` — (Optional) The credential section to use for all edgegrid calls. Default: `default`.
+* `property_section` — (Deprecated) The credential section to use for the Property Manager API (PAPI). Default: `default`.
+* `dns_section` — (Deprecated) The credential section to use for the Config DNS API. Default: `default`.
+* `gtm_section` — (Deprecated) The credential section to use for the Config GTM API. Default: `default`.
 
 ## Additional Authentication Method - Inline Credentials
 

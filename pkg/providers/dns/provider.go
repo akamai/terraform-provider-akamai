@@ -1,12 +1,9 @@
 package dns
 
 import (
-	"errors"
-	"fmt"
 	"sync"
 
-	dnsv2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/configdns-v2"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -18,7 +15,12 @@ import (
 type (
 	provider struct {
 		*schema.Provider
+
+		client dns.DNS
 	}
+
+	// Option is a dns provider option
+	Option func(p *provider)
 )
 
 var (
@@ -65,57 +67,22 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-func getConfigDNSV2Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error) {
-	var DNSv2Config edgegrid.Config
-	var err error
-	dns, err := tools.GetSetValue("dns", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
+// WithClient sets the client interface function, used for mocking and testing
+func WithClient(c dns.DNS) Option {
+	return func(p *provider) {
+		p.client = c
 	}
-	if err == nil {
-		dnsConfig := dns.List()
-		if len(dnsConfig) == 0 {
-			return nil, fmt.Errorf("'dns' property in provider must have at least one entry")
-		}
-		configMap, ok := dnsConfig[0].(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("dns config entry is of invalid type; should be 'map[string]interface{}'")
-		}
-		host, ok := configMap["host"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
-		}
-		accessToken, ok := configMap["access_token"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "access_token", "string")
-		}
-		clientToken, ok := configMap["client_token"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_token", "string")
-		}
-		clientSecret, ok := configMap["client_secret"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_secret", "string")
-		}
-		maxBody, ok := configMap["max_body"].(int)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "max_body", "int")
-		}
-		DNSv2Config = edgegrid.Config{
-			Host:         host,
-			AccessToken:  accessToken,
-			ClientToken:  clientToken,
-			ClientSecret: clientSecret,
-			MaxBody:      maxBody,
-		}
-		dnsv2.Init(DNSv2Config)
-		return &DNSv2Config, nil
-	}
+}
 
-	edgerc, err := tools.GetStringValue("edgerc", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
+// Client returns the DNS interface
+func (p *provider) Client(meta akamai.OperationMeta) dns.DNS {
+	if p.client != nil {
+		return p.client
 	}
+	return dns.Client(meta.Session())
+}
+
+func getConfigDNSV2Service(d tools.ResourceDataFetcher) (interface{}, error) {
 
 	var section string
 
@@ -126,15 +93,13 @@ func getConfigDNSV2Service(d tools.ResourceDataFetcher) (*edgegrid.Config, error
 		}
 	}
 
-	DNSv2Config, err = edgegrid.Init(edgerc, section)
-	if err != nil {
-		return nil, err
+	if section != "" {
+		if s, ok := d.(*schema.ResourceData); ok {
+			s.Set("config_section", section)
+		}
 	}
 
-	dnsv2.Init(DNSv2Config)
-	edgegrid.SetupLogging()
-
-	return &DNSv2Config, nil
+	return nil, nil
 }
 
 func (p *provider) Name() string {

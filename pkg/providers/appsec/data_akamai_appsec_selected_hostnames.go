@@ -2,13 +2,12 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -52,11 +51,8 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnamesRead")
-	CorrelationID := "[APPSEC][resourceSelectedHostnames-" + meta.OperationID() + "]"
 
 	getSelectedHostnames := v2.GetSelectedHostnamesRequest{}
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Read SelectedHostnames D.ID %v", d.Id()))
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
@@ -82,7 +78,7 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	jsonBody, err := jsonhooks.Marshal(selectedhostnames)
+	jsonBody, err := json.Marshal(selectedhostnames)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -103,7 +99,6 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "selectedHostsDS", selectedhostnames)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("selectedhostnames outputtext   %v\n", outputtext))
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}

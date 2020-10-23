@@ -1,14 +1,10 @@
 package property
 
 import (
-	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/apex/log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	papiv1 "github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
@@ -105,54 +101,7 @@ func (p *provider) Client(meta akamai.OperationMeta) papi.PAPI {
 	return papi.Client(meta.Session())
 }
 
-func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
-	var papiConfig edgegrid.Config
-	var err error
-	property, err := tools.GetSetValue("property", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
-	}
-	if err == nil {
-		log.Infof("[DEBUG] Setting property config via HCL")
-		cfg := property.List()[0].(map[string]interface{})
-
-		host, ok := cfg["host"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
-		}
-		accessToken, ok := cfg["access_token"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "access_token", "string")
-		}
-		clientToken, ok := cfg["client_token"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_token", "string")
-		}
-		clientSecret, ok := cfg["client_secret"].(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_secret", "string")
-		}
-		maxBody, ok := cfg["max_body"].(int)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "max_body", "int")
-		}
-		papiConfig = edgegrid.Config{
-			Host:         host,
-			AccessToken:  accessToken,
-			ClientToken:  clientToken,
-			ClientSecret: clientSecret,
-			MaxBody:      maxBody,
-		}
-
-		papiv1.Init(papiConfig)
-		return &papiConfig, nil
-	}
-
-	edgerc, err := tools.GetStringValue("edgerc", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
-	}
-
+func getPAPIV1Service(d *schema.ResourceData) (interface{}, error) {
 	var section string
 
 	for _, s := range tools.FindStringValues(d, "property_section", "papi_section", "config_section") {
@@ -166,13 +115,7 @@ func getPAPIV1Service(d *schema.ResourceData) (*edgegrid.Config, error) {
 		d.Set("config_section", section)
 	}
 
-	papiConfig, err = edgegrid.Init(edgerc, section)
-	if err != nil {
-		return nil, err
-	}
-
-	papiv1.Init(papiConfig)
-	return &papiConfig, nil
+	return nil, nil
 }
 
 func (p *provider) Name() string {

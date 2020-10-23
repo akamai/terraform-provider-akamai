@@ -11,7 +11,9 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/configgtm-v1_4"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -138,9 +140,14 @@ func resourceGTMv1Datacenter() *schema.Resource {
 func parseDatacenterResourceId(id string) (string, int, error) {
 
 	parts := strings.SplitN(id, ":", 2)
+
+	if len(parts) != 2 || parts[0] == "" {
+		return "", -1, fmt.Errorf("Datacenter ID, %v, is invalid", id)
+	}
+
 	domain := parts[0]
 	dcID, err := strconv.Atoi(parts[1])
-	if len(parts) != 2 || parts[0] == "" || err != nil {
+	if err != nil {
 		return "", -1, err
 	}
 
@@ -155,6 +162,11 @@ var (
 func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterCreate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	// Async GTM DC creation causes issues at this writing. Synchronize as work around.
 	datacenterCreateLock.Lock()
@@ -172,12 +184,12 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	var diags diag.Diagnostics
 	logger.Infof("Creating datacenter [%s] in domain [%s]", datacenterName, domain)
-	newDC, err := populateNewDatacenterObject(d, m)
+	newDC, err := populateNewDatacenterObject(ctx, meta, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Datacenter: [%v]", newDC)
-	cStatus, err := newDC.Create(domain)
+	cStatus, err := inst.Client(meta).CreateDatacenter(ctx, newDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -200,7 +212,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(domain, m)
+		done, err := waitForCompletion(ctx, domain, m)
 		if done {
 			logger.Infof("Datacenter Create completed")
 		} else {
@@ -230,6 +242,11 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterRead")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Reading Datacenter: %s", d.Id())
 	var diags diag.Diagnostics
@@ -243,7 +260,7 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 			Detail:   err.Error(),
 		})
 	}
-	dc, err := gtm.GetDatacenter(dcID, domain)
+	dc, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -261,6 +278,11 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterUpdate")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Updating Datacenter: %s", d.Id())
 	var diags diag.Diagnostics
@@ -275,7 +297,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := gtm.GetDatacenter(dcID, domain)
+	existDC, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -285,11 +307,11 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	logger.Debugf("Updating Datacenter BEFORE: %v", existDC)
-	if err = populateDatacenterObject(d, existDC, m); err != nil {
+	if err := populateDatacenterObject(d, existDC, m); err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Datacenter PROPOSED: %v", existDC)
-	uStat, err := existDC.Update(domain)
+	uStat, err := inst.Client(meta).UpdateDatacenter(ctx, existDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -310,7 +332,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(domain, m)
+		done, err := waitForCompletion(ctx, domain, m)
 		if done {
 			logger.Infof("Datacenter Update completed")
 		} else {
@@ -329,6 +351,12 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterImport")
+	// create a context with logging for api calls
+	ctx := context.Background()
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Importing Datacenter: %s", d.Id())
 	// retrieve the datacenter and domain
@@ -336,7 +364,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 	if err != nil {
 		return nil, fmt.Errorf("Invalid Datacenter resource ID")
 	}
-	dc, err := gtm.GetDatacenter(dcID, domain)
+	dc, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Import error: %s", err.Error())
 		return nil, err
@@ -357,6 +385,11 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterDelete")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
 
 	logger.Debugf("Deleting Datacenter: %s", d.Id())
 	var diags diag.Diagnostics
@@ -370,7 +403,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := gtm.GetDatacenter(dcID, domain)
+	existDC, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("DatacenterDelete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -380,7 +413,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	logger.Debugf("Deleting Datacenter: %v", existDC)
-	uStat, err := existDC.Delete(domain)
+	uStat, err := inst.Client(meta).DeleteDatacenter(ctx, existDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -404,7 +437,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(domain, m)
+		done, err := waitForCompletion(ctx, domain, m)
 		if done {
 			logger.Infof("Datacenter Delete completed")
 		} else {
@@ -427,9 +460,9 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 // Create and populate a new datacenter object from resource data
-func populateNewDatacenterObject(d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
+func populateNewDatacenterObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
 
-	dcObj := gtm.NewDatacenter()
+	dcObj := inst.Client(meta).NewDatacenter(ctx)
 	dcObj.DefaultLoadObject = gtm.NewLoadObject()
 	err := populateDatacenterObject(d, dcObj, m)
 

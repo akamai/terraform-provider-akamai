@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/tidwall/gjson"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -161,15 +160,15 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
 	group, err := getGroup(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating property: %w", err))
 	}
 	contract, err := getContract(ctx, d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating property: %w", err))
 	}
 	product, err := getProduct(ctx, d, contract.ContractID, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("creating property: %w", err))
 	}
 
 	name, err := tools.GetStringValue("name", d)
@@ -202,9 +201,17 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	rules, err := getRules(ctx, d, prop, contract.ContractID, group.GroupID, meta)
 	if err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "getRules produced errors and property clean up failed", err.Error()))
+		}
+		d.SetId("")
 		return diag.FromErr(err)
 	}
 	if _, err := client.UpdateRuleTree(ctx, rules); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "UpdateRuleTree produced errors and property clean up failed", err.Error()))
+		}
+		d.SetId("")
 		return diag.FromErr(err)
 	}
 
@@ -223,6 +230,10 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		GroupID:         prop.GroupID,
 	})
 	if err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "GetRuleTree produced errors and property clean up failed", err.Error()))
+		}
+		d.SetId("")
 		return diag.FromErr(err)
 	}
 	rulesAPI.Etag = ""
@@ -236,20 +247,28 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	logger.Debugf("CREATE Check rules after unmarshal from JSON %s", string(body))
 
 	if err := d.Set("rulessha", sha1hashAPI); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "GetRuleTree produced errors and property clean up failed", err.Error()))
+		}
+		d.SetId("")
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	d.SetId(fmt.Sprintf("%s", prop.PropertyID))
 	if err := d.Set("rules", string(body)); err != nil {
+		if err := cleanUpProperty(ctx, prop, meta); err != nil {
+			return diag.FromErr(fmt.Errorf("%s , %s", "GetRuleTree produced errors and property clean up failed", err.Error()))
+		}
+		d.SetId("")
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	logger.Debugf("Done")
+	logger.Debugf("Property create Done")
 	return resourcePropertyRead(ctx, d, m)
 }
 
 func getRules(ctx context.Context, d *schema.ResourceData, property *papi.Property, contract, group string, meta akamai.OperationMeta) (papi.UpdateRulesRequest, error) {
 	req := papi.UpdateRulesRequest{}
 	logger := meta.Log("PAPI", "getRules")
-	req.Rules.Name = "default"
+	req.Rules.Rules.Name = "default"
 	req.PropertyID = d.Id()
 	req.PropertyVersion = property.LatestVersion
 	origin, err := createOrigin(d, logger)
@@ -263,7 +282,7 @@ func getRules(ctx context.Context, d *schema.ResourceData, property *papi.Proper
 		logger.Debugf("Unmarshal Rules from JSON")
 		rules = unmarshalRulesFromJSON(d)
 	}
-	req.Rules = *rules
+	req.Rules.Rules = *rules
 
 	cpCode, err := getCPCode(ctx, meta, contract, group, logger, d)
 	if err != nil {
@@ -271,7 +290,7 @@ func getRules(ctx context.Context, d *schema.ResourceData, property *papi.Proper
 	}
 
 	logger.Debugf("updateStandardBehaviors")
-	req.Rules.Behaviors = updateStandardBehaviors(rules.Behaviors, cpCode, origin, logger)
+	req.Rules.Rules.Behaviors = updateStandardBehaviors(rules.Behaviors, cpCode, origin, logger)
 	logger.Debugf("fixupPerformanceBehaviors")
 	fixupPerformanceBehaviors(rules, logger)
 
@@ -306,13 +325,17 @@ func setHostnames(ctx context.Context, property *papi.Property, d *schema.Resour
 			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "edge_hostname", "string")
 		}
 		logger.Debugf("Searching for edge hostname: %s, for hostname: %s", edgeHostNameStr, public)
-		newEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, "", edgeHostNameStr, "", "")
+		newEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostNameStr)
 		if err != nil {
-			return nil, fmt.Errorf("edge hostname not found: %s", edgeHostNameStr)
+			if err := cleanUpProperty(ctx, property, meta); err != nil {
+				return nil, fmt.Errorf("edge hostname not found and property cleanup might have failed: %s", edgeHostNameStr)
+			}
+			d.SetId("")
+			return nil, fmt.Errorf("edge hostname not found and property create failed: %s", edgeHostNameStr)
 		}
 		logger.Debugf("Found edge hostname: %s", newEdgeHostname.Domain)
 
-		hostname.Hostnames.Items = append(hostname.Hostnames.Items, papi.Hostname{
+		hostname.Hostnames = append(hostname.Hostnames, papi.Hostname{
 			CnameType:      papi.HostnameCnameTypeEdgeHostname,
 			EdgeHostnameID: newEdgeHostname.ID,
 			CnameFrom:      public,
@@ -600,7 +623,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 			return diag.FromErr(err)
 		}
 		res.Etag = ""
-		body, err = jsonhooks.Marshal(res)
+		body, err = json.Marshal(res)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -648,7 +671,7 @@ func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff
 	logger.Debugf("OLD: %s", oldStr)
 	logger.Debugf("NEW: %s", newStr)
 	if !compareRulesJSON(oldStr, newStr) {
-		logger.Debugf("CHANGED VALUES: %s %s " + oldStr + " " + newStr)
+		logger.Debugf("CHANGED VALUES: %s %s ", oldStr, newStr)
 		if err := d.SetNewComputed("version"); err != nil {
 			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 		}
@@ -685,10 +708,7 @@ func getGroup(ctx context.Context, d *schema.ResourceData, meta akamai.Operation
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingGroups, err.Error())
 	}
-	groupID, err = tools.AddPrefix(groupID, "grp_")
-	if err != nil {
-		return nil, err
-	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 
 	var group *papi.Group
 	var groupFound bool
@@ -721,10 +741,7 @@ func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.Operat
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingContracts, err.Error())
 	}
-	contractID, err = tools.AddPrefix(contractID, "ctr_")
-	if err != nil {
-		return nil, err
-	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
 	var contract *papi.Contract
 	var contractFound bool
 	for _, c := range res.Contracts.Items {
@@ -735,7 +752,7 @@ func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.Operat
 		}
 	}
 	if !contractFound {
-		return nil, fmt.Errorf("%w: %s", ErrNoContractsFound, contractID)
+		return nil, fmt.Errorf("%w: %s", ErrContractNotFound, contractID)
 	}
 
 	logger.Debugf("Contract found: %s", contract.ContractID)
@@ -756,6 +773,7 @@ func getCPCode(ctx context.Context, m akamai.OperationMeta, contractID, groupID 
 		}
 		return nil, nil
 	}
+	cpCodeID = tools.AddPrefix(cpCodeID, "cpc_")
 	logger.Debugf("Fetching CP code")
 
 	cpCodeResponse, err := inst.Client(m).GetCPCode(ctx, papi.GetCPCodeRequest{
@@ -788,10 +806,7 @@ func getProduct(ctx context.Context, d *schema.ResourceData, contractID string, 
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrProductFetch, err.Error())
 	}
-	productID, err = tools.AddPrefix(productID, "prd_")
-	if err != nil {
-		return nil, err
-	}
+	productID = tools.AddPrefix(productID, "prd_")
 	var productFound bool
 	var product papi.ProductItem
 	for _, p := range res.Products.Items {
@@ -910,11 +925,15 @@ func fixupPerformanceBehaviors(rules *papi.Rules, logger log.Interface) {
 func updateStandardBehaviors(behaviors []papi.RuleBehavior, cpCode *papi.CPCode, origin *papi.RuleOptionsMap, logger log.Interface) []papi.RuleBehavior {
 	logger.Debugf("cpCode: %#v", cpCode)
 	if cpCode != nil {
+		cpCodeID, err := tools.GetIntID(cpCode.ID, "cpc_")
+		if err != nil {
+			return nil
+		}
 		b := papi.RuleBehavior{
 			Name: "cpCode",
 			Options: papi.RuleOptionsMap{
 				"value": papi.RuleOptionsMap{
-					"id": cpCode.ID,
+					"id": cpCodeID,
 				},
 			},
 		}
@@ -1005,11 +1024,21 @@ func unmarshalRulesFromJSON(d *schema.ResourceData) *papi.Rules {
 				variableMap, ok := value.Value().(map[string]interface{})
 				if ok {
 					newVariable := papi.RuleVariable{}
-					newVariable.Name = variableMap["name"].(string)
-					newVariable.Description = variableMap["description"].(string)
-					newVariable.Value = variableMap["value"].(string)
-					newVariable.Hidden = variableMap["hidden"].(bool)
-					newVariable.Sensitive = variableMap["sensitive"].(bool)
+					if val, ok := variableMap["name"].(string); ok {
+						newVariable.Name = val
+					}
+					if val, ok := variableMap["description"].(string); ok {
+						newVariable.Description = val
+					}
+					if val, ok := variableMap["value"].(string); ok {
+						newVariable.Value = val
+					}
+					if val, ok := variableMap["hidden"].(bool); ok {
+						newVariable.Hidden = val
+					}
+					if val, ok := variableMap["sensitive"].(bool); ok {
+						newVariable.Sensitive = val
+					}
 					propertyRules.Variables = addVariable(propertyRules.Variables, newVariable)
 				}
 				return true
@@ -1041,11 +1070,21 @@ func unmarshalRulesFromJSON(d *schema.ResourceData) *papi.Rules {
 			variableMap, ok := value.Value().(map[string]interface{})
 			if ok {
 				newVariable := papi.RuleVariable{}
-				newVariable.Name = variableMap["name"].(string)
-				newVariable.Description = variableMap["description"].(string)
-				newVariable.Value = variableMap["value"].(string)
-				newVariable.Hidden = variableMap["hidden"].(bool)
-				newVariable.Sensitive = variableMap["sensitive"].(bool)
+				if val, ok := variableMap["name"].(string); ok {
+					newVariable.Name = val
+				}
+				if val, ok := variableMap["description"].(string); ok {
+					newVariable.Description = val
+				}
+				if val, ok := variableMap["value"].(string); ok {
+					newVariable.Value = val
+				}
+				if val, ok := variableMap["hidden"].(bool); ok {
+					newVariable.Hidden = val
+				}
+				if val, ok := variableMap["sensitive"].(bool); ok {
+					newVariable.Sensitive = val
+				}
 				propertyRules.Variables = addVariable(propertyRules.Variables, newVariable)
 			}
 			return true
@@ -1475,27 +1514,12 @@ func findRule(path string, rules *papi.Rules) (*papi.Rules, error) {
 	return currentRule, nil
 }
 
-func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, id, domain, suffix, prefix string) (*papi.EdgeHostnameGetItem, error) {
-	if suffix == "" && domain != "" {
-		suffix = "edgesuite.net"
-		if strings.HasSuffix(domain, "edgekey.net") {
-			suffix = "edgekey.net"
-		}
-	}
-
-	if prefix == "" && domain != "" {
-		prefix = strings.TrimSuffix(domain, "."+suffix)
-	}
-
-	if len(edgeHostnames.Items) == 0 {
-		return nil, errors.New("no hostnames found, did you call GetHostnames()?")
-	}
-
-	for _, eHn := range edgeHostnames.Items {
-		if (eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix) || eHn.ID == id {
-			return &eHn, nil
-		}
-	}
-
-	return nil, nil
+func cleanUpProperty(ctx context.Context, property *papi.Property, meta akamai.OperationMeta) error {
+	client := inst.Client(meta)
+	_, err := client.RemoveProperty(ctx, papi.RemovePropertyRequest{
+		PropertyID: property.PropertyID,
+		ContractID: property.ContractID,
+		GroupID:    property.GroupID,
+	})
+	return err
 }

@@ -1,52 +1,78 @@
 package dns
 
 import (
+	"errors"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
-func TestAccDataSourceDNSRecordSet_basic(t *testing.T) {
-	dataSourceName := "data.akamai_dns_record_set.test"
+func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiDNSv2RecordDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccDataSourceDNSRecordSetBasic(),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dataSourceName, "host", "exampleterraform.io"),
-				),
-			},
-		},
+	t.Run("basic", func(t *testing.T) {
+		client := &mockdns{}
+
+		dataSourceName := "data.akamai_dns_record_set.test"
+		outputName := "test_addrs"
+
+		rdata := []string{"10.1.0.1", "10.2.0.1"}
+
+		client.On("GetRdata",
+			mock.Anything, // ctx is irrelevant for this test
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"A",
+		).Return(rdata, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestDataDnsRecordSet/basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							// check the values set in dataSourceDNSRecordSetRead
+							// rdata is an array that becomes rdata.0 and rdata.1 in tf state
+							resource.TestCheckResourceAttrSet(dataSourceName, "rdata.0"),
+							resource.TestCheckResourceAttrSet(dataSourceName, "rdata.1"),
+							resource.TestCheckResourceAttrSet(dataSourceName, "id"),
+							resource.TestCheckOutput(outputName, strings.Join(rdata, ",")),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
-}
 
-func testAccDataSourceDNSRecordSetBasic() string {
-	return `provider "akamai" {
-  dns_section = "dns"
-}
+	t.Run("error", func(t *testing.T) {
+		client := &mockdns{}
 
-resource "akamai_dns_record" "test" {
-	zone = "exampleterraform.io"
-	name = "exampleterraform.io"
-	recordtype =  "A"
-	active = true
-	ttl = 300
-	target = ["10.0.0.2","10.0.0.3"]
-}
+		client.On("GetRdata",
+			mock.Anything, // ctx is irrelevant for this test
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"A",
+		).Return(nil, errors.New("invalid zone"))
 
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDataDnsRecordSet/basic.tf"),
+						ExpectError: regexp.MustCompile(`invalid zone`),
+					},
+				},
+			})
+		})
 
-data "akamai_dns_record_set" "test" {
-	zone = "exampleterraform.io"
-	host = "exampleterraform.io"
-	record_type = "A"
-}
-
-output "test_addrs" {
-	value = "${join(",", data.akamai_dns_record_set.test.rdata)}"
-}
-`
+		client.AssertExpectations(t)
+	})
 }
