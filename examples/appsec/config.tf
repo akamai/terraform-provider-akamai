@@ -288,3 +288,70 @@ data "akamai_appsec_custom_rule_actions" "appsecreatecustomruleactions" {
 output "customruleactions" {
   value = data.akamai_appsec_custom_rule_actions.appsecreatecustomruleactions.output_text
 }*/
+
+/*
+resource "akamai_appsec_waf_mode" "appsecwafmode" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+    mode = "AAG" //KRS
+}
+
+output "appsecwafmode" {
+  value = akamai_appsec_waf_mode.appsecwafmode.output_text
+}*/
+/*
+data "akamai_appsec_waf_modes" "appsecwafmodes" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+}
+
+output "appsecwafmodes" {
+  value = data.akamai_appsec_waf_modes.appsecwafmodes.output_text
+}*/
+
+/*
+resource "akamai_appsec_penalty_box" "appsecpenaltybox" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+    action = "alert" 
+    penalty_box_protection = true
+}
+
+output "appsecpenaltybox" {
+  value = akamai_appsec_penalty_box.appsecpenaltybox.output_text
+}
+
+data "akamai_appsec_penalty_boxes" "appsecpenaltyboxes" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+}
+
+output "appsecpenaltyboxes" {
+  value = data.akamai_appsec_penalty_boxes.appsecpenaltyboxes.output_text
+}
+*/
+
+resource "akamai_appsec_waf_protection" "appsecwafprotection" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+    enabled = false
+}
+
+output "appsecwafmode" {
+  value = akamai_appsec_waf_protection.appsecwafprotection.output_text
+}
+
+data "akamai_appsec_waf_protection" "appsecwafprotection" {
+    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
+    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
+    policy_id = "AAAA_81230"
+}
+
+output "appsecwafprotection" {
+  value = data.akamai_appsec_waf_protection.appsecwafprotection.output_text
+}
