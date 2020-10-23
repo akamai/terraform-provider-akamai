@@ -2,10 +2,10 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -70,7 +70,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	jsonBody, err := jsonhooks.Marshal(exportconfiguration)
+	jsonBody, err := json.Marshal(exportconfiguration)
 	if err != nil {
 		return diag.FromErr(err)
 	}

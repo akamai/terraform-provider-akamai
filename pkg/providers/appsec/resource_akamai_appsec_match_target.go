@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/appsec-v1"
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -127,7 +126,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 		bypassnetworklists := d.Get("bypass_network_lists").(*schema.Set).List()
 
 		for _, b := range bypassnetworklists {
-			bl := appsec.BypassNetworkList{}
+			bl := v2.BypassNetworkList{}
 			bl.ID = b.(string)
 			createMatchTarget.BypassNetworkLists = append(createMatchTarget.BypassNetworkLists, bl)
 		}
@@ -171,7 +170,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 		bypassnetworklists := d.Get("bypass_network_lists").(*schema.Set).List()
 
 		for _, b := range bypassnetworklists {
-			bl := appsec.BypassNetworkList{}
+			bl := v2.BypassNetworkList{}
 			bl.ID = b.(string)
 			updateMatchTarget.BypassNetworkLists = append(updateMatchTarget.BypassNetworkLists, bl)
 		}

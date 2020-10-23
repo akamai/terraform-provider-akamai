@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -153,7 +152,6 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRemove")
-	CorrelationID := "[APPSEC][resourceMatchTargets-" + meta.OperationID() + "]"
 
 	activate, err := tools.GetBoolValue("activate", d)
 	if err != nil {
@@ -173,7 +171,6 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	removeActivations.ActivationID, _ = strconv.Atoi(d.Id())
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("activationid  %v\n", removeActivations.ActivationID))
 	//postpayload := appsec.NewActivationsPost()
 	ap := v2.ActivationConfigs{}
 
@@ -196,8 +193,6 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	removeActivations.Network = network
 
 	removeActivations.NotificationEmails = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
-
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  Deactivating %s \n", removeActivations.Network))
 
 	removeActivations.Action = "DEACTIVATE"
 

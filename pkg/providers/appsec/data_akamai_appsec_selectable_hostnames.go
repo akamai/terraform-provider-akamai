@@ -2,9 +2,9 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/jsonhooks-v1"
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -67,7 +67,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	jsonBody, err := jsonhooks.Marshal(selectablehostnames)
+	jsonBody, err := json.Marshal(selectablehostnames)
 	if err != nil {
 		return diag.FromErr(err)
 	}
