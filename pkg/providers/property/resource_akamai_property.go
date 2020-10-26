@@ -252,13 +252,31 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		logger.WithError(err).Error(`could not set "contract_id" attribute`)
 		diags = append(diags, diag.FromErr(err)...)
 	}
+	if err := d.Set("contract", prop.ContractID); err != nil {
+		logger.WithError(err).Error(`could not set "contract" attribute`)
+		diags = append(diags, diag.FromErr(err)...)
+	}
+
 	if err := d.Set("group_id", prop.GroupID); err != nil {
 		logger.WithError(err).Error(`could not set "group_id" attribute`)
+		diags = append(diags, diag.FromErr(err)...)
+	}
+	if err := d.Set("group", prop.GroupID); err != nil {
+		logger.WithError(err).Error(`could not set "group" attribute`)
 		diags = append(diags, diag.FromErr(err)...)
 	}
 
 	if err := d.Set("product_id", prop.ProductID); err != nil {
 		logger.WithError(err).Error(`could not set "product_id" attribute`)
+		diags = append(diags, diag.FromErr(err)...)
+	}
+	if err := d.Set("product", prop.ProductID); err != nil {
+		logger.WithError(err).Error(`could not set "product" attribute`)
+		diags = append(diags, diag.FromErr(err)...)
+	}
+
+	if err := d.Set("latest_version", prop.LatestVersion); err != nil {
+		logger.WithError(err).Error(`could not set "latest_version" attribute`)
 		diags = append(diags, diag.FromErr(err)...)
 	}
 
