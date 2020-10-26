@@ -122,7 +122,7 @@ func resourcePropertyRulesCreate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(fmt.Sprintf("%s_%d", propertyID, version))
+	d.SetId(propertyID)
 	if res.Errors != nil {
 		ruleErrors, err := json.Marshal(res.Errors)
 		if err != nil {
@@ -266,7 +266,7 @@ func resourcePropertyRulesUpdate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(fmt.Sprintf("%s_%d", propertyID, version))
+	d.SetId(propertyID)
 	if res.Errors != nil {
 		ruleErrors, err := json.Marshal(res.Errors)
 		if err != nil {
