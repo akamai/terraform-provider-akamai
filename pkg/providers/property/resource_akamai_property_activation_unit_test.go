@@ -189,9 +189,8 @@ func TestLookupActivation(t *testing.T) {
 			activation, err := lookupActivation(nil, client, query)
 			assert.True(t, errors.Is(err, test.expectedError))
 			if err == nil {
-				expectedActivation := test.expectedActivation
-				if expectedActivation != nil {
-					assert.Equal(t, expectedActivation.ActivationType, activation.ActivationType)
+				if test.expectedActivation != nil {
+					assert.Equal(t, test.expectedActivation.ActivationType, activation.ActivationType)
 					assert.Equal(t, test.mostRecentActivationDate, activation.SubmitDate)
 				} else {
 					assert.Nil(t, activation)

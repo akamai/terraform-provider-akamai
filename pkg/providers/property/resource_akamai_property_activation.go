@@ -652,7 +652,7 @@ func lookupActivation(ctx context.Context, client papi.PAPI, query lookupActivat
 				return nil, err
 			}
 
-			if bestMatchSubmitDate.Equal(time.Time{}) || bestMatchSubmitDate.Before(aSubmitDate) {
+			if bestMatchSubmitDate.IsZero() || bestMatchSubmitDate.Before(aSubmitDate) {
 				bestMatch = a
 				bestMatchSubmitDate, err = tools.ParseDate(tools.DateTimeFormat, bestMatch.SubmitDate)
 				if err != nil {
