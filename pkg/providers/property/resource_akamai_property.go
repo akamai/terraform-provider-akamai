@@ -3,7 +3,6 @@ package property
 import (
 	"context"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -259,60 +258,15 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		logger.WithError(err).Error(`could not set "group_id" attribute`)
 		diags = append(diags, diag.FromErr(err)...)
 	}
-	return res.Property, nil
-}
-
-func getGroup(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Group, error) {
-	logger := meta.Log("PAPI", "getGroup")
-	client := inst.Client(meta)
-	logger.Debugf("Fetching groups")
-	groupID, err := tools.GetStringValue("group", d)
-	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return nil, err
-		}
-		return nil, ErrNoGroupProvided
-	}
-	res, err := client.GetGroups(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrFetchingGroups, err.Error())
-	}
-	groupID = tools.AddPrefix(groupID, "grp_")
 
 	if err := d.Set("product_id", prop.ProductID); err != nil {
 		logger.WithError(err).Error(`could not set "product_id" attribute`)
 		diags = append(diags, diag.FromErr(err)...)
 	}
-	if err := d.Set("product", prop.ProductID); err != nil {
-		logger.WithError(err).Error(`could not set "product" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
-	}
-
 	if err := d.Set("latest_version", prop.LatestVersion); err != nil {
 		logger.WithError(err).Error(`could not set "latest_version" attribute`)
 		diags = append(diags, diag.FromErr(err)...)
 	}
-	res, err := client.GetContracts(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrFetchingContracts, err.Error())
-	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
-	var contract *papi.Contract
-	var contractFound bool
-	for _, c := range res.Contracts.Items {
-		if c.ContractID == contractID {
-			contract = c
-			contractFound = true
-			break
-		}
-	}
-	if !contractFound {
-		return nil, fmt.Errorf("%w: %s", ErrContractNotFound, contractID)
-	}
-
-	logger.Debugf("Contract found: %s", contract.ContractID)
-	return contract, nil
-}
 
 	if prop.StagingVersion != nil && *prop.StagingVersion > 0 {
 		if err := d.Set("staging_version", *prop.StagingVersion); err != nil {
@@ -320,32 +274,12 @@ func getGroup(ctx context.Context, d *schema.ResourceData, meta akamai.Operation
 			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
-	cpCodeID = tools.AddPrefix(cpCodeID, "cpc_")
-	logger.Debugf("Fetching CP code")
 
 	if prop.ProductionVersion != nil && *prop.ProductionVersion > 0 {
 		if err := d.Set("production_version", *prop.ProductionVersion); err != nil {
 			logger.WithError(err).Error(`could not set "production_version" attribute`)
 			diags = append(diags, diag.FromErr(err)...)
 		}
-		return nil, ErrNoProductProvided
-	}
-	res, err := client.GetProducts(ctx, papi.GetProductsRequest{ContractID: contractID})
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrProductFetch, err.Error())
-	}
-	productID = tools.AddPrefix(productID, "prd_")
-	var productFound bool
-	var product papi.ProductItem
-	for _, p := range res.Products.Items {
-		if p.ProductID == productID {
-			product = p
-			productFound = true
-			break
-		}
-	}
-	if !productFound {
-		return nil, fmt.Errorf("%w: %s", ErrProductNotFound, productID)
 	}
 
 	return diags

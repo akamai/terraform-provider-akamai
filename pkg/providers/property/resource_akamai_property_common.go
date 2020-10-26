@@ -30,10 +30,7 @@ func getGroup(ctx context.Context, d *schema.ResourceData, meta akamai.Operation
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingGroups, err.Error())
 	}
-	groupID, err = tools.AddPrefix(groupID, "grp_")
-	if err != nil {
-		return nil, err
-	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 
 	var group *papi.Group
 	var groupFound bool
@@ -66,10 +63,7 @@ func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.Operat
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingContracts, err.Error())
 	}
-	contractID, err = tools.AddPrefix(contractID, "ctr_")
-	if err != nil {
-		return nil, err
-	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
 	var contract *papi.Contract
 	var contractFound bool
 	for _, c := range res.Contracts.Items {
@@ -105,10 +99,7 @@ func getProduct(ctx context.Context, d *schema.ResourceData, contractID string, 
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrProductFetch, err.Error())
 	}
-	productID, err = tools.AddPrefix(productID, "prd_")
-	if err != nil {
-		return nil, err
-	}
+	productID = tools.AddPrefix(productID, "prd_")
 	var productFound bool
 	var product papi.ProductItem
 	for _, p := range res.Products.Items {
@@ -126,41 +117,6 @@ func getProduct(ctx context.Context, d *schema.ResourceData, contractID string, 
 	return &product, nil
 }
 
-func extractOptions(options *schema.Set) (map[string]interface{}, error) {
-	optv := make(map[string]interface{})
-	for _, option := range options.List() {
-		optionMap, ok := option.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		if val, ok := optionMap["value"].(string); ok && val != "" {
-			optv[optionMap["key"].(string)] = convertString(val)
-			continue
-		}
-		vals, ok := optionMap["values"]
-		if !ok {
-			continue
-		}
-		valsSet, ok := vals.(*schema.Set)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "values", "*schema.Set")
-		}
-		if valsSet.Len() == 0 {
-			optv[optionMap["key"].(string)] = convertString(optionMap["value"].(string))
-			continue
-		}
-		if valsSet.Len() > 0 {
-			op := make([]interface{}, 0)
-			for _, v := range vals.(*schema.Set).List() {
-				op = append(op, convertString(v.(string)))
-			}
-
-			optv[optionMap["key"].(string)] = op
-		}
-	}
-	return optv, nil
-}
-
 func convertString(v string) interface{} {
 	if f1, err := strconv.ParseFloat(v, 64); err == nil {
 		return f1
@@ -174,99 +130,6 @@ func convertString(v string) interface{} {
 		return f3
 	}
 	return v
-}
-
-func extractRules(drules *schema.Set) ([]papi.Rules, error) {
-
-	var rules []papi.Rules
-	for _, v := range drules.List() {
-		rule := papi.Rules{Name: "default"}
-		vv, ok := v.(map[string]interface{})
-		if ok {
-			rule.Name = vv["name"].(string)
-			rule.Comment = vv["comment"].(string)
-
-			criteriaMustSatisfy, ok := vv["criteria_match"]
-			if ok {
-				if criteriaMustSatisfy.(string) == "all" {
-					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
-				}
-
-				if criteriaMustSatisfy.(string) == "any" {
-					rule.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
-				}
-			}
-			behaviors, ok := vv["behavior"]
-			if ok {
-				for _, behavior := range behaviors.(*schema.Set).List() {
-					behaviorMap, ok := behavior.(map[string]interface{})
-					if ok {
-						newBehavior := papi.RuleBehavior{}
-						newBehavior.Name = behaviorMap["name"].(string)
-						behaviorOptions, ok := behaviorMap["option"]
-						if ok {
-							opts, err := extractOptions(behaviorOptions.(*schema.Set))
-							if err != nil {
-								return nil, err
-							}
-							newBehavior.Options = opts
-						}
-						rule.Behaviors = mergeBehaviors(rule.Behaviors, newBehavior)
-					}
-				}
-			}
-
-			criterias, ok := vv["criteria"]
-			if ok {
-				for _, criteria := range criterias.(*schema.Set).List() {
-					criteriaMap, ok := criteria.(map[string]interface{})
-					if ok {
-						newCriteria := papi.RuleBehavior{}
-						newCriteria.Name = criteriaMap["name"].(string)
-						criteriaOptions, ok := criteriaMap["option"]
-						if ok {
-							crit, err := extractOptions(criteriaOptions.(*schema.Set))
-							if err != nil {
-								return nil, err
-							}
-							newCriteria.Options = crit
-						}
-						rule.Criteria = append(rule.Criteria, newCriteria)
-					}
-				}
-			}
-
-			variables, ok := vv["variable"]
-			if ok {
-				for _, variable := range variables.(*schema.Set).List() {
-					variableMap, ok := variable.(map[string]interface{})
-					if ok {
-						newVariable := papi.RuleVariable{}
-						newVariable.Name = variableMap["name"].(string)
-						newVariable.Description = variableMap["description"].(string)
-						newVariable.Value = variableMap["value"].(string)
-						newVariable.Hidden = variableMap["hidden"].(bool)
-						newVariable.Sensitive = variableMap["sensitive"].(bool)
-						rule.Variables = addVariable(rule.Variables, newVariable)
-					}
-				}
-			}
-
-			childRules, ok := vv["rule"]
-			if ok && childRules.(*schema.Set).Len() > 0 {
-				rules, err := extractRules(childRules.(*schema.Set))
-				if err != nil {
-					return nil, err
-				}
-				for _, newRule := range rules {
-					rule.Children = append(rule.Children, newRule)
-				}
-			}
-		}
-		rules = append(rules, rule)
-	}
-
-	return rules, nil
 }
 
 func findProperty(ctx context.Context, name string, meta akamai.OperationMeta) (*papi.Property, error) {
@@ -291,40 +154,4 @@ func findProperty(ctx context.Context, name string, meta akamai.OperationMeta) (
 		return nil, fmt.Errorf("%w: %s", ErrPropertyNotFound, name)
 	}
 	return property.Properties.Items[0], nil
-}
-
-func mergeBehaviors(old []papi.RuleBehavior, new papi.RuleBehavior) []papi.RuleBehavior {
-	for i := range old {
-		if new.Name == "cpCode" || new.Name == "origin" {
-			if old[i].Name == new.Name {
-				old[i].Options = mergeOptions(old[i].Options, new.Options)
-				return old
-			}
-		}
-	}
-
-	return append(old, new)
-}
-
-// MergeOptions merges the given options with the existing options
-func mergeOptions(old, new papi.RuleOptionsMap) papi.RuleOptionsMap {
-	options := make(papi.RuleOptionsMap)
-	for k, v := range old {
-		options[k] = v
-	}
-	for k, v := range new {
-		options[k] = v
-	}
-	return options
-}
-
-func addVariable(old []papi.RuleVariable, new papi.RuleVariable) []papi.RuleVariable {
-	for i := range old {
-		if old[i].Name == new.Name {
-			old[i] = new
-			return old
-		}
-	}
-
-	return append(old, new)
 }
