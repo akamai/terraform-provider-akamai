@@ -1,8 +1,6 @@
 package property
 
 import (
-	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/apex/log"
@@ -152,16 +150,4 @@ func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Dia
 	}
 
 	return nil
-}
-
-// Returns a schema.SchemaStateFunc that ensures ID values always have the given prefix
-func statePrefixer(prefix string) schema.SchemaStateFunc {
-	return func(given interface{}) string {
-		s := given.(string)
-		if !strings.HasPrefix(s, prefix) {
-			s = fmt.Sprintf("%s%s", prefix, s)
-		}
-
-		return s
-	}
 }

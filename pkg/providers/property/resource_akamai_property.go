@@ -40,14 +40,14 @@ func resourceProperty() *schema.Resource {
 				Optional:   true,
 				Computed:   true,
 				Deprecated: `use "contract_id" attribute instead`,
-				StateFunc:  statePrefixer("ctr_"),
+				StateFunc:  addPrefixToState("ctr_"),
 			},
 			"contract_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"contract_id", "contract"},
-				StateFunc:    statePrefixer("ctr_"),
+				StateFunc:    addPrefixToState("ctr_"),
 			},
 
 			"group": {
@@ -55,14 +55,14 @@ func resourceProperty() *schema.Resource {
 				Optional:   true,
 				Computed:   true,
 				Deprecated: `use "group_id" attribute instead`,
-				StateFunc:  statePrefixer("grp_"),
+				StateFunc:  addPrefixToState("grp_"),
 			},
 			"group_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"group_id", "group"},
-				StateFunc:    statePrefixer("grp_"),
+				StateFunc:    addPrefixToState("grp_"),
 			},
 
 			"product": {
@@ -70,14 +70,14 @@ func resourceProperty() *schema.Resource {
 				Optional:   true,
 				Computed:   true,
 				Deprecated: `use "product_id" attribute instead`,
-				StateFunc:  statePrefixer("prd_"),
+				StateFunc:  addPrefixToState("prd_"),
 			},
 			"product_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"product_id", "product"},
-				StateFunc:    statePrefixer("prd_"),
+				StateFunc:    addPrefixToState("prd_"),
 			},
 
 			"latest_version":     {Type: schema.TypeInt, Computed: true},

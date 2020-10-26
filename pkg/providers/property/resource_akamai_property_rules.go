@@ -291,8 +291,8 @@ func validateJSON(val interface{}, _ cty.Path) diag.Diagnostics {
 }
 
 func addPrefixToState(pre string) schema.SchemaStateFunc {
-	return func(i interface{}) string {
-		str, ok := i.(string)
+	return func(given interface{}) string {
+		str, ok := given.(string)
 		if !ok {
 			panic("interface should be string")
 		}
