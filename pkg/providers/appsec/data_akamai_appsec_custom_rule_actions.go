@@ -41,7 +41,6 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionsRead")
-	CorrelationID := "[APPSEC][resourceCustomRuleActions-" + meta.OperationID() + "]"
 
 	getCustomRuleActions := v2.GetCustomRuleActionsRequest{}
 
