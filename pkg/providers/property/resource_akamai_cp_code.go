@@ -3,7 +3,6 @@ package property
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -85,9 +84,7 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	} else {
 		productID = d.Get("product").(string)
 	}
-	if !strings.HasPrefix(productID, "prd_") {
-		productID = fmt.Sprintf("prd_%s", productID)
-	}
+	productID = tools.AddPrefix(productID, "prd_")
 
 	// Schema guarantees group_id/group are strings and one or the other is set
 	var groupID string
@@ -96,9 +93,7 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	} else {
 		groupID = d.Get("group").(string)
 	}
-	if !strings.HasPrefix(groupID, "grp_") {
-		groupID = fmt.Sprintf("grp_%s", groupID)
-	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 
 	// Schema guarantees contract_id/contract are strings and one or the other is set
 	var contractID string
@@ -107,9 +102,7 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	} else {
 		contractID = d.Get("contract").(string)
 	}
-	if !strings.HasPrefix(contractID, "ctr_") {
-		contractID = fmt.Sprintf("ctr_%s", contractID)
-	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
 
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
 	cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
@@ -149,9 +142,7 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	} else {
 		groupID = d.Get("group").(string)
 	}
-	if !strings.HasPrefix(groupID, "grp_") {
-		groupID = fmt.Sprintf("grp_%s", groupID)
-	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 
 	// Schema guarantees contract_id/contract are strings and one or the other is set
 	var contractID string
@@ -160,9 +151,8 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	} else {
 		contractID = d.Get("contract").(string)
 	}
-	if !strings.HasPrefix(contractID, "ctr_") {
-		contractID = fmt.Sprintf("ctr_%s", contractID)
-	}
+
+	contractID = tools.AddPrefix(contractID, "ctr_")
 
 	// Attempt to find by ID first
 	cpCode, err := findCPCode(ctx, d.Id(), contractID, groupID, meta)

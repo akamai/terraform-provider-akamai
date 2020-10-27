@@ -111,9 +111,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	} else {
 		groupID = d.Get("group").(string)
 	}
-	if !strings.HasPrefix(groupID, "grp_") {
-		groupID = fmt.Sprintf("grp_%s", groupID)
-	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 
 	// Schema guarantees contract_id/contract are strings and one or the other is set
 	var contractID string
@@ -122,9 +120,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	} else {
 		contractID = d.Get("contract").(string)
 	}
-	if !strings.HasPrefix(contractID, "ctr_") {
-		contractID = fmt.Sprintf("ctr_%s", contractID)
-	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
 
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
@@ -136,9 +132,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	} else {
 		productID = d.Get("product").(string)
 	}
-	if !strings.HasPrefix(productID, "prd_") {
-		productID = fmt.Sprintf("prd_%s", productID)
-	}
+	productID = tools.AddPrefix(productID, "prd_")
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
 		ContractID: contractID,
@@ -297,9 +291,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	} else {
 		groupID = d.Get("group").(string)
 	}
-	if !strings.HasPrefix(groupID, "grp_") {
-		groupID = fmt.Sprintf("grp_%s", groupID)
-	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 
 	// Schema guarantees contract_id/contract are strings and one or the other is set
 	var contractID string
@@ -308,9 +300,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	} else {
 		contractID = d.Get("contract").(string)
 	}
-	if !strings.HasPrefix(contractID, "ctr_") {
-		contractID = fmt.Sprintf("ctr_%s", contractID)
-	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
 
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
