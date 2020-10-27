@@ -7,7 +7,6 @@ import (
 	"strings"
 	"text/template"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
@@ -23,11 +22,9 @@ type OutputTemplate struct {
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
 		fmt.Printf("%s is in the OutputTemplate >> %+v\n", key, f)
-		edge.PrintfCorrelation("[DEBUG]", "TEMPLATE", fmt.Sprintf("%s   %v\n", key, f))
 		return f, nil
 	} else {
 		fmt.Printf("%s is NOT in the OutputTemplate!\n", key)
-		edge.PrintfCorrelation("[DEBUG]", "TEMPLATE", fmt.Sprintf("Error %s   \n", key))
 		return nil, fmt.Errorf("Error not found")
 	}
 }
