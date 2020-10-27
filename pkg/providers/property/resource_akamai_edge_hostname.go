@@ -28,19 +28,46 @@ func resourceSecureEdgeHostName() *schema.Resource {
 
 var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	"product": {
-		Type:     schema.TypeString,
-		Required: true,
-		ForceNew: true,
+		Type:       schema.TypeString,
+		Optional:   true,
+		Computed:   true,
+		Deprecated: `use "product_id" attribute instead`,
+		StateFunc:  addPrefixToState("prd_"),
+	},
+	"product_id": {
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		ExactlyOneOf: []string{"product_id", "product"},
+		StateFunc:    addPrefixToState("prd_"),
 	},
 	"contract": {
-		Type:     schema.TypeString,
-		Required: true,
-		ForceNew: true,
+		Type:       schema.TypeString,
+		Optional:   true,
+		Computed:   true,
+		Deprecated: `use "contract_id" attribute instead`,
+		StateFunc:  addPrefixToState("ctr_"),
+	},
+	"contract_id": {
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		ExactlyOneOf: []string{"contract_id", "contract"},
+		StateFunc:    addPrefixToState("ctr_"),
 	},
 	"group": {
-		Type:     schema.TypeString,
-		Required: true,
-		ForceNew: true,
+		Type:       schema.TypeString,
+		Optional:   true,
+		Computed:   true,
+		Deprecated: `use "group_id" attribute instead`,
+		StateFunc:  addPrefixToState("grp_"),
+	},
+	"group_id": {
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		ExactlyOneOf: []string{"group_id", "group"},
+		StateFunc:    addPrefixToState("grp_"),
 	},
 	"edge_hostname": {
 		Type:             schema.TypeString,
@@ -77,37 +104,56 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	client := inst.Client(meta)
 
-	group, err := getGroup(ctx, d, meta)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
+	// Schema guarantees group_id/group are strings and one or the other is set
+	var groupID string
+	if got, ok := d.GetOk("group_id"); ok {
+		groupID = got.(string)
+	} else {
+		groupID = d.Get("group").(string)
+	}
+	if !strings.HasPrefix(groupID, "grp_") {
+		groupID = fmt.Sprintf("grp_%s", groupID)
 	}
 
-	contract, err := getContract(ctx, d, meta)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
+	// Schema guarantees contract_id/contract are strings and one or the other is set
+	var contractID string
+	if got, ok := d.GetOk("contract_id"); ok {
+		contractID = got.(string)
+	} else {
+		contractID = d.Get("contract").(string)
+	}
+	if !strings.HasPrefix(contractID, "ctr_") {
+		contractID = fmt.Sprintf("ctr_%s", contractID)
 	}
 
-	logger.Debugf("  Edgehostnames GROUP = %v", group)
-	logger.Debugf("Edgehostnames CONTRACT = %v", contract)
+	logger.Debugf("Edgehostnames GROUP = %v", groupID)
+	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
 
-	product, err := getProduct(ctx, d, contract.ContractID, meta)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("creating edge hostname: %w", err))
+	// Schema guarantees product_id/product are strings and one or the other is set
+	var productID string
+	if got, ok := d.GetOk("product_id"); ok {
+		productID = got.(string)
+	} else {
+		productID = d.Get("product").(string)
+	}
+	if !strings.HasPrefix(productID, "prd_") {
+		productID = fmt.Sprintf("prd_%s", productID)
 	}
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-		ContractID: contract.ContractID,
-		GroupID:    group.GroupID,
+		ContractID: contractID,
+		GroupID:    groupID,
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	edgeHostname, err := tools.GetStringValue("edge_hostname", d)
-	if err != nil {
-		return diag.FromErr(err)
+
+	var edgeHostname string
+	if got, ok := d.GetOk("edge_hostname"); ok {
+		edgeHostname = got.(string)
 	}
 	newHostname := papi.EdgeHostnameCreate{}
-	newHostname.ProductID = product.ProductID
+	newHostname.ProductID = productID
 	newHostname.DomainSuffix = "edgesuite.net"
 
 	switch {
@@ -165,8 +211,8 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	logger.Debugf("Creating new edge hostname: %#v", newHostname)
 	hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
 		EdgeHostname: newHostname,
-		ContractID:   contract.ContractID,
-		GroupID:      group.GroupID,
+		ContractID:   contractID,
+		GroupID:      groupID,
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -244,31 +290,43 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 
 	client := inst.Client(meta)
 
-	group, err := getGroup(ctx, d, meta)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("updating edge hostname: %w", err))
+	// Schema guarantees group_id/group are strings and one or the other is set
+	var groupID string
+	if got, ok := d.GetOk("group_id"); ok {
+		groupID = got.(string)
+	} else {
+		groupID = d.Get("group").(string)
+	}
+	if !strings.HasPrefix(groupID, "grp_") {
+		groupID = fmt.Sprintf("grp_%s", groupID)
 	}
 
-	contract, err := getContract(ctx, d, meta)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("updating edge hostname: %w", err))
+	// Schema guarantees contract_id/contract are strings and one or the other is set
+	var contractID string
+	if got, ok := d.GetOk("contract_id"); ok {
+		contractID = got.(string)
+	} else {
+		contractID = d.Get("contract").(string)
+	}
+	if !strings.HasPrefix(contractID, "ctr_") {
+		contractID = fmt.Sprintf("ctr_%s", contractID)
 	}
 
-	logger.Debugf("  Edgehostnames GROUP = %v", group)
-	logger.Debugf("Edgehostnames CONTRACT = %v", contract)
+	logger.Debugf("Edgehostnames GROUP = %v", groupID)
+	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-		ContractID: contract.ContractID,
-		GroupID:    group.GroupID,
+		ContractID: contractID,
+		GroupID:    groupID,
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	defaultEdgeHostname := &edgeHostnames.EdgeHostnames.Items[0]
 
-	edgeHostname, err := tools.GetStringValue("edge_hostname", d)
-	if err != nil {
-		return diag.FromErr(err)
+	var edgeHostname string
+	if got, ok := d.GetOk("edge_hostname"); ok {
+		edgeHostname = got.(string)
 	}
 
 	if edgeHostname != "" {
@@ -281,10 +339,10 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	if err := d.Set("contract", contract.ContractID); err != nil {
+	if err := d.Set("contract", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("group", group.GroupID); err != nil {
+	if err := d.Set("group", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("edge_hostname", defaultEdgeHostname.Domain); err != nil {
