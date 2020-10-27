@@ -41,14 +41,14 @@ func resourceMatchTargetSequence() *schema.Resource {
 			"type": {
 				Type:             schema.TypeString,
 				Required:         true,
-				DiffSuppressFunc: suppressJsonProvided,
+				DiffSuppressFunc: suppressJsonProvidedSimple,
 			},
 			"sequence_map": {
 				Type:             schema.TypeMap,
 				Optional:         true,
 				Elem:             &schema.Schema{Type: schema.TypeString},
 				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
+				DiffSuppressFunc: suppressJsonProvidedSimple,
 			},
 		},
 	}

@@ -3,10 +3,8 @@ package appsec
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 
-	edge "github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -75,7 +73,6 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "customRuleAction", customruleactions)
-	edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("customRuleAction outputtext   %v\n", outputtext))
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}
