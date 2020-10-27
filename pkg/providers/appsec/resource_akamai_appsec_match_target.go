@@ -31,9 +31,10 @@ func resourceMatchTarget() *schema.Resource {
 				Required: true,
 			},
 			"json": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"type", "is_negative_path_match", "is_negative_file_extension_match", "default_file", "hostnames", "file_paths", "file_extensions", "security_policy", "bypass_network_lists"},
+				Type:             schema.TypeString,
+				Optional:         true,
+				ConflictsWith:    []string{"type", "is_negative_path_match", "is_negative_file_extension_match", "default_file", "hostnames", "file_paths", "file_extensions", "security_policy", "bypass_network_lists"},
+				DiffSuppressFunc: suppressEquivalentJSONDiffs,
 			},
 			"target_id": {
 				Type:     schema.TypeInt,
@@ -138,6 +139,14 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
+	jsonBody, err := json.Marshal(postresp)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.Set("json", string(jsonBody))
+
+	d.Set("target_id", postresp.TargetID)
+
 	d.SetId(strconv.Itoa(postresp.TargetID))
 
 	return resourceMatchTargetRead(ctx, d, m)
@@ -155,6 +164,12 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 		json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTarget)
 		updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
+		jsonBody, err := json.Marshal(updateMatchTarget)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.Set("json", string(jsonBody))
+
 	} else {
 		updateMatchTarget.ConfigID = d.Get("config_id").(int)
 		updateMatchTarget.ConfigVersion = d.Get("version").(int)
@@ -176,12 +191,16 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 		}
 	}
 
-	_, err := client.UpdateMatchTarget(ctx, updateMatchTarget)
+	resp, err := client.UpdateMatchTarget(ctx, updateMatchTarget)
 	if err != nil {
 		logger.Warnf("calling 'updateMatchTarget': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
+	jsonBody, err := json.Marshal(resp)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.Set("json", string(jsonBody))
 	return resourceMatchTargetRead(ctx, d, m)
 }
 
@@ -224,16 +243,44 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	d.Set("type", matchtarget.Type)
-	d.Set("is_negative_path_match", matchtarget.IsNegativePathMatch)
-	d.Set("is_negative_file_extension_match", matchtarget.IsNegativeFileExtensionMatch)
-	d.Set("default_file", matchtarget.DefaultFile)
-	d.Set("hostnames", matchtarget.Hostnames)
-	d.Set("file_paths", matchtarget.FilePaths)
-	d.Set("file_extensions", matchtarget.FileExtensions)
-	d.Set("security_policy", matchtarget.SecurityPolicy.PolicyID)
+	jsonBody, err := json.Marshal(matchtarget)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.Set("json", string(jsonBody))
+
 	d.Set("target_id", matchtarget.TargetID)
 	d.SetId(strconv.Itoa(matchtarget.TargetID))
 
 	return nil
+}
+
+func matchTargetAsJSONDString(d *schema.ResourceData) (string, error) {
+
+	updateMatchTarget := v2.UpdateMatchTargetRequest{}
+	updateMatchTarget.ConfigID = d.Get("config_id").(int)
+	updateMatchTarget.ConfigVersion = d.Get("version").(int)
+	updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
+	updateMatchTarget.Type = d.Get("type").(string)
+	updateMatchTarget.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
+	updateMatchTarget.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
+	updateMatchTarget.DefaultFile = d.Get("default_file").(string)
+	updateMatchTarget.Hostnames = tools.SetToStringSlice(d.Get("hostnames").(*schema.Set))
+	updateMatchTarget.FilePaths = tools.SetToStringSlice(d.Get("file_paths").(*schema.Set))
+	updateMatchTarget.FileExtensions = tools.SetToStringSlice(d.Get("file_extensions").(*schema.Set))
+	updateMatchTarget.SecurityPolicy.PolicyID = d.Get("security_policy").(string)
+	bypassnetworklists := d.Get("bypass_network_lists").(*schema.Set).List()
+
+	for _, b := range bypassnetworklists {
+		bl := v2.BypassNetworkList{}
+		bl.ID = b.(string)
+		updateMatchTarget.BypassNetworkLists = append(updateMatchTarget.BypassNetworkLists, bl)
+	}
+
+	jsonBody, err := json.Marshal(updateMatchTarget)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonBody), nil
+
 }
