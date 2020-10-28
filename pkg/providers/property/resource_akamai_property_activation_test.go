@@ -2,9 +2,12 @@ package property
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/mock"
 	"log"
+	"regexp"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -15,7 +18,7 @@ provider "akamai" {
 }
 
 resource "akamai_property_activation" "property_activation" {
-	property = "${akamai_property.property.id}"
+	property_id = "${akamai_property.property.id}"
 	version = "${akamai_property.property.version}"
 	network = "STAGING"
 	activate = true
@@ -45,6 +48,7 @@ resource "akamai_edge_hostname" "test" {
 
 resource "akamai_property" "property" {
   name = "terraform-test3"
+  id = "prp_1234"
 
   contact = ["user@exampleterraform.io"]
 
@@ -144,6 +148,184 @@ data "akamai_property_rules" "rules" {
     }
 }
 `)
+
+type papiCall struct {
+	methodName   string
+	papiResponse interface{}
+	error        error
+	stubOnce     bool
+}
+
+func mockPAPIClient(callsToMock []papiCall) *mockpapi {
+	client := &mockpapi{}
+
+	for _, call := range callsToMock {
+		stub := client.On(call.methodName, AnyCTX, mock.Anything).Return(call.papiResponse, call.error)
+		if call.stubOnce {
+			stub.Once()
+		}
+	}
+
+	return client
+}
+
+func TestResourcePropertyActivationCreate(t *testing.T) {
+	t.Run("check schema property activation - OK", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{
+			{
+				methodName: "GetRuleTree",
+				papiResponse: &papi.GetRuleTreeResponse{
+					Response: papi.Response{Errors: make([]*papi.Error, 0)},
+				},
+				error:    nil,
+				stubOnce: false,
+			},
+			{
+				methodName: "GetActivations",
+				papiResponse: &papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+						AccountID:       "act_1-6JHGX",
+						ActivationID:    "atv_activation1",
+						ActivationType:  "ACTIVATE",
+						GroupID:         "grp_91533",
+						PropertyName:    "test",
+						PropertyID:      "prp_test",
+						PropertyVersion: 1,
+						Network:         "STAGING",
+						Status:          "ACTIVE",
+						SubmitDate:      "2020-10-28T15:04:05Z",
+					}}}},
+				error:    nil,
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivations",
+				papiResponse: &papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+						AccountID:       "act_1-6JHGX",
+						ActivationID:    "atv_deactivation1",
+						ActivationType:  "DEACTIVATE",
+						GroupID:         "grp_91533",
+						PropertyName:    "test",
+						PropertyID:      "prp_test",
+						PropertyVersion: 1,
+						Network:         "STAGING",
+						Status:          "ACTIVE",
+						SubmitDate:      "2020-10-28T15:05:05Z",
+					}}}},
+				error:    nil,
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivations",
+				papiResponse: &papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+						AccountID:       "act_1-6JHGX",
+						ActivationID:    "atv_delete1",
+						ActivationType:  "DEACTIVATE",
+						GroupID:         "grp_91533",
+						PropertyName:    "test",
+						PropertyID:      "prp_test",
+						PropertyVersion: 1,
+						Network:         "STAGING",
+						Status:          "ACTIVE",
+						SubmitDate:      "2020-10-28T15:06:05Z",
+					}}}},
+				error:    nil,
+				stubOnce: true,
+			},
+		})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "warnings"),
+							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "errors"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						),
+						ExpectNonEmptyPlan: true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("check schema property activation - papi error", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{
+			{
+				methodName:   "GetRuleTree",
+				papiResponse: nil,
+				error:        fmt.Errorf("failed to create request"),
+				stubOnce:     false,
+			},
+		})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+						ExpectError: regexp.MustCompile("failed to create request"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("check schema property activation - no property id nor property", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestPropertyActivation/no_propertyId/resource_property_activation.tf"),
+						ExpectError: regexp.MustCompile("ExactlyOne"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("check schema property activation - no contact", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestPropertyActivation/no_contact/resource_property_activation.tf"),
+						ExpectError: regexp.MustCompile("Missing required argument"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+}
 
 func TestAccAkamaiPropertyActivation_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{

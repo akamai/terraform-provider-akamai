@@ -2,12 +2,158 @@ package property
 
 import (
 	"errors"
+	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/tj/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
+
+type (
+	ctxt struct {
+	}
+)
+
+func (c ctxt) Deadline() (deadline time.Time, ok bool) {
+	panic("implement me")
+}
+
+func (c ctxt) Done() <-chan struct{} {
+	panic("implement me")
+}
+
+func (c ctxt) Err() error {
+	panic("implement me")
+}
+
+func (c ctxt) Value(_ interface{}) interface{} {
+	panic("implement me")
+}
+
+func TestResolveVersion(t *testing.T) {
+	tests := map[string]struct {
+		versionData       int
+		versionDataExists bool
+		propertyID        string
+		network           papi.ActivationNetwork
+		init              func(*mockpapi)
+		withError         error
+	}{
+		"ok": {
+			versionData:       0,
+			versionDataExists: true,
+			init: func(m *mockpapi) {
+				m.On("GetLatestVersion", mock.Anything, mock.Anything).Return(
+					&papi.GetPropertyVersionsResponse{
+						Version: papi.PropertyVersionGetItem{
+							PropertyVersion: 0,
+						},
+					}, nil)
+			},
+		},
+		"version not present but fetched": {
+			versionData: 1,
+			init: func(m *mockpapi) {
+				m.On("GetLatestVersion", mock.Anything, mock.Anything).Return(
+					&papi.GetPropertyVersionsResponse{
+						Version: papi.PropertyVersionGetItem{
+							PropertyVersion: 1,
+						},
+					}, nil)
+			},
+		},
+		"version not present & not fetched": {
+			versionData: 0,
+			init: func(m *mockpapi) {
+				m.On("GetLatestVersion", mock.Anything, mock.Anything).Return(
+					&papi.GetPropertyVersionsResponse{
+						Version: papi.PropertyVersionGetItem{
+							PropertyVersion: 1,
+						},
+					}, tools.ErrNotFound)
+			},
+			withError: tools.ErrNotFound,
+		},
+	}
+	for name, test := range tests {
+		d := schema.ResourceData{}
+		ctx := ctxt{}
+		client := &mockpapi{}
+		test.init(client)
+		t.Run(name, func(t *testing.T) {
+			if test.versionDataExists {
+				d.Set("version", test.versionData)
+			}
+
+			version, err := resolveVersion(ctx, &d, client, test.propertyID, test.network)
+			if test.withError != nil {
+				assert.Equal(t, test.withError, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, test.versionData, version)
+		})
+	}
+}
+
+func TestNetworkAlias(t *testing.T) {
+	tests := map[string]struct {
+		hasNetwork  bool
+		addNetwork  papi.ActivationNetwork
+		networkTest papi.ActivationNetwork
+		withError   error
+	}{
+		"ok production": {
+			hasNetwork:  true,
+			addNetwork:  papi.ActivationNetworkProduction,
+			networkTest: papi.ActivationNetworkProduction,
+		},
+		"ok p": {
+			hasNetwork:  true,
+			networkTest: papi.ActivationNetworkProduction,
+			addNetwork:  "P",
+		},
+		"ok default staging": {
+			hasNetwork:  false,
+			addNetwork:  papi.ActivationNetworkStaging,
+			networkTest: papi.ActivationNetworkStaging,
+		},
+		"nok malformed input": {
+			hasNetwork: true,
+			addNetwork: "other",
+			withError:  fmt.Errorf("network not recognized"),
+		},
+	}
+	for name, test := range tests {
+		resource := schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"network": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Default:  papi.ActivationNetworkStaging,
+				},
+			},
+		}
+		d := resource.TestResourceData()
+		if test.hasNetwork {
+			_ = d.Set("network", string(test.addNetwork))
+		}
+		t.Run(name, func(t *testing.T) {
+			net, err := networkAlias(d)
+
+			if test.withError != nil {
+				assert.Error(t, test.withError, err)
+			} else {
+				assert.NotNil(t, net)
+				assert.Equal(t, test.networkTest, net)
+			}
+		})
+	}
+}
 
 func TestLookupActivation(t *testing.T) {
 
