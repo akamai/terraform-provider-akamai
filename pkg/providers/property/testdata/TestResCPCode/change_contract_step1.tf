@@ -4,7 +4,7 @@ provider "akamai" {
 
 resource "akamai_cp_code" "test" {
   name     = "test cpcode"
-  contract = "ctr2"
-  group    = "grp1"
-  product  = "prd1"
+  contract = "2"
+  group    = "1"
+  product  = "prd_1"
 }

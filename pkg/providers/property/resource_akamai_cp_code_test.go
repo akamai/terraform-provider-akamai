@@ -6,9 +6,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 // Alias of mock.Anything to use as a placeholder for any context.Context
@@ -35,7 +36,7 @@ func TestResCPCode(t *testing.T) {
 	expectCreate := func(m *mockpapi, CPCName, Product, Contract, Group string, CPCodes *[]papi.CPCode) *mock.Call {
 		mockImpl := func(_ context.Context, req papi.CreateCPCodeRequest) (*papi.CreateCPCodeResponse, error) {
 			cpc := papi.CPCode{
-				ID:         fmt.Sprintf("cpc_%s:%s:%d", req.ContractID, req.GroupID, len(*CPCodes)),
+				ID:         fmt.Sprintf("cpc_%d", len(*CPCodes)),
 				Name:       req.CPCode.CPCodeName,
 				ProductIDs: []string{req.CPCode.ProductID},
 			}
@@ -66,8 +67,8 @@ func TestResCPCode(t *testing.T) {
 		CPCodes := []papi.CPCode{}
 
 		// Values are from fixture:
-		expectGet(client, "ctr1", "grp1", &CPCodes)
-		expectCreate(client, "test cpcode", "prd1", "ctr1", "grp1", &CPCodes)
+		expectGet(client, "ctr_1", "grp_1", &CPCodes)
+		expectCreate(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes)
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -77,11 +78,11 @@ func TestResCPCode(t *testing.T) {
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestResCPCode/create_new_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_ctr1:grp1:0"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
 					),
 				}},
 				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
@@ -192,9 +193,9 @@ func TestResCPCode(t *testing.T) {
 		CPCodes := []papi.CPCode{}
 
 		// Values are from fixture:
-		expectGet(client, "ctr1", "grp1", &CPCodes)
-		expectCreate(client, "test cpcode", "prd1", "ctr1", "grp1", &CPCodes).Once()
-		expectCreate(client, "renamed cpcode", "prd1", "ctr1", "grp1", &CPCodes).Once()
+		expectGet(client, "ctr_1", "grp_1", &CPCodes)
+		expectCreate(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
+		expectCreate(client, "renamed cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -204,11 +205,11 @@ func TestResCPCode(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
-						Check:  resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_ctr1:grp1:0"),
+						Check:  resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
 					},
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step1.tf"),
-						Check:  resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_ctr1:grp1:1"),
+						Check:  resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_1"),
 					},
 				},
 				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
@@ -227,11 +228,11 @@ func TestResCPCode(t *testing.T) {
 		CPCodes2 := []papi.CPCode{}
 
 		// Values are from fixture:
-		expectGet(client, "ctr1", "grp1", &CPCodes1)
-		expectCreate(client, "test cpcode", "prd1", "ctr1", "grp1", &CPCodes1).Once()
+		expectGet(client, "ctr_1", "grp_1", &CPCodes1)
+		expectCreate(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes1).Once()
 
-		expectGet(client, "ctr1", "grp2", &CPCodes2)
-		expectCreate(client, "test cpcode", "prd1", "ctr1", "grp2", &CPCodes2).Once()
+		expectGet(client, "ctr_1", "grp_2", &CPCodes2)
+		expectCreate(client, "test cpcode", "prd_1", "ctr_1", "grp_2", &CPCodes2).Once()
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -242,21 +243,21 @@ func TestResCPCode(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_group_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_ctr1:grp1:0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
 						),
 					},
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_group_step1.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_ctr1:grp2:0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_1"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp2"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_2"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
 						),
 					},
 				},
@@ -276,11 +277,11 @@ func TestResCPCode(t *testing.T) {
 		CPCodes2 := []papi.CPCode{}
 
 		// Values are from fixture:
-		expectGet(client, "ctr1", "grp1", &CPCodes1)
-		expectCreate(client, "test cpcode", "prd1", "ctr1", "grp1", &CPCodes1).Once()
+		expectGet(client, "ctr_1", "grp_1", &CPCodes1)
+		expectCreate(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes1).Once()
 
-		expectGet(client, "ctr2", "grp1", &CPCodes2)
-		expectCreate(client, "test cpcode", "prd1", "ctr2", "grp1", &CPCodes2).Once()
+		expectGet(client, "ctr_2", "grp_1", &CPCodes2)
+		expectCreate(client, "test cpcode", "prd_1", "ctr_2", "grp_1", &CPCodes2).Once()
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -291,21 +292,21 @@ func TestResCPCode(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_contract_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_ctr1:grp1:0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
 						),
 					},
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_contract_step1.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_ctr2:grp1:0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_1"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr2"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_2"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
 						),
 					},
 				},
@@ -328,9 +329,9 @@ func TestResCPCode(t *testing.T) {
 		CPCodes := []papi.CPCode{}
 
 		// Values are from fixture:
-		expectGet(client, "ctr1", "grp1", &CPCodes)
-		expectCreate(client, "test cpcode", "prd1", "ctr1", "grp1", &CPCodes).Once()
-		expectCreate(client, "test cpcode", "prd2", "ctr1", "grp1", &CPCodes).Once()
+		expectGet(client, "ctr_1", "grp_1", &CPCodes)
+		expectCreate(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
+		expectCreate(client, "test cpcode", "prd_2", "ctr_1", "grp_1", &CPCodes).Once()
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -341,21 +342,21 @@ func TestResCPCode(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_product_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_ctr1:grp1:0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
 						),
 					},
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_product_step1.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_ctr1:grp1:1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_1"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd2"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_2"),
 						),
 					},
 				},

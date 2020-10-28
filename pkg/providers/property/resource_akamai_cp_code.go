@@ -77,14 +77,8 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		name = got.(string)
 	}
 
-	// Schema guarantees product_id/product are strings and one or the other is set
-	var productID string
-	if got, ok := d.GetOk("product_id"); ok {
-		productID = got.(string)
-	} else {
-		productID = d.Get("product").(string)
-	}
-	productID = tools.AddPrefix(productID, "prd_")
+	product := d.Get("product").(string)
+	product = tools.AddPrefix(product, "prd_")
 
 	// Schema guarantees group_id/group are strings and one or the other is set
 	var groupID string
@@ -111,7 +105,7 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if cpCode == nil {
-		cpcID, err := createCPCode(ctx, name, productID, contractID, groupID, meta)
+		cpcID, err := createCPCode(ctx, name, product, contractID, groupID, meta)
 		if err != nil {
 			return diag.FromErr(err)
 		}

@@ -3,9 +3,9 @@ provider "akamai" {
 }
 
 resource "akamai_edge_hostname" "edgehostname" {
-  contract = "ctr_2"
-  group = "grp_2"
-  product = "prd_2"
+  contract = "2"
+  group = "2"
+  product = "2"
   edge_hostname = "test.edgesuite.net"
   certificate = 123
   ipv4 = true
