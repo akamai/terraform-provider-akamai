@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_custom_rule_actions
 
-Use `akamai_appsec_custom_rule_actions` data source to retrieve a custom_rule_actions id.
+Use the `akamai_appsec_custom_rule_actions` data source to retrieve information about the actions defined for the custom rules associated with a specific security configuration, version and security policy.
 
 ## Example Usage
 
@@ -19,17 +19,19 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-
-data "akamai_appsec_custom_rule_actions" "appsecreatecustomruleactions" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
-    policy_id = "AAAA_81230"
+data "akamai_appsec_configuration" "configuration" {
+  name = "Akamai Tools"
 }
 
-output "customruleactions" {
-  value = data.akamai_appsec_custom_rule_actions.appsecreatecustomruleactions.output_text
+data "akamai_appsec_custom_rule_actions" "custom_rule_actions" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
+  policy_id = "crAP_75829"
 }
 
+output "custom_rule_actions" {
+  value = data.akamai_appsec_custom_rule_actions.custom_rule_actions.output_text
+}
 
 ```
 
@@ -37,17 +39,15 @@ output "customruleactions" {
 
 The following arguments are supported:
 
-* `config_id`- (Required) The Configuration ID
+* `config_id` - (Required) The ID of the security configuration to use.
 
-* `version` - (Required) The Version Number of configuration
+* `version` - (Required) The version number of the security configuration to use.
 
-* `policy_id` - (Required) The Policy Id of configuration
+* `policy_id` - (Required) The ID of the security policy to use
 
-# Attributes Reference
+## Attributes Reference
 
-The following are the return attributes:
+In addition to the arguments above, the following attributes are exported:
 
-*`rule_id` - The Rule ID
-
-*`ouput_text` - The list of custom rule actions in tabular format
+* `output_text` - A tabular display showing the ID, name, and action of all custom rules associated with the specified security configuration, version and security policy.
 

@@ -64,7 +64,7 @@ In addition to the arguments above, the following attributes are exported:
 
 * `config_id` - The ID of the specified security configuration. Returned only if `name` was specified.
 
-* `output_text` - A tabular listing showing the following information about all available security configurations: config_id, name, latest version, version active in staging, and version active in production.
+* `output_text` - A tabular display showing the following information about all available security configurations: config_id, name, latest version, version active in staging, and version active in production.
 
 * `latest_version` - The last version of the specified security configuration created. Returned only if `name` was specified.
 

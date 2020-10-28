@@ -63,5 +63,5 @@ In addition to the arguments above, the following attributes are exported:
 
 * `json` - The complete set of information about the specified security configuration version, in JSON format. This includes the types available for the `search` parameter, plus several additional fields such as createDate and createdBy.
 
-* `output_text` - A tabular listing showing the types of data specified in the `search` parameter. Included only if the `search` parameter specifies at least one type.
+* `output_text` - A tabular display showing the types of data specified in the `search` parameter. Included only if the `search` parameter specifies at least one type.
 

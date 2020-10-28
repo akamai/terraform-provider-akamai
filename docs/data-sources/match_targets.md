@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_match_targets
 
-Use `akamai_appsec_match_targets` data source to retrieve a match_targets id.
+Use the `akamai_appsec_match_targets` data source to retrieve information about the match targets associated with a given configuration and version.
 
 ## Example Usage
 
@@ -18,32 +18,18 @@ Basic usage:
 provider "akamai" {
   appsec_section = "default"
 }
-data "akamai_appsec_configuration" "appsecconfigedge" {
-  name = "Example for EDGE"
-  
+
+data "akamai_appsec_configuration" "configuration" {
+  name = "Akamai Tools"
 }
 
-
-
-output "configsedge" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_id
+data "akamai_appsec_match_targets" "match_targets" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
-
-resource "akamai_appsec_match_targets" "appsecmatchtargets" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
-    type =  "website"
-    is_negative_path_match =  false
-    is_negative_file_extension_match =  true
-    default_file = "BASE_MATCH"
-    hostnames =  ["example.com","www.example.net","m.example.com"]
-    //file_paths =  ["/sssi/*","/cache/aaabbc*","/price_toy/*"]
-    //file_extensions = ["wmls","jpeg","pws","carb","pdf","js","hdml","cct","swf","pct"]
-    security_policy = "f1rQ_106946"
- 
-    bypass_network_lists = ["888518_ACDDCKERS","1304427_AAXXBBLIST"]
-    
+output "match_targets" {
+  value = data.akamai_appsec_match_targets.match_targets.output_text
 }
 
 ```
@@ -52,14 +38,13 @@ resource "akamai_appsec_match_targets" "appsecmatchtargets" {
 
 The following arguments are supported:
 
-* `config_id`- (Required) The Configuration ID
+* `config_id` - (Required) The ID of the security configuration to use.
 
-* `version` - (Required) The Version Number of configuration
+* `version` - (Required) The version number of the security configuration to use.
 
+## Attributes Reference
 
-# Attributes Reference
+In addition to the arguments above, the following attributes are exported:
 
-The following are the return attributes:
-
-*`output_text` - The match targets in formatted text
+* `output_text` - A tabular display showing the ID and Policy ID of all match targets associated with the specified security configuraton and version.
 

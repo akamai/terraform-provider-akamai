@@ -74,5 +74,5 @@ In addition to the arguments above, the following attributes are exported:
 
 * `production_status` - The status of the specified version in production: "Active", "Inactive", or "Deactivated". Returned only if `version` was specified.
 
-* `output_text` - A tabular listing showing the following information about all versions of the security configuration: version number, staging status, and production status.
+* `output_text` - A tabular display showing the following information about all versions of the security configuration: version number, staging status, and production status.
 

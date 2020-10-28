@@ -58,5 +58,5 @@ In addition to the arguments above, the following attributes are exported:
 
 * `hostnames_json` - The list of selected hostnames in json format.
 
-* `output_text` - A tabular list of the selected hostnames.
+* `output_text` - A tabular display of the selected hostnames.
 

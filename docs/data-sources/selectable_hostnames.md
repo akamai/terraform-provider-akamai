@@ -55,9 +55,9 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `hostnames` - The list of selectable hostnames
+* `hostnames` - The list of selectable hostnames.
 
-* `hostnames_json` - The list of selectable hostnames in json format
+* `hostnames_json` - The list of selectable hostnames in json format.
 
-* `output_text` - A tabular list of selectable hostnames showing the name and config_id of the security configuration under which the host is protected in production, or '-' if the host is not protected in production
+* `output_text` - A tabular display of the selectable hostnames showing the name and config_id of the security configuration under which the host is protected in production, or '-' if the host is not protected in production.
 
