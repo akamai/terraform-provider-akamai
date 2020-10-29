@@ -1,0 +1,23 @@
+{{define "test-template"}}
+    {
+        "name": "RUM",
+        "children": [
+            {{template "another-template" .}}
+        ],
+        "behaviors": [
+            {
+                "name": "mPulse",
+                "options": {
+                    "enabled": true,
+                    "requirePci": false,
+                    "titleOptional": "",
+                    "apiKey": "",
+                    "bufferSize": "",
+                    "configOverride": ""
+                }
+            }
+        ],
+        "criteria": [],
+        "criteriaMustSatisfy": "{{.criteriaMustSatisfy}}"
+    }
+{{end}}

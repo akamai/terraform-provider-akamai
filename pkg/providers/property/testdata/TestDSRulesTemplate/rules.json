@@ -1,0 +1,62 @@
+{
+  "rules": {
+    "name": "test",
+    "children": [
+      {
+        "name": "RUM",
+        "children": [
+          {
+            "name": "Augment insights",
+            "children": [
+              {
+                "name": "Traffic reporting",
+                "uuid": "008c842b-b54c-40ec-bcb4-8ba3f08ee9f1",
+                "children": [],
+                "features": [
+                  {
+                    "name": "cpCode",
+                    "uuid": "37f90c93-f8aa-4e3b-8694-7ee2323fef99",
+                    "version": "1.1",
+                    "options": {
+                      "value": {
+                        "id": 586940,
+                        "description": "akamaidemo-ion-www.scalemates.com",
+                        "products": [
+                          "Fresca"
+                        ],
+                        "createdDate": 1497541925000,
+                        "name": "akamaidemo-ion-www.scalemates.com"
+                      }
+                    }
+                  }
+                ],
+                "comments": "Identify your main traffic segments so you can granularly zoom in your traffic statistics like hits, bandwidth, offload, response codes, and errors.",
+                "conditions": [],
+                "conditionBehavior": "all"
+              }
+            ],
+            "features": [],
+            "comments": "Control the settings related to monitoring and reporting. This gives you additional visibility into your traffic and audiences.",
+            "conditions": [],
+            "conditionBehavior": "all"
+          }
+        ],
+        "behaviors": [
+          {
+            "name": "mPulse",
+            "options": {
+              "enabled": true,
+              "requirePci": false,
+              "titleOptional": "",
+              "apiKey": "",
+              "bufferSize": "",
+              "configOverride": ""
+            }
+          }
+        ],
+        "criteria": [],
+        "criteriaMustSatisfy": "test-criteria"
+      }
+    ]
+  }
+}

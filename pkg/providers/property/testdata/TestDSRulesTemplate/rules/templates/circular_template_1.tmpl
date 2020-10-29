@@ -1,0 +1,23 @@
+{{define "circular-template"}}
+    {
+        "name": "RUM",
+        "children": [
+            {{template "circular-template-2" .}}
+        ],
+        "behaviors": [
+            {
+            "name": "mPulse",
+            "options": {
+                "enabled": true,
+                "requirePci": false,
+                "titleOptional": "",
+                "apiKey": "",
+                "bufferSize": "",
+                "configOverride": ""
+                }
+            }
+        ],
+        "criteria": [],
+        "criteriaMustSatisfy": "{{.criteriaMustSatisfy}}"
+    }
+{{end}}
