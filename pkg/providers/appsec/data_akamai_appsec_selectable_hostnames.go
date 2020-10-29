@@ -116,7 +116,6 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 
 	}
 
-	//edge.PrintfCorrelation("[DEBUG]", CorrelationID, fmt.Sprintf("  SET SelectedHostnames H %v", h))
 	d.Set("hostnames", newhdata)
 
 	ots := OutputTemplates{}

@@ -95,7 +95,7 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 		d.Set("output_text", outputtext)
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d", securitypolicy.ConfigID, securitypolicy.Version))
+	d.SetId(fmt.Sprintf("%d:%d", getSecurityPolicy.ConfigID, getSecurityPolicy.Version))
 
 	return nil
 }

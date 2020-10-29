@@ -1,0 +1,184 @@
+[
+    {
+        "configId": 43253,
+        "configName": "Akamai Tools",
+        "lastCreatedVersion": 15,
+        "page": 1,
+        "pageSize": 15,
+        "totalSize": 15,
+        "versionList": [
+            {
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "action": "ACTIVATE",
+                    "status": "Deactivated",
+                    "time": "2019-07-27T00:34:23Z"
+                },
+                "version": 1
+            },
+            {
+                "basedOn": 1,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "action": "ACTIVATE",
+                    "status": "Deactivated",
+                    "time": "2020-08-27T02:12:02Z"
+                },
+                "version": 2
+            },
+            {
+                "basedOn": 2,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "action": "ACTIVATE",
+                    "status": "Deactivated",
+                    "time": "2020-08-27T02:55:02Z"
+                },
+                "version": 3
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "action": "ACTIVATE",
+                    "status": "Deactivated",
+                    "time": "2020-10-21T16:09:47Z"
+                },
+                "version": 4
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 5
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 6
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 7
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 8
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 9
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 10
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 11
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 12
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 13
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 14
+            },
+            {
+                "basedOn": 3,
+                "configId": 43253,
+                "production": {
+                    "status": "Inactive"
+                },
+                "staging": {
+                    "status": "Inactive"
+                },
+                "version": 15
+            }
+        ]
+    }
+]
