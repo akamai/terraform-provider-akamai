@@ -24,10 +24,10 @@ type (
 		Session() session.Session
 
 		// CacheGet returns an object from the cache
-		CacheGet(key string, out interface{}) error
+		CacheGet(prov Subprovider, key string, out interface{}) error
 
 		// CacheSet sets a value in the cache
-		CacheSet(key string, val interface{}) error
+		CacheSet(prov Subprovider, key string, val interface{}) error
 	}
 
 	meta struct {
@@ -57,8 +57,8 @@ func (m *meta) Session() session.Session {
 	return m.sess
 }
 
-func (m *meta) CacheSet(key string, val interface{}) error {
-	key = fmt.Sprintf("%s:%s", m.operationID, key)
+func (m *meta) CacheSet(prov Subprovider, key string, val interface{}) error {
+	key = fmt.Sprintf("%s:%s:%T", m.operationID, key, prov)
 
 	data, err := json.Marshal(val)
 	if err != nil {
@@ -68,8 +68,8 @@ func (m *meta) CacheSet(key string, val interface{}) error {
 	return instance.cache.Set(key, data)
 }
 
-func (m *meta) CacheGet(key string, out interface{}) error {
-	key = fmt.Sprintf("%s:%s", m.operationID, key)
+func (m *meta) CacheGet(prov Subprovider, key string, out interface{}) error {
+	key = fmt.Sprintf("%s:%s:%T", m.operationID, key, prov)
 
 	data, err := instance.cache.Get(key)
 	if err != nil {
