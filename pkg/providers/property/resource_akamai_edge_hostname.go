@@ -164,7 +164,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
 
 	ipv4, _ := tools.GetBoolValue("ipv4", d)
-	if ipv4, _ := tools.GetBoolValue("ipv4", d); ipv4 {
+	if ipv4 {
 		newHostname.IPVersionBehavior = "IPV4"
 	}
 	ipv6, _ := tools.GetBoolValue("ipv6", d)
@@ -218,7 +218,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
-	logger.Debugf("DELETING")
+	logger.Debug("DELETING")
 	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
 	d.SetId("")
 	logger.Debugf("DONE")
