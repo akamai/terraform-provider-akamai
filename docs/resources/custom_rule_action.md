@@ -9,9 +9,8 @@ description: |-
 # resource_akamai_appsec_custom_rule_action
 
 
-The `resource_akamai_appsec_custom_rule_action` resource allows you to create or re-use CustomRuleActions.
+The `resource_akamai_appsec_custom_rule_action` resource allows you to associate a custom rule and action with a security policy, security configuration and version.
 
-If the CustomRuleAction already exists it will be used instead of creating a new one.
 
 ## Example Usage
 
@@ -21,28 +20,21 @@ Basic usage:
 provider "akamai" {
   appsec_section = "default"
 }
-data "akamai_appsec_configuration" "appsecconfigedge" {
-  name = "Example for EDGE"
-  
+
+data "akamai_appsec_configuration" "configuration" {
+  name = "Akamai Tools"
 }
 
-
-
-output "configsedge" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_id
+resource "akamai_appsec_custom_rule_action" "create_custom_rule_action" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
+  policy_id = "crAP_75829"
+  rule_id = 12345
+  custom_rule_action = "alert"
 }
 
-
-resource "akamai_appsec_custom_rule_action" "appsecreatecustomruleaction" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
-    policy_id = "AAAA_81230"
-    rule_id = akamai_appsec_custom_rule.appseccustomrule1.rule_id
-    custom_rule_action = "alert"
-}
-
-output "customruleaction" {
-  value = akamai_appsec_custom_rule_action.appsecreatecustomruleaction.rule_id
+output "custom_rule_id" {
+  value = akamai_appsec_custom_rule_action.create_custom_rule_action.rule_id
 }
 
 ```
@@ -50,19 +42,23 @@ output "customruleaction" {
 ## Argument Reference
 
 The following arguments are supported:
-* `config_id`- (Required) The Configuration ID
 
-* `version` - (Required) The Version Number of configuration
+* `config_id` - (Required) The ID of the security configuration to use.
 
-* `policy_id` - (Required) The Policy Id of configuration
+* `version` - (Required) The version number of the security configuration to use.
 
-* `rule_id` - (Required) The Rule Id of configuration
+* `custom_rule_action` - (Required) The action to be taken when the custom rule is invoked. Must be one of the following:
+  * alert
+  * deny
+  * none
 
-* `custom_rule_action` - (Required) The custom_rule_action for custom rules  action
+* `policy_id` - (Required) The 
 
-# Attributes Reference
+* `rule_id` - (Required)
 
-The following are the return attributes:
+## Attributes Reference
 
-*`rule_id` - The Rule ID
+In addition to the arguments above, the following attributes are exported:
+
+* `rule_id` - The ID of the custom rule.
 

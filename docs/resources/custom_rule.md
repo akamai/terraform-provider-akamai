@@ -9,9 +9,7 @@ description: |-
 # resource_akamai_appsec_custom_rule
 
 
-The `resource_akamai_appsec_custom_rule` resource allows you to create or re-use CustomRules.
-
-If the CustomRule already exists it will be used instead of creating a new one.
+The `resource_akamai_appsec_custom_rule` resource allows you to create or modify a custom rule associated with a given security configuration.
 
 ## Example Usage
 
@@ -21,33 +19,35 @@ Basic usage:
 provider "akamai" {
   appsec_section = "default"
 }
-data "akamai_appsec_configuration" "appsecconfigedge" {
-  name = "Example for EDGE"
-  
+
+data "akamai_appsec_configuration" "configuration" {
+  name = "Akamai Tools"
 }
 
-
-
-output "configsedge" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_id
+data "local_file" "rules" {
+  filename = "${path.module}/custom_rules.json"
 }
 
+resource "akamai_appsec_custom_rule" "custom_rule" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  rules = data.local_file.rules.content
+}
 
-resource "akamai_appsec_custom_rule" "appseccustomrule" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    custom_rules_json =  file("${path.module}/custom_rules.json")
+output "custom_rule_rule_id" {
+  value = akamai_appsec_custom_rule.custom_rule.rule_id
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
-"* `config_id`- (Required) The Configuration ID
-* `rules` - (Required) Custom Rules File
+* `config_id` - (Required) The ID of the security configuration to use.
 
-# Attributes Reference
+* `rules` - (Required) The name of a JSON file containing a custom rule definition.
 
-The following are the return attributes:
 
-*`rule_id` - The RuleID"
+## Attributes Reference
+
+In addition to the arguments above, the following attributes are exported:
+
+* `rule_id` - The ID of the custom rule.
 
