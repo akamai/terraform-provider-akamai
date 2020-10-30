@@ -81,6 +81,7 @@ func Provider() *schema.Provider {
 			"akamai_property_rules":      resourcePropertyRules(),
 			"akamai_property_variables":  resourcePropertyVariables(),
 			"akamai_property_activation": resourcePropertyActivation(),
+			"akamai_property_hostnames":  resPropHostname(),
 		},
 	}
 	return provider
