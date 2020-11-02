@@ -112,6 +112,13 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		groupID = d.Get("group").(string)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
+	// set group/groupID into ResourceData
+	if err := d.Set("group_id", groupID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("group", groupID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	// Schema guarantees contract_id/contract are strings and one or the other is set
 	var contractID string
@@ -121,6 +128,13 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		contractID = d.Get("contract").(string)
 	}
 	contractID = tools.AddPrefix(contractID, "ctr_")
+	// set contract/contract_id into ResourceData
+	if err := d.Set("contract_id", contractID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("contract", contractID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
@@ -133,6 +147,13 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		productID = d.Get("product").(string)
 	}
 	productID = tools.AddPrefix(productID, "prd_")
+	// set product/product_id into ResourceData
+	if err := d.Set("product_id", productID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("product", productID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
 		ContractID: contractID,
@@ -292,6 +313,13 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 		groupID = d.Get("group").(string)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
+	// set group/groupID into ResourceData
+	if err := d.Set("group_id", groupID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("group", groupID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	// Schema guarantees contract_id/contract are strings and one or the other is set
 	var contractID string
@@ -301,6 +329,13 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 		contractID = d.Get("contract").(string)
 	}
 	contractID = tools.AddPrefix(contractID, "ctr_")
+	// set contract/contract_id into ResourceData
+	if err := d.Set("contract_id", contractID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("contract", contractID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
@@ -329,10 +364,11 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	if err := d.Set("contract", contractID); err != nil {
+	// set product/product_id into ResourceData
+	if err := d.Set("product_id", tools.AddPrefix(defaultEdgeHostname.ProductID, "prd_")); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("group", groupID); err != nil {
+	if err := d.Set("product", tools.AddPrefix(defaultEdgeHostname.ProductID, "prd_")); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("edge_hostname", defaultEdgeHostname.Domain); err != nil {
