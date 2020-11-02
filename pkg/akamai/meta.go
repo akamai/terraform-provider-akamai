@@ -58,7 +58,7 @@ func (m *meta) Session() session.Session {
 }
 
 func (m *meta) CacheSet(prov Subprovider, key string, val interface{}) error {
-	key = fmt.Sprintf("%s:%s:%T", m.operationID, key, prov)
+	key = fmt.Sprintf("%s:%T", key, prov)
 
 	data, err := json.Marshal(val)
 	if err != nil {
@@ -69,7 +69,7 @@ func (m *meta) CacheSet(prov Subprovider, key string, val interface{}) error {
 }
 
 func (m *meta) CacheGet(prov Subprovider, key string, out interface{}) error {
-	key = fmt.Sprintf("%s:%s:%T", m.operationID, key, prov)
+	key = fmt.Sprintf("%s:%T", key, prov)
 
 	data, err := instance.cache.Get(key)
 	if err != nil {
