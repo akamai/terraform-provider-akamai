@@ -31,9 +31,10 @@ type (
 	}
 
 	meta struct {
-		operationID string
-		log         hclog.Logger
-		sess        session.Session
+		operationID  string
+		log          hclog.Logger
+		sess         session.Session
+		cacheEnabled bool
 	}
 )
 
@@ -58,6 +59,10 @@ func (m *meta) Session() session.Session {
 }
 
 func (m *meta) CacheSet(prov Subprovider, key string, val interface{}) error {
+	if !m.cacheEnabled {
+		return nil
+	}
+
 	key = fmt.Sprintf("%s:%T", key, prov)
 
 	data, err := json.Marshal(val)
@@ -69,6 +74,10 @@ func (m *meta) CacheSet(prov Subprovider, key string, val interface{}) error {
 }
 
 func (m *meta) CacheGet(prov Subprovider, key string, out interface{}) error {
+	if !m.cacheEnabled {
+		return ErrCacheEntryNotFound
+	}
+
 	key = fmt.Sprintf("%s:%T", key, prov)
 
 	data, err := instance.cache.Get(key)

@@ -82,6 +82,11 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 						Type:        schema.TypeString,
 						Default:     "default",
 					},
+					"cache_enabled": {
+						Optional: true,
+						Default:  true,
+						Type:     schema.TypeBool,
+					},
 				},
 				ResourcesMap:       make(map[string]*schema.Resource),
 				DataSourcesMap:     make(map[string]*schema.Resource),
@@ -133,6 +138,11 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				}
 			}
 
+			cacheEnabled, err := tools.GetBoolValue("cache_enabled", d)
+			if err != nil && !IsNotFoundError(err) {
+				return nil, diag.FromErr(err)
+			}
+
 			edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
 
 			edgercPath, err := tools.GetStringValue("edgerc", d)
@@ -173,9 +183,10 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 			)
 
 			meta := &meta{
-				log:         log,
-				operationID: opid,
-				sess:        sess,
+				log:          log,
+				operationID:  opid,
+				sess:         sess,
+				cacheEnabled: cacheEnabled,
 			}
 
 			return meta, nil
