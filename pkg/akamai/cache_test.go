@@ -103,9 +103,9 @@ func testCacheSet(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	var diags diag.Diagnostics
 
 	meta := Meta(m)
-	logger := meta.Log("test", "testCreate")
+	logger := meta.Log("cache", "testCacheSet")
 
-	logger.Debug("testing cache create")
+	logger.Debug("testing cache set")
 
 	key := d.Get("key").(string)
 	value := d.Get("value").(string)
@@ -128,9 +128,9 @@ func testCacheGet(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	var diags diag.Diagnostics
 
 	meta := Meta(m)
-	logger := meta.Log("test", "testCreate")
+	logger := meta.Log("cache", "testCacheGet")
 
-	logger.Debug("testing cache create")
+	logger.Debug("testing cache get")
 
 	var value string
 	key := d.Get("key").(string)
