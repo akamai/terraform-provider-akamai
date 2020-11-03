@@ -140,9 +140,14 @@ func resourceGTMv1Datacenter() *schema.Resource {
 func parseDatacenterResourceId(id string) (string, int, error) {
 
 	parts := strings.SplitN(id, ":", 2)
+
+	if len(parts) != 2 || parts[0] == "" {
+		return "", -1, fmt.Errorf("Datacenter ID, %v, is invalid", id)
+	}
+
 	domain := parts[0]
 	dcID, err := strconv.Atoi(parts[1])
-	if len(parts) != 2 || parts[0] == "" || err != nil {
+	if err != nil {
 		return "", -1, err
 	}
 

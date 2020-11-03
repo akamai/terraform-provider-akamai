@@ -35,8 +35,8 @@ func TestResCPCode(t *testing.T) {
 	expectCreate := func(m *mockpapi, CPCName, Product, Contract, Group string, CPCodes *[]papi.CPCode) *mock.Call {
 		mockImpl := func(_ context.Context, req papi.CreateCPCodeRequest) (*papi.CreateCPCodeResponse, error) {
 			cpc := papi.CPCode{
-				ID:        fmt.Sprintf("cpc_%s:%s:%d", req.ContractID, req.GroupID, len(*CPCodes)),
-				Name:      req.CPCode.CPCodeName,
+				ID:         fmt.Sprintf("cpc_%s:%s:%d", req.ContractID, req.GroupID, len(*CPCodes)),
+				Name:       req.CPCode.CPCodeName,
 				ProductIDs: []string{req.CPCode.ProductID},
 			}
 
@@ -122,7 +122,6 @@ func TestResCPCode(t *testing.T) {
 		})
 	})
 
-
 	t.Run("use existing CP Code", func(t *testing.T) {
 		client := &mockpapi{}
 		defer client.AssertExpectations(t)
@@ -177,9 +176,8 @@ func TestResCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
-					ExpectError:regexp.MustCompile("Couldn't find product id on the CP Code"),
-
+					Config:      loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
+					ExpectError: regexp.MustCompile("Couldn't find product id on the CP Code"),
 				}},
 				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
 			})

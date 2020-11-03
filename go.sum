@@ -43,7 +43,10 @@ github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.18 h1:KyEv96ncdgOIJRTKMcWlIqM0
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.18/go.mod h1:L+HB2uBoDgi3+r1pJEJcbGwyyHhd2QXaGsKLbDwtm8Q=
 github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.1 h1:SBuJK5sq4QHE8pFV6YcOQHsj2zhXhqJKVnYpvee55bg=
 github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.1/go.mod h1:NYv9/tgSBZzzB4/raW1CjKbRgytc1yvfP96Eff4OVrQ=
+<<<<<<< HEAD
 github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7/go.mod h1:6zEj6s6u/ghQa61ZWa/C2Aw3RkjiTBOix7dkqa1VLIs=
+=======
+>>>>>>> d46a278d1c8d085484f5a3b991fecf2fdc97b9a0
 github.com/allegro/bigcache v1.2.1 h1:hg1sY1raCwic3Vnsvje6TT7/pnZba83LeFck5NrFKSc=
 github.com/allegro/bigcache v1.2.1/go.mod h1:Cb/ax3seSYIx7SuZdm2G2xzfwmv3TPSk2ucNfQESPXM=
 github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239/go.mod h1:2FmKhYUyUczH0OGQWaF5ceTx0UBShxjsH6f8oGKYe2c=
