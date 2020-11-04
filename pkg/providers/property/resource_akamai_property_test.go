@@ -63,7 +63,6 @@ func TestResProperty(t *testing.T) {
 		resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 		resource.TestCheckResourceAttr("akamai_property.test", "production_version", "42"),
 		resource.TestCheckResourceAttr("akamai_property.test", "staging_version", "42"),
-		resource.TestCheckResourceAttr("akamai_property.test", "latest_version", "42"),
 		resource.TestCheckResourceAttr("akamai_property.test", "name", "test property"),
 		resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_0"),
 		resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_0"),

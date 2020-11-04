@@ -79,7 +79,6 @@ func resourceProperty() *schema.Resource {
 				StateFunc:    addPrefixToState("prd_"),
 			},
 
-			"latest_version":     {Type: schema.TypeInt, Computed: true},
 			"staging_version":    {Type: schema.TypeInt, Computed: true},
 			"production_version": {Type: schema.TypeInt, Computed: true},
 
@@ -260,10 +259,6 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	if err := d.Set("product_id", prop.ProductID); err != nil {
 		logger.WithError(err).Error(`could not set "product_id" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
-	}
-	if err := d.Set("latest_version", prop.LatestVersion); err != nil {
-		logger.WithError(err).Error(`could not set "latest_version" attribute`)
 		diags = append(diags, diag.FromErr(err)...)
 	}
 
