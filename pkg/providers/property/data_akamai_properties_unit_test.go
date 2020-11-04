@@ -56,8 +56,8 @@ func TestDataProperties(t *testing.T) {
 					Config: loadFixtureString("testdata/TestDataProperties/properties.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "id", "grp_testctr_test"),
-						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "group", "grp_test"),
-						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "contract", "ctr_test"),
+						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "group_id", "grp_test"),
+						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "contract_id", "ctr_test"),
 						resource.TestCheckResourceAttrSet("data.akamai_properties.akaproperties", "properties"),
 						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "properties", stateVal),
 					),
@@ -114,8 +114,8 @@ func TestDataProperties(t *testing.T) {
 					Config: loadFixtureString("testdata/TestDataProperties/properties_no_group_prefix.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "id", "grp_testctr_test"),
-						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "group", "test"),
-						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "contract", "ctr_test"),
+						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "group_id", "test"),
+						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "contract_id", "ctr_test"),
 						resource.TestCheckResourceAttrSet("data.akamai_properties.akaproperties", "properties"),
 						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "properties", stateVal),
 					),
@@ -172,8 +172,8 @@ func TestDataProperties(t *testing.T) {
 					Config: loadFixtureString("testdata/TestDataProperties/properties_no_contract_prefix.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "id", "grp_testctr_test"),
-						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "group", "grp_test"),
-						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "contract", "test"),
+						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "group_id", "grp_test"),
+						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "contract_id", "test"),
 						resource.TestCheckResourceAttrSet("data.akamai_properties.akaproperties", "properties"),
 						resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "properties", stateVal),
 					),

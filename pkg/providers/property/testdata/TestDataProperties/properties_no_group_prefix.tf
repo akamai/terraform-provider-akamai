@@ -3,6 +3,6 @@ provider "akamai" {
 }
 
 data "akamai_properties" "akaproperties" {
-  group = "test"
-  contract = "ctr_test"
+  group_id = "test"
+  contract_id = "ctr_test"
 }

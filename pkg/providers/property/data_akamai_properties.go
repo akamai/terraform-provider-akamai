@@ -16,11 +16,11 @@ func dataSourceAkamaiProperties() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataAkamaiPropertiesRead,
 		Schema: map[string]*schema.Schema{
-			"group": {
+			"group_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"contract": {
+			"contract_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -38,11 +38,11 @@ func dataAkamaiPropertiesRead(ctx context.Context, d *schema.ResourceData, m int
 	log := meta.Log("PAPI", "dataAkamaiPropertiesRead")
 	log.Debug("Listing Properties")
 
-	groupId, err := tools.GetStringValue("group", d)
+	groupId, err := tools.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractId, err := tools.GetStringValue("contract", d)
+	contractId, err := tools.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
