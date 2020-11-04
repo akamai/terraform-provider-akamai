@@ -68,7 +68,7 @@ var (
 	// ErrRuleFormatsNotFound is returned when no rule formats were found
 	ErrRuleFormatsNotFound = errors.New("no rule formats found")
 
-	// PAPI edge hostnames errors
+	// ErrEdgeHostnameNotFound is returned when no edgehostname were found
 	ErrEdgeHostnameNotFound = errors.New("unable to find edge hostname")
 
 	// DiagWarnActivationTimeout returned on activation poll timeout

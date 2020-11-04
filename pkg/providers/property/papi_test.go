@@ -179,6 +179,22 @@ func (p *mockpapi) GetProperty(ctx context.Context, r papi.GetPropertyRequest) (
 	return args.Get(0).(*papi.GetPropertyResponse), args.Error(1)
 }
 
+// Any function having the same signature as papi.GetProperty
+type GetPropertyFunc func(context.Context, papi.GetPropertyRequest) (*papi.GetPropertyResponse, error)
+
+// Expect a call to the mock's papi.GetProperty() where the return value is computed by the given function
+func (p *mockpapi) OnGetProperty(ctx, req interface{}, impl GetPropertyFunc) *mock.Call {
+	call := p.On("GetProperty", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.GetPropertyRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
+}
+
 func (p *mockpapi) RemoveProperty(ctx context.Context, r papi.RemovePropertyRequest) (*papi.RemovePropertyResponse, error) {
 	args := p.Called(ctx, r)
 
@@ -309,12 +325,25 @@ func (p *mockpapi) GetPropertyVersionHostnames(ctx context.Context, r papi.GetPr
 	return args.Get(0).(*papi.GetPropertyVersionHostnamesResponse), args.Error(1)
 }
 
+// Any function having the same signature as papi.GetPropertyVersionHostnames
+type GetPropertyVersionHostnamesFunc func(context.Context, papi.GetPropertyVersionHostnamesRequest) (*papi.GetPropertyVersionHostnamesResponse, error)
+
+// Expect a call to the mock's papi.GetPropertyVersionHostnames() where the return value is computed by the given
+// function
+func (p *mockpapi) OnGetPropertyVersionHostnames(ctx, req interface{}, impl GetPropertyVersionHostnamesFunc) *mock.Call {
+	call := p.On("GetPropertyVersionHostnames", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.GetPropertyVersionHostnamesRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
+}
+
 func (p *mockpapi) UpdatePropertyVersionHostnames(ctx context.Context, r papi.UpdatePropertyVersionHostnamesRequest) (*papi.UpdatePropertyVersionHostnamesResponse, error) {
 	args := p.Called(ctx, r)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
 
 	return args.Get(0).(*papi.UpdatePropertyVersionHostnamesResponse), args.Error(1)
 }

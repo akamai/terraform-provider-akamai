@@ -1,0 +1,27 @@
+{
+  "properties": {
+    "items": [{
+      "accountId": "act1",
+      "assetId": "ast1",
+      "contractId": "ctr_test",
+      "groupId": "grp_test",
+      "latestVersion": 1,
+      "note": "note1",
+      "productId": "prd1",
+      "propertyId": "prp1",
+      "propertyName": "prpname1",
+      "ruleFormat": "latest"
+    }, {
+      "accountId": "act1",
+      "assetId": "ast1",
+      "contractId": "ctr_test",
+      "groupId": "grp_test",
+      "latestVersion": 1,
+      "note": "note2",
+      "productId": "prd1",
+      "propertyId": "prp2",
+      "propertyName": "prpname2",
+      "ruleFormat": "latest"
+    }]
+  }
+}

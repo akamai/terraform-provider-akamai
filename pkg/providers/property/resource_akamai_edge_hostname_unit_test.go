@@ -3,13 +3,15 @@ package property
 import (
 	"errors"
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"github.com/tj/assert"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 func TestResourceEdgeHostname(t *testing.T) {
@@ -22,25 +24,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 		"edge hostname with .edgesuite.net, create edge hostname": {
 			givenTF: "new_edgesuite_net.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -49,10 +32,10 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_1",
+							ID:           "eh_123",
 							Domain:       "test2.edgesuite.net",
 							ProductID:    "prd_2",
-							DomainPrefix: "test2",
+							DomainPrefix: "test",
 							DomainSuffix: "edgesuite.net",
 						},
 						{
@@ -69,7 +52,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostname: papi.EdgeHostnameCreate{
 						ProductID:         "prd_2",
-						DomainPrefix:      "test",
+						DomainPrefix:      "test2",
 						DomainSuffix:      "edgesuite.net",
 						SecureNetwork:     "STANDARD_TLS",
 						IPVersionBehavior: "IPV6_COMPLIANCE",
@@ -87,15 +70,15 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_1",
-							Domain:       "test2.edgesuite.net",
+							ID:           "eh_123",
+							Domain:       "test.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test2",
 							DomainSuffix: "edgesuite.net",
 						},
 						{
 							ID:           "eh_2",
-							Domain:       "test3.edgesuite.net",
+							Domain:       "test.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test3",
 							DomainSuffix: "edgesuite.net",
@@ -121,25 +104,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 		"edge hostname with .edgekey.net, create edge hostname": {
 			givenTF: "new_edgekey_net.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -148,15 +112,15 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_1",
-							Domain:       "test2.edgesuite.net",
+							ID:           "eh_123",
+							Domain:       "test.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test2",
 							DomainSuffix: "edgesuite.net",
 						},
 						{
 							ID:           "eh_2",
-							Domain:       "test3.edgesuite.net",
+							Domain:       "test.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test3",
 							DomainSuffix: "edgesuite.net",
@@ -186,8 +150,8 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_1",
-							Domain:       "test2.edgesuite.net",
+							ID:           "eh_123",
+							Domain:       "test.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test2",
 							DomainSuffix: "edgesuite.net",
@@ -220,25 +184,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 		"edge hostname with .akamaized.net, create edge hostname": {
 			givenTF: "new_akamaized_net.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -247,18 +192,18 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_1",
-							Domain:       "test2.edgesuite.net",
+							ID:           "eh_123",
+							Domain:       "test.akamaized.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test2",
-							DomainSuffix: "edgesuite.net",
+							DomainSuffix: "akamaized.net",
 						},
 						{
 							ID:           "eh_2",
-							Domain:       "test3.edgesuite.net",
+							Domain:       "test.akamaized.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test3",
-							DomainSuffix: "edgesuite.net",
+							DomainSuffix: "akamaized.net",
 						},
 					}},
 				}, nil).Once()
@@ -283,18 +228,18 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_1",
-							Domain:       "test2.edgesuite.net",
+							ID:           "eh_123",
+							Domain:       "test.akamaized.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test2",
-							DomainSuffix: "edgesuite.net",
+							DomainSuffix: "akamaized.net",
 						},
 						{
 							ID:           "eh_2",
-							Domain:       "test3.edgesuite.net",
+							Domain:       "test.akamaized.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test3",
-							DomainSuffix: "edgesuite.net",
+							DomainSuffix: "akamaized.net",
 						},
 						{
 							ID:           "eh_123",
@@ -317,25 +262,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 		"different edge hostname, create": {
 			givenTF: "new.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -344,7 +270,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_1",
+							ID:           "eh_123",
 							Domain:       "test.aka.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test2",
@@ -352,7 +278,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 						{
 							ID:           "eh_2",
-							Domain:       "test3.edgesuite.net",
+							Domain:       "test.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test3",
 							DomainSuffix: "edgesuite.net",
@@ -414,25 +340,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 		"edge hostname exists": {
 			givenTF: "new_akamaized_net.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -441,7 +348,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_1",
+							ID:           "eh_123",
 							Domain:       "test.akamaized.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test",
@@ -449,95 +356,24 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 						{
 							ID:           "eh_2",
-							Domain:       "test3.edgesuite.net",
+							Domain:       "test.akamaized.net",
 							ProductID:    "prd_2",
-							DomainPrefix: "test3",
-							DomainSuffix: "edgesuite.net",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
 						},
 					}},
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
-				"id":            "eh_1",
+				"id":            "eh_123",
 				"contract":      "ctr_2",
 				"group":         "grp_2",
 				"edge_hostname": "test.akamaized.net",
 			},
 		},
-		"group not found": {
-			givenTF: "new_akamaized_net.tf",
-			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-					}},
-				}, nil)
-			},
-			withError: regexp.MustCompile("group not found: grp_2"),
-		},
-		"contract not found": {
-			givenTF: "new_akamaized_net.tf",
-			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-					}},
-				}, nil)
-			},
-			withError: regexp.MustCompile("contract not found: ctr_2"),
-		},
-		"product not found": {
-			givenTF: "new_akamaized_net.tf",
-			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-						}},
-					}, nil)
-			},
-			withError: regexp.MustCompile("product not found: prd_2"),
-		},
 		"error fetching edge hostnames": {
 			givenTF: "new_akamaized_net.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -548,25 +384,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 		"invalid IP version behavior": {
 			givenTF: "invalid_ip.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -577,25 +394,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 		"certificate required for ENHANCED_TLS": {
 			givenTF: "missing_certificate.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -606,25 +404,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 		"error creating edge hostname": {
 			givenTF: "new_akamaized_net.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -699,25 +478,6 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		"edge hostname with .akamaized.net, create edge hostname": {
 			givenTF: "new_akamaized_net.tf",
 			init: func(m *mockpapi) {
-				m.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
-					Groups: papi.GroupItems{Items: []*papi.Group{
-						{GroupID: "grp_1"},
-						{GroupID: "grp_2"},
-					}},
-				}, nil)
-				m.On("GetContracts", mock.Anything).Return(&papi.GetContractsResponse{
-					Contracts: papi.ContractsItems{Items: []*papi.Contract{
-						{ContractID: "ctr_1"},
-						{ContractID: "ctr_2"},
-					}},
-				}, nil)
-				m.On("GetProducts", mock.Anything, papi.GetProductsRequest{ContractID: "ctr_2"}).
-					Return(&papi.GetProductsResponse{
-						Products: papi.ProductsItems{Items: []papi.ProductItem{
-							{ProductID: "prd_1"},
-							{ProductID: "prd_2"},
-						}},
-					}, nil)
 				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -817,6 +577,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 					},
 				})
 			})
+			//fmt.Print(t)
 			client.AssertExpectations(t)
 		})
 	}
