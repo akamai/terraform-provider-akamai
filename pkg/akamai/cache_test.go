@@ -31,6 +31,15 @@ func init() {
 
 func cacheWriteTest() string {
 	return `
+terraform {
+	required_providers {
+		akamai = {
+		source = "akamai/akamai"
+		}
+	}
+	required_version = ">= 0.13"
+}
+
 provider "akamai" {
 	cache_enabled = true
 }
@@ -45,7 +54,8 @@ resource "akamai_cache" "test" {
 func TestCache(t *testing.T) {
 	t.Run("CacheSet", func(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
-			Providers: testAccProviders,
+			IsUnitTest: true,
+			Providers:  testAccProviders,
 			Steps: []resource.TestStep{
 				{
 					Config: cacheWriteTest(),
