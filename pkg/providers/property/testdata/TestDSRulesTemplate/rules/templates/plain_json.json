@@ -1,0 +1,27 @@
+{
+  "rules": {
+    "name": "test",
+    "children": [
+      {
+        "name": "RUM",
+        "children": [
+        ],
+        "behaviors": [
+          {
+            "name": "mPulse",
+            "options": {
+              "enabled": true,
+              "requirePci": false,
+              "titleOptional": "",
+              "apiKey": "",
+              "bufferSize": "",
+              "configOverride": ""
+            }
+          }
+        ],
+        "criteria": [],
+        "criteriaMustSatisfy": "all"
+      }
+    ]
+  }
+}

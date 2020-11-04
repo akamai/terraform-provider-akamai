@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "name": "${env.name}",
+    "children": [
+      "#include:snippets/not_found.json"
+    ]
+  }
+}

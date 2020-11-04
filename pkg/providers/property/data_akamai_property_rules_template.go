@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -65,12 +66,12 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"variables"},
-				RequiredWith:  []string{"var_values_file"},
 			},
 			"var_values_file": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"variables"},
+				RequiredWith:  []string{"var_definition_file"},
 			},
 			"json": {
 				Type:     schema.TypeString,
@@ -86,6 +87,8 @@ const (
 )
 
 func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "dataAkamaiPropertyRulesRead")
 	file, err := tools.GetStringValue("template_file", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -96,18 +99,25 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	if err == nil {
-		varsMap, err = convertToTypedMap(vars)
+		varsMap, err = convertToTypedMap(vars.List())
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 	varsDefinitionFile, err := tools.GetStringValue("var_definition_file", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if err == nil {
+		logger.Debugf("Fetching variable definitions from file: %s", varsDefinitionFile)
 		varsValuesFile, err := tools.GetStringValue("var_values_file", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		varsMap, err = getVarsFromFile(varsDefinitionFile, varsValuesFile)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 	templateStr, err := convertToTemplate(file)
 	if err != nil {
@@ -125,6 +135,7 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 				return err
 			}
 			if !info.IsDir() && path != file {
+				logger.Debugf("Template snippet found: %s", path)
 				templateFiles[strings.TrimPrefix(path, fmt.Sprintf("%s/", dir))] = path
 			}
 			return nil
@@ -149,9 +160,11 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 	d.SetId(file)
 	formatted := bytes.Buffer{}
-	err = json.Indent(&formatted, wr.Bytes(), "", "  ")
+	result := wr.Bytes()
+	err = json.Indent(&formatted, result, "", "  ")
 	if err != nil {
-		return diag.FromErr(err)
+		logger.Debugf("Creating rule tree resulted in invalid JSON: %s\nError: %s", result, err)
+		return diag.FromErr(fmt.Errorf("invalid JSON result: %w", err))
 	}
 	if err := d.Set("json", formatted.String()); err != nil {
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
@@ -164,11 +177,18 @@ var (
 	varRegexp     = regexp.MustCompile(`"\${.+}"`)
 )
 
+var (
+	ErrReadFile    = errors.New("reading file")
+	ErrUnmarshal   = errors.New("unmarshaling value")
+	ErrFormatValue = errors.New("formatting value")
+	ErrUnknownType = errors.New("unknown 'type' value")
+)
+
 func convertToTemplate(path string) (string, error) {
 	builder := strings.Builder{}
 	f, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%w: %s", ErrReadFile, err)
 	}
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
@@ -183,63 +203,65 @@ func convertToTemplate(path string) (string, error) {
 			line = varRegexp.ReplaceAll(line, []byte(fmt.Sprintf("%s%s%s", leftDelim, varName, rightDelim)))
 		}
 		builder.Write(line)
+		builder.WriteString("\n")
 	}
 	return builder.String(), nil
 }
 
-func convertToTypedMap(vars *schema.Set) (map[string]interface{}, error) {
+func convertToTypedMap(vars []interface{}) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
-	for _, variable := range vars.List() {
+	for _, variable := range vars {
 		varInfo, ok := variable.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("unable to convert map entry to data object: %v", variable)
+			return nil, fmt.Errorf("%w: unable to convert map entry to data object: %v", tools.ErrInvalidType, variable)
 		}
 		varName, ok := varInfo["name"]
 		if !ok {
-			return nil, fmt.Errorf("'name' argument is required in variable definition")
+			return nil, fmt.Errorf("%w: 'name' argument is required in variable definition", tools.ErrNotFound)
 		}
 		varNameStr, ok := varName.(string)
 		if !ok {
-			return nil, fmt.Errorf("'name' argument should be a string: %v", varName)
+			return nil, fmt.Errorf("%w: 'name' argument should be a string: %v", tools.ErrInvalidType, varName)
 		}
 		varType, ok := varInfo["type"]
 		if !ok {
-			return nil, fmt.Errorf("'type' argument is required in variable definition: %s", varNameStr)
+			return nil, fmt.Errorf("%w: 'type' argument is required in variable definition: %s", tools.ErrNotFound, varNameStr)
 		}
 		varTypeStr, ok := varType.(string)
 		if !ok {
-			return nil, fmt.Errorf("'type' argument should be a string: %s", varNameStr)
+			return nil, fmt.Errorf("%w: 'type' argument should be a string: %s", tools.ErrInvalidType, varNameStr)
 		}
 		value, ok := varInfo["value"]
 		if !ok {
-			return nil, fmt.Errorf("'value' argument is required in variable definition: %s", varNameStr)
+			return nil, fmt.Errorf("%w: 'value' argument is required in variable definition: %s", tools.ErrNotFound, varNameStr)
 		}
 		valueStr, ok := value.(string)
 		if !ok {
-			return nil, fmt.Errorf("'value' argument should be a string: %s", varNameStr)
+			return nil, fmt.Errorf("%w: 'value' argument should be a string: %s", tools.ErrInvalidType, varNameStr)
 		}
 		switch varTypeStr {
 		case "string":
 			result[varNameStr] = fmt.Sprintf(`"%s"`, valueStr)
 		case "jsonBlock":
-			if ok := json.Valid([]byte(valueStr)); !ok {
-				return nil, fmt.Errorf("'jsonBlock` argument is not a valid json object: %s: %s", varNameStr, valueStr)
+			var target map[string]interface{}
+			if err := json.Unmarshal([]byte(valueStr), &target); err != nil {
+				return nil, fmt.Errorf("%w: 'jsonBlock` argument is not a valid json object: %s: %s", ErrUnmarshal, varNameStr, valueStr)
 			}
 			result[varNameStr] = valueStr
 		case "number":
 			num, err := strconv.ParseFloat(valueStr, 64)
 			if err != nil {
-				return nil, fmt.Errorf("value could not be represented as number: %w", err)
+				return nil, fmt.Errorf("%w: value could not be represented as number: %s", tools.ErrInvalidType, err)
 			}
 			result[varNameStr] = num
 		case "bool":
 			boolean, err := strconv.ParseBool(valueStr)
 			if err != nil {
-				return nil, fmt.Errorf("value could not be represented as boolean: %w", err)
+				return nil, fmt.Errorf("%w: value could not be represented as boolean: %s", tools.ErrInvalidType, err)
 			}
 			result[varNameStr] = boolean
 		default:
-			return nil, fmt.Errorf("unknown 'type' argument value: %s", varTypeStr)
+			return nil, fmt.Errorf("%w: %s", ErrUnknownType, varTypeStr)
 		}
 	}
 	return result, nil
@@ -254,47 +276,35 @@ func getVarsFromFile(definitionsPath, valuesPath string) (map[string]interface{}
 	}
 	definitionsFile, err := ioutil.ReadFile(definitionsPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", ErrReadFile, err)
 	}
 	var definitions variableDefinitions
 	if err := json.Unmarshal(definitionsFile, &definitions); err != nil {
-		return nil, err
-	}
-	var values map[string]interface{}
-	valuesFile, err := ioutil.ReadFile(valuesPath)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(valuesFile, &values); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", ErrUnmarshal, err)
 	}
 	vars := make(map[string]interface{})
 	for name, varDef := range definitions.Definitions {
-		switch v := varDef.Default.(type) {
-		case string:
-			vars[name] = fmt.Sprintf(`"%s"`, v)
-		case map[string]interface{}:
-			jsonBlock, err := json.Marshal(v)
-			if err != nil {
-				return nil, err
-			}
-			vars[name] = string(jsonBlock)
-		default:
-			vars[name] = v
+		v, err := formatValue(varDef.Default)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %s", ErrFormatValue, err)
 		}
+		vars[name] = v
 	}
-	for name, value := range values {
-		if _, ok := vars[name]; ok {
-			switch v := value.(type) {
-			case string:
-				vars[name] = fmt.Sprintf(`"%s"`, v)
-			case map[string]interface{}:
-				jsonBlock, err := json.Marshal(v)
+	if valuesPath != "" {
+		var values map[string]interface{}
+		valuesFile, err := ioutil.ReadFile(valuesPath)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %s", ErrReadFile, err)
+		}
+		if err := json.Unmarshal(valuesFile, &values); err != nil {
+			return nil, fmt.Errorf("%w: %s", ErrUnmarshal, err)
+		}
+		for name, value := range values {
+			if _, ok := vars[name]; ok {
+				v, err := formatValue(value)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("%w: %s", ErrFormatValue, err)
 				}
-				vars[name] = string(jsonBlock)
-			default:
 				vars[name] = v
 			}
 		}
@@ -305,4 +315,19 @@ func getVarsFromFile(definitionsPath, valuesPath string) (map[string]interface{}
 		}
 	}
 	return vars, nil
+}
+
+func formatValue(val interface{}) (interface{}, error) {
+	switch v := val.(type) {
+	case string:
+		return fmt.Sprintf(`"%s"`, v), nil
+	case map[string]interface{}:
+		jsonBlock, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		return string(jsonBlock), nil
+	default:
+		return val, nil
+	}
 }

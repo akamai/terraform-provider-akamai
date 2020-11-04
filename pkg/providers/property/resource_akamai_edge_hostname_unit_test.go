@@ -673,9 +673,8 @@ func TestResourceEdgeHostname(t *testing.T) {
 				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", k, v))
 			}
 			useClient(client, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest: true,
-					Providers:  testAccProviders,
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							ExpectNonEmptyPlan: true,
