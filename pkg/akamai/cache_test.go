@@ -2,6 +2,7 @@ package akamai
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
 	"github.com/apex/log"
@@ -29,18 +30,10 @@ func init() {
 	}
 }
 
-func cacheWriteTest() string {
+func configCacheSet() string {
 	return `
-terraform {
-	required_providers {
-		akamai = {
-		source = "akamai/akamai"
-		}
-	}
-	required_version = ">= 0.13"
-}
-
 provider "akamai" {
+	edgerc = "~/.edgerc" 
 	cache_enabled = true
 }
 
@@ -51,20 +44,119 @@ resource "akamai_cache" "test" {
 `
 }
 
-func TestCache(t *testing.T) {
-	t.Run("CacheSet", func(t *testing.T) {
-		resource.UnitTest(t, resource.TestCase{
-			IsUnitTest: true,
-			Providers:  testAccProviders,
-			Steps: []resource.TestStep{
-				{
-					Config: cacheWriteTest(),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttrSet("foo", "id"),
-					),
-				},
+func configCacheGet() string {
+	return `
+provider "akamai" {
+	edgerc = "~/.edgerc" 
+	cache_enabled = true
+}
+
+data "akamai_cache" "test" {
+	key = "foo"
+}
+`
+}
+
+func configCacheMiss() string {
+	return `
+provider "akamai" {
+	edgerc = "~/.edgerc" 
+	cache_enabled = true
+}
+
+data "akamai_cache" "test" {
+	key = "bad_key"
+}
+`
+}
+
+func configCacheGetDisabled() string {
+	return `
+provider "akamai" {
+	edgerc = "~/.edgerc" 
+	cache_enabled = false
+}
+
+data "akamai_cache" "test" {
+	key = "foo"
+}
+`
+}
+
+func configCacheSetDisabled() string {
+	return `
+provider "akamai" {
+	edgerc = "~/.edgerc" 
+	cache_enabled = false
+}
+
+resource "akamai_cache" "test" {
+	key = "foo"
+	value = "bar"
+}
+`
+}
+
+func TestCache_ok(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configCacheSet(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("akamai_cache.test", "id"),
+				),
 			},
-		})
+			{
+				Config: configCacheGet(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.akamai_cache.test", "value", "bar"),
+				),
+			},
+		},
+	})
+}
+
+func TestCache_miss(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      configCacheMiss(),
+				ExpectError: regexp.MustCompile(`cache entry not found`),
+			},
+		},
+	})
+}
+
+func TestCacheGet_disabled(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      configCacheGetDisabled(),
+				ExpectError: regexp.MustCompile(`cache entry not found`),
+			},
+		},
+	})
+}
+
+func TestCacheSet_disabled(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configCacheSetDisabled(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("akamai_cache.test", "id"),
+				),
+				ExpectError: regexp.MustCompile(`cache entry not found`),
+			},
+		},
 	})
 }
 
