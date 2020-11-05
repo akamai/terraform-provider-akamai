@@ -213,8 +213,9 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		}
 		// This is explicit case, where ip_behaviour/ipv4, ipv6 was not defined.
 		if !(ipv4 || ipv6) {
-			newHostname.IPVersionBehavior = papi.EHIPVersionV4
+			return diag.FromErr(fmt.Errorf("ipv4 or ipv6 must be specified to create a new Edge Hostname"))
 		}
+
 	}
 
 	if err := d.Set("ip_behavior", newHostname.IPVersionBehavior); err != nil {
