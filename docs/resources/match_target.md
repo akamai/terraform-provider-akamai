@@ -56,7 +56,7 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-* `json` - The name of a JSON file containing one or more match target definitions. If not specified, the match target must be specified using the additional parameters listed below.
+* `json` - The name of a JSON file containing one or more match target definitions ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postmatchtargets)). If not specified, the match target must be specified using the additional parameters listed below.
 
   * `type`
   * `is_negative_path_match`
@@ -91,6 +91,4 @@ The following arguments are supported:
 In addition to the arguments above, the following attributes are exported:
 
 * `target_id` - The ID of the match target.
-
-
 

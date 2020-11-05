@@ -45,7 +45,7 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-* `json` - The name of a JSON file containing the sequence of all match targets defined for the specified security configuration and version. If not specified, the match target sequence must be specified using the `type` and `sequence_map` parameters described below.
+* `json` - The name of a JSON file containing the sequence of all match targets defined for the specified security configuration and version ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putsequence)). If not specified, the match target sequence must be specified using the `type` and `sequence_map` parameters described below.
 
 * `type` - (Required) Describes the type of match target, either website or api. Must not be specified if `json` is specified. Must not be specified if `json` is specified.
 
