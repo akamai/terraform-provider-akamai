@@ -76,27 +76,30 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		DiffSuppressFunc: suppressEdgeHostnameDomain,
 	},
 	"ipv4": {
-		Type:       schema.TypeBool,
-		Optional:   true,
-		Default:    true,
-		ForceNew:   true,
-		Deprecated: `use "ip_behavior" attribute instead`,
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Default:       true,
+		ForceNew:      true,
+		ConflictsWith: []string{"ip_behavior"},
+		Deprecated:    `use "ip_behavior" attribute instead`,
 	},
 	"ipv6": {
-		Type:       schema.TypeBool,
-		Optional:   true,
-		Default:    false,
-		ForceNew:   true,
-		Deprecated: `use "ip_behavior" attribute instead`,
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Default:       false,
+		ForceNew:      true,
+		ConflictsWith: []string{"ip_behavior"},
+		Deprecated:    `use "ip_behavior" attribute instead`,
 	},
 	"ip_behavior": {
-		Type:     schema.TypeString,
-		Optional: true,
-		ForceNew: true,
+		Type:          schema.TypeString,
+		Optional:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"ipv4", "ipv6"},
 		ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 			v := val.(string)
-			if v != "IPV4" && v != "IPV6_PERFORMANCE" && v != "IPV6_COMPLIANCE" {
-				errs = append(errs, fmt.Errorf("%v must be one of IPV4, IPV6_PERFORMANCE, IPV6_COMPLIANCE, got: %v", key, v))
+			if !strings.EqualFold(papi.EHIPVersionV4, v) && !strings.EqualFold(papi.EHIPVersionV6Performance, v) && !strings.EqualFold(papi.EHIPVersionV6Compliance, v) {
+				errs = append(errs, fmt.Errorf("%v must be one of %v, %v, %v, got: %v", key, papi.EHIPVersionV4, papi.EHIPVersionV6Performance, papi.EHIPVersionV6Compliance, v))
 			}
 			return
 		},
@@ -195,22 +198,22 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
 
 	if got, ok := d.GetOk("ip_behavior"); ok {
-		newHostname.IPVersionBehavior = got.(string)
+		newHostname.IPVersionBehavior = strings.ToUpper(got.(string))
 	} else {
 		ipv4, _ := tools.GetBoolValue("ipv4", d)
 		if ipv4 {
-			newHostname.IPVersionBehavior = "IPV4"
+			newHostname.IPVersionBehavior = papi.EHIPVersionV4
 		}
 		ipv6, _ := tools.GetBoolValue("ipv6", d)
 		if ipv6 {
-			newHostname.IPVersionBehavior = "IPV6_PERFORMANCE"
+			newHostname.IPVersionBehavior = papi.EHIPVersionV6Performance
 		}
 		if ipv4 && ipv6 {
-			newHostname.IPVersionBehavior = "IPV6_COMPLIANCE"
+			newHostname.IPVersionBehavior = papi.EHIPVersionV6Compliance
 		}
 		// This is explicit case, where ip_behaviour/ipv4, ipv6 was not defined.
 		if !(ipv4 || ipv6) {
-			newHostname.IPVersionBehavior = "IPV4"
+			newHostname.IPVersionBehavior = papi.EHIPVersionV4
 		}
 	}
 
