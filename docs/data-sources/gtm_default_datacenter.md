@@ -35,11 +35,11 @@ The following arguments are supported:
 
 * `domain` — (Required)
 * `domain` — (Optional. Default 5400)
-* `datacenter_id` — (Computed - do not configure) default datacenter Id
-* `nickname` — (Computed - do not configure) default datacenter nickname
 
 ## Attributes Reference
 
 The following are the return attributes:
 
 * `id` — The data resource id. Format: <domain>:default_datacenter:<datacenter_id>
+* `datacenter_id` — default datacenter Id
+* `nickname` — default datacenter nickname

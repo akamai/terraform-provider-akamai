@@ -1,65 +1,32 @@
 ---
 layout: "akamai"
-page_title: "Akamai: property rules"
+page_title: "Akamai: akamai_property_rules"
 subcategory: "Provisioning"
 description: |-
-  Property Rules
+ Property ruletree
 ---
 
 # akamai_property_rules
 
-The `akamai_property_rules` data source allows you to configure a nested block of property rules, criteria, and behaviors. A property’s main functionality is encapsulated in its set of rules and rules are composed of the matches and the behavior that applies under those matches.
 
-In future this resource will be deprecated in favor of direct json rules for ease working with PMCLI, PAPI, and the Property Manager UI.
+Use `akamai_property_rules` data source to query and retrieve the instance information and rule tree of an 
+existing property instance.  allows searching across contracts and groups you may have access to.
 
-## Example Usage
+## Basic Usage
 
-Basic usage:
+Given a contract and group return what properties exist for the user:
 
-```hcl
-data "akamai_property_rules" "example" {
-  rules { # Default rule
-  
-    behavior { # Downstream Cache behavior
-      name = "downstreamCache"
-      option { # behavior option
-        key = "behavior"
-        value = "TUNNEL_ORIGIN"
-      }
-    }
-  
-    rule { # "Performance" child rule
-      name = "Performance"
-      
-      rule { # "JPEG Images" child rule 
-        name = "JPEG Images"
-        
-        behavior { # Adaptive Image Compression behavior
-          name = "adaptiveImageCompression"
-          
-          # Options
-          option {
-            key = "tier1MobileCompressionMethod"
-            value = "COMPRESS"
-          }
-          option {
-            key = "tier1MobileCompressionValue"
-            value = "80"
-          }
-          option {
-            key = "tier2MobileCompressionMethod"
-            value = "COMPRESS"
-          }
-        }
-      }
-    }
-  }
+datasource-example.tf
+```hcl-terraform
+datasource "akamai_property_rules" "my-example" {
+    property_id = "prp_####"
+    group_id = "grp_####"
+    contract_id = "ctr_####"
+    version   = 3
 }
 
-resource "akamai_property" "example" {
-  rules = "${data.akamai_property_rules.example.json}"
-  
-  // ...
+output "property_match" {
+  value = data.akamai_property_rules.my-example
 }
 ```
 
@@ -67,34 +34,13 @@ resource "akamai_property" "example" {
 
 The following arguments are supported:
 
-The `rule` block supports:
-
-* `is_secure` — (Optional) Whether the property is a secure (Enhanced TLS) property or not (top-level only).
-* `criteria` — (Optional) One or more criteria to match requests on.
-* `behavior` — (Optional) One or more behaviors to apply to requests that match.
-* `rule` — (Optional) Child rules (may be nested five levels deep).
-
-The `criteria` block supports:
-
-* `name` — (Required) The name of the criteria.
-* `option` — (Optional) One or more options for the criteria.
-
-
-The `behavior` block supports:
-
-* `name` — (Required) The name of the behavior.
-* `option` — (Optional) One or more options for the behavior.
-
-The `option` block supports:
-
-* `key` — (Required) The option name.
-* `value` — (Optional) A single value for the option.
-* `values` — (Optional) An array of values for the option.
-
-One of `value` or `values` is required.
+* `contract_id` — (Required) The Contract ID.  Can be provided with or without `ctr_` prefix.
+* `group_id` — (Required) The Group ID. Can be provided with or without `grp_` prefix.
+* `property_id` — (Required) The property ID.  Can be provided with or without `prp_` prefix.
+* `version` — (Optional) The version to return. (default: latest)
 
 ## Attributes Reference
 
 The following are the return attributes:
 
-* `json` — The resulting JSON rule tree
+* `json` — PAPIs response to the query.

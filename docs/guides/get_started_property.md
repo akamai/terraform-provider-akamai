@@ -38,13 +38,13 @@ To create a property there are a number of dependencies you must first meet:
 * **Group ID**: The ID of the group under which the property, CP Code, and edge hostnames will live
 * **Edge hostname:** The Akamai edge hostname for your property. You can [create a new one or reuse an existing one](#managing-edge-hostnames). 
 * **Origin hostname:** The origin hostname you want your configuration to point to
-* **Product:** The [Akamai Product ID](/docs/providers/akamai/g/appendix.html#common-product-ids) for the product you are using (Ion, DSA, etc.)
-* **Rules configuration**: The rules.json file contains the base rules for the property.  (learn how to leverage the rules.json tree from an existing property [here](/docs/providers/akamai/g/faq.html#migrating-a-property-to-terraform))
+* **Product:** The [Akamai Product ID](appendix.md#common-product-ids) for the product you are using (Ion, DSA, etc.)
+* **Rules configuration**: The rules.json file contains the base rules for the property.  (learn how to leverage the rules.json tree from an existing property [here](faq.md#migrating-a-property-to-terraform))
 
 
 ## Retrieving The Contract ID
 
-You can fetch your contract ID automatically using the [`akamai_contract` data source](/docs/providers/akamai/d/contract.html). To fetch the default contract ID no attributes need to be set:
+You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/contract.html). To fetch the default contract ID no attributes need to be set:
 
 ```hcl
 data "akamai_contract" "default" {
@@ -56,7 +56,7 @@ Alternatively, if you have multiple contracts, you can specify the `group` which
 
 ```hcl
 data "akamai_contract" "default" {
-	group = "default"
+	group_name = "default"
 }
 ```
 
@@ -64,11 +64,11 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ## Retrieving The Group ID
 
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](/docs/providers/akamai/d/group.html). To fetch the default group ID no attributes other than contract need to be set:
+Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/group.html). To fetch the default group ID no attributes other than contract need to be set:
 
 ```hcl
 data "akamai_group" "default" {
-	contract = data.akamai_contract.default.id
+	contract_id = data.akamai_contract.default.id
 }
 ``` 
 
@@ -77,7 +77,7 @@ To fetch a specific group, you can specify the `name` argument:
 ```hcl
 data "akamai_group" "default" {
 	name = "example"
-	contract = data.akamai_contract.default.id
+	contract_id = data.akamai_contract.default.id
 }
 ```
 
@@ -89,9 +89,9 @@ Whether you are reusing an existing Edge Hostname or creating a new one, you use
 
 ```hcl
 resource "akamai_edge_hostname" "example" {
-	group = "${data.akamai_group.default.id}"
-	contract = "${data.akamai_contract.default.id}"
-	product = "prd_SPM"
+	group_id = data.akamai_group.default.id
+	contract_id = data.akamai_contract.default.id
+	product_id = "prd_SPM"
 	edge_hostname = "example.com.edgesuite.net"
 }
 ```
@@ -102,9 +102,9 @@ This will create a non-secure hostname, to create a secure hostname, you must sp
 
 ```hcl
 resource "akamai_edge_hostname" "example" {
-	group = "${data.akamai_group.default.id}"
-	contract = "${data.akamai_contract.default.id}"
-	product = "prd_SPM"
+	group_id = data.akamai_group.default.id
+	contract_id = data.akamai_contract.default.id
+	product_id = "prd_SPM"
 	edge_hostname = "example.com.edgesuite.net"
 	certificate = "<CERTIFICATE ENROLLMENT ID>"
 }
@@ -118,28 +118,28 @@ This will create a Standard TLS secure hostname, to create an Enhanced TLS hostn
 
 A property contains the delivery configuration, or rule tree, which determines how requests are handled. This rule tree is usually represented using JSON, and is often refered to as `rules.json`.
 
-You can specify the rule tree as a JSON string, using the [`rules` argument of the `akamai_property` resource](/docs/providers/akamai/r/property.html#rules).
+You can specify the rule tree as a JSON string, using the [`rules` argument of the `akamai_property` resource](../resources/property.html#rules).
 
-We recommend storing the rules JSON as a JSON file on disk and ingesting it using Terraforms `local_file` data source. For example, if our file is called `rules.json`, we might create a `local_file` data source called `rules`. We specify the path to `rules.json` using the `filename` argument:
+We recommend storing the rules JSON as a JSON file on disk and ingesting it using Terraform's built in `file` function. For example, if our file is called `rules.json`, We specify the path to `rules.json` using the `file` function as follows:
 
 ```hcl
-data "local_file" "rules" {
-	filename = "rules.json"
+locals {
+	json = file("${path.module}/rules.json") 
 }
 ```
 
-We can now use `${data.local_file.rules.content}` to reference the file contents in the `akamai_property.rules` argument.
+We can now use `local.json` to reference the file contents in the `akamai_property.rules` argument.  Or we can just embed the file reference directly as shown below.
 
 ## Creating a Property
 
-The property itself is represented by an [`akamai_property` resource](/docs/providers/akamai/r/property.html). Add this new block to your `akamai.tf` file after the provider block.
+The property itself is represented by an [`akamai_property` resource](../resources/property.html). Add this new block to your `akamai.tf` file after the provider block.
 
 To define the entire configuration, we start by opening the resource block and give it a name. In this case we’re going to use the name "example".
 
 Next, we set the name of the property, contact email id, product ID, group ID, CP code, property hostname, and edge hostnames.
 
 
-Finally, we setup the property rules: first, we should specify the [`rule format` argument](/docs/providers/akamai/r/property.html#rule_format), as well as passing the `rules.json` data to `rules` argument.
+Finally, we setup the property rules: first, we should specify the [`rule format` argument](../resources/property.html#rule_format), as well as passing the `rules.json` data to `rules` argument.
 
 Once you’re done, your property should look like this:
 
@@ -147,16 +147,16 @@ Once you’re done, your property should look like this:
 resource "akamai_property" "example" {
 	name = "xyz.example.com"                        # Property Name
 	contact = ["user@example.org"]                  # User to notify of de/activations  
-	product  = "prd_SPM"                            # Product Identifier (Ion)
-	group    = "${data.akamai_group.default.id}"    # Group ID variable
-	contract = "${data.akamai_contract.default.id}" # Contract ID variable
+	product_id  = "prd_SPM"                         # Product Identifier (Ion)
+	group_id    = data.akamai_group.default.id      # Group ID variable
+	contract_id = data.akamai_contract.default.id   # Contract ID variable
 	hostnames = {                                   # Hostname configuration
 		# "public hostname" = "edge hostname"
 		"example.com" = "example.com.edgesuite.net"
 		"www.example.com" = "example.com.edgesuite.net"
 	}
 	rule_format = "v2018-02-27"                     # Rule Format
-	rules = "${data.local_file.rules.content}"      # JSON Rule tree
+	rules = file("${path.module}/rules.json")       # JSON Rule tree
 }
 ```
 
@@ -196,7 +196,7 @@ Once this completes your property will have been created. You can verify this in
 ## Activate your property
 
 
-To activate your property we need to create a new [`akamai_property_activation` resource](/docs/providers/akamai/r/property_activation.html). This resource manages the activation for a property, allowing you to specify which network and what version to activate.
+To activate your property we need to create a new [`akamai_property_activation` resource](../resources/property_activation.html). This resource manages the activation for a property, allowing you to specify which network and what version to activate.
 
 You will need to set the `property` ID and `version` arguments, which can both be set from the `akamai_property` resource. You should then set the `network` to `STAGING` or `PRODUCTION`. You should also set the `contact` email address.
 
@@ -204,11 +204,10 @@ Lastly, you need to affirm that you wish to activate the property, by setting th
 
 ```hcl
 resource "akamai_property_activation" "example" {
-	property = "${akamai_property.example.id}"
-	version = "${akamai_property.example.version}"
+	property_id = akamai_property.example.id
+	version = akamai_property.example.version
 	network = "STAGING"
 	contact = ["user@example.org"]
-	activate = true	
 }
 ```
 

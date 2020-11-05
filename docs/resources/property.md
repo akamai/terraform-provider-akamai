@@ -9,7 +9,9 @@ description: |-
 # akamai_property
 
 The `akamai_property` resource represents an Akamai property configuration, allowing you to create,
-update, and activate properties on the Akamai platform. 
+update, and activate properties on the Akamai platform. NOTE: in 0.10 and earlier version this resource also 
+controlled cpcode, origin, rules, and hostname associations but the logic was broken out into individual resources 
+starting with 1.0.
 
 ## Example Usage
 
@@ -19,21 +21,16 @@ Basic usage:
 resource "akamai_property" "example" {
     name    = "terraform-demo"
     contact = ["user@example.org"]
-    account  = "prd_SPM"
-    product  = "prd_SPM"
-    contract = "ctr_####"
-    group    = "grp_####"
-    cp_code  = "cpc_#####"
-
+    product_id  = "prd_SPM"
+    contract_id = var.contractid
+    group_id    = var.groupid
     hostnames = {
       "example.org" = "example.org.edgesuite.net"
-      "www.example.org" = "example.org.edgesuite.net"
+      "www.example.org" = "example.org.edgesuite.net" 
       "sub.example.org" = "sub.example.org.edgesuite.net"
     }
-
-    rule_format = "v2018-02-27"
-    rules       = "${data.local_file.terraform-demo.content}"
-    variables   = "${akamai_property_variables.origin.json}"
+    rule_format = "v2020-03-04"
+    rules       = data.akamai_rules_template.example.json
 }
 ```
 
@@ -45,38 +42,24 @@ The following arguments are supported:
 
 * `name` — (Required) The property name.
 * `contact` — (Required) One or more email addresses to inform about activation changes.
-* `hostnames` — (Required) A map of public hostnames to edge hostnames (e.g. `{"example.org" = "example.org.edgesuite.net"}`)
-* `contract` — (Optional) The contract ID.
-* `group` — (Optional) The group ID.
-* `product` — (Optional) The product ID. (Default: `prd_SPM` for Ion)
-* `is_secure` — (Optional) Whether the property is a secure (Enhanced TLS) property or not.
+* `contract_id` — (Required) The Contract ID.  Can be provided with or without `ctr_` prefix.
+* `group_id` — (Required) The Group ID. Can be provided with or without `grp_` prefix.
+* `product_id` — (Required) The Product ID. Can be provided with or without `prd_` prefix.
+* `hostnames` — (Required) A map of public hostnames to edge hostnames (e.g. `{"example.org" = "example.org.edgesuite.net"}`)
+* `rules` — (Required) A JSON encoded rule tree for given property. This should be provided in a form of complete json rule tree (see: [`akamai_property_rules`](../data-sources/property_rules.html))
+* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)) if not provided then the latest version will be used.
 
-### Property Rules
-
-* `rules` — (Required) A JSON encoded string of property rules (see: [`akamai_property_rules`](/docs/providers/akamai/d/property_rules.html))
-* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)).
-
-In addition the specifying the rule tree in it's entirety, you can also set the default CP Code and Origin explicitly. *This will override your JSON configuration*.
-
-* `cp_code` — (Optional) The CP Code id or name to use (or create). Required unless a [cpCode behavior](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#cpcode) is present in the default rule.
-* `origin` — (Optional) The property origin (an origin must be specified to activate a property, but may be defined in your rules block).
-  * `hostname` — (Required) The origin hostname.
-  * `port` — (Optional) The origin port to connect to (default: 80).
-  * `forward_hostname` — (Optional) The value for the Hostname header sent to origin. (default: `ORIGIN_HOSTNAME`).
-  * `cache_key_hostname` — (Optional) The hostname uses for the cache key. (default: `ORIGIN_HOSTNAME`).
-  * `compress` — (Optional, boolean) Whether origin supports gzip compression (default: `false`).
-  * `enable_true_client_ip` — (Optional, boolean) Whether the X-True-Client-IP header should be sent to origin (default: `false`).
-
-You can also define property manager variables. *This will override your JSON configuration*.
-
-* `variables` — (Optional) A JSON encoded string of property manager variable definitions (see: [`akamai_property_variables`](/docs/providers/akamai/r/property_variables.html))
+### Deprecated
+* `contract` — (Deprecated) synonym of contract_id for legacy purposes
+* `group` — (Deprecated) synonym of group_id for legacy purposes
+* `product` — (Deprecated) synonym of product_id for legacy purposes
 
 ### Attribute Reference
 
 The following attributes are returned:
 
-* `account` — the Account ID under which the property is created.
-* `version` — the current version of the property config.
+* `warnings` — The contents of `warnings` field returned by the API.
+* `errors` — The contents of `errors` field returned by the API.
+* `latest_version` — The version of property on which the rules are created/updated - provider always uses latest or creates a new version if latest is not editable.
 * `production_version` — the current version of the property active on the production network.
 * `staging_version` — the current version of the property active on the staging network.
-* `edge_hostnames` — the final public hostname to edge hostname map

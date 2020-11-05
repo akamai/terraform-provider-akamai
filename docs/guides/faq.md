@@ -30,142 +30,56 @@ Since Terraform assumes it is the de-facto state for any resource it leverages, 
 
 ## Dynamic Rule Trees Using Templates
 
-If you wish to inject terraform data into your rules.json, for example an origin address, you can use Terraform templates to do so like so:
+If you wish to inject terraform data into your rules.json, for example an origin address, you should use rules templates to do so.  It has many benefits over Terraform templates in that is supports recursion and PMCLI templates:
 
-First decide where your origin value will come from, this could be another Terraform resource such as your origin cloud provider, or it could be a terraform input variable like this:
-
-```hcl
-variable "origin" { }
-```
-
-Because we have not specified a default, a value is required when executing the config. We can then reference this variable using `${vars.origin}` in our template data source:
-
-```hcl
-data "template_file" "init" {
-  template = "${file("rules.json")}"
-  vars = {
-    origin = "${vars.origin}"
-  }
-}
-```
-
-Then in our `rules.json` we would have:
-
-```json
-{
-  "name": "origin",
-  "options": {
-    "hostname": "**${origin}**",
-    ...
-  }
-},
-```
-
-You can also inject entire JSON blocks using the same mechanism:
-
-```json
-{
-	"rules": {
-		"behaviors": [
-    		${origin}
-
-	    ]
-	}
-}
-```
-## Leverage template_file and snippets to render your configuration file
-
-The ‘rules’ argument within the akamai_property resource enables leveraging the full breadth of the Akamai’s property management capabilities. This requires that a valid json string is passed on as opposed to a filename. Terraform enables this via the "local_file" data source that loads the file.
-
-```hcl
-data "local_file" "rules" {
-  filename = "${path.module}/rules.json"
-}
- 
-resource "akamai_property" "example" {
-  ....
-  rules = "${data.local_file.terraform-demo.content}"
-}
-```
-
-Microservices driven and DevOps users typically want additional flexibility - using delegating snippets of the configuration to different users, and inserting variables within code. Terraform's "template_file" is provides that additoinal value. Use the example below to construct a template_file data resource that helps maintain a rules.json with variables inside it:
-
-```hcl
-data "template_file" "rules" {
-template = "${file("${path.module}/rules.json")}"
-vars = {
-origin = "${var.origin}"
-  }
-}
- 
-resource "akamai_property" "example" {
-...
-rules = "${data.template_file.rules.rendered}"
-}
-
-"rules": {
-  "name": "default",
-  "children": [
-    ${file("${snippets}/performance.json")}
-    ],
-    ${file("${snippets}/default.json")}
-  ],
-"options": {
-    "is_secure": true
-  }
-},
-  "ruleFormat": "v2018-02-27"
-}
-```
 
 More advanced users want different properties to use different rule sets. This can be done by maintaining a base rule set and then importing individual rule sets. To do this we first create a directory structure - something like:
 
 ```dir
-rules/rules.json
+rules/main.json
 rules/snippets/routing.json
 rules/snippets/performance.json
 …
 ```
 
-The "rules" directory contains a single file "rules.json" and a sub directory containing all rule snippets. Here, we would provide a basic template for our json.
+The "rules" directory contains a single file "main.json" and a sub directory containing all rule snippets. Here, we would provide a basic template for our json.
 
 ```json
-"rules": {
-  "name": "default",
-  "children": [
-    ${file("${snippets}/performance.json")}
-    ],
-    ${file("${snippets}/routing.json")}
-  ],
-"options": {
-    "is_secure": true
-    }
-  },
-  "ruleFormat": "v2018-02-27"
-```
-Then remove the "template_file" section we added earlier and replace it with:
-
-```hcl
-data "template_file" "rule_template" {
-template = "${file("${path.module}/rules/rules.json")}"
-vars = {
-snippets = "${path.module}/rules/snippets"
-  }
-}
-data "template_file" "rules" {
-template = "${data.template_file.rule_template.rendered}"
-vars = {
-tdenabled = var.tdenabled
-  }
+{
+    rules": {
+      "name": "default",
+      "children": [
+        "#include:snippets/performance.json",
+        "#include:snippets/routing.json"
+      ],
+      "options": {
+            "is_secure": “${env.secure}"
+      }
+    },
+    "ruleFormat": "v2018-02-27"
 }
 ```
 
-This enables Terraform to process the rules.json & pull each fragment that's referenced and then to pass its output through another template_file section to process it a second time. This is because the first pass creates the entire json and the second pass replaces the variables that we need for each fragment. As before, we can utilize the rendered output in our property definition.
+This enables our rules template to process the rules.json & pull each fragment that's referenced. As before, we can utilize the rendered output in our property definition.
 
 ```hcl
+data "akamai_rules_template" "example" {
+  template_file = abspath("${path.root}/rules/main.json")
+  variables {
+      name  = "secure"
+      value = "true"
+      type  = "bool"
+  }
+  variables {
+      name  = "caching_ttl"
+      value = "3d"
+      type  = "string"
+  }
+}
+
 resource "akamai_property" "example" {
-....
-rules = "${data.template_file.rules.rendered}"
+    ....
+    rules  = data.akamai_rules_template.example.json
 }
 ```
 

@@ -9,7 +9,7 @@ description: |-
 # akamai_contract
 
 
-Use `akamai_contract` data source to retrieve a contract id.
+Use `akamai_contract` data source to resolve a contract id.
 
 ## Example Usage
 
@@ -17,11 +17,11 @@ Basic usage:
 
 ```hcl
 data "akamai_contract" "example" {
-     group = "group name"
+     group_name = "example group name"
 }
 
 resource "akamai_property" "example" {
-    contract = "${data.akamai_contract.example.id}"
+    contract_id = data.akamai_contract.example.id
     ...
 }
 ```
@@ -30,10 +30,12 @@ resource "akamai_property" "example" {
 
 The following arguments are supported:
 
-* `group` — (Optional) The group within which the contract can be found. Used to keep group and contract selections in synch when using an API that requires both.
+### Required Arguments
+* Group qualifier in one of the three forms detailed below.  Used to keep group and contract selections in synch when using an API that requires both.
+  * `group_name` — The group name within which the contract can be found. 
+  * `group_id` — The group id within which the contract can be found. 
+  * `group` — (Deprecated) Either a group id or a group name within which the contract can be found. Cannot be used with `group_id` and `group_name`.
 
 ## Attributes Reference
-
-The following are the return attributes:
 
 * `id` — The contract ID.

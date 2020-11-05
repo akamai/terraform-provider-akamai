@@ -9,7 +9,7 @@ description: |-
 # akamai_group
 
 
-Use `akamai_group` data source to retrieve a group id.
+Use `akamai_group` data source to retrieve a group id by name.
 
 ## Example Usage
 
@@ -17,16 +17,16 @@ Basic usage:
 
 ```hcl
 data "akamai_group" "example" {
-    name = "group name"
-    contract = data.akamai_contract.example.id
+    name = "example group name"
+    contract_id = data.akamai_contract.example.id
 }
 
 data "akamai_contract" "example" {
-     group = "group name"
+     group_name = "example group name"
 }
 
 resource "akamai_property" "example" {
-    group    = "${data.akamai_group.example.id}"
+    group_id    = ata.akamai_group.example.id
     ...
 }
 ```
@@ -35,8 +35,12 @@ resource "akamai_property" "example" {
 
 The following arguments are supported:
 
-* `name` — (Required) The group name.
-* `contract` — (Required) The contract ID
+* `group_name` — (Required) The group name.
+* `contract_id` — (Required) The contract ID. 
+
+### Deprecated 
+* `name` — (Deprecated) synonym for `group_name` for legacy purposes.
+* `contract` — (Deprecated) synonym of contract_id for legacy purposes. 
 
 ## Attributes Reference
 

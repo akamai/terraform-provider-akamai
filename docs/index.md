@@ -142,13 +142,13 @@ To specify credentials inline, use the `property` or `dns` block to define crede
 
 ## Environment Variables
 
-You can also specify credential values using environment variables. Environment variables take precedence over the contents of the `.edgerc` file.
+You can specify credential values using environment variables. Environment variables take precedence over the contents of the `.edgerc` file.
 
 Create environment variables in the format:
 
 `AKAMAI{_SECTION_NAME}_*`
 
-For example, if you specify `property_section = "papi"` you would set the following ENV variables:
+For example, if you specify `config_section = "papi"` you would set the following ENV variables:
 
 * `AKAMAI_PAPI_HOST`
 * `AKAMAI_PAPI_ACCESS_TOKEN`

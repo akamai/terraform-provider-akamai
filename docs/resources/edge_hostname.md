@@ -19,9 +19,9 @@ Basic usage:
 
 ```hcl
 resource "akamai_edge_hostname" "terraform-demo" {
-    product  = "prd_####"
-    contract = "ctr_####"
-    group    = "grp_####"
+    product_id  = "prd_Object_Delivery"
+    contract_id = "ctr_1-AB123"
+    group_id    = "grp_123"
     edge_hostname = "www.example.org.edgesuite.net"
 }
 ```
@@ -30,16 +30,21 @@ resource "akamai_edge_hostname" "terraform-demo" {
 
 The following arguments are supported:
 
-* `contract` — (Required) The contract ID.  
-* `group` — (Required) The group ID.  
-* `product` — (Required) The product ID.  
+* `name` — (Required) The Edge Code name
+* `contract_id` — (Required) The Contract ID.  Can be provided with or without `ctr_` prefix.
+* `product_id` — (Required) The Product ID. Can be provided with or without `prd_` prefix.
 * `edge_hostname` — (Required) One or more edge hostnames (must be <= to the number of public hostnames).
-* `ipv4` — (Optional) Whether the property supports IPv4 to origin.  (Default: `true`).
-* `ipv6` —  (Optional) Whether the property supports IPv6 to origin. (Default: `false`).
-* `certificate` — (Optional) The certificate enrollment ID.  
+* `certificate` — (Optional) The certificate enrollment ID. Required when `edge_hostname` ends in edgekey.net.
+* `ip_behavior` - (Optional) way to directly specify IP protocol hostname supports : `IPV4`, `IPV6` or `IPV6_COMPLIANCE`
+
+### Deprecated
+* `contract` — (Deprecated) synonym of contract_id for legacy purposes
+* `ipv4` — (Optional, Deprecated) Whether property supports IPv4 to origin. Used to compute `ip_behavior` when it is not supplied. (Default: `true`).
+* `ipv6` —  (Optional, Deprecated) Whether property supports IPv6 to origin. Used to compute `ip_behavior` when it is not supplied. (Default: `false`).
+* `product` — (Deprecated) synonym of product_id for legacy purposes
 
 ## Attributes Reference
 
 The following attributes are returned:
 
-* `ip_behavior` — Whether the hostname uses `IPV4`, `IPV6` or `IPV6_COMPLIANCE`.
+* `ip_behavior` — One of `IPV4`, `IPV6` or `IPV6_COMPLIANCE` to specify whether hostname will use IPV4 IPV6 or both.* `ip_behavior` — One of `IPV4`, `IPV6` or `IPV6_COMPLIANCE` to specify whether hostname will use IPV4 IPV6 or both.

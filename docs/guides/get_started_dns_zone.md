@@ -48,7 +48,7 @@ To import an existing zone and recordsets, you must also know the identifiers or
 
 ## Retrieving The Contract ID
 
-You can fetch your contract ID automatically using the [`akamai_contract` data source](/docs/providers/akamai/d/contract.html). To fetch the default contract ID no attributes need to be set:
+You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/contract.html). To fetch the default contract ID no attributes need to be set:
 
 ```hcl
 data "akamai_contract" "default" {
@@ -60,7 +60,7 @@ Alternatively, if you have multiple contracts, you can specify the `group` which
 
 ```hcl
 data "akamai_contract" "default" {
-	group = "default"
+	group_name = "default"
 }
 ```
 
@@ -68,11 +68,11 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ## Retrieving The Group ID
 
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](/docs/providers/akamai/d/group.html). To fetch the default group ID no attributes other than contract need to be set:
+Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/group.html). To fetch the default group ID no attributes other than contract need to be set:
 
 ```hcl
 data "akamai_group" "default" {
-	contract = data.akamai_contract.default.id
+	contract_id = data.akamai_contract.default.id
 }
 ``` 
 
@@ -81,7 +81,7 @@ To fetch a specific group, you can specify the `name` argument:
 ```hcl
 data "akamai_group" "default" {
 	name = "example"
-	contract = data.akamai_contract.default.id
+	contract_id = data.akamai_contract.default.id
 }
 ```
 
@@ -89,7 +89,7 @@ You can now refer to the group ID using the `id` attribute: `data.akamai_group.d
 
 ## Creating a DNS Zone
 
-The zone itself is represented by a [`akamai_dns_zone` resource](/docs/providers/akamai/r/dns_zone.html). Add this new resource block to your `akamai.tf` file after the provider block. Note: the zone should be the first DNS resource created as it provides operating context for all other recordset resources.
+The zone itself is represented by a [`akamai_dns_zone` resource](../resources/dns_zone.html). Add this new resource block to your `akamai.tf` file after the provider block. Note: the zone should be the first DNS resource created as it provides operating context for all other recordset resources.
 
 To define the entire configuration, we start by opening the resource block and giving the zone a name. In this case we’re going to use the name "example".
 
@@ -110,7 +110,7 @@ provider "akamai" {
 data "akamai_contract" "default" { }
 
 data "akamai_group" "default" {
-	contract = data.akamai_contract.default.id
+	contract_id = data.akamai_contract.default.id
 }
 
 resource "akamai_dns_zone" "example" {
@@ -147,10 +147,12 @@ provider "akamai" {
 	config_section = local.section
 }
 
-data "akamai_contract" "default" { }
+data "akamai_contract" "default" { 
+    group_name = "Example group"
+}
 
 data "akamai_group" "default" {
-	contract = data.akamai_contract.default.id
+	contract_id = data.akamai_contract.default.id
 }
 
 resource "akamai_dns_zone" "primary_example" {
@@ -268,11 +270,11 @@ $ terraform plan
 
 ## Creating a DNS Record
 
-The recordset itself is represented by a [`akamai_dns_record` resource](/docs/providers/akamai/r/dns_record.html). Add this new block to your `akamai.tf` file after the provider block.
+The recordset itself is represented by a [`akamai_dns_record` resource](../resources/dns_record.html). Add this new block to your `akamai.tf` file after the provider block.
 
 To define the entire configuration, we start by opening the resource block and give it a name. In this case we’re going to use the name "example_a_record".
 
-Next, we set the required (zone, recordtype, ttl) and any optional/required arguments based on recordtype. Required fields for each record type are itemized in [`akamai_dns_record` resource](/docs/providers/akamai/r/dns_record.html).
+Next, we set the required (zone, recordtype, ttl) and any optional/required arguments based on recordtype. Required fields for each record type are itemized in [`akamai_dns_record` resource](../resources/dns_record.html).
 
 Once you’re done, your record configuration should look like this:
 
@@ -325,7 +327,7 @@ $ terraform import akamai_dns_zone.{{zone resource name}} {{edge dns zone name}}
 $ terraform import akamai_dns_record.{{record resource name}} {{edge dns zone name}}#{{edge dns recordset name}}#{{record type}}
 ```
 
-[Migrating A DNS Zone](/docs/providers/akamai/g/faq.html#migrating-an-edge-dns-zone-and-records-to-terraform) discusses DNS resource import in more detail.
+[Migrating A DNS Zone](faq.html#migrating-an-edge-dns-zone-and-records-to-terraform) discusses DNS resource import in more detail.
 
 ## Working With MX Records
 

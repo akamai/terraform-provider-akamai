@@ -17,14 +17,32 @@ Basic usage:
 
 ```hcl
 data "akamai_cp_code" "example" {
-     name = "cpcode name"
-     group = "grp_#####"
-     contract = "ctr_#####"
+     name = "my cpcode name"
+     group_id = "grp_123"
+     contract_id = "ctr_1-AB123"
+}
+```
+
+A more real world example using other datasources as dependencies:
+```
+locals {
+    group_name = "example group name"
+    cpcode_name = "My Cpcode Name"
 }
 
-resource "akamai_property" "example" {
-    contract = "${data.akamai_cpcode.example.id}"
-    ...
+data "akamai_group" "example" {
+    name = local.group_name
+    contract_id = data.akamai_contract.example.id
+}
+
+data "akamai_contract" "example" {
+     group_name = local.group_name
+}
+
+data "akamai_cp_code" "example" {
+     name = local.cpcode_name
+     group_id = data.akamai_group.example.id
+     contract_id = data.akamai_contract.example.id
 }
 ```
 
@@ -33,8 +51,12 @@ resource "akamai_property" "example" {
 The following arguments are supported:
 
 * `name` — (Required) The CP code name.
-* `group` — (Required) The group ID
-* `contract` — (Required) The contract ID
+* `group_id` — (Required) The group ID
+* `contract_id` — (Required) The contract ID
+
+### Deprecated
+* `group` — (Deprecated) synonym of group_id for legacy purposes. Cannot be used with `group_id`
+* `contract` — (Deprecated) synonym of contract_id for legacy purposes. Cannot be used with `contract_id`
 
 ## Attributes Reference
 
