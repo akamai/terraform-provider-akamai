@@ -46,14 +46,8 @@ func dataAkamaiPropertiesRead(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupId, err = tools.AddPrefix(groupId, "grp_")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	contractId, err = tools.AddPrefix(contractId, "ctr_")
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	groupId = tools.AddPrefix(groupId, "grp_")
+	contractId = tools.AddPrefix(contractId, "ctr_")
 	properties, err := getProperties(ctx, groupId, contractId, meta)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error listing properties: %w", err))
