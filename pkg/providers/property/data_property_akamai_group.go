@@ -15,9 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourcePropertyGroups() *schema.Resource {
+func dataSourcePropertyGroup() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourcePropertyGroupsRead,
+		ReadContext: dataSourcePropertyGroupRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -31,9 +31,9 @@ func dataSourcePropertyGroups() *schema.Resource {
 	}
 }
 
-func dataSourcePropertyGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourcePropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	log := meta.Log("PAPI", "dataSourcePropertyGroupsRead")
+	log := meta.Log("PAPI", "dataSourcePropertyGroupRead")
 
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -52,7 +52,7 @@ func dataSourcePropertyGroupsRead(ctx context.Context, d *schema.ResourceData, m
 		getDefault = true
 	}
 
-	log.Debugf("[Akamai Property Groups] Start Searching for property group records %s ", name)
+	log.Debugf("[Akamai Property Group] Start Searching for property group records %s ", name)
 
 	groups, err := getGroups(ctx, meta)
 	if err != nil {
