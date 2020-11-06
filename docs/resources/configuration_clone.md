@@ -9,9 +9,7 @@ description: |-
 # resource_akamai_appsec_configuration_clone
 
 
-The `resource_akamai_appsec_configuration_clone` resource allows you to create or re-use ConfigurationClones.
-
-If the ConfigurationClone already exists it will be used instead of creating a new one.
+The `resource_akamai_appsec_configuration_clone` resource allows you to create a new version of a security configuration by cloning an existing version.
 
 ## Example Usage
 
@@ -21,40 +19,35 @@ Basic usage:
 provider "akamai" {
   appsec_section = "default"
 }
- data "akamai_appsec_configuration" "appsecconfigedge" {
-  name = "Example for EDGE"
-  
+
+data "akamai_appsec_configuration" "configuration" {
+  name = "Akamai Tools"
 }
 
-
-
-output "configsedge" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_id
+resource "akamai_appsec_configuration_version_clone" "clone" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  create_from_version = data.akamai_appsec_configuration.configuration.latest_version
+  rule_update  = false
 }
 
-
-resource "akamai_appsec_configuration_clone" "appsecconfigurationclone" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    create_from_version = data.akamai_appsec_configuration.appsecconfigedge.latest_version 
-    rule_update  = false
-   }
-
+output "clone_version" {
+  value = akamai_appsec_configuration_version_clone.clone.version
+}
 ```
 
 ## Argument Reference
 
 The following arguments are supported:
-* `config_id`- (Required) The Configuration ID
 
-* `create_from_version` - (Required) The Version Number of configuration
+* `config_id` - (Required) The ID of the security configuration to use.
 
-* `rule_update` - (Optional) Update Rules Flag
+* `create_from_version` - (Required) The version number of the security configuration to clone.
 
-# Attributes Reference
+* `rule_update` - A boolean indicating whether to update the rules of the new version. If not supplied, False is assumed.
 
-The following are the return attributes:
+## Attributes Reference
 
-* `configcloneid` - Id of cloned configuration
+In addition to the arguments above, the following attributes are exported:
 
-* `version` - Version of cloned configuration
+* `version` - The number of the cloned version.
 

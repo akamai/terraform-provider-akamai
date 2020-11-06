@@ -9,9 +9,8 @@ description: |-
 # resource_akamai_appsec_match_target
 
 
-The `resource_akamai_appsec_match_target` resource allows you to create or re-use MatchTargets.
+The `resource_akamai_appsec_match_target` resource allows you to create or modify a match target associated with a given security configuration and version.
 
-If the MatchTarget already exists it will be used instead of creating a new one.
 
 ## Example Usage
 
@@ -21,59 +20,75 @@ Basic usage:
 provider "akamai" {
   appsec_section = "default"
 }
-data "akamai_appsec_configuration" "appsecconfigedge" {
-  name = "Example for EDGE"
-  
+
+data "akamai_appsec_configuration" "configuration" {
+  name = "Akamai Tools"
+}
+
+resource "akamai_appsec_match_target" "match_target_1" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
+  json =  file("${path.module}/match_targets.json")
+}
+
+resource "akamai_appsec_match_target" "match_target_2" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
+  type =  "website"
+  is_negative_path_match =  false
+  is_negative_file_extension_match =  true
+  default_file = "NO_MATCH"
+  hostnames =  ["example.com","www.example.net","n.example.com"]
+  file_paths =  ["/sssi/*","/cache/aaabbc*","/price_toy/*"]
+  file_extensions = ["wmls","jpeg","pws","carb","pdf","js","hdml","cct","swf","pct"]
+  security_policy = "crAP_75829"
+  bypass_network_lists = ["12345_FOO","67890_BAR"]
 }
 
 
-
-output "configsedge" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_id
-}
-
-
-resource "akamai_appsec_match_target" "appsecmatchtarget" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
-    type =  "website"
-    is_negative_path_match =  false
-    is_negative_file_extension_match =  true
-    default_file = "BASE_MATCH"
-    hostnames =  ["example.com","www.example.net","m.example.com"]
-    //file_paths =  ["/sssi/*","/cache/aaabbc*","/price_toy/*"]
-    //file_extensions = ["wmls","jpeg","pws","carb","pdf","js","hdml","cct","swf","pct"]
-    security_policy = "f1rQ_106946"
- 
-    bypass_network_lists = ["888518_ACDDCKERS","1304427_AAXXBBLIST"]
-    
-}
 ```
 
 ## Argument Reference
 
 The following arguments are supported:
-* `config_id`- (Required) The Configuration ID
 
-* `version` - (Required) The Version Number of configuration
+* `config_id` - (Required) The ID of the security configuration to use.
 
-* `json` - (Optional) The JSON for configuration
+* `version` - (Required) The version number of the security configuration to use.
 
-* `type` - (Optional) The Version Number of configuration
+* `json` - The name of a JSON file containing one or more match target definitions ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postmatchtargets)). If not specified, the match target must be specified using the additional parameters listed below.
 
-* `sequence` - (Optional) The Version Number of configuration
-* `is_negative_path_match` - (Optional) The Version Number of configuration
-* `is_negative_file_extension_match` - (Optional) The Version Number of configuration
-* `default_file` - (Optional) The Version Number of configuration
-* `hostnames` - (Optional) The Version Number of configuration
-* `file_paths` - (Optional) The Version Number of configuration
-* `file_extensions` - (Optional) The Version Number of configuration
-* `security_policy` - (Optional) The Version Number of configuration
-* `bypass_network_lists` - (Optional) The Version Number of configuration
+  * `type`
+  * `is_negative_path_match`
+  * `is_negative_file_extension_match`
+  * `default_file`
+  * `hostnames`
+  * `file_paths`
+  * `file_extensions`
+  * `security_policy`
+  * `bypass_network_lists`
 
-# Attributes Reference
+* `type` - (Required) Describes the type of match target, either website or api. Must not be specified if `json` is specified.
 
-The following are the return attributes:
+* `is_negative_path_match` - Describes whether the match target applies when a match is found in the specified paths or when a match isn’t found. Must not be specified if `json` is specified.
 
-*`targetid` - The TargetID
+* `is_negative_file_extension_match` - Describes whether the match target applies when a match is found in the specified fileExtensions or when a match isn’t found. Must not be specified if `json` is specified.
+
+* `default_file` - Describes the rule to match on paths. Either NO_MATCH to not match on the default file, BASE_MATCH to match only requests for top-level hostnames ending in a trailing slash, or RECURSIVE_MATCH to match all requests for paths that end in a trailing slash. Must not be specified if `json` is specified.
+
+* `hostnames` - The hostnames to match the request on. Must not be specified if `json` is specified.
+
+* `file_paths` - The path used in the path match. Must not be specified if `json` is specified.
+
+* `file_extensions` - The file extensions used in the path match. Must not be specified if `json` is specified.
+
+* `security_policy` - (Required) The security policy associated with the match target. Must not be specified if `json` is specified.
+
+* `bypass_network_lists` - The list of network list identifiers and names. Must not be specified if `json` is specified.
+
+## Attributes Reference
+
+In addition to the arguments above, the following attributes are exported:
+
+* `target_id` - The ID of the match target.
 

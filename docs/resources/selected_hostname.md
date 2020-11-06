@@ -9,9 +9,8 @@ description: |-
 # resource_akamai_appsec_selected_hostname
 
 
-The `resource_akamai_appsec_selected_hostname` resource allows you to create or re-use SelectedHostnames.
+The `resource_akamai_appsec_selected_hostname` resource allows you to set or modify the list of hosts protected under a given security configuration and version.
 
-If the SelectedHostname already exists it will be used instead of creating a new one.
 
 ## Example Usage
 
@@ -22,21 +21,15 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-data "akamai_appsec_configuration" "appsecconfigedge" {
-  name = "Example for EDGE"
-  
-}
-
-
-
-output "configsedge" {
-  value = data.akamai_appsec_configuration.appsecconfigedge.config_id
+data "akamai_appsec_configuration" "configuration" {
+  name = "Akamai Tools"
 }
 
 resource "akamai_appsec_selected_hostnames" "appsecselectedhostnames" {
-    config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
-    version = data.akamai_appsec_configuration.appsecconfigedge.latest_version 
-    hostnames = ["rinaldi.sandbox.akamaideveloper.com","sujala.sandbox.akamaideveloper.com"]  
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
+  hostnames = [ "example.com" ]
+  mode = "APPEND"
 }
 
 ```
@@ -44,15 +37,22 @@ resource "akamai_appsec_selected_hostnames" "appsecselectedhostnames" {
 ## Argument Reference
 
 The following arguments are supported:
-* `config_id`- (Required) The Configuration ID
 
-* `version` - (Required) The Version Number of configuration
+* `config_id` - (Required) The ID of the security configuration to use.
 
-* `hostnames` - (Required) The List of hostnames to configure
+* `version` - (Required) The version number of the security configuration to use.
+
+* `hostnames` - (Required) The list of hostnames to be applied, added or removed.
+
+* `mode` - (Required) A string specifying the interpretation of the `hostnames` parameter. Must be one of the following:
+
+  * Append - the hosts listed in `hostnames` will be added to the current list of selected hostnames
+  * Replace - the hosts listed in `hostnames` will overwrite the current list of selected hostnames
+  * Remove - the hosts listed in `hostnames` will be removed from the current list of select hostnames
 
 # Attributes Reference
 
-The following are the return attributes:
+In addition to the arguments above, the following attributes are exported:
 
-* `Hostnames` - Set of selectable hostnames
+* None
 
