@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func resourceProperty() *schema.Resource {
@@ -19,7 +21,7 @@ func resourceProperty() *schema.Resource {
 		UpdateContext: resourcePropertyUpdate,
 		DeleteContext: resourcePropertyDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourcePropertyImport,
 		},
 		StateUpgraders: []schema.StateUpgrader{{
 			Version: 0,
@@ -79,6 +81,7 @@ func resourceProperty() *schema.Resource {
 				StateFunc:    addPrefixToState("prd_"),
 			},
 
+			"latest_version":     {Type: schema.TypeInt, Computed: true},
 			"staging_version":    {Type: schema.TypeInt, Computed: true},
 			"production_version": {Type: schema.TypeInt, Computed: true},
 
@@ -140,168 +143,114 @@ func resourceProperty() *schema.Resource {
 }
 
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("PAPI", "resourcePropertyCreate")
+	logger := akamai.Meta(m).Log("PAPI", "resourcePropertyCreate")
+	client := inst.Client(akamai.Meta(m))
+	ctx = log.NewContext(ctx, logger)
 
 	if err := resPropAssertNoForbiddenAttr(d); err != nil {
 		// User will also see messages saying which attributes are not supported
 		return diag.Errorf("unsupported attributes given. See the Akamai Terraform Upgrade Guide")
 	}
 
-	// Schema guarantees contract_id/contract are strings and one or the other is set
-	var ContractID string
-	if got, ok := d.GetOk("contract_id"); ok {
-		ContractID = got.(string)
-	} else {
-		ContractID = d.Get("contract").(string)
-	}
-	if !strings.HasPrefix(ContractID, "ctr_") {
-		ContractID = fmt.Sprintf("ctr_%s", ContractID)
-	}
-
-	// Schema guarantees group_id/group are strings and one or the other is set
-	var GroupID string
-	if got, ok := d.GetOk("group_id"); ok {
-		GroupID = got.(string)
-	} else {
-		GroupID = d.Get("group").(string)
-	}
-	if !strings.HasPrefix(GroupID, "grp_") {
-		GroupID = fmt.Sprintf("grp_%s", GroupID)
-	}
-
-	// Schema guarantees product_id/product are strings and one or the other is set
-	var ProductID string
-	if got, ok := d.GetOk("product_id"); ok {
-		ProductID = got.(string)
-	} else {
-		ProductID = d.Get("product").(string)
-	}
-	if !strings.HasPrefix(ProductID, "prd_") {
-		ProductID = fmt.Sprintf("prd_%s", ProductID)
-	}
-
-	// Schema guarantees name is a string and is present
+	// Schema guarantees name, contract_id, group_id, and product_id are strings
 	PropertyName := d.Get("name").(string)
 
-	req := papi.CreatePropertyRequest{
-		ContractID: ContractID,
-		GroupID:    GroupID,
-		Property: papi.PropertyCreate{
-			ProductID:    ProductID,
-			PropertyName: PropertyName,
-		},
+	GroupID := d.Get("group_id").(string)
+	if GroupID == "" {
+		GroupID = d.Get("group").(string)
 	}
+	GroupID = tools.AddPrefix(GroupID, "grp_")
 
-	logger = logger.WithFields(logFields(req))
-	logger.Debug("creating property")
+	ContractID := d.Get("contract_id").(string)
+	if ContractID == "" {
+		ContractID = d.Get("contract").(string)
+	}
+	ContractID = tools.AddPrefix(ContractID, "ctr_")
 
-	res, err := client.CreateProperty(ctx, req)
+	ProductID := d.Get("product_id").(string)
+	if ProductID == "" {
+		ProductID = d.Get("product").(string)
+	}
+	ProductID = tools.AddPrefix(ProductID, "prd_")
+
+	PropertyID, err := createProperty(ctx, client, PropertyName, GroupID, ContractID, ProductID)
 	if err != nil {
-		logger.WithError(err).Error("could not create property")
 		return diag.FromErr(err)
 	}
 
-	if !strings.HasPrefix(res.PropertyID, "prp_") {
-		res.PropertyID = fmt.Sprintf("prp_%s", res.PropertyID)
+	attrs := map[string]interface{}{
+		"group_id":    GroupID,
+		"group":       GroupID,
+		"contract_id": ContractID,
+		"contract":    ContractID,
+		"product_id":  ProductID,
+		"product":     ProductID,
+	}
+	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+		return diag.FromErr(err)
 	}
 
-	logger.WithFields(logFields(*res)).Info("property created")
-
-	d.SetId(res.PropertyID)
-
+	d.SetId(PropertyID)
 	return resourcePropertyRead(ctx, d, m)
 }
 
 func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("PAPI", "resourcePropertyRead")
+	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resPropHostnameRead"))
+	client := inst.Client(akamai.Meta(m))
 
 	if err := resPropAssertNoForbiddenAttr(d); err != nil {
 		// User will also see messages saying which attributes are not supported
 		return diag.Errorf("unsupported attributes given. See the Akamai Terraform Upgrade Guide")
 	}
 
-	// PropertyID could be un-prefixed in the case of imports
+	// Schema guarantees property_id, group_id, and contract_id are strings
 	PropertyID := d.Id()
-	if !strings.HasPrefix(PropertyID, "prp_") {
-		PropertyID = fmt.Sprintf("prp_%s", PropertyID)
-	}
-	d.SetId(PropertyID)
+	ContractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
+	GroupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
 
-	req := papi.GetPropertyRequest{PropertyID: PropertyID}
-	logger = logger.WithFields(logFields(req))
-
-	res, err := client.GetProperty(ctx, req)
+	Property, err := fetchProperty(ctx, client, PropertyID, GroupID, ContractID)
 	if err != nil {
-		logger.WithError(err).Error("could not read property")
 		return diag.FromErr(err)
 	}
 
-	var diags diag.Diagnostics
-
-	prop := res.Property
-	if err := d.Set("name", prop.PropertyName); err != nil {
-		logger.WithError(err).Error(`could not set "name" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
+	var StagingVersion int
+	if Property.StagingVersion == nil {
+		StagingVersion = 0
+	} else {
+		StagingVersion = *Property.StagingVersion
 	}
 
-	if err := d.Set("contract_id", prop.ContractID); err != nil {
-		logger.WithError(err).Error(`could not set "contract_id" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
-	}
-	if err := d.Set("contract", prop.ContractID); err != nil {
-		logger.WithError(err).Error(`could not set "contract" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
+	var ProductionVersion int
+	if Property.ProductionVersion == nil {
+		ProductionVersion = 0
+	} else {
+		ProductionVersion = *Property.ProductionVersion
 	}
 
-	if err := d.Set("group_id", prop.GroupID); err != nil {
-		logger.WithError(err).Error(`could not set "group_id" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
+	attrs := map[string]interface{}{
+		"name":               Property.PropertyName,
+		"group_id":           Property.GroupID,
+		"group":              Property.GroupID,
+		"contract_id":        Property.ContractID,
+		"contract":           Property.ContractID,
+		"product_id":         Property.ProductID,
+		"product":            Property.ProductID,
+		"latest_version":     Property.LatestVersion,
+		"staging_version":    StagingVersion,
+		"production_version": ProductionVersion,
 	}
-	if err := d.Set("group", prop.GroupID); err != nil {
-		logger.WithError(err).Error(`could not set "group" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
-	}
-
-	if err := d.Set("product_id", prop.ProductID); err != nil {
-		logger.WithError(err).Error(`could not set "product_id" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
-	}
-	if err := d.Set("product", prop.ProductID); err != nil {
-		logger.WithError(err).Error(`could not set "product" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
+	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+		return diag.FromErr(err)
 	}
 
-	if err := d.Set("latest_version", prop.LatestVersion); err != nil {
-		logger.WithError(err).Error(`could not set "latest_version" attribute`)
-		diags = append(diags, diag.FromErr(err)...)
-	}
-
-	if prop.StagingVersion != nil && *prop.StagingVersion > 0 {
-		if err := d.Set("staging_version", *prop.StagingVersion); err != nil {
-			logger.WithError(err).Error(`could not set "staging_version" attribute`)
-			diags = append(diags, diag.FromErr(err)...)
-		}
-	}
-
-	if prop.ProductionVersion != nil && *prop.ProductionVersion > 0 {
-		if err := d.Set("production_version", *prop.ProductionVersion); err != nil {
-			logger.WithError(err).Error(`could not set "production_version" attribute`)
-			diags = append(diags, diag.FromErr(err)...)
-		}
-	}
-
-	return diags
+	return nil
 }
 
 func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "resourcePropertyUpdate")
+	logger := akamai.Meta(m).Log("PAPI", "resourcePropertyUpdate")
 
 	if err := resPropAssertNoForbiddenAttr(d); err != nil {
+		d.Partial(true)
 		// User will also see messages saying which attributes are not supported
 		return diag.Errorf("unsupported attributes given. See the Akamai Terraform Upgrade Guide")
 	}
@@ -321,51 +270,89 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
+	if diags.HasError() {
+		d.Partial(true)
+		return diags
+	}
 
 	// There are no attributes that can be updated by this resource
 
 	diags = append(diags, resourcePropertyRead(ctx, d, m)...)
+	if diags.HasError() {
+		d.Partial(true)
+	}
 	return diags
 }
 
 func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "resourcePropertyDelete")
-	client := inst.Client(meta)
+	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyDelete"))
+	client := inst.Client(akamai.Meta(m))
 
-	// Schema guarantees one of contract_id/contract are strings and one or the other is set
-	var ContractID string
-	if got, ok := d.GetOk("contract_id"); ok {
-		ContractID = got.(string)
-	} else {
-		ContractID = d.Get("contract").(string)
-	}
+	PropertyID := d.Id()
+	ContractID := d.Get("contract_id").(string)
+	GroupID := d.Get("group_id").(string)
 
-	// Schema guarantees one of group_id/group will be set and that they're strings
-	var GroupID string
-	if got, ok := d.GetOk("group_id"); ok {
-		GroupID = got.(string)
-	} else {
-		GroupID = d.Get("group").(string)
-	}
-
-	req := papi.RemovePropertyRequest{
-		ContractID: ContractID,
-		GroupID:    GroupID,
-		PropertyID: d.Id(),
-	}
-
-	logger = logger.WithFields(logFields(req))
-	logger.Debug("removing property")
-
-	_, err := client.RemoveProperty(ctx, req)
-	if err != nil {
-		logger.WithError(err).Error("could not remove property")
+	if err := removeProperty(ctx, client, PropertyID, GroupID, ContractID); err != nil {
 		return diag.FromErr(err)
 	}
 
-	logger.Info("property removed")
 	return nil
+}
+
+func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyImport"))
+
+	// User-supplied import ID is a comma-separated list of PropertyID[,GroupID[,ContractID]]
+	// ContractID and GroupID are optional as long as the PropertyID is sufficient to fetch the property
+	var PropertyID, GroupID, ContractID string
+	parts := strings.Split(d.Id(), ",")
+
+	switch len(parts) {
+	case 1:
+		PropertyID = tools.AddPrefix(parts[0], "prp_")
+	case 2:
+		PropertyID = tools.AddPrefix(parts[0], "prp_")
+		GroupID = tools.AddPrefix(parts[1], "grp_")
+	case 3:
+		PropertyID = tools.AddPrefix(parts[0], "prp_")
+		GroupID = tools.AddPrefix(parts[1], "grp_")
+		ContractID = tools.AddPrefix(parts[2], "ctr_")
+	default:
+		return nil, fmt.Errorf("invalid property identifier: %q", d.Id())
+	}
+
+	// Import only needs to set the resource ID and enough attributes that the read opertaion will function, so there's
+	// no need to fetch anything if the user gave both GroupID and ContractID
+	if GroupID != "" && ContractID != "" {
+		attrs := map[string]interface{}{
+			"group_id":    GroupID,
+			"contract_id": ContractID,
+		}
+		if err := rdSetAttrs(ctx, d, attrs); err != nil {
+			return nil, err
+		}
+
+		d.SetId(PropertyID)
+		return []*schema.ResourceData{d}, nil
+	}
+
+	// Missing GroupID, ContractID, or both -- Attempt to fetch them. If the PropertyID is not sufficient, PAPI
+	// will return an error.
+	Property, err := fetchProperty(ctx, inst.Client(akamai.Meta(m)), PropertyID, GroupID, ContractID)
+	if err != nil {
+		return nil, err
+	}
+
+	attrs := map[string]interface{}{
+		"group_id":    Property.GroupID,
+		"contract_id": Property.ContractID,
+	}
+	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+		return nil, err
+	}
+
+	d.SetId(Property.PropertyID)
+	return []*schema.ResourceData{d}, nil
 }
 
 // Returns error when any hard-deprecated attributes contain non-zero values
@@ -385,6 +372,51 @@ func resPropAssertNoForbiddenAttr(d *schema.ResourceData) error {
 			return fmt.Errorf("unsupported attribute: %q", attr)
 		}
 	}
+
+	return nil
+}
+
+func createProperty(ctx context.Context, client papi.PAPI, PropertyName, GroupID, ContractID, ProductID string) (PropertyID string, err error) {
+	req := papi.CreatePropertyRequest{
+		ContractID: ContractID,
+		GroupID:    GroupID,
+		Property: papi.PropertyCreate{
+			ProductID:    ProductID,
+			PropertyName: PropertyName,
+		},
+	}
+
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+
+	logger.Debug("creating property")
+	res, err := client.CreateProperty(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not create property")
+		return
+	}
+	PropertyID = res.PropertyID
+
+	logger.WithFields(logFields(*res)).Info("property created")
+	return
+}
+
+func removeProperty(ctx context.Context, client papi.PAPI, PropertyID, GroupID, ContractID string) error {
+	req := papi.RemovePropertyRequest{
+		PropertyID: PropertyID,
+		GroupID:    GroupID,
+		ContractID: ContractID,
+	}
+
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger.Debug("removing property")
+
+	_, err := client.RemoveProperty(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not remove property")
+		return err
+	}
+
+	logger.Info("property removed")
 
 	return nil
 }

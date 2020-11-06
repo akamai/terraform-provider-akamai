@@ -10,58 +10,43 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// Wrapper to intercept the mockpapi's call of t.FailNow(). The Terraform test driver runs the provider code on
+// goroutines other than the one created for the test. When t.FailNow() is called from any other goroutine, it causes
+// the test to hang because the TF test driver is still waiting to serve requests. Mockery's failure message neglects to
+// inform the user which test had failed. Use this struct to wrap a *testing.T when you call mock.Test(T{t}) and the
+// mock's failure will print the failling test's name. Such failures are usually caused by the provider invoking an
+// unexpected call on the mock.
+//
+// NB: You should only need to use this where your test uses the Terraform test driver
+type T struct{ *testing.T }
+
+// Overrides testing.T.FailNow() so when a test mock fails an assertion, we see which test had failed before it hangs
+func (t T) FailNow() {
+	t.T.Fatalf("FAIL: %s", t.T.Name())
+}
+
 func TestResProperty(t *testing.T) {
-	// Helper to in-line expected non-error call to papi.CreateProperty()
-	ExpectCreate := func(client *mockpapi, PropertyName, PropertyID string) *mock.Call {
-		// contract, group, and product are always the same in this test suite (values match those in fixtures)
-		req := papi.CreatePropertyRequest{
-			ContractID: "ctr_0",
-			GroupID:    "grp_0",
-			Property: papi.PropertyCreate{
-				ProductID:    "prd_0",
-				PropertyName: PropertyName,
-			},
+	// Helper to in-line expected call to papi.GetProperty() with a constant Property struct with values that are
+	// standard for this test
+	ExpectGetProp := func(client *mockpapi, PropertyName, PropertyID, GroupID, ContractID, ProductID string, Version int) *mock.Call {
+		Property := papi.Property{
+			PropertyName:   PropertyName,
+			PropertyID:     PropertyID,
+			GroupID:        GroupID,
+			ContractID:     ContractID,
+			ProductID:      "prd_0",
+			LatestVersion:  Version,
+			StagingVersion: &Version,
 		}
 
-		res := papi.CreatePropertyResponse{PropertyID: PropertyID}
-		return client.On("CreateProperty", AnyCTX, req).Return(&res, nil)
-	}
-
-	// Helper to in-line expected non-error call to papi.RemoveProperty()
-	ExpectRemove := func(client *mockpapi, PropertyID string) *mock.Call {
-		// contract and group are always the same in this test suite (values match those in fixtures)
-		req := papi.RemovePropertyRequest{
-			PropertyID: PropertyID,
-			ContractID: "ctr_0",
-			GroupID:    "grp_0",
-		}
-		res := papi.RemovePropertyResponse{}
-
-		return client.On("RemoveProperty", AnyCTX, req).Return(&res, nil)
-	}
-
-	// Helper to in-line expected non-error call to papi.GetProperty()
-	ExpectGet := func(client *mockpapi, PropertyName, PropertyID string, Version int) *mock.Call {
-		// contract, group, and product are always the same in this test suite (values match those in fixtures)
-		req := papi.GetPropertyRequest{PropertyID: PropertyID}
-		res := papi.GetPropertyResponse{Property: &papi.Property{
-			PropertyID:        PropertyID,
-			ContractID:        "ctr_0",
-			GroupID:           "grp_0",
-			ProductID:         "prd_0",
-			PropertyName:      PropertyName,
-			LatestVersion:     Version,
-			ProductionVersion: &Version,
-			StagingVersion:    &Version,
-		}}
-
-		return client.On("GetProperty", AnyCTX, req).Return(&res, nil)
+		// return ExpectGetProperty(client, PropertyID, "", "", &Property)
+		return ExpectGetProperty(client, PropertyID, GroupID, ContractID, &Property)
 	}
 
 	// TestCheckFunc to verify all standard attributes
 	checkAllAttrs := resource.ComposeAggregateTestCheckFunc(
 		resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
-		resource.TestCheckResourceAttr("akamai_property.test", "production_version", "42"),
+		resource.TestCheckResourceAttr("akamai_property.test", "production_version", "0"),
 		resource.TestCheckResourceAttr("akamai_property.test", "staging_version", "42"),
 		resource.TestCheckResourceAttr("akamai_property.test", "name", "test property"),
 		resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_0"),
@@ -109,7 +94,7 @@ func TestResProperty(t *testing.T) {
 		t.Run(fmt.Sprintf("ForbiddenAttr/%s", fixtureName), func(t *testing.T) {
 			t.Helper()
 			client := &mockpapi{}
-			defer client.AssertExpectations(t)
+			client.Test(T{t})
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -120,6 +105,8 @@ func TestResProperty(t *testing.T) {
 					}},
 				})
 			})
+
+			client.AssertExpectations(t)
 		})
 	}
 
@@ -130,11 +117,14 @@ func TestResProperty(t *testing.T) {
 		t.Run(fmt.Sprintf("Immutable/%s", attribute), func(t *testing.T) {
 			t.Helper()
 			client := &mockpapi{}
-			defer client.AssertExpectations(t)
+			client.Test(T{t})
 
-			ExpectCreate(client, "test property", "prp_0").Once()
-			ExpectGet(client, "test property", "prp_0", 42)
-			ExpectRemove(client, "prp_0").Once()
+			// We're going to pretend like all of these are valid property identities
+			ExpectGetProp(client, "test property", "prp_0", "grp_0", "ctr_0", "prd_0", 42)
+			// ExpectGetProp(client, "test property", "prp_0", GroupID2, ContractID2, ProductID2, 42)
+
+			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
+			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -151,10 +141,12 @@ func TestResProperty(t *testing.T) {
 					},
 				})
 			})
+
+			client.AssertExpectations(t)
 		})
 	}
 
-	// Run a test case where a single resource is created, read, and destroyed. The resources of this kindall have the
+	// Run a test case where a single resource is created, read, and destroyed. The resources of this kind all have the
 	// same attributes and vary only by the input terraform config file, which is named after the test case.
 	AssertLifecycle := func(t *testing.T, fixtureName string) {
 		t.Helper()
@@ -162,11 +154,11 @@ func TestResProperty(t *testing.T) {
 		t.Run(fmt.Sprintf("Lifecycle/%s", fixtureName), func(t *testing.T) {
 			t.Helper()
 			client := &mockpapi{}
-			defer client.AssertExpectations(t)
+			client.Test(T{t})
 
-			ExpectCreate(client, "test property", "prp_0").Once()
-			ExpectGet(client, "test property", "prp_0", 42)
-			ExpectRemove(client, "prp_0").Once()
+			ExpectGetProp(client, "test property", "prp_0", "grp_0", "ctr_0", "prd_0", 42)
+			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
+			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -178,6 +170,8 @@ func TestResProperty(t *testing.T) {
 					CheckDestroy: resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
 				})
 			})
+
+			client.AssertExpectations(t)
 		})
 	}
 
@@ -188,11 +182,24 @@ func TestResProperty(t *testing.T) {
 		t.Run(fmt.Sprintf("Importable/%s", fixtureName), func(t *testing.T) {
 			t.Helper()
 			client := &mockpapi{}
-			defer client.AssertExpectations(t)
+			client.Test(T{t})
 
-			ExpectCreate(client, "test property", "prp_0").Once()
-			ExpectGet(client, "test property", "prp_0", 42)
-			ExpectRemove(client, "prp_0").Once()
+			Version := 42
+			Property := papi.Property{
+				PropertyName:   "test property",
+				PropertyID:     "prp_0",
+				GroupID:        "grp_0",
+				ContractID:     "ctr_0",
+				ProductID:      "prd_0",
+				LatestVersion:  Version,
+				StagingVersion: &Version,
+			}
+
+			ExpectGetProperty(client, "prp_0", "", "", &Property)
+			ExpectGetProperty(client, "prp_0", "grp_0", "ctr_0", &Property)
+
+			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
+			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -216,6 +223,8 @@ func TestResProperty(t *testing.T) {
 					},
 				})
 			})
+
+			client.AssertExpectations(t)
 		})
 	}
 
@@ -274,15 +283,14 @@ func TestResProperty(t *testing.T) {
 
 		t.Run("property is destroyed and recreated when name is changed", func(t *testing.T) {
 			client := &mockpapi{}
-			defer client.AssertExpectations(t)
+			client.Test(T{t})
 
-			ExpectCreate(client, "test property", "prp_0").Once()
-			ExpectGet(client, "test property", "prp_0", 42)
-			ExpectRemove(client, "prp_0").Once()
-
-			ExpectCreate(client, "renamed property", "prp_1").Once()
-			ExpectGet(client, "renamed property", "prp_1", 1)
-			ExpectRemove(client, "prp_1").Once()
+			ExpectGetProp(client, "test property", "prp_0", "grp_0", "ctr_0", "prd_0", 42)
+			ExpectGetProp(client, "renamed property", "prp_1", "grp_0", "ctr_0", "prd_0", 1)
+			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
+			ExpectCreateProperty(client, "renamed property", "grp_0", "ctr_0", "prd_0", "prp_1").Once()
+			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
+			ExpectRemoveProperty(client, "prp_1", "ctr_0", "grp_0").Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -306,14 +314,16 @@ func TestResProperty(t *testing.T) {
 					CheckDestroy: resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
 				})
 			})
+
+			client.AssertExpectations(t)
 		})
 
 		t.Run("error when deleting active property", func(t *testing.T) {
 			client := &mockpapi{}
-			defer client.AssertExpectations(t)
+			client.Test(T{t})
 
-			ExpectCreate(client, "test property", "prp_0").Once()
-			ExpectGet(client, "test property", "prp_0", 42)
+			ExpectGetProp(client, "test property", "prp_0", "grp_0", "ctr_0", "prd_0", 42)
+			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
 
 			// First call to remove is not successful
 			req := papi.RemovePropertyRequest{
@@ -326,7 +336,7 @@ func TestResProperty(t *testing.T) {
 			client.On("RemoveProperty", AnyCTX, req).Return(nil, err).Once()
 
 			// Second call will be successful (TF test case requires last state to be empty or it's a failed test)
-			ExpectRemove(client, "prp_0").Once()
+			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -343,6 +353,36 @@ func TestResProperty(t *testing.T) {
 					},
 				})
 			})
+
+			client.AssertExpectations(t)
 		})
 	})
+}
+
+// Sets up an expected call to papi.CreateProperty() with a constant success response with the given PropertyID
+func ExpectCreateProperty(client *mockpapi, PropertyName, GroupID, ContractID, ProductID, PropertyID string) *mock.Call {
+	req := papi.CreatePropertyRequest{
+		GroupID:    GroupID,
+		ContractID: ContractID,
+		Property: papi.PropertyCreate{
+			ProductID:    ProductID,
+			PropertyName: PropertyName,
+		},
+	}
+
+	res := papi.CreatePropertyResponse{PropertyID: PropertyID}
+
+	return client.On("CreateProperty", AnyCTX, req).Return(&res, nil)
+}
+
+// Sets up an expected call to papi.RemoveProperty() with a constant success response
+func ExpectRemoveProperty(client *mockpapi, PropertyID, ContractID, GroupID string) *mock.Call {
+	req := papi.RemovePropertyRequest{
+		PropertyID: PropertyID,
+		GroupID:    GroupID,
+		ContractID: ContractID,
+	}
+	res := papi.RemovePropertyResponse{}
+
+	return client.On("RemoveProperty", AnyCTX, req).Return(&res, nil)
 }
