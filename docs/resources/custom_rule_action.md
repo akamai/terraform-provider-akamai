@@ -56,9 +56,9 @@ The following arguments are supported:
 
 * `rule_id` - (Required)
 
-## Attributes Reference
+## Attribute Reference
 
-In addition to the arguments above, the following attributes are exported:
+In addition to the arguments above, the following attribute is exported:
 
 * `rule_id` - The ID of the custom rule.
 

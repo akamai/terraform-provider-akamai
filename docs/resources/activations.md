@@ -46,9 +46,9 @@ resource "akamai_appsec_activations" "activation" {
 
 * `activate` - A boolean indicating whether to active the specified configuration and version. If not supplied, True is assmed.
 
-## Attributes Reference
+## Attribute Reference
 
-In addition to the arguments above, the following attributes are exported:
+In addition to the arguments above, the following attribute is exported:
 
 * `status` - The status of the operation. The following values are may be returned:
 

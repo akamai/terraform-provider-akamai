@@ -45,9 +45,9 @@ The following arguments are supported:
 
 * `rule_update` - A boolean indicating whether to update the rules of the new version. If not supplied, False is assumed.
 
-## Attributes Reference
+## Attribute Reference
 
-In addition to the arguments above, the following attributes are exported:
+In addition to the arguments above, the following attribute is exported:
 
 * `version` - The number of the cloned version.
 
