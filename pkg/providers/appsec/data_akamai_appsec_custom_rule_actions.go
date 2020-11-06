@@ -76,7 +76,7 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 		d.Set("output_text", outputtext)
 	}
 
-	//d.Set("rule_id", ruleid)
+	//d.Set("custom_rule_id", ruleid)
 	d.SetId(strconv.Itoa(getCustomRuleActions.ConfigID))
 
 	return nil

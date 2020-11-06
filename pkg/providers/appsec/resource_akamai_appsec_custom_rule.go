@@ -33,7 +33,7 @@ func resourceCustomRule() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringIsJSON,
 			},
-			"rule_id": {
+			"custom_rule_id": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
@@ -63,7 +63,7 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	d.Set("rule_id", customrule.ID)
+	d.Set("custom_rule_id", customrule.ID)
 	d.SetId(strconv.Itoa(customrule.ID))
 
 	return resourceCustomRuleRead(ctx, d, m)
@@ -142,7 +142,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	d.Set("rule_id", customrule.ID)
+	d.Set("custom_rule_id", customrule.ID)
 	d.SetId(strconv.Itoa(customrule.ID))
 
 	return nil

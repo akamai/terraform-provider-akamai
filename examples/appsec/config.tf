@@ -154,19 +154,11 @@ resource "akamai_appsec_match_target" "appsecmatchtargets" {
  //   config_id = akamai_appsec_configuration_clone.appsecconfigurationclone.config_id
   //  version = akamai_appsec_configuration_clone.appsecconfigurationclone.version
     json =  file("${path.module}/match_targets.json")
-   /* type =  "website"
-    is_negative_path_match =  false
-    is_negative_file_extension_match =  true
-    default_file = "NO_MATCH" //"BASE_MATCH" //NO_MATCH
-    hostnames =  ["example.com","www.example.net","n.example.com"]
-    file_paths =  ["/sssi/*","/cache/aaabbc*","/price_toy/*"]
-    file_extensions = ["wmls","jpeg","pws","carb","pdf","js","hdml","cct","swf","pct"]
-    security_policy = "AAAA_81230"
-*/
+   
 
-    //bypass_network_lists = ["888518_ACDDCKERS","1304427_AAXXBBLIST"]
+   
 }
-
+/*
 resource "akamai_appsec_match_target_sequence" "appsecmatchtargetsequence" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = 11 //data.akamai_appsec_configuration.appsecconfigedge.latest_version  
@@ -178,6 +170,7 @@ resource "akamai_appsec_match_target_sequence" "appsecmatchtargetsequence" {
     }  
     depends_on = ["akamai_appsec_match_target.appsecmatchtargets"]
 }
+*/
 
 data "akamai_appsec_match_targets" "appsecmatchtargets" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
@@ -187,7 +180,7 @@ output "ds_match_targets" {
   value = data.akamai_appsec_match_targets.appsecmatchtargets.output_text
 }
 
-/*
+
 data "local_file" "rules" {
   filename = "${path.module}/custom_rules_simple.json"
 }
@@ -195,21 +188,22 @@ resource "akamai_appsec_custom_rule" "appseccustomrule" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     rules = data.local_file.rules.content
 }
-*/
 
+/*
 resource "akamai_appsec_custom_rule" "appseccustomrule1" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     rules = file("${path.module}/custom_rules_simple1.json")
 }
 
-
+*/
+/*
 data "akamai_appsec_custom_rules" "appseccustomrule" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
 }
 output "appseccustomrules" {
   value = data.akamai_appsec_custom_rules.appseccustomrule.output_text
 }
-
+*/
 /*
 resource "akamai_appsec_activations" "appsecactivations" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
@@ -271,7 +265,7 @@ resource "akamai_appsec_custom_rule_action" "appsecreatecustomruleaction" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
     policy_id = "AAAA_81230"
-    rule_id = akamai_appsec_custom_rule.appseccustomrule1.rule_id
+    custom_rule_id = akamai_appsec_custom_rule.appseccustomrule1.rule_id
     custom_rule_action = "alert"
 }
 output "customruleaction" {

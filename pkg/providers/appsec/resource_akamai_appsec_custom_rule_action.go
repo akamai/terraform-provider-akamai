@@ -47,7 +47,7 @@ func resourceCustomRuleAction() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"rule_id": {
+			"custom_rule_id": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -80,11 +80,11 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	getCustomRuleAction.PolicyID = policyid
 
-	ruleid, err := tools.GetIntValue("rule_id", d)
+	ruleid, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getCustomRuleAction.ID = ruleid
+	getCustomRuleAction.RuleID = ruleid
 
 	customruleaction, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
 	if err != nil {
@@ -92,7 +92,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	d.Set("rule_id", getCustomRuleAction.ID)
+	d.Set("custom_rule_id", getCustomRuleAction.RuleID)
 	d.SetId(strconv.Itoa(customruleaction.RuleID))
 
 	return nil
@@ -123,11 +123,11 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	}
 	updateCustomRuleAction.PolicyID = policyid
 
-	ruleid, err := tools.GetIntValue("rule_id", d)
+	ruleid, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateCustomRuleAction.ID = ruleid
+	updateCustomRuleAction.RuleID = ruleid
 
 	updateCustomRuleAction.Action = "none"
 
@@ -167,11 +167,11 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 	updateCustomRuleAction.PolicyID = policyid
 
-	ruleid, err := tools.GetIntValue("rule_id", d)
+	ruleid, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateCustomRuleAction.ID = ruleid
+	updateCustomRuleAction.RuleID = ruleid
 
 	customruleaction, err := tools.GetStringValue("custom_rule_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
