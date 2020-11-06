@@ -35,7 +35,7 @@ func resourceMatchTarget() *schema.Resource {
 				Required:         true,
 				DiffSuppressFunc: suppressEquivalentJSONDiffs,
 			},
-			"target_id": {
+			"match_target_id": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
@@ -66,7 +66,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	d.Set("json", string(jsonBody))
 
-	d.Set("target_id", postresp.TargetID)
+	d.Set("match_target_id", postresp.TargetID)
 
 	d.SetId(strconv.Itoa(postresp.TargetID))
 
@@ -148,7 +148,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	d.Set("json", string(jsonBody))
 
-	d.Set("target_id", matchtarget.TargetID)
+	d.Set("match_target_id", matchtarget.TargetID)
 	d.SetId(strconv.Itoa(matchtarget.TargetID))
 
 	return nil
