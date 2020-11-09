@@ -8,6 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -417,6 +418,65 @@ func TestResPropHostname(t *testing.T) {
 				})
 			})
 
+			client.AssertExpectations(t)
+		})
+
+		t.Run("update hostnames", func(t *testing.T) {
+			client := &mockpapi{}
+
+			Property := papi.Property{
+				PropertyID:    "prp_0",
+				GroupID:       "grp_0",
+				ContractID:    "ctr_0",
+				LatestVersion: 1,
+			}
+
+			// The state of the test property's associated Hostnames at version 1, already contains desired state
+			Hostnames := []papi.Hostname{}
+
+			ExpectGetProperty(client, "prp_0", "grp_0", "ctr_0", &Property)
+			ExpectGetPropertyVersionHostnames(client, "prp_0", "grp_0", "ctr_0", 1, &Hostnames)
+
+			// For step0 - CREATE
+			NewHostnames1 := []papi.Hostname{{
+				CnameType:      "EDGE_HOSTNAME",
+				CnameFrom:      "test.domain",
+				EdgeHostnameID: "ehn_0",
+			}}
+			ExpectUpdatePropertyVersionHostnames(client, "prp_0", "grp_0", "ctr_0", 1, NewHostnames1, &Hostnames).Once()
+
+			// For step1 - UPDATE
+			NewHostnames2 := []papi.Hostname{{
+				CnameType:      "EDGE_HOSTNAME",
+				CnameFrom:      "test.domain2",
+				EdgeHostnameID: "ehn_1",
+			}}
+			ExpectUpdatePropertyVersionHostnames(client, "prp_0", "grp_0", "ctr_0", 1, NewHostnames2, &Hostnames).Once()
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString("testdata/%s/step0.tf", t.Name()),
+							Check:  checkAllAttrs,
+						},
+						{
+							Config: loadFixtureString("testdata/%s/step1.tf", t.Name()),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("akamai_property_hostnames.test", "id", "prp_0"),
+								resource.TestCheckResourceAttr("akamai_property_hostnames.test", "property_id", "prp_0"),
+								resource.TestCheckResourceAttr("akamai_property_hostnames.test", "contract_id", "ctr_0"),
+								resource.TestCheckResourceAttr("akamai_property_hostnames.test", "group_id", "grp_0"),
+								resource.TestCheckResourceAttr("akamai_property_hostnames.test", "names.test.domain2", "ehn_1"),
+							),
+						},
+					},
+					CheckDestroy: resource.TestCheckNoResourceAttr("akamai_property_hostnames.test", "id"),
+				})
+			})
+
+			assert.Equal(t, NewHostnames2, Hostnames)
 			client.AssertExpectations(t)
 		})
 
