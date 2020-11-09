@@ -122,7 +122,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 
 	updatematchtargetsequence, err := client.UpdateMatchTargetSequence(ctx, updateMatchTargetSequence)
 	if err != nil {
-		logger.Warnf("calling 'updateMatchTargetSequence': %s", err.Error())
+		logger.Errorf("calling 'updateMatchTargetSequence': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -155,53 +155,51 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
 
-	getMatchTargetSequences := v2.GetMatchTargetSequencesRequest{}
+	getMatchTargetSequence := v2.GetMatchTargetSequenceRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
-		getMatchTargetSequences.ConfigID, _ = strconv.Atoi(s[0])
-		getMatchTargetSequences.ConfigVersion, _ = strconv.Atoi(s[1])
+		getMatchTargetSequence.ConfigID, _ = strconv.Atoi(s[0])
+		getMatchTargetSequence.ConfigVersion, _ = strconv.Atoi(s[1])
 
 		matchtargetseqtype, err := tools.GetStringValue("type", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		getMatchTargetSequences.Type = matchtargetseqtype
-		d.Set("type", getMatchTargetSequences.Type)
+		getMatchTargetSequence.Type = matchtargetseqtype
+		d.Set("type", getMatchTargetSequence.Type)
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		getMatchTargetSequences.ConfigID = configid
+		getMatchTargetSequence.ConfigID = configid
 
 		version, err := tools.GetIntValue("version", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		getMatchTargetSequences.ConfigVersion = version
+		getMatchTargetSequence.ConfigVersion = version
 
 		matchtargetseqtype, err := tools.GetStringValue("type", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		getMatchTargetSequences.Type = matchtargetseqtype
-		d.Set("type", getMatchTargetSequences.Type)
+		getMatchTargetSequence.Type = matchtargetseqtype
+		d.Set("type", getMatchTargetSequence.Type)
 	}
 
-	matchtargetsequences, err := client.GetMatchTargetSequences(ctx, getMatchTargetSequences)
+	matchtargetsequence, err := client.GetMatchTargetSequence(ctx, getMatchTargetSequence)
 	if err != nil {
 		logger.Errorf("calling 'getMatchTargetSequence': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	logger.Warnf("calling 'getMatchTargetSequence': %s", matchtargetsequences.MatchTargets.WebsiteTargets)
 	targetsequence := v2.TargetSequence{}
 	sequencemap := []v2.TargetSequence{}
 
-	if getMatchTargetSequences.Type == "website" {
-		for _, targets := range matchtargetsequences.MatchTargets.WebsiteTargets {
-			logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP': %s", targets)
+	if getMatchTargetSequence.Type == "website" {
+		for _, targets := range matchtargetsequence.MatchTargets.WebsiteTargets {
 			targetsequence.TargetID = targets.TargetID
 			targetsequence.Sequence = targets.Sequence
 			sequencemap = append(sequencemap, targetsequence)
@@ -209,9 +207,8 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 		}
 	}
 
-	if getMatchTargetSequences.Type == "api" {
-		for _, targets := range matchtargetsequences.MatchTargets.APITargets {
-			logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP': %s", targets)
+	if getMatchTargetSequence.Type == "api" {
+		for _, targets := range matchtargetsequence.MatchTargets.APITargets {
 			targetsequence.TargetID = targets.TargetID
 			targetsequence.Sequence = targets.Sequence
 			sequencemap = append(sequencemap, targetsequence)
@@ -221,9 +218,9 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 
 	d.Set("sequence_map", sequenceToMap(sequencemap))
 
-	d.Set("type", getMatchTargetSequences.Type)
+	d.Set("type", getMatchTargetSequence.Type)
 
-	d.SetId(fmt.Sprintf("%d:%d", getMatchTargetSequences.ConfigID, getMatchTargetSequences.ConfigVersion))
+	d.SetId(fmt.Sprintf("%d:%d", getMatchTargetSequence.ConfigID, getMatchTargetSequence.ConfigVersion))
 
 	return nil
 }

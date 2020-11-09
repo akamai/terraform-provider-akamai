@@ -9,11 +9,11 @@
                     "defaultFile": "NO_MATCH",
                     "effectiveSecurityControls": {
                         "applyApplicationLayerControls": false,
-                        "applyBotmanControls": true,
-                        "applyNetworkLayerControls": true,
-                        "applyRateControls": true,
-                        "applyReputationControls": true,
-                        "applySlowPostControls": true
+                        "applyBotmanControls": false,
+                        "applyNetworkLayerControls": false,
+                        "applyRateControls": false,
+                        "applyReputationControls": false,
+                        "applySlowPostControls": false
                     },
                     "fileExtensions": [
                         "carb",
@@ -28,12 +28,10 @@
                         "pws"
                     ],
                     "filePaths": [
-                        "/cache/aaabbc*",
-                        "/price_toy/*",
-                        "/sssi/*"
+                        "/cache/aaabbc*"
                     ],
                     "hostnames": [
-                        "n.example.com",
+                        "m.example.com",
                         "www.example.net",
                         "example.com"
                     ],

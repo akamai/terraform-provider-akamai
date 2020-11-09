@@ -91,9 +91,10 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 		logger.Errorf("calling 'getCustomRuleAction': %s", err.Error())
 		return diag.FromErr(err)
 	}
+	logger.Warnf("calling 'getCustomRuleAction': %s", customruleaction)
 
-	d.Set("custom_rule_id", getCustomRuleAction.RuleID)
-	d.SetId(strconv.Itoa(customruleaction.RuleID))
+	d.Set("custom_rule_id", ruleid)
+	d.SetId(strconv.Itoa(ruleid))
 
 	return nil
 }

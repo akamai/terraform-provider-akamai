@@ -172,7 +172,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 
 	_, erru := client.UpdateSelectedHostname(ctx, updateSelectedHostname)
 	if erru != nil {
-		logger.Warnf("calling 'updateSelectedHostname': %s", erru.Error())
+		logger.Errorf("calling 'updateSelectedHostname': %s", erru.Error())
 	}
 
 	return resourceSelectedHostnameRead(ctx, d, m)

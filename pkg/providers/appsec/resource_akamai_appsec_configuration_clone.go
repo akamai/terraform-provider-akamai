@@ -70,7 +70,7 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	logger.Errorf("calling 'createConfigurationClone CCR ': %v", ccr)
-	//	d.Set("version", ccr.Version)
+	d.Set("version", ccr.Version)
 	d.SetId(strconv.Itoa(ccr.ConfigID))
 
 	return resourceConfigurationCloneRead(ctx, d, m)
@@ -89,7 +89,7 @@ func resourceConfigurationCloneRead(ctx context.Context, d *schema.ResourceData,
 	}
 	getConfigurationClone.ConfigID = configid
 
-	version, err := tools.GetIntValue("create_from_version", d)
+	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
