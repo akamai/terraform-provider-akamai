@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -110,14 +111,24 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	removeMatchTarget := v2.RemoveMatchTargetRequest{}
 
-	removeMatchTarget.ConfigID = d.Get("config_id").(int)
-	removeMatchTarget.ConfigVersion = d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeMatchTarget.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeMatchTarget.ConfigVersion = version
+
 	removeMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
 
-	_, err := client.RemoveMatchTarget(ctx, removeMatchTarget)
-	if err != nil {
-		logger.Errorf("calling 'removeMatchTarget': %s", err.Error())
-		return diag.FromErr(err)
+	_, errd := client.RemoveMatchTarget(ctx, removeMatchTarget)
+	if errd != nil {
+		logger.Errorf("calling 'removeMatchTarget': %s", errd.Error())
+		return diag.FromErr(errd)
 	}
 
 	d.SetId("")
@@ -132,8 +143,18 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	getMatchTarget := v2.GetMatchTargetRequest{}
 
-	getMatchTarget.ConfigID = d.Get("config_id").(int)
-	getMatchTarget.ConfigVersion = d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getMatchTarget.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getMatchTarget.ConfigVersion = version
+
 	getMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
 
 	matchtarget, err := client.GetMatchTarget(ctx, getMatchTarget)
