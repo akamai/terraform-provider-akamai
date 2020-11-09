@@ -67,10 +67,18 @@ func dataSourceContractsRead(ctx context.Context, d *schema.ResourceData, m inte
 
 // Reusable function to fetch all the contracts accessible through a API token
 func getContracts(ctx context.Context, meta akamai.OperationMeta) (*papi.GetContractsResponse, error) {
-	client := inst.Client(meta)
-	ctrs, err := client.GetContracts(ctx)
-	if err != nil {
-		return nil, err
+	contracts := &papi.GetContractsResponse{}
+	if err := meta.CacheGet(inst, "contracts", contracts); err != nil {
+		if !akamai.IsNotFoundError(err) {
+			return nil, err
+		}
+		contracts, err = inst.Client(meta).GetContracts(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if err := meta.CacheSet(inst, "contracts", contracts); err != nil {
+			return nil, err
+		}
 	}
-	return ctrs, nil
+	return contracts, nil
 }
