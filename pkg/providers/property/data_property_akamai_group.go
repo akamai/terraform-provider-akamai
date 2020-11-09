@@ -134,7 +134,7 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 func getGroups(ctx context.Context, meta akamai.OperationMeta) (*papi.GetGroupsResponse, error) {
 	groups := &papi.GetGroupsResponse{}
 	if err := meta.CacheGet(inst, "groups", groups); err != nil {
-		if !akamai.IsNotFoundError(err) {
+		if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
 			return nil, err
 		}
 		groups, err = inst.Client(meta).GetGroups(ctx)

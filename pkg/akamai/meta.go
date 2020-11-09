@@ -59,34 +59,46 @@ func (m *meta) Session() session.Session {
 }
 
 func (m *meta) CacheSet(prov Subprovider, key string, val interface{}) error {
+	log := m.Log("meta", "CacheSet")
+
 	if !m.cacheEnabled {
-		return nil
+		log.Debug("cache disabled")
+		return ErrCacheDisabled
 	}
 
-	key = fmt.Sprintf("%s:%T", key, prov)
+	key = fmt.Sprintf("%s:%s", key, prov.Name())
 
 	data, err := json.Marshal(val)
 	if err != nil {
 		return fmt.Errorf("failed to marshal object to cache: %w", err)
 	}
 
+	log.Debugf("cache set for for key %s [%d bytes]", key, len(data))
+
 	return instance.cache.Set(key, data)
 }
 
 func (m *meta) CacheGet(prov Subprovider, key string, out interface{}) error {
+	log := m.Log("meta", "CacheGet")
+
 	if !m.cacheEnabled {
-		return ErrCacheEntryNotFound
+		log.Debug("cache disabled")
+		return ErrCacheDisabled
 	}
 
-	key = fmt.Sprintf("%s:%T", key, prov)
+	key = fmt.Sprintf("%s:%s", key, prov.Name())
 
 	data, err := instance.cache.Get(key)
 	if err != nil {
 		if err == bigcache.ErrEntryNotFound {
+			log.Debugf("cache miss for for key %s", key)
+
 			return ErrCacheEntryNotFound
 		}
 		return err
 	}
+
+	log.Debugf("cache get for for key %s: [%d bytes]", key, len(data))
 
 	return json.Unmarshal(data, out)
 }
