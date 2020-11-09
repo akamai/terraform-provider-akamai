@@ -59,7 +59,7 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	customrule, err := client.CreateCustomRule(ctx, createCustomRule)
 	if err != nil {
-		logger.Warnf("calling 'createCustomRule': %s", err.Error())
+		logger.Errorf("calling 'createCustomRule': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -88,7 +88,7 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	_, erru := client.UpdateCustomRule(ctx, updateCustomRule)
 	if erru != nil {
-		logger.Warnf("calling 'updateCustomRule': %s", erru.Error())
+		logger.Errorf("calling 'updateCustomRule': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
 
@@ -112,7 +112,7 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	_, errd := client.RemoveCustomRule(ctx, removeCustomRule)
 	if errd != nil {
-		logger.Warnf("calling 'removeCustomRule': %s", errd.Error())
+		logger.Errorf("calling 'removeCustomRule': %s", errd.Error())
 		return diag.FromErr(errd)
 	}
 
@@ -138,7 +138,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	customrule, err := client.GetCustomRule(ctx, getCustomRule)
 	if err != nil {
-		logger.Warnf("calling 'getCustomRule': %s", err.Error())
+		logger.Errorf("calling 'getCustomRule': %s", err.Error())
 		return diag.FromErr(err)
 	}
 

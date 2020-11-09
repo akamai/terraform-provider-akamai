@@ -74,7 +74,7 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 
 	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
 	if err != nil {
-		logger.Warnf("calling 'getSelectedHostnames': %s", err.Error())
+		logger.Errorf("calling 'getSelectedHostnames': %s", err.Error())
 		return diag.FromErr(err)
 	}
 

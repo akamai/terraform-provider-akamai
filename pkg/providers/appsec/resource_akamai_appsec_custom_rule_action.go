@@ -88,7 +88,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 
 	customruleaction, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
 	if err != nil {
-		logger.Warnf("calling 'getCustomRuleAction': %s", err.Error())
+		logger.Errorf("calling 'getCustomRuleAction': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -133,7 +133,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 
 	_, errd := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if errd != nil {
-		logger.Warnf("calling 'removeCustomRuleAction': %s", errd.Error())
+		logger.Errorf("calling 'removeCustomRuleAction': %s", errd.Error())
 		return diag.FromErr(err)
 	}
 
@@ -182,7 +182,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 
 	_, erru := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if erru != nil {
-		logger.Warnf("calling 'updateCustomRuleAction': %s", erru.Error())
+		logger.Errorf("calling 'updateCustomRuleAction': %s", erru.Error())
 	}
 
 	return resourceCustomRuleActionRead(ctx, d, m)

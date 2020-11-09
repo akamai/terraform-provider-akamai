@@ -104,10 +104,9 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 
 		sequenceMap, ok := d.Get("sequence_map").(map[string]interface{})
 		if !ok {
-			logger.Warnf("get map  'updateMatchTargetSequence': %s", err.Error())
+			logger.Errorf("get map  'updateMatchTargetSequence': %s", err.Error())
 			return diag.FromErr(err)
 		}
-		logger.Warnf("calling 'getMatchTargetSequence SEQ MAP': %s", sequenceMap)
 
 		for target, sequence := range sequenceMap {
 			logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP': %s", target)
@@ -192,7 +191,8 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 
 	matchtargetsequences, err := client.GetMatchTargetSequences(ctx, getMatchTargetSequences)
 	if err != nil {
-		logger.Warnf("calling 'getMatchTargetSequence': %s", err.Error())
+		logger.Errorf("calling 'getMatchTargetSequence': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	logger.Warnf("calling 'getMatchTargetSequence': %s", matchtargetsequences.MatchTargets.WebsiteTargets)
@@ -219,7 +219,6 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 		}
 	}
 
-	logger.Warnf("calling 'getMatchTargetSequence SEQ MAP LOOP EXIT ': %s", sequencemap)
 	d.Set("sequence_map", sequenceToMap(sequencemap))
 
 	d.Set("type", getMatchTargetSequences.Type)
