@@ -135,7 +135,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 						DomainPrefix:      "test",
 						DomainSuffix:      "edgekey.net",
 						SecureNetwork:     "ENHANCED_TLS",
-						IPVersionBehavior: "IPV6",
+						IPVersionBehavior: "IPV6_PERFORMANCE",
 						CertEnrollmentID:  123,
 						SlotNumber:        123,
 					},
@@ -175,7 +175,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			expectedAttributes: map[string]string{
 				"id":            "eh_123",
-				"ip_behavior":   "IPV6",
+				"ip_behavior":   "IPV6_PERFORMANCE",
 				"contract":      "ctr_2",
 				"group":         "grp_2",
 				"edge_hostname": "test.edgekey.net",
