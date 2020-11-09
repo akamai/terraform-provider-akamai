@@ -17,8 +17,25 @@ func dataSourcePropertyContract() *schema.Resource {
 		ReadContext: dataSourcePropertyContractRead,
 		Schema: map[string]*schema.Schema{
 			"group": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"group_id", "group_name"},
+				ExactlyOneOf:  []string{"group", "group_id", "group_name"},
+				Deprecated:    akamai.NoticeDeprecatedUseAlias("group"),
+			},
+			"group_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"group"},
+				ExactlyOneOf:  []string{"group", "group_id", "group_name"},
+				ForceNew:      true,
+			},
+			"group_name": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"group"},
+				ExactlyOneOf:  []string{"group", "group_id", "group_name"},
+				ForceNew:      true,
 			},
 		},
 	}
@@ -35,7 +52,7 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 		session.WithContextLog(log),
 	)
 
-	group, err := tools.GetStringValue("group", d)
+	group, err := resolveKeyState("group", "group_id", d)
 
 	// If no group, just return the first contract
 	if err != nil {

@@ -24,8 +24,15 @@ func dataSourcePropertyGroup() *schema.Resource {
 				Optional: true,
 			},
 			"contract": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"contract_id"},
+				Deprecated:    akamai.NoticeDeprecatedUseAlias("contract"),
+			},
+			"contract_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"contract"},
 			},
 		},
 	}
@@ -59,11 +66,11 @@ func dataSourcePropertyGroupRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	contract, err := tools.GetStringValue("contract", d)
+	contractID, err := resolveKeyState("contract", "contract_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	group, err := findGroupByName(name, contract, groups, getDefault)
+	group, err := findGroupByName(name, contractID, groups, getDefault)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err))
 	}

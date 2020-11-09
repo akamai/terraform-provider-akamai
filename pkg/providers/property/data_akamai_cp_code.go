@@ -2,8 +2,8 @@ package property
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -20,14 +20,34 @@ func dataSourceCPCode() *schema.Resource {
 				Required: true,
 			},
 			"contract": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"contract_id"},
+				ExactlyOneOf:  []string{"contract", "contract_id"},
+				ForceNew:      true,
+				Deprecated:    akamai.NoticeDeprecatedUseAlias("contract"),
+			},
+			"contract_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"contract"},
+				ExactlyOneOf:  []string{"contract", "contract_id"},
+				ForceNew:      true,
 			},
 			"group": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"group_id"},
+				ExactlyOneOf:  []string{"group", "group_id"},
+				ForceNew:      true,
+				Deprecated:    akamai.NoticeDeprecatedUseAlias("group"),
+			},
+			"group_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"group"},
+				ExactlyOneOf:  []string{"group", "group_id"},
+				ForceNew:      true,
 			},
 			"product_ids": {
 				Type:     schema.TypeList,
@@ -44,22 +64,22 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	log.Debug("Read CP Code")
 
-	var name, group, contract string
+	var name, groupID, contractID string
 	var err error
 
 	if name, err = tools.GetStringValue("name", d); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if group, err = tools.GetStringValue("group", d); err != nil {
+	if groupID, err = resolveKeyState("group", "group_id", d); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if contract, err = tools.GetStringValue("contract", d); err != nil {
+	if contractID, err = resolveKeyState("contract", "contract_id", d); err != nil {
 		return diag.FromErr(err)
 	}
 
-	cpCode, err := findCPCode(ctx, name, contract, group, meta)
+	cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("could not load CP codes: %w", err))
 	}
@@ -79,6 +99,17 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	log.Debugf("Read CP Code: %+v", cpCode)
 	return nil
+}
+
+func resolveKeyState(key, id string, rd *schema.ResourceData) (value string, err error) {
+	value, err = tools.GetStringValue(key, rd)
+	if errors.Is(tools.ErrNotFound, err) {
+		value, err = tools.GetStringValue(id, rd)
+	}
+	if err != nil {
+		return "", err
+	}
+	return value, nil
 }
 
 // findCPCode searches all CP codes for a match against given nameOrID

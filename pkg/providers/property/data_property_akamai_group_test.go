@@ -38,6 +38,20 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 	})
 }
 
+func TestVerifyDataSourceSchema(t *testing.T) {
+	t.Run("test datasource ConflictsWith", func(t *testing.T) {
+		resource.UnitTest(t, resource.TestCase{
+			Providers:  testAccProviders,
+			IsUnitTest: true,
+			Steps: []resource.TestStep{{
+				Config:             testAccDataSourceContractConflicts(),
+				ExpectNonEmptyPlan: true,
+				ExpectError:        regexp.MustCompile("\"contract\": conflicts with contract_id"),
+			}},
+		})
+	})
+}
+
 func testAccDataSourceGroupBasic() string {
 	return `
 		provider "akamai" {
@@ -46,6 +60,24 @@ func testAccDataSourceGroupBasic() string {
 		}
 
 		data "akamai_group" "test" {
+		}
+
+		output "groupid" {
+			value = "${data.akamai_group.test.id}"
+		}
+`
+}
+
+func testAccDataSourceContractConflicts() string {
+	return `
+		provider "akamai" {
+			papi_section = "papi"
+			edgerc = "~/.edgerc"
+		}
+
+		data "akamai_group" "test" {
+            contract = "ctr_contract"
+            contract_id = "ctr_contractId"
 		}
 
 		output "groupid" {

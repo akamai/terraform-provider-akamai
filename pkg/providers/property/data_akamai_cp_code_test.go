@@ -225,4 +225,31 @@ func TestDSCPCode(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("contract collides with contract ID", func(t *testing.T) {
+		resource.UnitTest(t, resource.TestCase{
+			Providers:  testAccProviders,
+			IsUnitTest: true,
+			Steps: []resource.TestStep{{
+				Config:             loadFixtureString("testdata/TestDSCPCode/contract_collides_with_id.tf"),
+				ExpectNonEmptyPlan: true,
+				ExpectError:        regexp.MustCompile("only one of `contract,contract_id` can be specified"),
+			}},
+		})
+	})
+
+	t.Run("group collides with group ID", func(t *testing.T) {
+		client := &mockpapi{}
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers:  testAccProviders,
+				IsUnitTest: true,
+				Steps: []resource.TestStep{{
+					Config:             loadFixtureString("testdata/TestDSCPCode/group_collides_with_id.tf"),
+					ExpectNonEmptyPlan: true,
+					ExpectError:        regexp.MustCompile("only one of `group,group_id` can be specified"),
+				}},
+			})
+		})
+	})
 }
