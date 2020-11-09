@@ -64,7 +64,8 @@ func dataSourceWAFProtectionsRead(ctx context.Context, d *schema.ResourceData, m
 
 	wafprotections, err := client.GetWAFProtections(ctx, getWAFProtections)
 	if err != nil {
-		logger.Warnf("calling 'getWAFProtections': %s", err.Error())
+		logger.Errorf("calling 'getWAFProtections': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}

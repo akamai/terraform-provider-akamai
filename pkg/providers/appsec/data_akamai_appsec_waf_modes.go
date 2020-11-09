@@ -64,7 +64,8 @@ func dataSourceWAFModesRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	wafmodes, err := client.GetWAFModes(ctx, getWAFModes)
 	if err != nil {
-		logger.Warnf("calling 'getWAFModes': %s", err.Error())
+		logger.Errorf("calling 'getWAFModes': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}

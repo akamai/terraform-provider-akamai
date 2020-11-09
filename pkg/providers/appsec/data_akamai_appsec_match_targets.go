@@ -54,7 +54,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	matchtargets, err := client.GetMatchTargets(ctx, getMatchTargets)
 	if err != nil {
-		logger.Warnf("calling 'getMatchTargets': %s", err.Error())
+		logger.Errorf("calling 'getMatchTargets': %s", err.Error())
 		return diag.FromErr(err)
 	}
 

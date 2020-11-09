@@ -77,7 +77,8 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 
 	wafprotection, err := client.GetWAFProtection(ctx, getWAFProtection)
 	if err != nil {
-		logger.Warnf("calling 'getWAFProtection': %s", err.Error())
+		logger.Errorf("calling 'getWAFProtection': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}
@@ -123,15 +124,16 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 	}
 	updateWAFProtection.PolicyID = policyid
 
-	enabled, err := tools.GetBoolValue("enabled", d)
+	applyapplicationlayercontrols, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateWAFProtection.ApplyApplicationLayerControls = enabled
+	updateWAFProtection.ApplyApplicationLayerControls = applyapplicationlayercontrols
 
 	_, erru := client.UpdateWAFProtection(ctx, updateWAFProtection)
 	if erru != nil {
-		logger.Warnf("calling 'updateWAFProtection': %s", erru.Error())
+		logger.Errorf("calling 'updateWAFProtection': %s", erru.Error())
+		return diag.FromErr(erru)
 	}
 
 	return resourceWAFProtectionRead(ctx, d, m)

@@ -64,7 +64,8 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 
 	ratepolicyactions, err := client.GetRatePolicyActions(ctx, getRatePolicyActions)
 	if err != nil {
-		logger.Warnf("calling 'getRatePolicyActions': %s", err.Error())
+		logger.Errorf("calling 'getRatePolicyActions': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	for _, configval := range ratepolicyactions.RatePolicyActions {

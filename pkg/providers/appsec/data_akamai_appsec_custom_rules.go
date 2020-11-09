@@ -44,7 +44,7 @@ func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m in
 
 	customrules, err := client.GetCustomRules(ctx, getCustomRules)
 	if err != nil {
-		logger.Warnf("calling 'getCustomRules': %s", err.Error())
+		logger.Errorf("calling 'getCustomRules': %s", err.Error())
 		return diag.FromErr(err)
 	}
 

@@ -1,0 +1,15 @@
+{
+    "configId": 43253,
+    "version": 15,
+    "policyId": "LNPD_76189",
+    "policyName": "Cloned Test for Launchpad 15",
+    "policySecurityControls": {
+        "applyApiConstraints": true,
+        "applyApplicationLayerControls": true,
+        "applyBotmanControls": true,
+        "applyNetworkLayerControls": true,
+        "applyRateControls": true,
+        "applyReputationControls": true,
+        "applySlowPostControls": false
+    }
+}

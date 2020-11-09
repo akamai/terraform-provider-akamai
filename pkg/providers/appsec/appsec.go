@@ -1,4 +1,4 @@
-// +build all dns
+// +build all appsec
 
 package appsec
 

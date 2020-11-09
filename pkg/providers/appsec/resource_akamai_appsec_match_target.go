@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -32,71 +33,12 @@ func resourceMatchTarget() *schema.Resource {
 			},
 			"json": {
 				Type:             schema.TypeString,
-				Optional:         true,
-				ConflictsWith:    []string{"type", "is_negative_path_match", "is_negative_file_extension_match", "default_file", "hostnames", "file_paths", "file_extensions", "security_policy", "bypass_network_lists"},
+				Required:         true,
 				DiffSuppressFunc: suppressEquivalentJSONDiffs,
 			},
-			"target_id": {
+			"match_target_id": {
 				Type:     schema.TypeInt,
 				Computed: true,
-			},
-			"type": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
-			},
-			"is_negative_path_match": {
-				Type:             schema.TypeBool,
-				Optional:         true,
-				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
-			},
-			"is_negative_file_extension_match": {
-				Type:             schema.TypeBool,
-				Optional:         true,
-				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
-			},
-			"default_file": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
-			},
-			"hostnames": &schema.Schema{
-				Type:             schema.TypeSet,
-				Optional:         true,
-				Elem:             &schema.Schema{Type: schema.TypeString},
-				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
-			},
-			"file_paths": &schema.Schema{
-				Type:             schema.TypeSet,
-				Optional:         true,
-				Elem:             &schema.Schema{Type: schema.TypeString},
-				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
-			},
-			"file_extensions": &schema.Schema{
-				Type:             schema.TypeSet,
-				Optional:         true,
-				Elem:             &schema.Schema{Type: schema.TypeString},
-				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
-			},
-			"security_policy": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
-			},
-			"bypass_network_lists": &schema.Schema{
-				Type:             schema.TypeSet,
-				Optional:         true,
-				Elem:             &schema.Schema{Type: schema.TypeString},
-				ConflictsWith:    []string{"json"},
-				DiffSuppressFunc: suppressJsonProvided,
 			},
 		},
 	}
@@ -109,33 +51,13 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	createMatchTarget := v2.CreateMatchTargetRequest{}
 
-	jsonpostpayload, ok := d.GetOk("json")
-	if ok {
+	jsonpostpayload := d.Get("json")
 
-		json.Unmarshal([]byte(jsonpostpayload.(string)), &createMatchTarget)
-	} else {
-		createMatchTarget.ConfigID = d.Get("config_id").(int)
-		createMatchTarget.ConfigVersion = d.Get("version").(int)
-		createMatchTarget.Type = d.Get("type").(string)
-		createMatchTarget.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
-		createMatchTarget.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
-		createMatchTarget.DefaultFile = d.Get("default_file").(string)
-		createMatchTarget.Hostnames = tools.SetToStringSlice(d.Get("hostnames").(*schema.Set))
-		createMatchTarget.FilePaths = tools.SetToStringSlice(d.Get("file_paths").(*schema.Set))
-		createMatchTarget.FileExtensions = tools.SetToStringSlice(d.Get("file_extensions").(*schema.Set))
-		createMatchTarget.SecurityPolicy.PolicyID = d.Get("security_policy").(string)
-		bypassnetworklists := d.Get("bypass_network_lists").(*schema.Set).List()
-
-		for _, b := range bypassnetworklists {
-			bl := v2.BypassNetworkList{}
-			bl.ID = b.(string)
-			createMatchTarget.BypassNetworkLists = append(createMatchTarget.BypassNetworkLists, bl)
-		}
-	}
+	json.Unmarshal([]byte(jsonpostpayload.(string)), &createMatchTarget)
 
 	postresp, err := client.CreateMatchTarget(ctx, createMatchTarget)
 	if err != nil {
-		logger.Warnf("calling 'createMatchTarget': %s", err.Error())
+		logger.Errorf("calling 'createMatchTarget': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -145,7 +67,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	d.Set("json", string(jsonBody))
 
-	d.Set("target_id", postresp.TargetID)
+	d.Set("match_target_id", postresp.TargetID)
 
 	d.SetId(strconv.Itoa(postresp.TargetID))
 
@@ -159,44 +81,22 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	updateMatchTarget := v2.UpdateMatchTargetRequest{}
 
-	jsonpostpayload, ok := d.GetOk("json")
-	if ok {
+	jsonpostpayload := d.Get("json")
 
-		json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTarget)
-		updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
-		jsonBody, err := json.Marshal(updateMatchTarget)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		d.Set("json", string(jsonBody))
-
-	} else {
-		updateMatchTarget.ConfigID = d.Get("config_id").(int)
-		updateMatchTarget.ConfigVersion = d.Get("version").(int)
-		updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
-		updateMatchTarget.Type = d.Get("type").(string)
-		updateMatchTarget.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
-		updateMatchTarget.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
-		updateMatchTarget.DefaultFile = d.Get("default_file").(string)
-		updateMatchTarget.Hostnames = tools.SetToStringSlice(d.Get("hostnames").(*schema.Set))
-		updateMatchTarget.FilePaths = tools.SetToStringSlice(d.Get("file_paths").(*schema.Set))
-		updateMatchTarget.FileExtensions = tools.SetToStringSlice(d.Get("file_extensions").(*schema.Set))
-		updateMatchTarget.SecurityPolicy.PolicyID = d.Get("security_policy").(string)
-		bypassnetworklists := d.Get("bypass_network_lists").(*schema.Set).List()
-
-		for _, b := range bypassnetworklists {
-			bl := v2.BypassNetworkList{}
-			bl.ID = b.(string)
-			updateMatchTarget.BypassNetworkLists = append(updateMatchTarget.BypassNetworkLists, bl)
-		}
+	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTarget)
+	updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
+	jsonBody, err := json.Marshal(updateMatchTarget)
+	if err != nil {
+		return diag.FromErr(err)
 	}
+	d.Set("json", string(jsonBody))
 
 	resp, err := client.UpdateMatchTarget(ctx, updateMatchTarget)
 	if err != nil {
-		logger.Warnf("calling 'updateMatchTarget': %s", err.Error())
+		logger.Errorf("calling 'updateMatchTarget': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	jsonBody, err := json.Marshal(resp)
+	jsonBody, err = json.Marshal(resp)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -211,14 +111,24 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	removeMatchTarget := v2.RemoveMatchTargetRequest{}
 
-	removeMatchTarget.ConfigID = d.Get("config_id").(int)
-	removeMatchTarget.ConfigVersion = d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeMatchTarget.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeMatchTarget.ConfigVersion = version
+
 	removeMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
 
-	_, err := client.RemoveMatchTarget(ctx, removeMatchTarget)
-	if err != nil {
-		logger.Warnf("calling 'removeMatchTarget': %s", err.Error())
-		return diag.FromErr(err)
+	_, errd := client.RemoveMatchTarget(ctx, removeMatchTarget)
+	if errd != nil {
+		logger.Errorf("calling 'removeMatchTarget': %s", errd.Error())
+		return diag.FromErr(errd)
 	}
 
 	d.SetId("")
@@ -233,13 +143,23 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	getMatchTarget := v2.GetMatchTargetRequest{}
 
-	getMatchTarget.ConfigID = d.Get("config_id").(int)
-	getMatchTarget.ConfigVersion = d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getMatchTarget.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getMatchTarget.ConfigVersion = version
+
 	getMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
 
 	matchtarget, err := client.GetMatchTarget(ctx, getMatchTarget)
 	if err != nil {
-		logger.Warnf("calling 'getMatchTarget': %s", err.Error())
+		logger.Errorf("calling 'getMatchTarget': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -249,7 +169,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	d.Set("json", string(jsonBody))
 
-	d.Set("target_id", matchtarget.TargetID)
+	d.Set("match_target_id", matchtarget.TargetID)
 	d.SetId(strconv.Itoa(matchtarget.TargetID))
 
 	return nil

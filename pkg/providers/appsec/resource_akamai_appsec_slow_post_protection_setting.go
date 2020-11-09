@@ -90,7 +90,8 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 
 	_, errg := client.GetSlowPostProtectionSetting(ctx, getSlowPostProtectionSetting)
 	if errg != nil {
-		logger.Warnf("calling 'getSlowPostProtectionSetting': %s", errg.Error())
+		logger.Errorf("calling 'getSlowPostProtectionSetting': %s", errg.Error())
+		return diag.FromErr(errg)
 	}
 
 	d.SetId(strconv.Itoa(getSlowPostProtectionSetting.ConfigID))
@@ -154,7 +155,8 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 
 	_, erru := client.UpdateSlowPostProtectionSetting(ctx, updateSlowPostProtectionSetting)
 	if erru != nil {
-		logger.Warnf("calling 'updateSlowPostProtectionSetting': %s", erru.Error())
+		logger.Errorf("calling 'updateSlowPostProtectionSetting': %s", erru.Error())
+		return diag.FromErr(erru)
 	}
 
 	return resourceSlowPostProtectionSettingRead(ctx, d, m)

@@ -47,7 +47,7 @@ func resourceCustomRuleAction() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"rule_id": {
+			"custom_rule_id": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -80,20 +80,21 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	getCustomRuleAction.PolicyID = policyid
 
-	ruleid, err := tools.GetIntValue("rule_id", d)
+	ruleid, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getCustomRuleAction.ID = ruleid
+	getCustomRuleAction.RuleID = ruleid
 
 	customruleaction, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
 	if err != nil {
-		logger.Warnf("calling 'getCustomRuleAction': %s", err.Error())
+		logger.Errorf("calling 'getCustomRuleAction': %s", err.Error())
 		return diag.FromErr(err)
 	}
+	logger.Warnf("calling 'getCustomRuleAction': %s", customruleaction)
 
-	d.Set("rule_id", getCustomRuleAction.ID)
-	d.SetId(strconv.Itoa(customruleaction.RuleID))
+	d.Set("custom_rule_id", ruleid)
+	d.SetId(strconv.Itoa(ruleid))
 
 	return nil
 }
@@ -123,18 +124,18 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	}
 	updateCustomRuleAction.PolicyID = policyid
 
-	ruleid, err := tools.GetIntValue("rule_id", d)
+	ruleid, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateCustomRuleAction.ID = ruleid
+	updateCustomRuleAction.RuleID = ruleid
 
 	updateCustomRuleAction.Action = "none"
 
 	_, errd := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if errd != nil {
-		logger.Warnf("calling 'removeCustomRuleAction': %s", errd.Error())
-		return diag.FromErr(err)
+		logger.Errorf("calling 'removeCustomRuleAction': %s", errd.Error())
+		return diag.FromErr(errd)
 	}
 
 	d.SetId("")
@@ -167,11 +168,11 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 	updateCustomRuleAction.PolicyID = policyid
 
-	ruleid, err := tools.GetIntValue("rule_id", d)
+	ruleid, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateCustomRuleAction.ID = ruleid
+	updateCustomRuleAction.RuleID = ruleid
 
 	customruleaction, err := tools.GetStringValue("custom_rule_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -182,7 +183,8 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 
 	_, erru := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if erru != nil {
-		logger.Warnf("calling 'updateCustomRuleAction': %s", erru.Error())
+		logger.Errorf("calling 'updateCustomRuleAction': %s", erru.Error())
+		return diag.FromErr(erru)
 	}
 
 	return resourceCustomRuleActionRead(ctx, d, m)

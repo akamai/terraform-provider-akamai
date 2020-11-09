@@ -37,7 +37,7 @@
                         "www.example.net",
                         "example.com"
                     ],
-                    "isNegativeFileExtensionMatch": true,
+                    "isNegativeFileExtensionMatch": false,
                     "isNegativePathMatch": false,
                     "securityPolicy": {
                         "policyId": "AAAA_81230"

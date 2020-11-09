@@ -539,3 +539,204 @@ func (p *mockappsec) UpdateWAFProtection(ctx context.Context, params appsec.Upda
 
 	return args.Get(0).(*appsec.UpdateWAFProtectionResponse), args.Error(1)
 }
+
+func (p *mockappsec) GetRateProtection(ctx context.Context, params appsec.GetRateProtectionRequest) (*appsec.GetRateProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetRateProtectionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetRateProtections(ctx context.Context, params appsec.GetRateProtectionsRequest) (*appsec.GetRateProtectionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetRateProtectionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateRateProtection(ctx context.Context, params appsec.UpdateRateProtectionRequest) (*appsec.UpdateRateProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateRateProtectionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetKRSRuleActions(ctx context.Context, params appsec.GetKRSRuleActionsRequest) (*appsec.GetKRSRuleActionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetKRSRuleActionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetKRSRuleAction(ctx context.Context, params appsec.GetKRSRuleActionRequest) (*appsec.GetKRSRuleActionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetKRSRuleActionResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateKRSRuleAction(ctx context.Context, params appsec.UpdateKRSRuleActionRequest) (*appsec.UpdateKRSRuleActionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateKRSRuleActionResponse), args.Error(1)
+}
+
+func (p *mockappsec) CreateWAFAttackGroupAction(ctx context.Context, params appsec.CreateWAFAttackGroupActionRequest) (*appsec.CreateWAFAttackGroupActionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.CreateWAFAttackGroupActionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetAttackGroupConditionException(ctx context.Context, params appsec.GetAttackGroupConditionExceptionRequest) (*appsec.GetAttackGroupConditionExceptionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAttackGroupConditionExceptionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetAttackGroupConditionExceptions(ctx context.Context, params appsec.GetAttackGroupConditionExceptionsRequest) (*appsec.GetAttackGroupConditionExceptionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAttackGroupConditionExceptionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateAttackGroupConditionException(ctx context.Context, params appsec.UpdateAttackGroupConditionExceptionRequest) (*appsec.UpdateAttackGroupConditionExceptionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateAttackGroupConditionExceptionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetWAFAttackGroupAction(ctx context.Context, params appsec.GetWAFAttackGroupActionRequest) (*appsec.GetWAFAttackGroupActionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetWAFAttackGroupActionResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateWAFAttackGroupAction(ctx context.Context, params appsec.UpdateWAFAttackGroupActionRequest) (*appsec.UpdateWAFAttackGroupActionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateWAFAttackGroupActionResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveWAFAttackGroupAction(ctx context.Context, params appsec.RemoveWAFAttackGroupActionRequest) (*appsec.RemoveWAFAttackGroupActionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveWAFAttackGroupActionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetWAFAttackGroupActions(ctx context.Context, params appsec.GetWAFAttackGroupActionsRequest) (*appsec.GetWAFAttackGroupActionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetWAFAttackGroupActionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetReputationProtections(ctx context.Context, params appsec.GetReputationProtectionsRequest) (*appsec.GetReputationProtectionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetReputationProtectionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetReputationProtection(ctx context.Context, params appsec.GetReputationProtectionRequest) (*appsec.GetReputationProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetReputationProtectionResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateReputationProtection(ctx context.Context, params appsec.UpdateReputationProtectionRequest) (*appsec.UpdateReputationProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateReputationProtectionResponse), args.Error(1)
+
+}
+
+func (p *mockappsec) GetSlowPostProtection(ctx context.Context, params appsec.GetSlowPostProtectionRequest) (*appsec.GetSlowPostProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetSlowPostProtectionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetSlowPostProtections(ctx context.Context, params appsec.GetSlowPostProtectionsRequest) (*appsec.GetSlowPostProtectionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetSlowPostProtectionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateSlowPostProtection(ctx context.Context, params appsec.UpdateSlowPostProtectionRequest) (*appsec.UpdateSlowPostProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateSlowPostProtectionResponse), args.Error(1)
+}

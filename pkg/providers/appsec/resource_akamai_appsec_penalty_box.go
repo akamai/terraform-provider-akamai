@@ -87,7 +87,8 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	penaltybox, err := client.GetPenaltyBox(ctx, getPenaltyBox)
 	if err != nil {
-		logger.Warnf("calling 'getPenaltyBox': %s", err.Error())
+		logger.Errorf("calling 'getPenaltyBox': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}
@@ -147,7 +148,8 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	_, erru := client.UpdatePenaltyBox(ctx, updatePenaltyBox)
 	if erru != nil {
-		logger.Warnf("calling 'updatePenaltyBox': %s", erru.Error())
+		logger.Errorf("calling 'updatePenaltyBox': %s", erru.Error())
+		return diag.FromErr(erru)
 	}
 
 	return resourcePenaltyBoxRead(ctx, d, m)

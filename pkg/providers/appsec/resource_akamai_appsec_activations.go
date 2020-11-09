@@ -121,7 +121,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	postresp, err := client.CreateActivations(ctx, createActivations, true)
 	if err != nil {
-		logger.Warnf("calling 'createActivations': %s", err.Error())
+		logger.Errorf("calling 'createActivations': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -201,7 +201,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	postresp, err := client.RemoveActivations(ctx, removeActivations)
 
 	if err != nil {
-		logger.Warnf("calling 'removeActivations': %s", err.Error())
+		logger.Errorf("calling 'removeActivations': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -243,7 +243,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	activations, err := client.GetActivations(ctx, getActivations)
 	if err != nil {
-		logger.Warnf("calling 'getActivations': %s", err.Error())
+		logger.Errorf("calling 'getActivations': %s", err.Error())
 		return diag.FromErr(err)
 	}
 

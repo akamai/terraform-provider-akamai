@@ -20,8 +20,7 @@ type (
 
 		client appsec.APPSEC
 	}
-
-	// Option is a papi provider option
+	// Option is a appsec provider option
 	Option func(p *provider)
 )
 
@@ -62,26 +61,33 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_appsec_configuration":         dataSourceConfiguration(),
-			"akamai_appsec_configuration_version": dataSourceConfigurationVersion(),
-			"akamai_appsec_custom_rules":          dataSourceCustomRules(),
-			"akamai_appsec_custom_rule_actions":   dataSourceCustomRuleActions(),
-			"akamai_appsec_export_configuration":  dataSourceExportConfiguration(),
-			"akamai_appsec_match_targets":         dataSourceMatchTargets(),
-			"akamai_appsec_penalty_boxes":         dataSourcePenaltyBoxes(),
-			"akamai_appsec_rate_policies":         dataSourceRatePolicies(),
-			"akamai_appsec_rate_policy_actions":   dataSourceRatePolicyActions(),
-			"akamai_appsec_selectable_hostnames":  dataSourceSelectableHostnames(),
-			"akamai_appsec_security_policy":       dataSourceSecurityPolicy(),
-			"akamai_appsec_selected_hostnames":    dataSourceSelectedHostnames(),
-			"akamai_appsec_slow_post":             dataSourceSlowPostProtectionSettings(),
-			"akamai_appsec_waf_modes":             dataSourceWAFModes(),
-			"akamai_appsec_waf_protection":        dataSourceWAFProtections(),
+			"akamai_appsec_configuration":            dataSourceConfiguration(),
+			"akamai_appsec_configuration_version":    dataSourceConfigurationVersion(),
+			"akamai_appsec_custom_rules":             dataSourceCustomRules(),
+			"akamai_appsec_custom_rule_actions":      dataSourceCustomRuleActions(),
+			"akamai_appsec_export_configuration":     dataSourceExportConfiguration(),
+			"akamai_appsec_krs_rule_actions":         dataSourceKRSRuleActions(),
+			"akamai_appsec_match_targets":            dataSourceMatchTargets(),
+			"akamai_appsec_penalty_boxes":            dataSourcePenaltyBoxes(),
+			"akamai_appsec_rate_policies":            dataSourceRatePolicies(),
+			"akamai_appsec_rate_policy_actions":      dataSourceRatePolicyActions(),
+			"akamai_appsec_rate_protections":         dataSourceRateProtections(),
+			"akamai_appsec_reputation_protections":   dataSourceReputationProtections(),
+			"akamai_appsec_selectable_hostnames":     dataSourceSelectableHostnames(),
+			"akamai_appsec_security_policy":          dataSourceSecurityPolicy(),
+			"akamai_appsec_selected_hostnames":       dataSourceSelectedHostnames(),
+			"akamai_appsec_slow_post":                dataSourceSlowPostProtectionSettings(),
+			"akamai_appsec_slowpost_protections":     dataSourceSlowPostProtections(),
+			"akamai_appsec_waf_attack_group_actions": dataSourceWAFAttackGroupActions(),
+			"akamai_appsec_waf_modes":                dataSourceWAFModes(),
+			"akamai_appsec_waf_protection":           dataSourceWAFProtections(),
+			"akamai_appsec_aag_rules":                dataSourceAttackGroupConditionExceptions(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_appsec_configuration_version_clone": resourceConfigurationClone(),
 			"akamai_appsec_selected_hostnames":          resourceSelectedHostname(),
 			"akamai_appsec_security_policy_clone":       resourceSecurityPolicyClone(),
+			"akamai_appsec_krs_rule_action":             resourceKRSRuleAction(),
 			"akamai_appsec_match_target":                resourceMatchTarget(),
 			"akamai_appsec_match_target_sequence":       resourceMatchTargetSequence(),
 			"akamai_appsec_penalty_box":                 resourcePenaltyBox(),
@@ -90,9 +96,14 @@ func Provider() *schema.Provider {
 			"akamai_appsec_activations":                 resourceActivations(),
 			"akamai_appsec_rate_policy":                 resourceRatePolicy(),
 			"akamai_appsec_rate_policy_action":          resourceRatePolicyAction(),
+			"akamai_appsec_rate_protection":             resourceRateProtection(),
+			"akamai_appsec_reputation_protection":       resourceReputationProtection(),
 			"akamai_appsec_slow_post":                   resourceSlowPostProtectionSetting(),
+			"akamai_appsec_slowpost_protection":         resourceSlowPostProtection(),
+			"akamai_appsec_waf_attack_group_action":     resourceWAFAttackGroupAction(),
 			"akamai_appsec_waf_mode":                    resourceWAFMode(),
 			"akamai_appsec_waf_protection":              resourceWAFProtection(),
+			"akamai_appsec_aag_rule":                    resourceAttackGroupConditionException(),
 		},
 	}
 	return provider

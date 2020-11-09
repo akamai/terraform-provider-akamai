@@ -97,11 +97,18 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 
 	ratepolicyaction, err := client.GetRatePolicyAction(ctx, getRatePolicyAction)
 	if err != nil {
-		logger.Warnf("calling 'getRatePolicyAction': %s", err.Error())
+		logger.Errorf("calling 'getRatePolicyAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
+	logger.Warnf("calling 'GetRatePolicyAction': %s", ratepolicyaction)
 
 	for _, configval := range ratepolicyaction.RatePolicyActions {
-		d.SetId(strconv.Itoa(configval.ID))
+		if configval.ID == getRatePolicyAction.ID {
+			d.SetId(strconv.Itoa(configval.ID))
+			d.Set("ipv4_action", configval.Ipv4Action)
+			d.Set("ipv6_action", configval.Ipv6Action)
+			d.SetId(strconv.Itoa(configval.ID))
+		}
 	}
 
 	return nil
@@ -136,16 +143,17 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateRatePolicyAction.ID = ratepolicyid
+	updateRatePolicyAction.RatePolicyID = ratepolicyid
 
 	updateRatePolicyAction.Ipv4Action = "none"
 	updateRatePolicyAction.Ipv6Action = "none"
 
-	_, erru := client.UpdateRatePolicyAction(ctx, updateRatePolicyAction)
+	resp, erru := client.UpdateRatePolicyAction(ctx, updateRatePolicyAction)
 	if erru != nil {
-		logger.Warnf("calling 'removeRatePolicyAction': %s", erru.Error())
+		logger.Errorf("calling 'removeRatePolicyAction': %s", erru.Error())
+		return diag.FromErr(erru)
 	}
-
+	logger.Warnf("calling 'RemoveRatePolicyAction': %s", resp)
 	d.SetId("")
 
 	return nil
@@ -180,7 +188,7 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateRatePolicyAction.ID = ratepolicyid
+	updateRatePolicyAction.RatePolicyID = ratepolicyid
 
 	ipv4action, err := tools.GetStringValue("ipv4_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -193,11 +201,18 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	updateRatePolicyAction.Ipv6Action = ipv6action
-
-	_, erru := client.UpdateRatePolicyAction(ctx, updateRatePolicyAction)
+	logger.Warnf("calling 'updateRatePolicyAction REQ': %s", updateRatePolicyAction)
+	resp, erru := client.UpdateRatePolicyAction(ctx, updateRatePolicyAction)
 	if erru != nil {
-		logger.Warnf("calling 'updateRatePolicyAction': %s", erru.Error())
+		logger.Errorf("calling 'updateRatePolicyAction': %s", erru.Error())
+		return diag.FromErr(erru)
 	}
+	logger.Warnf("calling 'updateRatePolicyAction': %s", resp)
+
+	d.SetId(strconv.Itoa(resp.ID))
+	d.Set("ipv4_action", resp.Ipv4Action)
+	d.Set("ipv6_action", resp.Ipv6Action)
+	d.SetId(strconv.Itoa(resp.ID))
 
 	return resourceRatePolicyActionRead(ctx, d, m)
 }

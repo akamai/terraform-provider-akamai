@@ -64,7 +64,8 @@ func dataSourcePenaltyBoxesRead(ctx context.Context, d *schema.ResourceData, m i
 
 	penaltyboxes, err := client.GetPenaltyBoxes(ctx, getPenaltyBoxes)
 	if err != nil {
-		logger.Warnf("calling 'getPenaltyBoxes': %s", err.Error())
+		logger.Errorf("calling 'getPenaltyBoxes': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}

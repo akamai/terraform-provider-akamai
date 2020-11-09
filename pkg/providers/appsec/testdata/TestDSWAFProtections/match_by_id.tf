@@ -3,7 +3,6 @@ provider "akamai" {
 }
 
 
-
 data "akamai_appsec_waf_protection" "test" {
     config_id = 43253
     version = 7

@@ -82,7 +82,8 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
-		logger.Warnf("calling 'getWAFMode': %s", err.Error())
+		logger.Errorf("calling 'getWAFMode': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}

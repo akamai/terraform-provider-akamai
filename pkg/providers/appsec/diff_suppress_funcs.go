@@ -33,7 +33,7 @@ func suppressJsonProvided(k, old, new string, d *schema.ResourceData) bool {
 
 		}
 
-		if k == "target_id" {
+		if k == "match_target_id" {
 			return true
 		}
 
