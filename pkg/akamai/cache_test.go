@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/apex/log"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -24,6 +25,8 @@ var (
 )
 
 func init() {
+	hclog.Default().SetLevel(hclog.Trace)
+
 	testAccProvider = Provider(newCacheProvider())()
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testAccProvider,
@@ -138,7 +141,7 @@ func TestCacheGet_disabled(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      configCacheGetDisabled(),
-				ExpectError: regexp.MustCompile(`cache entry not found`),
+				ExpectError: regexp.MustCompile(`cache is disabled`),
 			},
 		},
 	})
@@ -154,7 +157,7 @@ func TestCacheSet_disabled(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("akamai_cache.test", "id"),
 				),
-				ExpectError: regexp.MustCompile(`cache entry not found`),
+				ExpectError: regexp.MustCompile(`cache is disabled`),
 			},
 		},
 	})
@@ -205,12 +208,12 @@ func testCacheSet(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	var diags diag.Diagnostics
 
 	meta := Meta(m)
-	logger := meta.Log("cache", "testCacheSet")
-
-	logger.Debug("testing cache set")
+	logger := meta.Log("method", "testCacheSet")
 
 	key := d.Get("key").(string)
 	value := d.Get("value").(string)
+
+	logger.WithField("key", key).Debug("testing cache set")
 
 	if err := meta.CacheSet(testInst, key, value); err != nil {
 		diags = append(diags, diag.Diagnostic{
@@ -230,12 +233,12 @@ func testCacheGet(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	var diags diag.Diagnostics
 
 	meta := Meta(m)
-	logger := meta.Log("cache", "testCacheGet")
-
-	logger.Debug("testing cache get")
+	logger := meta.Log("method", "testCacheGet")
 
 	var value string
 	key := d.Get("key").(string)
+
+	logger.WithField("key", key).Debug("testing cache get")
 
 	if err := meta.CacheGet(testInst, key, &value); err != nil {
 		diags = append(diags, diag.Diagnostic{
