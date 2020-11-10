@@ -55,8 +55,6 @@ The following arguments are supported:
 
 * `name` - (Optional) The name of a specific security configuration. If not supplied, information about all security configurations is returned.
 
-* `version` - (Optional) The specific version number to return. If specified, this value is returned for use in specifying other data sources or resources.
-
 
 ## Attributes Reference
 
