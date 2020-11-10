@@ -16,11 +16,17 @@ import (
 func dataPropertyRules() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataPropRulesOperation,
-		Schema:      dataPropertyRulesSchema,
+		StateUpgraders: []schema.StateUpgrader{{
+			Version: 0,
+			Type:    dataAkamaiPropertyRuleSchemaV0().CoreConfigSchema().ImpliedType(),
+			Upgrade: upgradeAkamaiPropertyRuleStateV0,
+		}},
+		SchemaVersion: 1,
+		Schema:        dataAkamaiPropertyRuleSchema,
 	}
 }
 
-var dataPropertyRulesSchema = map[string]*schema.Schema{
+var dataAkamaiPropertyRuleSchema = map[string]*schema.Schema{
 	"contract_id": {
 		Type:      schema.TypeString,
 		Required:  true,
