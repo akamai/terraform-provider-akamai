@@ -6,10 +6,10 @@ description: |-
   CustomRuleAction
 ---
 
-# resource_akamai_appsec_custom_rule_action
+# akamai_appsec_custom_rule_action
 
 
-The `resource_akamai_appsec_custom_rule_action` resource allows you to associate a custom rule and action with a security policy, security configuration and version.
+The `akamai_appsec_custom_rule_action` resource allows you to associate an action to a custom rule.
 
 
 ## Example Usage
@@ -29,12 +29,12 @@ resource "akamai_appsec_custom_rule_action" "create_custom_rule_action" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   policy_id = "crAP_75829"
-  rule_id = 12345
+  custom_rule_id = 12345
   custom_rule_action = "alert"
 }
 
 output "custom_rule_id" {
-  value = akamai_appsec_custom_rule_action.create_custom_rule_action.rule_id
+  value = akamai_appsec_custom_rule_action.create_custom_rule_action.custom_rule_id
 }
 
 ```
@@ -54,11 +54,11 @@ The following arguments are supported:
 
 * `policy_id` - (Required) The 
 
-* `rule_id` - (Required)
+* `custom_rule_id` - (Required)
 
 ## Attribute Reference
 
 In addition to the arguments above, the following attribute is exported:
 
-* `rule_id` - The ID of the custom rule.
+* `custom_rule_id` - The ID of the custom rule.
 

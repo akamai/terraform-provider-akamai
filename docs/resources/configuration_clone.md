@@ -6,10 +6,10 @@ description: |-
   ConfigurationClone
 ---
 
-# resource_akamai_appsec_configuration_clone
+# akamai_appsec_configuration_clone
 
 
-The `resource_akamai_appsec_configuration_clone` resource allows you to create a new version of a security configuration by cloning an existing version.
+The `akamai_appsec_configuration_version_clone` resource allows you to create a new version of a security configuration by cloning an existing version.
 
 ## Example Usage
 

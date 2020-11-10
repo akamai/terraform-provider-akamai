@@ -6,10 +6,10 @@ description: |-
   MatchTarget
 ---
 
-# resource_akamai_appsec_match_target
+# akamai_appsec_match_target
 
 
-The `resource_akamai_appsec_match_target` resource allows you to create or modify a match target associated with a given security configuration and version.
+The `akamai_appsec_match_target` resource allows you to create or modify a match target associated with a given security configuration version.
 
 
 ## Example Usage

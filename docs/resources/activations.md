@@ -6,10 +6,10 @@ description: |-
   Activations
 ---
 
-# resource_akamai_appsec_activations
+# akamai_appsec_activations
 
 
-The `resource_akamai_appsec_activations` resource allows you to activate or deactivate a given security configuration and version.
+The `akamai_appsec_activations` resource allows you to activate or deactivate a given security configuration version.
 
 ## Example Usage
 
@@ -44,7 +44,7 @@ resource "akamai_appsec_activations" "activation" {
 
 * `notes` - An optional text note describing this operation.
 
-* `activate` - A boolean indicating whether to active the specified configuration and version. If not supplied, True is assmed.
+* `activate` - A boolean indicating whether to activate the specified configuration version. If not supplied, True is assmed.
 
 ## Attribute Reference
 

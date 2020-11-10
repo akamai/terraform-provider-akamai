@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_export_configuration
 
-Use the akamai_appsec_export_configuration` data source to retrieve comprehensive details about a security configuration and version, including rate and security policies, rules, hostnames, and other settings. You can retrieve the entire set of information in JSON format, or a subset of the information in tabular format.
+Use the `akamai_appsec_export_configuration` data source to retrieve comprehensive details about a security configuration version, including rate and security policies, rules, hostnames, and other settings. You can retrieve the entire set of information in JSON format, or a subset of the information in tabular format.
 
 ## Example Usage
 

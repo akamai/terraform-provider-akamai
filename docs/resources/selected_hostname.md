@@ -6,10 +6,10 @@ description: |-
   SelectedHostname
 ---
 
-# resource_akamai_appsec_selected_hostname
+# akamai_appsec_selected_hostname
 
 
-The `resource_akamai_appsec_selected_hostname` resource allows you to set or modify the list of hosts protected under a given security configuration and version.
+The `akamai_appsec_selected_hostname` resource allows you to set the list of hostnames protected under a given security configuration version.
 
 
 ## Example Usage
