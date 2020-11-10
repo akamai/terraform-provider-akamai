@@ -257,3 +257,27 @@ func TestFindGroupByName(t *testing.T) {
 		})
 	}
 }
+
+func TestDisabledCache(t *testing.T) {
+	t.Run("testing cache_enabled=false", func(t *testing.T) {
+		client := &mockpapi{}
+		client.On("GetGroups")
+		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
+			AccountID: "act_1-1TJZFB", AccountName: "example.com",
+			Groups: papi.GroupItems{Items: []*papi.Group{{
+				GroupID:       "grp_Example.com-1-1TJZH5",
+				GroupName:     "Example.com-1-1TJZH5",
+				ParentGroupID: "grp_parent",
+				ContractIDs:   []string{"ctr_1234"},
+			}}}}, nil)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers:  testAccProviders,
+				IsUnitTest: true,
+				Steps: []resource.TestStep{{
+					Config: loadFixtureString("testdata/TestDisabledCache/cg.tf"),
+				}},
+			})
+		})
+	})
+}
