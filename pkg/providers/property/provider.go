@@ -3,6 +3,7 @@ package property
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -66,6 +67,7 @@ func Provider() *schema.Provider {
 				Optional:   true,
 				Type:       schema.TypeSet,
 				Elem:       config.Options("property"),
+				MaxItems:   1,
 				Deprecated: akamai.NoticeDeprecatedUseAlias("property"),
 			},
 		},
@@ -108,21 +110,34 @@ func (p *provider) Client(meta akamai.OperationMeta) papi.PAPI {
 	return papi.Client(meta.Session())
 }
 
-func getPAPIV1Service(d *schema.ResourceData) (interface{}, error) {
-	var section string
-
+func getPAPIV1Service(d *schema.ResourceData) error {
+	var inlineConfig *schema.Set
+	for _, key := range []string{"property", "config"} {
+		opt, err := tools.GetSetValue(key, d)
+		if err != nil {
+			if !errors.Is(err, tools.ErrNotFound) {
+				return err
+			}
+			continue
+		}
+		if inlineConfig != nil {
+			return fmt.Errorf("only one inline config section can be defined")
+		}
+		inlineConfig = opt
+	}
+	if err := d.Set("config", inlineConfig); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	for _, s := range tools.FindStringValues(d, "property_section", "papi_section", "config_section") {
-		if s != "default" {
-			section = s
+		if s != "default" && s != "" {
+			if err := d.Set("config_section", s); err != nil {
+				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			}
 			break
 		}
 	}
 
-	if section != "" {
-		d.Set("config_section", section)
-	}
-
-	return nil, nil
+	return nil
 }
 
 func (p *provider) Name() string {
@@ -151,9 +166,8 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
 
-	_, err := getPAPIV1Service(d)
-	if err != nil {
-		return nil
+	if err := getPAPIV1Service(d); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return nil
