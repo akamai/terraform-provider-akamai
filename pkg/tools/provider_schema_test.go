@@ -452,3 +452,60 @@ func TestFindStringValues(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveKeyState(t *testing.T) {
+	const key = "key"
+	const fallbackKey = "keyId"
+	const value = "value"
+
+	tests := map[string]struct {
+		key       string
+		fallback  string
+		init      func(*mocked)
+		expected  string
+		withError error
+	}{
+		"key value found": {
+			init: func(m *mocked) {
+				m.On("GetOk", key).Return(value, true).Once()
+			},
+			expected: value,
+		},
+		"key not found, fall back value found": {
+			init: func(m *mocked) {
+				m.On("GetOk", key).Return(nil, false).Once()
+				m.On("GetOk", fallbackKey).Return(value, true).Once()
+			},
+			expected: value,
+		},
+		"key not found, fall back not found": {
+			init: func(m *mocked) {
+				m.On("GetOk", mock.Anything).Return(nil, false)
+			},
+			expected:  "",
+			withError: ErrNotFound,
+		},
+		"value type not string": {
+			key: "other type",
+			init: func(m *mocked) {
+				m.On("GetOk", mock.Anything).Return(make([]string, 0), true).Once()
+			},
+			expected:  "",
+			withError: ErrInvalidType,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			m := &mocked{}
+			test.init(m)
+			res, err := ResolveKeyStringState(key, fallbackKey, m)
+			m.AssertExpectations(t)
+			if test.withError != nil {
+				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				return
+			}
+			assert.Equal(t, test.expected, res)
+		})
+	}
+}

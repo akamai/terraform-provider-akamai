@@ -52,7 +52,7 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 		session.WithContextLog(log),
 	)
 
-	group, err := resolveKeyState("group", "group_id", d)
+	group, err := tools.ResolveKeyStringState("group", "group_id", d)
 
 	// If no group, just return the first contract
 	if err != nil {
