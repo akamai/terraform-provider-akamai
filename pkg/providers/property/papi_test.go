@@ -342,6 +342,23 @@ func (p *mockpapi) OnGetPropertyVersionHostnames(ctx, req interface{}, impl GetP
 	return call
 }
 
+// Any function having the same signature as papi.GetRuleTree
+type GetRuleTreeFunc = func(context.Context, papi.GetRuleTreeRequest) (*papi.GetRuleTreeResponse, error)
+
+// Expect a call to the mock's papi.GetPropertyVersionHostnames() where the return value is computed by the given
+// function
+func (p *mockpapi) OnGetRuleTree(ctx, req interface{}, impl GetRuleTreeFunc) *mock.Call {
+	call := p.On("GetRuleTree", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.GetRuleTreeRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
+}
+
 func (p *mockpapi) UpdatePropertyVersionHostnames(ctx context.Context, r papi.UpdatePropertyVersionHostnamesRequest) (*papi.UpdatePropertyVersionHostnamesResponse, error) {
 	args := p.Called(ctx, r)
 

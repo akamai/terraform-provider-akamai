@@ -2,19 +2,69 @@ package property
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/apex/log"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func resourceProperty() *schema.Resource {
+	papiError := func() *schema.Resource {
+		return &schema.Resource{Schema: map[string]*schema.Schema{
+			"type":           {Type: schema.TypeString, Optional: true},
+			"title":          {Type: schema.TypeString, Optional: true},
+			"detail":         {Type: schema.TypeString, Optional: true},
+			"instance":       {Type: schema.TypeString, Optional: true},
+			"behavior_name":  {Type: schema.TypeString, Optional: true},
+			"error_location": {Type: schema.TypeString, Optional: true},
+			"status_code":    {Type: schema.TypeInt, Optional: true},
+		}}
+	}
+
+	validateRules := func(val interface{}, _ cty.Path) diag.Diagnostics {
+		if len(val.(string)) == 0 {
+			return nil
+		}
+
+		var target map[string]interface{}
+		if err := json.Unmarshal([]byte(val.(string)), &target); err != nil {
+			return diag.Errorf("rules are not valid JSON")
+		}
+		return nil
+	}
+
+	diffSuppressRules := func(_, old, new string, _ *schema.ResourceData) bool {
+		logger := akamai.Log("PAPI", "suppressRulesJSON")
+
+		if old == "" || new == "" {
+			return old == new
+		}
+
+		var oldRules, newRules papi.Rules
+		if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
+			logger.Errorf("Unable to unmarshal 'old' JSON rules: %s", err)
+			return false
+		}
+
+		if err := json.Unmarshal([]byte(new), &newRules); err != nil {
+			logger.Errorf("Unable to unmarshal 'new' JSON rules: %s", err)
+			return false
+		}
+
+		return compareRules(&oldRules, &newRules)
+	}
+
 	return &schema.Resource{
 		CreateContext: resourcePropertyCreate,
 		ReadContext:   resourcePropertyRead,
@@ -30,27 +80,22 @@ func resourceProperty() *schema.Resource {
 		}},
 		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
+			// Required
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Name to give to the Property (must be unique)",
 			},
 
-			"contract": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: `use "contract_id" attribute instead`,
-				StateFunc:  addPrefixToState("ctr_"),
-			},
-			"contract_id": {
+			"group_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				ExactlyOneOf: []string{"contract_id", "contract"},
-				StateFunc:    addPrefixToState("ctr_"),
+				ExactlyOneOf: []string{"group_id", "group"},
+				StateFunc:    addPrefixToState("grp_"),
+				Description:  "Group ID to be assigned to the Property",
 			},
-
 			"group": {
 				Type:       schema.TypeString,
 				Optional:   true,
@@ -58,14 +103,31 @@ func resourceProperty() *schema.Resource {
 				Deprecated: `use "group_id" attribute instead`,
 				StateFunc:  addPrefixToState("grp_"),
 			},
-			"group_id": {
+
+			"contract_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				ExactlyOneOf: []string{"group_id", "group"},
-				StateFunc:    addPrefixToState("grp_"),
+				ExactlyOneOf: []string{"contract_id", "contract"},
+				StateFunc:    addPrefixToState("ctr_"),
+				Description:  "Contract ID to be assigned to the Property",
+			},
+			"contract": {
+				Type:       schema.TypeString,
+				Optional:   true,
+				Computed:   true,
+				Deprecated: `use "contract_id" attribute instead`,
+				StateFunc:  addPrefixToState("ctr_"),
 			},
 
+			"product_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"product_id", "product"},
+				StateFunc:    addPrefixToState("prd_"),
+				Description:  "Product ID to be assigned to the Property",
+			},
 			"product": {
 				Type:       schema.TypeString,
 				Optional:   true,
@@ -73,24 +135,72 @@ func resourceProperty() *schema.Resource {
 				Deprecated: `use "product_id" attribute instead`,
 				StateFunc:  addPrefixToState("prd_"),
 			},
-			"product_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"product_id", "product"},
-				StateFunc:    addPrefixToState("prd_"),
+
+			// Optional
+			"rule_format": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Specify the rule format version (defaults to latest version available when created)",
+				ValidateDiagFunc: func(v interface{}, _ cty.Path) diag.Diagnostics {
+					if v.(string) == "" {
+						return nil
+					}
+
+					if !regexp.MustCompile(`^v[0-9]{4}-[0-9]{2}-[0-9]{2}$`).MatchString(v.(string)) {
+						url := "https://developer.akamai.com/api/core_features/property_manager/vlatest.html#behaviors"
+						return diag.Errorf(`"rule_format" must be of the form vYYYY-MM-DD (with a leading "v") see %s`, url)
+					}
+
+					return nil
+				},
+			},
+			"rules": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				Description:      "Property Rules as JSON",
+				ValidateDiagFunc: validateRules,
+				DiffSuppressFunc: diffSuppressRules,
+				StateFunc: func(v interface{}) string {
+					return compactJSON([]byte(v.(string)))
+				},
+			},
+			"hostnames": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
 			},
 
-			"latest_version":     {Type: schema.TypeInt, Computed: true},
-			"staging_version":    {Type: schema.TypeInt, Computed: true},
-			"production_version": {Type: schema.TypeInt, Computed: true},
+			// Computed
+			"latest_version": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Property's current latest version number",
+			},
+			"staging_version": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Property's version currently activated in staging (zero when not active in staging)",
+			},
+			"production_version": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Property's version currently activated in production (zero when not active in production)",
+			},
+			"rule_errors": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem:     papiError(),
+			},
+			"rule_warnings": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem:     papiError(),
+			},
 
 			// Hard-deprecated attributes: These are effectively removed, but we wanted to refer users to the upgrade guide
-			"rule_format": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Deprecated: `"rule_format" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
-			},
 			"cp_code": {
 				Type:       schema.TypeString,
 				Optional:   true,
@@ -101,12 +211,6 @@ func resourceProperty() *schema.Resource {
 				Optional:   true,
 				Elem:       &schema.Schema{Type: schema.TypeString},
 				Deprecated: `"contact" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
-			},
-			"hostnames": {
-				Type:       schema.TypeMap,
-				Optional:   true,
-				Elem:       &schema.Schema{Type: schema.TypeString},
-				Deprecated: `"hostnames" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
 			},
 			"origin": {
 				Type:     schema.TypeSet,
@@ -128,11 +232,6 @@ func resourceProperty() *schema.Resource {
 				Optional:   true,
 				Deprecated: `"is_secure" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
 			},
-			"rules": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Deprecated: `"rules" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
-			},
 			"variables": {
 				Type:       schema.TypeString,
 				Optional:   true,
@@ -147,12 +246,14 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	client := inst.Client(akamai.Meta(m))
 	ctx = log.NewContext(ctx, logger)
 
-	if err := resPropAssertNoForbiddenAttr(d); err != nil {
-		// User will also see messages saying which attributes are not supported
-		return diag.Errorf("unsupported attributes given. See the Akamai Terraform Upgrade Guide")
+	// Block creation if user has set any hard-deprecated attributes
+	for _, attr := range resPropForbiddenAttrs() {
+		if _, ok := d.GetOk(attr); ok {
+			return diag.Errorf("unsupported attribute: %q See the Akamai Terraform Upgrade Guide", attr)
+		}
 	}
 
-	// Schema guarantees name, contract_id, group_id, and product_id are strings
+	// Schema guarantees these types
 	PropertyName := d.Get("name").(string)
 
 	GroupID := d.Get("group_id").(string)
@@ -173,37 +274,72 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	ProductID = tools.AddPrefix(ProductID, "prd_")
 
-	PropertyID, err := createProperty(ctx, client, PropertyName, GroupID, ContractID, ProductID)
+	Hostnames := mapToHostnames(d.Get("hostnames").(map[string]interface{}))
+	RuleFormat := d.Get("rule_format").(string)
+
+	RulesJSON := []byte(d.Get("rules").(string))
+
+	PropertyID, err := createProperty(ctx, client, PropertyName, GroupID, ContractID, ProductID, RuleFormat)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	// Save minimum state BEFORE moving on
+	d.SetId(PropertyID)
 	attrs := map[string]interface{}{
 		"group_id":    GroupID,
-		"group":       GroupID,
 		"contract_id": ContractID,
-		"contract":    ContractID,
-		"product_id":  ProductID,
-		"product":     ProductID,
 	}
 	if err := rdSetAttrs(ctx, d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(PropertyID)
+	Property := papi.Property{
+		PropertyName:  PropertyName,
+		PropertyID:    PropertyID,
+		ContractID:    ContractID,
+		GroupID:       GroupID,
+		ProductID:     ProductID,
+		LatestVersion: 1,
+	}
+
+	if len(Hostnames) > 0 {
+		if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if len(RulesJSON) > 0 {
+		var Rules papi.Rules
+		if err := json.Unmarshal(RulesJSON, &Rules); err != nil {
+			logger.WithError(err).Error("failed to unmarshal property rules")
+			return diag.Errorf("rules are not valid JSON: %s", err)
+		}
+
+		ctx := ctx
+		if RuleFormat != "" && RuleFormat != "latest" {
+			h := http.Header{
+				"Content-Type": []string{fmt.Sprintf("application/vnd.akamai.papirules.%s+json", RuleFormat)},
+			}
+
+			ctx = session.ContextWithOptions(ctx, session.WithContextHeaders(h))
+		}
+
+		if err := updatePropertyRules(ctx, client, Property, Rules); err != nil {
+			d.Partial(true)
+			return diag.FromErr(err)
+		}
+	}
+
 	return resourcePropertyRead(ctx, d, m)
 }
 
 func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resPropHostnameRead"))
+	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyRead"))
+	logger := log.FromContext(ctx)
 	client := inst.Client(akamai.Meta(m))
 
-	if err := resPropAssertNoForbiddenAttr(d); err != nil {
-		// User will also see messages saying which attributes are not supported
-		return diag.Errorf("unsupported attributes given. See the Akamai Terraform Upgrade Guide")
-	}
-
-	// Schema guarantees property_id, group_id, and contract_id are strings
+	// Schema guarantees group_id, and contract_id are strings
 	PropertyID := d.Id()
 	ContractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
 	GroupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
@@ -214,17 +350,31 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	var StagingVersion int
-	if Property.StagingVersion == nil {
-		StagingVersion = 0
-	} else {
+	if Property.StagingVersion != nil {
 		StagingVersion = *Property.StagingVersion
 	}
 
 	var ProductionVersion int
-	if Property.ProductionVersion == nil {
-		ProductionVersion = 0
-	} else {
+	if Property.ProductionVersion != nil {
 		ProductionVersion = *Property.ProductionVersion
+	}
+
+	// TODO: Load hostnames asynchronously
+	Hostnames, err := fetchPropertyHostnames(ctx, client, *Property)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// TODO: Load rules asynchronously
+	Rules, RuleFormat, RuleErrors, RuleWarnings, err := fetchPropertyRules(ctx, client, *Property)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	RulesJSON, err := json.Marshal(Rules)
+	if err != nil {
+		logger.WithError(err).Error("could not render rules as JSON")
+		return diag.Errorf("received rules that could not be rendered to JSON: %s", err)
 	}
 
 	attrs := map[string]interface{}{
@@ -238,6 +388,11 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"latest_version":     Property.LatestVersion,
 		"staging_version":    StagingVersion,
 		"production_version": ProductionVersion,
+		"hostnames":          hostnamesToMap(Hostnames),
+		"rules":              string(RulesJSON),
+		"rule_format":        RuleFormat,
+		"rule_errors":        papiErrorsToList(RuleErrors),
+		"rule_warnings":      papiErrorsToList(RuleWarnings),
 	}
 	if err := rdSetAttrs(ctx, d, attrs); err != nil {
 		return diag.FromErr(err)
@@ -247,22 +402,28 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	logger := akamai.Meta(m).Log("PAPI", "resourcePropertyUpdate")
+	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyUpdate"))
+	logger := log.FromContext(ctx)
+	client := inst.Client(akamai.Meta(m))
 
-	if err := resPropAssertNoForbiddenAttr(d); err != nil {
-		d.Partial(true)
-		// User will also see messages saying which attributes are not supported
-		return diag.Errorf("unsupported attributes given. See the Akamai Terraform Upgrade Guide")
+	// Block changes to hard-deprecated attributes
+	for _, attr := range resPropForbiddenAttrs() {
+		if _, ok := d.GetOk(attr); ok && d.HasChange(attr) {
+			d.Partial(true)
+			return diag.Errorf("unsupported attribute: %q See the Akamai Terraform Upgrade Guide", attr)
+		}
 	}
 
 	var diags diag.Diagnostics
 
 	immutable := []string{
-		"contract_id", "contract",
-		"group_id", "group",
-		"product_id", "product",
+		"group_id",
+		"group",
+		"contract_id",
+		"contract",
+		"product_id",
+		"product",
 	}
-
 	for _, attr := range immutable {
 		if d.HasChange(attr) {
 			err := fmt.Errorf(`property attribute %q cannot be changed after creation (immutable)`, attr)
@@ -275,13 +436,123 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diags
 	}
 
-	// There are no attributes that can be updated by this resource
-
-	diags = append(diags, resourcePropertyRead(ctx, d, m)...)
-	if diags.HasError() {
-		d.Partial(true)
+	// We only update if these attributes change
+	if !d.HasChanges("hostnames", "rules", "rule_format") {
+		logger.Debug("No changes to hostnames, rules, or rule_format (no update required)")
+		return nil
 	}
-	return diags
+
+	// Schema guarantees these types
+	var StagingVersion, ProductionVersion *int
+	if v, ok := d.GetOk("staging_version"); ok && v.(int) != 0 {
+		i := v.(int)
+		StagingVersion = &i
+	}
+
+	if v, ok := d.GetOk("production_version"); ok && v.(int) != 0 {
+		i := v.(int)
+		ProductionVersion = &i
+	}
+
+	Property := papi.Property{
+		PropertyID:        d.Id(),
+		PropertyName:      d.Get("name").(string),
+		ContractID:        d.Get("contract_id").(string),
+		GroupID:           d.Get("group_id").(string),
+		ProductID:         d.Get("product_id").(string),
+		LatestVersion:     d.Get("latest_version").(int),
+		StagingVersion:    StagingVersion,
+		ProductionVersion: ProductionVersion,
+	}
+
+	if latestVersionIsActive(Property) {
+		VersionID, err := createPropertyVersion(ctx, client, Property)
+		if err != nil {
+			d.Partial(true)
+			return diag.FromErr(err)
+		}
+
+		Property.LatestVersion = VersionID
+	}
+
+	// Hostnames
+	if d.HasChange("hostnames") {
+		Hostnames := mapToHostnames(d.Get("hostnames").(map[string]interface{}))
+
+		if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
+			d.Partial(true)
+			return diag.FromErr(err)
+		}
+	}
+
+	var Rules *papi.Rules
+	RuleFormat := d.Get("rule_format").(string)
+	RulesJSON := []byte(d.Get("rules").(string))
+	RulesNeedUpdate := len(RulesJSON) > 0 && d.HasChange("rules")
+	FormatNeedsUpdate := len(RuleFormat) > 0 && d.HasChange("rule_format")
+	MIME := fmt.Sprintf("application/vnd.akamai.papirules.v%s+json", RuleFormat)
+
+	// Special cases for when rule_format needs update and rules does not:
+	//   * User is upgrading feature set and is not managing rules in terraform
+	//   * User is upgrading feature set and no longer wants to manage rules in terraform
+	//   * User is upgrading feature set and manages rules in terraform and expects rules content not to change when
+	//     PAPI upgrades the format. This case can cause drift if the contents of the rules are changed by PAPI.
+	if FormatNeedsUpdate && !RulesNeedUpdate {
+		// We need to ask PAPI to compute an updated set of rules for us before we update
+		// See https://developer.akamai.com/api/core_features/property_manager/v1.html#getpropertyversionrules
+
+		req := papi.GetRuleTreeRequest{
+			PropertyID:      Property.PropertyID,
+			GroupID:         Property.GroupID,
+			ContractID:      Property.ContractID,
+			PropertyVersion: Property.LatestVersion,
+		}
+
+		logger := log.FromContext(ctx).WithFields(logFields(req))
+		h := http.Header{"Accept": []string{MIME}}
+		ctx := session.ContextWithOptions(ctx, session.WithContextHeaders(h))
+
+		logger.Debug("fetching property rules")
+		res, err := client.GetRuleTree(ctx, req)
+
+		if err != nil {
+			d.Partial(true)
+			logger.WithError(err).Error("Could not fetch rules in new format")
+			return diag.Errorf("Could not fetch rules in new format: %s", err)
+		}
+		logger.WithFields(logFields(*res)).Debug("fetched property rules")
+
+		if res.RuleFormat != RuleFormat {
+			d.Partial(true)
+			err := fmt.Errorf("expected rule format %q got %q", RuleFormat, res.RuleFormat)
+			logger.WithError(err).Error("Could not upgrade rule format")
+			return diag.Errorf("Could not fetch rules in new format: %s", err)
+		}
+
+		Rules = &res.Rules
+	}
+
+	if FormatNeedsUpdate || RulesNeedUpdate {
+		if Rules == nil {
+			// Not the special case: load Rules from state
+			Rules = &papi.Rules{}
+
+			if err := json.Unmarshal(RulesJSON, Rules); err != nil {
+				d.Partial(true)
+				return diag.Errorf("rules are not valid JSON: %s", err)
+			}
+		}
+
+		h := http.Header{"Content-Type": []string{MIME}}
+		ctx := session.ContextWithOptions(ctx, session.WithContextHeaders(h))
+
+		if err := updatePropertyRules(ctx, client, Property, *Rules); err != nil {
+			d.Partial(true)
+			return diag.FromErr(err)
+		}
+	}
+
+	return resourcePropertyRead(ctx, d, m)
 }
 
 func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -355,34 +626,24 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	return []*schema.ResourceData{d}, nil
 }
 
-// Returns error when any hard-deprecated attributes contain non-zero values
-func resPropAssertNoForbiddenAttr(d *schema.ResourceData) error {
-	deprecated := []string{
-		"rule_format",
+func resPropForbiddenAttrs() []string {
+	return []string{
 		"cp_code",
 		"contact",
-		"hostnames",
 		"origin",
 		"is_secure",
-		"rules",
 		"variables",
 	}
-	for _, attr := range deprecated {
-		if _, ok := d.GetOk(attr); ok {
-			return fmt.Errorf("unsupported attribute: %q", attr)
-		}
-	}
-
-	return nil
 }
 
-func createProperty(ctx context.Context, client papi.PAPI, PropertyName, GroupID, ContractID, ProductID string) (PropertyID string, err error) {
+func createProperty(ctx context.Context, client papi.PAPI, PropertyName, GroupID, ContractID, ProductID, RuleFormat string) (PropertyID string, err error) {
 	req := papi.CreatePropertyRequest{
 		ContractID: ContractID,
 		GroupID:    GroupID,
 		Property: papi.PropertyCreate{
 			ProductID:    ProductID,
 			PropertyName: PropertyName,
+			RuleFormat:   RuleFormat,
 		},
 	}
 
@@ -419,4 +680,238 @@ func removeProperty(ctx context.Context, client papi.PAPI, PropertyID, GroupID, 
 	logger.Info("property removed")
 
 	return nil
+}
+
+// Retrieves basic info for a Property
+func fetchProperty(ctx context.Context, client papi.PAPI, PropertyID, GroupID, ContractID string) (*papi.Property, error) {
+	req := papi.GetPropertyRequest{
+		PropertyID: PropertyID,
+		ContractID: ContractID,
+		GroupID:    GroupID,
+	}
+
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+
+	logger.Debug("fetching property")
+	res, err := client.GetProperty(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not read property")
+		return nil, err
+	}
+
+	logger = logger.WithFields(logFields(*res))
+
+	if res.Property == nil {
+		err := fmt.Errorf("PAPI::GetProperty() response did not contain a property")
+		logger.WithError(err).Error("could not look up property")
+		return nil, err
+	}
+
+	logger.Debug("property fetched")
+	return res.Property, nil
+}
+
+// Fetch hostnames for latest version of given property
+func fetchPropertyHostnames(ctx context.Context, client papi.PAPI, Property papi.Property) ([]papi.Hostname, error) {
+	req := papi.GetPropertyVersionHostnamesRequest{
+		PropertyID:      Property.PropertyID,
+		GroupID:         Property.GroupID,
+		ContractID:      Property.ContractID,
+		PropertyVersion: Property.LatestVersion,
+	}
+
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+
+	logger.Debug("fetching property hostnames")
+	res, err := client.GetPropertyVersionHostnames(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not fetch property hostnames")
+		return nil, err
+	}
+
+	logger.WithFields(logFields(*res)).Debug("fetched property hostnames")
+	return res.Hostnames.Items, nil
+}
+
+// Fetch rules for latest version of given property
+func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Property) (Rules papi.Rules, Format string, Errors, Warnings []*papi.Error, err error) {
+	req := papi.GetRuleTreeRequest{
+		PropertyID:      Property.PropertyID,
+		GroupID:         Property.GroupID,
+		ContractID:      Property.ContractID,
+		PropertyVersion: Property.LatestVersion,
+		ValidateRules:   true,
+		ValidateMode:    "FULL",
+	}
+
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+
+	logger.Debug("fetching property rules")
+	res, err := client.GetRuleTree(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not fetch property rules")
+		return
+	}
+
+	logger.WithFields(logFields(*res)).Debug("fetched property rules")
+	Rules = res.Rules
+	Format = res.RuleFormat
+	Errors = res.Errors
+	Warnings = res.Warnings
+	return
+}
+
+// Set rules for the latest version of the given property
+func updatePropertyRules(ctx context.Context, client papi.PAPI, Property papi.Property, Rules papi.Rules) error {
+	req := papi.UpdateRulesRequest{
+		PropertyID:      Property.PropertyID,
+		GroupID:         Property.GroupID,
+		ContractID:      Property.ContractID,
+		PropertyVersion: Property.LatestVersion,
+		Rules:           papi.RulesUpdate{Rules: Rules},
+	}
+
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+
+	logger.Debug("fetching property rules")
+	res, err := client.UpdateRuleTree(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not update property rules")
+		return err
+	}
+
+	logger.WithFields(logFields(*res)).Info("updated property rules")
+	return nil
+}
+
+// Create a new property version based on the latest version of the given property
+func createPropertyVersion(ctx context.Context, client papi.PAPI, Property papi.Property) (NewVersion int, err error) {
+	req := papi.CreatePropertyVersionRequest{
+		PropertyID: Property.PropertyID,
+		ContractID: Property.ContractID,
+		GroupID:    Property.GroupID,
+		Version: papi.PropertyVersionCreate{
+			CreateFromVersion: Property.LatestVersion,
+		},
+	}
+
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+
+	logger.Debug("creating new property version")
+	res, err := client.CreatePropertyVersion(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not create new property version")
+		return
+	}
+
+	logger.WithFields(logFields(*res)).Info("property version created")
+	NewVersion = res.PropertyVersion
+	return
+}
+
+// Set hostnames of the latest version of the given property
+func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property papi.Property, Hostnames []papi.Hostname) error {
+	req := papi.UpdatePropertyVersionHostnamesRequest{
+		PropertyID:      Property.PropertyID,
+		GroupID:         Property.GroupID,
+		ContractID:      Property.ContractID,
+		PropertyVersion: Property.LatestVersion,
+		Hostnames:       Hostnames,
+	}
+
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+
+	logger.Debug("updating property hostnames")
+	res, err := client.UpdatePropertyVersionHostnames(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not create new property version")
+		return err
+	}
+
+	logger.WithFields(logFields(*res)).Info("property hostnames updated")
+	return nil
+}
+
+// Convert given hostnames to the map form that can be stored in a schema.ResourceData
+func hostnamesToMap(Hostnames []papi.Hostname) map[string]interface{} {
+	m := map[string]interface{}{}
+	for _, hn := range Hostnames {
+		m[hn.CnameFrom] = hn.CnameTo
+	}
+
+	return m
+}
+
+// Convert the given map from a schema.ResourceData to a slice of papi.Hostnames
+func mapToHostnames(given map[string]interface{}) []papi.Hostname {
+	var Hostnames []papi.Hostname
+
+	for from, to := range given {
+		Hostnames = append(Hostnames, papi.Hostname{
+			CnameType: "EDGE_HOSTNAME",
+			CnameFrom: from,
+			CnameTo:   to.(string), // guaranteed by schema to be a string
+		})
+	}
+
+	return Hostnames
+}
+
+// Tests true when the given property's latest version is active in any environment
+func latestVersionIsActive(Property papi.Property) bool {
+	// NB: The property version could possibly be in a transitional state where PAPI will reject a request to update
+	//     hostnames or rules. It is the responsibility of the user to ensure the resource dependencies are such that
+	//     changes happen in the correct order.
+	ActiveInProd := Property.ProductionVersion != nil && *Property.ProductionVersion == Property.LatestVersion
+	ActiveInStaging := Property.StagingVersion != nil && *Property.StagingVersion == Property.LatestVersion
+
+	return ActiveInProd || ActiveInStaging
+}
+
+// Set many attributes of a schema.ResourceData in one call
+func rdSetAttrs(ctx context.Context, d *schema.ResourceData, AttributeValues map[string]interface{}) error {
+	logger := log.FromContext(ctx)
+
+	for attr, value := range AttributeValues {
+		if err := d.Set(attr, value); err != nil {
+			logger.WithError(err).Errorf("could not set %q", attr)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func papiErrorsToList(Errors []*papi.Error) []interface{} {
+	if len(Errors) == 0 {
+		return nil
+	}
+
+	var RuleErrors []interface{}
+
+	for _, err := range Errors {
+		if err == nil {
+			continue
+		}
+
+		RuleErrors = append(RuleErrors, papiErrorToMap(err))
+	}
+
+	return RuleErrors
+}
+
+func papiErrorToMap(err *papi.Error) map[string]interface{} {
+	if err == nil {
+		return nil
+	}
+
+	return map[string]interface{}{
+		"type":           err.Type,
+		"title":          err.Title,
+		"detail":         err.Detail,
+		"instance":       err.Instance,
+		"behavior_name":  err.BehaviorName,
+		"error_location": err.ErrorLocation,
+		"status_code":    err.StatusCode,
+	}
 }

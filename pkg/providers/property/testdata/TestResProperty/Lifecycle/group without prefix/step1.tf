@@ -3,9 +3,9 @@ provider "akamai" {
 }
 
 resource "akamai_property" "test" {
-  name = "renamed property"
+  name = "test property"
   contract_id = "ctr_0"
-  group_id    = "grp_0"
+  group       = "0"
   product_id  = "prd_0"
 
   hostnames = {

@@ -39,48 +39,95 @@ func (m mergeLogFields) Fields() log.Fields {
 
 // Convert the given value to a type that captures structured logging fields
 func toLogFielder(given interface{}) log.Fielder {
-	switch given.(type) {
+	switch v := given.(type) {
 	case log.Fielder:
-		return given.(log.Fielder)
-
-	case papi.CreatePropertyRequest:
-		return createPropertyReqFields(given.(papi.CreatePropertyRequest))
-
-	case papi.CreatePropertyResponse:
-		return createPropertyResFields(given.(papi.CreatePropertyResponse))
-
-	case papi.RemovePropertyRequest:
-		return removePropertyReqFields(given.(papi.RemovePropertyRequest))
-
-	case papi.GetPropertyRequest:
-		return getPropertyReqFields(given.(papi.GetPropertyRequest))
-
-	case papi.GetPropertyResponse:
-		return getPropertyResFields(given.(papi.GetPropertyResponse))
-
-	case papi.CreatePropertyVersionRequest:
-		return createPropertyVersionReqFields(given.(papi.CreatePropertyVersionRequest))
-
-	case papi.CreatePropertyVersionResponse:
-		return createPropertyVersionResFields(given.(papi.CreatePropertyVersionResponse))
-
-	case papi.UpdatePropertyVersionHostnamesRequest:
-		return updatePropertyVersionHostnamesReqFields(given.(papi.UpdatePropertyVersionHostnamesRequest))
-
-	case papi.UpdatePropertyVersionHostnamesResponse:
-		return updatePropertyVersionHostnamesResFields(given.(papi.UpdatePropertyVersionHostnamesResponse))
-
-	case papi.GetPropertyVersionHostnamesRequest:
-		return getPropertyVersionHostnamesReqFields(given.(papi.GetPropertyVersionHostnamesRequest))
-
-	case papi.GetPropertyVersionHostnamesResponse:
-		return getPropertyVersionHostnamesResFields(given.(papi.GetPropertyVersionHostnamesResponse))
+		return v
 
 	case error:
-		return log.Fields{"error": given.(error).Error()}
+		return log.Fields{"error": v.Error()}
+
+	case papi.CreatePropertyRequest:
+		return createPropertyReqFields(v)
+
+	case papi.CreatePropertyResponse:
+		return createPropertyResFields(v)
+
+	case papi.RemovePropertyRequest:
+		return removePropertyReqFields(v)
+
+	case papi.GetPropertyRequest:
+		return getPropertyReqFields(v)
+
+	case papi.GetPropertyResponse:
+		return getPropertyResFields(v)
+
+	case papi.CreatePropertyVersionRequest:
+		return createPropertyVersionReqFields(v)
+
+	case papi.CreatePropertyVersionResponse:
+		return createPropertyVersionResFields(v)
+
+	case papi.UpdatePropertyVersionHostnamesRequest:
+		return updatePropertyVersionHostnamesReqFields(v)
+
+	case papi.UpdatePropertyVersionHostnamesResponse:
+		return updatePropertyVersionHostnamesResFields(v)
+
+	case papi.GetPropertyVersionHostnamesRequest:
+		return getPropertyVersionHostnamesReqFields(v)
+
+	case papi.GetPropertyVersionHostnamesResponse:
+		return getPropertyVersionHostnamesResFields(v)
+
+	case papi.GetRuleTreeRequest:
+		return getRuleTreeReqFields(v)
+
+	case papi.GetRuleTreeResponse:
+		return getRuleTreeResFields(v)
+
+	case papi.UpdateRulesRequest:
+		return updateRulesReqFields(v)
 	}
 
 	panic(fmt.Sprintf("no known log.Fielder for %T", given))
+}
+
+type updateRulesReqFields papi.UpdateRulesRequest
+
+func (r updateRulesReqFields) Fields() log.Fields {
+	return log.Fields{
+		"property_id":      r.PropertyID,
+		"group_id":         r.GroupID,
+		"contract_id":      r.ContractID,
+		"property_version": r.PropertyVersion,
+		"validate_mode":    r.ValidateMode,
+		"validate_rules":   r.ValidateRules,
+	}
+}
+
+type getRuleTreeReqFields papi.GetRuleTreeRequest
+
+func (r getRuleTreeReqFields) Fields() log.Fields {
+	return log.Fields{
+		"property_id":      r.PropertyID,
+		"group_id":         r.GroupID,
+		"contract_id":      r.ContractID,
+		"property_version": r.PropertyVersion,
+		"validate_mode":    r.ValidateMode,
+		"validate_rules":   r.ValidateRules,
+	}
+}
+
+type getRuleTreeResFields papi.GetRuleTreeResponse
+
+func (r getRuleTreeResFields) Fields() log.Fields {
+	return log.Fields{
+		"property_id":      r.PropertyID,
+		"group_id":         r.GroupID,
+		"contract_id":      r.ContractID,
+		"property_version": r.PropertyVersion,
+		"rules_format":     r.RuleFormat,
+	}
 }
 
 type createPropertyReqFields papi.CreatePropertyRequest
