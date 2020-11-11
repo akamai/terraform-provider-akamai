@@ -189,8 +189,10 @@ github.com/hashicorp/terraform-exec v0.3.0 h1:5WLBsnv9BoEUGlHJZETROZZxw+qO3/TFQE
 github.com/hashicorp/terraform-exec v0.3.0/go.mod h1:yKWvMPtkTaHpeAmllw+1qdHZ7E5u+pAZ+x8e2jQF6gM=
 github.com/hashicorp/terraform-json v0.5.0 h1:7TV3/F3y7QVSuN4r9BEXqnWqrAyeOtON8f0wvREtyzs=
 github.com/hashicorp/terraform-json v0.5.0/go.mod h1:eAbqb4w0pSlRmdvl8fOyHAi/+8jnkVYN28gJkSJrLhU=
+github.com/hashicorp/terraform-plugin-sdk v1.16.0 h1:NrkXMRjHErUPPTHQkZ6JIn6bByiJzGnlJzH1rVdNEuE=
 github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1 h1:qG6EdnW2UrftQI4mBdIsWP4YWqYJXynZtl0shQYuU78=
 github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1/go.mod h1:BRz6UtYmksQJU0eMfahQR8fcJf8tIe77gn7YVm6rGD4=
+github.com/hashicorp/terraform-plugin-sdk/v2 v2.2.0 h1:2m4uKA97R8ijHGLwhHdpSJyI8Op1FpS/ozpoF21jK7s=
 github.com/hashicorp/terraform-plugin-test/v2 v2.0.0 h1:fYGV3nZvs8KFGKuY2NPAJDMNfVSDHo+U2FGFl3bPv1s=
 github.com/hashicorp/terraform-plugin-test/v2 v2.0.0/go.mod h1:C6VALgUlvaif+PnHyRGKWPTdQkMJK4NQ20VJolxZLI0=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
@@ -289,6 +291,12 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/tidwall/gjson v1.6.3 h1:aHoiiem0dr7GHkW001T1SMTJ7X5PvyekH5WX0whWGnI=
+github.com/tidwall/gjson v1.6.3/go.mod h1:BaHyNc5bjzYkPqgLq7mdVzeiRtULKULXLgZFKsxEHI0=
+github.com/tidwall/match v1.0.1 h1:PnKP62LPNxHKTwvHHZZzdOAOCtsJTjo6dZLCwpKm5xc=
+github.com/tidwall/match v1.0.1/go.mod h1:LujAq0jyVjBy028G1WhWfIzbpQfMO8bBZ6Tyb0+pL9E=
+github.com/tidwall/pretty v1.0.2 h1:Z7S3cePv9Jwm1KwS0513MRaoUe3S01WPbLNV40pwWZU=
+github.com/tidwall/pretty v1.0.2/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tj/assert v0.0.0-20171129193455-018094318fb0/go.mod h1:mZ9/Rh9oLWpLLDRpvE+3b7gP/C2YyLFYxNmcLnPTMe0=
 github.com/tj/assert v0.0.3 h1:Df/BlaZ20mq6kuai7f5z2TvPFiwC3xaWJSDQNiIS3Rk=
 github.com/tj/assert v0.0.3/go.mod h1:Ne6X72Q+TB1AteidzQncjw9PabbMp4PBMZ1k+vd1Pvk=
