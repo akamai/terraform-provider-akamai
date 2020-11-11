@@ -124,18 +124,21 @@ To specify credentials inline, use the `property` or `dns` block to define crede
   * `client_token` — (Required) The credential client_token
   * `client_secret` — (Required) The credential client_secret
   * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
+  * `account_key` — (Optional) Account switch key to manage multiple accounts
 * `dns` — (Optional) Provide credentials for the Edge DNS API (config-dns)
   * `host` — (Required) The credential hostname
   * `access_token` — (Required) The credential access_token
   * `client_token` — (Required) The credential client_token
   * `client_secret` — (Required) The credential client_secret
   * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
+  * `account_key` — (Optional) Account switch key to manage multiple accounts
 * `gtm` — (Optional) Provide credentials for the GTM Config API (config-gtm)
   * `host` — (Required) The credential hostname
   * `access_token` — (Required) The credential access_token
   * `client_token` — (Required) The credential client_token
   * `client_secret` — (Required) The credential client_secret
   * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
+  * `account_key` — (Optional) Account switch key to manage multiple accounts
 
 ## Environment Variables
 
@@ -152,6 +155,7 @@ For example, if you specify `property_section = "papi"` you would set the follow
 * `AKAMAI_PAPI_CLIENT_TOKEN`
 * `AKAMAI_PAPI_CLIENT_SECRET`
 * `AKAMAI_PAPI_MAX_BODY` (optional)
+* `AKAMAI_PAPI_ACCOUNT_KEY` (optional)
 
 If the section name is `default`, you can omit it, instead using:
 
@@ -160,6 +164,7 @@ If the section name is `default`, you can omit it, instead using:
 * `AKAMAI_CLIENT_TOKEN`
 * `AKAMAI_CLIENT_SECRET`
 * `AKAMAI_MAX_BODY` (optional)
+* `AKAMAI_ACCOUNT_KEY` (optional)
 
 ## Guides
 
