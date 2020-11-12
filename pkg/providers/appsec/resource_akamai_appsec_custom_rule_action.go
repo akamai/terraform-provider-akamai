@@ -135,7 +135,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	_, errd := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if errd != nil {
 		logger.Errorf("calling 'removeCustomRuleAction': %s", errd.Error())
-		return diag.FromErr(err)
+		return diag.FromErr(errd)
 	}
 
 	d.SetId("")
