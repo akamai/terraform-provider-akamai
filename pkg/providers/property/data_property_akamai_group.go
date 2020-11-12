@@ -149,7 +149,9 @@ func getGroups(ctx context.Context, meta akamai.OperationMeta) (*papi.GetGroupsR
 			return nil, err
 		}
 		if err := meta.CacheSet(inst, "groups", groups); err != nil {
-			return nil, err
+			if !errors.Is(err, akamai.ErrCacheDisabled) {
+				return nil, err
+			}
 		}
 	}
 
