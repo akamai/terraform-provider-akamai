@@ -38,7 +38,7 @@ func TestAccDataSourceGroup_basic(t *testing.T) {
 	})
 }
 
-func TestVerifyDataSourceSchema(t *testing.T) {
+func TestVerifyGroupDataSourceSchema(t *testing.T) {
 	t.Run("test datasource ConflictsWith", func(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
 			Providers:  testAccProviders,

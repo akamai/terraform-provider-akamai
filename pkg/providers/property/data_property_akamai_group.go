@@ -66,7 +66,7 @@ func dataSourcePropertyGroupRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	contractID, err := resolveKeyState("contract", "contract_id", d)
+	contractID, err := tools.ResolveKeyStringState("contract", "contract_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}

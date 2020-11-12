@@ -2,7 +2,6 @@ package property
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -71,11 +70,11 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	if groupID, err = resolveKeyState("group", "group_id", d); err != nil {
+	if groupID, err = tools.ResolveKeyStringState("group", "group_id", d); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if contractID, err = resolveKeyState("contract", "contract_id", d); err != nil {
+	if contractID, err = tools.ResolveKeyStringState("contract", "contract_id", d); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -99,17 +98,6 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	log.Debugf("Read CP Code: %+v", cpCode)
 	return nil
-}
-
-func resolveKeyState(key, id string, rd *schema.ResourceData) (value string, err error) {
-	value, err = tools.GetStringValue(key, rd)
-	if errors.Is(tools.ErrNotFound, err) {
-		value, err = tools.GetStringValue(id, rd)
-	}
-	if err != nil {
-		return "", err
-	}
-	return value, nil
 }
 
 // findCPCode searches all CP codes for a match against given nameOrID

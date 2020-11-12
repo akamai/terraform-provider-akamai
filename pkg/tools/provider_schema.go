@@ -200,3 +200,14 @@ func FindStringValues(rd ResourceDataFetcher, keys ...string) []string {
 
 	return rval
 }
+
+func ResolveKeyStringState(key, fallbackKey string, rd ResourceDataFetcher) (value string, err error) {
+	value, err = GetStringValue(key, rd)
+	if errors.Is(err, ErrNotFound) {
+		value, err = GetStringValue(fallbackKey, rd)
+	}
+	if err != nil {
+		return "", err
+	}
+	return value, nil
+}
