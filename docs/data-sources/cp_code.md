@@ -54,7 +54,7 @@ The following arguments are supported:
 * `group_id` — (Required) The group ID
 * `contract_id` — (Required) The contract ID
 
-### Deprecated
+### Deprecated Arguments
 * `group` — (Deprecated) synonym of group_id for legacy purposes. Cannot be used with `group_id`
 * `contract` — (Deprecated) synonym of contract_id for legacy purposes. Cannot be used with `contract_id`
 

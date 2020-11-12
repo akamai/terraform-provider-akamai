@@ -16,7 +16,7 @@ Basic usage:
 
 ```hcl
 resource "akamai_dns_zone" "demozone" {
-    contract = "ctr_XXX"
+    contract = "ctr_1-AB123"
     group = 100
     zone = "example.com"
     type =  "secondary"

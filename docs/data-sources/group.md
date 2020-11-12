@@ -38,7 +38,7 @@ The following arguments are supported:
 * `group_name` — (Required) The group name.
 * `contract_id` — (Required) The contract ID. 
 
-### Deprecated 
+### Deprecated Arguments 
 * `name` — (Deprecated) synonym for `group_name` for legacy purposes.
 * `contract` — (Deprecated) synonym of contract_id for legacy purposes. 
 

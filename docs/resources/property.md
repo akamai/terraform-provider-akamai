@@ -38,23 +38,21 @@ resource "akamai_property" "example" {
 
 The following arguments are supported:
 
-### Property Basics
-
 * `name` — (Required) The property name.
 * `contact` — (Required) One or more email addresses to inform about activation changes.
 * `contract_id` — (Required) The Contract ID.  Can be provided with or without `ctr_` prefix.
 * `group_id` — (Required) The Group ID. Can be provided with or without `grp_` prefix.
 * `product_id` — (Required) The Product ID. Can be provided with or without `prd_` prefix.
 * `hostnames` — (Required) A map of public hostnames to edge hostnames (e.g. `{"example.org" = "example.org.edgesuite.net"}`)
-* `rules` — (Required) A JSON encoded rule tree for given property. This should be provided in a form of complete json rule tree (see: [`akamai_property_rules`](../data-sources/property_rules.html))
+* `rules` — (Required) A JSON encoded rule tree for given property. This should be provided in a form of complete json rule tree (see: [`akamai_property_rules`](../data-sources/property_rules.md))
 * `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)) if not provided then the latest version will be used.
 
-### Deprecated
+### Deprecated Arguments
 * `contract` — (Deprecated) synonym of contract_id for legacy purposes
 * `group` — (Deprecated) synonym of group_id for legacy purposes
 * `product` — (Deprecated) synonym of product_id for legacy purposes
 
-### Attribute Reference
+## Attribute Reference
 
 The following attributes are returned:
 

@@ -81,7 +81,7 @@ The following arguments are supported:
 * `network` — (Optional) Akamai network to activate on. Allowed values `STAGING` or `PRODUCTION` (Default: `STAGING`).
 * `version` — (Required) The version to activate. Note: this field used to be optional but now depends on property_version to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. 
 
-### Deprecated
+### Deprecated Arguments
 * `property` — (Deprecated) synonym of property_id for legacy purposes
 
 ## Attribute Reference

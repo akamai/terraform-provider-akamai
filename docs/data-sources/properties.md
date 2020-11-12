@@ -19,8 +19,8 @@ Given a contract and group return what properties exist for the user:
 datasource-example.tf
 ```hcl-terraform
 datasource "akamai_properties" "example" {
-    contract_id = "ctr_####"
-    group_id   = "grp_####"
+    contract_id = "ctr_1-AB123"
+    group_id   = "grp_12345"
 }
 
 output "my_property_list" {

@@ -44,7 +44,7 @@ To create a property there are a number of dependencies you must first meet:
 
 ## Retrieving The Contract ID
 
-You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/contract.html). To fetch the default contract ID no attributes need to be set:
+You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/contract.md). To fetch the default contract ID no attributes need to be set:
 
 ```hcl
 data "akamai_contract" "default" {
@@ -64,7 +64,7 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ## Retrieving The Group ID
 
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/group.html). To fetch the default group ID no attributes other than contract need to be set:
+Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/group.md). To fetch the default group ID no attributes other than contract need to be set:
 
 ```hcl
 data "akamai_group" "default" {
@@ -118,7 +118,7 @@ This will create a Standard TLS secure hostname, to create an Enhanced TLS hostn
 
 A property contains the delivery configuration, or rule tree, which determines how requests are handled. This rule tree is usually represented using JSON, and is often refered to as `rules.json`.
 
-You can specify the rule tree as a JSON string, using the [`rules` argument of the `akamai_property` resource](../resources/property.html#rules).
+You can specify the rule tree as a JSON string, using the [`rules` argument of the `akamai_property` resource](../resources/property.md#rules).
 
 We recommend storing the rules JSON as a JSON file on disk and ingesting it using Terraform's built in `file` function. For example, if our file is called `rules.json`, We specify the path to `rules.json` using the `file` function as follows:
 
@@ -132,14 +132,14 @@ We can now use `local.json` to reference the file contents in the `akamai_proper
 
 ## Creating a Property
 
-The property itself is represented by an [`akamai_property` resource](../resources/property.html). Add this new block to your `akamai.tf` file after the provider block.
+The property itself is represented by an [`akamai_property` resource](../resources/property.md). Add this new block to your `akamai.tf` file after the provider block.
 
 To define the entire configuration, we start by opening the resource block and give it a name. In this case we’re going to use the name "example".
 
 Next, we set the name of the property, contact email id, product ID, group ID, CP code, property hostname, and edge hostnames.
 
 
-Finally, we setup the property rules: first, we should specify the [`rule format` argument](../resources/property.html#rule_format), as well as passing the `rules.json` data to `rules` argument.
+Finally, we setup the property rules: first, we should specify the [`rule format` argument](../resources/property.md#rule_format), as well as passing the `rules.json` data to `rules` argument.
 
 Once you’re done, your property should look like this:
 
@@ -196,7 +196,7 @@ Once this completes your property will have been created. You can verify this in
 ## Activate your property
 
 
-To activate your property we need to create a new [`akamai_property_activation` resource](../resources/property_activation.html). This resource manages the activation for a property, allowing you to specify which network and what version to activate.
+To activate your property we need to create a new [`akamai_property_activation` resource](../resources/property_activation.md). This resource manages the activation for a property, allowing you to specify which network and what version to activate.
 
 You will need to set the `property` ID and `version` arguments, which can both be set from the `akamai_property` resource. You should then set the `network` to `STAGING` or `PRODUCTION`. You should also set the `contact` email address.
 

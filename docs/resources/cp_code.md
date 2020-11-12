@@ -58,7 +58,7 @@ The following arguments are supported:
 * `group_id` — (Required) The Group ID
 * `product_id` — (Required) The Product ID
 
-### Deprecated
+### Deprecated Arguments
 * `contract` — (Deprecated) synonym of contract_id for legacy purposes
 * `group` — (Deprecated) synonym of group_id for legacy purposes
 * `product` — (Deprecated) synonym of product_id for legacy purposes

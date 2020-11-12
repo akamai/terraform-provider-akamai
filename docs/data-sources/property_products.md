@@ -18,7 +18,7 @@ Given a contract return what products exist for the user:
 datasource-example.tf
 ```hcl-terraform
 datasource "akamai_property_products" "my-example" {
-    contract_id = "ctr_####"
+    contract_id = "ctr_1-AB123"
 }
 
 output "property_match" {

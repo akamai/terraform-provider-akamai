@@ -37,7 +37,7 @@ The following arguments are supported:
 * `certificate` — (Optional) The certificate enrollment ID. Required when `edge_hostname` ends in edgekey.net.
 * `ip_behavior` - (Optional) way to directly specify IP protocol hostname supports : `IPV4`, `IPV6` or `IPV6_COMPLIANCE`
 
-### Deprecated
+### Deprecated Arguments
 * `contract` — (Deprecated) synonym of contract_id for legacy purposes
 * `ipv4` — (Optional, Deprecated) Whether property supports IPv4 to origin. Used to compute `ip_behavior` when it is not supplied. (Default: `true`).
 * `ipv6` —  (Optional, Deprecated) Whether property supports IPv6 to origin. Used to compute `ip_behavior` when it is not supplied. (Default: `false`).
