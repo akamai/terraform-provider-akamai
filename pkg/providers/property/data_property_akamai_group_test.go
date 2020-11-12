@@ -275,7 +275,7 @@ func TestDisabledCache(t *testing.T) {
 				Providers:  testAccProviders,
 				IsUnitTest: true,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDisabledCache/cg.tf"),
+					Config: loadFixtureString("testdata/TestDisabledCache/datasource-nocache.tf"),
 				}},
 			})
 		})
