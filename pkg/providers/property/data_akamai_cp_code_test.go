@@ -252,4 +252,24 @@ func TestDSCPCode(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("group not found in state", func(t *testing.T) {
+		client := &mockpapi{}
+		client.On("GetCPCodes",
+			AnyCTX, mock.Anything,
+		).Return(&papi.GetCPCodesResponse{CPCodes: papi.CPCodeItems{Items: []papi.CPCode{{
+			ID: "cpc_test-ft-cp-code", Name: "test-ft-cp-code", CreatedDate: "", ProductIDs: []string{"prd_prod1"},
+		}}}}, nil)
+		client.On("CreateCPCode", AnyCTX, mock.Anything).Return(&papi.CreateCPCodeResponse{}, nil)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers:  testAccProviders,
+				IsUnitTest: true,
+				Steps: []resource.TestStep{{
+					Config:             loadFixtureString("testdata/TestDSGroupNotFound/cp_code.tf"),
+					ExpectNonEmptyPlan: true,
+				}},
+			})
+		})
+	})
 }

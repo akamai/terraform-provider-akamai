@@ -10,25 +10,23 @@ import (
 )
 
 func TestDataSourceMultipleGroups_basic(t *testing.T) {
-	contractIDs := []string{"ctr_contractID"}
-	groups := []map[string]interface{}{{
-		"group_id":        "grp_test",
-		"group_name":      "test",
-		"parent_group_id": "grp_parent",
-		"contractIds":     contractIDs,
-	}}
-
-	client := &mockpapi{}
-	client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
-		AccountID: "act_1-1TJZFB", AccountName: "example.com",
-		Groups: papi.GroupItems{Items: []*papi.Group{{
-			GroupID:       groups[0]["group_id"].(string),
-			GroupName:     groups[0]["group_name"].(string),
-			ParentGroupID: groups[0]["parent_group_id"].(string),
-			ContractIDs:   contractIDs,
-		}}}}, nil)
-
 	t.Run("test output", func(t *testing.T) {
+		client := &mockpapi{}
+		contractIDs := []string{"ctr_contractID"}
+		groups := []map[string]interface{}{{
+			"group_id":        "grp_test",
+			"group_name":      "test",
+			"parent_group_id": "grp_parent",
+			"contractIds":     contractIDs,
+		}}
+		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
+			AccountID: "act_1-1TJZFB", AccountName: "example.com",
+			Groups: papi.GroupItems{Items: []*papi.Group{{
+				GroupID:       groups[0]["group_id"].(string),
+				GroupName:     groups[0]["group_name"].(string),
+				ParentGroupID: groups[0]["parent_group_id"].(string),
+				ContractIDs:   contractIDs,
+			}}}}, nil)
 		useClient(client, func() {
 			resource.ParallelTest(t, resource.TestCase{
 				Providers:    testAccProviders,
@@ -45,6 +43,37 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 						),
 					},
 				},
+			})
+		})
+	})
+}
+
+func TestGroup_ContractNotFoundInState(t *testing.T) {
+	t.Run("contractId not found in state", func(t *testing.T) {
+		client := &mockpapi{}
+		contractIDs := []string{"ctr_contractID"}
+		groups := []map[string]interface{}{{
+			"group_id":        "grp_test",
+			"group_name":      "test",
+			"parent_group_id": "grp_parent",
+			"contractIds":     contractIDs,
+		}}
+		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
+			AccountID: "act_1-1TJZFB", AccountName: "example.com",
+			Groups: papi.GroupItems{Items: []*papi.Group{{
+				GroupID:       groups[0]["group_id"].(string),
+				GroupName:     groups[0]["group_name"].(string),
+				ParentGroupID: groups[0]["parent_group_id"].(string),
+				ContractIDs:   contractIDs,
+			}}}}, nil)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers:  testAccProviders,
+				IsUnitTest: true,
+				Steps: []resource.TestStep{{
+					Config:             loadFixtureString("testdata/TestDSContractRequired/group.tf"),
+					ExpectNonEmptyPlan: true,
+				}},
 			})
 		})
 	})
