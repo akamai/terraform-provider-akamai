@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_match_targets
 
-Use the `akamai_appsec_match_targets` data source to retrieve information about the match targets associated with a given configuration and version.
+Use the `akamai_appsec_match_targets` data source to retrieve information about the match targets associated with a given configuration version.
 
 ## Example Usage
 

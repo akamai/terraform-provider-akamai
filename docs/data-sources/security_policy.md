@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_security_policy
 
-Use the `akamai_appsec_security_policy` data source to retrieve information about the security policies associated with a specific security configuration and version, or about a specific security policy.
+Use the `akamai_appsec_security_policy` data source to retrieve information about the security policies associated with a specific security configuration version, or about a specific security policy.
 
 ## Example Usage
 
@@ -65,4 +65,4 @@ In addition to the arguments above, the following attributes are exported:
 
 * `output_text` - A tabular display showing the ID and name of all security policies.
 
-* `policy_id` - The ID of the specified security configuration. Included only if `name` was specified.
+* `policy_id` - The ID of the security policy. Included only if `name` was specified.

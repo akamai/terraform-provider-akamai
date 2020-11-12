@@ -6,10 +6,10 @@ description: |-
   CustomRule
 ---
 
-# resource_akamai_appsec_custom_rule
+# akamai_appsec_custom_rule
 
 
-The `resource_akamai_appsec_custom_rule` resource allows you to create or modify a custom rule associated with a given security configuration.
+The `akamai_appsec_custom_rule` resource allows you to create or modify a custom rule associated with a given security configuration.
 
 ## Example Usage
 
@@ -34,7 +34,7 @@ resource "akamai_appsec_custom_rule" "custom_rule" {
 }
 
 output "custom_rule_rule_id" {
-  value = akamai_appsec_custom_rule.custom_rule.rule_id
+  value = akamai_appsec_custom_rule.custom_rule.custom_rule_id
 }
 ```
 
@@ -49,5 +49,5 @@ output "custom_rule_rule_id" {
 
 In addition to the arguments above, the following attribute is exported:
 
-* `rule_id` - The ID of the custom rule.
+* `custom_rule_id` - The ID of the custom rule.
 
