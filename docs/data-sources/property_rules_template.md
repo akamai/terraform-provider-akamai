@@ -6,9 +6,9 @@ description: |-
   Property Rules template
 ---
 
-# akamai_rules_template
+# akamai_property_rules_template
 
-The `akamai_rules_template` data source allows you to configure a nested block of property rules, criteria, and behaviors. 
+The `akamai_property_rules_template` data source allows you to configure a nested block of property rules, criteria, and behaviors. 
 The rule tree is composed of a set of templates, which allow to nest other templates as well as interpolate user-defined variables.
 
 The template format used in this data source matches the format used in [Property Manager CLI](https://learn.akamai.com/en-us/learn_akamai/getting_started_with_akamai_developers/developer_tools/getstartedpmcli.html#addanewsnippet)
@@ -19,7 +19,7 @@ Basic usage:
 
 Using variables passed in data source definition:
 ```hcl
-data "akamai_rules_template" "akarules" {
+data "akamai_property_rules_template" "akarules" {
   template_file = abspath("${path.root}/rules/rules.json")
   variables {
     name = "enabled"
@@ -36,7 +36,7 @@ data "akamai_rules_template" "akarules" {
 
 Using variables defined in files:
 ```hcl
-data "akamai_rules_template" "akarules" {
+data "akamai_property_rules_template" "akarules" {
   template_file = abspath("${path.root}/rules/rules.json")
   var_definition_file = abspath("${path.root}/variables/variableDefinitions.json")
   var_values_file = abspath("${path.root}/variables/variables.json")

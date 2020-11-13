@@ -21,7 +21,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
 					},
 				},
@@ -37,7 +37,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_file.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
 					},
 				},
