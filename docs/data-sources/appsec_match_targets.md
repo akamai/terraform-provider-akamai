@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: MatchTargets"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
  MatchTargets
 ---

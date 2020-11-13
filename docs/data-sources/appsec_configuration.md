@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: Configuration"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
  Configuration
 ---

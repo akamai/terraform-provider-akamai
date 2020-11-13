@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: ExportConfiguration"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
  ExportConfiguration
 ---

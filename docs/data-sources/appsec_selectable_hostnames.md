@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: SelectableHostnames"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
  SelectableHostnames
 ---

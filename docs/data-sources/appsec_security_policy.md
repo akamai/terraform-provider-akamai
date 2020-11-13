@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: SecurityPolicy"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
  SecurityPolicy
 ---
