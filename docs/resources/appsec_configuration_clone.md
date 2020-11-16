@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: ConfigurationClone"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
   ConfigurationClone
 ---

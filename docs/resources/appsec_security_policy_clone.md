@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: SecurityPolicyClone"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
   SecurityPolicyClone
 ---

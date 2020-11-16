@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: Activations"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
   Activations
 ---

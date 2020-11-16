@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: CustomRule"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
   CustomRule
 ---
