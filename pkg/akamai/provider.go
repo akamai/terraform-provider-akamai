@@ -215,49 +215,49 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 }
 
 func setEdgegridEnvs(envsMap map[string]interface{}, section string) error {
-	var accessTokenEnv, clientTokenEnv, hostEnv, clientSecretEnv, maxBodyEnv = "AKAMAI_ACCESS_TOKEN", "AKAMAI_CLIENT_TOKEN", "AKAMAI_HOST", "AKAMAI_CLIENT_SECRET", "AKAMAI_MAX_BODY"
+	configEnvs := []string{"ACCESS_TOKEN", "CLIENT_TOKEN", "HOST", "CLIENT_SECRET", "MAX_BODY"}
+	prefix := "AKAMAI"
 	if section != "" {
-		section = strings.ToUpper(section)
-		accessTokenEnv = fmt.Sprintf("AKAMAI_%s_ACCESS_TOKEN", section)
-		clientTokenEnv = fmt.Sprintf("AKAMAI_%s_CLIENT_TOKEN", section)
-		hostEnv = fmt.Sprintf("AKAMAI_%s_HOST", section)
-		clientSecretEnv = fmt.Sprintf("AKAMAI_%s_CLIENT_SECRET", section)
-		maxBodyEnv = fmt.Sprintf("AKAMAI_%s_MAX_BODY", section)
+		prefix = fmt.Sprintf("%s_%s", prefix, strings.ToUpper(section))
 	}
-	host, ok := envsMap["host"].(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
-	}
-	if err := os.Setenv(hostEnv, host); err != nil {
-		return err
-	}
-	clientToken, ok := envsMap["client_token"].(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_token", "string")
-	}
-	if err := os.Setenv(clientTokenEnv, clientToken); err != nil {
-		return err
-	}
-	clientSecret, ok := envsMap["client_secret"].(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_secret", "string")
-	}
-	if err := os.Setenv(clientSecretEnv, clientSecret); err != nil {
-		return err
-	}
-	accessToken, ok := envsMap["access_token"].(string)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "access_token", "string")
-	}
-	if err := os.Setenv(accessTokenEnv, accessToken); err != nil {
-		return err
-	}
-	maxBody, ok := envsMap["max_body"].(int)
-	if !ok {
-		return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "max_body", "int")
-	}
-	if err := os.Setenv(maxBodyEnv, strconv.Itoa(maxBody)); err != nil {
-		return err
+	for _, env := range configEnvs {
+		var value string
+		var ok bool
+		switch env {
+		case "ACCESS_TOKEN":
+			value, ok = envsMap["access_token"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "access_token", "string")
+			}
+		case "CLIENT_TOKEN":
+			value, ok = envsMap["client_token"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_token", "string")
+			}
+		case "HOST":
+			value, ok = envsMap["host"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
+			}
+		case "CLIENT_SECRET":
+			value, ok = envsMap["client_secret"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_secret", "string")
+			}
+		case "MAX_BODY":
+			maxBody, ok := envsMap["max_body"].(int)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "max_body", "int")
+			}
+			value = strconv.Itoa(maxBody)
+		}
+		env = fmt.Sprintf("%s_%s", prefix, env)
+		if os.Getenv(env) != "" {
+			continue
+		}
+		if err := os.Setenv(env, value); err != nil {
+			return err
+		}
 	}
 	return nil
 }
