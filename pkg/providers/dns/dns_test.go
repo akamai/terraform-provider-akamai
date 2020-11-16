@@ -413,3 +413,26 @@ func (d *mockdns) UpdateRecordsets(ctx context.Context, param *dns.Recordsets, p
 
 	return args.Error(0)
 }
+
+// Mocked out following endpoints to make tests compile due to PR in edgegrid that added these resources.
+func (d *mockdns) PostMasterZoneFile(ctx context.Context, param string, param2 string) error {
+       return nil
+}
+func (d *mockdns) CreateBulkZones(ctx context.Context, param *dns.BulkZonesCreate, param2 dns.ZoneQueryString) (*dns.BulkZonesResponse, error) {
+       return nil, nil
+}
+func (d *mockdns) DeleteBulkZones(ctx context.Context, param *dns.ZoneNameListResponse, param2 ...bool) (*dns.BulkZonesResponse, error) {
+       return nil, nil
+}
+func (d *mockdns) GetBulkZoneCreateStatus(ctx context.Context, param string) (*dns.BulkStatusResponse, error) {
+       return nil, nil
+}
+func (d *mockdns) GetBulkZoneDeleteStatus(ctx context.Context, param string) (*dns.BulkStatusResponse, error) {
+       return nil, nil
+}
+func (d *mockdns) GetBulkZoneCreateResult(ctx context.Context, requestid string) (*dns.BulkCreateResultResponse, error) {
+       return nil, nil
+}
+func (d *mockdns) GetBulkZoneDeleteResult(ctx context.Context, param string) (*dns.BulkDeleteResultResponse, error) {
+       return nil, nil
+}
