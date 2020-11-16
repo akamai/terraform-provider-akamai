@@ -49,7 +49,7 @@ To import an existing domain and contained objects, you must also know the ident
 
 ## Retrieving The Contract ID
 
-You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/contract.md). To fetch the default contract ID no attributes need to be set:
+You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). To fetch the default contract ID no attributes need to be set:
 
 ```hcl
 data "akamai_contract" "default" {
@@ -191,7 +191,7 @@ resource "akamai_gtm_property" "example_prop" {
 
 ## Initialize the Provider
 
-Once you have your configuration complete, save the file. Then switch to the terminal to initialize terraform using the command:
+Once you have your configuration complete, save the file. Then switch to the terminal to initialize Terraform using the command:
 
 ```bash
 $ terraform init
@@ -211,7 +211,7 @@ This command will make Terraform create a plan for the work it will do based on 
 
 ## Apply Changes
 
-To actually create our domain, datacenter and property;, we need to instruct terraform to apply the changes outlined in the plan. To do this, in the terminal, run the command:
+To actually create our domain, datacenter and property;, we need to instruct Terraform to apply the changes outlined in the plan. To do this, in the terminal, run the command:
 
 ```bash
 $ terraform apply

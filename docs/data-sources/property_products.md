@@ -13,7 +13,7 @@ Use `akamai_property_products` data source to list products associated with a co
 
 ## Example Usage
 
-Given a contract return what products exist for the user:
+Return products associated with the EdgeGrid API client token under a given contract:
 
 datasource-example.tf
 ```hcl-terraform
@@ -34,23 +34,8 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
-* `json` — PAPIs response to the query.
-
-Example PAPI response is of the form that follows:
-```json
-{
-    "accountId": "act_1-9ZYX87",
-    "contractId": "ctr_1-ABC234",
-    "products": {
-        "items": [
-            {
-                "productName": "Alta",
-                "productId": "prd_Alta"
-            }
-        ]
-    }
-}
-
-```
+* `products` — list of supported product, with the following properties:
+  * `product_id` - the product ID (string)
+  * `product_name` - the product name (string)

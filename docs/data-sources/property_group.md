@@ -26,7 +26,7 @@ data "akamai_contract" "example" {
 }
 
 resource "akamai_property" "example" {
-    group_id    = ata.akamai_group.example.id
+    group_id    = data.akamai_group.example.id
     ...
 }
 ```
@@ -35,15 +35,14 @@ resource "akamai_property" "example" {
 
 The following arguments are supported:
 
-* `group_name` — (Required) The group name.
+* `name` — (Required) The group name.
 * `contract_id` — (Required) The contract ID. 
 
 ### Deprecated Arguments 
-* `name` — (Deprecated) synonym for `group_name` for legacy purposes.
-* `contract` — (Deprecated) synonym of contract_id for legacy purposes. 
+* `contract` — (Deprecated) synonym of contract_id for legacy purposes. Cannot be used with `contract_id`.
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
 * `id` — The group ID.

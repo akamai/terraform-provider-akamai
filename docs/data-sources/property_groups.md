@@ -1,62 +1,40 @@
 ---
 layout: "akamai"
-page_title: "Akamai: akamai_property_groups"
-subcategory: "Provisioning"
+page_title: "Akamai: groups"
+subcategory: "Common"
 description: |-
  Property groups
 ---
 
-# akamai_property_groups
+# akamai_groups
 
 
-Use `akamai_property_groups` data source to list groups associated with an edgerc API token. 
+Use `akamai_groups` data source to list groups associated with an EdgeGrid API client token. 
 
 ## Basic Usage
 
-Return what groups exist for the user:
+Return groups associated with the EdgeGrid API client token:
 
 datasource-example.tf
 ```hcl-terraform
-datasource "akamai_property_groups" "my-example" {
+datasource "akamai_groups" "my-example" {
 }
 
 output "property_match" {
-  value = data.akamai_property_groups.my-example
+  value = data.akamai_groups.my-example
 }
 ```
 
 ## Argument Reference
 
-No arguments are supported:
+There are no arguments available for this data source.
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
-* `json` — PAPIs response to the query.
-
-Example PAPI response is as follows:
-```json
-{
-    "accountId": "act_1-9ZYX87",
-    "accountName": "Example.com",
-    "groups": {
-        "items": [
-            {
-                "groupName": "Example.com-1-1ABC234",
-                "groupId": "grp_12345",
-                "contractIds": [
-                    "ctr_1-1ABC234"
-                ]
-            },
-            {
-                "groupName": "Test",
-                "groupId": "grp_23455",
-                "parentGroupId": "grp_12345",
-                "contractIds": [
-                    "ctr_1-1ABC234"
-                ]
-            }
-        ]
-    }
-}
+* `groups` — list of supported groups, with the following properties:
+  * `group_id` - the group ID (string)
+  * `group_name` - the group name (string)
+  * `parent_group_id` - the parent group ID (string)
+  * `contract_ids` - the group contract IDs (array of string)

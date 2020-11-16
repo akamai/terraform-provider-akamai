@@ -48,7 +48,7 @@ To import an existing zone and recordsets, you must also know the identifiers or
 
 ## Retrieving The Contract ID
 
-You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/contract.md). To fetch the default contract ID no attributes need to be set:
+You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). To fetch the default contract ID no attributes need to be set:
 
 ```hcl
 data "akamai_contract" "default" {
@@ -68,7 +68,7 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ## Retrieving The Group ID
 
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/group.md). To fetch the default group ID no attributes other than contract need to be set:
+Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/property_group.md). To fetch the default group ID no attributes other than contract need to be set:
 
 ```hcl
 data "akamai_group" "default" {
@@ -290,7 +290,7 @@ resource "akamai_dns_record" "example_a_record" {
 
 ## Initialize the Provider
 
-Once you have your configuration complete, save the file. Then switch to the terminal to initialize terraform using the command:
+Once you have your configuration complete, save the file. Then switch to the terminal to initialize Terraform using the command:
 
 ```bash
 $ terraform init
@@ -310,7 +310,7 @@ This command will make Terraform create a plan for the work it will do based on 
 
 ## Apply Changes
 
-To actually create our zone and recordset, we need to instruct terraform to apply the changes outlined in the plan. To do this, in the terminal, run the command:
+To actually create our zone and recordset, we need to instruct Terraform to apply the changes outlined in the plan. To do this, in the terminal, run the command:
 
 ```bash
 $ terraform apply

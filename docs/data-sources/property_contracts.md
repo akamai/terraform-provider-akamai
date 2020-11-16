@@ -9,11 +9,11 @@ description: |-
 # akamai_property_contracts
 
 
-Use `akamai_property_contracts` data source to list contracts associated with an edgerc API token. 
+Use `akamai_property_contracts` data source to list contracts associated with an EdgeGrid API client token. 
 
 ## Example Usage
 
-Return what contracts exist for the user:
+Return contracts associated with the EdgeGrid API client token:
 
 datasource-example.tf
 ```hcl-terraform
@@ -27,25 +27,12 @@ output "property_match" {
 
 ## Argument Reference
 
-No arguments are supported:
+There are no arguments available for this data source.
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
-* `json` — PAPIs response to the query.
-
-Example PAPI response is as follows:
-```json
-{
-    "accountId": "act_1-9ZYX87",
-    "contracts": {
-        "items": [
-            {
-                "contractId": "ctr_1-1ABC123",
-                "contractTypeName": "DIRECT_CUSTOMER"
-            }
-        ]
-    }
-}
-```
+* `contracts` — list of supported contracts, with the following properties:
+  * `contract_id` - the contract ID (string)
+  * `contract_type_name` - the contract type (string)

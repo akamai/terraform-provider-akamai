@@ -10,11 +10,11 @@ description: |-
 
 
 Use `akamai_property_rules` data source to query and retrieve the instance information and rule tree of an 
-existing property instance.  allows searching across contracts and groups you may have access to.
+existing property instance.
 
 ## Basic Usage
 
-Given a contract and group return what properties exist for the user:
+Return property rule tree associated with that property version given a property, contract and group:
 
 datasource-example.tf
 ```hcl-terraform
@@ -41,6 +41,7 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
-* `json` — PAPIs response to the query.
+* `rules` — Provisioning API ruletree JSON contents.
+* `errors` — List of validation errors associated with the ruletree object returned.

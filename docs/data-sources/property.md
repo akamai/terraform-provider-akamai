@@ -32,11 +32,11 @@ output "property_match" {
 
 The following arguments are supported:
 
-* `search_type` — (Required) One of the following values `name`, `hostname`, or `edge_hostname` (last field only searches active properties).
+* `search_type` — (Required) One of the following values `name`, `hostname`, or `edge_hostname`. Please note that `edge_hostname` only searches active properties.
 * `search_value` — (Required) The value to be searched for in the field specified.
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
-* `json` — PAPIs response to the query.
+* `json` — Provisioning API response to the query.

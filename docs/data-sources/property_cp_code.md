@@ -60,7 +60,7 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
 * `id` — The CP code ID.
 * `product_ids` - An array of product ids associated with this cpcode

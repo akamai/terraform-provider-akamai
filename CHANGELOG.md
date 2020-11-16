@@ -3,41 +3,42 @@
 ## 1.0.0 (Unreleased) Provisioning redesign
 
 #### BREAKING CHANGES:
-* resources/akamai_property no longer supports the following fields : cp_code, origin, variables, is_secure, contact. This new structure simplifies object structure and removes the ability to set the same value more than one way.
-* datasource/akamai_property_rules removed in favor of using template json object to better work with other tools and documentation that is all json based.
+* resources/akamai_property no longer supports the following fields : cp_code, origin, variables, is_secure, contact. The revised resource simplifies the object structure and removes the ability to set the same value more than one way.
+* datasource/akamai_property_rules removed in favor of using template JSON object to better work with other Akamai tools and documentation that is all JSON based.
 * resources/akamai_property_variables removed in favor of directly managing the variable segment as part of ruletree object.
-* resources/akamai_property_activation activate attribute was dropped and version field is now required.
+* resources/akamai_property_activation no longer supports the following fields : activate.  version has gone from being optional to being a required field.
+* provider: configuring via an inline provider block (`property`, `dns`, or `gtm`) has been replaced with a more general `config` block that works the same way.
 #### NOTES:
-* provider/papi: we changed attribute names in papi to distinguishing objects and names from ids.  Where before "group" could represent a name, an id, or sometimes both - we now distinguish between them by having distinct field names like `group_name`, `group_id` instead of `group`.
+* provider/papi: changed attribute names in Provisioning to distinguish objects and names from id attributes.  In prior releases, "group" could represent a name, an id, or sometimes both. This release distinguishes them with distinct attribute names "group_name", "group_id" instead of "group"."
 #### KNOWN BUGS:
-* provider: provider configuration validation requires an edgerc file configured and present even when one should not be needed.
-* provider: support for configuring the provider via an inline provider, dns, or gtm block no longer works.  Users should use edgerc file or terraform environment args to configure instead.
+* none known
 #### FEATURES:
-* datasource/akamai_properties created to list properties accessible to the user.
-* datasource/akamai_property created to search for a properties with a specific value in a small set of searchable fields.
-* datasource/akamai_property_contracts created to list contracts accessible to the user.
-* datasource/akamai_property_groups created to list groups accessible to the user.
-* datasource/akamai_property_products created to list products associated with a given contract.
-* datasource/akamai_property_rule_formats created to list rule_formats.
-* datasource/akamai_property_rules created to output the structure of a particular rule version on the server. NOTE: this is NOT the same as the deprecated datasource used for rule formatting.
-* datasource/akamai_rules_template created to handle file based json templating for rules tree data management
+* datasource/akamai_properties added to list properties accessible to the user.
+* datasource/akamai_property added to search for a properties with a specific value in a small set of searchable fields.
+* datasource/akamai_property_contracts added to list contracts accessible to the user.
+* datasource/akamai_property_groups added to list groups accessible to the user.
+* datasource/akamai_property_products added to list products associated with a given contract.
+* datasource/akamai_property_rule_formats added to list rule_formats.
+* datasource/akamai_property_rules added to output the structure of a particular rule version on the server. NOTE: this is NOT the same as the deprecated datasource used for rule formatting.
+* datasource/akamai_rules_template added to handle file based JSON templating for rules tree data management
 #### ENHANCEMENTS:
-* resources/akamai_property aliased property to property_id. contract to contract_id, and product to product_id and account to account_id.  Now return following additional fields : prod_version, stage_version.
-* resources/akamai_property_activation aliased property to property_id. Now return following additional fields : target_version, warnings, errors, activation_id, and status
+* resources/akamai_property aliased property to property_id. contract to contract_id, and product to product_id and account to account_id.  Renamed version to latest_version.
+* resources/akamai_property_activation aliased property to property_id. Returns these additional attributes : target_version, warnings, errors, activation_id, and status
 * datasource/akamai_contract aliased group to group_id and/or group_name.
 * datasource/akamai_cp_code aliased group to group_id and contract to contract_id.
 * datasource/akamai_group aliased name to group_name and contract to contract_id.
 #### BUG FIXES:
-* resources/akamai_property_activation activating and destroying activation for the same property multiple times would get errors on 2nd destroy ands subsequent destroy attempts with "resource not found error" message.
-* resources/akamai_property_activation wrong activation id would be read for property versions that had ben activated and deactivated multiple time.
-* resources/akamai_property destroy  wrong activation id would be read for property versions that had ben activated and deactivated multiple time.
+* provider: provider configuration validation requires an edgerc file configured and present even when environment variable-based configuration was used.
+* provider: provider inline configuration support was re-introduced as a new config field.
+* resources/akamai_property_activation activating and destroying activation for the same property multiple times in a row would fail on second destroy attempt and subsequent destroy attempts with "resource not found error" message.
+* resources/akamai_property_activation wrong activation id read for property versions that had been activated and deactivated multiple time.
 
 ## 0.10.2 (Oct 22,2020)
 #### NOTES:
 * Documentation formatting
 #### KNOWN BUGS:
-* provider: provider configuration validation requires an edgerc file configured and present even when one should not be needed.
-* provider: support for configuring the provider via an inline provider, dns, or gtm block no longer works.  Users should use edgerc file or terraform environment args to configure instead.
+* provider: provider configuration validation requires an edgerc file configured and present even when environment variable-based configuration was used.
+* provider: support for configuring the provider via an inline provider block (`property`, `dns`, or `gtm`) no longer works.  Users should use edgerc file or Terraform environment args to configure instead.
 
 ## 0.10.1 (Not released)
 
@@ -48,7 +49,7 @@
 * resources/akamai_edge_hostname: edge_hostname field should be provided with an ending of edgesuite.net, edgekey.net, or akamaized.net.  If a required suffix is not provided then edgesuite.net is appended as default.
 #### KNOWN BUGS:
 * provider: provider configuration validation requires an edgerc file configured and present even when one should not be needed.
-* provider: support for configuring the provider via an inline provider, dns, or gtm block no longer works.  Users should use edgerc file or terraform environment args to configure instead.
+* provider: support for configuring the provider via an inline provider block (`property`, `dns`, or `gtm`) no longer works.  Users should use edgerc file or Terraform environment args to configure instead.
 #### ENHANCEMENTS:
 * provider: improved error handling and improved message consistency
 * provider: release notes categorize updates according to Terraform best practices guide.
@@ -64,7 +65,7 @@
 * datasource/akamai_property_rules: comparisons in rule tree now properly ignore equivalent values with attribute order differences.
 * provider: updated all error messages to better identify issues and actions required by user
 * provider: fixed crash due to unexpected data types from unexpected API responses
-* provider: fixed crash due to unexpected data types in terraform files
+* provider: fixed crash due to unexpected data types in Terraform files
 * provider: errors now get reported using Terraform diagnostics allowing much more detail to be passed to user when an error occurs.
 
 ## 0.9.1 (Sept 02, 2020)
@@ -77,7 +78,7 @@
 
 #### KNOWN BUGS:
 * provider: provider configuration validation requires an edgerc file configured and present even when one should not be needed.
-* provider: support for configuring the provider via an inline provider, dns, or gtm block no longer works.  Users should use edgerc file or terraform environment args to configure instead.
+* provider: support for configuring the provider via an inline provider block (`property`, `dns`, or `gtm`) no longer works.  Users should use edgerc file or Terraform environment args to configure instead.
 
 #### BUG FIXES:
 * [FIX] datasource akamai_group will no longer panic when contract not provided

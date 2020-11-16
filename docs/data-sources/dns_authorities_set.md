@@ -28,6 +28,6 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
 * `authorities` — A list of authorities

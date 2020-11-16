@@ -38,7 +38,7 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
 * `id` — The data resource id. Format: <domain>:default_datacenter:<datacenter_id>
 * `datacenter_id` — default datacenter Id

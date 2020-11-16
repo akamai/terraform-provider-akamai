@@ -18,22 +18,28 @@ description: |-
 If you have an existing property you would like to migrate to Terraform we recommend the following process:
 
 1. Export your rules.json from your existing property (using the API, CLI, or Control Center)
-2. Create a terraform configuration that pulls in the rules.json
-3. Assign a temporary hostname for testing (hint: you can use the edge hostname as the public hostname to allow testing without changing any DNS)
+2. Create a Terraform configuration that pulls in the rules.json
+3. Assign a temporary hostname for testing (hint: you can use the edge hostname as the public hostname to allow testing 
+without changing any DNS)
 4. Activate the property and test thoroughly
 5. Once testing has concluded successfully, update the configuration to assign the production public hostnames
 6. Activate again
 
-Once this second activation completes Akamai will automatically route all traffic to the new property and will deactivate the original property entirely if all hostnames are no longer pointed at it.
+Once this second activation completes Akamai will automatically route all traffic to the new property and will 
+deactivate the original property entirely if all hostnames are no longer pointed at it.
 
-Since Terraform assumes it is the de-facto state for any resource it leverages, we strongly recommend creating a new property based off an existing rules.json tree when starting with the provider to mitigate any risks to existing setups. 
+Since Terraform assumes it is the de-facto state for any resource it leverages, we strongly recommend creating a new 
+property based off an existing rules.json tree when starting with the provider to mitigate any risks to existing setups. 
 
 ## Dynamic Rule Trees Using Templates
 
-If you wish to inject terraform data into your rules.json, for example an origin address, you should use rules templates to do so.  It has many benefits over Terraform templates in that is supports recursion and PMCLI templates:
+If you wish to inject Terraform interpolations into your rules.json, for example an origin address, you should use rules 
+templates to do so.  akamai_property_rules_template data source has many benefits including recursive variable 
+replacement and the ability to directly consume Property Manager CLI snippet templates:
 
 
-More advanced users want different properties to use different rule sets. This can be done by maintaining a base rule set and then importing individual rule sets. To do this we first create a directory structure - something like:
+More advanced users want different properties to use different rule sets. This can be done by maintaining a base rule 
+set and then importing individual rule sets. To do this we first create a directory structure - something like:
 
 ```dir
 rules/main.json
@@ -42,7 +48,8 @@ rules/snippets/performance.json
 …
 ```
 
-The "rules" directory contains a single file "main.json" and a sub directory containing all rule snippets. Here, we would provide a basic template for our json.
+The "rules" directory contains a single file "main.json" and a sub directory containing all rule snippets. Here, we 
+would provide a basic template for our json.
 
 ```json
 {
@@ -60,10 +67,11 @@ The "rules" directory contains a single file "main.json" and a sub directory con
 }
 ```
 
-This enables our rules template to process the rules.json & pull each fragment that's referenced. As before, we can utilize the rendered output in our property definition.
+This enables our rules template to process the rules.json and pull each fragment that's referenced. The rendered output 
+can be set into property definition resources.
 
 ```hcl
-data "akamai_rules_template" "example" {
+data "akamai_property_rules_template" "example" {
   template_file = abspath("${path.root}/rules/main.json")
   variables {
       name  = "secure"
@@ -79,7 +87,7 @@ data "akamai_rules_template" "example" {
 
 resource "akamai_property" "example" {
     ....
-    rules  = data.akamai_rules_template.example.json
+    rules  = data.akamai_property_rules_template.example.json
 }
 ```
 
@@ -111,9 +119,9 @@ It is recommended that the existing zone configuration and master file (using th
 ### Via Step By Step Construction
 
 1. Download your existing zone master file configuration (using the API) as a backup and reference.
-2. Using the zone master file as a reference, create a terraform configuration representing the the existing zone and all contained recordsets. Note: In creating each resource block, make note of `required`, `optional` and `computed` fields.
+2. Using the zone master file as a reference, create a Terraform configuration representing the the existing zone and all contained recordsets. Note: In creating each resource block, make note of `required`, `optional` and `computed` fields.
 3. Use the Terraform Import command to import the existing zone and contained recordsets; singularly and in serial order.
-4. (Optional, Recommended) Review and compare the zone master file content and created terraform.tfstate to confirm the zone and all recordsets are represented correctly
+4. (Optional, Recommended) Review and compare the zone master file content and created Terraform.tfstate to confirm the zone and all recordsets are represented correctly
 5. Execute a `Terraform Plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the Edge DNS Backend.
 
 Since Terraform assumes it is the de-facto state for any resource it leverages, we strongly recommend staging the zone and recordset imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to the existing Edge DNS zone configuration.
@@ -140,7 +148,7 @@ It is recommended that the existing domain configuration (using the API or Contr
 ### Via Step By Step Construction
 
 1. Download your existing domain configuration (using the API or Control Center) as a backup and reference.
-2. Using the domain download as a reference, create a terraform configuration representing the the existing domain and all contained GTM objects. Note: In creating each resource block, make note of `required`, `optional` and `computed` fields.
+2. Using the domain download as a reference, create a Terraform configuration representing the the existing domain and all contained GTM objects. Note: In creating each resource block, make note of `required`, `optional` and `computed` fields.
 3. Use the Terraform Import command to import the existing domain and contained objects; singularly and in serial order.
 4. (Optional, Recommended) Review domain download content and created terraform.tfstate to confirm the domain and all objects are represented correctly
 5. Execute a `Terraform Plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the GTM Backend.
@@ -152,7 +160,7 @@ Since Terraform assumes it is the de-facto state for any resource it leverages, 
 Terraform presents not only fields defined in the configuration, but all defined resource fields, during a Plan or Apply action. Fields are either required, optional or computed as specified in each resource description. Default values for fields will display if not explicitly configured. In many cases, the default will be zero, empty string or empty list depending on the the type. These default or empty values are informational and not included in resource updates.
 
 ## How does Terraform handle changes made through other clients (UI, APIs)?
-We recommend that anyone using Terraform should manage all changes through the provider. However in case this isn't true in emergency scenarios, the terraform state tree will become inconsistent. The next 'terraform plan' will warn and suggest changes. In case you make the same change in the UI and terraform, the state will go back to being consistent and the warning will go away.
+We recommend that anyone using Terraform should manage all changes through the provider. However in case this isn't true in emergency scenarios, the Terraform state tree will become inconsistent. The next 'terraform plan' will warn and suggest changes. In case you make the same change in the UI and Terraform, the state will go back to being consistent and the warning will go away.
 
 ## Upgrading the Akamai Provider
 

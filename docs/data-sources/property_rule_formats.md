@@ -9,8 +9,9 @@ description: |-
 # akamai_property_rule_formats
 
 
-Use `akamai_property_rule_formats` data source to query the list of know rule formats.  These formats can be used to 'lock'
-your tools to a known format and avoid syntax changes that the `latest` format will undergo a few times a year.
+Use `akamai_property_rule_formats` data source to query the list of known rule formats.  These formats can be used to 'freeze'
+the api syntax at a known format and avoid syntax changes that the `latest` format will undergo where behaviors and 
+criteria undergo structural changes.
 
 ## Example Usage
 
@@ -28,27 +29,26 @@ output "property_match" {
 
 ## Argument Reference
 
-No arguments are supported:
+There are no arguments available for this data source.
 
 ## Attributes Reference
 
-* `json` — PAPIs response to the query.
+The following attributes are returned:
 
-Example PAPI response is of the form that follows:
+* `formats` — list of supported format identifiers.
+
+Example response is of the form that follows:
 ```json
-{
-    "ruleFormats": {
-        "items": [
-            "latest",
-            "v2015-08-17",
-            "v2015–08–17",
-            "v2016–11–15",
-            "v2017–06–19",
-            "v2018–02–27",
-            "v2018–09–12",
-            "v2019–07–25",
-            "v2020–03–04"
-        ]
-    }
-}
+[
+    "latest",
+    "v2015-08-17",
+    "v2015–08–17",
+    "v2016–11–15",
+    "v2017–06–19",
+    "v2018–02–27",
+    "v2018–09–12",
+    "v2019–07–25",
+    "v2020–03–04",
+    "v2020–11–01"
+]
 ```

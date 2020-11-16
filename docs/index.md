@@ -118,21 +118,28 @@ To specify credentials inline, use the `property` or `dns` block to define crede
 
 #### Argument Reference
 
-* `property` — (Optional) Provide credentials for the Property Manager API (papi)
+* `config` — (Optional) Provide credentials for Terraform provider
   * `host` — (Required) The credential hostname
   * `access_token` — (Required) The credential access_token
   * `client_token` — (Required) The credential client_token
   * `client_secret` — (Required) The credential client_secret
   * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
   * `account_key` — (Optional) Account switch key to manage multiple accounts
-* `dns` — (Optional) Provide credentials for the Edge DNS API (config-dns)
+* `property` — (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `property` tag name
   * `host` — (Required) The credential hostname
   * `access_token` — (Required) The credential access_token
   * `client_token` — (Required) The credential client_token
   * `client_secret` — (Required) The credential client_secret
   * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
   * `account_key` — (Optional) Account switch key to manage multiple accounts
-* `gtm` — (Optional) Provide credentials for the GTM Config API (config-gtm)
+* `dns` — (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `dns` tag name
+  * `host` — (Required) The credential hostname
+  * `access_token` — (Required) The credential access_token
+  * `client_token` — (Required) The credential client_token
+  * `client_secret` — (Required) The credential client_secret
+  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
+  * `account_key` — (Optional) Account switch key to manage multiple accounts
+* `gtm` — (Optional) (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `gtm` tag name
   * `host` — (Required) The credential hostname
   * `access_token` — (Required) The credential access_token
   * `client_token` — (Required) The credential client_token

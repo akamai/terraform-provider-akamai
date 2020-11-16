@@ -10,11 +10,11 @@ description: |-
 
 
 Use `akamai_properties` data source to query and retrieve the list of properties for a group and contract 
-that the current API token has access to. 
+that the current EdgeGrid API client token has access to. 
 
 ## Example Usage
 
-Given a contract and group return what properties exist for the user:
+Return properties associated with the EdgeGrid API client token given a contract and group:
 
 datasource-example.tf
 ```hcl-terraform
@@ -37,6 +37,6 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-The following are the return attributes:
+The following attributes are returned:
 
-* `json` — PAPIs response to the query.
+* `properties` — Provisioning API response containing a list of properties available for the provided contract and group.

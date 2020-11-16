@@ -10,7 +10,7 @@ description: |-
 
 The `akamai_property` resource represents an Akamai property configuration, allowing you to create,
 update, and activate properties on the Akamai platform. NOTE: in 0.10 and earlier version this resource also 
-controlled cpcode, origin, rules, and hostname associations but the logic was broken out into individual resources 
+controlled cpcode, origin, and variable associations but those convenience accessors were dropped 
 starting with 1.0.
 
 ## Example Usage
@@ -30,7 +30,7 @@ resource "akamai_property" "example" {
       "sub.example.org" = "sub.example.org.edgesuite.net"
     }
     rule_format = "v2020-03-04"
-    rules       = data.akamai_rules_template.example.json
+    rules       = data.akamai_property_rules_template.example.json
 }
 ```
 
@@ -45,12 +45,12 @@ The following arguments are supported:
 * `product_id` — (Required) The Product ID. Can be provided with or without `prd_` prefix.
 * `hostnames` — (Required) A map of public hostnames to edge hostnames (e.g. `{"example.org" = "example.org.edgesuite.net"}`)
 * `rules` — (Required) A JSON encoded rule tree for given property. This should be provided in a form of complete json rule tree (see: [`akamai_property_rules`](../data-sources/property_rules.md))
-* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)) if not provided then the latest version will be used.
+* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)) to freeze behaviors and criteria at a known format if not provided then the latest version will be used and the rule structure requirements will change over time.
 
 ### Deprecated Arguments
-* `contract` — (Deprecated) synonym of contract_id for legacy purposes
-* `group` — (Deprecated) synonym of group_id for legacy purposes
-* `product` — (Deprecated) synonym of product_id for legacy purposes
+* `contract` — (Deprecated) synonym of `contract_id` for legacy purposes. Cannot be used with `contract_id`.
+* `group` — (Deprecated) synonym of `group_id` for legacy purposes Cannot be used with `group_id`.
+* `product` — (Deprecated) synonym of `product_id` for legacy purposes.  Cannot be used with `product_id`.
 
 ## Attribute Reference
 

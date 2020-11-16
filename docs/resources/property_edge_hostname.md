@@ -35,7 +35,7 @@ The following arguments are supported:
 * `product_id` — (Required) The Product ID. Can be provided with or without `prd_` prefix.
 * `edge_hostname` — (Required) One or more edge hostnames (must be <= to the number of public hostnames).
 * `certificate` — (Optional) The certificate enrollment ID. Required when `edge_hostname` ends in edgekey.net.
-* `ip_behavior` - (Optional) way to directly specify IP protocol hostname supports : `IPV4`, `IPV6` or `IPV6_COMPLIANCE`
+* `ip_behavior` - (Optional) Directly specify IP protocol the hostname supports. Must be one of : `IPV4`, `IPV6_PERFORMANCE` or `IPV6_COMPLIANCE`
 
 ### Deprecated Arguments
 * `contract` — (Deprecated) synonym of contract_id for legacy purposes
@@ -47,4 +47,4 @@ The following arguments are supported:
 
 The following attributes are returned:
 
-* `ip_behavior` — One of `IPV4`, `IPV6` or `IPV6_COMPLIANCE` to specify whether hostname will use IPV4 IPV6 or both.* `ip_behavior` — One of `IPV4`, `IPV6` or `IPV6_COMPLIANCE` to specify whether hostname will use IPV4 IPV6 or both.
+* `ip_behavior` — One of `IPV4`, `IPV6` or `IPV6_COMPLIANCE` to specify whether hostname will use IPV4 IPV6 or both.* `ip_behavior` — One of `IPV4`, `IPV6_PERFORMANCE` or `IPV6_COMPLIANCE` to specify whether hostname will use IPV4 IPV6 or both.
