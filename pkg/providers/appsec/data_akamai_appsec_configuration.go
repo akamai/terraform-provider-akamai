@@ -18,10 +18,6 @@ func dataSourceConfiguration() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
 			"config_id": {
 				Type:     schema.TypeInt,
 				Computed: true,

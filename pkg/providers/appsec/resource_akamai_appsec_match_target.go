@@ -31,7 +31,7 @@ func resourceMatchTarget() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"json": {
+			"match_target": {
 				Type:             schema.TypeString,
 				Required:         true,
 				DiffSuppressFunc: suppressEquivalentJSONDiffs,
@@ -51,7 +51,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	createMatchTarget := v2.CreateMatchTargetRequest{}
 
-	jsonpostpayload := d.Get("json")
+	jsonpostpayload := d.Get("match_target")
 
 	json.Unmarshal([]byte(jsonpostpayload.(string)), &createMatchTarget)
 
@@ -65,7 +65,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.Set("json", string(jsonBody))
+	d.Set("match_target", string(jsonBody))
 
 	d.Set("match_target_id", postresp.TargetID)
 
@@ -81,7 +81,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	updateMatchTarget := v2.UpdateMatchTargetRequest{}
 
-	jsonpostpayload := d.Get("json")
+	jsonpostpayload := d.Get("match_target")
 
 	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTarget)
 	updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
@@ -89,7 +89,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.Set("json", string(jsonBody))
+	d.Set("match_target", string(jsonBody))
 
 	resp, err := client.UpdateMatchTarget(ctx, updateMatchTarget)
 	if err != nil {
@@ -100,7 +100,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.Set("json", string(jsonBody))
+	d.Set("match_target", string(jsonBody))
 	return resourceMatchTargetRead(ctx, d, m)
 }
 
@@ -167,7 +167,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.Set("json", string(jsonBody))
+	d.Set("match_target", string(jsonBody))
 
 	d.Set("match_target_id", matchtarget.TargetID)
 	d.SetId(strconv.Itoa(matchtarget.TargetID))

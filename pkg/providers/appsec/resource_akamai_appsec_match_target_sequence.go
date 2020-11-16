@@ -13,6 +13,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -33,9 +34,10 @@ func resourceMatchTargetSequence() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"json": {
+			"match_target_sequence": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				ValidateFunc:  validation.StringIsJSON,
 				ConflictsWith: []string{"sequence_map"},
 			},
 			"type": {
@@ -47,7 +49,7 @@ func resourceMatchTargetSequence() *schema.Resource {
 				Type:             schema.TypeMap,
 				Optional:         true,
 				Elem:             &schema.Schema{Type: schema.TypeString},
-				ConflictsWith:    []string{"json"},
+				ConflictsWith:    []string{"match_target_sequence"},
 				DiffSuppressFunc: suppressJsonProvidedSimple,
 			},
 		},
@@ -62,7 +64,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	updateMatchTargetSequence := v2.UpdateMatchTargetSequenceRequest{}
 	targetsequence := v2.TargetSequence{}
 
-	jsonpostpayload, ok := d.GetOk("json")
+	jsonpostpayload, ok := d.GetOk("match_target_sequence")
 	if ok {
 
 		json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTargetSequence)

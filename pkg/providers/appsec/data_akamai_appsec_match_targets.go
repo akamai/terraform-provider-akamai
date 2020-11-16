@@ -24,6 +24,10 @@ func dataSourceMatchTargets() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
+			"match_target_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -61,7 +65,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "DSmatchTarget", matchtargets)
+	outputtext, err := RenderTemplates(ots, "matchTargetDS", matchtargets)
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}

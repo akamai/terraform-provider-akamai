@@ -28,7 +28,7 @@ func resourceCustomRule() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"rules": {
+			"custom_rule": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsJSON,
@@ -54,7 +54,7 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	createCustomRule.ConfigID = configid
 
-	jsonpostpayload := d.Get("rules").(string)
+	jsonpostpayload := d.Get("custom_rule").(string)
 	json.Unmarshal([]byte(jsonpostpayload), &createCustomRule)
 
 	customrule, err := client.CreateCustomRule(ctx, createCustomRule)
@@ -83,7 +83,7 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 	updateCustomRule.ConfigID = configid
 
 	updateCustomRule.ID, _ = strconv.Atoi(d.Id())
-	jsonpostpayload := d.Get("rules").(string)
+	jsonpostpayload := d.Get("custom_rule").(string)
 	json.Unmarshal([]byte(jsonpostpayload), &updateCustomRule)
 
 	_, erru := client.UpdateCustomRule(ctx, updateCustomRule)

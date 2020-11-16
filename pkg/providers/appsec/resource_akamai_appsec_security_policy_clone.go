@@ -30,15 +30,15 @@ func resourceSecurityPolicyClone() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"create_from_security_policy": {
+			"create_from_security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"policy_name": {
+			"security_policy_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"policy_prefix": {
+			"security_policy_prefix": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -70,19 +70,19 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 	}
 	createSecurityPolicyClone.Version = version
 
-	createfromsecuritypolicy, err := tools.GetStringValue("create_from_security_policy", d)
+	createfromsecuritypolicy, err := tools.GetStringValue("create_from_security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	createSecurityPolicyClone.CreateFromSecurityPolicy = createfromsecuritypolicy
 
-	policyname, err := tools.GetStringValue("policy_name", d)
+	policyname, err := tools.GetStringValue("security_policy_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	createSecurityPolicyClone.PolicyName = policyname
 
-	policyprefix, err := tools.GetStringValue("policy_prefix", d)
+	policyprefix, err := tools.GetStringValue("security_policy_prefix", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -95,8 +95,8 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 	}
 
 	d.Set("policy_id", spcr.PolicyID)
-	d.Set("policy_name", spcr.PolicyName)
-	d.Set("policy_prefix", createSecurityPolicyClone.PolicyPrefix)
+	d.Set("security_policy_name", spcr.PolicyName)
+	d.Set("security_policy_prefix", createSecurityPolicyClone.PolicyPrefix)
 	d.SetId(spcr.PolicyID)
 
 	return resourceSecurityPolicyCloneRead(ctx, d, m)
@@ -129,7 +129,7 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	d.Set("policy_name", securitypolicyclone.PolicyName)
+	d.Set("security_policy_name", securitypolicyclone.PolicyName)
 	d.Set("policy_id", securitypolicyclone.PolicyID)
 	d.SetId(securitypolicyclone.PolicyID)
 

@@ -12,7 +12,7 @@ import (
 //suppressJsonProvided to handle when json supplied vs HCL values
 func suppressJsonProvidedSimple(_, old, new string, d *schema.ResourceData) bool {
 
-	json := d.Get("json").(string)
+	json := d.Get("match_target").(string)
 	if json != "" {
 		if old == "" && new == "" {
 			return true
@@ -24,10 +24,10 @@ func suppressJsonProvidedSimple(_, old, new string, d *schema.ResourceData) bool
 }
 
 func suppressJsonProvided(k, old, new string, d *schema.ResourceData) bool {
-	json := d.Get("json").(string)
+	json := d.Get("match_target").(string)
 	if json != "" {
 
-		if k == "json" {
+		if k == "match_target" {
 
 			return compareMatchTargetsJSON(old, new)
 
@@ -50,7 +50,7 @@ func suppressJsonProvided(k, old, new string, d *schema.ResourceData) bool {
 			return false
 		}
 	} else {
-		if k == "json" {
+		if k == "match_target" {
 			return true
 		}
 	}
@@ -62,6 +62,7 @@ func suppressJsonProvided(k, old, new string, d *schema.ResourceData) bool {
 }
 
 func suppressEquivalentJSONDiffs(k, old, new string, d *schema.ResourceData) bool {
+	//TODO remove old HCL driven parameters
 	if new == "" {
 		jsonfromschema, err := matchTargetAsJSONDString(d)
 		if err == nil {

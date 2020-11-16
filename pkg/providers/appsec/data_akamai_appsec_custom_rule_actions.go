@@ -28,6 +28,10 @@ func dataSourceCustomRuleActions() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"custom_rule_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
