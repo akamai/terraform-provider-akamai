@@ -2,629 +2,244 @@ package property
 
 import (
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
+	"log"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestResourcePropertyRules(t *testing.T) {
+var testAccAkamaiPropertyRulesConfig = `
+provider "akamai" {
+  papi_section = "papi"
+  edgerc = "~/.edgerc"
+}
 
-	t.Run("new rules with latest version with update", func(t *testing.T) {
-		newRules := papi.Rules{
-			Behaviors: []papi.RuleBehavior{
-				{
-					Name: "beh_1",
-				},
-			},
-			Name:                "default",
-			Options:             papi.RuleOptions{IsSecure: true},
-			CriteriaMustSatisfy: "all",
+output "json" {
+	value = "${akamai_property_rules.rules.json}"
+}
+
+resource "akamai_property_rules" "rules" {
+ 	rules {
+		behavior {
+			name = "origin"
+        	option {
+       			key ="cacheKeyHostname"
+            	value = "ORIGIN_HOSTNAME"
+        	}
+			option {
+    			key ="compress"
+     			value = true
+     		}
+    		option {
+    			key ="enableTrueClientIp"
+     			value = false
+     		}
+    		option {
+    			key ="forwardHostHeader"
+     			value = "REQUEST_HOST_HEADER"
+     		}
+    		option {
+    			key ="hostname"
+     			value = "exampleterraform.io"
+     		}
+    		option {
+    			key ="httpPort"
+     			value = 80
+     		}
+    		option {
+    			key ="httpsPort"
+     			value = 443
+     		}
+    		option {
+    			key ="originSni"
+     			value = true
+     		}
+    		option {
+    			key ="originType"
+     			value = "CUSTOMER"
+     		}
+    		option {
+    			key ="verificationMode"
+     			value = "PLATFORM_SETTINGS"
+     		}
+    		option {
+    			key ="originCertificate"
+     			value = ""
+     		}
+    		option {
+    			key ="ports"
+     			value = ""
+     		}
+      	}
+		behavior {
+			name ="cpCode"
+			option {
+				key ="id"
+				value = "cp-code-id"
+			}
 		}
-		client := new(mockpapi)
-		updatedRules := papi.Rules{
-			Behaviors: []papi.RuleBehavior{
-				{
-					Name: "beh_2",
-				},
-			},
-			Name:                "updated",
-			Options:             papi.RuleOptions{IsSecure: true},
-			CriteriaMustSatisfy: "all",
+		behavior {
+			name ="caching"
+			option {
+				key ="behavior"
+				value = "MAX_AGE"
+			}
+			option {
+                key ="mustRevalidate"
+                value = "false"
+			}
+            option {
+                key ="ttl"
+                value = "1d"
+            }
 		}
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						PreConfig: func() {
-							client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
-								PropertyID: "prp_1",
-								ContractID: "ctr_1",
-								GroupID:    "grp_1",
-							}).Return(&papi.GetPropertyVersionsResponse{
-								PropertyID:   "prp_1",
-								PropertyName: "property 1",
-								AccountID:    "acc_1",
-								ContractID:   "ctr_1",
-								GroupID:      "grp_1",
-								Version: papi.PropertyVersionGetItem{
-									ProductID:        "prd_1",
-									ProductionStatus: "ACTIVE",
-									PropertyVersion:  1,
-								},
-							}, nil).Times(4)
-							client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-								Rules:           papi.RulesUpdate{Rules: newRules},
-							}).Return(&papi.UpdateRulesResponse{
-								AccountID:       "acc_1",
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-								Errors: []papi.RuleError{
-									{
-										Type:  "generic",
-										Title: "some error",
-									},
-								},
-							}, nil).Once()
-							client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-							}).Return(&papi.GetRuleTreeResponse{
-								Response: papi.Response{
-									AccountID:  "acc_1",
-									ContractID: "ctr_1",
-									GroupID:    "grp_1",
-									Errors: []*papi.Error{
-										{
-											Type:  "generic",
-											Title: "some error",
-										},
-									},
-								},
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-							}, nil).Times(3)
-						},
-						Config: loadFixtureString("testdata/TestResourcePropertyRules/latest_version_create.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "version", "1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "rules", compactJSON(loadFixtureBytes("testdata/TestResourcePropertyRules/rules_create.json"))),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "property_id", "prp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "contract_id", "ctr_1"),
-						),
-					},
-					{
-						PreConfig: func() {
-							client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
-								PropertyID: "prp_1",
-								ContractID: "ctr_1",
-								GroupID:    "grp_1",
-							}).Return(&papi.GetPropertyVersionsResponse{
-								PropertyID:   "prp_1",
-								PropertyName: "property 1",
-								AccountID:    "acc_1",
-								ContractID:   "ctr_1",
-								GroupID:      "grp_1",
-								Version: papi.PropertyVersionGetItem{
-									ProductID:        "prd_1",
-									ProductionStatus: "ACTIVE",
-									PropertyVersion:  1,
-								},
-							}, nil).Once()
-							client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
-								PropertyID: "prp_1",
-								ContractID: "ctr_1",
-								GroupID:    "grp_1",
-							}).Return(&papi.GetPropertyVersionsResponse{
-								PropertyID:   "prp_1",
-								PropertyName: "property 1",
-								AccountID:    "acc_1",
-								ContractID:   "ctr_1",
-								GroupID:      "grp_1",
-								Version: papi.PropertyVersionGetItem{
-									ProductID:        "prd_1",
-									ProductionStatus: "ACTIVE",
-									PropertyVersion:  2,
-								},
-							}, nil).Twice()
-							client.On("CreatePropertyVersion", mock.Anything, papi.CreatePropertyVersionRequest{
-								PropertyID: "prp_1",
-								ContractID: "ctr_1",
-								GroupID:    "grp_1",
-								Version: papi.PropertyVersionCreate{
-									CreateFromVersion: 1,
-								},
-							}).Return(&papi.CreatePropertyVersionResponse{
-								PropertyVersion: 2,
-							}, nil).Once()
-							client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 2,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-								Rules:           papi.RulesUpdate{Rules: updatedRules},
-							}).Return(&papi.UpdateRulesResponse{
-								AccountID:       "acc_1",
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								PropertyID:      "prp_1",
-								PropertyVersion: 2,
-								Rules:           newRules,
-								Errors: []papi.RuleError{
-									{
-										Type:  "generic",
-										Title: "some error",
-									},
-								},
-							}, nil).Once()
-							client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 2,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-							}).Return(&papi.GetRuleTreeResponse{
-								Response: papi.Response{
-									AccountID:  "acc_1",
-									ContractID: "ctr_1",
-									GroupID:    "grp_1",
-								},
-								PropertyID:      "prp_1",
-								PropertyVersion: 2,
-								Rules:           updatedRules,
-							}, nil).Twice()
-						},
-						Config: loadFixtureString("testdata/TestResourcePropertyRules/latest_version_update.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "version", "2"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "rules", compactJSON(loadFixtureBytes("testdata/TestResourcePropertyRules/rules_update.json"))),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "property_id", "prp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "contract_id", "ctr_1"),
-						),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
+    }
+}
+`
 
-	t.Run("new rules, diff suppressed", func(t *testing.T) {
-		newRules := papi.Rules{
-			Behaviors: []papi.RuleBehavior{
-				{
-					Name: "beh_1",
-				},
+var errorRegex, err = regexp.Compile("The akamai_property_rules resource has moved to a data source, please change 'resource \"akamai_property_rules\"' to 'data \"akamai_property_rules\"")
+
+func TestAccAkamaiPropertyRules_basic(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAkamaiPropertyRulesDestroy,
+		Steps: []resource.TestStep{
+			{
+				ExpectError: errorRegex,
+				Config:      testAccAkamaiPropertyRulesConfig,
 			},
-			Name:                "default",
-			Options:             papi.RuleOptions{IsSecure: true},
-			CriteriaMustSatisfy: "all",
+		},
+	})
+}
+
+var testAccAkamaiPropertyRulesSiteshield = `
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+output "json" {
+	value = "${akamai_property_rules.rules.json}"
+}
+
+resource "akamai_property_rules" "rules" {
+ 	rules {
+		behavior {
+			name = "siteShield"
+			option {
+				key = "ssmap"
+				value = "mapname.akamai.net"
+			}
 		}
-		client := new(mockpapi)
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						PreConfig: func() {
-							client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
-								PropertyID: "prp_1",
-								ContractID: "ctr_1",
-								GroupID:    "grp_1",
-							}).Return(&papi.GetPropertyVersionsResponse{
-								PropertyID:   "prp_1",
-								PropertyName: "property 1",
-								AccountID:    "acc_1",
-								ContractID:   "ctr_1",
-								GroupID:      "grp_1",
-								Version: papi.PropertyVersionGetItem{
-									ProductID:        "prd_1",
-									ProductionStatus: "ACTIVE",
-									PropertyVersion:  1,
-								},
-							}, nil)
-							client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-								Rules:           papi.RulesUpdate{Rules: newRules},
-							}).Return(&papi.UpdateRulesResponse{
-								AccountID:       "acc_1",
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-								Errors: []papi.RuleError{
-									{
-										Type:  "generic",
-										Title: "some error",
-									},
-								},
-							}, nil).Once()
-							client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-							}).Return(&papi.GetRuleTreeResponse{
-								Response: papi.Response{
-									AccountID:  "acc_1",
-									ContractID: "ctr_1",
-									GroupID:    "grp_1",
-									Errors: []*papi.Error{
-										{
-											Type:  "generic",
-											Title: "some error",
-										},
-									},
-								},
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-							}, nil)
-						},
-						Config: loadFixtureString("testdata/TestResourcePropertyRules/latest_version_create.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "version", "1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "rules", compactJSON(loadFixtureBytes("testdata/TestResourcePropertyRules/rules_create.json"))),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "property_id", "prp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "contract_id", "ctr_1"),
-						),
-					},
-					{
-						Config: loadFixtureString("testdata/TestResourcePropertyRules/latest_version_create.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "version", "1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "rules", compactJSON(loadFixtureBytes("testdata/TestResourcePropertyRules/rules_create.json"))),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "property_id", "prp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "contract_id", "ctr_1"),
-						),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
+	}
+}
+`
 
-	t.Run("error fetching latest version on create", func(t *testing.T) {
-		client := new(mockpapi)
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						PreConfig: func() {
-							client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
-								PropertyID: "prp_1",
-								ContractID: "ctr_1",
-								GroupID:    "grp_1",
-							}).Return(nil, fmt.Errorf("oops")).Once()
-						},
-						Config:      loadFixtureString("testdata/TestResourcePropertyRules/latest_version_create.tf"),
-						ExpectError: regexp.MustCompile("oops"),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-
-	t.Run("invalid rules JSON", func(t *testing.T) {
-		client := new(mockpapi)
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config:      loadFixtureString("testdata/TestResourcePropertyRules/invalid_rules_json.tf"),
-						ExpectError: regexp.MustCompile("invalid JSON"),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-
-	t.Run("new contract ID on update", func(t *testing.T) {
-		client := new(mockpapi)
-		newRules := papi.Rules{
-			Behaviors: []papi.RuleBehavior{
-				{
-					Name: "beh_1",
-				},
+func TestAkamaiPropertyRules_siteshield(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				ExpectError: errorRegex,
+				Destroy:     false,
+				Config:      testAccAkamaiPropertyRulesSiteshield,
 			},
-			Name:                "default",
-			Options:             papi.RuleOptions{IsSecure: true},
-			CriteriaMustSatisfy: "all",
-		}
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						PreConfig: func() {
-							client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
-								PropertyID: "prp_1",
-								ContractID: "ctr_1",
-								GroupID:    "grp_1",
-							}).Return(&papi.GetPropertyVersionsResponse{
-								PropertyID:   "prp_1",
-								PropertyName: "property 1",
-								AccountID:    "acc_1",
-								ContractID:   "ctr_1",
-								GroupID:      "grp_1",
-								Version: papi.PropertyVersionGetItem{
-									ProductID:        "prd_1",
-									ProductionStatus: "ACTIVE",
-									PropertyVersion:  1,
-								},
-							}, nil).Times(4)
-							client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-								Rules:           papi.RulesUpdate{Rules: newRules},
-							}).Return(&papi.UpdateRulesResponse{
-								AccountID:       "acc_1",
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-								Errors: []papi.RuleError{
-									{
-										Type:  "generic",
-										Title: "some error",
-									},
-								},
-							}, nil).Once()
-							client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-							}).Return(&papi.GetRuleTreeResponse{
-								Response: papi.Response{
-									AccountID:  "acc_1",
-									ContractID: "ctr_1",
-									GroupID:    "grp_1",
-								},
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-							}, nil).Times(3)
-						},
-						Config: loadFixtureString("testdata/TestResourcePropertyRules/latest_version_create.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "version", "1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "rules", compactJSON(loadFixtureBytes("testdata/TestResourcePropertyRules/rules_create.json"))),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "property_id", "prp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "contract_id", "ctr_1"),
-						),
-					},
-					{
-						Config:      loadFixtureString("testdata/TestResourcePropertyRules/update_new_contract.tf"),
-						ExpectError: regexp.MustCompile("contract_id field is immutable and cannot be updated"),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
+		},
 	})
+}
 
-	t.Run("new group ID on update", func(t *testing.T) {
-		client := new(mockpapi)
-		newRules := papi.Rules{
-			Behaviors: []papi.RuleBehavior{
-				{
-					Name: "beh_1",
-				},
+var testAccAkamaiPropertyRulesCPCode = `
+provider "akamai" {
+	  edgerc = "~/.edgerc"
+}
+
+output "json" {
+	value = "${akamai_property_rules.rules.json}"
+}
+
+resource "akamai_property_rules" "rules" {
+ 	rules {
+		behavior {
+			name = "cpCode"
+			option {
+				key = "id"
+				value = "cpc_12345"
+			}
+		}
+	}
+}
+`
+
+func TestAkamaiPropertyRules_cpCode(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				ExpectError: errorRegex,
+				Destroy:     false,
+				Config:      testAccAkamaiPropertyRulesCPCode,
 			},
-			Name:                "default",
-			Options:             papi.RuleOptions{IsSecure: true},
-			CriteriaMustSatisfy: "all",
-		}
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						PreConfig: func() {
-							client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
-								PropertyID: "prp_1",
-								ContractID: "ctr_1",
-								GroupID:    "grp_1",
-							}).Return(&papi.GetPropertyVersionsResponse{
-								PropertyID:   "prp_1",
-								PropertyName: "property 1",
-								AccountID:    "acc_1",
-								ContractID:   "ctr_1",
-								GroupID:      "grp_1",
-								Version: papi.PropertyVersionGetItem{
-									ProductID:        "prd_1",
-									ProductionStatus: "ACTIVE",
-									PropertyVersion:  1,
-								},
-							}, nil).Times(4)
-							client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-								Rules:           papi.RulesUpdate{Rules: newRules},
-							}).Return(&papi.UpdateRulesResponse{
-								AccountID:       "acc_1",
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-								Errors: []papi.RuleError{
-									{
-										Type:  "generic",
-										Title: "some error",
-									},
-								},
-							}, nil).Once()
-							client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-							}).Return(&papi.GetRuleTreeResponse{
-								Response: papi.Response{
-									AccountID:  "acc_1",
-									ContractID: "ctr_1",
-									GroupID:    "grp_1",
-								},
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-							}, nil).Times(3)
-						},
-						Config: loadFixtureString("testdata/TestResourcePropertyRules/latest_version_create.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "version", "1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "rules", compactJSON(loadFixtureBytes("testdata/TestResourcePropertyRules/rules_create.json"))),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "property_id", "prp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "contract_id", "ctr_1"),
-						),
-					},
-					{
-						Config:      loadFixtureString("testdata/TestResourcePropertyRules/update_new_group.tf"),
-						ExpectError: regexp.MustCompile("group_id field is immutable and cannot be updated"),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
+		},
 	})
+}
 
-	t.Run("new property ID on update", func(t *testing.T) {
-		client := new(mockpapi)
-		newRules := papi.Rules{
-			Behaviors: []papi.RuleBehavior{
-				{
-					Name: "beh_1",
-				},
+var testAccAkamaiPropertyRulesIsSecure = `
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+output "json" {
+	value = "${akamai_property_rules.rules.json}"
+}
+
+resource "akamai_property_rules" "rules" {
+ 	rules {
+		is_secure = %s
+	}
+}
+`
+
+func TestAkamaiPropertyRules_isSecureTrue(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				ExpectError: errorRegex,
+				Destroy:     false,
+				Config:      fmt.Sprintf(testAccAkamaiPropertyRulesIsSecure, "true"),
 			},
-			Name:                "default",
-			Options:             papi.RuleOptions{IsSecure: true},
-			CriteriaMustSatisfy: "all",
-		}
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						PreConfig: func() {
-							client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
-								PropertyID: "prp_1",
-								ContractID: "ctr_1",
-								GroupID:    "grp_1",
-							}).Return(&papi.GetPropertyVersionsResponse{
-								PropertyID:   "prp_1",
-								PropertyName: "property 1",
-								AccountID:    "acc_1",
-								ContractID:   "ctr_1",
-								GroupID:      "grp_1",
-								Version: papi.PropertyVersionGetItem{
-									ProductID:        "prd_1",
-									ProductionStatus: "ACTIVE",
-									PropertyVersion:  1,
-								},
-							}, nil).Times(4)
-							client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-								Rules:           papi.RulesUpdate{Rules: newRules},
-							}).Return(&papi.UpdateRulesResponse{
-								AccountID:       "acc_1",
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-								Errors: []papi.RuleError{
-									{
-										Type:  "generic",
-										Title: "some error",
-									},
-								},
-							}, nil).Once()
-							client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								ContractID:      "ctr_1",
-								GroupID:         "grp_1",
-								ValidateRules:   true,
-							}).Return(&papi.GetRuleTreeResponse{
-								Response: papi.Response{
-									AccountID:  "acc_1",
-									ContractID: "ctr_1",
-									GroupID:    "grp_1",
-								},
-								PropertyID:      "prp_1",
-								PropertyVersion: 1,
-								Rules:           newRules,
-							}, nil).Times(3)
-						},
-						Config: loadFixtureString("testdata/TestResourcePropertyRules/latest_version_create.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "version", "1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "rules", compactJSON(loadFixtureBytes("testdata/TestResourcePropertyRules/rules_create.json"))),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "property_id", "prp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_property_rules.rules", "contract_id", "ctr_1"),
-						),
-					},
-					{
-						Config:      loadFixtureString("testdata/TestResourcePropertyRules/update_new_property.tf"),
-						ExpectError: regexp.MustCompile("property_id field is immutable and cannot be updated"),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
+		},
 	})
+}
 
+func TestAkamaiPropertyRules_isSecureFalse(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: true,
+		Providers:  testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				ExpectError: errorRegex,
+				Destroy:     false,
+				Config:      fmt.Sprintf(testAccAkamaiPropertyRulesIsSecure, "false"),
+			},
+		},
+	})
+}
+
+func testAccCheckAkamaiPropertyRulesDestroy(s *terraform.State) error {
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "akamai_property_rules" {
+			continue
+		}
+
+		rules := rs.Primary.Attributes["rules.#"]
+		log.Printf("[DEBUG] [Akamai PropertyRules] Delete Rules [%s]", rules)
+
+	}
+	return nil
 }

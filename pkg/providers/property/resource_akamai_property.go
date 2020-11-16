@@ -708,7 +708,10 @@ func getGroup(ctx context.Context, d *schema.ResourceData, meta akamai.Operation
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingGroups, err.Error())
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID, err = tools.AddPrefix(groupID, "grp_")
+	if err != nil {
+		return nil, err
+	}
 
 	var group *papi.Group
 	var groupFound bool
@@ -741,7 +744,10 @@ func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.Operat
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingContracts, err.Error())
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID, err = tools.AddPrefix(contractID, "ctr_")
+	if err != nil {
+		return nil, err
+	}
 	var contract *papi.Contract
 	var contractFound bool
 	for _, c := range res.Contracts.Items {
@@ -773,7 +779,10 @@ func getCPCode(ctx context.Context, m akamai.OperationMeta, contractID, groupID 
 		}
 		return nil, nil
 	}
-	cpCodeID = tools.AddPrefix(cpCodeID, "cpc_")
+	cpCodeID, err = tools.AddPrefix(cpCodeID, "cpc_")
+	if err != nil {
+		return nil, err
+	}
 	logger.Debugf("Fetching CP code")
 
 	cpCodeResponse, err := inst.Client(m).GetCPCode(ctx, papi.GetCPCodeRequest{
@@ -806,7 +815,10 @@ func getProduct(ctx context.Context, d *schema.ResourceData, contractID string, 
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrProductFetch, err.Error())
 	}
-	productID = tools.AddPrefix(productID, "prd_")
+	productID, err = tools.AddPrefix(productID, "prd_")
+	if err != nil {
+		return nil, err
+	}
 	var productFound bool
 	var product papi.ProductItem
 	for _, p := range res.Products.Items {
