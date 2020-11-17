@@ -3,6 +3,8 @@ package property
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/tj/assert"
 	"regexp"
 	"testing"
 
@@ -265,5 +267,65 @@ func TestResCPCode(t *testing.T) {
 				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
 			})
 		})
+	})
+
+	t.Run("import existing cp code", func(t *testing.T) {
+		client := &mockpapi{}
+		id := "123,1,2"
+
+		cpCodes := []papi.CPCode{{ID: "cpc_123", Name: "test cpcode", ProductIDs: []string{"prd_2"}}}
+		expectGet(client, "ctr_1", "grp_2", &cpCodes)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:             loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
+						ExpectNonEmptyPlan: true,
+					},
+					{
+						ImportState:   true,
+						ImportStateId: id,
+						ResourceName:  "akamai_cp_code.test",
+						ImportStateCheck: func(s []*terraform.InstanceState) error {
+							assert.Len(t, s, 1)
+							rs := s[0]
+							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
+							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+							assert.Equal(t, "prd_2", rs.Attributes["product"])
+							assert.Equal(t, "cpc_123", rs.Attributes["id"])
+							assert.Equal(t, "test cpcode", rs.Attributes["name"])
+							return nil
+						},
+						ImportStateVerify: true,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("invalid import ID passed", func(t *testing.T) {
+		client := &mockpapi{}
+		id := "123"
+
+		TODO(t, "error assertion in import is impossible using provider testing framework as it only checks for errors in `apply`")
+		cpCodes := []papi.CPCode{{ID: "cpc_123", Name: "test cpcode", ProductIDs: []string{"prd_2"}}}
+		expectGet(client, "ctr_1", "grp_2", &cpCodes)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:        loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
+						ImportState:   true,
+						ImportStateId: id,
+						ResourceName:  "akamai_cp_code.test",
+						ExpectError:   regexp.MustCompile("comma-separated list of CP code ID, contract ID and group ID has to be supplied in import"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
 	})
 }

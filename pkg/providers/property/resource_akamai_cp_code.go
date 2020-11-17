@@ -3,6 +3,7 @@ package property
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,6 +21,9 @@ func resourceCPCode() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceCPCodeCreate,
 		ReadContext:   resourceCPCodeRead,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceCPCodeImport,
+		},
 
 		// NB: CP Codes cannot be deleted https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
 		DeleteContext: schema.NoopContext,
@@ -182,6 +186,45 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.SetId(cpCode.ID)
 	logger.Debugf("Read CP Code: %+v", cpCode)
 	return nil
+}
+
+func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceCPCodeImport")
+	logger.Debugf("Import CP Code")
+
+	parts := strings.Split(d.Id(), ",")
+
+	if len(parts) < 3 {
+		return nil, fmt.Errorf("comma-separated list of CP code ID, contract ID and group ID has to be supplied in import: %s", d.Id())
+	}
+	cpCodeID := tools.AddPrefix(parts[0], "cpc_")
+	contractID := tools.AddPrefix(parts[1], "ctr_")
+	groupID := tools.AddPrefix(parts[2], "grp_")
+
+	cpCode, err := findCPCode(ctx, cpCodeID, contractID, groupID, meta)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := d.Set("name", cpCode.Name); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("contract_id", contractID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("group_id", groupID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if len(cpCode.ProductIDs) == 0 {
+		return nil, fmt.Errorf("could not find product id on the CP Code")
+	}
+	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	d.SetId(cpCode.ID)
+	logger.Debugf("Import CP Code: %+v", cpCode)
+	return []*schema.ResourceData{d}, nil
 }
 
 // createCPCode attempts to create a CP Code and returns the CP Code ID
