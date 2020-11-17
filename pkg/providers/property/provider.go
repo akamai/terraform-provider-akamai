@@ -4,14 +4,13 @@ import (
 	"sync"
 
 	"github.com/apex/log"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (
@@ -73,6 +72,7 @@ func Provider() *schema.Provider {
 			"akamai_group":                   dataSourcePropertyGroup(),
 			"akamai_groups":                  dataSourcePropertyMultipleGroups(),
 			"akamai_property_rules":          dataPropertyRules(),
+			"akamai_property_rule_formats":   dataPropertyRuleFormats(),
 			"akamai_property":                dataSourceAkamaiProperty(),
 			"akamai_property_rules_template": dataSourcePropertyRulesTemplate(),
 			"akamai_properties":              dataSourceAkamaiProperties(),
