@@ -10,7 +10,7 @@ description: |-
 
 
 Use `akamai_property_rule_formats` data source to query the list of known rule formats.  These formats can be used to 'freeze'
-the api syntax at a known format and avoid syntax changes that the `latest` format will undergo where behaviors and 
+the API syntax at a known format and avoid syntax changes that the `latest` format will undergo where behaviors and 
 criteria undergo structural changes.
 
 ## Example Usage
