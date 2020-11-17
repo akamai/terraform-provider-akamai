@@ -9,7 +9,7 @@ description: |-
 # akamai_cp_code
 
 
-Use `akamai_cp_code` data source to retrieve a cpcode id.
+Use the `akamai_cp_code` data source to retrieve the ID for a content provider (CP) code.
 
 ## Example Usage
 
@@ -23,7 +23,7 @@ data "akamai_cp_code" "example" {
 }
 ```
 
-A more real world example using other datasources as dependencies:
+Here's a more real-world example that includes other data sources as dependencies:
 ```
 locals {
     group_name = "example group name"
@@ -50,17 +50,17 @@ data "akamai_cp_code" "example" {
 
 The following arguments are supported:
 
-* `name` — (Required) The CP code name.
-* `group_id` — (Required) The group ID
-* `contract_id` — (Required) The contract ID
+* `name` - (Required) The name of the CP code.
+* `group_id` - The group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai Provider appends it to your entry for processing purposes.
+* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
 
 ### Deprecated Arguments
-* `group` — (Deprecated) synonym of group_id for legacy purposes. Cannot be used with `group_id`
-* `contract` — (Deprecated) synonym of contract_id for legacy purposes. Cannot be used with `contract_id`
+* `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
+* `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
 
 ## Attributes Reference
 
-The following attributes are returned:
+This data source returns these attributes are returned:
 
-* `id` — The CP code ID.
-* `product_ids` - An array of product ids associated with this cpcode
+* `id` - The CP code ID.
+* `product_ids` - An array of product IDs associated with this CP code. Each ID will include the `prd_` prefix.

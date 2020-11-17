@@ -29,20 +29,20 @@ The following arguments are supported:
 
 Required
 
-* `domain` — Domain name 
-* `name` — Resource name
+* `domain` - Domain name 
+* `name` - Resource name
 * `aggregation_type`
-* `type` — Resource type
+* `type` - Resource type
 
 Optional
  
-* `wait_on_complete` — (Boolean, Default: true) Wait for transaction to complete
-* `resource_instance`  — (multiple allowed) 
+* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
+* `resource_instance`  - (multiple allowed) 
   * `datacenter_id`
   * `load_object`
   * `load_object_port`
-  * `load_servers` — (List)
-  * `use_default_load_object` — (Boolean)
+  * `load_servers` - (List)
+  * `use_default_load_object` - (Boolean)
 * `host_header`
 * `least_squares_decay`
 * `upper_bound`

@@ -8,10 +8,13 @@ description: |-
 
 # akamai_property
 
-The `akamai_property` resource represents an Akamai property configuration, allowing you to create,
-update, and activate properties on the Akamai platform. NOTE: in 0.10 and earlier version this resource also 
-controlled cpcode, origin, and variable associations but those convenience accessors were dropped 
-starting with 1.0.
+The `akamai_property` resource represents an Akamai property configuration. This resources lets you to create,
+update, and activate properties on the Akamai platform. 
+
+Akamai’s edge network caches your web assets near to servers that request them. A property provides the main way to control how edge servers respond to various kinds of requests for those assets. Properties apply rules to a set of hostnames, and you can only apply one property at a time to any given hostname. Each property is assigned to a product, which determines which behaviors you can use. Each property’s default rule needs a valid content provider code (CP code) assigned to bill and report for the service.
+
+> __NOTE:__ In version 0.10 and earlier of this resource, it also controlled 
+content provider (CP) codes, origin settings, rules, and hostname associations. Starting with version 1.0, this logic is broken out into individual resources.
 
 ## Example Usage
 
@@ -36,28 +39,29 @@ resource "akamai_property" "example" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports these arguments:
 
-* `name` — (Required) The property name.
-* `contact` — (Required) One or more email addresses to inform about activation changes.
-* `contract_id` — (Required) The Contract ID.  Can be provided with or without `ctr_` prefix.
-* `group_id` — (Required) The Group ID. Can be provided with or without `grp_` prefix.
-* `product_id` — (Required) The Product ID. Can be provided with or without `prd_` prefix.
-* `hostnames` — (Required) A map of public hostnames to edge hostnames (e.g. `{"example.org" = "example.org.edgesuite.net"}`)
-* `rules` — (Required) A JSON encoded rule tree for given property. This should be provided in a form of complete json rule tree (see: [`akamai_property_rules`](../data-sources/property_rules.md))
-* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)) to freeze behaviors and criteria at a known format if not provided then the latest version will be used and the rule structure requirements will change over time.
+* `name` - (Required) The property name.
+* `contact` - (Required) One or more email addresses to send activation status changes to.
+* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
+* `group_id` - (Required) A group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai provider appends it to your entry for processing purposes.
+* `product_id` - (Required) A product's unique ID. If your ID doesn't include the `prd_` prefix, the Akamai Provider appends it to your entry for processing purposes.
+* `hostnames` - (Required) A mapping of public hostnames to edge hostnames (For example: `{"example.org" = "example.org.edgesuite.net"}`)
+* `rules` - (Required) A JSON-encoded rule tree for a given property. For this argument, you need to enter a complete JSON rule tree, unless you set up a series of JSON templates. See the [`akamai_property_rules`](/docs/providers/akamai/d/property_rules.html))
+* `rule_format` - (Optional) The [rule format](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats) to use. Uses the latest rule format by default.
 
 ### Deprecated Arguments
-* `contract` — (Deprecated) synonym of `contract_id` for legacy purposes. Cannot be used with `contract_id`.
-* `group` — (Deprecated) synonym of `group_id` for legacy purposes Cannot be used with `group_id`.
-* `product` — (Deprecated) synonym of `product_id` for legacy purposes.  Cannot be used with `product_id`.
+
+* `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
+* `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
+* `product` - (Deprecated) Optional argument replaced by the now required `product_id`. Maintained for legacy purposes.
 
 ## Attribute Reference
 
-The following attributes are returned:
+The resource returns these attributes:
 
-* `warnings` — The contents of `warnings` field returned by the API.
-* `errors` — The contents of `errors` field returned by the API.
-* `latest_version` — The version of property on which the rules are created/updated - provider always uses latest or creates a new version if latest is not editable.
-* `production_version` — the current version of the property active on the production network.
-* `staging_version` — the current version of the property active on the staging network.
+* `warnings` - The contents of `warnings` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `errors` - The contents of `errors` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `latest_version` - The version of the property you've created or updated rules for. The Akamai Provider always uses the latest version or creates a new version if latest is not editable.
+* `production_version` - The current version of the property active on the Akamai production network.
+* `staging_version` - The current version of the property active on the Akamai staging network.

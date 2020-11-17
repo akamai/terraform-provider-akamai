@@ -105,10 +105,10 @@ resource "akamai_dns_record" "example_record" {
 The following arguments are supported in the `provider` block:
 
 * `edgerc` - (Optional) The location of the `.edgerc` file containing credentials. Default: `$HOME/.edgerc`
-* `config_section` — (Optional) The credential section to use for all edgegrid calls. Default: `default`.
-* `property_section` — (Deprecated) The credential section to use for the Property Manager API (PAPI). Default: `default`.
-* `dns_section` — (Deprecated) The credential section to use for the Config DNS API. Default: `default`.
-* `gtm_section` — (Deprecated) The credential section to use for the Config GTM API. Default: `default`.
+* `config_section` - (Optional) The credential section to use for all edgegrid calls. Default: `default`.
+* `property_section` - (Deprecated) The credential section to use for the Property Manager API (PAPI). Default: `default`.
+* `dns_section` - (Deprecated) The credential section to use for the Config DNS API. Default: `default`.
+* `gtm_section` - (Deprecated) The credential section to use for the Config GTM API. Default: `default`.
 
 ## Additional Authentication Method - Inline Credentials
 
@@ -118,34 +118,34 @@ To specify credentials inline, use the `property` or `dns` block to define crede
 
 #### Argument Reference
 
-* `config` — (Optional) Provide credentials for Terraform provider
-  * `host` — (Required) The credential hostname
-  * `access_token` — (Required) The credential access_token
-  * `client_token` — (Required) The credential client_token
-  * `client_secret` — (Required) The credential client_secret
-  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
-  * `account_key` — (Optional) Account switch key to manage multiple accounts
-* `property` — (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `property` tag name
-  * `host` — (Required) The credential hostname
-  * `access_token` — (Required) The credential access_token
-  * `client_token` — (Required) The credential client_token
-  * `client_secret` — (Required) The credential client_secret
-  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
-  * `account_key` — (Optional) Account switch key to manage multiple accounts
-* `dns` — (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `dns` tag name
-  * `host` — (Required) The credential hostname
-  * `access_token` — (Required) The credential access_token
-  * `client_token` — (Required) The credential client_token
-  * `client_secret` — (Required) The credential client_secret
-  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
-  * `account_key` — (Optional) Account switch key to manage multiple accounts
-* `gtm` — (Optional) (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `gtm` tag name
-  * `host` — (Required) The credential hostname
-  * `access_token` — (Required) The credential access_token
-  * `client_token` — (Required) The credential client_token
-  * `client_secret` — (Required) The credential client_secret
-  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
-  * `account_key` — (Optional) Account switch key to manage multiple accounts
+* `config` - (Optional) Provide credentials for Terraform provider
+  * `host` - (Required) The credential hostname
+  * `access_token` - (Required) The credential access_token
+  * `client_token` - (Required) The credential client_token
+  * `client_secret` - (Required) The credential client_secret
+  * `max_body` - (Optional) The credential max body to sign (in bytes, Default: `131072`)
+  * `account_key` - (Optional) Account switch key to manage multiple accounts
+* `property` - (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `property` tag name
+  * `host` - (Required) The credential hostname
+  * `access_token` - (Required) The credential access_token
+  * `client_token` - (Required) The credential client_token
+  * `client_secret` - (Required) The credential client_secret
+  * `max_body` - (Optional) The credential max body to sign (in bytes, Default: `131072`)
+  * `account_key` - (Optional) Account switch key to manage multiple accounts
+* `dns` - (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `dns` tag name
+  * `host` - (Required) The credential hostname
+  * `access_token` - (Required) The credential access_token
+  * `client_token` - (Required) The credential client_token
+  * `client_secret` - (Required) The credential client_secret
+  * `max_body` - (Optional) The credential max body to sign (in bytes, Default: `131072`)
+  * `account_key` - (Optional) Account switch key to manage multiple accounts
+* `gtm` - (Optional) (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `gtm` tag name
+  * `host` - (Required) The credential hostname
+  * `access_token` - (Required) The credential access_token
+  * `client_token` - (Required) The credential client_token
+  * `client_secret` - (Required) The credential client_secret
+  * `max_body` - (Optional) The credential max body to sign (in bytes, Default: `131072`)
+  * `account_key` - (Optional) Account switch key to manage multiple accounts
 
 ## Environment Variables
 

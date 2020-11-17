@@ -8,26 +8,31 @@ description: |-
 
 # akamai_property_rules_template
 
-The `akamai_property_rules_template` data source allows you to configure a nested block of property rules, criteria, and behaviors. 
-The rule tree is composed of a set of templates, which allow other templates to be nested hierarchically, 
-as well as user-defined variables to be interpolated at runtime.
+The `akamai_property_rules_template` data source lets you configure a rule tree: a nested block of property rules that include match criteria and behaviors. The rule tree is a set of templates that's nested hierarchically. You can also add variables that you define to the template files that are interpolated at runtime.
 
-The template format used in this data source matches the format used in [Property Manager CLI](https://learn.akamai.com/en-us/learn_akamai/getting_started_with_akamai_developers/developer_tools/getstartedpmcli.html#addanewsnippet)
-User-defined variables can be passed either by supplying paths to `variableDefinitions.json` and `variables.json` with syntax used in PM CLI __or__ by supplying variables as set of Terraform variables.
+<!--Does "nested hierarchically" refer to rule order in PM?--> 
+
+The template format used in this data source matches the format used in the [Property Manager CLI](https://learn.akamai.com/en-us/learn_akamai/getting_started_with_akamai_developers/developer_tools/getstartedpmcli.html#addanewsnippet).
+You can pass user-defined variables by supplying either: 
+
+* paths to `variableDefinitions.json` and `variables.json` with syntax used in Property Manager CLI, or 
+* a set of Terraform variables.
 
 ## Referencing sub-files from a template
-Each template can include other template files by including them in the currently loaded file.  For example to include
-`example-file.json` from another template in the directory with the main starting template use the following syntax 
-`"#include:example-file.json"` including quotes.  All files are resolved in relation to the main template file's 
-directory path.  
+You can split each template out into a series of smaller template files. To add them to this data source, you need to include them in the currently loaded file.  For example, to include
+`example-file.json` from the `template` directory, use this syntax `"#include:example-file.json"` including 
+the quotes.  All files are resolved in relation to the `template` directory. 
+
+<!--What's the currently loaded file?--> 
 
 ## Inserting variables in a template
-Variables can also be included in a template by using a string like `“${env.<variableName>}"` including quotes.  These
-are variables passed into the template procession and are in contrast to Terraform variables which should resolve normally.
+You can also add variables to a template by using a string like `“${env.<variableName>}"` including quotes.  
+These are Akamai variables passed into the template call. They differ from Terraform variables which should resolve normally.
 
-## Example Usage
+## Example usage: variables
 
-### Set of two variables passed in data source definition:
+This first example shows two variables passed in data source definition:
+
 ```hcl
 data "akamai_property_rules_template" "akarules" {
   template_file = abspath("${path.root}/rules/main.json")
@@ -44,7 +49,8 @@ data "akamai_property_rules_template" "akarules" {
 }
 ```
 
-### Variables defined in files shared with PMCLI pipeline :
+In this second example, the variables defined refer to files shared with a Property Manager CLI pipeline:
+
 ```hcl
 data "akamai_property_rules_template" "akarules" {
   template_file = abspath("${path.root}/templates/main.json")
@@ -53,8 +59,9 @@ data "akamai_property_rules_template" "akarules" {
 }
 ```
 
-### Example of template in use:
-Given a template file like the example below, with all its nested templates existing, the usage is:
+### Example usage: template files
+
+Here's an example of what a JSON-based template file its nested templates existing might look like:
 
 templates/main.json:
 ```json
@@ -79,7 +86,9 @@ templates/main.json:
   }
 }
 ```
-You then can define a Terraform file like the following to expand the template file and use it with a property :
+
+You can then define a Terraform file like this, which pulls in the `main.json` file above and uses it with a property:
+
 ```hcl-terraform
 data "akamai_property_rules_template" "example" {
   template_file = abspath("${path.root}/templates/main.json")
@@ -110,26 +119,21 @@ resource "akamai_property" "example" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-### Input arguments
-
-#### Required arguments
-* `template_file` - (Required) the absolute path to the top-level template file in which other templates are nested.
-
-#### Optional arguments
-* `variables` - (Optional) a definition of a variable. There can be zero or more `variables` arguments passed. 
-This argument conflicts with `variable_definition_file` and `variable_values_file`. `variable` block consists of:
-    * `name` - the name of the variable used in template.
-    * `type` - the type of the variable - must be one of `string`, `number`, `bool` or `jsonBlock`
-    * `value` - the value of the variable passed as string.
-* `variable_definition_file` - (Optional) the absolute path to file containing variable definitions and defaults following the syntax used in PM CLI. 
-This argument conflicts with `variables` and is required when `variable_values_file` is set.
-* `variable_values_file` - (Optional) the absolute path to file containing variable values following the syntax used in PM CLI. This argument conflicts with `variables` argument.
+* `template_file` - (Required) The absolute path to your top-level JSON template file. The top-level template combines smaller, nested JSON templates to form your property rule tree.
+* `variables` - (Optional) A definition of a variable. Variables aren't required and you can use multiple ones if needed. This argument conflicts with the `variable_definition_file` and `variable_values_file` arguments. A `variables` block includes:
+    * `name` - The name of the variable used in template.
+    * `type` - The type of variable: `string`, `number`, `bool` or `jsonBlock`
+    * `value` - The value of the variable passed as a string.
+* `variable_definition_file` - (Optional) The absolute path to the file containing variable definitions and defaults. This file  follows the syntax used in PM CLI. This argument is required if you set `variable_values_file` and conflicts with `variables`.
+* `variable_values_file` - (Optional) The absolute path to the file containing variable values. This file  follows the syntax used in PM CLI. This argument is required if you set `variable_definition_file` and conflicts with `variables`.
 
 ## Attributes Reference
 
-The following attributes are returned:
+This data source returns this attribute:
 
-* `json` — The fully expanded template with variables and all nested templates resolved.
+* `json` - The fully expanded template with variables and all nested templates resolved.
+
+<!--Template or full JSON rule tree returned?-->
 

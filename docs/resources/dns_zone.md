@@ -33,18 +33,18 @@ resource "akamai_dns_zone" "demozone" {
 
 The following arguments are supported:
 
-* `contract` — (Required) The contract ID. 
-* `group` — (Required) The currently selected group ID.   
-* `zone` — (Required) Domain zone, encapsulating any nested subdomains.  
-* `type` — (Required) Whether the zone is primary or secondary.  
-* `masters` — (Required for Secondary) The names or addresses of the customer’s nameservers from which the zone data should be retrieved.  
-* `comment` — (Required) A descriptive comment.  
-* `sign_and_serve` — (Optional) Whether DNSSEC Sign&Serve is enabled. 
-* `sign_and_serve_algorithm` — (Optional) Algorithm used by Sign&Serve.
-* `target` — (Required for Alias) 
-* `tsig_key` — (Optional) TSIG Key used in secure zone transfers
+* `contract` - (Required) The contract ID. 
+* `group` - (Required) The currently selected group ID.   
+* `zone` - (Required) Domain zone, encapsulating any nested subdomains.  
+* `type` - (Required) Whether the zone is primary or secondary.  
+* `masters` - (Required for Secondary) The names or addresses of the customer’s nameservers from which the zone data should be retrieved.  
+* `comment` - (Required) A descriptive comment.  
+* `sign_and_serve` - (Optional) Whether DNSSEC Sign&Serve is enabled. 
+* `sign_and_serve_algorithm` - (Optional) Algorithm used by Sign&Serve.
+* `target` - (Required for Alias) 
+* `tsig_key` - (Optional) TSIG Key used in secure zone transfers
   * `name` - key name
   * `algorithm`
   * `secret`
-* `end_customer_id` — (Optional)
+* `end_customer_id` - (Optional)
   

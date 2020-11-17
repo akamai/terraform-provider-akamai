@@ -9,12 +9,13 @@ description: |-
 # akamai_properties
 
 
-Use `akamai_properties` data source to query and retrieve the list of properties for a group and contract 
-that the current EdgeGrid API client token has access to. 
+Use the `akamai_properties` data source to query and retrieve the list of properties for a group and contract 
+based on the [EdgeGrid API client token](https://developer.akamai.com/getting-started/edgegrid) you're using. 
 
 ## Example Usage
 
-Return properties associated with the EdgeGrid API client token given a contract and group:
+Return properties associated with the EdgeGrid API client token currently used for authentication:
+
 
 datasource-example.tf
 ```hcl-terraform
@@ -30,13 +31,13 @@ output "my_property_list" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports these arguments:
 
-* `contract_id` — (Required) The Contract ID.  Can be provided with or without `ctr_` prefix.
-* `group_id` — (Required) The Group ID. Can be provided with or without `grp_` prefix.
+* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
+* `group_id` - (Required) A group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai provider appends it to your entry for processing purposes.
 
 ## Attributes Reference
 
-The following attributes are returned:
+This data source returns these attributes:
 
-* `properties` — Provisioning API response containing a list of properties available for the provided contract and group.
+* `properties` - A list of properties available for the contract and group IDs provided.

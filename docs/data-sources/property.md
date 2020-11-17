@@ -9,12 +9,12 @@ description: |-
 # akamai_property
 
 
-Use `akamai_property` data source to query and retrieve the instance information and rule tree of an 
-existing property instance.  allows searching across contracts and groups you may have access to.
+Use the `akamai_property` data source to query and retrieve general information about and the rule tree of an 
+existing property.  With this data source you can search across the contracts and groups you have access to.
 
 ## Example Usage
 
-Given a contract and group return what properties exist for the user:
+This example returns property information and the rule tree for any properties associated with the `my-example.com` hostname:
 
 datasource-example.tf
 ```hcl-terraform
@@ -30,13 +30,13 @@ output "property_match" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports these arguments:
 
-* `search_type` — (Required) One of the following values `name`, `hostname`, or `edge_hostname`. Please note that `edge_hostname` only searches active properties.
-* `search_value` — (Required) The value to be searched for in the field specified.
+* `search_type` - (Required) The item to search on. You can choose one of the following values: `name` for the property name, `hostname`, or `edge_hostname`. An `edge_hostname` search only includes active properties.
+* `search_value` - (Required) The literal value to search on.
 
 ## Attributes Reference
 
-The following attributes are returned:
+This data source returns this attribute:
 
-* `json` — Provisioning API response to the query.
+* `json` - The response to the query returned from the [Property Manager API](https://developer.akamai.com/api/core_features/property_manager/v1.html). 

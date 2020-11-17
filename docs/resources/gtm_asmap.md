@@ -31,19 +31,19 @@ The following arguments are supported:
 
 Required
 
-* `domain` — Domain name 
-* `name` — Resource name
+* `domain` - Domain name 
+* `name` - Resource name
 * `default_datacenter`
   * `datacenter_id`
   * `nickname`
 
 Optional
  
-* `wait_on_complete` — (Boolean, Default: true) Wait for transaction to complete
-* `assignment` — (multiple allowed)
+* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
+* `assignment` - (multiple allowed)
   * `datacenter_id`
   * `nickname`
-  * `as_numbers` — (List)
+  * `as_numbers` - (List)
 
 ### Backing Schema Reference
 

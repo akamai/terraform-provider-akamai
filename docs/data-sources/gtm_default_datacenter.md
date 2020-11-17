@@ -33,13 +33,13 @@ resource "akamai_gtm_cidrmap" "example_cidrmap" {
 
 The following arguments are supported:
 
-* `domain` — (Required)
-* `domain` — (Optional. Default 5400)
+* `domain` - (Required)
+* `domain` - (Optional. Default 5400)
 
 ## Attributes Reference
 
 The following attributes are returned:
 
-* `id` — The data resource id. Format: <domain>:default_datacenter:<datacenter_id>
-* `datacenter_id` — default datacenter Id
-* `nickname` — default datacenter nickname
+* `id` - The data resource id. Format: <domain>:default_datacenter:<datacenter_id>
+* `datacenter_id` - default datacenter Id
+* `nickname` - default datacenter nickname

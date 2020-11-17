@@ -9,9 +9,11 @@ description: |-
 # akamai_cp_code
 
 
-The `akamai_cp_code` resource allows you to create or re-use CP Codes.
+The `akamai_cp_code` resource lets you create or reuse content provider (CP) codes.  CP codes track web traffic handled by Akamai servers. Akamai gives you a CP code when you purchase a product. You need this code when you activate associated properties. 
 
-If the CP Code already exists it will be used instead of creating a new one.
+You can create additional CP codes to support more detailed billing and reporting functions.
+
+By default, the Akamai Provider uses your existing CP code instead of creating a new one.
 
 ## Example Usage
 
@@ -26,7 +28,8 @@ resource "akamai_cp_code" "cp_code" {
 }
 ```
 
-A more real example using other datasources as dependencies:
+Here's a real-life example that includes other data sources as dependencies:
+
 ```
 locals {
     group_name = "example group name"
@@ -53,16 +56,17 @@ resource "akamai_cp_code" "example_cp" {
 
 The following arguments are supported:
 
-* `name` — (Required) The CP Code name
-* `contract_id` — (Required) The Contract ID
-* `group_id` — (Required) The Group ID
-* `product_id` — (Required) The Product ID
+* `name` - (Required) A descriptive label for the CP code. If you're creating a new CP code, the name can’t include commas, underscores, quotes, or any of these special characters: ^ # %.
+* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
+* `group_id` - (Required) A group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai provider appends it to your entry for processing purposes.
+* `product_id` - (Required) A product's unique ID. If your ID doesn't include the `prd_` prefix, the Akamai Provider appends it to your entry for processing purposes.
 
 ### Deprecated Arguments
-* `contract` — (Deprecated) synonym of contract_id for legacy purposes
-* `group` — (Deprecated) synonym of group_id for legacy purposes
-* `product` — (Deprecated) synonym of product_id for legacy purposes
+
+* `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
+* `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
+* `product` - (Deprecated) Replaced by `product_id`. Maintained for legacy purposes.
 
 ## Attributes Reference
 
-* `id` — The CP code ID.
+* `id` - The ID of the CP code.
