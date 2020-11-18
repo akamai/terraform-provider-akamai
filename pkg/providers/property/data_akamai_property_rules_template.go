@@ -7,11 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -19,6 +14,13 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func dataSourcePropertyRulesTemplate() *schema.Resource {
@@ -178,9 +180,13 @@ var (
 )
 
 var (
-	ErrReadFile    = errors.New("reading file")
-	ErrUnmarshal   = errors.New("unmarshaling value")
+	// ErrReadFile is used to specify error while reading a file.
+	ErrReadFile = errors.New("reading file")
+	// ErrUnmarshal is used to specify unmarshal error.
+	ErrUnmarshal = errors.New("unmarshaling value")
+	// ErrFormatValue is used to specify formatting error.
 	ErrFormatValue = errors.New("formatting value")
+	// ErrUnknownType is used to specify unknown error.
 	ErrUnknownType = errors.New("unknown 'type' value")
 )
 

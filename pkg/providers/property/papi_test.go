@@ -3,8 +3,9 @@ package property
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 type mockpapi struct {
