@@ -35,6 +35,22 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
+						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_null_values.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
+						),
+					},
+				},
+			})
+		})
+	})
+	t.Run("null values do not overwrite defaults", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
 						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_file.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
