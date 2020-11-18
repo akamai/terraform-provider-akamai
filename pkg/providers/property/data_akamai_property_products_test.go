@@ -2,11 +2,13 @@ package property
 
 import (
 	"fmt"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 func TestVerifyProductsDataSourceSchema(t *testing.T) {
@@ -50,7 +52,7 @@ func TestOutputProductsDataSource(t *testing.T) {
 	})
 }
 
-func testConfig(contractIdConfig string) string {
+func testConfig(contractIDConfig string) string {
 	return fmt.Sprintf(`
 	provider "akamai" {
 		edgerc = "~/.edgerc"
@@ -65,5 +67,5 @@ func testConfig(contractIdConfig string) string {
     output "product_id0" {
 		value = "${data.akamai_property_products.example.products[0].product_id}"
 	}
-`, contractIdConfig)
+`, contractIDConfig)
 }

@@ -2,13 +2,15 @@ package property
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceAkamaiProperties() *schema.Resource {
@@ -58,44 +60,24 @@ func dataAkamaiPropertiesRead(ctx context.Context, d *schema.ResourceData, m int
 	)
 	log.Debug("Listing Properties")
 
-	groupId, err := tools.GetStringValue("group_id", d)
+	// groupID / contractID is string as per schema.
+	groupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
+	contractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
+
+	properties, err := getProperties(ctx, groupID, contractID, meta)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-	contractId, err := tools.GetStringValue("contract_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	groupId = tools.AddPrefix(groupId, "grp_")
-	contractId = tools.AddPrefix(contractId, "ctr_")
-	propertiesResponse, err := getProperties(ctx, groupId, contractId, meta)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error listing properties: %w", err))
+		return diag.Errorf("error listing properties: %v", err)
 	}
 	// setting concatenated id to uniquely identify data
-	d.SetId(groupId + contractId)
-
-	properties := make([]map[string]interface{}, 0)
-	for _, item := range propertiesResponse.Properties.Items {
-		property := map[string]interface{}{
-			"account_id":         item.AccountID,
-			"asset_id":           item.AssetID,
-			"contract_id":        item.ContractID,
-			"group_id":           item.GroupID,
-			"latest_version":     item.LatestVersion,
-			"note":               item.Note,
-			"product_id":         item.ProductID,
-			"production_version": decodeVersion(item.ProductionVersion),
-			"property_id":        item.PropertyID,
-			"property_name":      item.PropertyName,
-			"rule_format":        item.RuleFormat,
-			"staging_version":    decodeVersion(item.StagingVersion),
-		}
-		properties = append(properties, property)
+	d.SetId(groupID + contractID)
+	props, err := json.Marshal(properties)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-
-	if err := d.Set("properties", properties); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting properties: %s", err))
+	/* setting raw json here in current scope. We have to set all the json fields in
+	property struct for more granular access to properties object */
+	if err := d.Set("properties", string(props)); err != nil {
+		return diag.Errorf("error setting properties: %s", err)
 	}
 	return nil
 }
@@ -109,11 +91,11 @@ func decodeVersion(version interface{}) int {
 }
 
 // Reusable function to fetch all the properties for a given group and contract
-func getProperties(ctx context.Context, groupId string, contractId string, meta akamai.OperationMeta) (*papi.GetPropertiesResponse, error) {
+func getProperties(ctx context.Context, groupID string, contractID string, meta akamai.OperationMeta) (*papi.GetPropertiesResponse, error) {
 	client := inst.Client(meta)
 	req := papi.GetPropertiesRequest{
-		ContractID: contractId,
-		GroupID:    groupId,
+		ContractID: contractID,
+		GroupID:    groupID,
 	}
 	props, err := client.GetProperties(ctx, req)
 	if err != nil {
