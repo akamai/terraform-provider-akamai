@@ -300,7 +300,7 @@ func getVarsFromFile(definitionsPath, valuesPath string) (map[string]interface{}
 			return nil, fmt.Errorf("%w: %s", ErrUnmarshal, err)
 		}
 		for name, value := range values {
-			if _, ok := vars[name]; ok {
+			if _, ok := vars[name]; ok && value != nil {
 				v, err := formatValue(value)
 				if err != nil {
 					return nil, fmt.Errorf("%w: %s", ErrFormatValue, err)
