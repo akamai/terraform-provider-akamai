@@ -1,6 +1,9 @@
 package property
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/apex/log"
@@ -83,10 +86,8 @@ func Provider() *schema.Provider {
 			"akamai_cp_code":             resourceCPCode(),
 			"akamai_edge_hostname":       resourceSecureEdgeHostName(),
 			"akamai_property":            resourceProperty(),
-			"akamai_property_rules":      resourcePropertyRules(),
 			"akamai_property_variables":  resourcePropertyVariables(),
 			"akamai_property_activation": resourcePropertyActivation(),
-			"akamai_property_hostnames":  resPropHostname(),
 		},
 	}
 	return provider
@@ -156,4 +157,21 @@ func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Dia
 	}
 
 	return nil
+}
+
+// compactJSON converts a JSON-encoded byte slice to a compact form (so our JSON fixtures can be readable)
+func compactJSON(encoded []byte) string {
+	buf := bytes.Buffer{}
+	if err := json.Compact(&buf, encoded); err != nil {
+		panic(fmt.Sprintf("%s: %s", err, string(encoded)))
+	}
+
+	return buf.String()
+}
+
+// addPrefixToState returns a function that ensures string values are prefixed correctly
+func addPrefixToState(prefix string) schema.SchemaStateFunc {
+	return func(given interface{}) string {
+		return tools.AddPrefix(given.(string), prefix)
+	}
 }

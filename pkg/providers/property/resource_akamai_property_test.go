@@ -10,52 +10,215 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Wrapper to intercept the mockpapi's call of t.FailNow(). The Terraform test driver runs the provider code on
-// goroutines other than the one created for the test. When t.FailNow() is called from any other goroutine, it causes
-// the test to hang because the TF test driver is still waiting to serve requests. Mockery's failure message neglects to
-// inform the user which test had failed. Use this struct to wrap a *testing.T when you call mock.Test(T{t}) and the
-// mock's failure will print the failling test's name. Such failures are usually caused by the provider invoking an
-// unexpected call on the mock.
-//
-// NB: You should only need to use this where your test uses the Terraform test driver
-type T struct{ *testing.T }
-
-// Overrides testing.T.FailNow() so when a test mock fails an assertion, we see which test had failed before it hangs
-func (t T) FailNow() {
-	t.T.Fatalf("FAIL: %s", t.T.Name())
-}
-
 func TestResProperty(t *testing.T) {
-	// Helper to in-line expected call to papi.GetProperty() with a constant Property struct with values that are
-	// standard for this test
-	ExpectGetProp := func(client *mockpapi, PropertyName, PropertyID, GroupID, ContractID, ProductID string, Version int) *mock.Call {
-		Property := papi.Property{
-			PropertyName:   PropertyName,
-			PropertyID:     PropertyID,
-			GroupID:        GroupID,
-			ContractID:     ContractID,
-			ProductID:      "prd_0",
-			LatestVersion:  Version,
-			StagingVersion: &Version,
-		}
+	// These more or less track the state of a Property in PAPI
+	type TestState struct {
+		Client     *mockpapi
+		Property   papi.Property
+		Hostnames  []papi.Hostname
+		Rules      papi.Rules
+		RuleFormat string
+	}
 
-		// return ExpectGetProperty(client, PropertyID, "", "", &Property)
-		return ExpectGetProperty(client, PropertyID, GroupID, ContractID, &Property)
+	// BehaviorFuncs can be composed to define common patterns of mock PAPI behavior
+	type BehaviorFunc = func(*TestState)
+
+	// Combines many BehaviorFuncs into one
+	ComposeBehaviors := func(behaviors ...BehaviorFunc) BehaviorFunc {
+		return func(State *TestState) {
+			for _, behave := range behaviors {
+				behave(State)
+			}
+		}
+	}
+
+	SetHostnames := func(PropertyID string, Version int, CnameTo string) BehaviorFunc {
+		return func(State *TestState) {
+			NewHostnames := []papi.Hostname{{
+				CnameType: "EDGE_HOSTNAME",
+				CnameFrom: "from.test.domain",
+				CnameTo:   CnameTo,
+			}}
+
+			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames).Once().Run(func(mock.Arguments) {
+				State.Hostnames = append([]papi.Hostname{}, NewHostnames...)
+			})
+		}
+	}
+
+	GetVersionResources := func(PropertyID string, Version int) BehaviorFunc {
+		return func(State *TestState) {
+			ExpectGetPropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, &State.Hostnames)
+			ExpectGetRuleTree(State.Client, PropertyID, "grp_0", "ctr_0", Version, &State.Rules, &State.RuleFormat)
+		}
+	}
+
+	DeleteProperty := func(PropertyID string) BehaviorFunc {
+		return func(State *TestState) {
+			ExpectRemoveProperty(State.Client, PropertyID, "ctr_0", "grp_0").Once().Run(func(mock.Arguments) {
+				State.Property = papi.Property{}
+				State.Rules = papi.Rules{}
+				State.Hostnames = nil
+				State.RuleFormat = ""
+			})
+		}
+	}
+
+	GetProperty := func(PropertyID string) BehaviorFunc {
+		return func(State *TestState) {
+			ExpectGetProperty(State.Client, PropertyID, "grp_0", "ctr_0", &State.Property)
+		}
+	}
+
+	CreateProperty := func(PropertyName, PropertyID string) BehaviorFunc {
+		return func(State *TestState) {
+			ExpectCreateProperty(State.Client, PropertyName, "grp_0", "ctr_0", "prd_0", PropertyID).Run(func(mock.Arguments) {
+				State.Property = papi.Property{
+					PropertyName:  PropertyName,
+					PropertyID:    PropertyID,
+					GroupID:       "grp_0",
+					ContractID:    "ctr_0",
+					ProductID:     "prd_0",
+					LatestVersion: 1,
+				}
+
+				State.Rules = papi.Rules{Name: "default"}
+				State.RuleFormat = "v2020-01-01"
+			}).Once()
+
+			GetProperty(PropertyID)(State)
+			GetVersionResources(PropertyID, 1)(State)
+		}
+	}
+
+	PropertyLifecycle := func(PropertyName, PropertyID string) BehaviorFunc {
+		return func(State *TestState) {
+			CreateProperty(PropertyName, PropertyID)(State)
+			GetVersionResources(PropertyID, 1)(State)
+			DeleteProperty(PropertyID)(State)
+		}
+	}
+
+	ImportProperty := func(PropertyID string) BehaviorFunc {
+		return func(State *TestState) {
+			// Depending on how much of the import ID is given, the initial property lookup may not have group/contract
+			ExpectGetProperty(State.Client, "prp_0", "grp_0", "", &State.Property).Maybe()
+			ExpectGetProperty(State.Client, "prp_0", "", "", &State.Property).Maybe()
+		}
+	}
+
+	AdvanceVersion := func(PropertyID string, FromVersion, ToVersion int) BehaviorFunc {
+		return func(State *TestState) {
+			ExpectCreatePropertyVersion(State.Client, PropertyID, "grp_0", "ctr_0", FromVersion, ToVersion).Once().Run(func(mock.Arguments) {
+				State.Property.LatestVersion = ToVersion
+			})
+			GetVersionResources(PropertyID, ToVersion)(State)
+		}
 	}
 
 	// TestCheckFunc to verify all standard attributes
-	checkAllAttrs := resource.ComposeAggregateTestCheckFunc(
-		resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
-		resource.TestCheckResourceAttr("akamai_property.test", "production_version", "0"),
-		resource.TestCheckResourceAttr("akamai_property.test", "staging_version", "42"),
-		resource.TestCheckResourceAttr("akamai_property.test", "name", "test property"),
-		resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_0"),
-		resource.TestCheckResourceAttr("akamai_property.test", "contract", "ctr_0"),
-		resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_0"),
-		resource.TestCheckResourceAttr("akamai_property.test", "group", "grp_0"),
-		resource.TestCheckResourceAttr("akamai_property.test", "product", "prd_0"),
-		resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_0"),
-	)
+	CheckAttrs := func(PropertyID, CnameTo, LatestVersion, StagingVersion, ProductionVersion string) resource.TestCheckFunc {
+		return resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr("akamai_property.test", "id", PropertyID),
+			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.from.test.domain", CnameTo),
+			resource.TestCheckResourceAttr("akamai_property.test", "latest_version", LatestVersion),
+			resource.TestCheckResourceAttr("akamai_property.test", "staging_version", StagingVersion),
+			resource.TestCheckResourceAttr("akamai_property.test", "production_version", ProductionVersion),
+			resource.TestCheckResourceAttr("akamai_property.test", "name", "test property"),
+			resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_0"),
+			resource.TestCheckResourceAttr("akamai_property.test", "contract", "ctr_0"),
+			resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_0"),
+			resource.TestCheckResourceAttr("akamai_property.test", "group", "grp_0"),
+			resource.TestCheckResourceAttr("akamai_property.test", "product", "prd_0"),
+			resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_0"),
+			resource.TestCheckResourceAttr("akamai_property.test", "rules", `{"name":"default","options":{}}`),
+		)
+	}
+
+	type StepsFunc = func(State *TestState, FixturePath string) []resource.TestStep
+
+	// Defines standard variations of client behaviors for a Lifecycle test
+	type LifecycleTestCase struct {
+		Name        string
+		ClientSetup BehaviorFunc
+		Steps       StepsFunc
+	}
+
+	// Standard test behavior for cases where the property's latest version is active in staging network
+	LatestVersionActiveInStaging := LifecycleTestCase{
+		Name: "Latest version is active in staging",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0"),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			AdvanceVersion("prp_0", 1, 2),
+			SetHostnames("prp_0", 2, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+				},
+				{
+					PreConfig: func() {
+						StagingVersion := 1
+						State.Property.StagingVersion = &StagingVersion
+					},
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0"),
+				},
+			}
+		},
+	}
+
+	// Standard test behavior for cases where the property's latest version is active in production network
+	LatestVersionActiveInProd := LifecycleTestCase{
+		Name: "Latest version is active in production",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0"),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			AdvanceVersion("prp_0", 1, 2),
+			SetHostnames("prp_0", 2, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+				},
+				{
+					PreConfig: func() {
+						ProductionVersion := 1
+						State.Property.ProductionVersion = &ProductionVersion
+					},
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1"),
+				},
+			}
+		},
+	}
+
+	// Standard test behavior for cases where the property's latest version is not active
+	LatestVersionNotActive := LifecycleTestCase{
+		Name: "Latest version not active",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0"),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			SetHostnames("prp_0", 1, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+				},
+				{
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "1", "0", "0"),
+				},
+			}
+		},
+	}
 
 	// Run a test case to verify schema validations
 	AssertConfigError := func(t *testing.T, flaw, rx string) {
@@ -110,63 +273,25 @@ func TestResProperty(t *testing.T) {
 		})
 	}
 
-	// Run a test case to verify error when the given attribute is changed after creation
-	AssertImmutable := func(t *testing.T, attribute string) {
+	// Run a happy-path test case that goes through a complete create-update-destroy cycle
+	AssertLifecycle := func(t *testing.T, variant string, kase LifecycleTestCase) {
 		t.Helper()
 
-		t.Run(fmt.Sprintf("Immutable/%s", attribute), func(t *testing.T) {
+		fixturePrefix := fmt.Sprintf("testdata/%s/Lifecycle/%s", t.Name(), variant)
+		testName := fmt.Sprintf("Lifecycle/%s/%s", variant, kase.Name)
+
+		t.Run(testName, func(t *testing.T) {
 			t.Helper()
+
 			client := &mockpapi{}
 			client.Test(T{t})
-
-			// We're going to pretend like all of these are valid property identities
-			ExpectGetProp(client, "test property", "prp_0", "grp_0", "ctr_0", "prd_0", 42)
-			// ExpectGetProp(client, "test property", "prp_0", GroupID2, ContractID2, ProductID2, 42)
-
-			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
-			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
+			State := &TestState{Client: client}
+			kase.ClientSetup(State)
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps: []resource.TestStep{
-						{
-							Config: loadFixtureString("testdata/%s-step0.tf", t.Name()),
-							Check:  checkAllAttrs,
-						},
-						{
-							Config:      loadFixtureString("testdata/%s-step1.tf", t.Name()),
-							ExpectError: regexp.MustCompile(fmt.Sprintf(`%q cannot be changed`, attribute)),
-						},
-					},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-	}
-
-	// Run a test case where a single resource is created, read, and destroyed. The resources of this kind all have the
-	// same attributes and vary only by the input terraform config file, which is named after the test case.
-	AssertLifecycle := func(t *testing.T, fixtureName string) {
-		t.Helper()
-
-		t.Run(fmt.Sprintf("Lifecycle/%s", fixtureName), func(t *testing.T) {
-			t.Helper()
-			client := &mockpapi{}
-			client.Test(T{t})
-
-			ExpectGetProp(client, "test property", "prp_0", "grp_0", "ctr_0", "prd_0", 42)
-			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
-			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
-
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps: []resource.TestStep{{
-						Config: loadFixtureString("testdata/%s.tf", t.Name()),
-						Check:  checkAllAttrs,
-					}},
+					Providers:    testAccProviders,
+					Steps:        kase.Steps(State, fixturePrefix),
 					CheckDestroy: resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
 				})
 			})
@@ -176,49 +301,43 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// Run a test case that verifies the resource can be imported by the given ID
-	AssertImportable := func(t *testing.T, fixtureName, ImportID string) {
+	AssertImportable := func(t *testing.T, TestName, ImportID string) {
 		t.Helper()
 
-		t.Run(fmt.Sprintf("Importable/%s", fixtureName), func(t *testing.T) {
+		fixturePath := fmt.Sprintf("testdata/%s/Importable/importable.tf", t.Name())
+		testName := fmt.Sprintf("Importable/%s", TestName)
+
+		t.Run(testName, func(t *testing.T) {
 			t.Helper()
+
 			client := &mockpapi{}
 			client.Test(T{t})
 
-			Version := 42
-			Property := papi.Property{
-				PropertyName:   "test property",
-				PropertyID:     "prp_0",
-				GroupID:        "grp_0",
-				ContractID:     "ctr_0",
-				ProductID:      "prd_0",
-				LatestVersion:  Version,
-				StagingVersion: &Version,
-			}
-
-			ExpectGetProperty(client, "prp_0", "", "", &Property)
-			ExpectGetProperty(client, "prp_0", "grp_0", "ctr_0", &Property)
-
-			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
-			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
+			setup := ComposeBehaviors(
+				PropertyLifecycle("test property", "prp_0"),
+				ImportProperty("prp_0"),
+				SetHostnames("prp_0", 1, "to.test.domain"),
+			)
+			setup(&TestState{Client: client})
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/%s.tf", t.Name()),
-							Check:  checkAllAttrs,
+							Config: loadFixtureString(fixturePath),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
 						},
 						{
 							ImportState:       true,
 							ImportStateVerify: true,
 							ImportStateId:     ImportID,
 							ResourceName:      "akamai_property.test",
-							Config:            loadFixtureString("testdata/%s.tf", t.Name()),
+							Config:            loadFixtureString(fixturePath),
 						},
 						{
-							Config: loadFixtureString("testdata/%s.tf", t.Name()),
-							Check:  checkAllAttrs,
+							Config: loadFixtureString(fixturePath),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
 						},
 					},
 				})
@@ -230,67 +349,69 @@ func TestResProperty(t *testing.T) {
 
 	suppressLogging(t, func() {
 		AssertConfigError(t, "name not given", `"name" is required`)
-
 		AssertConfigError(t, "neither contract nor contract_id given", `one of .contract,contract_id. must be specified`)
 		AssertConfigError(t, "both contract and contract_id given", `only one of .contract,contract_id. can be specified`)
-
 		AssertConfigError(t, "neither group nor group_id given", `one of .group,group_id. must be specified`)
 		AssertConfigError(t, "both group and group_id given", `only one of .group,group_id. can be specified`)
-
 		AssertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`)
 		AssertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`)
+		AssertConfigError(t, "invalid json rules", `rules are not valid JSON`)
 
 		AssertDeprecated(t, "contract")
 		AssertDeprecated(t, "group")
 		AssertDeprecated(t, "product")
-
-		AssertDeprecated(t, "rule_format")
 		AssertDeprecated(t, "cp_code")
 		AssertDeprecated(t, "contact")
-		AssertDeprecated(t, "hostnames")
 		AssertDeprecated(t, "origin")
 		AssertDeprecated(t, "is_secure")
-		AssertDeprecated(t, "rules")
 		AssertDeprecated(t, "variables")
 
-		AssertForbiddenAttr(t, "rule_format")
 		AssertForbiddenAttr(t, "cp_code")
 		AssertForbiddenAttr(t, "contact")
-		AssertForbiddenAttr(t, "hostnames")
 		AssertForbiddenAttr(t, "origin")
 		AssertForbiddenAttr(t, "is_secure")
-		AssertForbiddenAttr(t, "rules")
 		AssertForbiddenAttr(t, "variables")
 
-		AssertLifecycle(t, "contract instead of contract_id")
-		AssertLifecycle(t, "contract_id without prefix")
-		AssertLifecycle(t, "group instead of group_id")
-		AssertLifecycle(t, "group_id without prefix")
-		AssertLifecycle(t, "product instead of product_id")
-		AssertLifecycle(t, "product_id without prefix")
-
-		AssertImmutable(t, "contract_id")
-		AssertImmutable(t, "contract")
-
-		AssertImmutable(t, "group_id")
-		AssertImmutable(t, "group")
-
-		AssertImmutable(t, "product_id")
-		AssertImmutable(t, "product")
+		AssertLifecycle(t, "normal", LatestVersionNotActive)
+		AssertLifecycle(t, "normal", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "normal", LatestVersionActiveInProd)
+		AssertLifecycle(t, "contract_id without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "contract_id without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "contract_id without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "contract without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "contract without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "contract without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "group_id without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "group_id without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "group_id without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "group without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "group without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "group without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "product_id without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "product_id without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "product_id without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "product without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "product without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "product without prefix", LatestVersionActiveInProd)
 
 		AssertImportable(t, "property_id", "prp_0")
 		AssertImportable(t, "unprefixed property_id", "0")
+		AssertImportable(t, "property_id and group_id", "prp_0,grp_0")
+		AssertImportable(t, "unprefixed property_id and group_id", "0,0")
+		AssertImportable(t, "property_id and group_id and contract_id", "prp_0,grp_0,ctr_0")
+		AssertImportable(t, "unprefixed property_id and group_id and contract_id", "0,0,0")
 
 		t.Run("property is destroyed and recreated when name is changed", func(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
 
-			ExpectGetProp(client, "test property", "prp_0", "grp_0", "ctr_0", "prd_0", 42)
-			ExpectGetProp(client, "renamed property", "prp_1", "grp_0", "ctr_0", "prd_0", 1)
-			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
-			ExpectCreateProperty(client, "renamed property", "grp_0", "ctr_0", "prd_0", "prp_1").Once()
-			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
-			ExpectRemoveProperty(client, "prp_1", "ctr_0", "grp_0").Once()
+			setup := ComposeBehaviors(
+				PropertyLifecycle("test property", "prp_0"),
+				PropertyLifecycle("renamed property", "prp_1"),
+				SetHostnames("prp_0", 1, "to.test.domain"),
+				SetHostnames("prp_1", 1, "to2.test.domain"),
+			)
+			setup(&TestState{Client: client})
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -298,10 +419,7 @@ func TestResProperty(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/%s-step0.tf", t.Name()),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
-								resource.TestCheckResourceAttr("akamai_property.test", "name", "test property"),
-							),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
 						},
 						{
 							Config: loadFixtureString("testdata/%s-step1.tf", t.Name()),
@@ -322,8 +440,13 @@ func TestResProperty(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
 
-			ExpectGetProp(client, "test property", "prp_0", "grp_0", "ctr_0", "prd_0", 42)
-			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
+			setup := ComposeBehaviors(
+				CreateProperty("test property", "prp_0"),
+				GetProperty("prp_0"),
+				GetVersionResources("prp_0", 1),
+				SetHostnames("prp_0", 1, "to.test.domain"),
+			)
+			setup(&TestState{Client: client})
 
 			// First call to remove is not successful
 			req := papi.RemovePropertyRequest{
@@ -343,11 +466,11 @@ func TestResProperty(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/%s-step0.tf", t.Name()),
-							Check:  checkAllAttrs,
+							Config: loadFixtureString("testdata/%s/step0.tf", t.Name()),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
 						},
 						{
-							Config:      loadFixtureString("testdata/%s-step1.tf", t.Name()),
+							Config:      loadFixtureString("testdata/%s/step1.tf", t.Name()),
 							ExpectError: regexp.MustCompile(`Cannot remove active property`),
 						},
 					},
@@ -357,32 +480,4 @@ func TestResProperty(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	})
-}
-
-// Sets up an expected call to papi.CreateProperty() with a constant success response with the given PropertyID
-func ExpectCreateProperty(client *mockpapi, PropertyName, GroupID, ContractID, ProductID, PropertyID string) *mock.Call {
-	req := papi.CreatePropertyRequest{
-		GroupID:    GroupID,
-		ContractID: ContractID,
-		Property: papi.PropertyCreate{
-			ProductID:    ProductID,
-			PropertyName: PropertyName,
-		},
-	}
-
-	res := papi.CreatePropertyResponse{PropertyID: PropertyID}
-
-	return client.On("CreateProperty", AnyCTX, req).Return(&res, nil)
-}
-
-// Sets up an expected call to papi.RemoveProperty() with a constant success response
-func ExpectRemoveProperty(client *mockpapi, PropertyID, ContractID, GroupID string) *mock.Call {
-	req := papi.RemovePropertyRequest{
-		PropertyID: PropertyID,
-		GroupID:    GroupID,
-		ContractID: ContractID,
-	}
-	res := papi.RemovePropertyResponse{}
-
-	return client.On("RemoveProperty", AnyCTX, req).Return(&res, nil)
 }

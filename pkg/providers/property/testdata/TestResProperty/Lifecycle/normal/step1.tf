@@ -3,7 +3,7 @@ provider "akamai" {
 }
 
 resource "akamai_property" "test" {
-  name = "renamed property"
+  name = "test property"
   contract_id = "ctr_0"
   group_id    = "grp_0"
   product_id  = "prd_0"
@@ -11,4 +11,6 @@ resource "akamai_property" "test" {
   hostnames = {
     "from.test.domain" = "to2.test.domain"
   }
+
+  rules = "{\"name\":\"default\",\"options\":{}}"
 }

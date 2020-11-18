@@ -1,8 +1,6 @@
 package property
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -104,16 +102,6 @@ func loadFixtureString(format string, args ...interface{}) string {
 	return string(loadFixtureBytes(fmt.Sprintf(format, args...)))
 }
 
-// compactJSON converts a JSON-encoded byte slice to a compact form (so our JSON fixtures can be readable)
-func compactJSON(encoded []byte) string {
-	buf := bytes.Buffer{}
-	if err := json.Compact(&buf, encoded); err != nil {
-		panic(fmt.Sprintf("%s: %s", err, string(encoded)))
-	}
-
-	return buf.String()
-}
-
 // suppressLogging prevents logging output during the given func unless TEST_LOGGING env var is not empty. Use this
 // to keep log messages from polluting test output. Not thread-safe.
 func suppressLogging(t *testing.T, f func()) {
@@ -126,4 +114,19 @@ func suppressLogging(t *testing.T, f func()) {
 	}
 
 	f()
+}
+
+// Wrapper to intercept the mockpapi's call of t.FailNow(). The Terraform test driver runs the provider code on
+// goroutines other than the one created for the test. When t.FailNow() is called from any other goroutine, it causes
+// the test to hang because the TF test driver is still waiting to serve requests. Mockery's failure message neglects to
+// inform the user which test had failed. Use this struct to wrap a *testing.T when you call mock.Test(T{t}) and the
+// mock's failure will print the failling test's name. Such failures are usually caused by the provider invoking an
+// unexpected call on the mock.
+//
+// NB: You should only need to use this where your test uses the Terraform test driver
+type T struct{ *testing.T }
+
+// Overrides testing.T.FailNow() so when a test mock fails an assertion, we see which test had failed before it hangs
+func (t T) FailNow() {
+	t.T.Fatalf("FAIL: %s", t.T.Name())
 }
