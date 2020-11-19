@@ -22,6 +22,21 @@ func (p *mockpapi) GetGroups(ctx context.Context) (*papi.GetGroupsResponse, erro
 	return args.Get(0).(*papi.GetGroupsResponse), args.Error(1)
 }
 
+// Any function having the same signature as papi.GetGroups
+type GetGroupsFunc func(context.Context) (*papi.GetGroupsResponse, error)
+
+// Expect a call to the mock's papi.GetGroups() where the return value is computed by the given function
+func (p *mockpapi) OnGetGroups(ctx interface{}, impl GetGroupsFunc) *mock.Call {
+	call := p.On("GetGroups", ctx)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+
+		call.Return(impl(callCtx))
+	})
+
+	return call
+}
+
 func (p *mockpapi) GetContracts(ctx context.Context) (*papi.GetContractsResponse, error) {
 	args := p.Called(ctx)
 

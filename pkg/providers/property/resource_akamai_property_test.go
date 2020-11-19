@@ -18,6 +18,8 @@ func TestResProperty(t *testing.T) {
 		Hostnames  []papi.Hostname
 		Rules      papi.Rules
 		RuleFormat string
+		Groups     []papi.Group
+		err        error
 	}
 
 	// BehaviorFuncs can be composed to define common patterns of mock PAPI behavior
@@ -66,13 +68,17 @@ func TestResProperty(t *testing.T) {
 
 	GetProperty := func(PropertyID string) BehaviorFunc {
 		return func(State *TestState) {
-			ExpectGetProperty(State.Client, PropertyID, "grp_0", "ctr_0", &State.Property)
+			ExpectGetProperty(State.Client, PropertyID, "grp_0", "ctr_0", &State.Property, State.err)
 		}
 	}
 
-	CreateProperty := func(PropertyName, PropertyID string) BehaviorFunc {
+	CreateProperty := func(PropertyName, PropertyID string, err error) BehaviorFunc {
 		return func(State *TestState) {
-			ExpectCreateProperty(State.Client, PropertyName, "grp_0", "ctr_0", "prd_0", PropertyID).Run(func(mock.Arguments) {
+			ExpectCreateProperty(State.Client, PropertyName, "grp_0", "ctr_0", "prd_0", PropertyID, err).Run(func(mock.Arguments) {
+				if err != nil {
+					State.err = err
+				}
+
 				State.Property = papi.Property{
 					PropertyName:  PropertyName,
 					PropertyID:    PropertyID,
@@ -86,14 +92,22 @@ func TestResProperty(t *testing.T) {
 				State.RuleFormat = "v2020-01-01"
 			}).Once()
 
-			GetProperty(PropertyID)(State)
-			GetVersionResources(PropertyID, 1)(State)
+			if err == nil {
+				GetProperty(PropertyID)(State)
+				GetVersionResources(PropertyID, 1)(State)
+			}
 		}
 	}
 
-	PropertyLifecycle := func(PropertyName, PropertyID string) BehaviorFunc {
+	GetGroups := func(groups []*papi.Group, err error) BehaviorFunc {
 		return func(State *TestState) {
-			CreateProperty(PropertyName, PropertyID)(State)
+			ExpectGetGroups(State.Client, err, groups).Once()
+		}
+	}
+
+	PropertyLifecycle := func(PropertyName, PropertyID, GroupID string) BehaviorFunc {
+		return func(State *TestState) {
+			CreateProperty(PropertyName, PropertyID, nil)(State)
 			GetVersionResources(PropertyID, 1)(State)
 			DeleteProperty(PropertyID)(State)
 		}
@@ -102,8 +116,8 @@ func TestResProperty(t *testing.T) {
 	ImportProperty := func(PropertyID string) BehaviorFunc {
 		return func(State *TestState) {
 			// Depending on how much of the import ID is given, the initial property lookup may not have group/contract
-			ExpectGetProperty(State.Client, "prp_0", "grp_0", "", &State.Property).Maybe()
-			ExpectGetProperty(State.Client, "prp_0", "", "", &State.Property).Maybe()
+			ExpectGetProperty(State.Client, "prp_0", "grp_0", "", &State.Property, nil).Maybe()
+			ExpectGetProperty(State.Client, "prp_0", "", "", &State.Property, nil).Maybe()
 		}
 	}
 
@@ -148,7 +162,7 @@ func TestResProperty(t *testing.T) {
 	LatestVersionActiveInStaging := LifecycleTestCase{
 		Name: "Latest version is active in staging",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0"),
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
 			SetHostnames("prp_0", 2, "to2.test.domain"),
@@ -175,7 +189,7 @@ func TestResProperty(t *testing.T) {
 	LatestVersionActiveInProd := LifecycleTestCase{
 		Name: "Latest version is active in production",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0"),
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
 			SetHostnames("prp_0", 2, "to2.test.domain"),
@@ -202,7 +216,7 @@ func TestResProperty(t *testing.T) {
 	LatestVersionNotActive := LifecycleTestCase{
 		Name: "Latest version not active",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0"),
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			SetHostnames("prp_0", 1, "to2.test.domain"),
 		),
@@ -314,7 +328,7 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0"),
+				PropertyLifecycle("test property", "prp_0", "grp_0"),
 				ImportProperty("prp_0"),
 				SetHostnames("prp_0", 1, "to.test.domain"),
 			)
@@ -406,8 +420,8 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0"),
-				PropertyLifecycle("renamed property", "prp_1"),
+				PropertyLifecycle("test property", "prp_0", "grp_0"),
+				PropertyLifecycle("renamed property", "prp_1", "grp_0"),
 				SetHostnames("prp_0", 1, "to.test.domain"),
 				SetHostnames("prp_1", 1, "to2.test.domain"),
 			)
@@ -441,7 +455,7 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
-				CreateProperty("test property", "prp_0"),
+				CreateProperty("test property", "prp_0", nil),
 				GetProperty("prp_0"),
 				GetVersionResources("prp_0", 1),
 				SetHostnames("prp_0", 1, "to.test.domain"),
@@ -472,6 +486,39 @@ func TestResProperty(t *testing.T) {
 						{
 							Config:      loadFixtureString("testdata/%s/step1.tf", t.Name()),
 							ExpectError: regexp.MustCompile(`Cannot remove active property`),
+						},
+					},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
+
+		t.Run("error when the given group is not found", func(t *testing.T) {
+			client := &mockpapi{}
+			client.Test(T{t})
+
+			// the papi GetGroups call should not return any matching group
+			setup := ComposeBehaviors(
+				CreateProperty("property_name", "prp_0", &papi.Error{
+					StatusCode: 404,
+					Title:      "Not Found",
+					Detail:     "The system was unable to locate the requested resource",
+					Type:       "https://problems.luna.akamaiapis.net/papi/v0/http/not-found",
+					Instance:   "https://akaa-hqgqowhpmkw32kmt-t3owzo37wb5dkern.luna-dev.akamaiapis.net/papi/v1/properties?contractId=ctr_0\\u0026groupId=grp_0#c3fe5f9b0c4a14d1",
+				},
+				),
+				GetGroups([]*papi.Group{}, nil),
+			)
+			setup(&TestState{Client: client})
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config:      loadFixtureString("testdata/TestResProperty/Creation/property.tf"),
+							ExpectError: regexp.MustCompile("group not found: grp_0"),
 						},
 					},
 				})
