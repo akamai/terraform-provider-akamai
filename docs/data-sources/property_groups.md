@@ -13,7 +13,7 @@ Use the `akamai_property_groups` data source to list groups associated with the 
 
 ## Basic Usage
 
-Return groups associated with the selected EdgeGrid API client token:
+Return groups associated with the EdgeGrid API client token you're using:
 
 datasource-example.tf
 ```hcl-terraform

@@ -37,5 +37,5 @@ This data source supports this argument:
 This data source returns these attributes:
 
 * `products` - A list of supported products for the contract, including:
-  * `product_id` - A string containing product's unique ID. All results will include the `prd_` prefix.
+  * `product_id` - A string containing a product's unique ID. All results will include the `prd_` prefix.
   * `product_name` - A string containing the product name.

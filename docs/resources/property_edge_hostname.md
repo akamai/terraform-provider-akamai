@@ -12,7 +12,7 @@ The `akamai_edge_hostname` resource lets you configure a secure edge hostname. Y
 
 An edge hostname is the CNAME target you use when directing your end user traffic to Akamai. Each hostname assigned to a property has a corresponding edge hostname. 
  
-Akamai supports three types of edge hostname, depending on the level of security you need for your traffic: Standard TLS, Enhanced TLS, and Shared Certificate. When entering the `edge_hostname` attribute, need to include a specific domain suffix for your edge hostname type: 
+Akamai supports three types of edge hostnames, depending on the level of security you need for your traffic: Standard TLS, Enhanced TLS, and Shared Certificate. When entering the `edge_hostname` attribute, need to include a specific domain suffix for your edge hostname type: 
 
 | Edge hostname type | Domain suffix |
 |------|-------|
@@ -49,6 +49,7 @@ This resource supports these arguments:
 * `ip_behavior` - (Optional) Which version of the IP protocol to use: `IPV4` for version 4 only, or `IPV6_COMPLIANCE` for both 4 and 6. The default value is `IPV4`.
 
 ### Deprecated Arguments
+
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
 * `ipv6` -  (Deprecated) Optional argument used when a property supports IPv6 to origin. An existing resource will use this argument if `ip_behavior` hasn't been added. Set to `false` by default.
 * `ipv4` - (Deprecated) Optional argument used when a property supports IPv4 to origin. An existing resource will use this argument if `ip_behavior` hasn't been added. Set to `true` by default.

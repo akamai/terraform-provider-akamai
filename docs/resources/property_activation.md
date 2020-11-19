@@ -65,20 +65,21 @@ resource "akamai_property_activation" "example_prod" {
 
 The following arguments are supported:
 
-* `property_id` - (Required) The property’s unique identifier. If you use ID prefixes with PAPI, your ID will have the `prp_` prefix. 
+* `property_id` - (Required) The property’s unique identifier. If you use ID prefixes with the Property Manager API (PAPI), your ID will have the `prp_` prefix. 
 * `contact` - (Required) One or more email addresses to send activation status changes to.
 * `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. 
 * `network` - (Optional) Akamai network to activate on, either `STAGING` or `PRODUCTION`. `STAGING` is the default.
 
 ### Deprecated Arguments
+
 * `property` - (Deprecated) Replaced by `property_id`. Maintained for legacy purposes.
 
 ## Attribute Reference
 
 The following attributes are returned:
 
-* `id` - unique identifier for this activation
-* `warnings` - any warnings which may arise when the operation is executed by the infrastructure.
-* `errors` - any errors which may arise when the operation is executed by the infrastructure
-* `activation_id` - activation ID while an activation is in progress.
-* `status` - the current activation status
+* `id` - The unique identifier for this activation.
+* `warnings` - The contents of `warnings` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `errors` - The contents of `errors` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `activation_id` - The ID given to the activation event while it's in progress.
+* `status` - The property version’s activation status on the selected network.

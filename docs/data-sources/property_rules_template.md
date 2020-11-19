@@ -8,7 +8,9 @@ description: |-
 
 # akamai_property_rules_template
 
-The `akamai_property_rules_template` data source lets you configure a rule tree: a nested block of property rules that include match criteria and behaviors. The rule tree is a set of templates that's nested hierarchically. You can also add variables that you define to the template files that are interpolated at runtime.
+The `akamai_property_rules_template` data source lets you configure a rule tree: a nested block of property 
+rules that include match criteria and behaviors. The rule tree is a set of templates that's nested hierarchically. 
+You can also add variables that you define to the template files that are interpolated at runtime.
 
 <!--Does "nested hierarchically" refer to rule order in PM?--> 
 
@@ -19,14 +21,14 @@ You can pass user-defined variables by supplying either:
 * a set of Terraform variables.
 
 ## Referencing sub-files from a template
-You can split each template out into a series of smaller template files. To add them to this data source, you need to include them in the currently loaded file.  For example, to include
-`example-file.json` from the `template` directory, use this syntax `"#include:example-file.json"` including 
-the quotes.  All files are resolved in relation to the `template` directory. 
+You can split each template out into a series of smaller template files. To add them to this data source, 
+you need to include them in the currently loaded file.  For example, to include
+`example-file.json` from the `template` directory, use this syntax including the quotes: `"#include:example-file.json"`.  All files are resolved in relation to the `template` directory. 
 
 <!--What's the currently loaded file?--> 
 
 ## Inserting variables in a template
-You can also add variables to a template by using a string like `“${env.<variableName>}"` including quotes.  
+You can also add variables to a template by using a string like `“${env.<variableName>}"`. You'll need the quotes here too.  
 These are Akamai variables passed into the template call. They differ from Terraform variables which should resolve normally.
 
 ## Example usage: variables
@@ -61,7 +63,7 @@ data "akamai_property_rules_template" "akarules" {
 
 ### Example usage: template files
 
-Here's an example of what a JSON-based template file its nested templates existing might look like:
+Here's an example of what a JSON-based template file with its nested templates might look like:
 
 templates/main.json:
 ```json
@@ -82,7 +84,7 @@ templates/main.json:
       "is_secure": “${env.secure}"
     },
     "variables": "#include:akamai_variables.json",
-    "comments": "The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings."
+    "comments": "The behaviors in the Default Rule apply to all requests for the property hostnames unless another rule overrides the Default Rule settings."
   }
 }
 ```
@@ -126,8 +128,8 @@ resource "akamai_property" "example" {
     * `name` - The name of the variable used in template.
     * `type` - The type of variable: `string`, `number`, `bool` or `jsonBlock`
     * `value` - The value of the variable passed as a string.
-* `variable_definition_file` - (Optional) The absolute path to the file containing variable definitions and defaults. This file  follows the syntax used in PM CLI. This argument is required if you set `variable_values_file` and conflicts with `variables`.
-* `variable_values_file` - (Optional) The absolute path to the file containing variable values. This file  follows the syntax used in PM CLI. This argument is required if you set `variable_definition_file` and conflicts with `variables`.
+* `variable_definition_file` - (Optional) The absolute path to the file containing variable definitions and defaults. This file  follows the syntax used in the Property Manager CLI. This argument is required if you set `variable_values_file` and conflicts with `variables`.
+* `variable_values_file` - (Optional) The absolute path to the file containing variable values. This file  follows the syntax used in Property Manager CLI. This argument is required if you set `variable_definition_file` and conflicts with `variables`.
 
 ## Attributes Reference
 

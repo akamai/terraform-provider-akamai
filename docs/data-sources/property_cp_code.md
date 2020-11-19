@@ -23,7 +23,7 @@ data "akamai_cp_code" "example" {
 }
 ```
 
-Here's a more real-world example that includes other data sources as dependencies:
+Here's a real-world example that includes other data sources as dependencies:
 ```
 locals {
     group_name = "example group name"
@@ -48,10 +48,10 @@ data "akamai_cp_code" "example" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports these arguments:
 
 * `name` - (Required) The name of the CP code.
-* `group_id` - The group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai Provider appends it to your entry for processing purposes.
+* `group_id` - (Required) The group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai Provider appends it to your entry for processing purposes.
 * `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
 
 ### Deprecated Arguments
@@ -60,7 +60,7 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-This data source returns these attributes are returned:
+This data source returns these attributes:
 
-* `id` - The CP code ID.
-* `product_ids` - An array of product IDs associated with this CP code. Each ID will include the `prd_` prefix.
+* `id` - The CP code's ID.
+* `product_ids` - An array of product IDs associated with this CP code. Each ID returned includes the `prd_` prefix.

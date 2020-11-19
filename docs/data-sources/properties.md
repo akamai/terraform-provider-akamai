@@ -38,6 +38,6 @@ This data source supports these arguments:
 
 ## Attributes Reference
 
-This data source returns these attributes:
+This data source returns this attribute:
 
 * `properties` - A list of properties available for the contract and group IDs provided.
