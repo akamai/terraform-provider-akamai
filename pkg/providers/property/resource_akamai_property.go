@@ -82,10 +82,11 @@ func resourceProperty() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			// Required
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Name to give to the Property (must be unique)",
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: tools.IsBlank,
+				Description:      "Name to give to the Property (must be unique)",
 			},
 
 			"group_id": {
