@@ -66,6 +66,12 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	}
 	getCustomRuleActions.PolicyID = policyid
 
+	customruleid, err := tools.GetIntValue("custom_rule_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getCustomRuleActions.RuleID = customruleid
+
 	customruleactions, err := client.GetCustomRuleActions(ctx, getCustomRuleActions)
 	if err != nil {
 		logger.Errorf("calling 'getCustomRuleActions': %s", err.Error())
