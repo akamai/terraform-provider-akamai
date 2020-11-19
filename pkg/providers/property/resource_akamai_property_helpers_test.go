@@ -2,40 +2,31 @@ package property
 
 import (
 	"context"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/stretchr/testify/mock"
 )
 
 // Sets up an expected call to papi.GetGroups(), which returns the given parameters
-func ExpectGetGroups(client *mockpapi, err error, State []*papi.Group) *mock.Call {
+func ExpectGetGroups(client *mockpapi, State *[]*papi.Group) *mock.Call {
 	fn := func(ctx context.Context) (*papi.GetGroupsResponse, error) {
-
-		if err != nil {
-			return nil, err
-		}
-
 		var groups []*papi.Group
 
-		// duplicate the state
-		if State != nil {
-			groups = State
-		}
-
-		for ind, g := range groups {
-			v := *g
-			groups[ind] = &v
+		for _, ptr := range *State {
+			grp := *ptr
+			groups = append(groups, &grp)
 		}
 
 		return &papi.GetGroupsResponse{Groups: papi.GroupItems{Items: groups}}, nil
 	}
-	//return client.On("GetGroups", AnyCTX).Return(response, err)
+
 	return client.OnGetGroups(AnyCTX, fn)
 }
 
 // Sets up an expected call to papi.GetProperty() which returns a value depending on the given State pointer. When nil,
 // the PAPI response contains a zero-value papi.Property. Otherwise the response will dynamically contain a copy of
 // the State made at the time of the call to mockpapi.GetProperty().
-func ExpectGetProperty(client *mockpapi, PropertyID, GroupID, ContractID string, State *papi.Property, err error) *mock.Call {
+func ExpectGetProperty(client *mockpapi, PropertyID, GroupID, ContractID string, State *papi.Property) *mock.Call {
 	req := papi.GetPropertyRequest{
 		PropertyID: PropertyID,
 		ContractID: ContractID,
@@ -43,10 +34,6 @@ func ExpectGetProperty(client *mockpapi, PropertyID, GroupID, ContractID string,
 	}
 
 	fn := func(context.Context, papi.GetPropertyRequest) (*papi.GetPropertyResponse, error) {
-		if err != nil {
-			return nil, err
-		}
-
 		var property papi.Property
 
 		// Duplicate the State
@@ -143,8 +130,8 @@ func ExpectCreatePropertyVersion(client *mockpapi, PropertyID, GroupID, Contract
 	return client.On("CreatePropertyVersion", AnyCTX, req).Return(&res, nil)
 }
 
-// Sets up an expected call to papi.CreateProperty() with a constant success response with the given PropertyID
-func ExpectCreateProperty(client *mockpapi, PropertyName, GroupID, ContractID, ProductID, PropertyID string, err error) *mock.Call {
+// Sets up an expected successful call to papi.CreateProperty() with a constant success response with the given PropertyID
+func ExpectCreateProperty(client *mockpapi, PropertyName, GroupID, ContractID, ProductID, PropertyID string) *mock.Call {
 	req := papi.CreatePropertyRequest{
 		GroupID:    GroupID,
 		ContractID: ContractID,
@@ -156,7 +143,7 @@ func ExpectCreateProperty(client *mockpapi, PropertyName, GroupID, ContractID, P
 
 	res := papi.CreatePropertyResponse{PropertyID: PropertyID}
 
-	return client.On("CreateProperty", AnyCTX, req).Return(&res, err)
+	return client.On("CreateProperty", AnyCTX, req).Return(&res, nil)
 }
 
 // Sets up an expected call to papi.RemoveProperty() with a constant success response
