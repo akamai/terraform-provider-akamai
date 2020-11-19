@@ -4,28 +4,18 @@ package property
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
-func getGroup(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Group, error) {
+func getGroup(ctx context.Context, meta akamai.OperationMeta, groupID string) (*papi.Group, error) {
 	logger := meta.Log("PAPI", "getGroup")
 	client := inst.Client(meta)
 	logger.Debugf("Fetching groups")
-	groupID, err := tools.GetStringValue("group", d)
-	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return nil, err
-		}
-		return nil, ErrNoGroupProvided
-	}
 	res, err := client.GetGroups(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingGroups, err.Error())
@@ -48,22 +38,14 @@ func getGroup(ctx context.Context, d *schema.ResourceData, meta akamai.Operation
 	return group, nil
 }
 
-func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta) (*papi.Contract, error) {
+func getContract(ctx context.Context, meta akamai.OperationMeta, contractID string) (*papi.Contract, error) {
 	logger := meta.Log("PAPI", "getContract")
 	client := inst.Client(meta)
 	logger.Debugf("Fetching contract")
-	contractID, err := tools.GetStringValue("contract", d)
-	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return nil, err
-		}
-		return nil, ErrNoContractProvided
-	}
 	res, err := client.GetContracts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingContracts, err.Error())
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
 	var contract *papi.Contract
 	var contractFound bool
 	for _, c := range res.Contracts.Items {
@@ -81,25 +63,17 @@ func getContract(ctx context.Context, d *schema.ResourceData, meta akamai.Operat
 	return contract, nil
 }
 
-func getProduct(ctx context.Context, d *schema.ResourceData, contractID string, meta akamai.OperationMeta) (*papi.ProductItem, error) {
+func getProduct(ctx context.Context, meta akamai.OperationMeta, productID, contractID string) (*papi.ProductItem, error) {
 	logger := meta.Log("PAPI", "getProduct")
 	client := inst.Client(meta)
 	if contractID == "" {
 		return nil, ErrNoContractProvided
 	}
 	logger.Debugf("Fetching product")
-	productID, err := tools.GetStringValue("product", d)
-	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return nil, err
-		}
-		return nil, ErrNoProductProvided
-	}
 	res, err := client.GetProducts(ctx, papi.GetProductsRequest{ContractID: contractID})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrProductFetch, err.Error())
 	}
-	productID = tools.AddPrefix(productID, "prd_")
 	var productFound bool
 	var product papi.ProductItem
 	for _, p := range res.Products.Items {

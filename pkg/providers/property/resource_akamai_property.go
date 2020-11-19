@@ -3,6 +3,7 @@ package property
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -244,8 +245,9 @@ func resourceProperty() *schema.Resource {
 }
 
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	logger := akamai.Meta(m).Log("PAPI", "resourcePropertyCreate")
-	client := inst.Client(akamai.Meta(m))
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyCreate")
+	client := inst.Client(meta)
 	ctx = log.NewContext(ctx, logger)
 
 	// Block creation if user has set any hard-deprecated attributes
@@ -258,9 +260,9 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	// Schema guarantees these types
 	PropertyName := d.Get("name").(string)
 
-	GroupID := d.Get("group_id").(string)
-	if GroupID == "" {
-		GroupID = d.Get("group").(string)
+	GroupID, err := tools.ResolveKeyStringState("group_id", "group", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	GroupID = tools.AddPrefix(GroupID, "grp_")
 
@@ -283,6 +285,28 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	PropertyID, err := createProperty(ctx, client, PropertyName, GroupID, ContractID, ProductID, RuleFormat)
 	if err != nil {
+		if strings.Contains(err.Error(), "\"statusCode\": 404") {
+			// find out what is missing from the request
+			if _, err = getGroup(ctx, meta, GroupID); err != nil {
+				if errors.Is(err, ErrGroupNotFound) {
+					return diag.Errorf("%v: %s", ErrGroupNotFound, GroupID)
+				}
+				return diag.FromErr(err)
+			}
+			if _, err = getContract(ctx, meta, ContractID); err != nil {
+				if errors.Is(err, ErrContractNotFound) {
+					return diag.Errorf("%v: %s", ErrContractNotFound, ContractID)
+				}
+				return diag.FromErr(err)
+			}
+			if _, err = getProduct(ctx, meta, ProductID, ContractID); err != nil {
+				if errors.Is(err, ErrProductNotFound) {
+					return diag.Errorf("%v: %s", ErrProductNotFound, ProductID)
+				}
+				return diag.FromErr(err)
+			}
+			return diag.FromErr(err)
+		}
 		return diag.FromErr(err)
 	}
 
