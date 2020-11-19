@@ -11,18 +11,16 @@ import (
 )
 
 func TestResProperty(t *testing.T) {
-	// These more or less track the state of a Property in PAPI
+	// These more or less track the state of a Property in PAPI for the lifecycle tests
 	type TestState struct {
 		Client     *mockpapi
 		Property   papi.Property
 		Hostnames  []papi.Hostname
 		Rules      papi.Rules
 		RuleFormat string
-		Groups     []papi.Group
-		err        error
 	}
 
-	// BehaviorFuncs can be composed to define common patterns of mock PAPI behavior
+	// BehaviorFuncs can be composed to define common patterns of mock PAPI behavior (for Lifecycle tests)
 	type BehaviorFunc = func(*TestState)
 
 	// Combines many BehaviorFuncs into one
@@ -68,16 +66,13 @@ func TestResProperty(t *testing.T) {
 
 	GetProperty := func(PropertyID string) BehaviorFunc {
 		return func(State *TestState) {
-			ExpectGetProperty(State.Client, PropertyID, "grp_0", "ctr_0", &State.Property, State.err)
+			ExpectGetProperty(State.Client, PropertyID, "grp_0", "ctr_0", &State.Property)
 		}
 	}
 
-	CreateProperty := func(PropertyName, PropertyID string, err error) BehaviorFunc {
+	CreateProperty := func(PropertyName, PropertyID string) BehaviorFunc {
 		return func(State *TestState) {
-			ExpectCreateProperty(State.Client, PropertyName, "grp_0", "ctr_0", "prd_0", PropertyID, err).Run(func(mock.Arguments) {
-				if err != nil {
-					State.err = err
-				}
+			ExpectCreateProperty(State.Client, PropertyName, "grp_0", "ctr_0", "prd_0", PropertyID).Run(func(mock.Arguments) {
 
 				State.Property = papi.Property{
 					PropertyName:  PropertyName,
@@ -90,24 +85,15 @@ func TestResProperty(t *testing.T) {
 
 				State.Rules = papi.Rules{Name: "default"}
 				State.RuleFormat = "v2020-01-01"
-			}).Once()
-
-			if err == nil {
 				GetProperty(PropertyID)(State)
 				GetVersionResources(PropertyID, 1)(State)
-			}
-		}
-	}
-
-	GetGroups := func(groups []*papi.Group, err error) BehaviorFunc {
-		return func(State *TestState) {
-			ExpectGetGroups(State.Client, err, groups).Once()
+			}).Once()
 		}
 	}
 
 	PropertyLifecycle := func(PropertyName, PropertyID, GroupID string) BehaviorFunc {
 		return func(State *TestState) {
-			CreateProperty(PropertyName, PropertyID, nil)(State)
+			CreateProperty(PropertyName, PropertyID)(State)
 			GetVersionResources(PropertyID, 1)(State)
 			DeleteProperty(PropertyID)(State)
 		}
@@ -116,8 +102,8 @@ func TestResProperty(t *testing.T) {
 	ImportProperty := func(PropertyID string) BehaviorFunc {
 		return func(State *TestState) {
 			// Depending on how much of the import ID is given, the initial property lookup may not have group/contract
-			ExpectGetProperty(State.Client, "prp_0", "grp_0", "", &State.Property, nil).Maybe()
-			ExpectGetProperty(State.Client, "prp_0", "", "", &State.Property, nil).Maybe()
+			ExpectGetProperty(State.Client, "prp_0", "grp_0", "", &State.Property).Maybe()
+			ExpectGetProperty(State.Client, "prp_0", "", "", &State.Property).Maybe()
 		}
 	}
 
@@ -130,7 +116,7 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	// TestCheckFunc to verify all standard attributes
+	// TestCheckFunc to verify all standard attributes (for Lifecycle tests)
 	CheckAttrs := func(PropertyID, CnameTo, LatestVersion, StagingVersion, ProductionVersion string) resource.TestCheckFunc {
 		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_property.test", "id", PropertyID),
@@ -455,7 +441,7 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
-				CreateProperty("test property", "prp_0", nil),
+				CreateProperty("test property", "prp_0"),
 				GetProperty("prp_0"),
 				GetVersionResources("prp_0", 1),
 				SetHostnames("prp_0", 1, "to.test.domain"),
@@ -498,27 +484,64 @@ func TestResProperty(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
 
-			// the papi GetGroups call should not return any matching group
-			setup := ComposeBehaviors(
-				CreateProperty("property_name", "prp_0", &papi.Error{
-					StatusCode: 404,
-					Title:      "Not Found",
-					Detail:     "The system was unable to locate the requested resource",
-					Type:       "https://problems.luna.akamaiapis.net/papi/v0/http/not-found",
-					Instance:   "https://akaa-hqgqowhpmkw32kmt-t3owzo37wb5dkern.luna-dev.akamaiapis.net/papi/v1/properties?contractId=ctr_0\\u0026groupId=grp_0#c3fe5f9b0c4a14d1",
+			req := papi.CreatePropertyRequest{
+				ContractID: "ctr_0",
+				GroupID:    "grp_0",
+				Property: papi.PropertyCreate{
+					ProductID:    "prd_0",
+					PropertyName: "property_name",
 				},
-				),
-				GetGroups([]*papi.Group{}, nil),
-			)
-			setup(&TestState{Client: client})
+			}
 
+			var err error = &papi.Error{
+				StatusCode: 404,
+				Title:      "Not Found",
+				Detail:     "The system was unable to locate the requested resource",
+				Type:       "https://problems.luna.akamaiapis.net/papi/v0/http/not-found",
+				Instance:   "https://akaa-hqgqowhpmkw32kmt-t3owzo37wb5dkern.luna-dev.akamaiapis.net/papi/v1/properties?contractId=ctr_0\\u0026groupId=grp_0#c3fe5f9b0c4a14d1",
+			}
+
+			client.On("CreateProperty", AnyCTX, req).Return(nil, err).Once()
+
+			// the papi GetGroups call should not return any matching group
+			var Groups []*papi.Group
+			ExpectGetGroups(client, &Groups).Once()
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{{
+						Config:      loadFixtureString("testdata/TestResProperty/Creation/property.tf"),
+						ExpectError: regexp.MustCompile("group not found: grp_0"),
+					}},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
+
+		t.Run("error when creating property with non-unique name", func(t *testing.T) {
+			client := &mockpapi{}
+			client.Test(T{t})
+
+			req := papi.CreatePropertyRequest{
+				ContractID: "ctr_0",
+				GroupID:    "grp_0",
+				Property: papi.PropertyCreate{
+					PropertyName: "test property",
+					ProductID:    "prd_0",
+				},
+			}
+
+			client.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf("given property name is not unique"))
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString("testdata/TestResProperty/Creation/property.tf"),
-							ExpectError: regexp.MustCompile("group not found: grp_0"),
+							Config:      loadFixtureString("testdata/%s.tf", t.Name()),
+							Check:       resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
+							ExpectError: regexp.MustCompile(`property name is not unique`),
 						},
 					},
 				})
