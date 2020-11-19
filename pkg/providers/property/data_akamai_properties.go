@@ -18,12 +18,14 @@ func dataSourceAkamaiProperties() *schema.Resource {
 		ReadContext: dataAkamaiPropertiesRead,
 		Schema: map[string]*schema.Schema{
 			"group_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 			"contract_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 			"properties": {
 				Type:        schema.TypeList,

@@ -30,9 +30,10 @@ func resourceCPCode() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 			"contract": {
 				Type:       schema.TypeString,
@@ -63,9 +64,10 @@ func resourceCPCode() *schema.Resource {
 				StateFunc:    addPrefixToState("grp_"),
 			},
 			"product": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 		},
 	}

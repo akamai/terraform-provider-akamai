@@ -72,8 +72,9 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Computed: true,
 	},
 	"version": {
-		Type:     schema.TypeInt,
-		Required: true,
+		Type:             schema.TypeInt,
+		Required:         true,
+		ValidateDiagFunc: tools.IsNotBlank,
 	},
 	"network": {
 		Type:     schema.TypeString,

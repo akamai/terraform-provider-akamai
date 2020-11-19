@@ -28,16 +28,18 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 		ReadContext: dataAkamaiPropertyRulesRead,
 		Schema: map[string]*schema.Schema{
 			"template_file": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 			"variables": {
 				Type: schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: tools.IsNotBlank,
 						},
 						"type": {
 							Type:     schema.TypeString,

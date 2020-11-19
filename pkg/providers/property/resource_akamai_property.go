@@ -85,7 +85,7 @@ func resourceProperty() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: tools.IsBlank,
+				ValidateDiagFunc: tools.IsNotBlank,
 				Description:      "Name to give to the Property (must be unique)",
 			},
 

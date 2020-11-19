@@ -15,8 +15,9 @@ func dataSourceCPCode() *schema.Resource {
 		ReadContext: dataSourceCPCodeRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 			"contract": {
 				Type:          schema.TypeString,

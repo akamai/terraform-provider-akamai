@@ -74,6 +74,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Required:         true,
 		ForceNew:         true,
 		DiffSuppressFunc: suppressEdgeHostnameDomain,
+		ValidateDiagFunc: tools.IsNotBlank,
 	},
 	"ipv4": {
 		Type:          schema.TypeBool,

@@ -39,9 +39,10 @@ var dataAkamaiPropertyRuleSchema = map[string]*schema.Schema{
 		StateFunc: addPrefixToState("grp_"),
 	},
 	"property_id": {
-		Type:      schema.TypeString,
-		Required:  true,
-		StateFunc: addPrefixToState("prp_"),
+		Type:             schema.TypeString,
+		Required:         true,
+		StateFunc:        addPrefixToState("prp_"),
+		ValidateDiagFunc: tools.IsNotBlank,
 	},
 	"version": {
 		Type:        schema.TypeInt,
