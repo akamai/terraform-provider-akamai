@@ -144,11 +144,12 @@ func resourceProperty() *schema.Resource {
 				Computed:    true,
 				Description: "Specify the rule format version (defaults to latest version available when created)",
 				ValidateDiagFunc: func(v interface{}, _ cty.Path) diag.Diagnostics {
-					if v.(string) == "" {
+					format := v.(string)
+					if format == "" || format == "latest" {
 						return nil
 					}
 
-					if !regexp.MustCompile(`^v[0-9]{4}-[0-9]{2}-[0-9]{2}$`).MatchString(v.(string)) {
+					if !regexp.MustCompile(`^v[0-9]{4}-[0-9]{2}-[0-9]{2}$`).MatchString(format) {
 						url := "https://developer.akamai.com/api/core_features/property_manager/vlatest.html#behaviors"
 						return diag.Errorf(`"rule_format" must be of the form vYYYY-MM-DD (with a leading "v") see %s`, url)
 					}
@@ -318,7 +319,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		}
 
 		ctx := ctx
-		if RuleFormat != "" && RuleFormat != "latest" {
+		if RuleFormat != "" {
 			h := http.Header{
 				"Content-Type": []string{fmt.Sprintf("application/vnd.akamai.papirules.%s+json", RuleFormat)},
 			}
@@ -486,68 +487,23 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		}
 	}
 
-	var Rules *papi.Rules
 	RuleFormat := d.Get("rule_format").(string)
 	RulesJSON := []byte(d.Get("rules").(string))
 	RulesNeedUpdate := len(RulesJSON) > 0 && d.HasChange("rules")
 	FormatNeedsUpdate := len(RuleFormat) > 0 && d.HasChange("rule_format")
-	MIME := fmt.Sprintf("application/vnd.akamai.papirules.v%s+json", RuleFormat)
-
-	// Special cases for when rule_format needs update and rules does not:
-	//   * User is upgrading feature set and is not managing rules in terraform
-	//   * User is upgrading feature set and no longer wants to manage rules in terraform
-	//   * User is upgrading feature set and manages rules in terraform and expects rules content not to change when
-	//     PAPI upgrades the format. This case can cause drift if the contents of the rules are changed by PAPI.
-	if FormatNeedsUpdate && !RulesNeedUpdate {
-		// We need to ask PAPI to compute an updated set of rules for us before we update
-		// See https://developer.akamai.com/api/core_features/property_manager/v1.html#getpropertyversionrules
-
-		req := papi.GetRuleTreeRequest{
-			PropertyID:      Property.PropertyID,
-			GroupID:         Property.GroupID,
-			ContractID:      Property.ContractID,
-			PropertyVersion: Property.LatestVersion,
-		}
-
-		logger := log.FromContext(ctx).WithFields(logFields(req))
-		h := http.Header{"Accept": []string{MIME}}
-		ctx := session.ContextWithOptions(ctx, session.WithContextHeaders(h))
-
-		logger.Debug("fetching property rules")
-		res, err := client.GetRuleTree(ctx, req)
-
-		if err != nil {
-			d.Partial(true)
-			logger.WithError(err).Error("Could not fetch rules in new format")
-			return diag.Errorf("Could not fetch rules in new format: %s", err)
-		}
-		logger.WithFields(logFields(*res)).Debug("fetched property rules")
-
-		if res.RuleFormat != RuleFormat {
-			d.Partial(true)
-			err := fmt.Errorf("expected rule format %q got %q", RuleFormat, res.RuleFormat)
-			logger.WithError(err).Error("Could not upgrade rule format")
-			return diag.Errorf("Could not fetch rules in new format: %s", err)
-		}
-
-		Rules = &res.Rules
-	}
 
 	if FormatNeedsUpdate || RulesNeedUpdate {
-		if Rules == nil {
-			// Not the special case: load Rules from state
-			Rules = &papi.Rules{}
-
-			if err := json.Unmarshal(RulesJSON, Rules); err != nil {
-				d.Partial(true)
-				return diag.Errorf("rules are not valid JSON: %s", err)
-			}
+		var Rules papi.Rules
+		if err := json.Unmarshal(RulesJSON, &Rules); err != nil {
+			d.Partial(true)
+			return diag.Errorf("rules are not valid JSON: %s", err)
 		}
 
+		MIME := fmt.Sprintf("application/vnd.akamai.papirules.%s+json", RuleFormat)
 		h := http.Header{"Content-Type": []string{MIME}}
 		ctx := session.ContextWithOptions(ctx, session.WithContextHeaders(h))
 
-		if err := updatePropertyRules(ctx, client, Property, *Rules); err != nil {
+		if err := updatePropertyRules(ctx, client, Property, Rules); err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
 		}
