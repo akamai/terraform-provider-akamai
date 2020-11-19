@@ -2,7 +2,7 @@
 layout: "akamai"
 page_title: "Akamai: Get Started with Application Security"
 description: |-
-	Get Started with Akamai Application Security using Terraform
+  Get Started with Akamai Application Security using Terraform
 ---
 
 # Get Started with Application Security
