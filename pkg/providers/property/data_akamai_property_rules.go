@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
