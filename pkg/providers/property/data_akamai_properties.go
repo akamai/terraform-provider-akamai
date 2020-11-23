@@ -2,8 +2,6 @@ package property
 
 import (
 	"context"
-	"encoding/json"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -63,25 +61,53 @@ func dataAkamaiPropertiesRead(ctx context.Context, d *schema.ResourceData, m int
 	log.Debug("Listing Properties")
 
 	// groupID / contractID is string as per schema.
-	groupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
-	contractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
-
-	properties, err := getProperties(ctx, groupID, contractID, meta)
-	if err != nil {
-		return diag.Errorf("error listing properties: %v", err)
-	}
-	// setting concatenated id to uniquely identify data
-	d.SetId(groupID + contractID)
-	props, err := json.Marshal(properties)
+	groupID, err := tools.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	/* setting raw json here in current scope. We have to set all the json fields in
-	property struct for more granular access to properties object */
-	if err := d.Set("properties", string(props)); err != nil {
+	groupID = tools.AddPrefix(groupID, "grp_")
+	contractID, err := tools.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
+
+	propertiesResponse, err := getProperties(ctx, groupID, contractID, meta)
+	if err != nil {
+		return diag.Errorf("error listing properties: %v", err)
+	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
+
+	// setting concatenated id to uniquely identify data
+	d.SetId(groupID + contractID)
+
+	if err := d.Set("properties", sliceResponseProperties(propertiesResponse)); err != nil {
 		return diag.Errorf("error setting properties: %s", err)
 	}
+
 	return nil
+}
+
+func sliceResponseProperties(propertiesResponse *papi.GetPropertiesResponse) []map[string]interface{} {
+	var properties []map[string]interface{}
+	for _, item := range propertiesResponse.Properties.Items {
+		property := map[string]interface{}{
+			"account_id":         item.AccountID,
+			"asset_id":           item.AssetID,
+			"contract_id":        item.ContractID,
+			"group_id":           item.GroupID,
+			"latest_version":     item.LatestVersion,
+			"note":               item.Note,
+			"product_id":         item.ProductID,
+			"production_version": decodeVersion(item.ProductionVersion),
+			"property_id":        item.PropertyID,
+			"property_name":      item.PropertyName,
+			"rule_format":        item.RuleFormat,
+			"staging_version":    decodeVersion(item.StagingVersion),
+		}
+		properties = append(properties, property)
+	}
+	return properties
 }
 
 func decodeVersion(version interface{}) int {
