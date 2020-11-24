@@ -268,53 +268,48 @@ func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData,
 
 func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameImport")
-	resourceID := d.Id()
-	propertyID := resourceID
-
 	client := inst.Client(meta)
 
-	if !strings.HasPrefix(resourceID, "prp_") {
-		keys := []string{
-			papi.SearchKeyPropertyName,
-			papi.SearchKeyHostname,
-			papi.SearchKeyEdgeHostname,
-		}
-		for _, searchKey := range keys {
-			results, err := client.SearchProperties(ctx, papi.SearchRequest{
-				Key:   searchKey,
-				Value: resourceID,
-			})
-			if err != nil {
-				// TODO determine why is this error ignored
-				logger.Debugf("searching by key: %s: %w", searchKey, err)
-				continue
-			}
-
-			if results != nil && len(results.Versions.Items) > 0 {
-				propertyID = results.Versions.Items[0].PropertyID
-				break
-			}
-		}
+	parts := strings.Split(d.Id(), ",")
+	if len(parts) < 3 {
+		return nil, fmt.Errorf("comma-separated list of EdgehostNameID, contractID and groupID has to be supplied in import: %s", d.Id())
 	}
 
-	prop, err := client.GetProperty(ctx, papi.GetPropertyRequest{
-		PropertyID: propertyID,
+	edgehostID := parts[0]
+	contractID := tools.AddPrefix(parts[1], "ctr_")
+	groupID := tools.AddPrefix(parts[2], "grp_")
+
+	edgehostnameDetails, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
+		EdgeHostnameID: edgehostID,
+		ContractID:     contractID,
+		GroupID:        groupID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.Set("contract", prop.Property.ContractID); err != nil {
+	if err := d.Set("contract", edgehostnameDetails.ContractID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("group", prop.Property.GroupID); err != nil {
+	if err := d.Set("contract_id", edgehostnameDetails.ContractID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("edge_hostname", prop.Property.GroupID); err != nil {
+	if err := d.Set("group", edgehostnameDetails.GroupID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	d.SetId(prop.Property.PropertyID)
+	if err := d.Set("group_id", edgehostnameDetails.GroupID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("product", edgehostnameDetails.EdgeHostname.ProductID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("product_id", edgehostnameDetails.EdgeHostname.ProductID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	d.SetId(edgehostID)
 
 	return []*schema.ResourceData{d}, nil
 }
