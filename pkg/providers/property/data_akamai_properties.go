@@ -31,8 +31,6 @@ func dataSourceAkamaiProperties() *schema.Resource {
 				Description: "List of properties",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"account_id":         {Type: schema.TypeString, Computed: true},
-						"asset_id":           {Type: schema.TypeString, Computed: true},
 						"contract_id":        {Type: schema.TypeString, Computed: true},
 						"group_id":           {Type: schema.TypeString, Computed: true},
 						"latest_version":     {Type: schema.TypeInt, Computed: true},
@@ -92,8 +90,6 @@ func sliceResponseProperties(propertiesResponse *papi.GetPropertiesResponse) []m
 	var properties []map[string]interface{}
 	for _, item := range propertiesResponse.Properties.Items {
 		property := map[string]interface{}{
-			"account_id":         item.AccountID,
-			"asset_id":           item.AssetID,
 			"contract_id":        item.ContractID,
 			"group_id":           item.GroupID,
 			"latest_version":     item.LatestVersion,
