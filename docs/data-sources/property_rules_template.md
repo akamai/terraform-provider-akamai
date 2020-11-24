@@ -8,13 +8,13 @@ description: |-
 
 # akamai_property_rules_template
 
-The `akamai_property_rules_template` data source lets you configure a rule tree: a nested block of property 
-rules that include match criteria and behaviors. The rule tree is a set of templates that's nested hierarchically. 
-You can also add variables that you define to the template files that are interpolated at runtime.
+The `akamai_property_rules_template` data source lets you configure a rule tree through the use of JSON template files. A rule tree is a nested block of property 
+rules in JSON format that include match criteria and behaviors. 
 
-<!--Does "nested hierarchically" refer to rule order in PM?--> 
+With this data source you define the location of the JSON template files and provide information about any user-defined variables included within the templates.
 
-The template format used in this data source matches the format used in the [Property Manager CLI](https://learn.akamai.com/en-us/learn_akamai/getting_started_with_akamai_developers/developer_tools/getstartedpmcli.html#addanewsnippet).
+The template format used in this data source matches those used in the [Property Manager CLI](https://learn.akamai.com/en-us/learn_akamai/getting_started_with_akamai_developers/developer_tools/getstartedpmcli.html#addanewsnippet).
+
 You can pass user-defined variables by supplying either: 
 
 * paths to `variableDefinitions.json` and `variables.json` with syntax used in Property Manager CLI, or 
@@ -22,14 +22,12 @@ You can pass user-defined variables by supplying either:
 
 ## Referencing sub-files from a template
 You can split each template out into a series of smaller template files. To add them to this data source, 
-you need to include them in the currently loaded file.  For example, to include
-`example-file.json` from the `template` directory, use this syntax including the quotes: `"#include:example-file.json"`.  All files are resolved in relation to the `template` directory. 
-
-<!--What's the currently loaded file?--> 
+you need to include them in the currently loaded file, which corresponds to the value in the `template_file` argument.  For example, to include
+`example-file.json` from the `template` directory, use this syntax including the quotes: `"#include:example-file.json"`.  All files are resolved in relation to the directory that contains the starting template file. 
 
 ## Inserting variables in a template
 You can also add variables to a template by using a string like `“${env.<variableName>}"`. You'll need the quotes here too.  
-These are Akamai variables passed into the template call. They differ from Terraform variables which should resolve normally.
+These variables follow the format used in the [Property Manager CLI](https://github.com/akamai/cli-property-manager#update-the-variabledefinitions-file).  They differ from Terraform variables which should resolve normally.
 
 ## Example usage: variables
 
@@ -136,6 +134,3 @@ resource "akamai_property" "example" {
 This data source returns this attribute:
 
 * `json` - The fully expanded template with variables and all nested templates resolved.
-
-<!--Template or full JSON rule tree returned?-->
-

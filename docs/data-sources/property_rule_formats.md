@@ -19,7 +19,6 @@ generate unexpected errors.
 
 Use this example to list available property rule formats:
 
-datasource-example.tf
 ```hcl-terraform
 datasource "akamai_property_rule_formats" "my-example" {
 }

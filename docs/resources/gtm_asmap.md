@@ -39,7 +39,7 @@ Required
 
 Optional
  
-* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
+* `wait_on_complete` - (Boolean, Default: `true`) Wait for transaction to complete
 * `assignment` - (multiple allowed)
   * `datacenter_id`
   * `nickname`

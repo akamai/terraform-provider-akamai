@@ -17,7 +17,6 @@ search across contracts and groups you have access to.
 
 This example returns the rule tree for version 3 of a property based on the selected contract and group:
 
-datasource-example.tf
 ```hcl-terraform
 datasource "akamai_property_rules" "my-example" {
     property_id = "prp_123"
@@ -35,9 +34,9 @@ output "property_match" {
 
 This data source supports these arguments:
 
-* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
-* `group_id` - (Required) A group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai provider appends it to your entry for processing purposes.
-* `property_id` - (Required) A property's unique ID. If your ID doesn't include the `prp_` prefix, the Akamai Provider appends 
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
+* `property_id` - (Required) A property's unique ID, including the `prp_` prefix. 
 * `version` - (Optional) The version to return. Returns the latest version by default.
 
 ## Attributes Reference

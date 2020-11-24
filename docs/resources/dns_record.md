@@ -45,7 +45,7 @@ The following arguments are supported for all record types:
 * `zone` - (Required) Domain zone, encapsulating any nested subdomains.  
 * `recordType` - (Required) The DNS record type.  
 * `active` - (Ignored, Boolean) Maintained for backward compatibility
-* `ttl` - (Required,Boolean) The TTL is a 32-bit signed integer that specifies the time interval that the resource record may be cached before the source of the information should be consulted again. Zero values are interpreted to mean that the RR can only be used for the transaction in progress, and should not be cached. Zero values can also be used for extremely volatile data.  
+* `ttl` - (Required,Boolean) The TTL is a 32-bit signed integer that specifies the time interval that the resource record may be cached before the source of the information should be consulted again. A value of zero means that the RR can only be used for the transaction in progress, and should not be cached. Zero values can also be used for extremely volatile data.  
 
 ## Required Fields Per Record Type
 

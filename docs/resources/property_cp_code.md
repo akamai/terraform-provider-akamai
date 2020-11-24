@@ -57,9 +57,9 @@ resource "akamai_cp_code" "example_cp" {
 The following arguments are supported:
 
 * `name` - (Required) A descriptive label for the CP code. If you're creating a new CP code, the name can’t include commas, underscores, quotes, or any of these special characters: ^ # %.
-* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
-* `group_id` - (Required) A group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai provider appends it to your entry for processing purposes.
-* `product_id` - (Required) A product's unique ID. If your ID doesn't include the `prd_` prefix, the Akamai Provider appends it to your entry for processing purposes.
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
+* `product_id` - (Required) A product's unique ID, including the `prd_` prefix.
 
 ### Deprecated Arguments
 

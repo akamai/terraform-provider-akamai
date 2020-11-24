@@ -42,7 +42,7 @@ resource "akamai_property" "example" {
 This data source supports these arguments:
 
 * `name` - (Required) The group name.
-* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 
 ### Deprecated Arguments 
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
@@ -51,4 +51,4 @@ This data source supports these arguments:
 
 This data source returns this attribute:
 
-* `id` - The group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai Provider appends it to your entry for processing purposes.
+* `id` - The group's unique ID, including the `grp_` prefix.

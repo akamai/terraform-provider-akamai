@@ -51,8 +51,8 @@ data "akamai_cp_code" "example" {
 This data source supports these arguments:
 
 * `name` - (Required) The name of the CP code.
-* `group_id` - (Required) The group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai Provider appends it to your entry for processing purposes.
-* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
+* `group_id` - (Required) The group's unique ID, including the `grp_` prefix.
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 
 ### Deprecated Arguments
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
@@ -62,5 +62,5 @@ This data source supports these arguments:
 
 This data source returns these attributes:
 
-* `id` - The CP code's ID.
+* `id` - The ID of the CP code, including the `cpc_` prefix.
 * `product_ids` - An array of product IDs associated with this CP code. Each ID returned includes the `prd_` prefix.

@@ -12,7 +12,7 @@ The `akamai_edge_hostname` resource lets you configure a secure edge hostname. Y
 
 An edge hostname is the CNAME target you use when directing your end user traffic to Akamai. Each hostname assigned to a property has a corresponding edge hostname. 
  
-Akamai supports three types of edge hostnames, depending on the level of security you need for your traffic: Standard TLS, Enhanced TLS, and Shared Certificate. When entering the `edge_hostname` attribute, need to include a specific domain suffix for your edge hostname type: 
+Akamai supports three types of edge hostnames, depending on the level of security you need for your traffic: Standard TLS, Enhanced TLS, and Shared Certificate. When entering the `edge_hostname` attribute, you need to include a specific domain suffix for your edge hostname type: 
 
 | Edge hostname type | Domain suffix |
 |------|-------|
@@ -20,7 +20,7 @@ Akamai supports three types of edge hostnames, depending on the level of securit
 | Standard TLS | edgesuite.net |
 | Shared Cert | akamaized.net |
 
-For example, if you use Standard TLS and have www.customer.com as a hostname, your edge hostname would be www.customer.com.edgesuite.net. If you wanted to use Enhanced TLS with the same hostname, your edge hostname would be www.example.com.edgekey.net. See the [Property Manager API (PAPI)](https://developer.akamai.com/api/core_features/property_manager/v1.html#createedgehostnames) for more information.
+For example, if you use Standard TLS and have `www.customer.com` as a hostname, your edge hostname would be `www.customer.com.edgesuite.net`. If you wanted to use Enhanced TLS with the same hostname, your edge hostname would be `www.example.com.edgekey.net`. See the [Property Manager API (PAPI)](https://developer.akamai.com/api/core_features/property_manager/v1.html#createedgehostnames) for more information.
 
 
 ## Example Usage
@@ -40,13 +40,12 @@ resource "akamai_edge_hostname" "terraform-demo" {
 
 This resource supports these arguments:
 
-* `name` - (Required) The Edge Code name.
-* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
-* `product_id` - (Required) A product's unique ID. If your ID doesn't include the `prd_` prefix, the Akamai Provider appends it to your entry for processing purposes.
+* `name` - (Required) The name of the edge hostname.
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `product_id` - (Required) A product's unique ID, including the `prd_` prefix.
 * `edge_hostname` - (Required) One or more edge hostnames. The number of edge hostnames must be less than or equal to the number of public hostnames.
-* `certificate` - (Optional) Required only when creating an Enhanced TLS edge hostname. This argument sets the certificate enrollment ID. Edge hostnames (`edge_hostname`) for Enhanced TLS end in `edgekey.net`.
-<!--Don't you need to get this from CPS? If so, how do we get this value?-->
-* `ip_behavior` - (Optional) Which version of the IP protocol to use: `IPV4` for version 4 only, or `IPV6_COMPLIANCE` for both 4 and 6. The default value is `IPV4`.
+* `certificate` - (Optional) Required only when creating an Enhanced TLS edge hostname. This argument sets the certificate enrollment ID. Edge hostnames (`edge_hostname`) for Enhanced TLS end in `edgekey.net`. You can retrieve this ID from the Certificate Provisioning System.
+* `ip_behavior` - (Optional) Which version of the IP protocol to use: `IPV4` for version 4 only, `IPV6_PERFORMANCE` for version 6 only, or `IPV6_COMPLIANCE` for both 4 and 6. The default value is `IPV4`.
 
 ### Deprecated Arguments
 
@@ -59,4 +58,4 @@ This resource supports these arguments:
 
 This resource returns this attribute:
 
-* `ip_behavior` - Returns the IP protocol the hostname will use, either `IPV4`, `IPV6`, or `IPV6_COMPLIANCE` for both.
+* `ip_behavior` - Returns the IP protocol the hostname will use, either `IPV4` for version 4, IPV6_PERFORMANCE` for version 6, or `IPV6_COMPLIANCE` for both.

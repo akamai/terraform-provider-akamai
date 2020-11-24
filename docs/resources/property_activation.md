@@ -10,7 +10,8 @@ description: |-
 
 The `akamai_property_activation` resource lets you activate a property version. An activation deploys the version to either the Akamai staging or production network. You can activate a specific version multiple times if you need to.  
 
-Activate on staging first to detect any problems that could impact your production environment.
+Before activating on production, activate on staging first. This way you can detect any problems in staging before your changes progress to production.
+
 
 ## Example Usage
 
@@ -65,7 +66,7 @@ resource "akamai_property_activation" "example_prod" {
 
 The following arguments are supported:
 
-* `property_id` - (Required) The property’s unique identifier. If you use ID prefixes with the Property Manager API (PAPI), your ID will have the `prp_` prefix. 
+* `property_id` - (Required) The property’s unique identifier, including the `prp_` prefix. 
 * `contact` - (Required) One or more email addresses to send activation status changes to.
 * `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. 
 * `network` - (Optional) Akamai network to activate on, either `STAGING` or `PRODUCTION`. `STAGING` is the default.

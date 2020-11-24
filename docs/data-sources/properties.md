@@ -17,7 +17,6 @@ based on the [EdgeGrid API client token](https://developer.akamai.com/getting-st
 Return properties associated with the EdgeGrid API client token currently used for authentication:
 
 
-datasource-example.tf
 ```hcl-terraform
 datasource "akamai_properties" "example" {
     contract_id = "ctr_1-AB123"
@@ -33,8 +32,8 @@ output "my_property_list" {
 
 This data source supports these arguments:
 
-* `contract_id` - (Required) A contract's unique ID. If your ID doesn't include the `ctr_` prefix, the Akamai Provider appends it to your entry for processing purposes. 
-* `group_id` - (Required) A group's unique ID. If your ID doesn't include the `grp_` prefix, the Akamai provider appends it to your entry for processing purposes.
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
 
 ## Attributes Reference
 
