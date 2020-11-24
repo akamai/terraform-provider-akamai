@@ -34,7 +34,7 @@ resource "akamai_gtm_cidrmap" "example_cidrmap" {
 The following arguments are supported:
 
 * `domain` - (Required)
-* `domain` - (Optional. Default 5400)
+* `datacenter` - (Optional. Default 5400)
 
 ## Attributes Reference
 
