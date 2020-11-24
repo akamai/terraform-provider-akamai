@@ -124,8 +124,6 @@ func decodePropertyItems(items []*papi.Property) []map[string]interface{} {
 	properties := make([]map[string]interface{}, 0)
 	for _, item := range items {
 		prop := map[string]interface{}{
-			"account_id":         item.AccountID,
-			"asset_id":           item.AssetID,
 			"contract_id":        item.ContractID,
 			"group_id":           item.GroupID,
 			"latest_version":     item.LatestVersion,
