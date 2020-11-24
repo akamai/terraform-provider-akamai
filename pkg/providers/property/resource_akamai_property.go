@@ -722,7 +722,7 @@ func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pro
 		ContractID:      Property.ContractID,
 		PropertyVersion: Property.LatestVersion,
 		ValidateRules:   true,
-		ValidateMode:    "FULL",
+		ValidateMode:    papi.RuleValidateModeFull,
 	}
 
 	logger := log.FromContext(ctx).WithFields(logFields(req))

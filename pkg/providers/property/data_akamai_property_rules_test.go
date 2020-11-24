@@ -66,7 +66,7 @@ func TestDSPropertyRulesRead_Fail(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{{
 			Config:      loadFixtureString("testdata/TestDSPropertyRules/always_fails.tf"),
-			ExpectError: regexp.MustCompile(`Error: value not found: property_id`),
+			ExpectError: regexp.MustCompile(`Error: required value cannot be blank`),
 		}},
 	})
 }

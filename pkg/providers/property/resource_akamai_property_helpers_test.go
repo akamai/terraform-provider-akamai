@@ -166,7 +166,7 @@ func ExpectGetRuleTree(client *mockpapi, PropertyID, GroupID, ContractID string,
 		GroupID:         GroupID,
 		ContractID:      ContractID,
 		PropertyVersion: PropertyVersion,
-		ValidateMode:    "FULL",
+		ValidateMode:    "full",
 		ValidateRules:   true,
 	}
 
