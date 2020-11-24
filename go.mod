@@ -15,7 +15,7 @@ require (
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/testify v1.6.1
 	github.com/tj/assert v0.0.3
-	golang.org/x/tools v0.0.0-20201026223136-e84cfc6dd5ca // indirect
+	golang.org/x/tools v0.0.0-20201124123621-a9663296b157 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )
 

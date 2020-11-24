@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 func TestDataProperties(t *testing.T) {
@@ -101,11 +102,11 @@ func buildPapiProperties() []*papi.Property {
 	return properties
 }
 
-func buildAggregatedTest(properties []map[string]interface{}, id, groupId, contractId string) resource.TestCheckFunc {
+func buildAggregatedTest(properties []map[string]interface{}, id, groupID, contractID string) resource.TestCheckFunc {
 	testVar := make([]resource.TestCheckFunc, 0)
 	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "id", id))
-	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "group_id", groupId))
-	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "contract_id", contractId))
+	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "group_id", groupID))
+	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "contract_id", contractID))
 	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_properties.akaproperties", "properties.#", fmt.Sprintf("%v", len(properties))))
 	nrEntries := fmt.Sprintf("%v", len(properties[0]))
 	for ind, property := range properties {

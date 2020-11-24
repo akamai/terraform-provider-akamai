@@ -1,6 +1,5 @@
 provider "akamai" {
   edgerc = "~/.edgerc"
-  property_section = "afadencloud-example-01"
 }
 
 resource "akamai_cp_code" "akacpcode" {
