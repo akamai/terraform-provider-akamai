@@ -374,6 +374,13 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	productID := Property.ProductID
+	if productID == "" {
+		prdID := tools.FindStringValues(d, "product_id", "product")
+		if len(prdID) > 0 {
+			productID = prdID[0]
+		}
+	}
 
 	var StagingVersion int
 	if Property.StagingVersion != nil {
@@ -409,8 +416,8 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"group":              Property.GroupID,
 		"contract_id":        Property.ContractID,
 		"contract":           Property.ContractID,
-		"product_id":         Property.ProductID,
-		"product":            Property.ProductID,
+		"product_id":         productID,
+		"product":            productID,
 		"latest_version":     Property.LatestVersion,
 		"staging_version":    StagingVersion,
 		"production_version": ProductionVersion,
