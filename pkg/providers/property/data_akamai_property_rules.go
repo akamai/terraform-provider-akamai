@@ -3,7 +3,7 @@ package property
 import (
 	"context"
 	"encoding/json"
-
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -14,7 +14,7 @@ import (
 
 func dataPropertyRules() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataPropRulesOperation,
+		ReadContext: dataPropertyRulesRead,
 		StateUpgraders: []schema.StateUpgrader{{
 			Version: 0,
 			Type:    dataAkamaiPropertyRuleSchemaV0().CoreConfigSchema().ImpliedType(),
@@ -63,9 +63,10 @@ var dataAkamaiPropertyRuleSchema = map[string]*schema.Schema{
 	},
 }
 
-func dataPropRulesOperation(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
+	logger := meta.Log("PAPI", "dataPropertyRulesRead")
 
 	var (
 		contractID, groupID, propertyID string
@@ -117,7 +118,24 @@ func dataPropRulesOperation(ctx context.Context, d *schema.ResourceData, m inter
 		}
 	}
 
-	res, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+	if contractID != "" {
+		contractID = tools.AddPrefix(contractID, "ctr_")
+		if err := d.Set("contract_id", contractID); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+	if groupID != "" {
+		groupID = tools.AddPrefix(groupID, "grp_")
+		if err := d.Set("group_id", groupID); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+	propertyID = tools.AddPrefix(propertyID, "prp_")
+	if err := d.Set("property_id", propertyID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+
+	getRuleTreeResponse, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
 		PropertyID:      propertyID,
 		PropertyVersion: version,
 		ContractID:      contractID,
@@ -129,16 +147,17 @@ func dataPropRulesOperation(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	rulesJSON, err := json.Marshal(res.Rules)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("rules", string(rulesJSON)); err != nil {
-		return diag.FromErr(err)
+	if formattedRulesJson, err := json.MarshalIndent(getRuleTreeResponse.Rules, "", "  "); err != nil {
+		logger.Debugf("Creating rule tree resulted in invalid JSON: %s", err)
+		return diag.FromErr(fmt.Errorf("invalid JSON result: %w", err))
+	} else {
+		if err := d.Set("rules", string(formattedRulesJson)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
-	if len(res.Errors) != 0 {
-		ruleErrors, err := json.Marshal(res.Errors)
+	if len(getRuleTreeResponse.Errors) != 0 {
+		ruleErrors, err := json.Marshal(getRuleTreeResponse.Errors)
 		if err != nil {
 			return diag.FromErr(err)
 		}
