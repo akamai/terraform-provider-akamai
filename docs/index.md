@@ -7,176 +7,115 @@ description: |-
 
 # Akamai Terraform Provider
 
-The Akamai Terraform Provider is used to interact with Akamai and manage solutions for content
-delivery, security, and performance.
+Use the Akamai Terraform Provider to manage and provision your Akamai
+configurations in Terraform. You can use the Akamai Provider today for 
+your Property Manager, Application Security, Edge DNS, and Global
+Traffic Management configurations.
 
-Last updated: October 2020.
+Last updated: November 2020.
 
-## Prerequisites
+## Contents
 
-In order to get started with the Akamai Terraform Provider, the following is required:
+[[Workflows]{.ul}](#workflows)
 
-* Create an Akamai API Client with the right permissions and valid credentials to authenticate your Akamai Terraform files. Your Akamai API Client will require read-write permissions to either the Property Manager API, DNS API and/or Traffic Management API depending on your use-case for using the Akamai Terraform Provider.
+[[Maintenance]{.ul}](#maintenance)
 
-* Either import existing configurations with the [Akamai Terraform CLI](https://github.com/akamai/cli-terraform) or start from scratch with code examples. Note: Both Terraform and the Akamai Terraform CLI package come pre-installed in the Akamai Development Environment. Get more details in our [installation Instructions](https://developer.akamai.com/blog/2020/05/26/set-development-environment).
+> [[Manage changes to your Akamai configurations]{.ul}](#manage-changes-to-your-akamai-provider-configurations)
+>
+> [[Migrate to the newest version of the Akamai Terraform Provider
+> (placeholder)]{.ul}](#migrate-to-the-newest-version-of-the-akamai-terraform-provider-placeholder)
 
-* Run the terraform init command to load the Akamai Terraform Provider.
+[[Links to resources]{.ul}](#links-to-resources)
 
-* Run the terraform plan or terraform apply command to run your Terraform configuration.
+> [[New to Akamai?]{.ul}](#new-to-akamai)
+>
+> [[New to Terraform?]{.ul}](#new-to-terraform)
 
-Use the navigation to the left to read about the available resources available in the Akamai Terraform Provider.
+[[Available guides]{.ul}](#available-guides)
 
-## Authenticating Akamai Terraform configurations
-Authentication of Terraform configurations relies on the Akamai EdgeGrid authentication scheme. The Akamai Terraform Provider code acts as a wrapper for our APIs and re-uses the same authentication mechanism. Note: We recommend storing your API credentials in a local .edgerc file.
+## Workflows
 
-Your Akamai API Client will require read-write permissions to either the Property Manager API, DNS API and/or Traffic Management API depending on your use-case for using the Akamai Terraform Provider. Note: Without these permissions, your Terraform configurations won’t execute.
+Here are the most common workflows for the Akamai Terraform Provider:
 
-The local .edgerc file can be referenced in the top of the Akamai Terraform configuration with edgerc = "~/.edgerc". Note: ~/.edgerc is the location of your file on your local machine. You are able to reference individual sections inside the .edgerc file by referencing config_section = "default". Note: "default" is the name of the section stored in brackets in your .edgerc file.
+* **Set up the Provider the first time.** To do this, finish reviewing this guide, then go to [Set up the Akamai Provider](https://docs.google.com/document/d/1ohurENF2epbu_Dx8X0fcYwAVU1ZEKh\--Wg1jV2AWuP4/edit?usp=sharing). When setting up the Provider, you need to choose an [authentication method](https://docs.google.com/document/d/1S39MM1sZNoM4EmlSLlPVYNohiH6x-Js0IoadUhU4vcc/edit), and decide whether to import existing Akamai configurations, or create new ones.
+*  **Add a new module to an existing Provider configuration.** If the Akamai Terraform Provider is already set up, and you're adding a new module, read the guide for the module you're adding:
+                              
+  * [Application Security](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec)
+  * [DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone)
+  * [Global Traffic Management](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain)
+  * [Property Manager\](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property)
+<!-- Need to know the final name for this module. -->  
+*  **Update settings for an existing module.** Use the reference information for resource and data sources listed under each module, like DNS or Common. You can find this documentation on the panel to the left.
 
+## Maintenance
 
-## Example Usage
+### Manage changes to your Akamai configurations
 
-Terraform 0.13 and later:
+When you're using the Provider, you need to keep your Terraform settings up-to-date 
+with any changes made using Akamai APIs, CLIs, and Control Center. You should review 
+your network management processes, and update them as needed.
 
-```hcl
-terraform {
-  required_providers {
-    akamai = {
-      source  = "hashicorp/akamai"
-      version = "~> 0.10.0"
-    }
-  }
-}
+For example, you may want to run `terraform plan` before updating  
+your Akamai Provider configurations. You'll likely receive warnings
+and suggested changes. Once you any inconsistencies, you can run `terraform plan` 
+again and make sure everything is in sync.
 
-# Configure the Akamai Provider
-provider "akamai" {
-  edgerc = "~/.edgerc"
-  config_section = "default"
-}
+### Migrate to the newest version of the Akamai Terraform Provider (placeholder)
 
-# Create a Property
-resource "akamai_property" "example_property" {
-  name = "www.example.org"
-  
-  # ...
-}
+<!-- **FOR REVIEWERS: KEEPING THE OLD SECTION BELOW AS A PLACEHOLDER.\
+This will likely need to be a separate guide, but we'll need a quick overview here.** -->
 
-# Create a DNS Record
-resource "akamai_dns_record" "example_record" {
-  zone       = "example.org"
-  name       = "www.example.org"
-  recordtype = "CNAME"
-  active     = true
-  ttl        = 600
-  target     = ["example.org.akamaized.net."]
-}
-```
+<!--**The text below is from "Migrating a property to Terraform" section,
+currently in the FAQ doc.** -->
 
-Terraform 0.12 and earlier:
+<!--If you have an existing property you would like to migrate to Terraform: -->
 
-```hcl
-# Configure the Akamai Provider
-provider "akamai" {
-  edgerc = "~/.edgerc"
-  config_section = "default"
-}
+<!--1.  Export your rules.json from your existing property using the API,
+    > CLI, or Control Center -->
 
-# Create a Property
-resource "akamai_property" "example_property" {
-  name = "www.example.org"
-  
-  # ...
-}
+<!--2.  Create a Terraform configuration that pulls in the rules.json -->
 
-# Create a DNS Record
-resource "akamai_dns_record" "example_record" {
-  zone       = "example.org"
-  name       = "www.example.org"
-  recordtype = "CNAME"
-  active     = true
-  ttl        = 600
-  target     = ["example.org.akamaized.net."]
-}
+<!--3.  Assign a temporary hostname for testing. You can use the edge
+    > hostname as the public hostname to allow testing without changing
+    > any DNS. -->
 
-```
+<!--4.  Activate the property and test thoroughly. -->
 
-#### Argument Reference
+<!--5.  Once testing has concluded successfully, update the configuration to
+    > assign the production public hostnames. -->
 
-The following arguments are supported in the `provider` block:
+<!--6.  Activate again.  -->
 
-* `edgerc` - (Optional) The location of the `.edgerc` file containing credentials. Default: `$HOME/.edgerc`
-* `config_section` — (Optional) The credential section to use for all edgegrid calls. Default: `default`.
-* `property_section` — (Deprecated) The credential section to use for the Property Manager API (PAPI). Default: `default`.
-* `dns_section` — (Deprecated) The credential section to use for the Config DNS API. Default: `default`.
-* `gtm_section` — (Deprecated) The credential section to use for the Config GTM API. Default: `default`.
+<!--After this second activation is complete, Akamai automatically routes
+all traffic to the new property and deactivates the original property
+entirely if no hostnames are pointed at it. -->
 
-## Additional Authentication Method - Inline Credentials
+## Links to resources
 
-Outside of referenecing a local .edgerc file, you can specify credentials inline for each service used. Currently the provider supports `property` (PAPI), `dns` and `gtm` services.
+Here are some links to resources that can help get you started with the
+Akamai Terraform Provider.
 
-To specify credentials inline, use the `property` or `dns` block to define credentials.
+### New to Akamai?
 
-#### Argument Reference
+If you're new to Akamai, here are some links to help you get started:
 
-* `config` — (Optional) Provide credentials for Terraform provider
-  * `host` — (Required) The credential hostname
-  * `access_token` — (Required) The credential access_token
-  * `client_token` — (Required) The credential client_token
-  * `client_secret` — (Required) The credential client_secret
-  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
-  * `account_key` — (Optional) Account switch key to manage multiple accounts
-* `property` — (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `property` tag name
-  * `host` — (Required) The credential hostname
-  * `access_token` — (Required) The credential access_token
-  * `client_token` — (Required) The credential client_token
-  * `client_secret` — (Required) The credential client_secret
-  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
-  * `account_key` — (Optional) Account switch key to manage multiple accounts
-* `dns` — (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `dns` tag name
-  * `host` — (Required) The credential hostname
-  * `access_token` — (Required) The credential access_token
-  * `client_token` — (Required) The credential client_token
-  * `client_secret` — (Required) The credential client_secret
-  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
-  * `account_key` — (Optional) Account switch key to manage multiple accounts
-* `gtm` — (Optional) (Optional, Deprecated) Synonym to provide credentials for the Terraform provider using legacy `gtm` tag name
-  * `host` — (Required) The credential hostname
-  * `access_token` — (Required) The credential access_token
-  * `client_token` — (Required) The credential client_token
-  * `client_secret` — (Required) The credential client_secret
-  * `max_body` — (Optional) The credential max body to sign (in bytes, Default: `131072`)
-  * `account_key` — (Optional) Account switch key to manage multiple accounts
+* [Akamai Terraform Provider blogs](https://developer.akamai.com/blog/terraform)
+* [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started)<!--May want a different link.-->
+* [Akamai Community site](https://community.akamai.com/customers/s/)
 
-## Environment Variables
+### New to Terraform?
 
-You can specify credential values using environment variables. Environment variables take precedence over the contents of the `.edgerc` file.
+If you're new to Terraform, here are some links to help you get started:
 
-Create environment variables in the format:
+* [A Terraform Tutorial: Download to Installation, to Using Terraform](https://www.terraform.io/downloads.html)
+* [A Brief Primer on Terraform's Configuration Language](https://www.terraform.io/docs/configuration/index.html)
+* [If you want to learn about Terraform modules](https://www.terraform.io/docs/modules/index.html)
+* [Terraform Glossary](https://www.terraform.io/docs/glossary.html)
 
-`AKAMAI{_SECTION_NAME}_*`
+## Available guides
 
-For example, if you specify `config_section = "papi"` you would set the following ENV variables:
-
-* `AKAMAI_PAPI_HOST`
-* `AKAMAI_PAPI_ACCESS_TOKEN`
-* `AKAMAI_PAPI_CLIENT_TOKEN`
-* `AKAMAI_PAPI_CLIENT_SECRET`
-* `AKAMAI_PAPI_MAX_BODY` (optional)
-* `AKAMAI_PAPI_ACCOUNT_KEY` (optional)
-
-If the section name is `default`, you can omit it, instead using:
-
-* `AKAMAI_HOST`
-* `AKAMAI_ACCESS_TOKEN`
-* `AKAMAI_CLIENT_TOKEN`
-* `AKAMAI_CLIENT_SECRET`
-* `AKAMAI_MAX_BODY` (optional)
-* `AKAMAI_ACCOUNT_KEY` (optional)
-
-## Guides
-
-* [Frequently Asked Questions](guides/faq.md)
-* [Get Started with DNS Zone Administration](guides/get_started_dns_zone.md)
-* [Get Started with GTM Domain Administration](guides/get_started_gtm_domain.md)
-* [Get Started with Property Management](guides/get_started_property.md)
-* [Appendix](guides/appendix.md)
+* [Frequently Asked Questions](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/faq)<!--should be going away-->
+* [Get Started with DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone)
+* [Get Started with GTM Domain Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain)
+* [Get Started with Property Management](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) <!--Name may change-->
+* [Appendix](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix) <!--should be going away-->
