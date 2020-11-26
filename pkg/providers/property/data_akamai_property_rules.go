@@ -27,16 +27,18 @@ func dataPropertyRules() *schema.Resource {
 
 var dataAkamaiPropertyRuleSchema = map[string]*schema.Schema{
 	"contract_id": {
-		Type:      schema.TypeString,
-		Optional:  true,
-		Computed:  true,
-		StateFunc: addPrefixToState("ctr_"),
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		StateFunc:    addPrefixToState("ctr_"),
+		RequiredWith: []string{"group_id"},
 	},
 	"group_id": {
-		Type:      schema.TypeString,
-		Optional:  true,
-		Computed:  true,
-		StateFunc: addPrefixToState("grp_"),
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		StateFunc:    addPrefixToState("grp_"),
+		RequiredWith: []string{"contract_id"},
 	},
 	"property_id": {
 		Type:             schema.TypeString,
@@ -79,6 +81,23 @@ func dataPropRulesOperation(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
+	if contractID != "" {
+		contractID = tools.AddPrefix(contractID, "ctr_")
+		if err := d.Set("contract_id", contractID); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+	if groupID != "" {
+		groupID = tools.AddPrefix(groupID, "grp_")
+		if err := d.Set("group_id", groupID); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+	propertyID = tools.AddPrefix(propertyID, "prp_")
+	if err := d.Set("property_id", propertyID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+
 	if version, err = tools.GetIntValue("version", d); err != nil {
 		latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
 			PropertyID: propertyID,
@@ -96,23 +115,6 @@ func dataPropRulesOperation(ctx context.Context, d *schema.ResourceData, m inter
 		if err := d.Set("version", version); err != nil {
 			return diag.FromErr(err)
 		}
-	}
-
-	if contractID != "" {
-		contractID = tools.AddPrefix(contractID, "ctr_")
-		if err := d.Set("contract_id", contractID); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
-		}
-	}
-	if groupID != "" {
-		groupID = tools.AddPrefix(groupID, "grp_")
-		if err := d.Set("group_id", groupID); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
-		}
-	}
-	propertyID = tools.AddPrefix(propertyID, "prp_")
-	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 
 	res, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
