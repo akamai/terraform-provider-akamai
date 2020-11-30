@@ -123,19 +123,19 @@ func resourceProperty() *schema.Resource {
 			},
 
 			"product_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"product_id", "product"},
-				StateFunc:    addPrefixToState("prd_"),
-				Description:  "Product ID to be assigned to the Property",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Product ID to be assigned to the Property",
+				StateFunc:   addPrefixToState("prd_"),
 			},
 			"product": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: `use "product_id" attribute instead`,
-				StateFunc:  addPrefixToState("prd_"),
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"product_id"},
+				Deprecated:    `use "product_id" attribute instead`,
+				StateFunc:     addPrefixToState("prd_"),
 			},
 
 			// Optional
@@ -275,6 +275,9 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	ProductID := d.Get("product_id").(string)
 	if ProductID == "" {
 		ProductID = d.Get("product").(string)
+		if ProductID == "" {
+			return diag.Errorf("one of product,product_id must be specified")
+		}
 	}
 	ProductID = tools.AddPrefix(ProductID, "prd_")
 
@@ -315,6 +318,8 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	attrs := map[string]interface{}{
 		"group_id":    GroupID,
 		"contract_id": ContractID,
+		"product_id":  ProductID,
+		"product":     ProductID,
 	}
 	if err := rdSetAttrs(ctx, d, attrs); err != nil {
 		return diag.FromErr(err)
@@ -409,8 +414,6 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"group":              Property.GroupID,
 		"contract_id":        Property.ContractID,
 		"contract":           Property.ContractID,
-		"product_id":         Property.ProductID,
-		"product":            Property.ProductID,
 		"latest_version":     Property.LatestVersion,
 		"staging_version":    StagingVersion,
 		"production_version": ProductionVersion,
@@ -419,6 +422,10 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"rule_format":        RuleFormat,
 		"rule_errors":        papiErrorsToList(RuleErrors),
 		"rule_warnings":      papiErrorsToList(RuleWarnings),
+	}
+	if Property.ProductID != "" {
+		attrs["product_id"] = Property.ProductID
+		attrs["product"] = Property.ProductID
 	}
 	if err := rdSetAttrs(ctx, d, attrs); err != nil {
 		return diag.FromErr(err)
