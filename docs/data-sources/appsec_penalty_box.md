@@ -1,0 +1,61 @@
+---
+layout: "akamai"
+page_title: "Akamai: Penalty Box Settings"
+subcategory: "Application Security"
+description: |-
+ Penalty Box
+---
+
+# akamai_appsec_penalty_box
+
+Use the `akamai_appsec_penalty_box` data source to retrieve the list of ... information about ...
+
+## Example Usage
+
+Basic usage:
+
+```hcl
+provider "akamai" {
+  appsec_section = "default"
+}
+
+// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#getpenaltybox
+
+// USE CASE: user wants to view penalty box settings
+data "akamai_appsec_configuration" "configuration" {
+  name = var.security_configuration
+}
+data "akamai_appsec_penalty_box" "penalty_box" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
+  security_policy_id = var.security_policy_id
+}
+
+output "penalty_box_action" {
+  value = akamai_appsec_penalty_box.penalty_box.action
+}
+
+output "penalty_box_enabled" {
+  value = akamai_appsec_penalty_box.penalty_box.enabled
+}
+
+```
+
+## Argument Reference
+
+The following arguments are supported:
+
+* `config_id` - (Required) The ID of the security configuration to use.
+
+* `version` - (Required) The version number of the security configuration to use.
+
+* `security_policy_id` - (Required) The ID of the security policy to use.
+
+## Attributes Reference
+
+In addition to the arguments above, the following attributes are exported:
+
+* `action` - TBD
+
+* `enabled` - TBD
+
