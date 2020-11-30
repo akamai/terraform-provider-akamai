@@ -24,9 +24,13 @@ func dataSourceRatePolicyActions() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"rate_policy_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
 			},
 			"output_text": {
 				Type:        schema.TypeString,
@@ -56,11 +60,17 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 	}
 	getRatePolicyActions.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getRatePolicyActions.PolicyID = policyid
+
+	ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getRatePolicyActions.RatePolicyID = ratepolicyid
 
 	ratepolicyactions, err := client.GetRatePolicyActions(ctx, getRatePolicyActions)
 	if err != nil {

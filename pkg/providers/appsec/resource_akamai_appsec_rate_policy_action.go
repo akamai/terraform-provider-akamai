@@ -35,7 +35,7 @@ func resourceRatePolicyAction() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -83,7 +83,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	getRatePolicyAction.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -133,7 +133,7 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	}
 	updateRatePolicyAction.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -178,7 +178,7 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 	updateRatePolicyAction.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}

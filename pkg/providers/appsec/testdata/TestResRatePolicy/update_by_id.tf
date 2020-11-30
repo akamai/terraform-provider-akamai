@@ -6,7 +6,7 @@ provider "akamai" {
 resource "akamai_appsec_rate_policy" "test" {
     config_id = 43253
     version = 7
-    json = <<-EOF
+    rate_policy = <<-EOF
     {
     "matchType": "path",
     "type": "WAF",

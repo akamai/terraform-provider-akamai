@@ -21,10 +21,19 @@ func TestAccAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		cup := appsec.UpdateSlowPostProtectionResponse{}
+		expectJSUP := compactJSON(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtection.json"))
+		json.Unmarshal([]byte(expectJSUP), &cup)
+
 		client.On("GetSlowPostProtectionSetting",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetSlowPostProtectionSettingRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&cr, nil)
+
+		client.On("UpdateSlowPostProtection",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.UpdateSlowPostProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&cup, nil)
 
 		client.On("UpdateSlowPostProtectionSetting",
 			mock.Anything, // ctx is irrelevant for this test

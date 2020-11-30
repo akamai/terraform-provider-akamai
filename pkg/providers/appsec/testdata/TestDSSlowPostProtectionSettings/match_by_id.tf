@@ -7,7 +7,7 @@ provider "akamai" {
 data "akamai_appsec_slow_post" "test" {
     config_id = 43253
     version = 7
-    policy_id = "AAAA_81230"
+    security_policy_id = "AAAA_81230"
 }
 
 output "configsedge_post_output_text" {

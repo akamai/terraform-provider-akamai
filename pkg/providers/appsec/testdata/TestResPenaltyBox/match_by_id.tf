@@ -5,8 +5,8 @@ provider "akamai" {
 resource "akamai_appsec_penalty_box" "test" {
     config_id = 43253
     version = 7
-    policy_id = "AAAA_81230"
-    action = "alert" 
+    security_policy_id = "AAAA_81230"
+    penalty_box_action = "alert" 
     penalty_box_protection = true
 }
 

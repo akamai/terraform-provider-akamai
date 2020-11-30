@@ -1,0 +1,9 @@
+[
+    {
+        "type": "https://problems.luna.akamaiapis.net/APPSEC_OPEN/error-types/INVALID-INPUT-ERROR",
+        "status": 400,
+        "title": "Invalid Input Error",
+        "detail": "Ruleset is not Eval ruleset.",
+        "instance": "https://problems.luna.akamaiapis.net/APPSEC_OPEN/error-instances/c6e2b66a-f086-4e5b-b5f4-3d8d00326637"
+    }
+]

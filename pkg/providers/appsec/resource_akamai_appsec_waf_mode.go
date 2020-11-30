@@ -34,7 +34,7 @@ func resourceWAFMode() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -45,6 +45,22 @@ func resourceWAFMode() *schema.Resource {
 					AAG,
 					KRS,
 				}, false),
+			},
+			"current_ruleset": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"eval_ruleset": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"eval_status": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"eval_expiration_date": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"output_text": {
 				Type:        schema.TypeString,
@@ -74,7 +90,7 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	getWAFMode.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -95,6 +111,10 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 		d.Set("output_text", outputtext)
 	}
 
+	d.Set("current_ruleset", wafmode.Current)
+	d.Set("eval_status", wafmode.Eval)
+	d.Set("eval_ruleset", wafmode.Evaluating)
+	d.Set("eval_expiration_date", wafmode.Expires)
 	d.SetId(strconv.Itoa(getWAFMode.ConfigID))
 
 	return nil
@@ -124,7 +144,7 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	updateWAFMode.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -136,9 +156,24 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	updateWAFMode.Mode = mode
 
-	_, erru := client.UpdateWAFMode(ctx, updateWAFMode)
-	if erru != nil {
-		logger.Warnf("calling 'updateWAFMode': %s", erru.Error())
+	//if current mode = one to updare skip this call
+	getWAFMode := v2.GetWAFModeRequest{}
+	getWAFMode.ConfigID = configid
+	getWAFMode.Version = version
+	getWAFMode.PolicyID = policyid
+
+	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
+	if err != nil {
+		logger.Errorf("calling 'getWAFMode': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	if wafmode.Mode != mode {
+		_, erru := client.UpdateWAFMode(ctx, updateWAFMode)
+		if erru != nil {
+			logger.Errorf("calling 'updateWAFMode': %s", erru.Error())
+			return diag.FromErr(erru)
+		}
 	}
 
 	return resourceWAFModeRead(ctx, d, m)

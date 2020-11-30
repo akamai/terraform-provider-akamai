@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -32,9 +33,10 @@ func resourceRatePolicy() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"json": {
-				Type:     schema.TypeString,
-				Required: true,
+			"rate_policy": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsJSON,
 			},
 			"rate_policy_id": {
 				Type:     schema.TypeInt,
@@ -51,7 +53,7 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	createRatePolicy := v2.CreateRatePolicyRequest{}
 
-	jsonpostpayload := d.Get("json")
+	jsonpostpayload := d.Get("rate_policy")
 	json.Unmarshal([]byte(jsonpostpayload.(string)), &createRatePolicy)
 
 	configid, err := tools.GetIntValue("config_id", d)
@@ -84,7 +86,7 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	updateRatePolicy := v2.UpdateRatePolicyRequest{}
 
-	jsonpostpayload := d.Get("json")
+	jsonpostpayload := d.Get("rate_policy")
 	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateRatePolicy)
 
 	configid, err := tools.GetIntValue("config_id", d)
@@ -169,6 +171,7 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(errd)
 	}
 
+	d.Set("rate_policy_id", ratepolicy.ID)
 	d.SetId(strconv.Itoa(ratepolicy.ID))
 
 	return nil

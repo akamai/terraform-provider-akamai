@@ -33,7 +33,7 @@ func resourceSlowPostProtection() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -69,7 +69,7 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 	}
 	getSlowPostProtection.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -118,7 +118,7 @@ func resourceSlowPostProtectionUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 	updateSlowPostProtection.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}

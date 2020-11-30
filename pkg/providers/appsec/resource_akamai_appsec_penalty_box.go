@@ -34,7 +34,7 @@ func resourcePenaltyBox() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -42,7 +42,7 @@ func resourcePenaltyBox() *schema.Resource {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
-			"action": {
+			"penalty_box_action": {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
@@ -79,7 +79,7 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	getPenaltyBox.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -128,17 +128,17 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	updatePenaltyBox.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	updatePenaltyBox.PolicyID = policyid
 
-	action, err := tools.GetStringValue("action", d)
+	penaltyboxaction, err := tools.GetStringValue("penalty_box_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updatePenaltyBox.Action = action
+	updatePenaltyBox.Action = penaltyboxaction
 
 	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

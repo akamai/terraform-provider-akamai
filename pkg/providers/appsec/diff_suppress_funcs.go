@@ -23,54 +23,65 @@ func suppressJsonProvidedSimple(_, old, new string, d *schema.ResourceData) bool
 	return false
 }
 
-func suppressJsonProvided(k, old, new string, d *schema.ResourceData) bool {
-	json := d.Get("match_target").(string)
-	if json != "" {
-
-		if k == "match_target" {
-
-			return compareMatchTargetsJSON(old, new)
-
-		}
-
-		if k == "match_target_id" {
-			return true
-		}
-
-		if old == "" && new == "" {
-
-			return true
-		}
-
-		if old == new {
-			return true
-		}
-
-		if new == "" {
-			return false
-		}
-	} else {
-		if k == "match_target" {
-			return true
-		}
-	}
-
-	if old == new {
-		return true
-	}
-	return false
-}
-
 func suppressEquivalentJSONDiffs(k, old, new string, d *schema.ResourceData) bool {
 	//TODO remove old HCL driven parameters
-	if new == "" {
+	/*if new == "" {
 		jsonfromschema, err := matchTargetAsJSONDString(d)
 		if err == nil {
 			return compareMatchTargetsJSON(old, jsonfromschema)
 		}
-	}
+	}*/
 
 	return compareMatchTargetsJSON(old, new)
+}
+
+func suppressEquivalentJSONDiffsConditionException(k, old, new string, d *schema.ResourceData) bool {
+	return compareConditionExceptionJSON(old, new)
+
+}
+
+func compareConditionExceptionJSON(old, new string) bool {
+	var oldJSON, newJSON appsec.UpdateRuleConditionExceptionResponse
+	if old == new {
+		return true
+	}
+	if err := json.Unmarshal([]byte(old), &oldJSON); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(new), &newJSON); err != nil {
+		return false
+	}
+	diff := compareConditionException(&oldJSON, &newJSON)
+	return diff
+}
+
+func compareConditionException(old, new *appsec.UpdateRuleConditionExceptionResponse) bool {
+	if len(old.Conditions) != len(new.Conditions) ||
+		//len(old.FileExtensions) != len(new.FileExtensions) ||
+		len(old.Exception.HeaderCookieOrParamValues) != len(new.Exception.HeaderCookieOrParamValues) {
+		/*} ||
+		len(old.Exception.SpecificHeaderCookieOrParamNames.Name) != len(new.Exception.SpecificHeaderCookieOrParamNames.Name) {*/
+		return false
+	}
+	/*
+		sort.Strings(old.FilePaths)
+		sort.Strings(new.FilePaths)
+
+		sort.Strings(old.FileExtensions)
+		sort.Strings(new.FileExtensions)
+
+		sort.Strings(old.Hostnames)
+		sort.Strings(new.Hostnames)
+
+		new.EffectiveSecurityControls = old.EffectiveSecurityControls
+
+		new.TargetID = 0
+		old.TargetID = 0
+
+		new.Sequence = 0
+		old.Sequence = 0
+	*/
+	return reflect.DeepEqual(old, new)
 }
 
 func compareMatchTargetsJSON(old, new string) bool {

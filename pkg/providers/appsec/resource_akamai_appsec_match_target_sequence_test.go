@@ -53,14 +53,14 @@ func TestAccAkamaiMatchTargetSequence_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResMatchTargetSequence/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_match_target_sequence.test", "id", "43253:7"),
+							resource.TestCheckResourceAttr("akamai_appsec_match_target_sequence.test", "id", "43253:7:website"),
 						),
 						//ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResMatchTargetSequence/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_match_target_sequence.test", "id", "43253:7"),
+							resource.TestCheckResourceAttr("akamai_appsec_match_target_sequence.test", "id", "43253:7:website"),
 						),
 						//ExpectNonEmptyPlan: true,
 					},

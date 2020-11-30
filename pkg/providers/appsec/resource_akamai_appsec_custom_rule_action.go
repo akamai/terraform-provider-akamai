@@ -43,7 +43,7 @@ func resourceCustomRuleAction() *schema.Resource {
 					None,
 				}, false),
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -74,7 +74,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	getCustomRuleAction.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -118,7 +118,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	}
 	updateCustomRuleAction.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -162,7 +162,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 	updateCustomRuleAction.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}

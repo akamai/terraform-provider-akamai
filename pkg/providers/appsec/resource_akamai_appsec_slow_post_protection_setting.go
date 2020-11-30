@@ -34,7 +34,7 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -82,7 +82,7 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	}
 	getSlowPostProtectionSetting.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -101,7 +101,40 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 
 func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingDelete")
+
+	updateSlowPostProtection := v2.UpdateSlowPostProtectionRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtection.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtection.Version = version
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateSlowPostProtection.PolicyID = policyid
+
+	updateSlowPostProtection.ApplySlowPostControls = false
+
+	logger.Errorf("calling 'updateSlowPostProtection': %v", updateSlowPostProtection)
+	_, erru := client.UpdateSlowPostProtection(ctx, updateSlowPostProtection)
+	if erru != nil {
+		logger.Errorf("calling 'updateSlowPostProtection': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+	d.SetId("")
+	return nil
 }
 
 func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -123,7 +156,7 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 	}
 	updateSlowPostProtectionSetting.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}

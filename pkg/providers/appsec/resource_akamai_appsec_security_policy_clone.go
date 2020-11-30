@@ -42,7 +42,7 @@ func resourceSecurityPolicyClone() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"policy_id": &schema.Schema{
+			"security_policy_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Policy ID for clone",
@@ -94,7 +94,7 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	d.Set("policy_id", spcr.PolicyID)
+	d.Set("security_policy_id", spcr.PolicyID)
 	d.Set("security_policy_name", spcr.PolicyName)
 	d.Set("security_policy_prefix", createSecurityPolicyClone.PolicyPrefix)
 	d.SetId(spcr.PolicyID)
@@ -130,7 +130,7 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	d.Set("security_policy_name", securitypolicyclone.PolicyName)
-	d.Set("policy_id", securitypolicyclone.PolicyID)
+	d.Set("security_policy_id", securitypolicyclone.PolicyID)
 	d.SetId(securitypolicyclone.PolicyID)
 
 	return nil

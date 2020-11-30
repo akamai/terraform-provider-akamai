@@ -4,7 +4,7 @@ provider "akamai" {
 data "akamai_appsec_penalty_boxes" "test" {
     config_id = 43253
     version = 7
-    policy_id = "AAAA_81230"
+    security_policy_id = "AAAA_81230"
 }
 
 output "appsecpenaltyboxes" {

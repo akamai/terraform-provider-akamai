@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -23,6 +24,14 @@ func dataSourceRatePolicies() *schema.Resource {
 			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
+			},
+			"rate_policy_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"json": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"output_text": {
 				Type:        schema.TypeString,
@@ -52,6 +61,12 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getRatePolicies.ConfigVersion = version
 
+	ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getRatePolicies.RatePolicyID = ratepolicyid
+
 	ratepolicies, err := client.GetRatePolicies(ctx, getRatePolicies)
 	if err != nil {
 		logger.Errorf("calling 'getRatePolicies': %s", err.Error())
@@ -65,6 +80,13 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}
+
+	jsonBody, err := json.Marshal(ratepolicies)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.Set("json", string(jsonBody))
 
 	d.SetId(strconv.Itoa(getRatePolicies.ConfigID))
 

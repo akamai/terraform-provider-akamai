@@ -21,14 +21,44 @@ func TestAccAkamaiAttackGroupConditionException_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResAttackGroupConditionException/AttackGroupConditionException.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		crr := appsec.RemoveAttackGroupConditionExceptionResponse{}
+		expectJSR := compactJSON(loadFixtureBytes("testdata/TestResAttackGroupConditionException/AttackGroupConditionException.json"))
+		json.Unmarshal([]byte(expectJSR), &crr)
+
 		client.On("GetAttackGroupConditionException",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetAttackGroupConditionExceptionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
 		).Return(&cr, nil)
 
+		client.On("RemoveAttackGroupConditionException",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.RemoveAttackGroupConditionExceptionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
+		).Return(&crr, nil)
+
 		client.On("UpdateAttackGroupConditionException",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateAttackGroupConditionExceptionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
+			appsec.UpdateAttackGroupConditionExceptionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Conditions: []struct {
+				Type          string   "json:\"type\""
+				Filenames     []string "json:\"filenames,omitempty\""
+				PositiveMatch bool     "json:\"positiveMatch\""
+				Methods       []string "json:\"methods,omitempty\""
+			}{}, Exception: struct {
+				HeaderCookieOrParamValues        []string "json:\"headerCookieOrParamValues\""
+				SpecificHeaderCookieOrParamNames []struct {
+					Names    []string "json:\"names\""
+					Selector string   "json:\"selector\""
+				} "json:\"specificHeaderCookieOrParamNames\""
+				SpecificHeaderCookieOrParamPrefix struct {
+					Prefix   string "json:\"prefix\""
+					Selector string "json:\"selector\""
+				} "json:\"specificHeaderCookieOrParamPrefix\""
+			}{HeaderCookieOrParamValues: []string{"abc"}, SpecificHeaderCookieOrParamNames: []struct {
+				Names    []string "json:\"names\""
+				Selector string   "json:\"selector\""
+			}(nil), SpecificHeaderCookieOrParamPrefix: struct {
+				Prefix   string "json:\"prefix\""
+				Selector string "json:\"selector\""
+			}{Prefix: "a*", Selector: "REQUEST_COOKIES"}}},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
@@ -39,7 +69,7 @@ func TestAccAkamaiAttackGroupConditionException_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResAttackGroupConditionException/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_aag_rule.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_attack_group_condition_exception.test", "id", "43253"),
 						),
 					},
 				},

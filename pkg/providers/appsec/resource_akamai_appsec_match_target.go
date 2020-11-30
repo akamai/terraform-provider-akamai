@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -34,6 +35,7 @@ func resourceMatchTarget() *schema.Resource {
 			"match_target": {
 				Type:             schema.TypeString,
 				Required:         true,
+				ValidateFunc:     validation.StringIsJSON,
 				DiffSuppressFunc: suppressEquivalentJSONDiffs,
 			},
 			"match_target_id": {
@@ -175,6 +177,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
+/*
 func matchTargetAsJSONDString(d *schema.ResourceData) (string, error) {
 
 	updateMatchTarget := v2.UpdateMatchTargetRequest{}
@@ -204,3 +207,4 @@ func matchTargetAsJSONDString(d *schema.ResourceData) (string, error) {
 	return string(jsonBody), nil
 
 }
+*/

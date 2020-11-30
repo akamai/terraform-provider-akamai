@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -34,15 +35,15 @@ func resourceAttackGroupConditionException() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"group_id": {
+			"attack_group": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"rules": {
+			"condition_exception": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsJSON,
@@ -75,17 +76,17 @@ func resourceAttackGroupConditionExceptionRead(ctx context.Context, d *schema.Re
 	}
 	getAttackGroupConditionException.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getAttackGroupConditionException.PolicyID = policyid
 
-	group, err := tools.GetStringValue("group_id", d)
+	attackgroup, err := tools.GetStringValue("attack_group", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getAttackGroupConditionException.Group = group
+	getAttackGroupConditionException.Group = attackgroup
 
 	attackgroupconditionexception, err := client.GetAttackGroupConditionException(ctx, getAttackGroupConditionException)
 	if err != nil {
@@ -109,7 +110,46 @@ func resourceAttackGroupConditionExceptionRead(ctx context.Context, d *schema.Re
 
 func resourceAttackGroupConditionExceptionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceAttackGroupConditionExceptionRemove")
+
+	removeAttackGroupConditionException := v2.RemoveAttackGroupConditionExceptionRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeAttackGroupConditionException.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeAttackGroupConditionException.Version = version
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeAttackGroupConditionException.PolicyID = policyid
+
+	attackgroup, err := tools.GetStringValue("attack_group", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeAttackGroupConditionException.Group = attackgroup
+
+	logger.Errorf("calling 'RemoveAttackGroupConditionException': %v", removeAttackGroupConditionException)
+
+	_, errd := client.RemoveAttackGroupConditionException(ctx, removeAttackGroupConditionException)
+	if errd != nil {
+		logger.Errorf("calling 'RemoveAttackGroupConditionException': %s", errd.Error())
+		return diag.FromErr(errd)
+	}
+
+	d.SetId("")
+	return nil
 }
 
 func resourceAttackGroupConditionExceptionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -118,6 +158,10 @@ func resourceAttackGroupConditionExceptionUpdate(ctx context.Context, d *schema.
 	logger := meta.Log("APPSEC", "resourceAttackGroupConditionExceptionUpdate")
 
 	updateAttackGroupConditionException := v2.UpdateAttackGroupConditionExceptionRequest{}
+
+	jsonpostpayload := d.Get("condition_exception")
+
+	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateAttackGroupConditionException)
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -131,17 +175,17 @@ func resourceAttackGroupConditionExceptionUpdate(ctx context.Context, d *schema.
 	}
 	updateAttackGroupConditionException.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	updateAttackGroupConditionException.PolicyID = policyid
 
-	group, err := tools.GetStringValue("group_id", d)
+	attackgroup, err := tools.GetStringValue("attack_group", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateAttackGroupConditionException.Group = group
+	updateAttackGroupConditionException.Group = attackgroup
 
 	resp, erru := client.UpdateAttackGroupConditionException(ctx, updateAttackGroupConditionException)
 	if erru != nil {
