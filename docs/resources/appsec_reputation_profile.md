@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_reputation_profile`
 
-(Beta) Use the `akamai_appsec_reputation_profile` resource to create or modify a reputation profile for a specific security configuration version.
+Use the `akamai_appsec_reputation_profile` resource to create or modify a reputation profile for a specific security configuration version.
 
 ## Example Usage
 

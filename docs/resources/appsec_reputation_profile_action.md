@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_reputation_profile_action
 
-(Beta) Use the `akamai_appsec_reputation_profile_action` resource to update what action should be taken when a reputation profile's rule is triggered.
+Use the `akamai_appsec_reputation_profile_action` resource to update what action should be taken when a reputation profile's rule is triggered.
 
 ## Example Usage
 

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_rule_actions
 
-(Beta) Use the `akamai_appsec_rule_actions` data source to retrieve the action taken for each rule for a given security configuration version and security policy, or for a specific rule.
+Use the `akamai_appsec_rule_actions` data source to retrieve the action taken for each rule for a given security configuration version and security policy, or for a specific rule.
 
 ## Example Usage
 

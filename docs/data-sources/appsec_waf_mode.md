@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_waf_mode
 
-(Beta) Use the `akamai_appsec_waf_mode` data source to retrieve the mode that indicates how the WAF rules of the given security configuration version and security policy will be updated.
+Use the `akamai_appsec_waf_mode` data source to retrieve the mode that indicates how the WAF rules of the given security configuration version and security policy will be updated.
 
 ## Example Usage
 

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_waf_protections
 
-(Beta) Use the `akamai_appsec_waf_protections` data source to retrieve the protections in place for a given security configuration version and security policy.
+Use the `akamai_appsec_waf_protections` data source to retrieve the protections in place for a given security configuration version and security policy.
 
 ## Example Usage
 

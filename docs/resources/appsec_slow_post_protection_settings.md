@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_slow_post_protection_settings
 
-(Beta) Use the `akamai_appsec_slow_post_protection_settings` resource to update slow POST protection settings for a specific security configuration version.
+Use the `akamai_appsec_slow_post_protection_settings` resource to update slow POST protection settings for a specific security configuration version.
 
 ## Example Usage
 

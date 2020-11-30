@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_attack_group_condition_exception
 
-(Beta) Use the `akamai_appsec_attack_group_condition_exception` data source to retrieve an attack group rule's conditions and exceptions.
+Use the `akamai_appsec_attack_group_condition_exception` data source to retrieve an attack group rule's conditions and exceptions.
 
 ## Example Usage
 

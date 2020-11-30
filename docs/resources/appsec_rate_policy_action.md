@@ -9,7 +9,7 @@ description: |-
 # resource_akamai_appsec_rate_policy_action
 
 
-(Beta) The `resource_akamai_appsec_rate_policy_action` resource allows you to create, modify or delete the actions in a rate policy.
+The `resource_akamai_appsec_rate_policy_action` resource allows you to create, modify or delete the actions in a rate policy.
 
 ## Example Usage
 

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_attack_group_actiojn
 
-(Beta) Use the `akamai_appsec_attack_group_action` resource to update what action should be taken when an attack group’s rule triggers. 
+Use the `akamai_appsec_attack_group_action` resource to update what action should be taken when an attack group’s rule triggers. 
 
 ## Example Usage
 

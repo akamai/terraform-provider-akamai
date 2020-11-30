@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_rule_condition_exception
 
-(Beta) Use the `akamai_appsec_rule_condition_exception` data source to retrieve a KRS rule’s conditions and exceptions.
+Use the `akamai_appsec_rule_condition_exception` data source to retrieve a KRS rule’s conditions and exceptions.
 
 ## Example Usage
 

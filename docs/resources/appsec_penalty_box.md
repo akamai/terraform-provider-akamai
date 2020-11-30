@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_penalty_box
 
-(Beta) Use the `akamai_appsec_penalty_box` resource to update the penalty box settings for a given security policy.
+Use the `akamai_appsec_penalty_box` resource to update the penalty box settings for a given security policy.
 
 ## Example Usage
 

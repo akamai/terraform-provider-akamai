@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_eval_rule_condition_exception
 
-(Beta) Use the `akamai_appsec_eval_rule_condition_exception` data source to list the conditions and exceptions for a rule you want to evaluate.
+Use the `akamai_appsec_eval_rule_condition_exception` data source to list the conditions and exceptions for a rule you want to evaluate.
 
 ## Example Usage
 

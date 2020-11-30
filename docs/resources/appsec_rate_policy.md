@@ -9,7 +9,7 @@ description: |-
 # resource_akamai_appsec_rate_policy
 
 
-(Beta) The `resource_akamai_appsec_rate_policy` resource allows you to create, modify or delete rate policies for a specific security configuration version.
+The `resource_akamai_appsec_rate_policy` resource allows you to create, modify or delete rate policies for a specific security configuration version.
 
 ## Example Usage
 

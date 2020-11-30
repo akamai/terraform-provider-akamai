@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_eval_rule_condition_exception
 
-(Beta) Use the `akamai_appsec_eval_rule_condition_exception` resource to create or modify an eval rule's conditions and exceptions.
+Use the `akamai_appsec_eval_rule_condition_exception` resource to create or modify an eval rule's conditions and exceptions.
 
 ## Example Usage
 

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_eval_rule_actions
 
-(Beta) Use the `akamai_appsec_eval_rule_actions` data source to retrieve the rules available for evaluation and their actions, or the action for a specific rule available for evaluation..
+Use the `akamai_appsec_eval_rule_actions` data source to retrieve the rules available for evaluation and their actions, or the action for a specific rule available for evaluation..
 
 ## Example Usage
 

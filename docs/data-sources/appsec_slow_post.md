@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_slow_post_protection_settings
 
-(Beta) Use the `akamai_appsec_slow_post_protection_settings` data source to retrieve the slow post protection settings for a given security configuration version and policy.
+Use the `akamai_appsec_slow_post_protection_settings` data source to retrieve the slow post protection settings for a given security configuration version and policy.
 
 ## Example Usage
 

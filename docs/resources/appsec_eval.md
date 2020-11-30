@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_eval
 
-(Beta) Use the `akamai_appsec_eval` resource to perform evaluation mode operations such as Start, Stop, Restart, Update, or Complete.
+Use the `akamai_appsec_eval` resource to perform evaluation mode operations such as Start, Stop, Restart, Update, or Complete.
 
 ## Example Usage
 

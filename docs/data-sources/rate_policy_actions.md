@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_rate_policy_actions
 
-(Beta) Use the `akamai_appsec_rate_policy_actions` data source to retrieve a list of all rate policies associated with a given configuration version and security policy.
+Use the `akamai_appsec_rate_policy_actions` data source to retrieve a list of all rate policies associated with a given configuration version and security policy.
 
 ## Example Usage
 
