@@ -220,6 +220,27 @@ func TestResProperty(t *testing.T) {
 		},
 	}
 
+	// Standard test behavior for cases where the property's latest version is active in staging network
+	NoDiff := LifecycleTestCase{
+		Name: "No diff found in update",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+				},
+				{
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+				},
+			}
+		},
+	}
+
 	// Run a test case to verify schema validations
 	AssertConfigError := func(t *testing.T, flaw, rx string) {
 		t.Helper()
@@ -353,8 +374,8 @@ func TestResProperty(t *testing.T) {
 		AssertConfigError(t, "both contract and contract_id given", `only one of .contract,contract_id. can be specified`)
 		AssertConfigError(t, "neither group nor group_id given", `one of .group,group_id. must be specified`)
 		AssertConfigError(t, "both group and group_id given", `only one of .group,group_id. can be specified`)
-		AssertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`)
-		AssertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`)
+		AssertConfigError(t, "neither product nor product_id given", `one of product,product_id must be specified`)
+		AssertConfigError(t, "both product and product_id given", `"product": conflicts with product_id`)
 		AssertConfigError(t, "invalid json rules", `rules are not valid JSON`)
 
 		AssertDeprecated(t, "contract")
@@ -393,6 +414,9 @@ func TestResProperty(t *testing.T) {
 		AssertLifecycle(t, "product without prefix", LatestVersionNotActive)
 		AssertLifecycle(t, "product without prefix", LatestVersionActiveInStaging)
 		AssertLifecycle(t, "product without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "no diff", NoDiff)
+		AssertLifecycle(t, "product to product_id", NoDiff)
+		AssertLifecycle(t, "product_id to product", NoDiff)
 
 		AssertImportable(t, "property_id", "prp_0")
 		AssertImportable(t, "unprefixed property_id", "0")

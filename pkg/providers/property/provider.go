@@ -186,6 +186,9 @@ func compactJSON(encoded []byte) string {
 // addPrefixToState returns a function that ensures string values are prefixed correctly
 func addPrefixToState(prefix string) schema.SchemaStateFunc {
 	return func(given interface{}) string {
+		if given.(string) == "" {
+			return ""
+		}
 		return tools.AddPrefix(given.(string), prefix)
 	}
 }

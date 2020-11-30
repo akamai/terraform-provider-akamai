@@ -52,6 +52,9 @@ func ExpectGetProperty(client *mockpapi, PropertyID, GroupID, ContractID string,
 			property.StagingVersion = &v
 		}
 
+		// although optional in PAPI documentation, ProductID is not being set by PAPI in the response
+		property.ProductID = ""
+
 		return &papi.GetPropertyResponse{Property: &property}, nil
 	}
 
