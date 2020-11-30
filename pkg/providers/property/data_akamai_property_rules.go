@@ -126,10 +126,6 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 		}
 	}
-	propertyID = tools.AddPrefix(propertyID, "prp_")
-	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
-	}
 
 	getRuleTreeResponse, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
 		PropertyID:      propertyID,
