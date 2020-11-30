@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
 page_title: "Akamai: ExportConfiguration"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
  ExportConfiguration
 ---
 
 # akamai_appsec_export_configuration
 
-Use the akamai_appsec_export_configuration` data source to retrieve comprehensive details about a security configuration and version, including rate and security policies, rules, hostnames, and other settings. You can retrieve the entire set of information in JSON format, or a subset of the information in tabular format.
+Use the `akamai_appsec_export_configuration` data source to retrieve comprehensive details about a security configuration version, including rate and security policies, rules, hostnames, and other settings. You can retrieve the entire set of information in JSON format, or a subset of the information in tabular format.
 
 ## Example Usage
 
@@ -63,5 +63,5 @@ In addition to the arguments above, the following attributes are exported:
 
 * `json` - The complete set of information about the specified security configuration version, in JSON format. This includes the types available for the `search` parameter, plus several additional fields such as createDate and createdBy.
 
-* `output_text` - A tabular listing showing the types of data specified in the `search` parameter. Included only if the `search` parameter specifies at least one type.
+* `output_text` - A tabular display showing the types of data specified in the `search` parameter. Included only if the `search` parameter specifies at least one type.
 

@@ -1,19 +1,40 @@
 # RELEASE NOTES
 
-## 0.10.0 (Unreleased)
+## 0.11.0 (Nov 19,2020)
 
-####BREAKING CHANGES:
-####NOTES:
+#### NOTES:
+* provider: Added support for application security API
+#### BUG FIXES:
+* provider: Updated edgegrid library to version 2.0.2. Ths should include the following fixes:
+    * Re-enabled global account switch key support in edgerc files for reseller accounts.
+    * PAPI - edgehostname updated returns - The System could not find cnameTo value
+    * PAPI - property update return error - You provided an Etag that does not represent the last edit. Another edit has occurred, so check your request again before retrying.
+
+## 0.10.2 (Oct 22,2020)
+#### NOTES:
+* Documentation formatting
+#### KNOWN BUGS:
+* provider: provider configuration validation requires an edgerc file configured and present even when environment variable-based configuration was used.
+* provider: support for configuring the provider via an inline provider block (`property`, `dns`, or `gtm`) no longer works.  Users should use edgerc file or Terraform environment args to configure instead.
+
+## 0.10.1 (Not released)
+
+## 0.10.0 (Oct 20,2020)
+
+#### NOTES:
 * provider: The backing edgegrid library was entirely rewritten.  Provider behavior should be preserved but there is chance of incidental changes due to the project size.
-####FEATURES:
-####ENHANCEMENTS:
+* resources/akamai_edge_hostname: edge_hostname field should be provided with an ending of edgesuite.net, edgekey.net, or akamaized.net.  If a required suffix is not provided then edgesuite.net is appended as default.
+#### KNOWN BUGS:
+* provider: provider configuration validation requires an edgerc file configured and present even when one should not be needed.
+* provider: support for configuring the provider via an inline provider block (`property`, `dns`, or `gtm`) no longer works.  Users should use edgerc file or Terraform environment args to configure instead.
+#### ENHANCEMENTS:
 * provider: improved error handling and improved message consistency
 * provider: release notes categorize updates according to Terraform best practices guide.
 * resources/akamai_cp: support ids with and without prefixes
 * resources/akamai_edge_hostnames: support ids with and without prefixes
 * resources/akamai_property: support ids with and without prefixes
 * resources/akamai_property_activation: support ids with and without prefixes
-####BUG FIXES:
+#### BUG FIXES:
 * resources/akamai_property: [AT-42] Fix criteria_match values handling
 * provider: fixed documentation to properly present guides and categories on Hashicorp Terraform registry site
 * resources/edge_hostname: added error when neither IPV4 nor IPV6 is selected
@@ -21,18 +42,22 @@
 * datasource/akamai_property_rules: comparisons in rule tree now properly ignore equivalent values with attribute order differences.
 * provider: updated all error messages to better identify issues and actions required by user
 * provider: fixed crash due to unexpected data types from unexpected API responses
-* provider: fixed crash due to unexpected data types in terraform files
+* provider: fixed crash due to unexpected data types in Terraform files
 * provider: errors now get reported using Terraform diagnostics allowing much more detail to be passed to user when an error occurs.
 
 ## 0.9.1 (Sept 02, 2020)
-####BREAKING CHANGES:
+#### BREAKING CHANGES:
 * [IMPORTANT] Dropped support for TF clients <= 0.11. Provider now built using Terraform sdk v2 library. Terraform dropped 0.11 client support as part of this update.  This change will make many new enhancements possible. ([See: Terraform v2 sdk](https://www.terraform.io/docs/extend/guides/v2-upgrade-guide.html))
 * resources/akamai_group: contract field (previously optional) now required to ensure contract and group agreement.
 
-####NOTES:
+#### NOTES:
 * [CHANGE] Individual edgerc file sections for different Akamai APIs (i.e., `property_section`, `dns_section`) has been deprecated in favor a common `config_section` used in conjuction with provider aliases ([See: Multiple Provider Configurations](https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations))
 
-####BUG FIXES:
+#### KNOWN BUGS:
+* provider: provider configuration validation requires an edgerc file configured and present even when one should not be needed.
+* provider: support for configuring the provider via an inline provider block (`property`, `dns`, or `gtm`) no longer works.  Users should use edgerc file or Terraform environment args to configure instead.
+
+#### BUG FIXES:
 * [FIX] datasource akamai_group will no longer panic when contract not provided
 * [ADD] Project re-organized to prepare for additional APIs to be included
 * Fixed build job to compile sub-modules. Code is identical to 0.9.0 release

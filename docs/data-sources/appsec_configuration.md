@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: Configuration"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
  Configuration
 ---
@@ -55,8 +55,6 @@ The following arguments are supported:
 
 * `name` - (Optional) The name of a specific security configuration. If not supplied, information about all security configurations is returned.
 
-* `version` - (Optional) The specific version number to return. If specified, this value is returned for use in specifying other data sources or resources.
-
 
 ## Attributes Reference
 
@@ -64,7 +62,7 @@ In addition to the arguments above, the following attributes are exported:
 
 * `config_id` - The ID of the specified security configuration. Returned only if `name` was specified.
 
-* `output_text` - A tabular listing showing the following information about all available security configurations: config_id, name, latest version, version active in staging, and version active in production.
+* `output_text` - A tabular display showing the following information about all available security configurations: config_id, name, latest_version, version_active_in_staging, and version_active_in_production.
 
 * `latest_version` - The last version of the specified security configuration created. Returned only if `name` was specified.
 

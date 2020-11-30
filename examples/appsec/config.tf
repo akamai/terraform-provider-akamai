@@ -183,20 +183,21 @@ resource "akamai_appsec_custom_rule" "appseccustomrule" {
     custom_rule = data.local_file.rules.content
 }
 
-
+/*
 resource "akamai_appsec_custom_rule" "appseccustomrule1" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     custom_rule = file("${path.module}/custom_rules_simple1.json")
 }
 
-
+*/
+/*
 data "akamai_appsec_custom_rules" "appseccustomrule" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
 }
 output "appseccustomrules" {
   value = data.akamai_appsec_custom_rules.appseccustomrule.output_text
 }
-
+*/
 /*
 resource "akamai_appsec_activations" "appsecactivations" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id

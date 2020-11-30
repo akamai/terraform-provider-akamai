@@ -12,12 +12,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 var testAccProviders map[string]*schema.Provider
-
 var testProvider *schema.Provider
 
 func init() {
@@ -34,7 +32,7 @@ func TestProvider(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
-	TODO(t, "Check not implemented")
+
 }
 
 func getTestProvider() *schema.Provider {

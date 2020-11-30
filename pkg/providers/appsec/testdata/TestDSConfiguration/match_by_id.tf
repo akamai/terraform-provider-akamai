@@ -19,4 +19,3 @@ output "configsedgeconfiglist" {
   value = data.akamai_appsec_configuration.test.output_text
 }
 
-

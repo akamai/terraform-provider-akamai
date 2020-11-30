@@ -155,7 +155,7 @@ func (p *provider) Name() string {
 }
 
 // ProviderVersion update version string anytime provider adds new features
-const ProviderVersion string = "v0.8.3"
+const ProviderVersion string = "v1.0.0"
 
 func (p *provider) Version() string {
 	return ProviderVersion

@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: CustomRules"
-subcategory: "APPSEC"
+subcategory: "Application Security"
 description: |-
  CustomRules
 ---
@@ -42,5 +42,5 @@ The following argument is supported:
 
 In addition to the argument above, the following attribute is exported:
 
-*`output_text` - A tabular listing showing the ID and name of the custom rules defined for the security configuration.
+* `output_text` - A tabular display showing the ID and name of the custom rules defined for the security configuration.
 

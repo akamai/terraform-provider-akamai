@@ -29,7 +29,7 @@
         "/sssi/*"
     ],
     "hostnames": [
-        "n.example.com",
+        "n1.example.com",
         "www.example.net",
         "example.com"
     ],
