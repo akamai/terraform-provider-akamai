@@ -1,5 +1,8 @@
 # RELEASE NOTES
 
+## 0.12.0 (Unreleased)
+* provider: Added data sources and resources for additional Application Security AkamaiOPEN-edgegrid APIs.
+
 ## 0.11.0 (Nov 19,2020)
 
 #### NOTES:
