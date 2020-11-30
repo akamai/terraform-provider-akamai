@@ -94,10 +94,6 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 		}
 	}
-	propertyID = tools.AddPrefix(propertyID, "prp_")
-	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
-	}
 
 	if version, err = tools.GetIntValue("version", d); err != nil {
 		latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
