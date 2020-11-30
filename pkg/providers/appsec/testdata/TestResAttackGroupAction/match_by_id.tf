@@ -3,13 +3,12 @@ provider "akamai" {
 }
 
 
-resource "akamai_appsec_waf_attack_group_action" "test" {
-    config_id = 43253
+resource "akamai_appsec_attack_group_action" "test" {
+config_id = 43253
     version = 7
-    policy_id = "AAAA_81230"
-    group_id = "SQL"
-    action = "alert"
+    security_policy_id = "AAAA_81230"
+    attack_group = "SQL"
+    attack_group_action = "none"
 }
-
 
 

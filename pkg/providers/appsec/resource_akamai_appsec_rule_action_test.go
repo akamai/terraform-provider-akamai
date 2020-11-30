@@ -28,7 +28,7 @@ func TestAccAkamaiRuleAction_res_basic(t *testing.T) {
 
 		client.On("UpdateRuleAction",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 699989, Action: ""},
+			appsec.UpdateRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 699989, Action: "none"},
 		).Return(&cu, nil)
 
 		useClient(client, func() {

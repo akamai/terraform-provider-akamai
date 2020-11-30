@@ -3,11 +3,10 @@ provider "akamai" {
 }
 
 
-resource "akamai_appsec_rule_action" "test" {
+data "akamai_appsec_waf_mode" "test" {
     config_id = 43253
     version = 7
     security_policy_id = "AAAA_81230"
-    rule_id = 699989
-    rule_action = "none"
 }
+
 
