@@ -4,9 +4,10 @@ import (
 	"log"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 func TestDataSourceMultipleGroups_basic(t *testing.T) {
@@ -71,8 +72,8 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 				Providers:  testAccProviders,
 				IsUnitTest: true,
 				Steps: []resource.TestStep{{
-					Config:             loadFixtureString("testdata/TestDSContractRequired/group.tf"),
-					ExpectNonEmptyPlan: true,
+					Config:             loadFixtureString("testdata/TestDSContractRequired/groups.tf"),
+					ExpectNonEmptyPlan: false,
 				}},
 			})
 		})

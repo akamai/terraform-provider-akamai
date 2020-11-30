@@ -4,9 +4,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 func TestDSCPCode(t *testing.T) {
@@ -97,7 +98,7 @@ func TestDSCPCode(t *testing.T) {
 					Config: loadFixtureString("testdata/TestDSCPCode/match_by_full_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "cpc_test2"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "cpc_test2"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group", "grp_test"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract", "ctr_test"),
 					),
