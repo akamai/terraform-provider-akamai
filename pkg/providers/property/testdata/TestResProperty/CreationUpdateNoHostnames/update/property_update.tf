@@ -1,6 +1,5 @@
 provider "akamai" {
   edgerc = "~/.edgerc"
-  config_section = "afadencloud-example-01"
 }
 
 resource "akamai_property" "test" {
