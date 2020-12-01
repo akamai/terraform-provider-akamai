@@ -53,7 +53,7 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display showing boolean values indicating whether conditions and exceptions are present
+* `output_text` - A tabular display showing boolean values indicating whether conditions and exceptions are present.
 
 * `json` - A JSON-formatted list of the condition and exception information for the specified rule.
 

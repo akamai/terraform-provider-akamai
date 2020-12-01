@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_penalty_box
 
-Use the `akamai_appsec_penalty_box` data source to retrieve the list of ... information about ...
+Use the `akamai_appsec_penalty_box` data source to retrieve the penalty box settings for a specified security policy.
 
 ## Example Usage
 
@@ -18,8 +18,6 @@ Basic usage:
 provider "akamai" {
   appsec_section = "default"
 }
-
-// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#getpenaltybox
 
 // USE CASE: user wants to view penalty box settings
 data "akamai_appsec_configuration" "configuration" {
@@ -32,11 +30,15 @@ data "akamai_appsec_penalty_box" "penalty_box" {
 }
 
 output "penalty_box_action" {
-  value = akamai_appsec_penalty_box.penalty_box.action
+  value = data.akamai_appsec_penalty_box.penalty_box.action
 }
 
 output "penalty_box_enabled" {
-  value = akamai_appsec_penalty_box.penalty_box.enabled
+  value = data.akamai_appsec_penalty_box.penalty_box.enabled
+}
+
+output "penalty_box_text" {
+  value = data.akamai_appsec_penalty_box.penalty_box.output_text
 }
 
 ```
@@ -55,7 +57,8 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `action` - TBD
+* `action` - The action for the penalty box: `alert`, `deny`, or `none`.
 
-* `enabled` - TBD
+* `enabled` - Either `true` or `false`, indicating whether penalty box protection is enabled.
 
+* `output_text` - A tabular display of the `action` and `enabled` information.

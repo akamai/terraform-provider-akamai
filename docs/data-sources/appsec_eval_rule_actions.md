@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_eval_rule_actions
 
-Use the `akamai_appsec_eval_rule_actions` data source to retrieve the rules available for evaluation and their actions, or the action for a specific rule available for evaluation..
+Use the `akamai_appsec_eval_rule_actions` data source to retrieve the rules available for evaluation and their actions, or the action for a specific rule available for evaluation.
 
 ## Example Usage
 
@@ -60,7 +60,7 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `rule_id` - (Optional) The ID of a specific rule.
+* `eval_rule_id` - (Optional) The ID of a specific rule. If not supplied, information about all eval rules will be returned.
 
 ## Attributes Reference
 
