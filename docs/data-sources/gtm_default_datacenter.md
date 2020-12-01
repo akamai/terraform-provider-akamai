@@ -3,7 +3,7 @@ layout: "akamai"
 page_title: "Akamai: gtm_default_datacenter"
 subcategory: "Global Traffic Management"
 description: |-
- CP Code
+ Default Datacenter
 ---
 
 # akamai_gtm_default_datacenter
@@ -33,13 +33,13 @@ resource "akamai_gtm_cidrmap" "example_cidrmap" {
 
 The following arguments are supported:
 
-* `domain` — (Required)
-* `domain` — (Optional. Default 5400)
+* `domain` - (Required)
+* `datacenter` - (Optional. Default 5400)
 
 ## Attributes Reference
 
 The following attributes are returned:
 
-* `id` — The data resource id. Format: <domain>:default_datacenter:<datacenter_id>
-* `datacenter_id` — default datacenter Id
-* `nickname` — default datacenter nickname
+* `id` - The data resource ID. Format: `<domain>:default_datacenter:<datacenter_id>`
+* `datacenter_id` - The default datacenter ID
+* `nickname` - The default datacenter nickname

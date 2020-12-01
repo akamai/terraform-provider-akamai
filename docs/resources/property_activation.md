@@ -8,11 +8,10 @@ description: |-
 
 # akamai_property_activation
 
-The `akamai_property_activation` provides the resource for activating a property in the appropriate environment. Once 
-you are satisfied with any version of a property, an activation deploys it, either to the Akamai staging or production 
-network. You activate a specific version, but the same version can be activated separately more than once.  
-It is a best practice to have production activation depend on staging so if any problems are detected in staging 
-the change does not progress to production.
+The `akamai_property_activation` resource lets you activate a property version. An activation deploys the version to either the Akamai staging or production network. You can activate a specific version multiple times if you need to.  
+
+Before activating on production, activate on staging first. This way you can detect any problems in staging before your changes progress to production.
+
 
 ## Example Usage
 
@@ -51,9 +50,9 @@ resource "akamai_property_activation" "example_staging" {
 resource "akamai_property_activation" "example_prod" {
      property_id = akamai_property.example.id
      network  = "PRODUCTION"
-     # manually specifying version allows production to lag behind staging until qualified by testing on staging urls.
+     # manually specifying version allows production to lag behind staging until qualified by testing on staging URLs.
      version = 3 
-     # manually declairing a dependency on staging means production activation will not update if staging update fails -  
+     # manually declaring a dependency on staging means production activation will not update if staging update fails -  
      # useful when both target same version.  The example does not depict this approach. However, this practice is 
      # recommended even when you edit production version by hand as shown in this example.
      depends_on = [
@@ -67,20 +66,21 @@ resource "akamai_property_activation" "example_prod" {
 
 The following arguments are supported:
 
-* `property_id` — (Required) The property ID.  Can be provided with or without `prp_` prefix.
-* `contact` — (Required) One or more email addresses to inform about activation changes.
-* `network` — (Optional) Akamai network to activate on. Allowed values `STAGING` or `PRODUCTION` (Default: `STAGING`).
-* `version` — (Required) The version to activate. Note: this field used to be optional but now depends on property to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. 
+* `property_id` - (Required) The property’s unique identifier, including the `prp_` prefix. 
+* `contact` - (Required) One or more email addresses to send activation status changes to.
+* `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. 
+* `network` - (Optional) Akamai network to activate on, either `STAGING` or `PRODUCTION`. `STAGING` is the default.
 
 ### Deprecated Arguments
-* `property` — (Deprecated) synonym of property_id for legacy purposes
+
+* `property` - (Deprecated) Replaced by `property_id`. Maintained for legacy purposes.
 
 ## Attribute Reference
 
 The following attributes are returned:
 
-* `id` - unique identifier for this activation
-* `warnings` - any warnings which may arise when the operation is executed by the infrastructure.
-* `errors` - any errors which may arise when the operation is executed by the infrastructure
-* `activation_id` - activation ID while an activation is in progress.
-* `status` - the current activation status
+* `id` - The unique identifier for this activation.
+* `warnings` - The contents of `warnings` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `errors` - The contents of `errors` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `activation_id` - The ID given to the activation event while it's in progress.
+* `status` - The property version’s activation status on the selected network.

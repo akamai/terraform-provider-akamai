@@ -9,7 +9,13 @@ description: |-
 # akamai_group
 
 
-Use `akamai_group` data source to retrieve a group id by name.
+Use the `akamai_group` data source to retrieve a group ID by name. 
+
+Each account features a hierarchy of groups, which control access to your Akamai configurations and 
+help consolidate reporting functions, typically mapping to an organizational hierarchy. Using either 
+Control Center or the [Identity Management: User Administration API](https://developer.akamai.com/en-us/api/core_features/identity_management_user_admin/v2.html), 
+account administrators can assign properties to specific groups, each with its own set of users and 
+accompanying roles.
 
 ## Example Usage
 
@@ -33,16 +39,16 @@ resource "akamai_property" "example" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports these arguments:
 
-* `name` — (Required) The group name.
-* `contract_id` — (Required) The contract ID. 
+* `name` - (Required) The group name.
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 
 ### Deprecated Arguments 
-* `contract` — (Deprecated) synonym of contract_id for legacy purposes. Cannot be used with `contract_id`.
+* `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
 
 ## Attributes Reference
 
-The following attributes are returned:
+This data source returns this attribute:
 
-* `id` — The group ID.
+* `id` - The group's unique ID, including the `grp_` prefix.

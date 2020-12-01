@@ -24,10 +24,10 @@ data "akamai_authorities_set" "example" {
 
 The following arguments are supported:
 
-* `contract` — (Required) The contract ID.
+* `contract` - (Required) The contract ID.
 
 ## Attributes Reference
 
 The following attributes are returned:
 
-* `authorities` — A list of authorities
+* `authorities` - A list of authorities

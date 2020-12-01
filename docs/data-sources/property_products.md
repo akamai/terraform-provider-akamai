@@ -9,13 +9,12 @@ description: |-
 # akamai_property_products
 
 
-Use `akamai_property_products` data source to list products associated with a contract. 
+Use the `akamai_property_products` data source to list the products included on a contract. 
 
 ## Example Usage
 
-Return products associated with the EdgeGrid API client token under a given contract:
+This example returns products associated with the [EdgeGrid client token](https://developer.akamai.com/getting-started/edgegrid) for a given contract:
 
-datasource-example.tf
 ```hcl-terraform
 datasource "akamai_property_products" "my-example" {
     contract_id = "ctr_1-AB123"
@@ -28,14 +27,14 @@ output "property_match" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports this argument:
 
-* `contract_id` — (Required) The Contract ID.  Can be provided with or without `ctr_` prefix.
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 
 ## Attributes Reference
 
-The following attributes are returned:
+This data source returns these attributes:
 
-* `products` — list of supported product, with the following properties:
-  * `product_id` - the product ID (string)
-  * `product_name` - the product name (string)
+* `products` - A list of supported products for the contract, including:
+  * `product_id` - The product's unique ID, including the `prd_` prefix.
+  * `product_name` - A string containing the product name.
