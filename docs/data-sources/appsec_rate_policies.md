@@ -64,4 +64,5 @@ In addition to the arguments above, the following attributes are exported:
 
 * `output_text` - A tabular display showing the ID and name of all rate policies associated with the specified security configuration version.
 
-* `json` - The rate policy information in JSON format.
+* `json` - A JSON-formatted list of the rate policy information.
+

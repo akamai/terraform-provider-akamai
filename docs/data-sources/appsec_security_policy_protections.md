@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
-page_title: "Akamai: FOO"
+page_title: "Akamai: Security Policy Protections
 subcategory: "Application Security"
 description: |-
- FOO
+ Security Policy Protections
 ---
 
-# akamai_appsec_FOO
+# akamai_appsec_security_policy_protections
 
-Use the `akamai_appsec_FOO` data source to retrieve the list of ... information about ...
+Use the `akamai_appsec_security_policy_protections` data source to retrieve the protections in effect for a given security policy.
 
 ## Example Usage
 
@@ -79,11 +79,13 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
- * `json` - TBD
- * `apply_api_constraints` - TBD
- * `apply_application_layer_controls` - TBD
- * `apply_botman_controls` - TBD
- * `apply_network_layer_controls` - TBD
- * `apply_rate_controls` - TBD
- * `apply_reputation_controls` - TBD
- * `apply_slow_post_controls` - TBD
+* `apply_application_layer_controls` - `true` or `false`, indicating whether application layer controls are in effect.
+* `apply_network_layer_controls` - `true` or `false`, indicating whether network layer controls are in effect.
+* `apply_rate_controls` - `true` or `false`, indicating whether rate controls are in effect.
+* `apply_reputation_controls` - `true` or `false`, indicating whether reputation controls are in effect.
+* `apply_botman_controls` - `true` or `false`, indicating whether botman controls are in effect.
+* `apply_api_constraints` - `true` or `false`, indicating whether API constraints are in effect.
+* `apply_slow_post_controls` - `true` or `false`, indicating whether slow post controls are in effect.
+* `json` - a JSON-formatted list showing the status of the protection settings
+* `output_text` - a tabular display showing the status of the protection settings
+
