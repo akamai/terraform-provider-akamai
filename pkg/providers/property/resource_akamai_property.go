@@ -799,6 +799,9 @@ func createPropertyVersion(ctx context.Context, client papi.PAPI, Property papi.
 
 // Set hostnames of the latest version of the given property
 func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property papi.Property, Hostnames []papi.Hostname) error {
+	if Hostnames == nil {
+		Hostnames = []papi.Hostname{}
+	}
 	req := papi.UpdatePropertyVersionHostnamesRequest{
 		PropertyID:      Property.PropertyID,
 		GroupID:         Property.GroupID,

@@ -573,5 +573,79 @@ func TestResProperty(t *testing.T) {
 
 			client.AssertExpectations(t)
 		})
+
+		t.Run("validation error when updating a property hostnames to empty", func(t *testing.T) {
+			client := &mockpapi{}
+			client.Test(T{t})
+
+			ExpectCreateProperty(
+				client, "test property", "grp_0",
+				"ctr_0", "prd_0", "prp_0",
+			)
+
+			ExpectUpdatePropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 1,
+				[]papi.Hostname{{
+					CnameType: "EDGE_HOSTNAME",
+					CnameFrom: "terraform.provider.myu877.test.net",
+					CnameTo:   "terraform.provider.myu877.test.net.edgesuite.net",
+				}},
+			).Once()
+
+			ExpectGetProperty(
+				client, "prp_0", "grp_0", "ctr_0",
+				&papi.Property{
+					PropertyID: "prp_0", GroupID: "grp_0", ContractID: "ctr_0", LatestVersion: 1,
+					PropertyName: "test property",
+				},
+			)
+
+			ExpectGetPropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 1,
+				&[]papi.Hostname{{
+					CnameFrom: "terraform.provider.myu877.test.net",
+					CnameTo:   "terraform.provider.myu877.test.net.edgesuite.net",
+				}},
+			).Times(3)
+
+			ruleFormat := ""
+			ExpectGetRuleTree(
+				client, "prp_0", "grp_0", "ctr_0", 1,
+				&papi.Rules{}, &ruleFormat,
+			)
+
+			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
+
+			ExpectUpdatePropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 1,
+				[]papi.Hostname{},
+			).Once()
+
+			ExpectGetPropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 1,
+				&[]papi.Hostname{},
+			).Twice()
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+							Check:  resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
+						},
+						{
+							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/update/property_update.tf"),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
+								resource.TestCheckResourceAttr("akamai_property.test", "hostnames.#", "0"),
+							),
+						},
+					},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
 	})
 }
