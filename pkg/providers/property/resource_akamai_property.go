@@ -565,17 +565,17 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	// ContractID and GroupID are optional as long as the PropertyID is sufficient to fetch the property
 	var PropertyID, GroupID, ContractID string
 	parts := strings.Split(d.Id(), ",")
-
+	if len(parts) == 2 {
+		return nil, fmt.Errorf("Either PropertyId or comma-separated list of PropertyId, contractID and groupID in that order has to be supplied in import: %s", d.Id())
+	}
 	switch len(parts) {
 	case 1:
 		PropertyID = tools.AddPrefix(parts[0], "prp_")
-	case 2:
-		PropertyID = tools.AddPrefix(parts[0], "prp_")
-		GroupID = tools.AddPrefix(parts[1], "grp_")
 	case 3:
 		PropertyID = tools.AddPrefix(parts[0], "prp_")
-		GroupID = tools.AddPrefix(parts[1], "grp_")
-		ContractID = tools.AddPrefix(parts[2], "ctr_")
+		ContractID = tools.AddPrefix(parts[1], "ctr_")
+		GroupID = tools.AddPrefix(parts[2], "grp_")
+
 	default:
 		return nil, fmt.Errorf("invalid property identifier: %q", d.Id())
 	}
