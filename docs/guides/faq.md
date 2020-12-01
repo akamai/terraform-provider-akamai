@@ -7,90 +7,6 @@ description: |-
 
 # Frequently Asked Questions
 
-## Finding Current Status Of The Akamai Provider
-
-[Terraform_Provider_Akamai Issue Status](https://github.com/akamai/terraform-provider-akamai/issues) provides the current status of reported known provider isues.
-
-[Terraform_Provider_Akamai Release Notes](https://github.com/akamai/terraform-provider-akamai/blob/master/README.md) provides the current release status, including most recent changes.
-
-## Migrating a property to Terraform
-
-If you have an existing property you would like to migrate to Terraform we recommend the following process:
-
-1. Export your rules.json from your existing property (using the API, CLI, or Control Center)
-2. Create a Terraform configuration that pulls in the rules.json
-3. Assign a temporary hostname for testing (hint: you can use the edge hostname as the public hostname to allow testing 
-without changing any DNS)
-4. Activate the property and test thoroughly
-5. Once testing has concluded successfully, update the configuration to assign the production public hostnames
-6. Activate again
-
-Once this second activation completes Akamai will automatically route all traffic to the new property and will 
-deactivate the original property entirely if all hostnames are no longer pointed at it.
-
-Since Terraform assumes it is the de-facto state for any resource it leverages, we strongly recommend creating a new 
-property based off an existing rules.json tree when starting with the provider to mitigate any risks to existing setups. 
-
-## Dynamic Rule Trees Using Templates
-
-If you wish to inject Terraform interpolations into your rules.json, for example an origin address, you should use rules 
-templates to do so.  akamai_property_rules_template data source has many benefits including recursive variable 
-replacement and the ability to directly consume Property Manager CLI snippet templates:
-
-
-More advanced users want different properties to use different rule sets. This can be done by maintaining a base rule 
-set and then importing individual rule sets. To do this we first create a directory structure - something like:
-
-```dir
-rules/main.json
-rules/snippets/routing.json
-rules/snippets/performance.json
-…
-```
-
-The "rules" directory contains a single file "main.json" and a sub directory containing all rule snippets. Here, we 
-would provide a basic template for our json.
-
-```json
-{
-    rules": {
-      "name": "default",
-      "children": [
-        "#include:snippets/performance.json",
-        "#include:snippets/routing.json"
-      ],
-      "options": {
-            "is_secure": “${env.secure}"
-      }
-    },
-    "ruleFormat": "v2018-02-27"
-}
-```
-
-This enables our rules template to process the rules.json and pull each fragment that's referenced. The rendered output 
-can be set into property definition resources.
-
-```hcl
-data "akamai_property_rules_template" "example" {
-  template_file = abspath("${path.root}/rules/main.json")
-  variables {
-      name  = "secure"
-      value = "true"
-      type  = "bool"
-  }
-  variables {
-      name  = "caching_ttl"
-      value = "3d"
-      type  = "string"
-  }
-}
-
-resource "akamai_property" "example" {
-    ....
-    rules  = data.akamai_property_rules_template.example.json
-}
-```
-
 ## Primary Zone Partially Created
 
 In the rare instance, a primary zone may be only partially created on the Akamai backend; for example in the case of a network error. In this situation, the zone may have been created but not the SOA and NS records. Hence forth, any attempt to manage or administer recordsets in the zone will fail. The SOA and NS records must be manually created in order to continue to manage the configuration.
@@ -158,10 +74,3 @@ Since Terraform assumes it is the de-facto state for any resource it leverages, 
 ## GTM Terraform Resource Field Representation During Plan and/or Apply
 
 Terraform presents not only fields defined in the configuration, but all defined resource fields, during a Plan or Apply action. Fields are either required, optional or computed as specified in each resource description. Default values for fields will display if not explicitly configured. In many cases, the default will be zero, empty string or empty list depending on the the type. These default or empty values are informational and not included in resource updates.
-
-## How does Terraform handle changes made through other clients (UI, APIs)?
-We recommend that anyone using Terraform should manage all changes through the provider. However in case this isn't true in emergency scenarios, the Terraform state tree will become inconsistent. The next 'terraform plan' will warn and suggest changes. In case you make the same change in the UI and Terraform, the state will go back to being consistent and the warning will go away.
-
-## Upgrading the Akamai Provider
-
-To upgrade the provider, simply run `terraform init` again, and all providers will be updated to their latest version within specified version constraints.

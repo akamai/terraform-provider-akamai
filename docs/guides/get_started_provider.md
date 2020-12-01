@@ -17,27 +17,6 @@ specific to Terraform.
 Complete the tasks in this guide when setting up the Akamai
 Provider for the first time.
 
-## Contents
-<!--Probably don't need TOCs in the final version. Can see TOC in the right pane.-->
-
-* [Get Started](#get-started)
-
-* [Make some decisions](#make-some-decisions)
-
-* [Set up your Terraform folder and configuration file](#set-up-your-terraform-folder-and-configuration-file)
-
-* [Create Akamai API clients](#create-akamai-api-clients)
-
-* [Retrieve contract and group IDs](#retrieve-contract-and-group-ids)
-
-  * [About Groups](#about-groups)
-
-* [Set up your Akamai configurations in Terraform](#set-up-your-akamai-configurations-in-terraform)
-
-* [Initialize the Akamai Provider](#initialize-the-akamai-provider)
-
-* [Test your configuration](#test-your-configuration)
-
 ## Get Started 
 
 <!--Not sure this is the right heading for this section.-->

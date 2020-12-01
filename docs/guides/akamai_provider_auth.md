@@ -8,21 +8,6 @@ description: |-
 # Authenticate the Akamai Terraform Provider
 <!--Not sure about the name of this doc. -->
 
-## Contents
-<!--Not sure we need a TOC in any of these docs. Links appear on the right-hand side of the TF provider doc pages. -->
-
-* [Get authenticated](#get-authenticated)
-
-* [Set up your API clients](#set-up-your-api-clients)
-
-  * [Add your local .edgerc file to your Akamai Terraform config](#add-your-local-.edgerc-file-to-your-akamai-terraform-config)
-<!--Shorten this heading.-->
-
-* [How Else Can I Authenticate on Akamai?](#how-else-can-i-authenticate-on-akamai)
-
-  * [Authenticate using inline credentials](#authenticate-using-inline-credentials)
-  * [Authenticate using environment variables](#authenticate-using-environment-variables)
-
 Authentication of Terraform configurations relies on the Akamai EdgeGrid
 authentication scheme. The Akamai Terraform Provider code acts as a
 wrapper for our APIs and reuses the same authentication mechanism. We
