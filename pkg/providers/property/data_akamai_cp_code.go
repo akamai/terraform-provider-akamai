@@ -74,7 +74,7 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	// load group_id, if not exists, then load group.
-	if groupID, err = tools.ResolveKeyStringState("group_id", "group", d); err != nil {
+	if groupID, err = tools.ResolveKeyStringState(d, "group_id", "group"); err != nil {
 		return diag.FromErr(err)
 	}
 	// set group_id/group in state.
@@ -86,7 +86,7 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	// load contract_id, if not exists, then load contract.
-	if contractID, err = tools.ResolveKeyStringState("contract_id", "contract", d); err != nil {
+	if contractID, err = tools.ResolveKeyStringState(d, "contract_id", "contract"); err != nil {
 		return diag.FromErr(err)
 	}
 	// set contract_id/contract in state.

@@ -65,7 +65,7 @@ func dataSourcePropertyGroupRead(ctx context.Context, d *schema.ResourceData, m 
 	)
 
 	// check and load group_name, if not exists then check group.
-	name, err := tools.ResolveKeyStringState("group_name", "name", d)
+	name, err := tools.ResolveKeyStringState(d, "group_name", "name")
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
@@ -82,7 +82,7 @@ func dataSourcePropertyGroupRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	// check and load contract_id, if not exists then check contract.
-	contractID, err := tools.ResolveKeyStringState("contract_id", "contract", d)
+	contractID, err := tools.ResolveKeyStringState(d, "contract_id", "contract")
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}

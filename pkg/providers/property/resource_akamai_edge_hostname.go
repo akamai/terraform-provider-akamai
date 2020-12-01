@@ -28,18 +28,19 @@ func resourceSecureEdgeHostName() *schema.Resource {
 
 var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	"product": {
-		Type:       schema.TypeString,
-		Optional:   true,
-		Computed:   true,
-		Deprecated: `use "product_id" attribute instead`,
-		StateFunc:  addPrefixToState("prd_"),
+		Type:          schema.TypeString,
+		Optional:      true,
+		Computed:      true,
+		Deprecated:    `use "product_id" attribute instead`,
+		StateFunc:     addPrefixToState("prd_"),
+		ConflictsWith: []string{"product_id"},
 	},
 	"product_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"product_id", "product"},
-		StateFunc:    addPrefixToState("prd_"),
+		Type:          schema.TypeString,
+		Optional:      true,
+		Computed:      true,
+		ConflictsWith: []string{"product"},
+		StateFunc:     addPrefixToState("prd_"),
 	},
 	"contract": {
 		Type:       schema.TypeString,
@@ -96,6 +97,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:          schema.TypeString,
 		Optional:      true,
 		ForceNew:      true,
+		Computed:      true,
 		ConflictsWith: []string{"ipv4", "ipv6"},
 		ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 			v := val.(string)
@@ -154,11 +156,9 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
 
 	// Schema guarantees product_id/product are strings and one or the other is set
-	var productID string
-	if got, ok := d.GetOk("product_id"); ok {
-		productID = got.(string)
-	} else {
-		productID = d.Get("product").(string)
+	productID, err := tools.ResolveKeyStringState(d, "product_id", "product")
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("%v: %s, %s", tools.ErrNotFound, "product_id", "product"))
 	}
 	productID = tools.AddPrefix(productID, "prd_")
 	// set product/product_id into ResourceData
@@ -300,10 +300,11 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	if err := d.Set("group_id", edgehostnameDetails.GroupID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("product", edgehostnameDetails.EdgeHostname.ProductID); err != nil {
+	productID := edgehostnameDetails.EdgeHostname.ProductID
+	if err := d.Set("product", productID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("product_id", edgehostnameDetails.EdgeHostname.ProductID); err != nil {
+	if err := d.Set("product_id", productID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {

@@ -260,7 +260,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	// Schema guarantees these types
 	PropertyName := d.Get("name").(string)
 
-	GroupID, err := tools.ResolveKeyStringState("group_id", "group", d)
+	GroupID, err := tools.ResolveKeyStringState(d, "group_id", "group")
 	if err != nil {
 		return diag.FromErr(err)
 	}

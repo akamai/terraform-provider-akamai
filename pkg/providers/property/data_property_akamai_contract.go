@@ -50,7 +50,7 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 	)
 
 	// check if one of group_id/group_name exists.
-	group, err := tools.ResolveKeyStringState("group_id", "group_name", d)
+	group, err := tools.ResolveKeyStringState(d, "group_id", "group_name")
 	if err != nil {
 		// if both group_id/group_name not present in the state, check for group.
 		group, err = tools.GetStringValue("group", d)

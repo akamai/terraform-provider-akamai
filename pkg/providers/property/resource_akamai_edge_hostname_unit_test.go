@@ -481,16 +481,14 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			GroupID:    "grp_2",
 			EdgeHostname: papi.EdgeHostnameGetItem{
 				ID:           "eh_1",
-				Domain:       "test2.edgesuite.net",
-				ProductID:    "prd_2",
+				Domain:       "test.akamaized.net",
 				DomainPrefix: "test2",
 				DomainSuffix: "edgesuite.net",
 			},
 			EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 				{
 					ID:           "eh_1",
-					Domain:       "test2.edgesuite.net",
-					ProductID:    "prd_2",
+					Domain:       "test.akamaized.net",
 					DomainPrefix: "test2",
 					DomainSuffix: "edgesuite.net",
 				},
@@ -514,23 +512,20 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			GroupID:    "grp_2",
 			EdgeHostname: papi.EdgeHostnameGetItem{
 				ID:           "eh_1",
-				Domain:       "test2.edgesuite.net",
-				ProductID:    "prd_2",
+				Domain:       "test.akamaized.net",
 				DomainPrefix: "test2",
 				DomainSuffix: "edgesuite.net",
 			},
 			EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 				{
 					ID:           "eh_1",
-					Domain:       "test2.edgesuite.net",
-					ProductID:    "prd_2",
+					Domain:       "test.akamaized.net",
 					DomainPrefix: "test2",
 					DomainSuffix: "edgesuite.net",
 				},
 				{
 					ID:           "eh_2",
 					Domain:       "test3.edgesuite.net",
-					ProductID:    "prd_2",
 					DomainPrefix: "test3",
 					DomainSuffix: "edgesuite.net",
 				},
@@ -538,7 +533,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		}, nil)
 	}
 
-	expectCreateEdgHostName := func(m *mockpapi, ContractID, GroupID string) *mock.Call {
+	expectCreateEdgeHostName := func(m *mockpapi, ContractID, GroupID string) *mock.Call {
 		return m.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
 			ContractID: "ctr_1",
 			GroupID:    "grp_2",
@@ -560,28 +555,27 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 
 		expectGetEdgeHostname(client, "eh_1", "ctr_1", "grp_2")
 		expectGetEdgeHostnames(client, "ctr_1", "grp_2")
-		expectCreateEdgHostName(client, "ctr_1", "grp_2")
+		expectCreateEdgeHostName(client, "ctr_1", "grp_2")
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:             loadFixtureString("testdata/TestResourceEdgeHostname/import_edgehostname.tf"),
-						ExpectNonEmptyPlan: true,
-					},
-					{
-						Config:        loadFixtureString("testdata/TestResourceEdgeHostname/import_edgehostname.tf"),
-						ImportState:   true,
-						ImportStateId: id,
-						ResourceName:  "akamai_edge_hostname.importedgehostname",
+						Config: loadFixtureString("testdata/TestResourceEdgeHostname/import_edgehostname.tf"),
 						ImportStateCheck: func(s []*terraform.InstanceState) error {
 							assert.Len(t, s, 1)
 							rs := s[0]
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
-							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+							assert.Equal(t, "ctr_2", rs.Attributes["contract_id"])
 							assert.Equal(t, "eh_1", rs.Attributes["id"])
 							return nil
 						},
+					},
+					{
+						Config:            loadFixtureString("testdata/TestResourceEdgeHostname/import_edgehostname.tf"),
+						ImportState:       true,
+						ImportStateId:     id,
+						ResourceName:      "akamai_edge_hostname.importedgehostname",
 						ImportStateVerify: true,
 					},
 				},
