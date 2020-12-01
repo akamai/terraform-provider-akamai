@@ -610,6 +610,26 @@ func (p *mockappsec) UpdateWAFProtection(ctx context.Context, params appsec.Upda
 	return args.Get(0).(*appsec.UpdateWAFProtectionResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetPolicyProtections(ctx context.Context, params appsec.GetPolicyProtectionsRequest) (*appsec.GetPolicyProtectionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetPolicyProtectionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdatePolicyProtections(ctx context.Context, params appsec.UpdatePolicyProtectionsRequest) (*appsec.UpdatePolicyProtectionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdatePolicyProtectionsResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetRateProtection(ctx context.Context, params appsec.GetRateProtectionRequest) (*appsec.GetRateProtectionResponse, error) {
 	args := p.Called(ctx, params)
 
