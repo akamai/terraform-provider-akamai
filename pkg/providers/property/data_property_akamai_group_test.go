@@ -17,8 +17,8 @@ func Test_DSReadGroup(t *testing.T) {
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{
 				{
-					GroupID:       "example.com-1-1TJZH5",
-					GroupName:     "group-example.com",
+					GroupID:       "grp_12345",
+					GroupName:     "Example.com-1-1TJZH5",
 					ParentGroupID: "grp_parent",
 					ContractIDs:   []string{"ctr_1234"},
 				},
@@ -30,9 +30,9 @@ func Test_DSReadGroup(t *testing.T) {
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSGroup/ds-group-w-name-and-contract.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "id", "example.com-1-1TJZH5"),
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "name", "group-example.com"),
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "group_name", "group-example.com"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "id", "grp_12345"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "name", "Example.com-1-1TJZH5"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "group_name", "Example.com-1-1TJZH5"),
 						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "contract", "ctr_1234"),
 						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "contract_id", "ctr_1234"),
 					),
@@ -48,8 +48,8 @@ func Test_DSReadGroup(t *testing.T) {
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{
 				{
-					GroupID:       "example.com-1-1TJZH5",
-					GroupName:     "group-example.com",
+					GroupID:       "grp_12345",
+					GroupName:     "Example.com-1-1TJZH5",
 					ParentGroupID: "grp_parent",
 					ContractIDs:   []string{"ctr_1234"},
 				},
@@ -61,9 +61,9 @@ func Test_DSReadGroup(t *testing.T) {
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSGroup/ds-group-w-name-and-contract_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "id", "example.com-1-1TJZH5"),
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "name", "group-example.com"),
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "group_name", "group-example.com"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "id", "grp_12345"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "name", "Example.com-1-1TJZH5"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "group_name", "Example.com-1-1TJZH5"),
 						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "contract", "ctr_1234"),
 						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "contract_id", "ctr_1234"),
 					),
@@ -79,8 +79,8 @@ func Test_DSReadGroup(t *testing.T) {
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{
 				{
-					GroupID:       "example.com-1-1TJZH5",
-					GroupName:     "group-example.com",
+					GroupID:       "grp_12345",
+					GroupName:     "Example.com-1-1TJZH5",
 					ParentGroupID: "grp_parent",
 					ContractIDs:   []string{"ctr_1234"},
 				},
@@ -92,9 +92,9 @@ func Test_DSReadGroup(t *testing.T) {
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSGroup/ds-group-w-group-name-and-contract_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "id", "example.com-1-1TJZH5"),
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "name", "group-example.com"),
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "group_name", "group-example.com"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "id", "grp_12345"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "name", "Example.com-1-1TJZH5"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "group_name", "Example.com-1-1TJZH5"),
 						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "contract", "ctr_1234"),
 						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "contract_id", "ctr_1234"),
 					),
@@ -110,8 +110,8 @@ func Test_DSReadGroup(t *testing.T) {
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{
 				{
-					GroupID:       "example.com-1-1TJZH5",
-					GroupName:     "group-example.com",
+					GroupID:       "grp_12345",
+					GroupName:     "Example.com-1-1TJZH5",
 					ParentGroupID: "grp_parent",
 					ContractIDs:   []string{"ctr_1234"},
 				},
@@ -123,9 +123,9 @@ func Test_DSReadGroup(t *testing.T) {
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSGroup/ds-group-w-group-name-and-contract.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "id", "example.com-1-1TJZH5"),
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "name", "group-example.com"),
-						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "group_name", "group-example.com"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "id", "grp_12345"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "name", "Example.com-1-1TJZH5"),
+						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "group_name", "Example.com-1-1TJZH5"),
 						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "contract", "ctr_1234"),
 						resource.TestCheckResourceAttr("data.akamai_group.akagroup", "contract_id", "ctr_1234"),
 					),
@@ -141,8 +141,8 @@ func Test_DSReadGroup(t *testing.T) {
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{
 				{
-					GroupID:       "example.com-1-1TJZH5",
-					GroupName:     "group-example.com",
+					GroupID:       "grp_12345",
+					GroupName:     "Example.com-1-1TJZH5",
 					ParentGroupID: "grp_parent",
 					ContractIDs:   []string{"ctr_1234"},
 				},
@@ -166,8 +166,8 @@ func Test_DSReadGroup(t *testing.T) {
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{
 				{
-					GroupID:       "example.com-1-1TJZH5",
-					GroupName:     "group-example.com",
+					GroupID:       "grp_12345",
+					GroupName:     "Example.com-1-1TJZH5",
 					ParentGroupID: "grp_parent",
 					ContractIDs:   []string{"ctr_1234"},
 				},

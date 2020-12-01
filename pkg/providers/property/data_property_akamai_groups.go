@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePropertyMultipleGroups() *schema.Resource {
@@ -21,13 +23,24 @@ func dataSourcePropertyMultipleGroups() *schema.Resource {
 				Description: "List of groups",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"group_id":        {Type: schema.TypeString, Computed: true},
-						"group_name":      {Type: schema.TypeString, Computed: true},
-						"parent_group_id": {Type: schema.TypeString, Computed: true},
+						"group_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"group_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"parent_group_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"contract_ids": {
 							Type:     schema.TypeList,
 							Computed: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 					},
 				},
