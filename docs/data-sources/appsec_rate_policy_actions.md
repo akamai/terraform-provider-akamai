@@ -50,5 +50,7 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display showing the ID IPv4Action and IPv6Action of the indicated security policy or policies.
+* `output_text` - A tabular display showing the ID IPv4Action and IPv6Action of the indicated security policy.
+
+
 
