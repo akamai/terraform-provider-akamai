@@ -6,10 +6,10 @@ description: |-
 ---
 
 # Authenticate the Akamai Terraform Provider
-<!--Not sure about the name of this doc. -->
+<!--Not sure about the name of this doc is clear enough. Any suggestions?-->
 
 Authentication of Terraform configurations relies on the Akamai EdgeGrid
-authentication scheme. The Akamai Terraform Provider code acts as a
+authentication scheme. The Akamai Provider code acts as a
 wrapper for our APIs and reuses the same authentication mechanism. We
 recommend storing your API credentials in a local .edgerc file.
 
@@ -18,7 +18,7 @@ for more information about the process of creating Akamai credentials.
 
 ## Get authenticated 
 
-The permissions you need for the Akamai Terraform Provider depends on
+The permissions you need for the Akamai Provider depends on
 the subset of Akamai resources and data sources you'll use. Without
 these permissions, your Terraform configurations won't execute.
 
@@ -26,30 +26,27 @@ To get authenticated you need to:
 
 * Set up your API clients
 
-* Add your local .edgerc file to your Akamai Terraform config
+* Add your local .edgerc file to your Akamai Provider config
 
 ## Set up your API clients
 
 Before you [create an API client](https://developer.akamai.com/api/getting-started#createanapiclient),
 you need to:
 
-1.  Determine which Akamai products you'll be using with Terraform.
-2.  Find the API service name for the products you'll be adding.
-    If you already have the API clients you need, you can add the credential
-	to your local .edgerc file.
-	<!--Need to go back to this one.-->
+1.  Determine which Akamai Provider modules you'll be using with Terraform.
+2.  Find the API service name for the modules you'll be adding.
+3.  If you already have the API clients you need, you can add the credential
+	to your local `.edgerc` file.
 
 For example, if you're adding your Akamai properties to your existing
-Terraform configuration, you'll need read-write permission to the
-[Property Manager
-API](https://developer.akamai.com/api/core_features/property_manager/v1.html).
-In this case, you'll need to create an API client for the **Property
-Manager (PAPI)** service, then add it to your .edgerc file.
+Terraform configuration, you'll be using the Provisioning module. For this module,
+ you need to create an API client for the **Property Manager (PAPI)** service, 
+ then add it to your `.edgerc` file.
 
-Here's a list of the Akamai products available on Terraform and their
-supporting APIs:
+Here's a list of the Akamai modules available on Terraform and their
+supporting API service names:
 
-| **Product** | **API service name** |
+| **Module** | **API service name** |
 |-------------|----------------------|
 | Property Manager (Provisioning and Common modules) | Property Manager (PAPI)|
 | Edge DNS (DNS) | DNS-Zone Record Management |
@@ -59,18 +56,18 @@ supporting APIs:
 Once you create the supporting API clients you can update your local
 `.edgerc file`.
 
-### Add your local .edgerc file to your Akamai Terraform config
+### Add your local .edgerc file to your Akamai Provider config
 
 
 To reference a local .edgerc file, you add this line to the top of the
-Akamai Terraform configuration file (akamai.tf): edgerc =
+Akamai Provider configuration file (akamai.tf): edgerc =
 \"\~/.edgerc\".
 
 The \~/.edgerc is the location of your file on your local machine. In
 your Terraform files you can reference individual sections inside the
 .edgerc file:
 
-### Example Usage
+### Example usage
 
 Terraform 0.13 and later:
 
@@ -137,21 +134,21 @@ resource "akamai_dns_record" "example_record" {
 ```
 
 
-### Argument Reference
+### Argument reference
 
 Arguments supported in the `provider` block:
 
 * edgerc - (Optional) The location of the `.edgerc` file containing credentials. The default is `\$HOME/.edgerc`.
 * config_section - (Optional) The credential section to use within the `.edgerc` file for all Edge Grid calls. If not included, uses credentials in the default section of the `.edgerc` file.
 
-#### Deprecated Arguments
+#### Deprecated arguments
 
 * property_section - (Deprecated) The credential section to use for the [Property Manager API](https://developer.akamai.com/api/core_features/property_manager/v1.html).
 If not added, uses credentials in the default section of the `.edgerc` file.
 * dns_section - (Deprecated) The credential section to use for the [Edge DNS Zone Management API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html). If not added, uses credentials in the default section of the `.edgerc` file.
 * [gtm_section] - (Deprecated) The credential section to use for the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html). If not added, uses credentials in the default section of the `.edgerc` file.
 
-## How Else Can I Authenticate on Akamai?
+## How else can I authenticate on Akamai?
 
 Referencing a local `.edgerc` file in your `akamai.tf` file is the preferred
 authentication method. However there are a few other methods you can use
@@ -164,22 +161,22 @@ If needed, you can specify credentials inline for each resource or data
 source used. To do this, you'll need to add a `config` block that
 includes authentication information.
 
-### Example Usage
+### Example usage
 
 <!--**NEED CODE EXAMPLE HERE.**-->
 
-### Argument Reference
+### Argument reference
 
 * `config` - (Optional) Provide credentials for Akamai provider. This block supports these arguments:
-<!--Need better descriptions here. -->
-  * `host` - (Required) The credential hostname.
-  * `access_token` - (Required) The service's `access_token` from the `.edgerc` file.
-  * `client_token` - (Required) The service's `client_token` from the `.edgerc` file.
-  * `client_secret` - (Required) The service's `client_secret` from the `.edgerc` file.
-  * `max_body` - (Optional) The service's `max_body` to sign in bytes. The default is 131072 bytes.
+  * `host` - (Required) The base credential hostname without the protocol.
+  * `access_token` - (Required) The service's access token from the `.edgerc` file.
+  * `client_token` - (Required) The service's client token from the `.edgerc` file.
+  * `client_secret` - (Required) The service's client secret from the `.edgerc` file.
+  * `max_body` - (Optional) The service's maximum data payload size in bytes. The default is 131072 bytes.
+<!--Is the max_body description accurate?-->
   * `account_key` - (Optional) If managing multiple accounts, the account ID you want to use when running Terraform commands. The account selected persists for all commands until you change it.
 
-#### Deprecated Arguments
+#### Deprecated arguments
 
 * `dns` - (Deprecated) Legacy Edge DNS API service argument for inline authentication. Used same arguments as the current `config` block.
 * `gtm` - (Deprecated) Legacy Global Traffic Management API service argument for inline authentication. Used same arguments as the current `config` block.
@@ -187,16 +184,13 @@ includes authentication information.
 
 ### Authenticate using environment variables
 
-CHECK THAT THIS IS THE LATEST.
-
 You can also use environment variables to set credential values.
-Environment variables take precedence over the contents of the `.edgerc`
+Environment variables take precedence over the settings in the `.edgerc`
 file.
 
 Your environment variables should be in this format: `AKAMAI{_SECTION_NAME}_\*`
 
-For example, if you're setting up the Provisioning module, you'll need to add a `config_section` block with these environment variables for your Property Manager API client:
-<!--Go back and reread the above.-->
+For example, if you're setting up the Provisioning module, you'll need an API client for Property Manager. In your `akamai.tf` file, you'll need to add a `config_section` block with these environment variables:
 
 * `AKAMAI_PAPI_HOST`
 * `AKAMAI_PAPI_ACCESS_TOKEN`
@@ -204,6 +198,8 @@ For example, if you're setting up the Provisioning module, you'll need to add a 
 * `AKAMAI_PAPI_CLIENT_SECRET`
 * `AKAMAI_PAPI_MAX_BODY` (Optional)
 * `AKAMAI_PAPI_ACCOUNT_KEY` (Optional)
+
+These variables cover the arguments you'd enter if using inline variables. 
 
 If you're setting up variables for your `default` credentials, you can use these variables:
 
@@ -214,10 +210,10 @@ If you're setting up variables for your `default` credentials, you can use these
 * `AKAMAI_MAX_BODY` (Optional)
 * `AKAMAI_ACCOUNT_KEY` (Optional)
 
-### Example Usage
+### Example usage
 
 <!--**NEED CODE EXAMPLE HERE.**-->
 
-### Argument Reference
+### Argument reference
 
-<!--**Not sure if needed.**-->
+<!--**Is this section needed? Not sure if it would be a repeat of the Argument reference section above.**-->
