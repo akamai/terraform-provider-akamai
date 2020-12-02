@@ -143,7 +143,7 @@ func resourcePolicyProtectionsDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 	removePolicyProtections.PolicyID = policyid
-
+	//TODO remove once API fixed in Jan
 	removePolicyProtections.ApplyApplicationLayerControls = true
 
 	removePolicyProtections.ApplyNetworkLayerControls = false
