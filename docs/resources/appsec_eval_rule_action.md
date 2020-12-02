@@ -19,8 +19,6 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#putevalrule
-
 // USE CASE: user wants to set the eval rule action
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
@@ -32,9 +30,6 @@ resource "akamai_appsec_eval_rule_action" "rule_action" {
   rule_id = var.rule_id
   rule_action = var.action
 }
-
-//TF destroy - set the action to none.
-
 ```
 
 ## Argument Reference
@@ -55,6 +50,5 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* None
-
+* `output_text` - A tabular display of the eval rule and action information.
 

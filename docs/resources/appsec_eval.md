@@ -19,8 +19,6 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#postevaluationmode
-
 // USE CASE: user wants to set the eval operation
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
@@ -41,12 +39,8 @@ output "eval_mode_current_ruleset" {
   value = akamai_appsec_eval.eval_operation.current_ruleset
 }
 output "eval_mode_status" {
-  value = akamai_appsec_eval.eval_operation.eval_status  // enabled/disabled
+  value = akamai_appsec_eval.eval_operation.eval_status
 }
-
-//TF destroy - stop the eval (i.e eval_action will be STOP)
-
-
 ```
 
 ## Argument Reference
@@ -59,14 +53,17 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `eval_operation` - (Required) The operation to perform: Start, Stop, Restart, Update, or Complete.
+* `eval_operation` - (Required) The operation to perform: START, STOP, RESTART, UPDATE, or COMPLETE.
 
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
 
- * `evaluating_ruleset` - TBD
- * `expiration_date` - TBD
- * `current_ruleset` - TBD
- * `eval_status  // enabled/disabled` - TBD
+ * `evaluating_ruleset` - The set of rules being evaluated.
+
+ * `expiration_date` - The date on which the evaluation period ends.
+
+ * `current_ruleset` - The set of rules currently in effect.
+
+ * `eval_status` - Either `enabled` if an evaluation is currently in progress (that is, if the `eval_operation` parameter was `START`, `RESTART`, or `COMPLETE`) or `disabled` otherwise (that is, if the `eval_operation` parameter was `STOP` or `UPDATE`).
 
