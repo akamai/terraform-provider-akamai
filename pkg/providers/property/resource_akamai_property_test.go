@@ -368,6 +368,30 @@ func TestResProperty(t *testing.T) {
 		})
 	}
 
+	t.Run("invalid import ID passed", func(t *testing.T) {
+		t.Helper()
+		client := &mockpapi{}
+		client.Test(T{t})
+		ImportID := "prp_0,grp_0"
+		TODO(t, "error assertion in import is impossible using provider testing framework as it only checks for errors in `apply`")
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:        loadFixtureString("testdata/TestResProperty/Importable/importable.tf"),
+						ImportState:   true,
+						ImportStateId: ImportID,
+						ResourceName:  "akamai_property.test",
+						ExpectError:   regexp.MustCompile("Either PropertyId or comma-separated list of PropertyId, contractID and groupID in that order has to be supplied in import: prp_0,grp_0"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	suppressLogging(t, func() {
 		AssertConfigError(t, "name not given", `"name" is required`)
 		AssertConfigError(t, "neither contract nor contract_id given", `one of .contract,contract_id. must be specified`)
@@ -420,10 +444,8 @@ func TestResProperty(t *testing.T) {
 
 		AssertImportable(t, "property_id", "prp_0")
 		AssertImportable(t, "unprefixed property_id", "0")
-		AssertImportable(t, "property_id and group_id", "prp_0,grp_0")
-		AssertImportable(t, "unprefixed property_id and group_id", "0,0")
-		AssertImportable(t, "property_id and group_id and contract_id", "prp_0,grp_0,ctr_0")
-		AssertImportable(t, "unprefixed property_id and group_id and contract_id", "0,0,0")
+		AssertImportable(t, "property_id and contract_id and group_id", "prp_0,ctr_0,grp_0")
+		AssertImportable(t, "unprefixed property_id and contract_id and group_id", "0,0,0")
 
 		t.Run("property is destroyed and recreated when name is changed", func(t *testing.T) {
 			client := &mockpapi{}
