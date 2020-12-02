@@ -27,7 +27,7 @@ data "akamai_appsec_configuration" "configuration" {
 data "akamai_appsec_slow_post" "slow_post" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
-  policy_id = var.policy_id
+  security_policy_id = var.security_policy_id
 }
 output "slow_post_output_text" {
   value = data.akamai_appsec_slow_post.slow_post.output_text
@@ -43,17 +43,15 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-* `policy_id` - (Required) The ID of the security policy to use
+* `security_policy_id` - (Required) The ID of the security policy to use
 
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display showing the following attributes:
-  * `action` - The action that the rule should trigger (either `alert` or `abort`)
-  * `duration threshold` - The time in seconds before the first eight kilobytes of the POST body must be received to avoid triggering the specified `action`.
-  * `slow rate threshold` - The average rate in bytes per second over the period specified by `period` before the specified `action` is triggered.
-  * duration threshold timeout` - The length of time in seconds by which the eight kilobytes of the POST body transfer must be considered to avoid the request being considered a slow request.
-  * `period` - The length in seconds of the period during which the server should accept a request before determining whether a POST request is too slow.
-  * `rate` - The rate in bytes per second that is considered a slow request.
+* `output_text` - A tabular display including the following columns:
+  * `ACTION` - The action that the rule should trigger (either `alert` or `abort`)
+  * `SLOW_RATE_THRESHOLD RATE` - The average rate in bytes per second over the period specified by `period` before the specified `action` is triggered.
+  * `SLOW_RATE_THRESHOLD PERIOD` - The length in seconds of the period during which the server should accept a request before determining whether a POST request is too slow.
+  * `DURATION_THRESHOLD TIMEOUT` - The time in seconds before the first eight kilobytes of the POST body must be received to avoid triggering the specified `action`.
 
