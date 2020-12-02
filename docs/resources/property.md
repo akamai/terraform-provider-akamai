@@ -65,3 +65,23 @@ The resource returns these attributes:
 * `latest_version` - The version of the property you've created or updated rules for. The Akamai Provider always uses the latest version or creates a new version if latest is not editable.
 * `production_version` - The current version of the property active on the Akamai production network.
 * `staging_version` - The current version of the property active on the Akamai staging network.
+
+## Import
+
+Basic Usage:
+
+```hcl
+resource "akamai_property" "example" {
+    # (resource arguments)
+  }
+```
+
+Akamai properties can be imported using just the `property_id` as ID or a comma-delimited string of `property_id,contract_id,group_id` in that order as ID when a property belongs to multiple groups/contracts, e.g.
+
+```shell
+$ terraform import akamai_property.example prp_123
+```
+Or
+```shell
+$ terraform import akamai_property.example prp_123,ctr_1-AB123,grp_123
+```

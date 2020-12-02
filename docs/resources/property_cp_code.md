@@ -70,3 +70,19 @@ The following arguments are supported:
 ## Attributes Reference
 
 * `id` - The ID of the CP code.
+
+## Import
+
+Basic Usage:
+
+```hcl
+resource "akamai_cp_code" "example" {
+    # (resource arguments)
+  }
+```
+
+Akamai CP codes can be imported using a comma-delimited string of `cp_code_id,contract_id,group_id` in that order as ID, e.g.
+
+```shell
+$ terraform import akamai_cp_code.example cpc_123,ctr_1-AB123,grp_123
+```
