@@ -9,14 +9,14 @@ description: |-
 # akamai_property_rules
 
 
-Use `akamai_property_rules` data source to query and retrieve the instance information and rule tree of an 
-existing property instance.
+Use the `akamai_property_rules` data source to query and retrieve the rule tree of an existing property version.  Lets you 
+search across contracts and groups you have access to.
+
 
 ## Basic Usage
 
-Return property rule tree associated with that property version given a property, contract and group:
+This example returns the rule tree for version 3 of a property based on the selected contract and group:
 
-datasource-example.tf
 ```hcl-terraform
 datasource "akamai_property_rules" "my-example" {
     property_id = "prp_123"
@@ -32,16 +32,16 @@ output "property_match" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports these arguments:
 
-* `contract_id` — (Required) The Contract ID.  Can be provided with or without `ctr_` prefix.
-* `group_id` — (Required) The Group ID. Can be provided with or without `grp_` prefix.
-* `property_id` — (Required) The property ID.  Can be provided with or without `prp_` prefix.
-* `version` — (Optional) The version to return. (default: latest)
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
+* `property_id` - (Required) A property's unique ID, including the `prp_` prefix. 
+* `version` - (Optional) The version to return. Returns the latest version by default.
 
 ## Attributes Reference
 
-The following attributes are returned:
+This data source returns these attributes:
 
-* `rules` — Provisioning API ruletree JSON contents.
-* `errors` — List of validation errors associated with the ruletree object returned.
+* `rules` - A JSON-encoded rule tree for the property.
+* `errors` - A list of validation errors for the rule tree object returned. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the Property Manager API documentation.

@@ -15,7 +15,7 @@
     "options": {
       "type": "json",
       "default": {
-        "enabled": "false"
+        "enabled": false
       }
     }
   }

@@ -1,6 +1,8 @@
 package dns
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 
 	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
@@ -50,9 +52,11 @@ func Provider() *schema.Provider {
 				Deprecated: akamai.NoticeDeprecatedUseAlias("dns_section"),
 			},
 			"dns": {
-				Optional: true,
-				Type:     schema.TypeSet,
-				Elem:     config.Options("dns"),
+				Optional:   true,
+				Type:       schema.TypeSet,
+				Elem:       config.Options("dns"),
+				MaxItems:   1,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("dns"),
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -82,24 +86,35 @@ func (p *provider) Client(meta akamai.OperationMeta) dns.DNS {
 	return dns.Client(meta.Session())
 }
 
-func getConfigDNSV2Service(d tools.ResourceDataFetcher) (interface{}, error) {
-
-	var section string
+func getConfigDNSV2Service(d *schema.ResourceData) error {
+	var inlineConfig *schema.Set
+	for _, key := range []string{"dns", "config"} {
+		opt, err := tools.GetSetValue(key, d)
+		if err != nil {
+			if !errors.Is(err, tools.ErrNotFound) {
+				return err
+			}
+			continue
+		}
+		if inlineConfig != nil {
+			return fmt.Errorf("only one inline config section can be defined")
+		}
+		inlineConfig = opt
+	}
+	if err := d.Set("config", inlineConfig); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 
 	for _, s := range tools.FindStringValues(d, "dns_section", "config_section") {
-		if s != "default" {
-			section = s
+		if s != "default" && s != "" {
+			if err := d.Set("config_section", s); err != nil {
+				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			}
 			break
 		}
 	}
 
-	if section != "" {
-		if s, ok := d.(*schema.ResourceData); ok {
-			s.Set("config_section", section)
-		}
-	}
-
-	return nil, nil
+	return nil
 }
 
 func (p *provider) Name() string {
@@ -128,9 +143,8 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
 
-	_, err := getConfigDNSV2Service(d)
-	if err != nil {
-		return nil
+	if err := getConfigDNSV2Service(d); err != nil {
+		return diag.FromErr(err)
 	}
 	return nil
 }

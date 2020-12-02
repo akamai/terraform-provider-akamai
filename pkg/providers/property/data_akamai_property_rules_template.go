@@ -7,11 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -19,6 +14,13 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func dataSourcePropertyRulesTemplate() *schema.Resource {
@@ -26,16 +28,18 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 		ReadContext: dataAkamaiPropertyRulesRead,
 		Schema: map[string]*schema.Schema{
 			"template_file": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 			"variables": {
 				Type: schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: tools.IsNotBlank,
 						},
 						"type": {
 							Type:     schema.TypeString,
@@ -178,9 +182,13 @@ var (
 )
 
 var (
-	ErrReadFile    = errors.New("reading file")
-	ErrUnmarshal   = errors.New("unmarshaling value")
+	// ErrReadFile is used to specify error while reading a file.
+	ErrReadFile = errors.New("reading file")
+	// ErrUnmarshal is used to specify unmarshal error.
+	ErrUnmarshal = errors.New("unmarshaling value")
+	// ErrFormatValue is used to specify formatting error.
 	ErrFormatValue = errors.New("formatting value")
+	// ErrUnknownType is used to specify unknown error.
 	ErrUnknownType = errors.New("unknown 'type' value")
 )
 
@@ -300,7 +308,7 @@ func getVarsFromFile(definitionsPath, valuesPath string) (map[string]interface{}
 			return nil, fmt.Errorf("%w: %s", ErrUnmarshal, err)
 		}
 		for name, value := range values {
-			if _, ok := vars[name]; ok {
+			if _, ok := vars[name]; ok && value != nil {
 				v, err := formatValue(value)
 				if err != nil {
 					return nil, fmt.Errorf("%w: %s", ErrFormatValue, err)

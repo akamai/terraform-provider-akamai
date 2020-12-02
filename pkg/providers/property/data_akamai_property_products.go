@@ -17,8 +17,9 @@ func dataSourceAkamaiPropertyProducts() *schema.Resource {
 		ReadContext: dataSourceAkamaiPropertyProductsRead,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 			"products": {
 				Type:        schema.TypeList,

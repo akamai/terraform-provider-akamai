@@ -3,8 +3,9 @@ package property
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 type mockpapi struct {
@@ -19,6 +20,21 @@ func (p *mockpapi) GetGroups(ctx context.Context) (*papi.GetGroupsResponse, erro
 	}
 
 	return args.Get(0).(*papi.GetGroupsResponse), args.Error(1)
+}
+
+// Any function having the same signature as papi.GetGroups
+type GetGroupsFunc func(context.Context) (*papi.GetGroupsResponse, error)
+
+// Expect a call to the mock's papi.GetGroups() where the return value is computed by the given function
+func (p *mockpapi) OnGetGroups(ctx interface{}, impl GetGroupsFunc) *mock.Call {
+	call := p.On("GetGroups", ctx)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+
+		call.Return(impl(callCtx))
+	})
+
+	return call
 }
 
 func (p *mockpapi) GetContracts(ctx context.Context) (*papi.GetContractsResponse, error) {
@@ -335,6 +351,23 @@ func (p *mockpapi) OnGetPropertyVersionHostnames(ctx, req interface{}, impl GetP
 	call.Run(func(CallArgs mock.Arguments) {
 		callCtx := CallArgs.Get(0).(context.Context)
 		callReq := CallArgs.Get(1).(papi.GetPropertyVersionHostnamesRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
+}
+
+// Any function having the same signature as papi.GetRuleTree
+type GetRuleTreeFunc = func(context.Context, papi.GetRuleTreeRequest) (*papi.GetRuleTreeResponse, error)
+
+// Expect a call to the mock's papi.GetPropertyVersionHostnames() where the return value is computed by the given
+// function
+func (p *mockpapi) OnGetRuleTree(ctx, req interface{}, impl GetRuleTreeFunc) *mock.Call {
+	call := p.On("GetRuleTree", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.GetRuleTreeRequest)
 
 		call.Return(impl(callCtx, callReq))
 	})

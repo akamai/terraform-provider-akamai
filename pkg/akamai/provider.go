@@ -2,8 +2,12 @@ package akamai
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -80,7 +84,12 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 						Description: "The section of the edgerc file to use for configuration",
 						Optional:    true,
 						Type:        schema.TypeString,
-						Default:     "default",
+					},
+					"config": {
+						Optional: true,
+						Type:     schema.TypeSet,
+						Elem:     config.Options("config"),
+						MaxItems: 1,
 					},
 					"cache_enabled": {
 						Optional: true,
@@ -146,27 +155,34 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 			edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
 
 			edgercPath, err := tools.GetStringValue("edgerc", d)
-			if err != nil && !IsNotFoundError(err) {
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
 				return nil, diag.FromErr(err)
 			}
-			if edgercPath != "" {
-				edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
-			} else {
-				edgercOps = append(edgercOps, edgegrid.WithFile(edgegrid.DefaultConfigFile))
+			if edgercPath == "" {
+				edgercPath = edgegrid.DefaultConfigFile
 			}
-			environment, err := tools.GetStringValue("config_section", d)
-			if err != nil && !IsNotFoundError(err) {
-				return nil, diag.FromErr(err)
-			}
-			if environment != "" {
-				edgercOps = append(edgercOps, edgegrid.WithSection(environment))
-			}
-
+			edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
 			edgercSection, err := tools.GetStringValue("config_section", d)
-			if err != nil && !IsNotFoundError(err) {
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
 				return nil, diag.FromErr(err)
 			}
-			edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
+			if err == nil {
+				edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
+			}
+			envs, err := tools.GetSetValue("config", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return nil, diag.FromErr(err)
+			}
+			if err == nil && len(envs.List()) > 0 {
+				envsMap, ok := envs.List()[0].(map[string]interface{})
+				if !ok {
+					return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "config", "map[string]interface{}"))
+				}
+				err = setEdgegridEnvs(envsMap, edgercSection)
+				if err != nil {
+					return nil, diag.FromErr(err)
+				}
+			}
 
 			edgerc, err := edgegrid.New(edgercOps...)
 			if err != nil {
@@ -196,6 +212,54 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 	return func() *schema.Provider {
 		return &instance.Provider
 	}
+}
+
+func setEdgegridEnvs(envsMap map[string]interface{}, section string) error {
+	configEnvs := []string{"ACCESS_TOKEN", "CLIENT_TOKEN", "HOST", "CLIENT_SECRET", "MAX_BODY"}
+	prefix := "AKAMAI"
+	if section != "" {
+		prefix = fmt.Sprintf("%s_%s", prefix, strings.ToUpper(section))
+	}
+	for _, env := range configEnvs {
+		var value string
+		var ok bool
+		switch env {
+		case "ACCESS_TOKEN":
+			value, ok = envsMap["access_token"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "access_token", "string")
+			}
+		case "CLIENT_TOKEN":
+			value, ok = envsMap["client_token"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_token", "string")
+			}
+		case "HOST":
+			value, ok = envsMap["host"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
+			}
+		case "CLIENT_SECRET":
+			value, ok = envsMap["client_secret"].(string)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_secret", "string")
+			}
+		case "MAX_BODY":
+			maxBody, ok := envsMap["max_body"].(int)
+			if !ok {
+				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "max_body", "int")
+			}
+			value = strconv.Itoa(maxBody)
+		}
+		env = fmt.Sprintf("%s_%s", prefix, env)
+		if os.Getenv(env) != "" {
+			continue
+		}
+		if err := os.Setenv(env, value); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func mergeSchema(from, to map[string]*schema.Schema) (map[string]*schema.Schema, error) {

@@ -3,11 +3,13 @@ package property
 import (
 	"context"
 	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCPCode() *schema.Resource {
@@ -15,38 +17,39 @@ func dataSourceCPCode() *schema.Resource {
 		ReadContext: dataSourceCPCodeRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 			"contract": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"contract_id"},
-				ExactlyOneOf:  []string{"contract", "contract_id"},
-				ForceNew:      true,
-				Deprecated:    akamai.NoticeDeprecatedUseAlias("contract"),
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"contract", "contract_id"},
+				ForceNew:     true,
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("contract"),
 			},
 			"contract_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"contract"},
-				ExactlyOneOf:  []string{"contract", "contract_id"},
-				ForceNew:      true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"contract", "contract_id"},
+				ForceNew:     true,
 			},
 			"group": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"group_id"},
-				ExactlyOneOf:  []string{"group", "group_id"},
-				ForceNew:      true,
-				Deprecated:    akamai.NoticeDeprecatedUseAlias("group"),
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"group", "group_id"},
+				ForceNew:     true,
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("group"),
 			},
 			"group_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"group"},
-				ExactlyOneOf:  []string{"group", "group_id"},
-				ForceNew:      true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"group", "group_id"},
+				ForceNew:     true,
 			},
 			"product_ids": {
 				Type:     schema.TypeList,
@@ -70,12 +73,28 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	if groupID, err = tools.ResolveKeyStringState("group", "group_id", d); err != nil {
+	// load group_id, if not exists, then load group.
+	if groupID, err = tools.ResolveKeyStringState(d, "group_id", "group"); err != nil {
 		return diag.FromErr(err)
 	}
+	// set group_id/group in state.
+	if err := d.Set("group_id", groupID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("group", groupID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
 
-	if contractID, err = tools.ResolveKeyStringState("contract", "contract_id", d); err != nil {
+	// load contract_id, if not exists, then load contract.
+	if contractID, err = tools.ResolveKeyStringState(d, "contract_id", "contract"); err != nil {
 		return diag.FromErr(err)
+	}
+	// set contract_id/contract in state.
+	if err := d.Set("contract_id", contractID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("contract", contractID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 
 	cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
@@ -84,15 +103,11 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if cpCode == nil {
-		return diag.FromErr(fmt.Errorf("%w: invalid CP Code", ErrLookingUpCPCode))
-	}
-
-	if err := d.Set("name", cpCode.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%v: invalid CP Code", ErrLookingUpCPCode))
 	}
 
 	if err := d.Set("product_ids", cpCode.ProductIDs); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 	d.SetId(cpCode.ID)
 

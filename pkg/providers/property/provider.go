@@ -1,6 +1,10 @@
 package property
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/apex/log"
@@ -63,6 +67,7 @@ func Provider() *schema.Provider {
 				Optional:   true,
 				Type:       schema.TypeSet,
 				Elem:       config.Options("property"),
+				MaxItems:   1,
 				Deprecated: akamai.NoticeDeprecatedUseAlias("property"),
 			},
 		},
@@ -83,10 +88,8 @@ func Provider() *schema.Provider {
 			"akamai_cp_code":             resourceCPCode(),
 			"akamai_edge_hostname":       resourceSecureEdgeHostName(),
 			"akamai_property":            resourceProperty(),
-			"akamai_property_rules":      resourcePropertyRules(),
 			"akamai_property_variables":  resourcePropertyVariables(),
 			"akamai_property_activation": resourcePropertyActivation(),
-			"akamai_property_hostnames":  resPropHostname(),
 		},
 	}
 	return provider
@@ -107,21 +110,34 @@ func (p *provider) Client(meta akamai.OperationMeta) papi.PAPI {
 	return papi.Client(meta.Session())
 }
 
-func getPAPIV1Service(d *schema.ResourceData) (interface{}, error) {
-	var section string
-
+func getPAPIV1Service(d *schema.ResourceData) error {
+	var inlineConfig *schema.Set
+	for _, key := range []string{"property", "config"} {
+		opt, err := tools.GetSetValue(key, d)
+		if err != nil {
+			if !errors.Is(err, tools.ErrNotFound) {
+				return err
+			}
+			continue
+		}
+		if inlineConfig != nil {
+			return fmt.Errorf("only one inline config section can be defined")
+		}
+		inlineConfig = opt
+	}
+	if err := d.Set("config", inlineConfig); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	for _, s := range tools.FindStringValues(d, "property_section", "papi_section", "config_section") {
-		if s != "default" {
-			section = s
+		if s != "default" && s != "" {
+			if err := d.Set("config_section", s); err != nil {
+				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			}
 			break
 		}
 	}
 
-	if section != "" {
-		d.Set("config_section", section)
-	}
-
-	return nil, nil
+	return nil
 }
 
 func (p *provider) Name() string {
@@ -150,10 +166,29 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
 
-	_, err := getPAPIV1Service(d)
-	if err != nil {
-		return nil
+	if err := getPAPIV1Service(d); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return nil
+}
+
+// compactJSON converts a JSON-encoded byte slice to a compact form (so our JSON fixtures can be readable)
+func compactJSON(encoded []byte) string {
+	buf := bytes.Buffer{}
+	if err := json.Compact(&buf, encoded); err != nil {
+		panic(fmt.Sprintf("%s: %s", err, string(encoded)))
+	}
+
+	return buf.String()
+}
+
+// addPrefixToState returns a function that ensures string values are prefixed correctly
+func addPrefixToState(prefix string) schema.SchemaStateFunc {
+	return func(given interface{}) string {
+		if given.(string) == "" {
+			return ""
+		}
+		return tools.AddPrefix(given.(string), prefix)
+	}
 }
