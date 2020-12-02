@@ -97,6 +97,36 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+	t.Run("contract_id cannot be empty", func(t *testing.T) {
+		client := &mockpapi{}
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSPropertyRules/empty_contract_id.tf"),
+						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)contract_id = ""`),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("group_id cannot be empty", func(t *testing.T) {
+		client := &mockpapi{}
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSPropertyRules/empty_group_id.tf"),
+						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)group_id = ""`),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 	t.Run("error fetching latest version", func(t *testing.T) {
 		client := &mockpapi{}
 		mockImpl := func(m *mockpapi) {
@@ -164,7 +194,7 @@ func TestDSPropertyRulesRead_Fail(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{{
 			Config:      loadFixtureString("testdata/TestDSPropertyRules/always_fails.tf"),
-			ExpectError: regexp.MustCompile(`Error: required value cannot be blank`),
+			ExpectError: regexp.MustCompile(`Error: provided value cannot be blank`),
 		}},
 	})
 }

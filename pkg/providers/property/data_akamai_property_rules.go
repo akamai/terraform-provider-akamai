@@ -4,12 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataPropertyRules() *schema.Resource {
@@ -27,18 +26,20 @@ func dataPropertyRules() *schema.Resource {
 
 var dataAkamaiPropertyRuleSchema = map[string]*schema.Schema{
 	"contract_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		StateFunc:    addPrefixToState("ctr_"),
-		RequiredWith: []string{"group_id"},
+		Type:             schema.TypeString,
+		Optional:         true,
+		Computed:         true,
+		StateFunc:        addPrefixToState("ctr_"),
+		RequiredWith:     []string{"group_id"},
+		ValidateDiagFunc: tools.IsNotBlank,
 	},
 	"group_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		StateFunc:    addPrefixToState("grp_"),
-		RequiredWith: []string{"contract_id"},
+		Type:             schema.TypeString,
+		Optional:         true,
+		Computed:         true,
+		StateFunc:        addPrefixToState("grp_"),
+		RequiredWith:     []string{"contract_id"},
+		ValidateDiagFunc: tools.IsNotBlank,
 	},
 	"property_id": {
 		Type:             schema.TypeString,
@@ -111,19 +112,6 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 
 		if err := d.Set("version", version); err != nil {
 			return diag.FromErr(err)
-		}
-	}
-
-	if contractID != "" {
-		contractID = tools.AddPrefix(contractID, "ctr_")
-		if err := d.Set("contract_id", contractID); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
-		}
-	}
-	if groupID != "" {
-		groupID = tools.AddPrefix(groupID, "grp_")
-		if err := d.Set("group_id", groupID); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
