@@ -82,12 +82,27 @@ the Akamai Provider setup.
 You'll need contract and group IDs to use most of the Akamai Terraform
 Provider modules. These IDs provide needed account information.
 
-You can retrieve these IDs through the `akamai_contract` and
-`akamai_group` data sources, which require read access to the Property
-Manager API. You can also get this information from the Contracts app in
-Control Center, or by using other Akamai APIs.
+### Contract IDs
 
-### About Groups
+You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). To fetch the default contract ID no attributes need to be set:
+
+```hcl
+data "akamai_contract" "default" {
+
+}
+```
+
+Alternatively, if you have multiple contracts, you can specify the `group` which contains it:
+
+```hcl
+data "akamai_contract" "default" {
+	group_name = "default"
+}
+```
+
+You can now refer to the contract ID using the `id` attribute: `data.akamai_contract.default.id`.
+
+### Group IDs
 
 If you're not familiar with Akamai groups, they control access to your
 Akamai configurations and help consolidate reporting functions. Each account
@@ -95,6 +110,30 @@ Akamai configurations and help consolidate reporting functions. Each account
 
 Your account admins can use Control Center or the [Identity Management: User Administration API](https://developer.akamai.com/en-us/api/core_features/identity_management_user_admin/v2.html)
 to set up groups, each with their own set of users and roles.
+
+You can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/property_group.md). To fetch the default group ID no attributes other than contract need to be set:
+
+```hcl
+data "akamai_group" "default" {
+	contract_id = data.akamai_contract.default.id
+}
+``` 
+
+To fetch a specific group, you can specify the `name` argument:
+
+```hcl
+data "akamai_group" "default" {
+	name = "example"
+	contract_id = data.akamai_contract.default.id
+}
+```
+
+You can now refer to the group ID using the `id` attribute: `data.akamai_group.default.id`.
+
+You can retrieve these IDs through the [`akamai_contract`](../data-sources/property_contract.md) and
+[`akamai_group`](../data-sources/property_group.md) data sources, which require read access to the Property
+Manager API. You can also get this information from the Contracts app in
+Control Center, or by using other Akamai APIs.
 
 ## Set up your Akamai configurations in Terraform
 
