@@ -12,5 +12,5 @@ resource "akamai_property" "test" {
     "from.test.domain" = "to2.test.domain"
   }
 
-  rules = "{\"name\":\"default\",\"options\":{}}"
+  rules = "{\"rules\":{\"name\":\"default\",\"options\":{}}}"
 }

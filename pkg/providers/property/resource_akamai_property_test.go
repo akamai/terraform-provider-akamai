@@ -16,7 +16,7 @@ func TestResProperty(t *testing.T) {
 		Client     *mockpapi
 		Property   papi.Property
 		Hostnames  []papi.Hostname
-		Rules      papi.Rules
+		Rules      papi.RulesUpdate
 		RuleFormat string
 	}
 
@@ -57,7 +57,7 @@ func TestResProperty(t *testing.T) {
 		return func(State *TestState) {
 			ExpectRemoveProperty(State.Client, PropertyID, "ctr_0", "grp_0").Once().Run(func(mock.Arguments) {
 				State.Property = papi.Property{}
-				State.Rules = papi.Rules{}
+				State.Rules = papi.RulesUpdate{}
 				State.Hostnames = nil
 				State.RuleFormat = ""
 			})
@@ -83,7 +83,7 @@ func TestResProperty(t *testing.T) {
 					LatestVersion: 1,
 				}
 
-				State.Rules = papi.Rules{Name: "default"}
+				State.Rules = papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}
 				State.RuleFormat = "v2020-01-01"
 				GetProperty(PropertyID)(State)
 				GetVersionResources(PropertyID, 1)(State)
@@ -131,7 +131,7 @@ func TestResProperty(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_property.test", "group", "grp_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "product", "prd_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "rules", `{"name":"default","options":{}}`),
+			resource.TestCheckResourceAttr("akamai_property.test", "rules", `{"rules":{"name":"default","options":{}}}`),
 		)
 	}
 
@@ -633,7 +633,7 @@ func TestResProperty(t *testing.T) {
 			ruleFormat := ""
 			ExpectGetRuleTree(
 				client, "prp_0", "grp_0", "ctr_0", 1,
-				&papi.Rules{}, &ruleFormat,
+				&papi.RulesUpdate{}, &ruleFormat,
 			)
 
 			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
