@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Slow Post Protection Settings"
+page_title: "Akamai: Slow Post"
 subcategory: "Application Security"
 description: |-
- Slow Post Protection Settings
+ Slow Post
 ---
 
-# akamai_appsec_slow_post_protection_settings
+# akamai_appsec_slow_post
 
-Use the `akamai_appsec_slow_post_protection_settings` data source to retrieve the slow post protection settings for a given security configuration version and policy.
+Use the `akamai_appsec_slow_post` data source to retrieve the slow post protection settings for a given security configuration version and policy.
 
 ## Example Usage
 

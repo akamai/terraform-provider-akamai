@@ -28,9 +28,11 @@ data "akamai_appsec_attack_group_actions" "attack_group_actions" {
   version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
+
 output "attack_group_actions_text" {
   value = data.akamai_appsec_attack_group_actions.attack_group_actions.output_text
 }
+
 output "attack_group_actions_json" {
   value = data.akamai_appsec_attack_group_actions.attack_group_actions.json
 }
@@ -44,11 +46,7 @@ data "akamai_appsec_attack_group_actions" "attack_group_action" {
 }
 
 output "attack_group_action" {
-  value = akamai_appsec_attack_group_actions.attack_group_action.action
-}
-
-output "attack_group_id" {
-  value = akamai_appsec_attack_group_actions.attack_group_action.id
+  value = data.akamai_appsec_attack_group_actions.attack_group_action.action
 }
 ```
 
@@ -62,14 +60,15 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `attack_group_id` - (Optional) The attack group ID to use. If not supplied, information about all attack groups will be returned.
+* `attack_group` - (Optional) The attack group to use. If not supplied, information about all attack groups will be returned.
 
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
 
+* `action` - The attack group action for the attack group if one was specified: `alert`, `deny`, or `none`. If the action is none, the attack group is inactive in the security policy.
+
 * `output_text` - A tabular display showing the `action` and `group` name for each attack group.
 
 * `json` - The attack group information in JSON format.
-
 

@@ -1,6 +1,6 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Attack Group Condition Exception:"
+page_title: "Akamai: Attack Group Condition Exception"
 subcategory: "Application Security"
 description: |-
  Attack Group Condition Exception
@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_attack_group_condition_exception
 
-Use the `akamai_appsec_attack_group_condition_exception` data source to retrieve an attack group rule's conditions and exceptions.
+Use the `akamai_appsec_attack_group_condition_exception` data source to retrieve an attack group's conditions and exceptions.
 
 ## Example Usage
 
@@ -47,7 +47,7 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `attack_group` - (Required) The ID of the attack group to use.
+* `attack_group` - (Required) The attack group to use.
 
 ## Attributes Reference
 
@@ -55,4 +55,4 @@ In addition to the arguments above, the following attributes are exported:
 
 * `output_text` - A tabular display showing the ID, name, and action of all custom rules associated with the specified security configuration, version and security policy.
 
-
+* `json` - The condition and exception information in JSON format.
