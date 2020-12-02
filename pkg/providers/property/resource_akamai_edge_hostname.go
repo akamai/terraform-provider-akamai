@@ -360,7 +360,9 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	} else {
 		productID = d.Get("product").(string)
 	}
-	productID = tools.AddPrefix(productID, "prd_")
+	if productID != "" {
+		productID = tools.AddPrefix(productID, "prd_")
+	}
 	// set product/product_id into ResourceData
 	if err := d.Set("product_id", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))

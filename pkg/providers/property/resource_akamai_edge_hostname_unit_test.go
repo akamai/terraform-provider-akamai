@@ -568,6 +568,8 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
 							assert.Equal(t, "ctr_2", rs.Attributes["contract_id"])
 							assert.Equal(t, "eh_1", rs.Attributes["id"])
+							assert.Empty(t, rs.Attributes["product_id"])
+							assert.Empty(t, rs.Attributes["product"])
 							return nil
 						},
 					},
