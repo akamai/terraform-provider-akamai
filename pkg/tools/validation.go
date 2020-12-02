@@ -32,11 +32,11 @@ func IsNotBlank(i interface{}, path cty.Path) diag.Diagnostics {
 	switch val.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice:
 		if val.Len() == 0 {
-			return diag.Errorf("required value cannot be blank")
+			return diag.Errorf("provided value cannot be blank")
 		}
 	default:
 		if i == nil || reflect.DeepEqual(i, reflect.Zero(reflect.TypeOf(i)).Interface()) {
-			return diag.Errorf("required value cannot be blank")
+			return diag.Errorf("provided value cannot be blank")
 		}
 	}
 	return nil
