@@ -43,8 +43,7 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					Alert,
-					Deny,
-					None,
+					Abort,
 				}, false),
 			},
 			"slow_rate_threshold_rate": {
@@ -194,3 +193,7 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 
 	return resourceSlowPostProtectionSettingRead(ctx, d, m)
 }
+
+const (
+	Abort = "abort"
+)
