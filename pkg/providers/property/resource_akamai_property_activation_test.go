@@ -325,6 +325,99 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("schema with `property` instead of `property_id`", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{
+			{
+				methodName: "GetRuleTree",
+				papiResponse: &papi.GetRuleTreeResponse{
+					Response: papi.Response{Errors: make([]*papi.Error, 0)},
+				},
+				error:    nil,
+				stubOnce: false,
+			},
+			{
+				methodName: "GetActivations",
+				papiResponse: &papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+						AccountID:       "act_1-6JHGX",
+						ActivationID:    "atv_activation1",
+						ActivationType:  "ACTIVATE",
+						GroupID:         "grp_91533",
+						PropertyName:    "test",
+						PropertyID:      "prp_test",
+						PropertyVersion: 1,
+						Network:         "STAGING",
+						Status:          "ACTIVE",
+						SubmitDate:      "2020-10-28T15:04:05Z",
+					}}}},
+				error:    nil,
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivations",
+				papiResponse: &papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+						AccountID:       "act_1-6JHGX",
+						ActivationID:    "atv_deactivation1",
+						ActivationType:  "DEACTIVATE",
+						GroupID:         "grp_91533",
+						PropertyName:    "test",
+						PropertyID:      "prp_test",
+						PropertyVersion: 1,
+						Network:         "STAGING",
+						Status:          "ACTIVE",
+						SubmitDate:      "2020-10-28T15:05:05Z",
+					}}}},
+				error:    nil,
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivations",
+				papiResponse: &papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+						AccountID:       "act_1-6JHGX",
+						ActivationID:    "atv_delete1",
+						ActivationType:  "DEACTIVATE",
+						GroupID:         "grp_91533",
+						PropertyName:    "test",
+						PropertyID:      "prp_test",
+						PropertyVersion: 1,
+						Network:         "STAGING",
+						Status:          "ACTIVE",
+						SubmitDate:      "2020-10-28T15:06:05Z",
+					}}}},
+				error:    nil,
+				stubOnce: true,
+			},
+		})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation_deprecated_arg.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "property", "prp_test"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "warnings"),
+							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "errors"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						),
+						ExpectNonEmptyPlan: true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 }
 
 func TestAccAkamaiPropertyActivation_basic(t *testing.T) {
