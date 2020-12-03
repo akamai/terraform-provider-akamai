@@ -77,28 +77,10 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		DiffSuppressFunc: suppressEdgeHostnameDomain,
 		ValidateDiagFunc: tools.IsNotBlank,
 	},
-	"ipv4": {
-		Type:          schema.TypeBool,
-		Optional:      true,
-		Default:       true,
-		ForceNew:      true,
-		ConflictsWith: []string{"ip_behavior"},
-		Deprecated:    `use "ip_behavior" attribute instead`,
-	},
-	"ipv6": {
-		Type:          schema.TypeBool,
-		Optional:      true,
-		Default:       false,
-		ForceNew:      true,
-		ConflictsWith: []string{"ip_behavior"},
-		Deprecated:    `use "ip_behavior" attribute instead`,
-	},
 	"ip_behavior": {
-		Type:          schema.TypeString,
-		Optional:      true,
-		ForceNew:      true,
-		Computed:      true,
-		ConflictsWith: []string{"ipv4", "ipv6"},
+		Type:     schema.TypeString,
+		Required: true,
+		ForceNew: true,
 		ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 			v := val.(string)
 			if !strings.EqualFold(papi.EHIPVersionV4, v) && !strings.EqualFold(papi.EHIPVersionV6Performance, v) && !strings.EqualFold(papi.EHIPVersionV6Compliance, v) {
@@ -198,30 +180,8 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
 
-	if got, ok := d.GetOk("ip_behavior"); ok {
-		newHostname.IPVersionBehavior = strings.ToUpper(got.(string))
-	} else {
-		ipv4, _ := tools.GetBoolValue("ipv4", d)
-		if ipv4 {
-			newHostname.IPVersionBehavior = papi.EHIPVersionV4
-		}
-		ipv6, _ := tools.GetBoolValue("ipv6", d)
-		if ipv6 {
-			newHostname.IPVersionBehavior = papi.EHIPVersionV6Performance
-		}
-		if ipv4 && ipv6 {
-			newHostname.IPVersionBehavior = papi.EHIPVersionV6Compliance
-		}
-		// This is explicit case, where ip_behaviour/ipv4, ipv6 was not defined.
-		if !(ipv4 || ipv6) {
-			return diag.FromErr(fmt.Errorf("ipv4 or ipv6 must be specified to create a new Edge Hostname"))
-		}
-
-	}
-
-	if err := d.Set("ip_behavior", newHostname.IPVersionBehavior); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
+	// ip_behavior is required value in schema.
+	newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
 
 	for _, h := range edgeHostnames.EdgeHostnames.Items {
 		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
