@@ -59,3 +59,19 @@ This resource supports these arguments:
 This resource returns this attribute:
 
 * `ip_behavior` - Returns the IP protocol the hostname will use, either `IPV4` for version 4, IPV6_PERFORMANCE` for version 6, or `IPV6_COMPLIANCE` for both.
+
+## Import
+
+Basic Usage:
+
+```hcl
+resource "akamai_edge_hostname" "example" {
+    # (resource arguments)
+  }
+```
+
+Akamai edge hostnames can be imported using a comma-delimited string of `edge_hostname_id, contract_id, group_id` in that order as ID, e.g.
+
+```shell
+$ terraform import akamai_edge_hostname.example ehn_123,ctr_1-AB123,grp_123
+```
