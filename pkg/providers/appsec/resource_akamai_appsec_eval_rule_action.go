@@ -47,7 +47,7 @@ func resourceEvalRuleAction() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"eval_rule_id": {
+			"rule_id": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -85,11 +85,11 @@ func resourceEvalRuleActionRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getEvalRuleAction.PolicyID = policyid
 
-	evalruleid, err := tools.GetIntValue("eval_rule_id", d)
+	ruleid, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEvalRuleAction.RuleID = evalruleid
+	getEvalRuleAction.RuleID = ruleid
 
 	evalruleaction, err := client.GetEvalRuleAction(ctx, getEvalRuleAction)
 	if err != nil {
@@ -135,11 +135,11 @@ func resourceEvalRuleActionDelete(ctx context.Context, d *schema.ResourceData, m
 	}
 	removeEvalRuleAction.PolicyID = policyid
 
-	evalruleid, err := tools.GetIntValue("eval_rule_id", d)
+	ruleid, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	removeEvalRuleAction.RuleID = evalruleid
+	removeEvalRuleAction.RuleID = ruleid
 
 	removeEvalRuleAction.Action = "none"
 
@@ -176,11 +176,11 @@ func resourceEvalRuleActionUpdate(ctx context.Context, d *schema.ResourceData, m
 	}
 	updateEvalRuleAction.PolicyID = policyid
 
-	evalruleid, err := tools.GetIntValue("eval_rule_id", d)
+	ruleid, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateEvalRuleAction.RuleID = evalruleid
+	updateEvalRuleAction.RuleID = ruleid
 
 	ruleaction, err := tools.GetStringValue("rule_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

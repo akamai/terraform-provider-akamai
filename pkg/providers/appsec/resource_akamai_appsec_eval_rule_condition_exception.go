@@ -39,7 +39,7 @@ func resourceEvalRuleConditionException() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"eval_rule_id": {
+			"rule_id": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -83,11 +83,11 @@ func resourceEvalRuleConditionExceptionRead(ctx context.Context, d *schema.Resou
 	}
 	getEvalRuleConditionException.PolicyID = policyid
 
-	evalruleid, err := tools.GetIntValue("eval_rule_id", d)
+	ruleid, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEvalRuleConditionException.RuleID = evalruleid
+	getEvalRuleConditionException.RuleID = ruleid
 
 	evalruleconditionexception, err := client.GetEvalRuleConditionException(ctx, getEvalRuleConditionException)
 	if err != nil {
@@ -134,11 +134,11 @@ func resourceEvalRuleConditionExceptionDelete(ctx context.Context, d *schema.Res
 	}
 	removeEvalRuleConditionException.PolicyID = policyid
 
-	evalruleid, err := tools.GetIntValue("eval_rule_id", d)
+	ruleid, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	removeEvalRuleConditionException.RuleID = evalruleid
+	removeEvalRuleConditionException.RuleID = ruleid
 
 	logger.Errorf("calling 'RemoveEvalRuleConditionException': %v", removeEvalRuleConditionException)
 
@@ -182,11 +182,11 @@ func resourceEvalRuleConditionExceptionUpdate(ctx context.Context, d *schema.Res
 	}
 	updateEvalRuleConditionException.PolicyID = policyid
 
-	evalruleid, err := tools.GetIntValue("eval_rule_id", d)
+	ruleid, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateEvalRuleConditionException.RuleID = evalruleid
+	updateEvalRuleConditionException.RuleID = ruleid
 
 	_, erru := client.UpdateEvalRuleConditionException(ctx, updateEvalRuleConditionException)
 	if erru != nil {

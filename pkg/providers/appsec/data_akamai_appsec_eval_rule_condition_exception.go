@@ -29,7 +29,7 @@ func dataSourceEvalRuleConditionException() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"eval_rule_id": {
+			"rule_id": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -71,11 +71,11 @@ func dataSourceEvalRuleConditionExceptionRead(ctx context.Context, d *schema.Res
 	}
 	getEvalRuleConditionException.PolicyID = policyid
 
-	evalruleid, err := tools.GetIntValue("eval_rule_id", d)
+	ruleid, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEvalRuleConditionException.RuleID = evalruleid
+	getEvalRuleConditionException.RuleID = ruleid
 
 	evalruleconditionexception, err := client.GetEvalRuleConditionException(ctx, getEvalRuleConditionException)
 	if err != nil {

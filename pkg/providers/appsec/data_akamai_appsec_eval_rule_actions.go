@@ -29,7 +29,7 @@ func dataSourceEvalRuleActions() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"eval_rule_id": {
+			"rule_id": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
@@ -75,11 +75,11 @@ func dataSourceEvalRuleActionsRead(ctx context.Context, d *schema.ResourceData, 
 	}
 	getEvalRuleActions.PolicyID = policyid
 
-	evalruleid, err := tools.GetIntValue("eval_rule_id", d)
+	ruleid, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEvalRuleActions.RuleID = evalruleid
+	getEvalRuleActions.RuleID = ruleid
 
 	evalruleactions, err := client.GetEvalRuleActions(ctx, getEvalRuleActions)
 	if err != nil {
