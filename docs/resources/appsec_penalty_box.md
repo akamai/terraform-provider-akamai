@@ -19,9 +19,7 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#putpenaltybox
-
-// USE CASE: user wants to set the penalty box
+// USE CASE: user wants to update the penalty box settings
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
@@ -32,9 +30,6 @@ resource "akamai_appsec_penalty_box" "penalty_box" {
   penalty_box_protection = true
   penalty_box_action = var.action
 }
-
-//TF destroy - set the penalty_box_protection to false.
-
 ```
 
 ## Argument Reference
@@ -49,12 +44,12 @@ The following arguments are supported:
 
 * `penalty_box_protection` - (Required) A boolean value indicating whether to enable penalty box protection.
 
-* `penalty_box_action` - (Required) "Deny", "Alert" or "None", indicating the action to take when penalty box protection is triggered. Ignored if `penalty_box_protection` is set to `false`.
+* `penalty_box_action` - (Required) The action to take when penalty box protection is triggered: `alert` to record the trigger event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action. Ignored if `penalty_box_protection` is set to `false`.
+
 
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
 
 * `output_text` - A tabular display showing the updated penalty box protection settings.
-
 

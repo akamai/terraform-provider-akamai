@@ -39,9 +39,6 @@ output "rate_policy_id" {
   version = data.akamai_appsec_configuration.configuration.latest_version
   rate_policy_id =  var.rate_policy_id
 }*/
-
-//TF destroy - means Delete the rate policy.
-               
 ```
 
 ## Argument Reference
@@ -52,7 +49,10 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-* `rate_policy` - (Required) The name of a file containing a JSON-formatted rate policy definition ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#57c65cbd))
+* `rate_policy` - (Required) The name of a file containing a JSON-formatted rate policy definition ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#57c65cbd)).
+
+* `rate_policy_id` - (Optional) The ID of an existing rate policy to be modified.
+
 
 ## Attributes Reference
 

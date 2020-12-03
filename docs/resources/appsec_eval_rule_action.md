@@ -44,7 +44,7 @@ The following arguments are supported:
 
 * `rule_id` - (Required) The ID of the rule being evaluated.
 
-* `action` - (Required) The action to be taken: `alert` to record the trigger of the event, `deny` to block the request, or `none` to take no action.
+* `action` - (Required) The action to be taken: `alert` to record the trigger of the event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
 
 ## Attributes Reference
 

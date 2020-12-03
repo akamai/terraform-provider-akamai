@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Attack Group Action"
+page_title: "Akamai: Rate Protection"
 subcategory: "Application Security"
 description: |-
- Attack Group Action
+ Rate Protection
 ---
 
-# akamai_appsec_attack_group_action
+# akamai_appsec_rate_protection
 
-Use the `akamai_appsec_attack_group_action` resource to update what action should be taken when an attack group’s rule triggers. 
+Use the `akamai_appsec_rate_protection` resource to enable or disable rate protection for a given configuration version and security policy.
 
 ## Example Usage
 
@@ -16,19 +16,19 @@ Basic usage:
 
 ```hcl
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to set the attack group action
+// USE CASE: user wants to enable or disable rate protection
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
-resource "akamai_appsec_attack_group_action" "attack_group_action" {
+
+resource "akamai_appsec_rate_protection" "protection" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
-  attack_group = var.attack_group
-  attack_group_action = var.action
+  enabled = var.enabled
 }
 ```
 
@@ -42,13 +42,12 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `attack_group` - (Required) The ID of the attack group to use.
+* `enabled` - (Required) Whether to enable rate controls: either `true` or `false`.
 
-* `attack_group_action` - (Required) The action to be taken: `alert` to record the trigger of the event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
 
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display of the attack group action information.
+* `output_text` - A tabular display showing the current rate protection setting.
 

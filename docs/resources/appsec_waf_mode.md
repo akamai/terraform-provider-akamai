@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Mode"
+page_title: "Akamai: WAF Mode"
 subcategory: "Application Security"
 description: |-
- Mode
+ WAF Mode
 ---
 
-# akamai_appsec_mode
+# akamai_appsec_waf_mode
 
-Use the `akamai_appsec_mode` resource to specify how your rule sets are updated. Use KRS mode to update the rule sets manually, or AAG to have them update automatically.
+Use the `akamai_appsec_waf_mode` resource to specify how your rule sets are updated. Use KRS mode to update the rule sets manually, or AAG to have them update automatically.
 
 ## Example Usage
 
@@ -16,10 +16,8 @@ Basic usage:
 
 ```hcl
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
-
-// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#putmode
 
 // USE CASE: user wants to set the waf mode
 data "akamai_appsec_configuration" "configuration" {
@@ -31,30 +29,21 @@ resource "akamai_appsec_waf_mode" "waf_mode" {
   security_policy_id = var.policy_id
   mode = var.mode
 }
-
 output "waf_mode_mode" {
   value = akamai_appsec_waf_mode.waf_mode.mode
 }
-
 output "waf_mode_current_ruleset" {
   value = akamai_appsec_waf_mode.waf_mode.current_ruleset
 }
-
 output "waf_mode_eval_status" {
-  value = akamai_appsec_waf_mode.waf_mode.eval_status  // enabled/disabled
+  value = akamai_appsec_waf_mode.waf_mode.eval_status
 }
-
 output "waf_mode_eval_ruleset" {
   value = akamai_appsec_waf_mode.waf_mode.eval_ruleset
 }
-
 output "waf_mode_eval_expiration_date" {
   value = akamai_appsec_waf_mode.waf_mode.eval_expiration_date
 }
-
-//TF destroy - no-op
-
-
 ```
 
 ## Argument Reference
@@ -73,6 +62,13 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - TBD
+* `current_ruleset` - The current rule set.
 
+* `eval_ruleset` - The rule set being evaluated if any.
+
+* `eval_status` - Either `enabled` if an evaluation is currently in progress, or `disabled` otherwise.
+
+* `eval_expiration_date` - The date on which the evaluation period ends.
+
+* `output_text` - A tabular display showing the current rule set, WAF mode and evaluation status (`enabled` if a rule set is currently being evaluated, `disabled` otherwise).
 

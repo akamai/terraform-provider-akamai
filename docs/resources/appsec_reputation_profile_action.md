@@ -19,8 +19,6 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#putreputationprofileaction
-
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
@@ -40,9 +38,6 @@ output "reputation_profile_id" {
 output "reputation_profile_action" {
   value = akamai_appsec_reputation_profile_action.appsec_reputation_profile_action.action
 }
-
-//TF destroy - means set the reputation profile action to none
-
 ```
 
 ## Argument Reference
@@ -57,7 +52,8 @@ The following arguments are supported:
 
 * `reputation_profile_id` - (Required) The ID of the reputation profile to use.
 
-* `action` - (Required) The action to take when the specified reputation profile’s rule is triggered: `alert` to record the trigger event, `deny` to block the request, or `none` to take no action.
+* `action` - (Required) The action to take when the specified reputation profile’s rule is triggered: `alert` to record the trigger event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
+
 
 ## Attributes Reference
 

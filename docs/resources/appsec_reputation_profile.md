@@ -6,7 +6,7 @@ description: |-
  Reputation Profile
 ---
 
-# akamai_appsec_reputation_profile`
+# akamai_appsec_reputation_profile
 
 Use the `akamai_appsec_reputation_profile` resource to create or modify a reputation profile for a specific security configuration version.
 
@@ -15,10 +15,6 @@ Use the `akamai_appsec_reputation_profile` resource to create or modify a reputa
 Basic usage:
 
 ```hcl
-provider "akamai" {
-  appsec_section = "default"
-}
-
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
@@ -36,8 +32,6 @@ resource "akamai_appsec_reputation_profile" "reputation_profile" {
 output "reputation_profile_id" {
   value = akamai_appsec_reputation_profile.reputation_profile_id
 }
-
-//TF destroy - means Delete the reputation profile.
 ```
 
 ## Argument Reference
@@ -49,6 +43,7 @@ The following arguments are supported:
 * `version` - (Required) The version number of the security configuration to use.
 
 * `reputation_profile` - (Required) The name of a file containing a JSON-formatted definition of the reputation profile. ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postreputationprofiles))
+
 
 ## Attributes Reference
 

@@ -59,11 +59,11 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
- * `evaluating_ruleset` - The set of rules being evaluated.
+* `evaluating_ruleset` - The set of rules being evaluated.
 
- * `expiration_date` - The date on which the evaluation period ends.
+* `expiration_date` - The date on which the evaluation period ends.
 
- * `current_ruleset` - The set of rules currently in effect.
+* `current_ruleset` - The set of rules currently in effect.
 
- * `eval_status` - Either `enabled` if an evaluation is currently in progress (that is, if the `eval_operation` parameter was `START`, `RESTART`, or `COMPLETE`) or `disabled` otherwise (that is, if the `eval_operation` parameter was `STOP` or `UPDATE`).
+* `eval_status` - Either `enabled` if an evaluation is currently in progress (that is, if the `eval_operation` parameter was `START`, `RESTART`, or `COMPLETE`) or `disabled` otherwise (that is, if the `eval_operation` parameter was `STOP` or `UPDATE`).
 

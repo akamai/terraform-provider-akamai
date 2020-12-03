@@ -19,8 +19,6 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-//OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#putipgeofirewall
-
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
@@ -71,11 +69,6 @@ output "ip_geo_mode_allow" {
 output "allow_exception_ip_network_lists" {
   value = akamai_appsec_ip_geo.ip_geo_allow.exception_ip_network_lists
 }
-
-//TF destroy - should call protections protections API and turn it off the ipGeo control off
-//OPEN API: /appsec/v1/configs/{config_id}/versions/{version}/security-policies/{security_policy_id}/protections
-//Request body: {"applyNetworkLayerControls":false}
-
 ```
 
 ## Argument Reference
@@ -88,16 +81,16 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `mode` - (Required) The mode to use for IP/Geo firewall blocking: `blockSpecificIPGeo` to block specific IPs, geographies or network lists, or `blockAllTrafficExceptAllowedIPs` to allow specific IPs or geographies to be let through while blocking the rest.
+* `mode` - (Required) The mode to use for IP/Geo firewall blocking: `block` to block specific IPs, geographies or network lists, or `allow` to allow specific IPs or geographies to be let through while blocking the rest.
 
-* `geo_network_lists` - (Optional) TBD
+* `geo_network_lists` - (Optional) The network lists to be blocked or allowed geographically.
 
-* `ip_network_lists` - (Optional) TBD
+* `ip_network_lists` - (Optional) The network lists to be blocked or allowd by IP address.
 
-* `exception_ip_network_lists` - (Required) TBD:w
+* `exception_ip_network_lists` - (Required) The network lists to be allowed regardless of `mode`, `geo_network_lists`, and `ip_network_lists` parameters.
 
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
 
-* None
+* `output_txt` - A tabular display of the IP/Geo firewall settings.
