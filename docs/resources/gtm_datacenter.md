@@ -27,20 +27,20 @@ The following arguments are supported:
 
 Required
 
-* `domain` — Domain name 
+* `domain` - Domain name 
 
 Optional
  
-* `wait_on_complete` — (Boolean, Default: true) Wait for transaction to complete
-* `nickname` — datacenter nickname
+* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
+* `nickname` - datacenter nickname
 * `default_load_object`
   * `load_object`
   * `load_object_port`
-  * `load_servers` — (List)
+  * `load_servers` - (List)
 * `city`
 * `clone_of`
-* `cloud_server_targeting` — (Boolean)
-* `cloud_server_host_header_override` — (Boolean)
+* `cloud_server_targeting` - (Boolean)
+* `cloud_server_host_header_override` - (Boolean)
 * `continent`
 * `country`
 * `latitude`
@@ -58,7 +58,7 @@ The following arguments will be found in terraform.tfstate and can be referenced
 * `servermonitor_liveness_count`
 * `servermonitor_load_count`
 * `servermonitor_pool`
-* `virtual` — (Boolean)
+* `virtual` - (Boolean)
 
 ### Backing Schema Reference
 

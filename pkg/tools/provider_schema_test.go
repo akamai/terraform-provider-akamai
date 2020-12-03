@@ -499,7 +499,7 @@ func TestResolveKeyState(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			m := &mocked{}
 			test.init(m)
-			res, err := ResolveKeyStringState(key, fallbackKey, m)
+			res, err := ResolveKeyStringState(m, key, fallbackKey)
 			m.AssertExpectations(t)
 			if test.withError != nil {
 				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)

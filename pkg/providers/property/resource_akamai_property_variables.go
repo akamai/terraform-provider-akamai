@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -27,7 +28,7 @@ func resourcePropertyVariables() *schema.Resource {
 							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"name":        {Type: schema.TypeString, Required: true},
+									"name":        {Type: schema.TypeString, Required: true, ValidateDiagFunc: tools.IsNotBlank},
 									"hidden":      {Type: schema.TypeBool, Required: true},
 									"sensitive":   {Type: schema.TypeBool, Required: true},
 									"description": {Type: schema.TypeString, Optional: true},

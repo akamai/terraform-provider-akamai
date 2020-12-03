@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePropertyGroup() *schema.Resource {
@@ -20,19 +20,30 @@ func dataSourcePropertyGroup() *schema.Resource {
 		ReadContext: dataSourcePropertyGroupRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"name", "group_name"},
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("name"),
+			},
+			"group_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"name", "group_name"},
 			},
 			"contract": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"contract_id"},
-				Deprecated:    akamai.NoticeDeprecatedUseAlias("contract"),
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"contract", "contract_id"},
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("contract"),
 			},
 			"contract_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"contract"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"contract", "contract_id"},
 			},
 		},
 	}
@@ -48,9 +59,13 @@ func dataSourcePropertyGroupRead(ctx context.Context, d *schema.ResourceData, m 
 		session.WithContextLog(log),
 	)
 
-	var name string
-	name, err := tools.GetStringValue("name", d)
-	var getDefault bool
+	var (
+		name       string
+		getDefault bool
+	)
+
+	// check and load group_name, if not exists then check group.
+	name, err := tools.ResolveKeyStringState(d, "group_name", "name")
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
@@ -66,16 +81,36 @@ func dataSourcePropertyGroupRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	contractID, err := tools.ResolveKeyStringState("contract", "contract_id", d)
+	// check and load contract_id, if not exists then check contract.
+	contractID, err := tools.ResolveKeyStringState(d, "contract_id", "contract")
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
 	group, err := findGroupByName(name, contractID, groups, getDefault)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err))
+		return diag.Errorf("%v: %v: %v", ErrLookingUpGroupByName, name, err)
 	}
 
-	log.Debugf("Searching for records [%v]", group)
+	// set group_name/name in state.
+	if err := d.Set("group_name", group.GroupName); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("name", group.GroupName); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+
+	if len(group.ContractIDs) != 0 {
+		contractID = group.ContractIDs[0]
+	}
+	// set contract/contract_id in state.
+	if err := d.Set("contract", contractID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("contract_id", contractID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+
 	d.SetId(group.GroupID)
 	return nil
 }
@@ -118,7 +153,7 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 
 	// for non-default name, contract is required
 	if contract == "" {
-		return nil, fmt.Errorf("%w: %s", ErrNoContractProvided, name)
+		return nil, fmt.Errorf("%v: %s", ErrNoContractProvided, name)
 	}
 
 	var foundGroups []*papi.Group
@@ -135,7 +170,7 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 			}
 		}
 	}
-	return nil, fmt.Errorf("%w: %s", ErrGroupNotInContract, contract)
+	return nil, fmt.Errorf("%v: %s", ErrGroupNotInContract, contract)
 }
 
 func getGroups(ctx context.Context, meta akamai.OperationMeta) (*papi.GetGroupsResponse, error) {
