@@ -73,6 +73,7 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_contract":                dataSourcePropertyContract(),
+			"akamai_contracts":               dataSourceAkamaiContracts(),
 			"akamai_cp_code":                 dataSourceCPCode(),
 			"akamai_group":                   dataSourcePropertyGroup(),
 			"akamai_groups":                  dataSourcePropertyMultipleGroups(),
@@ -82,7 +83,6 @@ func Provider() *schema.Provider {
 			"akamai_property_rules_template": dataSourcePropertyRulesTemplate(),
 			"akamai_properties":              dataSourceAkamaiProperties(),
 			"akamai_property_products":       dataSourceAkamaiPropertyProducts(),
-			"akamai_contracts":               dataSourceAkamaiContracts(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_cp_code":             resourceCPCode(),
