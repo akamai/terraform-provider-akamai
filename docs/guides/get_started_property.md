@@ -13,14 +13,14 @@ You can use Provisioning module resources and data sources to create,
 deploy, activate, and manage properties, edge hostnames, and content
 provider (CP) codes.
 
-For more information about properties, see the [Property Manager documentation](https://learn.akamai.com/en-us/products/core_features/property_manager.html) page.
+For more information about properties, see [Property Manager documentation](https://learn.akamai.com/en-us/products/core_features/property_manager.html).
 
 ## Prerequisites
 
 Before you can create a property, you need to complete these prerequisties:
 meet:
 
-* **Set up the Akamai Terraform Provider.** You need to complete the tasks in the [Get Started with the Akamai Terraform Provider](../guides/get_started_provider) guide. Be sure you have the contract and group IDs used  you retrieved available. You'll need them to set up the Provisioning module.
+* **Set up the Akamai Terraform Provider.** You need to complete the tasks in the [Get Started with the Akamai Terraform Provider](../guides/get_started_provider) guide. Be sure you have the contract and group IDs you retrieved available. You'll need them to set up the Provisioning module.
 	<!--Did I get the URL right?-->
 * **Retrieve the Product ID**. You'll need the [Akamai Product ID](../guides/appendix#common-product-ids) for the product you are using, like Ion or Adaptive Media Delivery.
 

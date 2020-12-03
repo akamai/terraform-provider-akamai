@@ -87,14 +87,14 @@ provider "akamai" {
   config_section = "default"
 }
 
-# Create a Property
+# Create a property
 resource "akamai_property" "example_property" {
   name = "www.example.org"
   
   # ...
 }
 
-# Create a DNS Record
+# Create a DNS record
 resource "akamai_dns_record" "example_record" {
   zone       = "example.org"
   name       = "www.example.org"
@@ -114,14 +114,14 @@ provider "akamai" {
   config_section = "default"
 }
 
-# Create a Property
+# Create a property
 resource "akamai_property" "example_property" {
   name = "www.example.org"
   
   # ...
 }
 
-# Create a DNS Record
+# Create a DNS record
 resource "akamai_dns_record" "example_record" {
   zone       = "example.org"
   name       = "www.example.org"
@@ -139,27 +139,25 @@ resource "akamai_dns_record" "example_record" {
 Arguments supported in the `provider` block:
 
 * edgerc - (Optional) The location of the `.edgerc` file containing credentials. The default is `\$HOME/.edgerc`.
-* config_section - (Optional) The credential section to use within the `.edgerc` file for all Edge Grid calls. If not included, uses credentials in the default section of the `.edgerc` file.
+* config_section - (Optional) The credential section to use within the `.edgerc` file for all Edge Grid calls. If you don't use `config_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
 
 #### Deprecated arguments
 
 * property_section - (Deprecated) The credential section to use for the [Property Manager API](https://developer.akamai.com/api/core_features/property_manager/v1.html).
-If not added, uses credentials in the default section of the `.edgerc` file.
-* dns_section - (Deprecated) The credential section to use for the [Edge DNS Zone Management API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html). If not added, uses credentials in the default section of the `.edgerc` file.
-* [gtm_section] - (Deprecated) The credential section to use for the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html). If not added, uses credentials in the default section of the `.edgerc` file.
+If you don't use `property_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
+* dns_section - (Deprecated) The credential section to use for the [Edge DNS Zone Management API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html). If you don't use `dns_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
+* [gtm_section] - (Deprecated) The credential section to use for the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html). If you don't use `gtm_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
 
 ## How else can I authenticate on Akamai?
 
 Referencing a local `.edgerc` file in your `akamai.tf` file is the preferred
-authentication method. However there are a few other methods you can use
-if necessary.
+authentication method. But there are a few other methods you can use, like inline credentials and environment variables.
 
 Authenticate using inline credentials
 -------------------------------------
 
 If needed, you can specify credentials inline for each resource or data
-source used. To do this, you'll need to add a `config` block that
-includes authentication information.
+source. To do this, add a `config` block that includes authentication information.
 
 ### Example usage
 
@@ -167,7 +165,7 @@ includes authentication information.
 
 ### Argument reference
 
-* `config` - (Optional) Provide credentials for Akamai provider. This block supports these arguments:
+* `config` - (Optional) Provide credentials for Akamai Provider. This block supports these arguments:
   * `host` - (Required) The base credential hostname without the protocol.
   * `access_token` - (Required) The service's access token from the `.edgerc` file.
   * `client_token` - (Required) The service's client token from the `.edgerc` file.

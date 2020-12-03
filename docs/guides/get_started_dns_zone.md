@@ -296,7 +296,7 @@ Once you have your configuration complete, save the file. Then switch to the ter
 $ terraform init
 ```
 
-This command will install the latest version of the Akamai provider, as well as any other providers necessary (such as the local provider). To update the Akamai provider version after a new release, simply run `terraform init` again.
+This command will install the latest version of the Akamai Provider, as well as any other providers necessary (such as the local provider). To update the Akamai Provider version after a new release, simply run `terraform init` again.
 
 ## Test Your Configuration
 

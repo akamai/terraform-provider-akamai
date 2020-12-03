@@ -34,7 +34,7 @@ Here are the most common workflows for the Akamai Provider:
 ### Manage changes to your Akamai configurations
 
 When you're using the Akamai Provider, you need to keep your 
-Terraform configurations up-to-date with changes made using Akamai 
+Terraform configurations up to date with changes made using Akamai 
 APIs, CLIs, and Control Center. You should review your network management 
 processes and update them to include the Akamai Provider.
 

@@ -21,15 +21,15 @@ Provider for the first time.
 
 To set up the Akamai Provider, you need to:
 
-* Make some decisions
-* Set up your Terraform folder and configuration file
+* Make some decisions about how things should work.
+* Set up your Terraform folder and configuration file.
 * Create Akamai API clients for each module you'll use.
-* Retrieve contract and group IDs
-* Set up your Akamai configuration in Terraform
-* Initialize the Akamai Provider
-* Test your Akamai Provider configuration
+* Retrieve contract and group IDs.
+* Set up your Akamai configuration in Terraform.
+* Initialize the Akamai Provider.
+* Test your Akamai Provider configuration.
 
-## Make some decisions
+## Make some decisions about how things should work
 
 Before getting into the actual set up of the Akamai Provider, you need
 to make some decisions about how you want things to work. You need to
