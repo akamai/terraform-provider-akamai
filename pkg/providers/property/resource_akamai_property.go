@@ -498,13 +498,26 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductionVersion: ProductionVersion,
 	}
 
-	if latestVersionIsActive(Property) {
+	// load status for what we currently have as latest version.  GetLatestVersion may also work here.
+	resp, err := client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
+		PropertyID:	       d.Id(),
+		PropertyVersion:   d.Get("latest_version").(int),
+		ContractID:        d.Get("contract_id").(string),
+		GroupID:           d.Get("group_id").(string),
+
+	})
+	if err != nil {
+		d.Partial(true)
+		return diag.FromErr(err)
+	}
+	// check latest version is editable
+	if resp.Version.ProductionStatus != papi.VersionStatusInactive || resp.Version.StagingStatus != papi.VersionStatusInactive {
+		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
 		VersionID, err := createPropertyVersion(ctx, client, Property)
 		if err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
 		}
-
 		Property.LatestVersion = VersionID
 	}
 
