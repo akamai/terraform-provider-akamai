@@ -150,6 +150,62 @@ func TestResProperty(t *testing.T) {
 		Steps       StepsFunc
 	}
 
+	// Standard test behavior for cases where the property's latest version is deactivated in staging network
+	LatestVersionDeactivatedInStaging := LifecycleTestCase{
+		Name: "Latest version is active in staging",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			AdvanceVersion("prp_0", 1, 2),
+			SetHostnames("prp_0", 2, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+				},
+				{
+					PreConfig: func() {
+						StagingVersion := 1
+						State.Property.StagingVersion = &StagingVersion
+					},
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0"),
+				},
+			}
+		},
+	}
+
+	// Standard test behavior for cases where the property's latest version is deactivated in production network
+	LatestVersionDeactivatedInProd := LifecycleTestCase{
+		Name: "Latest version is active in production",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			AdvanceVersion("prp_0", 1, 2),
+			SetHostnames("prp_0", 2, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+				},
+				{
+					PreConfig: func() {
+						ProductionVersion := 1
+						State.Property.ProductionVersion = &ProductionVersion
+					},
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1"),
+				},
+			}
+		},
+	}
+
 	// Standard test behavior for cases where the property's latest version is active in staging network
 	LatestVersionActiveInStaging := LifecycleTestCase{
 		Name: "Latest version is active in staging",
@@ -429,6 +485,8 @@ func TestResProperty(t *testing.T) {
 		AssertLifecycle(t, "normal", LatestVersionNotActive)
 		AssertLifecycle(t, "normal", LatestVersionActiveInStaging)
 		AssertLifecycle(t, "normal", LatestVersionActiveInProd)
+		AssertLifecycle(t, "normal", LatestVersionDeactivatedInStaging)
+		AssertLifecycle(t, "normal", LatestVersionDeactivatedInProd)
 		AssertLifecycle(t, "contract_id without prefix", LatestVersionNotActive)
 		AssertLifecycle(t, "contract_id without prefix", LatestVersionActiveInStaging)
 		AssertLifecycle(t, "contract_id without prefix", LatestVersionActiveInProd)
@@ -613,6 +671,8 @@ func TestResProperty(t *testing.T) {
 				client, "test property", "grp_0",
 				"ctr_0", "prd_0", "prp_0",
 			)
+
+			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
 
 			ExpectUpdatePropertyVersionHostnames(
 				client, "prp_0", "grp_0", "ctr_0", 1,

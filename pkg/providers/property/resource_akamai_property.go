@@ -861,17 +861,6 @@ func mapToHostnames(given map[string]interface{}) []papi.Hostname {
 	return Hostnames
 }
 
-// Tests true when the given property's latest version is active in any environment
-func latestVersionIsActive(Property papi.Property) bool {
-	// NB: The property version could possibly be in a transitional state where PAPI will reject a request to update
-	//     hostnames or rules. It is the responsibility of the user to ensure the resource dependencies are such that
-	//     changes happen in the correct order.
-	ActiveInProd := Property.ProductionVersion != nil && *Property.ProductionVersion == Property.LatestVersion
-	ActiveInStaging := Property.StagingVersion != nil && *Property.StagingVersion == Property.LatestVersion
-
-	return ActiveInProd || ActiveInStaging
-}
-
 // Set many attributes of a schema.ResourceData in one call
 func rdSetAttrs(ctx context.Context, d *schema.ResourceData, AttributeValues map[string]interface{}) error {
 	logger := log.FromContext(ctx)
