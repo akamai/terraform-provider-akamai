@@ -27,7 +27,6 @@ func resourceCPCode() *schema.Resource {
 
 		// NB: CP Codes cannot be deleted https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
 		DeleteContext: schema.NoopContext,
-		UpdateContext: schema.NoopContext,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -147,6 +146,9 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
+	if err := d.Set("group", groupID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	// Schema guarantees contract_id/contract are strings and one or the other is set
 	var contractID string
@@ -155,11 +157,14 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	} else {
 		contractID = d.Get("contract").(string)
 	}
-
 	contractID = tools.AddPrefix(contractID, "ctr_")
 	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
+	if err := d.Set("contract", contractID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	// Attempt to find by ID first
 	cpCode, err := findCPCode(ctx, d.Id(), contractID, groupID, meta)
 	if err != nil {
