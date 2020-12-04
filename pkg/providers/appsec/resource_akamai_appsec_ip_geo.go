@@ -144,7 +144,18 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	updateIPGeo.PolicyID = policyid
 
-	updateIPGeo.Block = "blockSpecificIPGeo"
+	mode, err := tools.GetStringValue("mode", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	if mode == "allow" {
+		updateIPGeo.Block = "blockAllTrafficExceptAllowedIPs"
+	}
+
+	if mode == "block" {
+		updateIPGeo.Block = "blockSpecificIPGeo"
+	}
 
 	updateIPGeo.GeoControls.BlockedIPNetworkLists.NetworkList = tools.SetToStringSlice(d.Get("geo_network_lists").(*schema.Set))
 	updateIPGeo.IPControls.BlockedIPNetworkLists.NetworkList = tools.SetToStringSlice(d.Get("ip_network_lists").(*schema.Set))

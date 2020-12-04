@@ -11,7 +11,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -44,13 +43,9 @@ func resourceAttackGroupAction() *schema.Resource {
 				Required: true,
 			},
 			"attack_group_action": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					Alert,
-					Deny,
-					None,
-				}, false),
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: ValidateActions,
 			},
 			"output_text": {
 				Type:        schema.TypeString,

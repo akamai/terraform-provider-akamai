@@ -28,7 +28,7 @@ func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
 
 		client.On("UpdateIPGeo",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Block: "", GeoControls: struct {
+			appsec.UpdateIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Block: "blockSpecificIPGeo", GeoControls: struct {
 				BlockedIPNetworkLists struct {
 					NetworkList []string "json:\"networkList\""
 				} "json:\"blockedIPNetworkLists\""

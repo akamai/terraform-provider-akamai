@@ -20,17 +20,26 @@ func TestAccAkamaiReputationProfileAction_res_basic(t *testing.T) {
 		cr := appsec.GetReputationProfileActionResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileAction.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
-
+		/*
+			crd := appsec.UpdateReputationProfileActionResponse{}
+			expectJSD := compactJSON(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileActionDelete.json"))
+			json.Unmarshal([]byte(expectJSD), &crd)
+		*/
 		client.On("GetReputationProfileAction",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetReputationProfileActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ReputationProfileID: 1685099, Action: "alert"},
+			appsec.GetReputationProfileActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ReputationProfileID: 1685099},
 		).Return(&cr, nil)
 
 		client.On("UpdateReputationProfileAction",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateReputationProfileActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ReputationProfileID: 1685099, Action: "alert"},
+			appsec.UpdateReputationProfileActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ReputationProfileID: 1685099, Action: "none"},
 		).Return(&cu, nil)
-
+		/*
+			client.On("RemoveReputationProfileAction",
+				mock.Anything, // ctx is irrelevant for this test
+				appsec.UpdateReputationProfileActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ReputationProfileID: 1685099, Action: "none"},
+			).Return(&crd, nil)
+		*/
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest: true,
@@ -41,7 +50,15 @@ func TestAccAkamaiReputationProfileAction_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_action.test", "id", "43253"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
+
+					/*{
+						Config: loadFixtureString("testdata/TestResReputationProfileAction/update_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_action.test", "id", "43253"),
+						),
+					},*/
 				},
 			})
 		})

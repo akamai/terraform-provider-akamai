@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -35,13 +34,9 @@ func resourceRuleAction() *schema.Resource {
 				Required: true,
 			},
 			"rule_action": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					Alert,
-					Deny,
-					None,
-				}, false),
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: ValidateActions,
 			},
 			"security_policy_id": {
 				Type:     schema.TypeString,

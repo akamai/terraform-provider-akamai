@@ -11,7 +11,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -44,22 +43,14 @@ func resourceRatePolicyAction() *schema.Resource {
 				Required: true,
 			},
 			"ipv4_action": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					Alert,
-					Deny,
-					None,
-				}, false),
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: ValidateActions,
 			},
 			"ipv6_action": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					Alert,
-					Deny,
-					None,
-				}, false)},
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: ValidateActions},
 		},
 	}
 }

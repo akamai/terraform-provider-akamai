@@ -137,7 +137,35 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceSecurityPolicyCloneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSecurityPolicyCloneRead")
+
+	removeSecurityPolicyClone := v2.RemoveSecurityPolicyRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSecurityPolicyClone.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSecurityPolicyClone.Version = version
+
+	removeSecurityPolicyClone.PolicyID = d.Id()
+
+	_, errd := client.RemoveSecurityPolicy(ctx, removeSecurityPolicyClone)
+	if errd != nil {
+		logger.Errorf("calling 'removeSecurityPolicyClone': %s", errd.Error())
+		return diag.FromErr(errd)
+	}
+
+	d.SetId("")
+
+	return nil
 }
 
 func resourceSecurityPolicyCloneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

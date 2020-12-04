@@ -194,15 +194,6 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	d.Set("policy_name", securitypolicy.PolicyName)
 	d.Set("security_policy_id", securitypolicy.PolicyID)
 	d.SetId(securitypolicy.PolicyID)
-	/*
-		for _, configval := range securitypolicy.Policies {
 
-			if configval.PolicyID == policyid {
-				d.Set("policy_name", configval.PolicyName)
-				d.Set("security_policy_id", configval.PolicyID)
-				d.SetId(configval.PolicyID)
-			}
-		}
-	*/
 	return nil
 }

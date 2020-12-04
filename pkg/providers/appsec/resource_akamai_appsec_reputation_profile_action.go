@@ -11,7 +11,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -44,13 +43,9 @@ func resourceReputationProfileAction() *schema.Resource {
 				Required: true,
 			},
 			"action": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					Alert,
-					Deny,
-					None,
-				}, false),
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: ValidateActions,
 			},
 		},
 	}
@@ -87,12 +82,13 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	}
 	getReputationProfileAction.ReputationProfileID = reputationprofileid
 
-	_, errr := client.GetReputationProfileAction(ctx, getReputationProfileAction)
+	resp, errr := client.GetReputationProfileAction(ctx, getReputationProfileAction)
 	if errr != nil {
 		logger.Errorf("calling 'getReputationProfileAction': %s", errr.Error())
 		return diag.FromErr(errr)
 	}
 
+	d.Set("action", resp.Action)
 	d.SetId(strconv.Itoa(getReputationProfileAction.ConfigID))
 
 	return nil
