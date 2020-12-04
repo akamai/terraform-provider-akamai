@@ -46,6 +46,12 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
+	GetPropertyVersionResources := func(PropertyID string, Version int, StagStatus, ProdStatus papi.VersionStatus) BehaviorFunc {
+		return func(State *TestState) {
+			ExpectGetPropertyVersion(State.Client, PropertyID, "grp_0", "ctr_0", Version, StagStatus, ProdStatus)
+		}
+	}
+
 	GetVersionResources := func(PropertyID string, Version int) BehaviorFunc {
 		return func(State *TestState) {
 			ExpectGetPropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, &State.Hostnames)
@@ -149,6 +155,7 @@ func TestResProperty(t *testing.T) {
 		Name: "Latest version is active in staging",
 		ClientSetup: ComposeBehaviors(
 			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
 			SetHostnames("prp_0", 2, "to2.test.domain"),
@@ -176,6 +183,7 @@ func TestResProperty(t *testing.T) {
 		Name: "Latest version is active in production",
 		ClientSetup: ComposeBehaviors(
 			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusActive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
 			SetHostnames("prp_0", 2, "to2.test.domain"),
@@ -203,6 +211,7 @@ func TestResProperty(t *testing.T) {
 		Name: "Latest version not active",
 		ClientSetup: ComposeBehaviors(
 			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			SetHostnames("prp_0", 1, "to2.test.domain"),
 		),
