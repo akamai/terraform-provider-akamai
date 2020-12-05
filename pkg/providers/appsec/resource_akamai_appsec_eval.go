@@ -99,6 +99,12 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 	getEval.PolicyID = policyid
 
+	evaloperation, err := tools.GetStringValue("eval_operation", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getEval.Eval = evaloperation
+
 	eval, err := client.GetEval(ctx, getEval)
 	if err != nil {
 		logger.Errorf("calling 'getEval': %s", err.Error())
@@ -129,7 +135,7 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalDelete")
 
-	removeEval := v2.UpdateEvalRequest{}
+	removeEval := v2.RemoveEvalRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -151,7 +157,7 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	removeEval.Eval = "STOP"
 
-	_, erru := client.UpdateEval(ctx, removeEval)
+	_, erru := client.RemoveEval(ctx, removeEval)
 	if erru != nil {
 		logger.Errorf("calling 'removeEval': %s", erru.Error())
 		return diag.FromErr(erru)

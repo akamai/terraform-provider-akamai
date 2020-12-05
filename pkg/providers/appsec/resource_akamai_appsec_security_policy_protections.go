@@ -124,41 +124,45 @@ func resourcePolicyProtectionsDelete(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourcePolicyProtectionsRemove")
 
-	removePolicyProtections := v2.UpdatePolicyProtectionsRequest{}
+	updatePolicyProtections := v2.UpdatePolicyProtectionsRequest{}
+	removePolicyProtections := v2.RemovePolicyProtectionsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	updatePolicyProtections.ConfigID = configid
 	removePolicyProtections.ConfigID = configid
 
 	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	updatePolicyProtections.Version = version
 	removePolicyProtections.Version = version
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	updatePolicyProtections.PolicyID = policyid
 	removePolicyProtections.PolicyID = policyid
 	//TODO remove once API fixed in Jan
-	removePolicyProtections.ApplyApplicationLayerControls = true
+	updatePolicyProtections.ApplyApplicationLayerControls = true
 
-	removePolicyProtections.ApplyNetworkLayerControls = false
+	updatePolicyProtections.ApplyNetworkLayerControls = false
 
-	removePolicyProtections.ApplyRateControls = false
+	updatePolicyProtections.ApplyRateControls = false
 
-	removePolicyProtections.ApplyReputationControls = false
+	updatePolicyProtections.ApplyReputationControls = false
 
-	removePolicyProtections.ApplyBotmanControls = false
+	updatePolicyProtections.ApplyBotmanControls = false
 
-	removePolicyProtections.ApplyAPIConstraints = false
+	updatePolicyProtections.ApplyAPIConstraints = false
 
-	removePolicyProtections.ApplySlowPostControls = false
+	updatePolicyProtections.ApplySlowPostControls = false
 
-	_, erru := client.UpdatePolicyProtections(ctx, removePolicyProtections)
+	_, erru := client.UpdatePolicyProtections(ctx, updatePolicyProtections)
 	if erru != nil {
 		logger.Errorf("calling 'removePolicyProtections': %s", erru.Error())
 		return diag.FromErr(erru)
@@ -178,7 +182,7 @@ func resourcePolicyProtectionsDelete(ctx context.Context, d *schema.ResourceData
 
 	removePolicyProtections.ApplySlowPostControls = false
 
-	_, errd := client.UpdatePolicyProtections(ctx, removePolicyProtections)
+	_, errd := client.RemovePolicyProtections(ctx, removePolicyProtections)
 	if errd != nil {
 		logger.Errorf("calling 'removePolicyProtections': %s", errd.Error())
 		return diag.FromErr(errd)

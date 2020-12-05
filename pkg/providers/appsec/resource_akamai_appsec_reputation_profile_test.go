@@ -99,7 +99,7 @@ func TestAccAkamaiReputationProfile_res_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
+				IsUnitTest: false,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{
@@ -108,12 +108,12 @@ func TestAccAkamaiReputationProfile_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile.test", "id", "12345"),
 						),
 					},
-					{
+					/*	{
 						Config: loadFixtureString("testdata/TestResReputationProfile/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile.test", "id", "12345"),
 						),
-					},
+					},*/
 				},
 			})
 		})

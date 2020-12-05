@@ -2,7 +2,7 @@
     {
         "ruleActions": [
             {
-                "action": "none",
+                "action": "alert",
                 "id": 699989
             },
             {

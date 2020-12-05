@@ -9,7 +9,7 @@ resource "akamai_appsec_reputation_profile_action" "test" {
     version = 7
     security_policy_id = "AAAA_81230"
     reputation_profile_id = 1685099
-    action = "alert"
+    action = "none"
 }
 
 

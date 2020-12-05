@@ -14,12 +14,16 @@ func TestAccAkamaiEval_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateEvalResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResEval/EvalStop.json"))
+		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResEval/EvalStart.json"))
 		json.Unmarshal([]byte(expectJSU), &cu)
 
 		cr := appsec.GetEvalResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResEval/EvalStart.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
+
+		crd := appsec.RemoveEvalResponse{}
+		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResEval/EvalStop.json"))
+		json.Unmarshal([]byte(expectJSD), &crd)
 
 		client.On("GetEval",
 			mock.Anything, // ctx is irrelevant for this test
@@ -28,8 +32,13 @@ func TestAccAkamaiEval_res_basic(t *testing.T) {
 
 		client.On("UpdateEval",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateEvalRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Eval: "START"},
+			appsec.UpdateEvalRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Current: "", Eval: "START"},
 		).Return(&cu, nil)
+
+		client.On("RemoveEval",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.RemoveEvalRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Current: "", Eval: "STOP"},
+		).Return(&crd, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
