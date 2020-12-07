@@ -19,8 +19,6 @@ provider "akamai" {
   appsec_section = "default"
 }
 
-// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html (URL will be updated)
-
 // USE CASE: user wants to view all security policy protections
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
