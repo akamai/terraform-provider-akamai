@@ -45,7 +45,7 @@ This resource supports these arguments:
 * `contact` - (Required) One or more email addresses to send activation status changes to.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
-* `product_id` - (Required) A product's unique ID, including the `prd_` prefix.
+* `product_id` - (Required to create, otherwise Optional) A product's unique ID, including the `prd_` prefix.
 * `hostnames` - (Required) A mapping of public hostnames to edge hostnames (For example: `{"example.org" = "example.org.edgesuite.net"}`)
 * `rules` - (Required) A JSON-encoded rule tree for a given property. For this argument, you need to enter a complete JSON rule tree, unless you set up a series of JSON templates. See the [`akamai_property_rules`](/docs/providers/akamai/d/property_rules.html))
 * `rule_format` - (Optional) The [rule format](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats) to use. Uses the latest rule format by default.
