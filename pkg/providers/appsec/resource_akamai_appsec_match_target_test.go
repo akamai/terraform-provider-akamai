@@ -53,31 +53,6 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 			}(nil)},
 		).Return(&crmt, nil)
 
-		/*
-			client.On("CreateMatchTarget",
-				mock.Anything, // ctx is irrelevant for this test
-				appsec.CreateMatchTargetRequest{Type: "website", ConfigID: 43253, ConfigVersion: 7, DefaultFile: "BASE_MATCH", EffectiveSecurityControls: struct {
-					ApplyApplicationLayerControls bool "json:\"applyApplicationLayerControls\""
-					ApplyBotmanControls           bool "json:\"applyBotmanControls\""
-					ApplyNetworkLayerControls     bool "json:\"applyNetworkLayerControls\""
-					ApplyRateControls             bool "json:\"applyRateControls\""
-					ApplyReputationControls       bool "json:\"applyReputationControls\""
-					ApplySlowPostControls         bool "json:\"applySlowPostControls\""
-				}{ApplyApplicationLayerControls: false, ApplyBotmanControls: false, ApplyNetworkLayerControls: false, ApplyRateControls: false, ApplyReputationControls: false, ApplySlowPostControls: false}, FileExtensions: []string{"pdf", "swf", "js", "jpeg", "pws", "wmls", "cct", "hdml", "pct", "carb"}, FilePaths: []string{"/price_toy/*", "/cache/aaabbc*", "/sssi/*"}, Hostnames: []string{"www.example.net", "m.example.com", "example.com"}, IsNegativeFileExtensionMatch: false, IsNegativePathMatch: true, SecurityPolicy: struct {
-					PolicyID string "json:\"policyId\""
-				}{PolicyID: "AAAA_81230"}, Sequence: 0, BypassNetworkLists: []struct {
-					Name string "json:\"name\""
-					ID   string "json:\"id\""
-				}{struct {
-					Name string "json:\"name\""
-					ID   string "json:\"id\""
-				}{Name: "", ID: "1304427_AAXXBBLIST"}, struct {
-					Name string "json:\"name\""
-					ID   string "json:\"id\""
-				}{Name: "", ID: "888518_ACDDCKERS"}}},
-			).Return(&crmt, nil)
-		*/
-
 		client.On("UpdateMatchTarget",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.UpdateMatchTargetRequest{Type: "website", ConfigID: 43253, ConfigVersion: 15, TargetID: 3008967, DefaultFile: "NO_MATCH", EffectiveSecurityControls: struct {
@@ -94,30 +69,6 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 				ID   string "json:\"id\""
 			}(nil)},
 		).Return(&cu, nil)
-		/*
-			client.On("UpdateMatchTarget",
-				mock.Anything, // ctx is irrelevant for this test
-				appsec.UpdateMatchTargetRequest{Type: "website", ConfigID: 43253, ConfigVersion: 7, DefaultFile: "BASE_MATCH", EffectiveSecurityControls: struct {
-					ApplyApplicationLayerControls bool "json:\"applyApplicationLayerControls\""
-					ApplyBotmanControls           bool "json:\"applyBotmanControls\""
-					ApplyNetworkLayerControls     bool "json:\"applyNetworkLayerControls\""
-					ApplyRateControls             bool "json:\"applyRateControls\""
-					ApplyReputationControls       bool "json:\"applyReputationControls\""
-					ApplySlowPostControls         bool "json:\"applySlowPostControls\""
-				}{ApplyApplicationLayerControls: false, ApplyBotmanControls: false, ApplyNetworkLayerControls: false, ApplyRateControls: false, ApplyReputationControls: false, ApplySlowPostControls: false}, Hostnames: []string{"m1.example.com"}, IsNegativeFileExtensionMatch: false, IsNegativePathMatch: false, FilePaths: []string{"/price_toy/*", "/cache/aaabbc*", "/sssi/*"}, FileExtensions: []string{"pdf", "swf", "js", "jpeg", "pws", "wmls", "cct", "hdml", "pct", "carb"}, SecurityPolicy: struct {
-					PolicyID string "json:\"policyId\""
-				}{PolicyID: "AAAA_81230"}, Sequence: 0, TargetID: 3008967, BypassNetworkLists: []struct {
-					Name string "json:\"name\""
-					ID   string "json:\"id\""
-				}{struct {
-					Name string "json:\"name\""
-					ID   string "json:\"id\""
-				}{Name: "", ID: "1304427_AAXXBBLIST"}, struct {
-					Name string "json:\"name\""
-					ID   string "json:\"id\""
-				}{Name: "", ID: "888518_ACDDCKERS"}}},
-			).Return(&cu, nil)
-		*/
 
 		client.On("RemoveMatchTarget",
 			mock.Anything, // ctx is irrelevant for this test
@@ -126,7 +77,7 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
+				IsUnitTest: false,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{

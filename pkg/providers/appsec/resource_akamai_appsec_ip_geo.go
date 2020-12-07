@@ -116,7 +116,40 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 
 func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceIPGeoDelete")
+
+	updatePolicyProtections := v2.UpdatePolicyProtectionsRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updatePolicyProtections.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updatePolicyProtections.Version = version
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updatePolicyProtections.PolicyID = policyid
+
+	updatePolicyProtections.ApplyNetworkLayerControls = false
+
+	logger.Errorf("calling 'resourceIPGeoDelete': %v", updatePolicyProtections)
+	_, erru := client.UpdatePolicyProtections(ctx, updatePolicyProtections)
+	if erru != nil {
+		logger.Errorf("calling 'resourceIPGeoDelete': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+	d.SetId("")
+	return nil
 }
 
 func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
