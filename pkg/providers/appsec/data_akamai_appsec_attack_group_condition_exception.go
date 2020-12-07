@@ -88,7 +88,7 @@ func dataSourceAttackGroupConditionExceptionRead(ctx context.Context, d *schema.
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "AttackGroupConditionException", attackgroupconditionexception)
+	outputtext, err := RenderTemplates(ots, "RuleConditionException", attackgroupconditionexception)
 
 	if err == nil {
 		d.Set("output_text", outputtext)
