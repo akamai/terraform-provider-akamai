@@ -1,0 +1,202 @@
+[
+    {
+        "customRules": [
+            {
+                "id": 60036360,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036360",
+                "name": "Existing Test Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60038316,
+                "link": "/appsec/v1/configs/43253/custom-rules/60038316",
+                "name": "Fat Rule 1",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60036362,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036362",
+                "name": "Existing Test Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036189,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036189",
+                "name": "Fat Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60038318,
+                "link": "/appsec/v1/configs/43253/custom-rules/60038318",
+                "name": "Fat Rule 1",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60036332,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036332",
+                "name": "Existing Test Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036378,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036378",
+                "name": "Existing Test Rule",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60036370,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036370",
+                "name": "Existing Test Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036377,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036377",
+                "name": "Existing Test Rule 1",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60038437,
+                "link": "/appsec/v1/configs/43253/custom-rules/60038437",
+                "name": "Fat Rule 1",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60036213,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036213",
+                "name": "Existing Test Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036088,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036088",
+                "name": "Fat Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036192,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036192",
+                "name": "Fat Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036188,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036188",
+                "name": "Fat Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036209,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036209",
+                "name": "Existing Test Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036134,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036134",
+                "name": "Fat Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036115,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036115",
+                "name": "Fat Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60039068,
+                "link": "/appsec/v1/configs/43253/custom-rules/60039068",
+                "name": "Fat Rule 1",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60036374,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036374",
+                "name": "Existing Test Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60035868,
+                "link": "/appsec/v1/configs/43253/custom-rules/60035868",
+                "name": "Fat Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60039893,
+                "link": "/appsec/v1/configs/43253/custom-rules/60039893",
+                "name": "Fat Rule 1",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60036330,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036330",
+                "name": "Existing Test Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60038315,
+                "link": "/appsec/v1/configs/43253/custom-rules/60038315",
+                "name": "Fat Rule 1",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60038317,
+                "link": "/appsec/v1/configs/43253/custom-rules/60038317",
+                "name": "Fat Rule 1",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60039430,
+                "link": "/appsec/v1/configs/43253/custom-rules/60039430",
+                "name": "Fat Rule 1",
+                "status": "unused",
+                "version": 1
+            },
+            {
+                "id": 60036195,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036195",
+                "name": "Fat Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60036190,
+                "link": "/appsec/v1/configs/43253/custom-rules/60036190",
+                "name": "Fat Rule 1",
+                "status": "published",
+                "version": 1
+            },
+            {
+                "id": 60039625,
+                "link": "/appsec/v1/configs/43253/custom-rules/60039625",
+                "name": "Fat Rule 1",
+                "status": "unused",
+                "version": 1
+            }
+        ]
+    }
+]

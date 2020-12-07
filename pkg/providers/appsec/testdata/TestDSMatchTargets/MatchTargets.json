@@ -1,0 +1,52 @@
+[
+    {
+        "matchTargets": {
+            "websiteTargets": [
+                {
+                    "type": "website",
+                    "configId": 43253,
+                    "configVersion": 15,
+                    "defaultFile": "NO_MATCH",
+                    "effectiveSecurityControls": {
+                        "applyApplicationLayerControls": false,
+                        "applyBotmanControls": true,
+                        "applyNetworkLayerControls": true,
+                        "applyRateControls": true,
+                        "applyReputationControls": true,
+                        "applySlowPostControls": true
+                    },
+                    "fileExtensions": [
+                        "carb",
+                        "pct",
+                        "pdf",
+                        "swf",
+                        "cct",
+                        "jpeg",
+                        "js",
+                        "wmls",
+                        "hdml",
+                        "pws"
+                    ],
+                    "filePaths": [
+                        "/cache/aaabbc*",
+                        "/price_toy/*",
+                        "/sssi/*"
+                    ],
+                    "hostnames": [
+                        "n.example.com",
+                        "www.example.net",
+                        "example.com"
+                    ],
+                    "isNegativeFileExtensionMatch": false,
+                    "isNegativePathMatch": false,
+                    "securityPolicy": {
+                        "policyId": "AAAA_81230"
+                    },
+                    "sequence": 1,
+                    "targetId": 3008967
+                }
+            ],
+            "apiTargets": []
+        }
+    }
+]

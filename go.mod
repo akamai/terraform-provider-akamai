@@ -10,6 +10,7 @@ require (
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-hclog v0.9.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
+	github.com/jedib0t/go-pretty/v6 v6.0.4
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/spf13/cast v1.3.1

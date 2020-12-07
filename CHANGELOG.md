@@ -36,6 +36,16 @@
 * data-sources/akamai_cp_code aliased group to group_id and contract to contract_id.
 * data-sources/akamai_group aliased name to group_name and contract to contract_id.
 
+## 0.11.0 (Nov 19,2020)
+
+#### NOTES:
+* provider: Added support for application security API
+#### BUG FIXES:
+* provider: Updated edgegrid library to version 2.0.2. Ths should include the following fixes:
+    * Re-enabled global account switch key support in edgerc files for reseller accounts.
+    * PAPI - edgehostname updated returns - The System could not find cnameTo value
+    * PAPI - property update return error - You provided an Etag that does not represent the last edit. Another edit has occurred, so check your request again before retrying.
+
 ## 0.10.2 (Oct 22,2020)
 #### NOTES:
 * Documentation formatting
