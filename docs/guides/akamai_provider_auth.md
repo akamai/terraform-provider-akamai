@@ -6,9 +6,8 @@ description: |-
 ---
 
 # Authenticate the Akamai Terraform Provider
-<!--Not sure about the name of this doc is clear enough. Any suggestions?-->
 
-Authentication of Terraform configurations relies on the Akamai EdgeGrid
+Authentication of Akamai Terraform Provider relies on the Akamai EdgeGrid
 authentication scheme. The Akamai Provider code acts as a
 wrapper for our APIs and reuses the same authentication mechanism. We
 recommend storing your API credentials in a local .edgerc file.
@@ -56,7 +55,7 @@ supporting API service names:
 Once you create the supporting API clients you can update your local
 `.edgerc file`.
 
-### Add your local .edgerc file to your Akamai Provider config
+## Add your local .edgerc file to your Akamai Provider config
 
 
 To reference a local .edgerc file, you add this line to the top of the
@@ -76,7 +75,6 @@ terraform {
   required_providers {
     akamai = {
       source  = "hashicorp/akamai"
-      version = "~> 0.10.0"
     }
   }
 }
@@ -130,7 +128,6 @@ resource "akamai_dns_record" "example_record" {
   ttl        = 600
   target     = ["example.org.akamaized.net."]
 }
-
 ```
 
 
@@ -148,20 +145,27 @@ If you don't use `property_section`, the Akamai Provider uses the credentials in
 * dns_section - (Deprecated) The credential section to use for the [Edge DNS Zone Management API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html). If you don't use `dns_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
 * [gtm_section] - (Deprecated) The credential section to use for the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html). If you don't use `gtm_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
 
-## How else can I authenticate on Akamai?
+## Authenticate using inline credentials
 
 Referencing a local `.edgerc` file in your `akamai.tf` file is the preferred
-authentication method. But there are a few other methods you can use, like inline credentials and environment variables.
-
-Authenticate using inline credentials
--------------------------------------
-
-If needed, you can specify credentials inline for each resource or data
-source. To do this, add a `config` block that includes authentication information.
+authentication method. If needed, you can specify credentials inline for each 
+resource or data source. To do this, add a `config` block that includes authentication information.
 
 ### Example usage
+When using inline credentials, you need to update the Akamai Provider block to this:
 
-<!--**NEED CODE EXAMPLE HERE.**-->
+```
+provider "akamai" {
+  config { # NOTE : Replace values with valid edge token values
+    client_secret = "abcde7926304iHSUIYGE+9876XYZabcd/Io89="
+    host = "akaa-blablablablablabla-blabla920937blabla.luna-dev.akamaiapis.net"
+    access_token = "akaa-abcdef8398279-zyx90380397"
+    client_token = "akaa-lksalhdsuw8993-982hj2kjdb2u"
+  }
+}
+```
+
+You don't need the `edgerc` or `config_section` attributes that you'd use if you were adding your local `.edgerc` file to your Akamai Provider config.
 
 ### Argument reference
 
@@ -170,8 +174,7 @@ source. To do this, add a `config` block that includes authentication informatio
   * `access_token` - (Required) The service's access token from the `.edgerc` file.
   * `client_token` - (Required) The service's client token from the `.edgerc` file.
   * `client_secret` - (Required) The service's client secret from the `.edgerc` file.
-  * `max_body` - (Optional) The service's maximum data payload size in bytes. The default is 131072 bytes.
-<!--Is the max_body description accurate?-->
+  * `max_body` - (Optional) The service's maximum data payload size in bytes. 
   * `account_key` - (Optional) If managing multiple accounts, the account ID you want to use when running Terraform commands. The account selected persists for all commands until you change it.
 
 #### Deprecated arguments
@@ -180,7 +183,7 @@ source. To do this, add a `config` block that includes authentication informatio
 * `gtm` - (Deprecated) Legacy Global Traffic Management API service argument for inline authentication. Used same arguments as the current `config` block.
 * `property` - (Deprecated) Legacy Property Manager API service argument for inline authentication. Used same arguments as the current `config` block.
 
-### Authenticate using environment variables
+## Authenticate using environment variables
 
 You can also use environment variables to set credential values.
 Environment variables take precedence over the settings in the `.edgerc`
@@ -201,17 +204,39 @@ These variables cover the arguments you'd enter if using inline variables.
 
 If you're setting up variables for your `default` credentials, you can use these variables:
 
-* `AKAMAI_HOST`
-* `AKAMAI_ACCESS_TOKEN`
-* `AKAMAI_CLIENT_TOKEN`
+* `AKAMAI_HOST` 
+* `AKAMAI_ACCESS_TOKEN` 
+* `AKAMAI_CLIENT_TOKEN` 
 * `AKAMAI_CLIENT_SECRET`
-* `AKAMAI_MAX_BODY` (Optional)
-* `AKAMAI_ACCOUNT_KEY` (Optional)
+* `AKAMAI_MAX_BODY` (Optional) 
+* `AKAMAI_ACCOUNT_KEY` (Optional) 
 
 ### Example usage
 
-<!--**NEED CODE EXAMPLE HERE.**-->
+First, set up the base Akamai Provider block so that it's empty:
 
-### Argument reference
+```
+provider "akamai" {}
+```
 
-<!--**Is this section needed? Not sure if it would be a repeat of the Argument reference section above.**-->
+Then, in your terminal, set the values for your variables and run `terraform apply`: 
+
+``` 
+AKAMAI_HOST=akaa-hfwxy7qdv3a6v5pc-xupo52fjzb3yhpgw.luna-dev.akamaiapis.net \
+AKAMAI_ACCESS_TOKEN=akaa-gzzvy3juqgjts7ao-xmhsyq4tsif5likt \
+AKAMAI_CLIENT_TOKEN=akaa-ds7bmxvsl4rtjii6-vpuo5l5mf7n2z4bn \
+AKAMAI_CLIENT_SECRET=vzy6SEo8nja23k2XXMYofnD10Xag+ju2iwwABu/QsOo= \
+terraform apply
+```
+
+### Variable reference
+When using variables, you'll need to set them up based on the sections of your `.edgerc` they represent. Your environment variables should be in this format: `AKAMAI{_SECTION_NAME}_\*`
+
+These are the variables for the `default` section of your `.edgerc` and what they represent: 
+
+* `AKAMAI_HOST` - (Required) The base credential hostname without the protocol.
+* `AKAMAI_ACCESS_TOKEN` - (Required) The service's access token from the `.edgerc` file.
+* `AKAMAI_CLIENT_TOKEN` - (Required) The service's client token from the `.edgerc` file.
+* `AKAMAI_CLIENT_SECRET` - (Required) The service's client secret from the `.edgerc` file.
+* `AKAMAI_MAX_BODY` - (Optional) The service's maximum data payload size in bytes.
+* `AKAMAI_ACCOUNT_KEY` - (Optional) If managing multiple accounts, the account ID you want to use when running Terraform commands. The account selected persists for all commands until you change it.

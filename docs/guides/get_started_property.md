@@ -5,9 +5,7 @@ description: |-
   Get Started with Akamai Property Management using Terraform
 ---
 
-# Get Started with Property Management
-<!--Is this the right name? This is for the Provisioning module, which you can 
-use to set up properties.-->
+# Get Started with the Provisioning Module
 
 You can use Provisioning module resources and data sources to create,
 deploy, activate, and manage properties, edge hostnames, and content
@@ -17,20 +15,18 @@ For more information about properties, see [Property Manager documentation](http
 
 ## Prerequisites
 
-Before you can create a property, you need to complete these prerequisties:
-meet:
+Before you can create a property, you need to complete the tasks in the [Get Started with the Akamai Terraform Provider](../guides/get_started_provider) guide. Be sure you have the contract and group IDs you retrieved available. You'll need them to set up the Provisioning module.
 
-* **Set up the Akamai Terraform Provider.** You need to complete the tasks in the [Get Started with the Akamai Terraform Provider](../guides/get_started_provider) guide. Be sure you have the contract and group IDs you retrieved available. You'll need them to set up the Provisioning module.
-	<!--Did I get the URL right?-->
-* **Retrieve the Product ID**. You'll need the [Akamai Product ID](../guides/appendix#common-product-ids) for the product you are using, like Ion or Adaptive Media Delivery.
+## Provisioning Workflow 
 
-<!--Go back to this. Need prereqs and a workflow.-->
+To set up the Provisioning module, you need to: 
 
-* **Edge hostname:** The Akamai edge hostname for your property. You can [create a new one or reuse an existing one](#add-an-edge-hostname). 
-<!--Did I get the URL right?-->
-* **Origin hostname:** The origin hostname you want your property to point to. Your property should point to an origin hostname you create.
-<!--Where do you use this? It doesn't seem to be mentioned later.-->
-* **Rules configuration**: The `rules.json` file contains the base rules for the property. 
+* [Retrieve the product ID](#retrieve-the-product-id). This is the ID for the product you are using, like Ion or Adaptive Media Delivery.
+* [Add or create an edge hostname](#add-an-edge-hostname).
+* [Set up rules for your property](#set-up-property-rules). A separate `rules.json` file contains the base rules for the property. 
+* [Import or create a property](#import-or-create-a-property).
+* [Apply your property changes](#apply_your_property_changes). This step adds the property to your Terraform configuration.
+* [Activate your property](#activate_your_property]). Once you apply your property changes, you have to activate the property configuration for it to be live.
 
 ## Retrieve the product ID
 
@@ -129,7 +125,6 @@ of the property, contact email, product ID, group ID, CP code, property hostname
 Finally, you set up the property rules. You first specify the [rule
 format argument](../resources/property.md#rule_format),
 then add the path to the `rules.json` file. You can set a variable for the path, like `${path.module}`. 
-<!--Will the link take you directly to the argument? Thought that only worked with headings.-->
 
 Once you're done, your property should look like this:
 <!--Does it make sense to add the provider block to this example?-->
