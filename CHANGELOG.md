@@ -5,36 +5,36 @@
 #### BREAKING CHANGES:
 * provider: configuring via an inline provider block (`property`, `dns`, or `gtm`) has been replaced with a more general `config` block that works the same way.
 * There are several breaking changes in the 1.0 release.  You should consult the [Migration guide](docs/guides/1.0_migration.md) for details.
-  * resource/akamai_property_activation no longer supports the following fields : activate.  version has gone from being optional to being a required field.
-  * datasource/akamai_property_rules removed in favor of using template JSON object to better work with other Akamai tools and documentation that is all JSON based.
-  * resource/akamai_property_variables removed in favor of directly managing the variable segment as part of ruletree object.
-  * resource/akamai_cp_code no longer auto-imports on create. If a conflict is detected will error out and to ignore simply import the resource.
-  * resource/akamai_edge_hostname no longer supports the following fields : ipv4, ipv6. The revised resource allows setting ip_behavior directly.
-  * resource/akamai_property no longer supports the following fields : cp_code, origin, variables, is_secure, contact. The revised resource simplifies the object structure and removes the ability to set the same value more than one way.
+  * resources/akamai_property_activation no longer supports the following fields : activate.  version has gone from being optional to being a required field.
+  * data-sources/akamai_property_rules removed in favor of using template JSON object to better work with other Akamai tools and documentation that is all JSON based.
+  * resources/akamai_property_variables removed in favor of directly managing the variable segment as part of ruletree object.
+  * resources/akamai_cp_code no longer auto-imports on create. If a conflict is detected will error out and to ignore simply import the resource.
+  * resources/akamai_edge_hostname no longer supports the following fields : ipv4, ipv6. The revised resource allows setting ip_behavior directly.
+  * resources/akamai_property no longer supports the following fields : cp_code, origin, variables, is_secure, contact. The revised resource simplifies the object structure and removes the ability to set the same value more than one way.
 #### NOTES:
 * provider/papi: changed attribute names in Provisioning to distinguish objects and names from id attributes.  In prior releases, "group" could represent a name, an id, or sometimes both. This release distinguishes them with distinct attribute names "group_name", "group_id" instead of "group"."
 #### KNOWN BUGS:
 * none known
 #### FEATURES:
-* datasource/akamai_properties added to list properties accessible to the user.
-* datasource/akamai_property_contracts added to list contracts accessible to the user.
-* datasource/akamai_property_groups added to list groups accessible to the user.
-* datasource/akamai_property_products added to list products associated with a given contract.
-* datasource/akamai_property_rule_formats added to list rule_formats.
-* datasource/akamai_property_rules changed to output the structure of a particular rule version on the server. NOTE: this is NOT the same as the deprecated datasource used for rule formatting.
-* datasource/akamai_rules_template added to handle file based JSON templating for rules tree data management
+* data-sources/akamai_properties added to list properties accessible to the user.
+* data-sources/akamai_property_contracts added to list contracts accessible to the user.
+* data-sources/akamai_property_groups added to list groups accessible to the user.
+* data-sources/akamai_property_products added to list products associated with a given contract.
+* data-sources/akamai_property_rule_formats added to list rule_formats.
+* data-sources/akamai_property_rules changed to output the structure of a particular rule version on the server. NOTE: this is NOT the same as the deprecated datasource used for rule formatting.
+* data-sources/akamai_rules_template added to handle file based JSON templating for rules tree data management
 #### ENHANCEMENTS:
-* resource/akamai_property_activation aliased property to property_id. Returns these additional attributes : target_version, warnings, errors, activation_id, and status
+* resources/akamai_property_activation aliased property to property_id. Returns these additional attributes : target_version, warnings, errors, activation_id, and status
 #### BUG FIXES:
 * provider: provider configuration validation requires an edgerc file configured and present even when environment variable-based configuration was used.
 * provider: provider inline configuration support was re-introduced as a new config field.
-* resource/akamai_property_activation activating and destroying activation for the same property multiple times in a row would fail on second destroy attempt and subsequent destroy attempts with "resource not found error" message.
-* resource/akamai_property_activation wrong activation id read for property versions that had been activated and deactivated multiple time.
+* resources/akamai_property_activation activating and destroying activation for the same property multiple times in a row would fail on second destroy attempt and subsequent destroy attempts with "resource not found error" message.
+* resources/akamai_property_activation wrong activation id read for property versions that had been activated and deactivated multiple time.
 #### MINOR CHANGES:
-* resource/akamai_property aliased property to property_id. contract to contract_id, and product to product_id and account to account_id.  Renamed version to latest_version.
-* datasource/akamai_contract aliased group to group_id and/or group_name.
-* datasource/akamai_cp_code aliased group to group_id and contract to contract_id.
-* datasource/akamai_group aliased name to group_name and contract to contract_id.
+* resources/akamai_property aliased property to property_id. contract to contract_id, and product to product_id and account to account_id.  Renamed version to latest_version.
+* data-sources/akamai_contract aliased group to group_id and/or group_name.
+* data-sources/akamai_cp_code aliased group to group_id and contract to contract_id.
+* data-sources/akamai_group aliased name to group_name and contract to contract_id.
 
 ## 0.10.2 (Oct 22,2020)
 #### NOTES:
@@ -49,23 +49,23 @@
 
 #### NOTES:
 * provider: The backing edgegrid library was entirely rewritten.  Provider behavior should be preserved but there is chance of incidental changes due to the project size.
-* resource/akamai_edge_hostname: edge_hostname field should be provided with an ending of edgesuite.net, edgekey.net, or akamaized.net.  If a required suffix is not provided then edgesuite.net is appended as default.
+* resources/akamai_edge_hostname: edge_hostname field should be provided with an ending of edgesuite.net, edgekey.net, or akamaized.net.  If a required suffix is not provided then edgesuite.net is appended as default.
 #### KNOWN BUGS:
 * provider: provider configuration validation requires an edgerc file configured and present even when one should not be needed.
 * provider: support for configuring the provider via an inline provider block (`property`, `dns`, or `gtm`) no longer works.  Users should use edgerc file or Terraform environment args to configure instead.
 #### ENHANCEMENTS:
 * provider: improved error handling and improved message consistency
 * provider: release notes categorize updates according to Terraform best practices guide.
-* resource/akamai_cp: support ids with and without prefixes
-* resource/akamai_edge_hostnames: support ids with and without prefixes
-* resource/akamai_property: support ids with and without prefixes
-* resource/akamai_property_activation: support ids with and without prefixes
+* resources/akamai_cp: support ids with and without prefixes
+* resources/akamai_edge_hostnames: support ids with and without prefixes
+* resources/akamai_property: support ids with and without prefixes
+* resources/akamai_property_activation: support ids with and without prefixes
 #### BUG FIXES:
-* resource/akamai_property: [AT-42] Fix criteria_match values handling
+* resources/akamai_property: [AT-42] Fix criteria_match values handling
 * provider: fixed documentation to properly present guides and categories on Hashicorp Terraform registry site
-* resource/edge_hostname: added error when neither IPV4 nor IPV6 is selected
-* resource/akamai_property: comparisons in rule tree now properly ignore equivalent values with attribute order differences.
-* datasource/akamai_property_rules: comparisons in rule tree now properly ignore equivalent values with attribute order differences.
+* resources/edge_hostname: added error when neither IPV4 nor IPV6 is selected
+* resources/akamai_property: comparisons in rule tree now properly ignore equivalent values with attribute order differences.
+* data-sources/akamai_property_rules: comparisons in rule tree now properly ignore equivalent values with attribute order differences.
 * provider: updated all error messages to better identify issues and actions required by user
 * provider: fixed crash due to unexpected data types from unexpected API responses
 * provider: fixed crash due to unexpected data types in Terraform files
@@ -74,7 +74,7 @@
 ## 0.9.1 (Sept 02, 2020)
 #### BREAKING CHANGES:
 * [IMPORTANT] Dropped support for TF clients <= 0.11. Provider now built using Terraform sdk v2 library. Terraform dropped 0.11 client support as part of this update.  This change will make many new enhancements possible. ([See: Terraform v2 sdk](https://www.terraform.io/docs/extend/guides/v2-upgrade-guide.html))
-* resource/akamai_group: contract field (previously optional) now required to ensure contract and group agreement.
+* resources/akamai_group: contract field (previously optional) now required to ensure contract and group agreement.
 
 #### NOTES:
 * [CHANGE] Individual edgerc file sections for different Akamai APIs (i.e., `property_section`, `dns_section`) has been deprecated in favor a common `config_section` used in conjuction with provider aliases ([See: Multiple Provider Configurations](https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations))
