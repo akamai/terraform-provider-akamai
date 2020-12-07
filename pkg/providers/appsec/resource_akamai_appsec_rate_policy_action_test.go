@@ -42,7 +42,7 @@ func TestAccAkamaiRatePolicyAction_res_basic(t *testing.T) {
 		*/
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
+				IsUnitTest: false,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{

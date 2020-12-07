@@ -86,7 +86,7 @@ func dataSourceEvalRuleConditionExceptionRead(ctx context.Context, d *schema.Res
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "EvalRuleConditionExceptions", evalruleconditionexception)
+	outputtext, err := RenderTemplates(ots, "RuleConditionException", evalruleconditionexception)
 
 	if err == nil {
 		d.Set("output_text", outputtext)
