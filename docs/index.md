@@ -10,7 +10,9 @@ description: |-
 The Akamai Terraform Provider is used to interact with Akamai and manage solutions for content
 delivery, security, and performance.
 
-Last updated: October 2020.
+!>Version 1.0.0 of the Akamai provider for Terraform is a major release and includes breaking changes you may need to adapt in your configuration when upgrading. See [1.0 Migration guide](guides/1.0_migration.md) for details.
+
+Last updated: December 2020.
 
 ## Prerequisites
 

@@ -45,13 +45,11 @@ This resource supports these arguments:
 * `product_id` - (Required) A product's unique ID, including the `prd_` prefix.
 * `edge_hostname` - (Required) One or more edge hostnames. The number of edge hostnames must be less than or equal to the number of public hostnames.
 * `certificate` - (Optional) Required only when creating an Enhanced TLS edge hostname. This argument sets the certificate enrollment ID. Edge hostnames (`edge_hostname`) for Enhanced TLS end in `edgekey.net`. You can retrieve this ID from the Certificate Provisioning System.
-* `ip_behavior` - (Optional) Which version of the IP protocol to use: `IPV4` for version 4 only, `IPV6_PERFORMANCE` for version 6 only, or `IPV6_COMPLIANCE` for both 4 and 6. The default value is `IPV4`.
+* `ip_behavior` - (Required) Which version of the IP protocol to use: `IPV4` for version 4 only, `IPV6_PERFORMANCE` for version 6 only, or `IPV6_COMPLIANCE` for both 4 and 6. The default value is `IPV4`.
 
 ### Deprecated Arguments
 
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
-* `ipv6` -  (Deprecated) Optional argument used when a property supports IPv6 to origin. An existing resource will use this argument if `ip_behavior` hasn't been added. Set to `false` by default.
-* `ipv4` - (Deprecated) Optional argument used when a property supports IPv4 to origin. An existing resource will use this argument if `ip_behavior` hasn't been added. Set to `true` by default.
 * `product` - (Deprecated) Replaced by `product_id`. Maintained for legacy purposes.
 
 ## Attributes Reference
