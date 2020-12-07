@@ -32,13 +32,6 @@ resource "akamai_appsec_rate_policy" "rate_policy" {
 output "rate_policy_id" {
   value = akamai_appsec_rate_policy.rate_policy.rate_policy_id
 }
-
-// USE CASE: user wants to update an existing rate policy for a given configuration and version, using a JSON rule definition
-/*resource "akamai_appsec_rate_policy" "rate_policy" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
-  rate_policy_id =  var.rate_policy_id
-}*/
 ```
 
 ## Argument Reference

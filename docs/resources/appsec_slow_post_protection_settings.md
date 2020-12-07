@@ -56,5 +56,5 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* None
+* `output_text` - A tabular display showing the current protection settings.
 

@@ -28,8 +28,7 @@ data "akamai_appsec_configuration" "configuration" {
 resource "akamai_appsec_match_target_sequence" "match_target_sequence" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
-  type =  "website"
-  json =  file("${path.module}/match_targets.json")
+  match_target_sequence =  file("${path.module}/match_targets.json")
 }
 ```
 
@@ -41,14 +40,11 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-* `json` - (Required) The name of a JSON file containing the sequence of all match targets defined for the specified security configuration version ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putsequence)).
+* `match_target_sequence` - (Required) The name of a JSON file containing the sequence of all match targets defined for the specified security configuration version ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putsequence)).
 
 ## Attribute Reference
 
 In addition to the arguments above, the following attribute is exported:
 
 * None
-
-
-
 
