@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 1.0.0 (Unreleased) Provisioning redesign
+## 1.0.0 (Dec 9, 2020) Provisioning redesign
 
 #### BREAKING CHANGES:
 * provider: configuring via an inline provider block (`property`, `dns`, or `gtm`) has been replaced with a more general `config` block that works the same way.
@@ -14,7 +14,7 @@
 #### NOTES:
 * provider/papi: changed attribute names in Provisioning to distinguish objects and names from id attributes.  In prior releases, "group" could represent a name, an id, or sometimes both. This release distinguishes them with distinct attribute names "group_name", "group_id" instead of "group"."
 #### KNOWN BUGS:
-* none known
+* resources/akamai_property removing hostnames attribute can result in repeated noop update calls because in this case removal means the hostname relationships are un-managed leaving the attribute as empty is a better way to express this change.
 #### FEATURES:
 * data-sources/akamai_properties added to list properties accessible to the user.
 * data-sources/akamai_property_contracts added to list contracts accessible to the user.
