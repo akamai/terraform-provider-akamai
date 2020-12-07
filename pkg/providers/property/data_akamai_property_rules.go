@@ -127,7 +127,7 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	if formattedRulesJson, err := json.MarshalIndent(getRuleTreeResponse.Rules, "", "  "); err != nil {
+	if formattedRulesJson, err := json.MarshalIndent(papi.RulesUpdate{Rules: getRuleTreeResponse.Rules}, "", "  "); err != nil {
 		logger.Debugf("Creating rule tree resulted in invalid JSON: %s", err)
 		return diag.FromErr(fmt.Errorf("invalid JSON result: %w", err))
 	} else {

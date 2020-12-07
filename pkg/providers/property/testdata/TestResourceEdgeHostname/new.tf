@@ -7,4 +7,5 @@ resource "akamai_edge_hostname" "edgehostname" {
   group = "grp_2"
   product = "prd_2"
   edge_hostname = "test.aka"
+  ip_behavior = "IPV4"
 }

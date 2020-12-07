@@ -216,7 +216,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 						DomainPrefix:      "test",
 						DomainSuffix:      "akamaized.net",
 						SecureNetwork:     "SHARED_CERT",
-						IPVersionBehavior: "IPV4",
+						IPVersionBehavior: "IPV6_COMPLIANCE",
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
@@ -254,7 +254,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			expectedAttributes: map[string]string{
 				"id":            "eh_123",
-				"ip_behavior":   "IPV4",
+				"ip_behavior":   "IPV6_COMPLIANCE",
 				"contract":      "ctr_2",
 				"group":         "grp_2",
 				"edge_hostname": "test.akamaized.net",
@@ -383,14 +383,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 			withError: regexp.MustCompile("oops"),
 		},
 		"invalid IP version behavior": {
-			givenTF: "invalid_ip.tf",
-			init: func(m *mockpapi) {
-				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
-			},
-			withError: regexp.MustCompile("ipv4 or ipv6 must be specified to create a new Edge Hostname"),
+			givenTF:   "invalid_ip.tf",
+			init:      func(m *mockpapi) {},
+			withError: regexp.MustCompile("ip_behavior must be one of IPV4, IPV6_PERFORMANCE, IPV6_COMPLIANCE"),
 		},
 		"certificate required for ENHANCED_TLS": {
 			givenTF: "missing_certificate.tf",
@@ -436,7 +431,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 						DomainPrefix:      "test",
 						DomainSuffix:      "akamaized.net",
 						SecureNetwork:     "SHARED_CERT",
-						IPVersionBehavior: "IPV4",
+						IPVersionBehavior: "IPV6_COMPLIANCE",
 					},
 				}).Return(nil, fmt.Errorf("oops"))
 			},

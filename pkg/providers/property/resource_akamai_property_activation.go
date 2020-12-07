@@ -672,7 +672,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 
 func resolvePropertyID(d *schema.ResourceData) (string, error) {
 	propertyID, err := tools.GetStringValue("property_id", d)
-	if errors.Is(tools.ErrNotFound, err) {
+	if errors.Is(err, tools.ErrNotFound) {
 		// use legacy property as fallback option
 		propertyID, err = tools.GetStringValue("property", d)
 	}
