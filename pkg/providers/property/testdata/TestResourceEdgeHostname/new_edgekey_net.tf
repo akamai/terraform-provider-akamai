@@ -8,6 +8,5 @@ resource "akamai_edge_hostname" "edgehostname" {
   product = "prd_2"
   edge_hostname = "test.edgekey.net"
   certificate = 123
-  ipv4 = false
-  ipv6 = true
+  ip_behavior = "IPV6_PERFORMANCE"
 }

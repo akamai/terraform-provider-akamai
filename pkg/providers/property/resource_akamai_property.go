@@ -52,7 +52,7 @@ func resourceProperty() *schema.Resource {
 			return old == new
 		}
 
-		var oldRules, newRules papi.Rules
+		var oldRules, newRules papi.RulesUpdate
 		if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
 			logger.Errorf("Unable to unmarshal 'old' JSON rules: %s", err)
 			return false
@@ -63,7 +63,7 @@ func resourceProperty() *schema.Resource {
 			return false
 		}
 
-		return compareRules(&oldRules, &newRules)
+		return compareRules(&oldRules.Rules, &newRules.Rules)
 	}
 
 	return &schema.Resource{
@@ -341,7 +341,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if len(RulesJSON) > 0 {
-		var Rules papi.Rules
+		var Rules papi.RulesUpdate
 		if err := json.Unmarshal(RulesJSON, &Rules); err != nil {
 			logger.WithError(err).Error("failed to unmarshal property rules")
 			return diag.Errorf("rules are not valid JSON: %s", err)
@@ -498,13 +498,26 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductionVersion: ProductionVersion,
 	}
 
-	if latestVersionIsActive(Property) {
+	// load status for what we currently have as latest version.  GetLatestVersion may also work here.
+	resp, err := client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
+		PropertyID:	       d.Id(),
+		PropertyVersion:   d.Get("latest_version").(int),
+		ContractID:        d.Get("contract_id").(string),
+		GroupID:           d.Get("group_id").(string),
+
+	})
+	if err != nil {
+		d.Partial(true)
+		return diag.FromErr(err)
+	}
+	// check latest version is editable
+	if resp.Version.ProductionStatus != papi.VersionStatusInactive || resp.Version.StagingStatus != papi.VersionStatusInactive {
+		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
 		VersionID, err := createPropertyVersion(ctx, client, Property)
 		if err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
 		}
-
 		Property.LatestVersion = VersionID
 	}
 
@@ -524,7 +537,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	FormatNeedsUpdate := len(RuleFormat) > 0 && d.HasChange("rule_format")
 
 	if FormatNeedsUpdate || RulesNeedUpdate {
-		var Rules papi.Rules
+		var Rules papi.RulesUpdate
 		if err := json.Unmarshal(RulesJSON, &Rules); err != nil {
 			d.Partial(true)
 			return diag.Errorf("rules are not valid JSON: %s", err)
@@ -722,7 +735,7 @@ func fetchPropertyHostnames(ctx context.Context, client papi.PAPI, Property papi
 }
 
 // Fetch rules for latest version of given property
-func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Property) (Rules papi.Rules, Format string, Errors, Warnings []*papi.Error, err error) {
+func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Property) (Rules papi.RulesUpdate, Format string, Errors, Warnings []*papi.Error, err error) {
 	req := papi.GetRuleTreeRequest{
 		PropertyID:      Property.PropertyID,
 		GroupID:         Property.GroupID,
@@ -742,7 +755,7 @@ func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pro
 	}
 
 	logger.WithFields(logFields(*res)).Debug("fetched property rules")
-	Rules = res.Rules
+	Rules = papi.RulesUpdate{Rules: res.Rules}
 	Format = res.RuleFormat
 	Errors = res.Errors
 	Warnings = res.Warnings
@@ -750,13 +763,13 @@ func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pro
 }
 
 // Set rules for the latest version of the given property
-func updatePropertyRules(ctx context.Context, client papi.PAPI, Property papi.Property, Rules papi.Rules) error {
+func updatePropertyRules(ctx context.Context, client papi.PAPI, Property papi.Property, Rules papi.RulesUpdate) error {
 	req := papi.UpdateRulesRequest{
 		PropertyID:      Property.PropertyID,
 		GroupID:         Property.GroupID,
 		ContractID:      Property.ContractID,
 		PropertyVersion: Property.LatestVersion,
-		Rules:           papi.RulesUpdate{Rules: Rules},
+		Rules:           Rules,
 	}
 
 	logger := log.FromContext(ctx).WithFields(logFields(req))
@@ -846,17 +859,6 @@ func mapToHostnames(given map[string]interface{}) []papi.Hostname {
 	}
 
 	return Hostnames
-}
-
-// Tests true when the given property's latest version is active in any environment
-func latestVersionIsActive(Property papi.Property) bool {
-	// NB: The property version could possibly be in a transitional state where PAPI will reject a request to update
-	//     hostnames or rules. It is the responsibility of the user to ensure the resource dependencies are such that
-	//     changes happen in the correct order.
-	ActiveInProd := Property.ProductionVersion != nil && *Property.ProductionVersion == Property.LatestVersion
-	ActiveInStaging := Property.StagingVersion != nil && *Property.StagingVersion == Property.LatestVersion
-
-	return ActiveInProd || ActiveInStaging
 }
 
 // Set many attributes of a schema.ResourceData in one call

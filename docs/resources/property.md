@@ -45,7 +45,7 @@ This resource supports these arguments:
 * `contact` - (Required) One or more email addresses to send activation status changes to.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
-* `product_id` - (Required) A product's unique ID, including the `prd_` prefix.
+* `product_id` - (Required to create, otherwise Optional) A product's unique ID, including the `prd_` prefix.
 * `hostnames` - (Required) A mapping of public hostnames to edge hostnames (For example: `{"example.org" = "example.org.edgesuite.net"}`)
 * `rules` - (Required) A JSON-encoded rule tree for a given property. For this argument, you need to enter a complete JSON rule tree, unless you set up a series of JSON templates. See the [`akamai_property_rules`](/docs/providers/akamai/d/property_rules.html))
 * `rule_format` - (Optional) The [rule format](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats) to use. Uses the latest rule format by default.
@@ -65,3 +65,23 @@ The resource returns these attributes:
 * `latest_version` - The version of the property you've created or updated rules for. The Akamai Provider always uses the latest version or creates a new version if latest is not editable.
 * `production_version` - The current version of the property active on the Akamai production network.
 * `staging_version` - The current version of the property active on the Akamai staging network.
+
+## Import
+
+Basic Usage:
+
+```hcl
+resource "akamai_property" "example" {
+    # (resource arguments)
+  }
+```
+
+Akamai properties can be imported using just the `property_id` as ID or a comma-delimited string of `property_id,contract_id,group_id` in that order as ID when a property belongs to multiple groups/contracts, e.g.
+
+```shell
+$ terraform import akamai_property.example prp_123
+```
+Or
+```shell
+$ terraform import akamai_property.example prp_123,ctr_1-AB123,grp_123
+```
