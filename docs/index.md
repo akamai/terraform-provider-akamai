@@ -12,6 +12,8 @@ configurations in Terraform. You can use the Akamai Provider today for
 your Property Manager, Application Security, Edge DNS, and Global
 Traffic Management configurations.
 
+!>Version 1.0.0 of the Akamai provider for Terraform is a major release and includes breaking changes you may need to adapt in your configuration when upgrading. See [1.0 Migration guide](guides/1.0_migration.md) for details.
+
 Last updated: December 2020.
 
 ## Workflows
