@@ -4,9 +4,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 func TestDSCPCode(t *testing.T) {
@@ -97,7 +98,7 @@ func TestDSCPCode(t *testing.T) {
 					Config: loadFixtureString("testdata/TestDSCPCode/match_by_full_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "cpc_test2"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "cpc_test2"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group", "grp_test"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract", "ctr_test"),
 					),
@@ -224,5 +225,52 @@ func TestDSCPCode(t *testing.T) {
 		})
 
 		client.AssertExpectations(t)
+	})
+
+	t.Run("contract collides with contract ID", func(t *testing.T) {
+		resource.UnitTest(t, resource.TestCase{
+			Providers:  testAccProviders,
+			IsUnitTest: true,
+			Steps: []resource.TestStep{{
+				Config:             loadFixtureString("testdata/TestDSCPCode/contract_collides_with_id.tf"),
+				ExpectNonEmptyPlan: true,
+				ExpectError:        regexp.MustCompile("only one of `contract,contract_id` can be specified"),
+			}},
+		})
+	})
+
+	t.Run("group collides with group ID", func(t *testing.T) {
+		client := &mockpapi{}
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers:  testAccProviders,
+				IsUnitTest: true,
+				Steps: []resource.TestStep{{
+					Config:             loadFixtureString("testdata/TestDSCPCode/group_collides_with_id.tf"),
+					ExpectNonEmptyPlan: true,
+					ExpectError:        regexp.MustCompile("only one of `group,group_id` can be specified"),
+				}},
+			})
+		})
+	})
+
+	t.Run("group not found in state", func(t *testing.T) {
+		client := &mockpapi{}
+		client.On("GetCPCodes",
+			AnyCTX, mock.Anything,
+		).Return(&papi.GetCPCodesResponse{CPCodes: papi.CPCodeItems{Items: []papi.CPCode{{
+			ID: "cpc_test-ft-cp-code", Name: "test-ft-cp-code", CreatedDate: "", ProductIDs: []string{"prd_prod1"},
+		}}}}, nil)
+		client.On("CreateCPCode", AnyCTX, mock.Anything).Return(&papi.CreateCPCodeResponse{}, nil)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers:  testAccProviders,
+				IsUnitTest: true,
+				Steps: []resource.TestStep{{
+					Config:             loadFixtureString("testdata/TestDSGroupNotFound/cp_code.tf"),
+					ExpectNonEmptyPlan: true,
+				}},
+			})
+		})
 	})
 }

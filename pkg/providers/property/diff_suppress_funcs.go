@@ -6,12 +6,7 @@ import (
 	"sort"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
-
-func suppressEquivalentJSONDiffs(_, old, new string, _ *schema.ResourceData) bool {
-	return compareRulesJSON(old, new)
-}
 
 func compareRulesJSON(old, new string) bool {
 	var oldRules, newRules papi.GetRuleTreeResponse

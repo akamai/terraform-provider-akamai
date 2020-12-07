@@ -1,100 +1,47 @@
 ---
 layout: "akamai"
-page_title: "Akamai: property rules"
+page_title: "Akamai: akamai_property_rules"
 subcategory: "Provisioning"
 description: |-
-  Property Rules
+ Property ruletree
 ---
 
 # akamai_property_rules
 
-The `akamai_property_rules` data source allows you to configure a nested block of property rules, criteria, and behaviors. A property’s main functionality is encapsulated in its set of rules and rules are composed of the matches and the behavior that applies under those matches.
 
-In future this resource will be deprecated in favor of direct json rules for ease working with PMCLI, PAPI, and the Property Manager UI.
+Use the `akamai_property_rules` data source to query and retrieve the rule tree of an existing property version.  Lets you 
+search across contracts and groups you have access to.
 
-## Example Usage
 
-Basic usage:
+## Basic Usage
 
-```hcl
-data "akamai_property_rules" "example" {
-  rules { # Default rule
-  
-    behavior { # Downstream Cache behavior
-      name = "downstreamCache"
-      option { # behavior option
-        key = "behavior"
-        value = "TUNNEL_ORIGIN"
-      }
-    }
-  
-    rule { # "Performance" child rule
-      name = "Performance"
-      
-      rule { # "JPEG Images" child rule 
-        name = "JPEG Images"
-        
-        behavior { # Adaptive Image Compression behavior
-          name = "adaptiveImageCompression"
-          
-          # Options
-          option {
-            key = "tier1MobileCompressionMethod"
-            value = "COMPRESS"
-          }
-          option {
-            key = "tier1MobileCompressionValue"
-            value = "80"
-          }
-          option {
-            key = "tier2MobileCompressionMethod"
-            value = "COMPRESS"
-          }
-        }
-      }
-    }
-  }
+This example returns the rule tree for version 3 of a property based on the selected contract and group:
+
+```hcl-terraform
+datasource "akamai_property_rules" "my-example" {
+    property_id = "prp_123"
+    group_id = "grp_12345"
+    contract_id = "ctr_1-AB123"
+    version   = 3
 }
 
-resource "akamai_property" "example" {
-  rules = "${data.akamai_property_rules.example.json}"
-  
-  // ...
+output "property_match" {
+  value = data.akamai_property_rules.my-example
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports these arguments:
 
-The `rule` block supports:
-
-* `is_secure` — (Optional) Whether the property is a secure (Enhanced TLS) property or not (top-level only).
-* `criteria` — (Optional) One or more criteria to match requests on.
-* `behavior` — (Optional) One or more behaviors to apply to requests that match.
-* `rule` — (Optional) Child rules (may be nested five levels deep).
-
-The `criteria` block supports:
-
-* `name` — (Required) The name of the criteria.
-* `option` — (Optional) One or more options for the criteria.
-
-
-The `behavior` block supports:
-
-* `name` — (Required) The name of the behavior.
-* `option` — (Optional) One or more options for the behavior.
-
-The `option` block supports:
-
-* `key` — (Required) The option name.
-* `value` — (Optional) A single value for the option.
-* `values` — (Optional) An array of values for the option.
-
-One of `value` or `values` is required.
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
+* `property_id` - (Required) A property's unique ID, including the `prp_` prefix. 
+* `version` - (Optional) The version to return. Returns the latest version by default.
 
 ## Attributes Reference
 
-The following are the return attributes:
+This data source returns these attributes:
 
-* `json` — The resulting JSON rule tree
+* `rules` - A JSON-encoded rule tree for the property.
+* `errors` - A list of validation errors for the rule tree object returned. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the Property Manager API documentation.

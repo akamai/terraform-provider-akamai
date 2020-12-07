@@ -3,12 +3,11 @@ provider "akamai" {
 }
 
 resource "akamai_edge_hostname" "edgehostname" {
-  contract = "ctr_2"
-  group = "grp_2"
-  product = "prd_2"
-  edge_hostname = "test.edgesuite.net"
+  contract = "2"
+  group = "2"
+  product = "2"
+  edge_hostname = "test2.edgesuite.net"
   certificate = 123
-  ipv4 = true
-  ipv6 = true
+  ip_behavior = "IPV6_COMPLIANCE"
 }
 

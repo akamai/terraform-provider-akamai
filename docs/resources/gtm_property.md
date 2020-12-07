@@ -34,39 +34,39 @@ The following arguments are supported:
 
 Required
 
-* `domain` — Domain name 
-* `name` — Property name  
-* `type` — Property type  
+* `domain` - Domain name 
+* `name` - Property name  
+* `type` - Property type  
 * `score_aggregation_type`
 * `handout_limit` 
 * `handout_mode`  
-* `traffic_target` — (multiple allowed)
+* `traffic_target` - (multiple allowed)
   * `datacenter_id`
-  * `enabled` — (Boolean)
+  * `enabled` - (Boolean)
   * `weight`
-  * `servers` — (List)
-  * `name` — Traffic target name
+  * `servers` - (List)
+  * `name` - Traffic target name
   * `handout_cname`
 
 Optional
 
-* `liveness_test` — (multiple allowed)
-  * `name` — Liveness test name
+* `liveness_test` - (multiple allowed)
+  * `name` - Liveness test name
   * `test_interval`
   * `test_object_protocol`
   * `test_timeout`
-  * `answers_required` — (Boolean)
-  * `disabled` — (Boolean)
-  * `disable_nonstandard_port_warning` — (Boolean)
+  * `answers_required` - (Boolean)
+  * `disabled` - (Boolean)
+  * `disable_nonstandard_port_warning` - (Boolean)
   * `error_penalty`
-  * `http_header` — (multiple allowed)
+  * `http_header` - (multiple allowed)
      `name`
      `value`
-  * `http_error3xx` — (Boolean)
-  * `http_error4xx` — (Boolean)
-  * `http_error5xx` — (Boolean)
-  * `peer_certificate_verification` — (Boolean)
-  * `recursion_requested` — (Boolean)
+  * `http_error3xx` - (Boolean)
+  * `http_error4xx` - (Boolean)
+  * `http_error5xx` - (Boolean)
+  * `peer_certificate_verification` - (Boolean)
+  * `recursion_requested` - (Boolean)
   * `request_string`
   * `resource_type`
   * `response_string`
@@ -77,16 +77,16 @@ Optional
   * `test_object_port`
   * `test_object_username`
   * `timeout_penalty`
-* `wait_on_complete` — (Boolean, Default: true) Wait for transaction to complete
+* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
 * `failover_delay`
 * `failback_delay`
-* `ipv6` — (Boolean)
+* `ipv6` - (Boolean)
 * `stickiness_bonus_percentage`
 * `stickiness_bonus_constant`
 * `health_threshold`
-* `use_computed_targets` — (Boolean)
+* `use_computed_targets` - (Boolean)
 * `backup_ip`
-* `balance_by_download_score` — (Boolean)
+* `balance_by_download_score` - (Boolean)
 * `static_ttl`
 * `unreachable_threshold`
 * `health_multiplier`
@@ -99,10 +99,10 @@ Optional
 * `comments`
 * `ghost_demand_reporting`
 * `min_live_fraction`
-* `static_rr_set` — (multiple allowed)
+* `static_rr_set` - (multiple allowed)
   * `type`
   * `ttl`
-  * `rdata` — (List)
+  * `rdata` - (List)
 
 Computed
 

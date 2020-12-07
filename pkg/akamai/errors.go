@@ -24,6 +24,9 @@ var (
 	// ErrCacheEntryNotFound returns a cache entry error
 	ErrCacheEntryNotFound = &Error{"cache entry not found", true}
 
+	// ErrCacheDisabled is returned when the cache is disabled
+	ErrCacheDisabled = &Error{"cache is disabled", false}
+
 	// ErrProviderNotLoaded returned and panic'd when a requested provider is not loaded
 	// Users should never see this, unit tests and sanity checks should pick this up
 	ErrProviderNotLoaded = &Error{"provider not loaded", false}

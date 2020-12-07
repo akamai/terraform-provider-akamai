@@ -30,24 +30,24 @@ The following arguments are supported:
 
 Required
 
-* `contract` — The contract ID (if creating domain) 
-* `group` — The currently selected group ID (if creating domain)   
-* `name` — Domain name  
-* `type` — Domain type  
+* `contract` - The contract ID (if creating domain) 
+* `group` - The currently selected group ID (if creating domain)   
+* `name` - Domain name  
+* `type` - Domain type  
 
 Optional 
 
-* `wait_on_complete` — (Boolean, Default: true) Wait for transaction to complete
-* `comment` — A descriptive comment
-* `email_notification_list` — (List)
-* `default_timeout_penalty` — (Default: 25)
+* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
+* `comment` - A descriptive comment
+* `email_notification_list` - (List)
+* `default_timeout_penalty` - (Default: 25)
 * `load_imbalance_percentage`
 * `default_ssl_client_private_key`
-* `default_error_penalty` — (Default: 75)
-* `cname_coalescing_enabled` — (Boolean)
-* `load_feedback` — (Boolean)
+* `default_error_penalty` - (Default: 75)
+* `cname_coalescing_enabled` - (Boolean)
+* `load_feedback` - (Boolean)
 * `default_ssl_client_certificate`
-* `end_user_mapping_enabled` — (Boolean)
+* `end_user_mapping_enabled` - (Boolean)
 
 Computed
 

@@ -1,0 +1,12 @@
+{
+  "name": "ANOTHER",
+  "children": [
+  ],
+  "behaviors": [
+    {
+      "name": "test",
+      "options": "${env.options}"
+    }
+  ],
+  "criteria": []
+}

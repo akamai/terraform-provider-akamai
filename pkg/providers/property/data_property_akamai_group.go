@@ -6,34 +6,52 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourcePropertyGroups() *schema.Resource {
+func dataSourcePropertyGroup() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourcePropertyGroupsRead,
+		ReadContext: dataSourcePropertyGroupRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"name", "group_name"},
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("name"),
+			},
+			"group_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"name", "group_name"},
 			},
 			"contract": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"contract", "contract_id"},
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("contract"),
+			},
+			"contract_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"contract", "contract_id"},
 			},
 		},
 	}
 }
 
-func dataSourcePropertyGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourcePropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	log := meta.Log("PAPI", "dataSourcePropertyGroupsRead")
+	log := meta.Log("PAPI", "dataSourcePropertyGroupRead")
 
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -41,9 +59,13 @@ func dataSourcePropertyGroupsRead(ctx context.Context, d *schema.ResourceData, m
 		session.WithContextLog(log),
 	)
 
-	var name string
-	name, err := tools.GetStringValue("name", d)
-	var getDefault bool
+	var (
+		name       string
+		getDefault bool
+	)
+
+	// check and load group_name, if not exists then check group.
+	name, err := tools.ResolveKeyStringState(d, "group_name", "name")
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
@@ -52,23 +74,43 @@ func dataSourcePropertyGroupsRead(ctx context.Context, d *schema.ResourceData, m
 		getDefault = true
 	}
 
-	log.Debugf("[Akamai Property Groups] Start Searching for property group records %s ", name)
+	log.Debugf("[Akamai Property Group] Start Searching for property group records %s ", name)
 
 	groups, err := getGroups(ctx, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	contract, err := tools.GetStringValue("contract", d)
+	// check and load contract_id, if not exists then check contract.
+	contractID, err := tools.ResolveKeyStringState(d, "contract_id", "contract")
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	group, err := findGroupByName(name, contract, groups, getDefault)
+
+	group, err := findGroupByName(name, contractID, groups, getDefault)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %q: %s", ErrLookingUpGroupByName, name, err))
+		return diag.Errorf("%v: %v: %v", ErrLookingUpGroupByName, name, err)
 	}
 
-	log.Debugf("Searching for records [%v]", group)
+	// set group_name/name in state.
+	if err := d.Set("group_name", group.GroupName); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("name", group.GroupName); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+
+	if len(group.ContractIDs) != 0 {
+		contractID = group.ContractIDs[0]
+	}
+	// set contract/contract_id in state.
+	if err := d.Set("contract", contractID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("contract_id", contractID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+
 	d.SetId(group.GroupID)
 	return nil
 }
@@ -111,7 +153,7 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 
 	// for non-default name, contract is required
 	if contract == "" {
-		return nil, fmt.Errorf("%w: %s", ErrNoContractProvided, name)
+		return nil, fmt.Errorf("%v: %s", ErrNoContractProvided, name)
 	}
 
 	var foundGroups []*papi.Group
@@ -128,21 +170,23 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 			}
 		}
 	}
-	return nil, fmt.Errorf("%w: %s", ErrGroupNotInContract, contract)
+	return nil, fmt.Errorf("%v: %s", ErrGroupNotInContract, contract)
 }
 
 func getGroups(ctx context.Context, meta akamai.OperationMeta) (*papi.GetGroupsResponse, error) {
 	groups := &papi.GetGroupsResponse{}
-	if err := meta.CacheGet("groups", groups); err != nil {
-		if !akamai.IsNotFoundError(err) {
+	if err := meta.CacheGet(inst, "groups", groups); err != nil {
+		if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
 			return nil, err
 		}
 		groups, err = inst.Client(meta).GetGroups(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if err := meta.CacheSet("groups", groups); err != nil {
-			return nil, err
+		if err := meta.CacheSet(inst, "groups", groups); err != nil {
+			if !errors.Is(err, akamai.ErrCacheDisabled) {
+				return nil, err
+			}
 		}
 	}
 

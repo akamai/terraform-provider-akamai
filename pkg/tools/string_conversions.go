@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// ConvertToString will convert different types to strings.
 func ConvertToString(data interface{}) (res string) {
 	switch v := data.(type) {
 	case float32, float64:

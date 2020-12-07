@@ -1,7 +1,40 @@
 # RELEASE NOTES
 
-## 0.12.0 (Dec 16, 2020)
-* provider: Added data sources and resources for additional Application Security AkamaiOPEN-edgegrid APIs.
+## 1.0.0 (Dec 9, 2020) Provisioning redesign
+
+#### BREAKING CHANGES:
+* provider: configuring via an inline provider block (`property`, `dns`, or `gtm`) has been replaced with a more general `config` block that works the same way.
+* There are several breaking changes in the 1.0 release.  You should consult the [Migration guide](docs/guides/1.0_migration.md) for details.
+  * resources/akamai_property_activation no longer supports the following fields : activate.  version has gone from being optional to being a required field.
+  * data-sources/akamai_property_rules removed in favor of using template JSON object to better work with other Akamai tools and documentation that is all JSON based.
+  * resources/akamai_property_variables removed in favor of directly managing the variable segment as part of ruletree object.
+  * resources/akamai_cp_code no longer auto-imports on create. If a conflict is detected will error out and to ignore simply import the resource.
+  * resources/akamai_edge_hostname no longer supports the following fields : ipv4, ipv6. The revised resource allows setting ip_behavior directly.
+  * resources/akamai_property no longer supports the following fields : cp_code, origin, variables, is_secure, contact. The revised resource simplifies the object structure and removes the ability to set the same value more than one way.
+#### NOTES:
+* provider/papi: changed attribute names in Provisioning to distinguish objects and names from id attributes.  In prior releases, "group" could represent a name, an id, or sometimes both. This release distinguishes them with distinct attribute names "group_name", "group_id" instead of "group"."
+#### KNOWN BUGS:
+* resources/akamai_property removing hostnames attribute can result in repeated noop update calls because in this case removal means the hostname relationships are un-managed leaving the attribute as empty is a better way to express this change.
+#### FEATURES:
+* data-sources/akamai_properties added to list properties accessible to the user.
+* data-sources/akamai_property_contracts added to list contracts accessible to the user.
+* data-sources/akamai_property_groups added to list groups accessible to the user.
+* data-sources/akamai_property_products added to list products associated with a given contract.
+* data-sources/akamai_property_rule_formats added to list rule_formats.
+* data-sources/akamai_property_rules changed to output the structure of a particular rule version on the server. NOTE: this is NOT the same as the deprecated datasource used for rule formatting.
+* data-sources/akamai_rules_template added to handle file based JSON templating for rules tree data management
+#### ENHANCEMENTS:
+* resources/akamai_property_activation aliased property to property_id. Returns these additional attributes : target_version, warnings, errors, activation_id, and status
+#### BUG FIXES:
+* provider: provider configuration validation requires an edgerc file configured and present even when environment variable-based configuration was used.
+* provider: provider inline configuration support was re-introduced as a new config field.
+* resources/akamai_property_activation activating and destroying activation for the same property multiple times in a row would fail on second destroy attempt and subsequent destroy attempts with "resource not found error" message.
+* resources/akamai_property_activation wrong activation id read for property versions that had been activated and deactivated multiple time.
+#### MINOR CHANGES:
+* resources/akamai_property aliased property to property_id. contract to contract_id, and product to product_id and account to account_id.  Renamed version to latest_version.
+* data-sources/akamai_contract aliased group to group_id and/or group_name.
+* data-sources/akamai_cp_code aliased group to group_id and contract to contract_id.
+* data-sources/akamai_group aliased name to group_name and contract to contract_id.
 
 ## 0.11.0 (Nov 19,2020)
 
@@ -42,7 +75,7 @@
 * provider: fixed documentation to properly present guides and categories on Hashicorp Terraform registry site
 * resources/edge_hostname: added error when neither IPV4 nor IPV6 is selected
 * resources/akamai_property: comparisons in rule tree now properly ignore equivalent values with attribute order differences.
-* datasource/akamai_property_rules: comparisons in rule tree now properly ignore equivalent values with attribute order differences.
+* data-sources/akamai_property_rules: comparisons in rule tree now properly ignore equivalent values with attribute order differences.
 * provider: updated all error messages to better identify issues and actions required by user
 * provider: fixed crash due to unexpected data types from unexpected API responses
 * provider: fixed crash due to unexpected data types in Terraform files
