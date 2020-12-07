@@ -120,7 +120,7 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoDelete")
 
-	updatePolicyProtections := v2.UpdatePolicyProtectionsRequest{}
+	updatePolicyProtections := v2.UpdateNetworkLayerProtectionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -143,7 +143,7 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	updatePolicyProtections.ApplyNetworkLayerControls = false
 
 	logger.Errorf("calling 'resourceIPGeoDelete': %v", updatePolicyProtections)
-	_, erru := client.UpdatePolicyProtections(ctx, updatePolicyProtections)
+	_, erru := client.UpdateNetworkLayerProtection(ctx, updatePolicyProtections)
 	if erru != nil {
 		logger.Errorf("calling 'resourceIPGeoDelete': %s", erru.Error())
 		return diag.FromErr(erru)
