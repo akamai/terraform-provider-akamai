@@ -500,11 +500,10 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// load status for what we currently have as latest version.  GetLatestVersion may also work here.
 	resp, err := client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
-		PropertyID:	       d.Id(),
-		PropertyVersion:   d.Get("latest_version").(int),
-		ContractID:        d.Get("contract_id").(string),
-		GroupID:           d.Get("group_id").(string),
-
+		PropertyID:      d.Id(),
+		PropertyVersion: d.Get("latest_version").(int),
+		ContractID:      d.Get("contract_id").(string),
+		GroupID:         d.Get("group_id").(string),
 	})
 	if err != nil {
 		d.Partial(true)
