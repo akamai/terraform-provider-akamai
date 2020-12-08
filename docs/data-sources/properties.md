@@ -12,7 +12,7 @@ description: |-
 Use the `akamai_properties` data source to query and retrieve the list of properties for a group and contract 
 based on the [EdgeGrid API client token](https://developer.akamai.com/getting-started/edgegrid) you're using. 
 
-## Example Usage
+## Example usage
 
 Return properties associated with the EdgeGrid API client token currently used for authentication:
 
@@ -28,14 +28,14 @@ output "my_property_list" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 This data source supports these arguments:
 
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
 
-## Attributes Reference
+## Attributes reference
 
 This data source returns this attribute:
 

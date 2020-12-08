@@ -11,7 +11,7 @@ description: |-
 
 Use the `akamai_property_groups` data source to list groups associated with the [EdgeGrid API client token](https://developer.akamai.com/getting-started/edgegrid) you're using.
 
-## Basic Usage
+## Basic usage
 
 Return groups associated with the EdgeGrid API client token you're using:
 
@@ -24,11 +24,11 @@ output "property_match" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 There are no arguments available for this data source.
 
-## Attributes Reference
+## Attributes reference
 
 This data source returns these attributes:
 

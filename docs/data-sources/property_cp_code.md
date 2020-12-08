@@ -11,7 +11,7 @@ description: |-
 
 Use the `akamai_cp_code` data source to retrieve the ID for a content provider (CP) code.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -46,7 +46,7 @@ data "akamai_cp_code" "example" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 This data source supports these arguments:
 
@@ -54,11 +54,11 @@ This data source supports these arguments:
 * `group_id` - (Required) The group's unique ID, including the `grp_` prefix.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 
-### Deprecated Arguments
+### Deprecated arguments
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
 * `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
 
-## Attributes Reference
+## Attributes reference
 
 This data source returns these attributes:
 
