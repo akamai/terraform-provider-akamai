@@ -96,7 +96,39 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceWAFProtectionRemove")
+
+	removeWAFProtection := v2.UpdateWAFProtectionRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeWAFProtection.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeWAFProtection.Version = version
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeWAFProtection.PolicyID = policyid
+
+	removeWAFProtection.ApplyApplicationLayerControls = false
+
+	_, errd := client.UpdateWAFProtection(ctx, removeWAFProtection)
+	if errd != nil {
+		logger.Errorf("calling 'removeWAFProtection': %s", errd.Error())
+		return diag.FromErr(errd)
+	}
+	d.SetId("")
+	return nil
 }
 
 func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
