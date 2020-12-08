@@ -1,0 +1,36 @@
+---
+layout: "akamai"
+page_title: "Akamai: akamai_iam_countries"
+subcategory: "IAM"
+description: |-
+ IAM Countries
+---
+
+# akamai_iam_countries
+
+Use `akamai_iam_countries` datasource to retrieve all the possible countries that Akamai supports. Use the values from this operation to add or update a user’s country information.
+
+## Example Usage
+
+Basic usage:
+
+```hcl
+data "akamai_iam_countries" "countries" {
+}
+
+output "supported_countries" {
+  value = data.akamai_iam_countries.countries
+}
+```
+
+## Argument Reference
+
+There are no arguments for this data source.
+
+## Attributes Reference
+
+The following attributes are returned:
+
+* `countries` — A list of countries
+
+[API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadmincountries)
