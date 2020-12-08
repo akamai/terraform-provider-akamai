@@ -8,8 +8,9 @@ description: |-
 
 # akamai_property
 
-The `akamai_property` resource represents an Akamai property configuration. This resources lets you to create,
-update, and activate properties on the Akamai platform. 
+The `akamai_property` resource represents an Akamai property configuration. 
+This resource lets you to create, update, and activate properties on the 
+Akamai platform. 
 
 Akamai’s edge network caches your web assets near to servers that request them. A property provides the main way to control how edge servers respond to various kinds of requests for those assets. Properties apply rules to a set of hostnames, and you can only apply one property at a time to any given hostname. Each property is assigned to a product, which determines which behaviors you can use. Each property’s default rule needs a valid content provider code (CP code) assigned to bill and report for the service.
 
