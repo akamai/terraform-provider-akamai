@@ -41,11 +41,11 @@ resource "akamai_dns_record" "www" {
 
 The following arguments are supported for all record types:
 
-* `name` — (Required) The name of the record. The name is an owner name, that is, the name of the node to which this resource record pertains.  
-* `zone` — (Required) Domain zone, encapsulating any nested subdomains.  
-* `recordType` — (Required) The DNS record type.  
-* `active` — (Ignored, Boolean) Maintained for backward compatibility
-* `ttl` — (Required,Boolean) The TTL is a 32-bit signed integer that specifies the time interval that the resource record may be cached before the source of the information should be consulted again. Zero values are interpreted to mean that the RR can only be used for the transaction in progress, and should not be cached. Zero values can also be used for extremely volatile data.  
+* `name` - (Required) The name of the record. The name is an owner name, that is, the name of the node to which this resource record pertains.  
+* `zone` - (Required) Domain zone, encapsulating any nested subdomains.  
+* `recordType` - (Required) The DNS record type.  
+* `active` - (Ignored, Boolean) Maintained for backward compatibility
+* `ttl` - (Required,Boolean) The TTL is a 32-bit signed integer that specifies the time interval that the resource record may be cached before the source of the information should be consulted again. A value of zero means that the RR can only be used for the transaction in progress, and should not be cached. Zero values can also be used for extremely volatile data.  
 
 ## Required Fields Per Record Type
 
@@ -149,7 +149,7 @@ The following field is required:
 
 * target - One or more domain names that specifies a host willing to act as a mail exchange for the owner name.
 
-The following fields are optional depending on configuration type. See [DNS Getting Started Guide](/docs/providers/akamai/g/get_started_dns_zone.html#working-with-mx-records) for more information.
+The following fields are optional depending on configuration type. See [DNS Getting Started Guide](get_started_dns_zone.md#working-with-mx-records) for more information.
 
 * priority - The preference value given to the MX record among MX records. When a mailer needs to send mail to a certain DNS domain, it first contacts a DNS server for that domain and retrieves all the MX records. It then contacts the mailer with the lowest preference value. Ignored if embedded priority specified in target
 * priority_increment - auto priority increment when multiple targets are provided with no embedded priority.

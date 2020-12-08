@@ -76,6 +76,19 @@ func Options(section string) *schema.Resource {
 					return 131072, nil
 				},
 			},
+			"account_key": {
+				Type:     schema.TypeString,
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					if v := os.Getenv("AKAMAI_" + section + "_ACCOUNT_KEY"); v != "" {
+						return v, nil
+					} else if v := os.Getenv("AKAMAI_ACCOUNT_KEY"); v != "" {
+						return v, nil
+					}
+
+					return "", nil
+				},
+			},
 		},
 	}
 }

@@ -24,16 +24,17 @@ type (
 		Session() session.Session
 
 		// CacheGet returns an object from the cache
-		CacheGet(key string, out interface{}) error
+		CacheGet(prov Subprovider, key string, out interface{}) error
 
 		// CacheSet sets a value in the cache
-		CacheSet(key string, val interface{}) error
+		CacheSet(prov Subprovider, key string, val interface{}) error
 	}
 
 	meta struct {
-		operationID string
-		log         hclog.Logger
-		sess        session.Session
+		operationID  string
+		log          hclog.Logger
+		sess         session.Session
+		cacheEnabled bool
 	}
 )
 
@@ -57,27 +58,47 @@ func (m *meta) Session() session.Session {
 	return m.sess
 }
 
-func (m *meta) CacheSet(key string, val interface{}) error {
-	key = fmt.Sprintf("%s:%s", m.operationID, key)
+func (m *meta) CacheSet(prov Subprovider, key string, val interface{}) error {
+	log := m.Log("meta", "CacheSet")
+
+	if !m.cacheEnabled {
+		log.Debug("cache disabled")
+		return ErrCacheDisabled
+	}
+
+	key = fmt.Sprintf("%s:%s", key, prov.Name())
 
 	data, err := json.Marshal(val)
 	if err != nil {
 		return fmt.Errorf("failed to marshal object to cache: %w", err)
 	}
 
+	log.Debugf("cache set for for key %s [%d bytes]", key, len(data))
+
 	return instance.cache.Set(key, data)
 }
 
-func (m *meta) CacheGet(key string, out interface{}) error {
-	key = fmt.Sprintf("%s:%s", m.operationID, key)
+func (m *meta) CacheGet(prov Subprovider, key string, out interface{}) error {
+	log := m.Log("meta", "CacheGet")
+
+	if !m.cacheEnabled {
+		log.Debug("cache disabled")
+		return ErrCacheDisabled
+	}
+
+	key = fmt.Sprintf("%s:%s", key, prov.Name())
 
 	data, err := instance.cache.Get(key)
 	if err != nil {
 		if err == bigcache.ErrEntryNotFound {
+			log.Debugf("cache miss for for key %s", key)
+
 			return ErrCacheEntryNotFound
 		}
 		return err
 	}
+
+	log.Debugf("cache get for for key %s: [%d bytes]", key, len(data))
 
 	return json.Unmarshal(data, out)
 }

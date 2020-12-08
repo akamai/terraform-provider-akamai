@@ -14,7 +14,7 @@ RUN cd terraform-provider-akamai \
     && go install -tags all \
     && go mod edit -dropreplace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2
 
-FROM hashicorp/terraform:0.13.1
+FROM hashicorp/terraform:0.13.5
 ENV PROVIDER_VERSION="1.0.0"
 COPY --from=builder /go/bin/terraform-provider-akamai /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/${PROVIDER_VERSION}/linux_amd64/terraform-provider-akamai_v${PROVIDER_VERSION}
 COPY --from=builder /go/bin/terraform-provider-akamai /root/.terraform.d/plugins/registry.terraform.io/-/akamai/${PROVIDER_VERSION}/linux_amd64/terraform-provider-akamai_v${PROVIDER_VERSION}

@@ -8,7 +8,7 @@
 # Lastly you can quit the shell by typing 'exit' and press return key. This will destroy the container
 WORKDIR="${WORKDIR-$(pwd)}"
 echo "WORKDIR is $WORKDIR"
-TERRAFORM_VERSION="0.13.1"
+TERRAFORM_VERSION="0.13.5"
 PROVIDER_BRANCH_NAME="develop"
 
 docker rm -f akatf-container 2> /dev/null || true

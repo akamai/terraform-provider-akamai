@@ -14,10 +14,11 @@ var (
 	ErrNotFound = errors.New("value not found")
 	// ErrValueSet is returned when setting property value returned an error
 	ErrValueSet = errors.New("setting property value")
-	// ErrValueSet is returned when setting property value returned an error
+	// ErrEmptyKey is returned when setting property value returned an error
 	ErrEmptyKey = errors.New("provided key cannot be empty")
 )
 
+// ResourceDataFetcher ...
 type ResourceDataFetcher interface {
 	GetOk(string) (interface{}, bool)
 }
@@ -132,9 +133,9 @@ func GetBoolValue(key string, rd ResourceDataFetcher) (bool, error) {
 		return false, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
 	value, _ := rd.GetOk(key)
-	var val bool
-	var ok bool
-	if val, ok = value.(bool); !ok {
+
+	val, ok := value.(bool)
+	if !ok {
 		return false, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "bool")
 	}
 	return val, nil
@@ -198,4 +199,15 @@ func FindStringValues(rd ResourceDataFetcher, keys ...string) []string {
 	}
 
 	return rval
+}
+
+func ResolveKeyStringState(rd ResourceDataFetcher, key, fallbackKey string) (value string, err error) {
+	value, err = GetStringValue(key, rd)
+	if errors.Is(err, ErrNotFound) {
+		value, err = GetStringValue(fallbackKey, rd)
+	}
+	if err != nil {
+		return "", err
+	}
+	return value, nil
 }

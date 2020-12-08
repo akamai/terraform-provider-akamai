@@ -31,19 +31,19 @@ data "akamai_appsec_ip_geo" "ip_geo" {
 }
 
 output "ip_geo_mode" {
-  value = akamai_appsec_ip_geo.ip_geo.mode 
+  value = data.akamai_appsec_ip_geo.ip_geo.mode
 }
 
 output "geo_network_lists" {
-  value = akamai_appsec_ip_geo.ip_geo.geo_network_lists
+  value = data.akamai_appsec_ip_geo.ip_geo.geo_network_lists
 }
 
 output "ip_network_lists" {
-  value = akamai_appsec_ip_geo.ip_geo.ip_network_lists
+  value = data.akamai_appsec_ip_geo.ip_geo.ip_network_lists
 }
 
 output "exception_ip_network_lists" {
-  value = akamai_appsec_ip_geo.ip_geo.exception_ip_network_lists
+  value = data.akamai_appsec_ip_geo.ip_geo.exception_ip_network_lists
 }
 ```
 

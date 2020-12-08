@@ -1,8 +1,6 @@
 package property
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,6 +11,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -99,16 +98,35 @@ func loadFixtureBytes(path string) []byte {
 }
 
 // loadFixtureString returns the entire contents of the given file as a string
-func loadFixtureString(path string) string {
-	return string(loadFixtureBytes(path))
+func loadFixtureString(format string, args ...interface{}) string {
+	return string(loadFixtureBytes(fmt.Sprintf(format, args...)))
 }
 
-// compactJSON converts a JSON-encoded byte slice to a compact form (so our JSON fixtures can be readable)
-func compactJSON(encoded []byte) string {
-	buf := bytes.Buffer{}
-	if err := json.Compact(&buf, encoded); err != nil {
-		panic(fmt.Sprintf("%s: %s", err, string(encoded)))
+// suppressLogging prevents logging output during the given func unless TEST_LOGGING env var is not empty. Use this
+// to keep log messages from polluting test output. Not thread-safe.
+func suppressLogging(t *testing.T, f func()) {
+	t.Helper()
+
+	if os.Getenv("TEST_LOGGING") == "" {
+		orig := hclog.SetDefault(hclog.NewNullLogger())
+		defer func() { hclog.SetDefault(orig) }()
+		t.Log("Logging is suppressed. Set TEST_LOGGING=1 in env to see logged messages during test")
 	}
 
-	return buf.String()
+	f()
+}
+
+// Wrapper to intercept the mockpapi's call of t.FailNow(). The Terraform test driver runs the provider code on
+// goroutines other than the one created for the test. When t.FailNow() is called from any other goroutine, it causes
+// the test to hang because the TF test driver is still waiting to serve requests. Mockery's failure message neglects to
+// inform the user which test had failed. Use this struct to wrap a *testing.T when you call mock.Test(T{t}) and the
+// mock's failure will print the failling test's name. Such failures are usually caused by the provider invoking an
+// unexpected call on the mock.
+//
+// NB: You should only need to use this where your test uses the Terraform test driver
+type T struct{ *testing.T }
+
+// Overrides testing.T.FailNow() so when a test mock fails an assertion, we see which test had failed before it hangs
+func (t T) FailNow() {
+	t.T.Fatalf("FAIL: %s", t.T.Name())
 }

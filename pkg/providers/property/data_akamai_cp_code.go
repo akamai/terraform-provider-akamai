@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCPCode() *schema.Resource {
@@ -16,18 +17,39 @@ func dataSourceCPCode() *schema.Resource {
 		ReadContext: dataSourceCPCodeRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: tools.IsNotBlank,
 			},
 			"contract": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"contract", "contract_id"},
+				ForceNew:     true,
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("contract"),
+			},
+			"contract_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"contract", "contract_id"},
+				ForceNew:     true,
 			},
 			"group": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"group", "group_id"},
+				ForceNew:     true,
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("group"),
+			},
+			"group_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"group", "group_id"},
+				ForceNew:     true,
 			},
 			"product_ids": {
 				Type:     schema.TypeList,
@@ -44,36 +66,48 @@ func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	log.Debug("Read CP Code")
 
-	var name, group, contract string
+	var name, groupID, contractID string
 	var err error
 
 	if name, err = tools.GetStringValue("name", d); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if group, err = tools.GetStringValue("group", d); err != nil {
+	// load group_id, if not exists, then load group.
+	if groupID, err = tools.ResolveKeyStringState(d, "group_id", "group"); err != nil {
 		return diag.FromErr(err)
 	}
-
-	if contract, err = tools.GetStringValue("contract", d); err != nil {
-		return diag.FromErr(err)
+	// set group_id/group in state.
+	if err := d.Set("group_id", groupID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("group", groupID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 
-	cpCode, err := findCPCode(ctx, name, contract, group, meta)
+	// load contract_id, if not exists, then load contract.
+	if contractID, err = tools.ResolveKeyStringState(d, "contract_id", "contract"); err != nil {
+		return diag.FromErr(err)
+	}
+	// set contract_id/contract in state.
+	if err := d.Set("contract_id", contractID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("contract", contractID); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+
+	cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("could not load CP codes: %w", err))
 	}
 
 	if cpCode == nil {
-		return diag.FromErr(fmt.Errorf("%w: invalid CP Code", ErrLookingUpCPCode))
-	}
-
-	if err := d.Set("name", cpCode.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%v: invalid CP Code", ErrLookingUpCPCode))
 	}
 
 	if err := d.Set("product_ids", cpCode.ProductIDs); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 	d.SetId(cpCode.ID)
 

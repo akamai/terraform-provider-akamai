@@ -11,7 +11,6 @@ group_name = "terraform_workspaces"
 email = ["johndoe@acme.org"]
 
 # Product to associate with the configuration
-# See https://www.terraform.io/docs/providers/akamai/g/appendix.html
 product = "Adaptive_Media_Delivery"
 
 # AMD CP Code Name
