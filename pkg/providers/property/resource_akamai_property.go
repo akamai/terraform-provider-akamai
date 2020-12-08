@@ -66,6 +66,19 @@ func resourceProperty() *schema.Resource {
 		return compareRules(&oldRules.Rules, &newRules.Rules)
 	}
 
+	diffSuppressHostNames := func(_, oldHostname, newHostname string, _ *schema.ResourceData) bool {
+		logger := akamai.Log("PAPI", "suppressRulesJSON")
+		logger.Debugf("old hostname %v, newhostname %v:", oldHostname, newHostname)
+
+		// There are times where newHostname is comming as Zero.
+		if newHostname == "0" {
+			return true
+		}
+
+		// If oldHostname is not empty and newHostname is empty, the return true (i.e, supress diff).
+		return oldHostname != "" && newHostname == ""
+	}
+
 	return &schema.Resource{
 		CreateContext: resourcePropertyCreate,
 		ReadContext:   resourcePropertyRead,
@@ -170,10 +183,11 @@ func resourceProperty() *schema.Resource {
 				},
 			},
 			"hostnames": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
+				Type:             schema.TypeMap,
+				Optional:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				Description:      "Mapping of edge hostname CNAMEs to other CNAMEs",
+				DiffSuppressFunc: diffSuppressHostNames,
 			},
 
 			// Computed
@@ -469,7 +483,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diags
 	}
 
-	// We only update if these attributes change
+	// We only update if these attributes change.
 	if !d.HasChanges("hostnames", "rules", "rule_format") {
 		logger.Debug("No changes to hostnames, rules, or rule_format (no update required)")
 		return nil
