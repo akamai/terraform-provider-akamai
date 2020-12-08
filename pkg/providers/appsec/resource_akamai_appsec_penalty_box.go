@@ -106,7 +106,42 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourcePenaltyBoxRemove")
+
+	removePenaltyBox := v2.UpdatePenaltyBoxRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removePenaltyBox.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removePenaltyBox.Version = version
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removePenaltyBox.PolicyID = policyid
+
+	removePenaltyBox.Action = "none"
+
+	removePenaltyBox.PenaltyBoxProtection = false
+
+	_, errd := client.UpdatePenaltyBox(ctx, removePenaltyBox)
+	if errd != nil {
+		logger.Errorf("calling 'removePenaltyBox': %s", errd.Error())
+		return diag.FromErr(errd)
+	}
+	d.SetId("")
+
+	return nil
 }
 
 func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
