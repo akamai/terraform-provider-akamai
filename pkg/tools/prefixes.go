@@ -7,6 +7,9 @@ import (
 
 // AddPrefix will add prefix to given string.
 func AddPrefix(str, pre string) string {
+	if str == "" {
+		return ""
+	}
 	if strings.HasPrefix(str, pre) {
 		return str
 	}
