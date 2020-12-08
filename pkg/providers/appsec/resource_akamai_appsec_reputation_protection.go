@@ -96,7 +96,40 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceReputationProtectionRemove")
+
+	removeReputationProtection := v2.UpdateReputationProtectionRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeReputationProtection.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeReputationProtection.Version = version
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeReputationProtection.PolicyID = policyid
+
+	removeReputationProtection.ApplyReputationControls = false
+
+	_, errd := client.UpdateReputationProtection(ctx, removeReputationProtection)
+	if errd != nil {
+		logger.Errorf("calling 'removeReputationProtection': %s", errd.Error())
+		return diag.FromErr(errd)
+	}
+
+	d.SetId("")
+	return nil
 }
 
 func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

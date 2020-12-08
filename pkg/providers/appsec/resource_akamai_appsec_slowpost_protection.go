@@ -96,7 +96,39 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 
 func resourceSlowPostProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSlowPostProtectionRemove")
+
+	removeSlowPostProtection := v2.UpdateSlowPostProtectionRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSlowPostProtection.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSlowPostProtection.Version = version
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSlowPostProtection.PolicyID = policyid
+
+	removeSlowPostProtection.ApplySlowPostControls = false
+
+	_, errd := client.UpdateSlowPostProtection(ctx, removeSlowPostProtection)
+	if errd != nil {
+		logger.Errorf("calling 'removeSlowPostProtection': %s", errd.Error())
+		return diag.FromErr(errd)
+	}
+	d.SetId("")
+	return nil
 }
 
 func resourceSlowPostProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

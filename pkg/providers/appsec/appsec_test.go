@@ -540,6 +540,44 @@ func (p *mockappsec) UpdateSlowPostProtectionSetting(ctx context.Context, params
 	return args.Get(0).(*appsec.UpdateSlowPostProtectionSettingResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetNetworkLayerProtection(ctx context.Context, params appsec.GetNetworkLayerProtectionRequest) (*appsec.GetNetworkLayerProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetNetworkLayerProtectionResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateNetworkLayerProtection(ctx context.Context, params appsec.UpdateNetworkLayerProtectionRequest) (*appsec.UpdateNetworkLayerProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateNetworkLayerProtectionResponse), args.Error(1)
+}
+func (p *mockappsec) RemoveNetworkLayerProtection(ctx context.Context, params appsec.RemoveNetworkLayerProtectionRequest) (*appsec.RemoveNetworkLayerProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveNetworkLayerProtectionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetNetworkLayerProtections(ctx context.Context, params appsec.GetNetworkLayerProtectionsRequest) (*appsec.GetNetworkLayerProtectionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetNetworkLayerProtectionsResponse), args.Error(1)
+}
 func (p *mockappsec) GetWAFMode(ctx context.Context, params appsec.GetWAFModeRequest) (*appsec.GetWAFModeResponse, error) {
 	args := p.Called(ctx, params)
 
