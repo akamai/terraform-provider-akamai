@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: akamai_property_contracts"
-subcategory: "Provisioning"
+subcategory: "Common"
 description: |-
  Property contracts
 ---
