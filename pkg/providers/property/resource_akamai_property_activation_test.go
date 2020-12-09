@@ -152,15 +152,20 @@ data "akamai_property_rules" "rules" {
 type papiCall struct {
 	methodName   string
 	papiResponse interface{}
+	papiRequest  interface{}
 	error        error
 	stubOnce     bool
 }
 
 func mockPAPIClient(callsToMock []papiCall) *mockpapi {
 	client := &mockpapi{}
-
 	for _, call := range callsToMock {
-		stub := client.On(call.methodName, AnyCTX, mock.Anything).Return(call.papiResponse, call.error)
+		var request interface{}
+		request = mock.Anything
+		if call.papiRequest != nil {
+			request = call.papiRequest
+		}
+		stub := client.On(call.methodName, AnyCTX, request).Return(call.papiResponse, call.error)
 		if call.stubOnce {
 			stub.Once()
 		}
@@ -411,6 +416,145 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						),
 						ExpectNonEmptyPlan: true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("check schema property activation update", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{
+			{
+				methodName: "GetRuleTree",
+				papiResponse: &papi.GetRuleTreeResponse{
+					Response: papi.Response{Errors: make([]*papi.Error, 0)},
+				},
+				error:    nil,
+				stubOnce: false,
+			},
+			{
+				methodName: "GetActivations",
+				papiRequest: papi.GetActivationsRequest{
+					PropertyID: "prp_test",
+				},
+				papiResponse: &papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+						AccountID:       "act_1-6JHGX",
+						ActivationID:    "atv_activation1",
+						ActivationType:  "ACTIVATE",
+						GroupID:         "grp_91533",
+						PropertyName:    "test",
+						PropertyID:      "prp_test",
+						PropertyVersion: 1,
+						Network:         "STAGING",
+						Status:          "ACTIVE",
+						SubmitDate:      "2020-10-28T15:04:05Z",
+					}}}},
+				error:    nil,
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivations",
+				papiResponse: &papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+						AccountID:       "act_1-6JHGX",
+						ActivationID:    "atv_deactivation1",
+						ActivationType:  "DEACTIVATE",
+						GroupID:         "grp_91533",
+						PropertyName:    "test",
+						PropertyID:      "prp_test",
+						PropertyVersion: 2,
+						Network:         "STAGING",
+						Status:          "ACTIVE",
+						SubmitDate:      "2020-10-28T15:05:05Z",
+					}}}},
+				error:    nil,
+				stubOnce: false,
+			},
+			{
+				methodName: "GetActivations",
+				papiResponse: &papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+						AccountID:       "act_1-6JHGX",
+						ActivationID:    "atv_delete1",
+						ActivationType:  "DEACTIVATE",
+						GroupID:         "grp_91533",
+						PropertyName:    "test",
+						PropertyID:      "prp_test",
+						PropertyVersion: 1,
+						Network:         "STAGING",
+						Status:          "ACTIVE",
+						SubmitDate:      "2020-10-28T15:06:05Z",
+					}}}},
+				error:    nil,
+				stubOnce: false,
+			},
+			{
+				methodName: "CreateActivation",
+				papiRequest: papi.CreateActivationRequest{
+					PropertyID: "prp_test",
+					Activation: papi.Activation{
+						ActivationType:         papi.ActivationTypeActivate,
+						AcknowledgeAllWarnings: true,
+						PropertyVersion:        2,
+						Network:                "STAGING",
+						NotifyEmails:           []string{"user@example.com"},
+					},
+				},
+				papiResponse: &papi.CreateActivationResponse{
+					ActivationID: "atv_update",
+				},
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivation",
+				papiRequest: papi.GetActivationRequest{
+					PropertyID:   "prp_test",
+					ActivationID: "atv_update",
+				},
+				papiResponse: &papi.GetActivationResponse{
+					GetActivationsResponse: papi.GetActivationsResponse{},
+					Activation: &papi.Activation{
+						ActivationID:    "atv_update",
+						PropertyID:      "prp_test",
+						PropertyVersion: 2,
+						Network:         "STAGING",
+						Status:          papi.ActivationStatusActive,
+					},
+				},
+			},
+		})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "warnings"),
+							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "errors"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation_update.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "2"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						),
 					},
 				},
 			})
