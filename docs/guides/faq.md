@@ -15,7 +15,7 @@ The records can be created either thru the [Akamai Control Center](https://contr
  
 ## Migrating an Edge DNS Zone and Records to Terraform
 
-Migrating an existing Edge DNS Zone can be done in many ways. Two such methods include: via a command line utility or via step by step construction.
+Migrating an existing Edge DNS Zone can be done in many ways. Two such methods include: using a command line utility or using a step by step construction.
 
 ### Via Command Line Utility
 

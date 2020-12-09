@@ -15,7 +15,10 @@ For more information about properties, see the [Property Manager documentation](
 
 ## Prerequisites
 
-Before you can create a property, you need to complete the tasks in the [Get Started with the Akamai Terraform Provider](../guides/get_started_provider.md) guide. Be sure you have the contract and group IDs you retrieved available. You'll need them to set up the Provisioning module.
+Before you can create a property, you need to complete the tasks in the 
+[Get Started with the Akamai Terraform Provider](../guides/get_started_provider.md) 
+guide. Be sure you have the contract and group IDs you retrieved available. You'll 
+need them to set up the Provisioning module.
 
 ## Provisioning Workflow 
 
@@ -112,7 +115,10 @@ To import an existing property into Terraform you have to export the `rules.json
 
 You'll then need to create an `akamai_property` resource that pulls in the `rules.json`.
 
-You can use the `akamai_property_rules` data source to retrieve an existing rule template. It reads the server's copy of the rules then generates output in a format that you can save in a JSON file. If your rule template includes variables, you'll have to set them up again.
+You can use the `akamai_property_rules` data source to retrieve an existing rule 
+template. It reads the server's copy of the rules then generates output in a format 
+that you can save in a JSON file. If your rule template includes variables, you'll 
+have to set them up again.
 
 ### Create a property
 
@@ -218,7 +224,8 @@ The `akamai_property_rules_template` data source supports variable
 replacement and the use of snippet templates from the Property Manager CLI.
 
 You may need to use different rule sets with different properties. To do this you 
-need to maintain a base rule set and then import individual rule sets. You'll first need to create a directory structure, like this:
+need to maintain a base rule set and then import individual rule sets. You'll first 
+need to create a directory structure, like this:
 
 ```dir
 rules/main.json

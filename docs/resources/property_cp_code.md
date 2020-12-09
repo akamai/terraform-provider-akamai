@@ -82,9 +82,8 @@ resource "akamai_cp_code" "example" {
   }
 ```
 
-You can import your Akamai CP codes using a comma-delimited string of the CP code, contract, and group IDs. 
-
-You have to enter the IDs in this order: 
+You can import your Akamai CP codes using a comma-delimited string of the CP code, 
+contract, and group IDs. You have to enter the IDs in this order: 
 
 `cpcode_id,contract_id,group_id`
 

@@ -22,8 +22,7 @@ is assigned to a product, which determines which behaviors you can use. Each
 property’s default rule needs a valid content provider (CP) code assigned to bill 
 and report for the service.
 
-> __NOTE:__ In version 0.10 and earlier of this resource, it also controlled 
-content provider (CP) codes, origin settings, rules, and hostname associations. Starting with version 1.0.0, this logic is broken out into individual resources.
+> __NOTE:__ In version 0.10 and earlier of this resource, it also controlled content provider (CP) codes, origin settings, rules, and hostname associations. Starting with version 1.0.0, this logic is broken out into individual resources.
 
 ## Example usage
 
@@ -85,7 +84,8 @@ resource "akamai_property" "example" {
   }
 ```
 
-You can import Akamai properties using either the `property_id` or a comma-delimited string of the property, contract, and group IDs. You'll need to enter the string of ID if the property belongs to multiple groups or contracts.
+You can import Akamai properties using either the `property_id` or a comma-delimited 
+string of the property, contract, and group IDs. You'll need to enter the string of IDs if the property belongs to multiple groups or contracts.
 
 If using the string of IDs, you need to enter them in this order:
 
