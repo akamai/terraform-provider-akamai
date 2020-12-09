@@ -76,9 +76,9 @@ resource "akamai_edge_hostname" "example" {
 ```
 
 You can import Akamai edge hostnames using a comma-delimited string of edge 
-hostname, contract, and group IDs. You have to enter the IDs in this order: 
+hostname, contract ID, and group ID. You have to enter the values in this order: 
 
- `edge_hostname_id, contract_id, group_id` 
+ `edge_hostname, contract_id, group_id` 
 
 For example:
 
