@@ -6,7 +6,6 @@ description: |-
 ---
 
 # Get Started with the Akamai Terraform Provider
-<!--Not sure about the name of this doc. Any suggestions?-->
 
 If you've set up Akamai APIs before, some of the Akamai Provider 
 setup tasks will look familiar. You'll need to create Akamai API clients 
@@ -29,7 +28,7 @@ To set up the Akamai Provider, you need to:
 * Initialize the Akamai Provider.
 * Test your Akamai Provider configuration.
 
-## Make some decisions about how things should work
+## Make some decisions 
 
 Before getting into the actual set up of the Akamai Provider, you need
 to make some decisions about how you want things to work. You need to
@@ -58,7 +57,6 @@ answer these questions:
 Now that you made some decisions, you need to set up a Terraform configuration file for the Akamai modules you're using.
 
 1. Create a new folder called `terraform`.
-<!--Does it matter where they create this file?-->
 2. Create a file inside your new folder and name it `akamai.tf`.
 3. Continue with [Create Akamai API clients](#create-akamai-api-clients).
 
@@ -83,15 +81,16 @@ You can retrieve these IDs through the [`akamai_contract`](../data-sources/prope
 [`akamai_group`](../data-sources/property_group.md) data sources, which require read access to the Property
 Manager API. You can also get this information from the Contracts app in Akamai
 Control Center, or by using other Akamai APIs or CLIs.
-<!--I think "other Akamai APIs or CLIs" is too vague, although it does seem like you can get this info in various places. Thoughts? -->
 
 ### Retrieve contract IDs with akamai_contract
 
-You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). To retrieve the default contract ID no attributes need to be set:
-<!--You do need to have the PAPI API client do to this, right? --> 
+You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). Like the Provisioning module, this data source requires access to the Property Manager (PAPI) API service. See [Set up your API clients](guides/akamai_provider_auth.md#set-up-your-api-clients)
+
+To retrieve the default contract ID no attributes need to be set:
 
 ```hcl
 data "akamai_contract" "default" {
+     group_name = "example group name"
 
 }
 ```
@@ -153,7 +152,6 @@ Akamai modules you're using:
 pre-installed in the Akamai Development Environment. Get more details in
 our [[installation
 Instructions](https://developer.akamai.com/blog/2020/05/26/set-development-environment).
-<!--Is this note still valid?-->
 
 Once you're done with the module-level setup, continue with the next
 sections to initialize and test the Akamai Provider.

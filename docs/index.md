@@ -16,6 +16,10 @@ Traffic Management configurations.
 
 Last updated: December 2020.
 
+## Migrate to the newest version
+
+If you're using the Provisioning module, the latest major version of the Akamai Provider is now available. See [1.0.0 Migration Guide](../guides/1.0_migration) for more information.
+
 ## Workflows
 
 Here are the most common workflows for the Akamai Provider:
@@ -30,10 +34,7 @@ Here are the most common workflows for the Akamai Provider:
   * [Provisioning/Property Manager](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property)
 *  **Update settings for an existing module.** Use the reference information for resource and data sources listed under each module, like DNS or Common. You can find this documentation on the panel to the left.
 
-## Maintenance
-<!--Might remove this heading as the two subheads won't appear in the right-hand TOC.-->
-
-### Manage changes to your Akamai configurations
+## Manage changes to your Akamai configurations
 
 When you're using the Akamai Provider, you need to keep your 
 Terraform configurations up to date with changes made using Akamai 
@@ -45,9 +46,6 @@ For example, before updating your Akamai Provider configurations, you may want t
 and suggested changes. Once you fix any issues, you can run `terraform plan` 
 again and make sure everything is in sync.
 
-### Migrate to the newest version of the Akamai Provider 
-
-<!-- This section is a placeholder for the migration guide being developed. Likely need some overview text and a link to a separate migration guide.-->
 
 ## Links to resources
 
@@ -59,7 +57,8 @@ Akamai Terraform Provider.
 If you're new to Akamai, here are some links to help you get started:
 
 * [Akamai Provider blogs](https://developer.akamai.com/blog/terraform)
-* [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started)<!--May want a different link.-->
+* [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started)
+<!--May want a different link.-->
 * [Akamai Community site](https://community.akamai.com/customers/s/)
 
 ### New to Terraform?
@@ -74,9 +73,7 @@ If you're new to Terraform, here are some links you might find helpful:
 ## Available guides
 
 * [Frequently Asked Questions](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/faq)
-<!--May be going away with Dec release. More likely will stay until next doc update.-->
 * [Get Started with DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone)
 * [Get Started with GTM Domain Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain)
-* [Get Started with Property Management](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) <!--Name may change-->
+* [Get Started with the Provisioning Module](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) 
 * [Appendix](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix) 
-<!--Want to rename to something like "Common codes and formats". Any suggestions?-->
