@@ -44,7 +44,7 @@ resource "akamai_appsec_activations" "activation" {
 
 * `notes` - An optional text note describing this operation.
 
-* `activate` - A boolean indicating whether to activate the specified configuration version. If not supplied, True is assmed.
+* `activate` - A boolean indicating whether to activate the specified configuration version. If not supplied, True is assumed.
 
 ## Attribute Reference
 

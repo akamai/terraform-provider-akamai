@@ -28,7 +28,7 @@ Here's a real-world example that includes other data sources as dependencies:
 ```
 locals {
     group_name = "example group name"
-    cpcode_name = "My Cpcode Name"
+    cpcode_name = "My CP code Name"
 }
 
 data "akamai_group" "example" {

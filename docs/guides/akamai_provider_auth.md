@@ -23,9 +23,8 @@ these permissions, your Terraform configurations won't execute.
 
 To get authenticated you need to:
 
-* Set up your API clients
-
-* Add your local .edgerc file to your Akamai Provider config
+* Set up your API clients.
+* Add your local .edgerc file to your Akamai Provider configuration.
 
 ## Set up your API clients
 
@@ -58,8 +57,8 @@ Once you create the supporting API clients you can update your local
 ## Add your local .edgerc file to your Akamai Provider config
 
 
-To reference a local .edgerc file, you add this line to the top of the
-Akamai Provider configuration file (akamai.tf): 
+To reference a local `.edgerc` file, you add this line to the top of the
+Akamai Provider configuration file (`akamai.tf`): 
 
 ```
 edgerc = \"\~/.edgerc\"
