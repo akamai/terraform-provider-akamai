@@ -11,7 +11,7 @@ description: |-
 
 Use the `akamai_property_products` data source to list the products included on a contract. 
 
-## Example Usage
+## Example usage
 
 This example returns products associated with the [EdgeGrid client token](https://developer.akamai.com/getting-started/edgegrid) for a given contract:
 
@@ -25,13 +25,13 @@ output "property_match" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 This data source supports this argument:
 
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 
-## Attributes Reference
+## Attributes reference
 
 This data source returns these attributes:
 

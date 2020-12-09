@@ -11,7 +11,7 @@ description: |-
 
 Use the `akamai_contract` data source to find a contract ID.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -26,17 +26,17 @@ resource "akamai_property" "example" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 This data source requires one of these group arguments to return contract information: 
   * `group_name` - The name of the group containing the contract. 
   * `group_id` - The unique ID of the group containing the contract, including the  `grp_` prefix.
 
-### Deprecated Arguments
+### Deprecated arguments
 
 * `group` - (Deprecated) Either the group ID or the group name that includes the contract. You can't use this argument with `group_id` and `group_name`.
 
-## Attributes Reference
+## Attributes reference
 
 * `id` - The contract's unique ID, including the `ctr_` prefix.
 

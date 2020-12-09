@@ -129,7 +129,7 @@ resource "akamai_property" "example" {
 * `variable_definition_file` - (Optional) The absolute path to the file containing variable definitions and defaults. This file  follows the syntax used in the Property Manager CLI. This argument is required if you set `variable_values_file` and conflicts with `variables`.
 * `variable_values_file` - (Optional) The absolute path to the file containing variable values. This file  follows the syntax used in Property Manager CLI. This argument is required if you set `variable_definition_file` and conflicts with `variables`.
 
-## Attributes Reference
+## Attributes reference
 
 This data source returns this attribute:
 

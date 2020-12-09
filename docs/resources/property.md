@@ -3,20 +3,23 @@ layout: "akamai"
 page_title: "Akamai: property"
 subcategory: "Provisioning"
 description: |-
-  Create and update Akamai Properties
+  Create and update Akamai properties.
 ---
 
 # akamai_property
 
-The `akamai_property` resource represents an Akamai property configuration. This resources lets you to create,
-update, and activate properties on the Akamai platform. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](guides/1.0_migration.md) for details. 
+
+The `akamai_property` resource represents an Akamai property configuration. 
+This resource lets you to create, update, and activate properties on the 
+Akamai platform. 
 
 Akamai’s edge network caches your web assets near to servers that request them. A property provides the main way to control how edge servers respond to various kinds of requests for those assets. Properties apply rules to a set of hostnames, and you can only apply one property at a time to any given hostname. Each property is assigned to a product, which determines which behaviors you can use. Each property’s default rule needs a valid content provider code (CP code) assigned to bill and report for the service.
 
 > __NOTE:__ In version 0.10 and earlier of this resource, it also controlled 
 content provider (CP) codes, origin settings, rules, and hostname associations. Starting with version 1.0, this logic is broken out into individual resources.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -37,7 +40,7 @@ resource "akamai_property" "example" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 This resource supports these arguments:
 
@@ -50,13 +53,13 @@ This resource supports these arguments:
 * `rules` - (Required) A JSON-encoded rule tree for a given property. For this argument, you need to enter a complete JSON rule tree, unless you set up a series of JSON templates. See the [`akamai_property_rules`](/docs/providers/akamai/d/property_rules.html))
 * `rule_format` - (Optional) The [rule format](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats) to use. Uses the latest rule format by default.
 
-### Deprecated Arguments
+### Deprecated arguments
 
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
 * `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
 * `product` - (Deprecated) Optional argument replaced by the now required `product_id`. Maintained for legacy purposes.
 
-## Attribute Reference
+## Attribute reference
 
 The resource returns these attributes:
 
