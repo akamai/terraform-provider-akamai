@@ -9,11 +9,7 @@ description: |-
 
 The Akamai Provider for Terraform provides you the ability to automate the creation, deployment, and management of security configurations, custom rules, match targets and other application security resources.
 
-To get more information about Application Security, see:
-
-* [API documentation](https://developer.akamai.com/api/cloud_security/application_security/v1.html)
-* How-to Guides
-    * [Official Documentation](TBD: https://learn.akamai.com/en-us/products/core_features/control_center.html)
+To get more information about Application Security, see the [API documentation](https://developer.akamai.com/api/cloud_security/application_security/v1.html)
 
 ## Configure the Terraform Provider
 
@@ -40,7 +36,7 @@ For certain resources, you will also need other information, such as the version
 
 ## Retrieving Security Configuration Information
 
-You can obtain the name and ID of the existing security configurations using the [`akamai_appsec_configuration`](/docs/providers/akamai/d/configuration.html) data source. This data source can be used with no additional parameters to output information about all security configurations associated with your account. Add the following to your `akamai.tf` file:
+You can obtain the name and ID of the existing security configurations using the [`akamai_appsec_configuration`](../data-sources/appsec_configuration.md) data source. This data source can be used with no additional parameters to output information about all security configurations associated with your account. Add the following to your `akamai.tf` file:
 
 ```hcl
 data "akamai_appsec_configuration" "configurations" {
@@ -95,7 +91,7 @@ If you run `terraform apply` on this file, you should see the `config_id` value 
 
 ## Displaying Information About a Specific Configuration
 
-The provider's [`akamai_appsec_export_configuration`](/docs/providers/akamai/d/export_configuration.html) data source can diplay complete information about a specific configuration, including attributes such as custom rules, selected hostnames, etc. To show these two types of data for the most recent version of your selected configuration, add the following blocks to your `akamai.tf` file:
+The provider's [`akamai_appsec_export_configuration`](../data-sources/appsec_export_configuration.md) data source can diplay complete information about a specific configuration, including attributes such as custom rules, selected hostnames, etc. To show these two types of data for the most recent version of your selected configuration, add the following blocks to your `akamai.tf` file:
 
 ```hcl
 data "akamai_appsec_export_configuration" "export" {
@@ -112,7 +108,7 @@ output "exported_configuration_text" {
 }
 ```
 
-Note that you can specify a version of the configuration other than the most recent version. See [link required] for information on using the [`akamai_configuration_version`](/docs/providers/akamai/d/configuration_version.html) data source to list the available versions. Also, you can specify other kinds of data to be exported besides `customRules` and `selectedHosts`, using any of these search fields:
+Note that you can specify a version of the configuration other than the most recent version. See the [`akamai_configuration_version`](../data-sources/appsec_configuration_version.md) data source to list the available versions. Also, you can specify other kinds of data to be exported besides `customRules` and `selectedHosts`, using any of these search fields:
 
 * customRules
 * matchTargets
@@ -127,7 +123,7 @@ Save the file and run `terraform apply` to see a formatted display of the select
 
 ## Adding a Hostname to the `selectedHosts` List
 
-You can modify the list of hosts protected by a given security configuration using the [`akamai_appsec_selected_hostnames`](/docs/providers/akamai/r/selected_hostnames.html) resource. Add the following resource block to your `akamai.tf` file, replacing `example.com` with a hostname from the list reported in the `data_akamai_appsec_export_configuration` data source example above:
+You can modify the list of hosts protected by a given security configuration using the [`akamai_appsec_selected_hostnames`](../data-sources/appsec_selected_hostnames.md) resource. Add the following resource block to your `akamai.tf` file, replacing `example.com` with a hostname from the list reported in the `data_akamai_appsec_export_configuration` data source example above:
 
 ```hcl
 resource "akamai_appsec_selected_hostnames" "selected_hostnames_append" {
@@ -148,7 +144,7 @@ Note that you cannot modify a security configuration version that is currently a
 
 ## Activating a Security Configuration Version
 
-You can activate a specific version of a security configuration using the [`akamai_appsec_activations`](/docs/providers/akamai/r/activations.html) resource. Add the following resource block to your `akamai.tf` file, replacing the `version` value with the number of a currently inactive version, such as the one you modified using the `akamai_appsec_selected_hostnames` resource above.
+You can activate a specific version of a security configuration using the [`akamai_appsec_activations`](../data-sources/akamai_appsec_activations.md) resource. Add the following resource block to your `akamai.tf` file, replacing the `version` value with the number of a currently inactive version, such as the one you modified using the `akamai_appsec_selected_hostnames` resource above.
 
 ```hcl
 resource "akamai_appsec_activations" "activation" {

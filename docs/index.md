@@ -18,14 +18,13 @@ Last updated: December 2020.
 
 ## Migrate to the newest version
 
-If you're using the Provisioning module, the latest major version of the Akamai Provider is now available. See [1.0.0 Migration Guide](../guides/1.0_migration) for more information.
+If you're using the Provisioning module, the latest major version of the Akamai Provider is now available. See [1.0.0 Migration Guide](../guides/1.0_migration.md) for more information.
 
 ## Workflows
 
 Here are the most common workflows for the Akamai Provider:
 
-* **Set up the Provider the first time.** To do this, finish reviewing this guide, then go to [Get Started with the Akamai Terraform Provider
-](https://docs.google.com/document/d/1ohurENF2epbu_Dx8X0fcYwAVU1ZEKh\--Wg1jV2AWuP4/edit?usp=sharing). When setting up the Provider, you need to choose an [authentication method](https://docs.google.com/document/d/1S39MM1sZNoM4EmlSLlPVYNohiH6x-Js0IoadUhU4vcc/edit), and decide whether to import existing Akamai configurations, or create new ones.
+* **Set up the Provider the first time.** To do this, finish reviewing this guide, then go to [Get Started with the Akamai Terraform Provider](../guides/get_started_provider.md). When setting up the Provider, you need to choose an [authentication method](../guides/akamai_provider_auth.md), and decide whether to import existing Akamai configurations, or create new ones.
 * **Add a new module to your existing Akamai Provider configuration.** If the Akamai  Provider is already set up, and you're adding a new module, read the guide for the module you're adding:
                               
   * [Application Security](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec)

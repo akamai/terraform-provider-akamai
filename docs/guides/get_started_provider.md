@@ -44,7 +44,7 @@ answer these questions:
   
   * **Environment variables.** Use environment variables to set credentials. Any variables you set take precedence over the contents of the .edgerc configuration file.
 
-  For details, see [Authenticate the Akamai Terraform Provider](guides/akamai_provider_auth.md).
+  For details, see [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md).
 
 * **Modules.** Which modules are you using? The API clients you set up depend on the modules you choose. For example, if you want to use the Common data sources and resources, you'll need read access to the Property Manager API. 
 
@@ -69,7 +69,7 @@ Akamai Provider modules you're using, like DNS or Provisioning.
 
 Once you set up the API clients, you add credential information from those clients to your `akamai.tf` file.
 
-See the [Authenticate the Akamai Terraform Provider](guides/akamai_provider_auth.md)
+See the [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md)
 guide for details. Once you're done authenticating, come back here to complete 
 the Akamai Provider setup.
 

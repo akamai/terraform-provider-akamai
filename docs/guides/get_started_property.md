@@ -15,7 +15,7 @@ For more information about properties, see [Property Manager documentation](http
 
 ## Prerequisites
 
-Before you can create a property, you need to complete the tasks in the [Get Started with the Akamai Terraform Provider](../guides/get_started_provider) guide. Be sure you have the contract and group IDs you retrieved available. You'll need them to set up the Provisioning module.
+Before you can create a property, you need to complete the tasks in the [Get Started with the Akamai Terraform Provider](../guides/get_started_provider.md) guide. Be sure you have the contract and group IDs you retrieved available. You'll need them to set up the Provisioning module.
 
 ## Provisioning Workflow 
 
@@ -31,17 +31,17 @@ To set up the Provisioning module, you need to:
 ## Retrieve the product ID
 
 When setting up properties, you need to retrieve the ID for the specific
-Akamai product you are using. See the [Akamai Product ID](../guides/appendix#common-product-ids) section for a list of common IDs.
+Akamai product you are using. See the [Akamai Product ID](../guides/appendix.md#common-product-ids) section for a list of common IDs.
 
 -> **Note** If you're currently using prefixes with your IDs, you might have to remove the `prd_` prefix from your entry. For more information about prefixes, see the [ID prefixes](https://developer.akamai.com/api/core_features/property_manager/v1.html#prefixes) section of the Property Manager API (PAPI) documentation.
 
 ## Add an edge hostname
 
-You use the [akamai_edge_hostname](../resources/edge_hostname) resource to 
+You use the [akamai_edge_hostname](../resources/property_edge_hostname.md) resource to 
 reuse an existing edge hostname or create a new one. 
 
 To create different hostname types, you need to change the domain suffix
-for the `edge_hostname` attribute. See [Domain Suffixes for Different Edge Hostname Types](../guides/appendix#domain-suffixes-for-different-edge-hostname-types)
+for the `edge_hostname` attribute. See [Domain Suffixes for Different Edge Hostname Types](../guides/appendix.md#domain-suffixes-for-different-edge-hostname-types)
 
 Once you set up the `akamai_edge_hostname` resource, run `terraform plan` and resolve any errors or warnings before continuing with the next step. See [Command: plan](https://www.terraform.io/docs/commands/plan.html) for more information about this Terraform command.
 

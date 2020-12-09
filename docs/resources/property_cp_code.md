@@ -8,7 +8,7 @@ description: |-
 
 # akamai_cp_code
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](guides/1.0_migration.md) for details. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details. 
 
 The `akamai_cp_code` resource lets you create or reuse content provider (CP) codes.  CP codes track web traffic handled by Akamai servers. Akamai gives you a CP code when you purchase a product. You need this code when you activate associated properties. 
 
@@ -82,7 +82,13 @@ resource "akamai_cp_code" "example" {
   }
 ```
 
-Akamai CP codes can be imported using a comma-delimited string of `cp_code_id,contract_id,group_id` in that order as ID, e.g.
+You can import your Akamai CP codes using a comma-delimited string of the CP code, contract, and group IDs. 
+
+You have to enter the IDs in this order: 
+
+`cp_code_id,contract_id,group_id`
+
+For example:
 
 ```shell
 $ terraform import akamai_cp_code.example cpc_123,ctr_1-AB123,grp_123

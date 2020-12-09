@@ -233,5 +233,5 @@ $ terraform import akamai_gtm_geomap.{{geomap resource name}} {{gtm domain name}
 $ terraform import akamai_gtm_asmap.{{asmap resource name}} {{gtm domain name}}:{{gtm asmap name}}
 ```
 
-[Migrating A GTM Domain](faq.md#migrating-a-gtm-domain-and-contained-objects-to-terraform) discusses GTM resource import in more detail.
+[Migrating A GTM Domain](../guides/faq.md#migrating-a-gtm-domain-and-contained-objects-to-terraform) discusses GTM resource import in more detail.
 

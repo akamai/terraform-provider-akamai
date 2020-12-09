@@ -8,7 +8,7 @@ description: |-
 
 # akamai_edge_hostname
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](guides/1.0_migration.md) for details. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details. 
 
 The `akamai_edge_hostname` resource lets you configure a secure edge hostname. Your edge hostname determines how requests for your site, app, or content are mapped to Akamai edge servers. 
 
@@ -69,7 +69,11 @@ resource "akamai_edge_hostname" "example" {
   }
 ```
 
-Akamai edge hostnames can be imported using a comma-delimited string of `edge_hostname_id, contract_id, group_id` in that order as ID, e.g.
+You can import Akamai edge hostnames using a comma-delimited string of edge hostname, contract, and group IDs. You have to enter the IDs in this order: 
+
+ `edge_hostname_id, contract_id, group_id` 
+
+For example:
 
 ```shell
 $ terraform import akamai_edge_hostname.example ehn_123,ctr_1-AB123,grp_123
