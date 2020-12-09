@@ -5,9 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
 func TestResProperty(t *testing.T) {
@@ -663,7 +664,7 @@ func TestResProperty(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 
-		t.Run("validation error when updating a property hostnames to empty", func(t *testing.T) {
+		t.Run("validation - empty plan, when updating a property hostnames to empty", func(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
 
@@ -731,12 +732,11 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.test", "hostnames.#", "0"),
 							),
+							ExpectNonEmptyPlan: false,
 						},
 					},
 				})
 			})
-
-			client.AssertExpectations(t)
 		})
 	})
 }
