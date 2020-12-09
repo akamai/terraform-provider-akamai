@@ -112,7 +112,7 @@ To import an existing property into Terraform you have to export the `rules.json
 
 You'll then need to create an `akamai_property` resource that pulls in the `rules.json`.
 
-You can use the `akamai_property_rules` data source generate a rule template. It reads the server's copy of the rules then generates output in a format that you can save in a JSON file. If your rule template includes variables, you'll have to set them up again.
+You can use the `akamai_property_rules` data source to retrieve an existing rule template. It reads the server's copy of the rules then generates output in a format that you can save in a JSON file. If your rule template includes variables, you'll have to set them up again.
 
 ### Create a property
 
