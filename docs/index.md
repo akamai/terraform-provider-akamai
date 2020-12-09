@@ -31,7 +31,7 @@ Here are the most common workflows for the Akamai Provider:
   * [DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone)
   * [Global Traffic Management](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain)
   * [Provisioning/Property Manager](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property)
-*  **Update settings for an existing module.** Use the reference information for resource and data sources listed under each module, like DNS or Common. You can find this documentation on the panel to the left.
+*  **Update settings for an existing module.** Use the reference information for resource and data sources listed under each module, like DNS or Provisioning. You can find this documentation on the panel to the left.
 
 ## Manage changes to your Akamai configurations
 
@@ -57,7 +57,7 @@ If you're new to Akamai, here are some links to help you get started:
 
 * [Akamai Provider blogs](https://developer.akamai.com/blog/terraform)
 * [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started)
-<!--May want a different link.-->
+* [Akamai Community site](https://community.akamai.com/customers/s/)
 * [Akamai Community site](https://community.akamai.com/customers/s/)
 
 ### New to Terraform?

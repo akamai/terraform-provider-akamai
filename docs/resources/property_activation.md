@@ -70,7 +70,7 @@ The following arguments are supported:
 
 * `property_id` - (Required) The property’s unique identifier, including the `prp_` prefix. 
 * `contact` - (Required) One or more email addresses to send activation status changes to.
-* `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. 
+* `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `akamai_property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. 
 * `network` - (Optional) Akamai network to activate on, either `STAGING` or `PRODUCTION`. `STAGING` is the default.
 
 ### Deprecated arguments

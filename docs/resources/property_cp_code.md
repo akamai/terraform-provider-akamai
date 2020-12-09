@@ -86,7 +86,7 @@ You can import your Akamai CP codes using a comma-delimited string of the CP cod
 
 You have to enter the IDs in this order: 
 
-`cp_code_id,contract_id,group_id`
+`cpcode_id,contract_id,group_id`
 
 For example:
 

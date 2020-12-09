@@ -24,6 +24,7 @@ data "akamai_cp_code" "example" {
 ```
 
 Here's a real-world example that includes other data sources as dependencies:
+
 ```
 locals {
     group_name = "example group name"

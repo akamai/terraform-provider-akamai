@@ -194,7 +194,7 @@ The file, example_primary_zone_com_resources.json, will be generated with the fo
 }
 ```
 
-Next, update the Terraform Zone configuration file using the previously generated json as input.
+Next, update the Terraform Zone configuration file using the previously generated JSON as input.
 
 ```
 $ akamai terraform create-zone example_primary_zone.com --createconfig
