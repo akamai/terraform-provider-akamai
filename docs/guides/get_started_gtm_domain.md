@@ -104,7 +104,7 @@ resource "akamai_gtm_domain" "example" {
 	type = "weighted"				# Domain type
 	group_id    = data.akamai_group.default.id         # Group ID variable
 	contract_id = data.akamai_contract.default.id      # Contract ID variable
-	email_notification_list = "user@demo.me"        # email notification list
+	email_notification_list = ["user@demo.me"]        # email notification list
 	comment = "example domain demo"
 }
 ```
