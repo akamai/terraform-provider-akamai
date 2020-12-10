@@ -1,6 +1,8 @@
 package iam
 
 import (
+	"context"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -10,8 +12,8 @@ import (
 )
 
 type provider struct {
-	Client iam.IAM
-	Cache  Cache
+	client iam.IAM
+	cache  Cache
 
 	checkMeta func(akamai.OperationMeta)
 }
@@ -31,14 +33,14 @@ func (p *provider) Resources() map[string]*schema.Resource {
 // DataSources returns the subprovider's data source schema map
 func (p *provider) DataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akmai_iam_roles":              p.dsRoles(),
-		"akmai_iam_groups":             p.dsGroups(),
-		"akmai_iam_countries":          p.dsCountries(),
-		"akmai_iam_contact_types":      p.dsContactTypes(),
-		"akmai_iam_supported_langs":    p.dsLanguages(),
-		"akmai_iam_notification_prods": p.dsNotificationProds(),
-		"akmai_iam_timeout_policies":   p.dsTimeoutPolicies(),
-		"akmai_iam_states":             p.dsStates(),
+		"akamai_iam_roles":              p.dsRoles(),
+		"akamai_iam_groups":             p.dsGroups(),
+		"akamai_iam_countries":          p.dsCountries(),
+		"akamai_iam_contact_types":      p.dsContactTypes(),
+		"akamai_iam_supported_langs":    p.dsLanguages(),
+		"akamai_iam_notification_prods": p.dsNotificationProds(),
+		"akamai_iam_timeout_policies":   p.dsTimeoutPolicies(),
+		"akamai_iam_states":             p.dsStates(),
 	}
 }
 
@@ -68,7 +70,7 @@ func (p *provider) Version() string {
 
 // SetClient allows injection of an IAM.Client
 func (p *provider) SetClient(c iam.IAM) {
-	p.Client = c
+	p.client = c
 }
 
 // SetSession allows injection of a session.Session
@@ -78,5 +80,9 @@ func (p *provider) SetSession(s session.Session) {
 
 // SetCache allows injection of a Cache
 func (p *provider) SetCache(c Cache) {
-	p.Cache = c
+	p.cache = c
+}
+
+func (p *provider) log(ctx context.Context) log.Interface {
+	return log.FromContext(ctx)
 }

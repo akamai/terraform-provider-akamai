@@ -8,7 +8,7 @@ type Cache interface {
 	Get(key string, out interface{}) error
 }
 
-// Implements Cache
+// Implements Cache as provided by the meta
 type metaCache struct {
 	sub  akamai.Subprovider
 	meta akamai.OperationMeta

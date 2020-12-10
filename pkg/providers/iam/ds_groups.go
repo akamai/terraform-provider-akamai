@@ -3,6 +3,8 @@ package iam
 import (
 	"context"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -61,24 +63,15 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 			Description: "The user name or email of the person who created the group",
 			Computed:    true,
 		},
-		"actions": {
-			Type:        schema.TypeSet,
-			Description: "Permissions available to the user for this group",
+		"delete_allowed": {
+			Type:        schema.TypeBool,
+			Description: "Indicates whether the user can remove items from the group",
 			Computed:    true,
-			Elem: schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"delete": {
-						Type:        schema.TypeBool,
-						Description: "Indicates whether the user can remove items from the group",
-						Computed:    true,
-					},
-					"edit": {
-						Type:        schema.TypeBool,
-						Description: "Indicates whether the user can modify items in the group",
-						Computed:    true,
-					},
-				},
-			},
+		},
+		"edit_allowed": {
+			Type:        schema.TypeBool,
+			Description: "Indicates whether the user can modify items in the group",
+			Computed:    true,
 		},
 	}
 
@@ -94,5 +87,27 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 }
 
 func (p *provider) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	logger := log.FromContext(ctx)
+
+	Actions := d.Get("get_actions").(bool)
+
+	logger.Debug("Fetching groups")
+	req := iam.ListGroupsRequest{Actions: Actions}
+	res, err := p.client.ListGroups(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("Could not get groups")
+		return diag.FromErr(err)
+	}
+
+	groups := []interface{}{}
+	for _, ct := range res {
+		// groups = append(groups, ct)
+	}
+
+	if err := d.Set("groups", groups); err != nil {
+		logger.WithError(err).Error("Could not set groups in state")
+	}
+
+	d.SetId("akamai_iam_groups")
 	return nil
 }

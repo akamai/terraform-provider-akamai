@@ -84,7 +84,7 @@ func (p *provider) dsRoles() *schema.Resource {
 				Type:        schema.TypeSet,
 				Description: "Permissions available to the user for this group", // These descriptions were taken from the API docs
 				Computed:    true,
-				Elem: schema.Resource{
+				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"user_id": {
 							Type:        schema.TypeString,
@@ -123,7 +123,7 @@ func (p *provider) dsRoles() *schema.Resource {
 				Type:        schema.TypeSet,
 				Description: "Permissions available to the user for this group",
 				Computed:    true,
-				Elem: schema.Resource{
+				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"delete": {
 							Type:        schema.TypeBool,
