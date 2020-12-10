@@ -4,368 +4,150 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/tidwall/gjson"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 func dataPropertyRules() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataPropertyRulesRead,
-		Schema:      akamaiDataPropertyRulesSchema,
+		StateUpgraders: []schema.StateUpgrader{{
+			Version: 0,
+			Type:    dataAkamaiPropertyRuleSchemaV0().CoreConfigSchema().ImpliedType(),
+			Upgrade: upgradeAkamaiPropertyRuleStateV0,
+		}},
+		SchemaVersion: 1,
+		Schema:        dataAkamaiPropertyRuleSchema,
 	}
 }
 
-var akpsOption = &schema.Schema{
-	Type:     schema.TypeSet,
-	Optional: true,
-	Elem: &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"key": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"values": {
-				Type:     schema.TypeSet,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
-			},
-			"value": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-		},
+var dataAkamaiPropertyRuleSchema = map[string]*schema.Schema{
+	"contract_id": {
+		Type:             schema.TypeString,
+		Optional:         true,
+		Computed:         true,
+		StateFunc:        addPrefixToState("ctr_"),
+		RequiredWith:     []string{"group_id"},
+		ValidateDiagFunc: tools.IsNotBlank,
 	},
-}
-
-var akpsCriteria = &schema.Schema{
-	Type:     schema.TypeSet,
-	Optional: true,
-	Elem: &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"option": akpsOption,
-		},
+	"group_id": {
+		Type:             schema.TypeString,
+		Optional:         true,
+		Computed:         true,
+		StateFunc:        addPrefixToState("grp_"),
+		RequiredWith:     []string{"contract_id"},
+		ValidateDiagFunc: tools.IsNotBlank,
 	},
-}
-
-var akpsBehavior = &schema.Schema{
-	Type:     schema.TypeSet,
-	Optional: true,
-	Elem: &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"option": akpsOption,
-		},
+	"property_id": {
+		Type:             schema.TypeString,
+		Required:         true,
+		StateFunc:        addPrefixToState("prp_"),
+		ValidateDiagFunc: tools.IsNotBlank,
 	},
-}
-
-var akamaiDataPropertyRulesSchema = map[string]*schema.Schema{
-	// rules tree can go max 5 levels deep
-	"variables": {
-		Type:     schema.TypeString,
-		Optional: true,
+	"version": {
+		Type:        schema.TypeInt,
+		Optional:    true,
+		Computed:    true,
+		Description: "This is a computed value - provider will always use 'latest' version, providing own version number is not supported",
 	},
 	"rules": {
-		Type:     schema.TypeSet,
-		Optional: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"criteria_match": {
-					Type:     schema.TypeString,
-					Optional: true,
-					Default:  "all",
-				},
-				"behavior": akpsBehavior,
-				"is_secure": {
-					Type:     schema.TypeBool,
-					Optional: true,
-					Default:  false,
-				},
-				"rule": {
-					Type:     schema.TypeSet,
-					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							"name": {
-								Type:     schema.TypeString,
-								Required: true,
-							},
-							"comment": {
-								Type:     schema.TypeString,
-								Optional: true,
-							},
-							"criteria_match": {
-								Type:     schema.TypeString,
-								Optional: true,
-								Default:  "all",
-							},
-							"criteria": akpsCriteria,
-							"behavior": akpsBehavior,
-							"rule": {
-								Type:     schema.TypeSet,
-								Optional: true,
-								Elem: &schema.Resource{
-									Schema: map[string]*schema.Schema{
-										"name": {
-											Type:     schema.TypeString,
-											Required: true,
-										},
-										"comment": {
-											Type:     schema.TypeString,
-											Optional: true,
-										},
-										"criteria_match": {
-											Type:     schema.TypeString,
-											Optional: true,
-											Default:  "all",
-										},
-										"criteria": akpsCriteria,
-										"behavior": akpsBehavior,
-										"rule": {
-											Type:     schema.TypeSet,
-											Optional: true,
-											Elem: &schema.Resource{
-												Schema: map[string]*schema.Schema{
-													"name": {
-														Type:     schema.TypeString,
-														Required: true,
-													},
-													"comment": {
-														Type:     schema.TypeString,
-														Optional: true,
-													},
-													"criteria_match": {
-														Type:     schema.TypeString,
-														Optional: true,
-														Default:  "all",
-													},
-													"criteria": akpsCriteria,
-													"behavior": akpsBehavior,
-													"rule": {
-														Type:     schema.TypeSet,
-														Optional: true,
-														Elem: &schema.Resource{
-															Schema: map[string]*schema.Schema{
-																"name": {
-																	Type:     schema.TypeString,
-																	Required: true,
-																},
-																"comment": {
-																	Type:     schema.TypeString,
-																	Optional: true,
-																},
-																"criteria_match": {
-																	Type:     schema.TypeString,
-																	Optional: true,
-																	Default:  "all",
-																},
-																"criteria": akpsCriteria,
-																"behavior": akpsBehavior,
-															},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				"variable": {
-					Type:     schema.TypeSet,
-					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							"name": {
-								Type:     schema.TypeString,
-								Required: true,
-							},
-							"description": {
-								Type:     schema.TypeString,
-								Optional: true,
-							},
-							"hidden": {
-								Type:     schema.TypeBool,
-								Required: true,
-							},
-							"sensitive": {
-								Type:     schema.TypeBool,
-								Required: true,
-							},
-							"value": {
-								Type:     schema.TypeString,
-								Optional: true,
-							},
-						},
-					},
-				},
-			},
-		},
-	},
-	"json": {
-		Type: schema.TypeString,
-		//Type: schema.TypeSet,
+		Type:        schema.TypeString,
 		Computed:    true,
 		Description: "JSON Rule representation",
+	},
+	"errors": {
+		Type:     schema.TypeString,
+		Computed: true,
 	},
 }
 
 func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// get rules from the TF config
-	rules, err := unmarshalRules(d)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("PAPI", "dataPropertyRulesRead")
+
+	var (
+		contractID, groupID, propertyID string
+		version                         int
+		err                             error
+	)
+
+	// since contractID && groupID is optional, we should not return an error.
+	contractID, _ = tools.GetStringValue("contract_id", d)
+	groupID, _ = tools.GetStringValue("group_id", d)
+
+	if propertyID, err = tools.GetStringValue("property_id", d); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if contractID != "" {
+		contractID = tools.AddPrefix(contractID, "ctr_")
+		if err := d.Set("contract_id", contractID); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+	if groupID != "" {
+		groupID = tools.AddPrefix(groupID, "grp_")
+		if err := d.Set("group_id", groupID); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+
+	if version, err = tools.GetIntValue("version", d); err != nil {
+		latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
+			PropertyID: propertyID,
+			ContractID: contractID,
+			GroupID:    groupID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		version = latestVersion.Version.PropertyVersion
+		contractID = latestVersion.ContractID
+		groupID = latestVersion.GroupID
+
+		if err := d.Set("version", version); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	getRuleTreeResponse, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+		PropertyID:      propertyID,
+		PropertyVersion: version,
+		ContractID:      contractID,
+		GroupID:         groupID,
+		ValidateRules:   true,
+		ValidateMode:    papi.RuleValidateModeFull,
+	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	jsonBody, err := json.Marshal(papi.GetRuleTreeResponse{Rules: rules})
-	if err != nil {
-		return diag.FromErr(err)
+
+	if formattedRulesJson, err := json.MarshalIndent(papi.RulesUpdate{Rules: getRuleTreeResponse.Rules}, "", "  "); err != nil {
+		logger.Debugf("Creating rule tree resulted in invalid JSON: %s", err)
+		return diag.FromErr(fmt.Errorf("invalid JSON result: %w", err))
+	} else {
+		if err := d.Set("rules", string(formattedRulesJson)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
-	sha := tools.GetSHAString(string(jsonBody))
-	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error()))
+	if len(getRuleTreeResponse.Errors) != 0 {
+		ruleErrors, err := json.Marshal(getRuleTreeResponse.Errors)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("errors", string(ruleErrors)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
+	d.SetId(propertyID)
 
-	d.SetId(sha)
-
-	log.Println("[DEBUG] Done")
 	return nil
-}
-
-// TODO this function maps values from data source schema onto papi.Rules struct
-// it will not be needed if we use plain json for property rules (after rewrite)
-func unmarshalRules(d *schema.ResourceData) (papi.Rules, error) {
-	propertyRules := papi.Rules{Name: "default"}
-	// Default Rules
-	rules, ok := d.GetOk("rules")
-	if !ok {
-		return papi.Rules{}, nil
-	}
-	for _, r := range rules.(*schema.Set).List() {
-		ruleTree, ok := r.(map[string]interface{})
-		if ok {
-			behavior, ok := ruleTree["behavior"]
-			if ok {
-				for _, b := range behavior.(*schema.Set).List() {
-					bb, ok := b.(map[string]interface{})
-					if ok {
-						beh := papi.RuleBehavior{}
-						beh.Name = bb["name"].(string)
-						boptions, ok := bb["option"]
-						if ok {
-							opts, err := extractOptions(boptions.(*schema.Set))
-							if err != nil {
-								return papi.Rules{}, err
-							}
-							beh.Options = opts
-						}
-
-						// Fixup CPCode
-						if beh.Name == "cpCode" {
-							if cpCodeOption, ok := beh.Options["id"]; ok {
-								cpCodeID, err := tools.GetIntID(tools.ConvertToString(cpCodeOption), "cpc_")
-								if err != nil {
-									return papi.Rules{}, err
-								}
-								beh.Options = papi.RuleOptionsMap{"value": map[string]interface{}{"id": cpCodeID}}
-							}
-						}
-
-						// Fixup SiteShield
-						if beh.Name == "siteShield" {
-							if _, ok := beh.Options["ssmap"].(string); ok {
-								beh.Options = papi.RuleOptionsMap{"ssmap": map[string]interface{}{"value": beh.Options["ssmap"].(string)}}
-							}
-						}
-
-						propertyRules.Behaviors = mergeBehaviors(propertyRules.Behaviors, beh)
-					}
-				}
-			}
-
-			criteria, ok := ruleTree["criteria"]
-			if ok {
-				for _, c := range criteria.(*schema.Set).List() {
-					cc, ok := c.(map[string]interface{})
-					if ok {
-						newCriteria := papi.RuleBehavior{}
-						newCriteria.Name = cc["name"].(string)
-						coptions, ok := cc["option"]
-						if ok {
-							opts, err := extractOptions(coptions.(*schema.Set))
-							if err != nil {
-								return papi.Rules{}, err
-							}
-							newCriteria.Options = opts
-						}
-						propertyRules.Criteria = append(propertyRules.Criteria, newCriteria)
-					}
-				}
-			}
-
-			if criteriamustsatisfy, ok := ruleTree["criteria_match"]; ok {
-				s, _ := criteriamustsatisfy.(string)
-				switch s {
-				case "all":
-					propertyRules.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAll
-				case "any":
-					propertyRules.CriteriaMustSatisfy = papi.RuleCriteriaMustSatisfyAny
-				}
-			}
-
-			isSecure, ok := ruleTree["is_secure"].(bool)
-			if ok && isSecure {
-				propertyRules.Options = papi.RuleOptions{IsSecure: isSecure}
-			}
-		}
-
-		childRules, ok := ruleTree["rule"]
-		if ok {
-			rules, err := extractRules(childRules.(*schema.Set))
-			if err != nil {
-				return papi.Rules{}, err
-			}
-			propertyRules.Children = append(propertyRules.Children, rules...)
-		}
-	}
-
-	// ADD vars from variables resource
-	jsonvars, ok := d.GetOk("variables")
-	if ok {
-		log.Println("VARS from JSON ", jsonvars)
-		variables := gjson.Parse(jsonvars.(string))
-		result := gjson.Get(variables.String(), "variables")
-
-		result.ForEach(func(key, value gjson.Result) bool {
-			variableMap, ok := value.Value().(map[string]interface{})
-			log.Println("VARS from JSON LOOP NAME ", variableMap["name"].(string))
-			log.Println("VARS from JSON LOOP DESC ", variableMap["description"].(string))
-			if ok {
-				newVariable := papi.RuleVariable{}
-				newVariable.Name = variableMap["name"].(string)
-				newVariable.Description = variableMap["description"].(string)
-				newVariable.Value = variableMap["value"].(string)
-				newVariable.Hidden = variableMap["hidden"].(bool)
-				newVariable.Sensitive = variableMap["sensitive"].(bool)
-				propertyRules.Variables = addVariable(propertyRules.Variables, newVariable)
-			}
-
-			return true
-		}) //variables
-	}
-	return propertyRules, nil
 }

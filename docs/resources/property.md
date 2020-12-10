@@ -3,15 +3,28 @@ layout: "akamai"
 page_title: "Akamai: property"
 subcategory: "Provisioning"
 description: |-
-  Create and update Akamai Properties
+  Create and update Akamai properties.
 ---
 
 # akamai_property
 
-The `akamai_property` resource represents an Akamai property configuration, allowing you to create,
-update, and activate properties on the Akamai platform. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details. 
 
-## Example Usage
+The `akamai_property` resource represents an Akamai property configuration. 
+This resource lets you to create, update, and activate properties on the 
+Akamai platform. 
+
+Akamai’s edge network caches your web assets near to servers that request them. 
+A property provides the main way to control how edge servers respond to various 
+kinds of requests for those assets. Properties apply rules to a set of hostnames, 
+and you can only apply one property at a time to any given hostname. Each property 
+is assigned to a product, which determines which behaviors you can use. Each 
+property’s default rule needs a valid content provider (CP) code assigned to bill 
+and report for the service.
+
+> __NOTE:__ In version 0.10 and earlier of this resource, it also controlled content provider (CP) codes, origin settings, rules, and hostname associations. Starting with version 1.0.0, this logic is broken out into individual resources.
+
+## Example usage
 
 Basic usage:
 
@@ -19,64 +32,73 @@ Basic usage:
 resource "akamai_property" "example" {
     name    = "terraform-demo"
     contact = ["user@example.org"]
-    account  = "prd_SPM"
-    product  = "prd_SPM"
-    contract = "ctr_####"
-    group    = "grp_####"
-    cp_code  = "cpc_#####"
-
+    product_id  = "prd_SPM"
+    contract_id = var.contractid
+    group_id    = var.groupid
     hostnames = {
       "example.org" = "example.org.edgesuite.net"
-      "www.example.org" = "example.org.edgesuite.net"
+      "www.example.org" = "example.org.edgesuite.net" 
       "sub.example.org" = "sub.example.org.edgesuite.net"
     }
-
-    rule_format = "v2018-02-27"
-    rules       = "${data.local_file.terraform-demo.content}"
-    variables   = "${akamai_property_variables.origin.json}"
+    rule_format = "v2020-03-04"
+    rules       = data.akamai_property_rules_template.example.json
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are supported:
+This resource supports these arguments:
 
-### Property Basics
+* `name` - (Required) The property name.
+* `contact` - (Required) One or more email addresses to send activation status changes to.
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
+* `product_id` - (Required to create, otherwise Optional) A product's unique ID, including the `prd_` prefix.
+* `hostnames` - (Required) A mapping of public hostnames to edge hostnames. For example: `{"example.org" = "example.org.edgesuite.net"}`
+* `rules` - (Required) A JSON-encoded rule tree for a given property. For this argument, you need to enter a complete JSON rule tree, unless you set up a series of JSON templates. See the [`akamai_property_rules`](../data-sources/property_rules.md) data source.
+* `rule_format` - (Optional) The [rule format](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats) to use. Uses the latest rule format by default.
 
-* `name` — (Required) The property name.
-* `contact` — (Required) One or more email addresses to inform about activation changes.
-* `hostnames` — (Required) A map of public hostnames to edge hostnames (e.g. `{"example.org" = "example.org.edgesuite.net"}`)
-* `contract` — (Optional) The contract ID.
-* `group` — (Optional) The group ID.
-* `product` — (Optional) The product ID. (Default: `prd_SPM` for Ion)
-* `is_secure` — (Optional) Whether the property is a secure (Enhanced TLS) property or not.
+### Deprecated arguments
 
-### Property Rules
+* `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
+* `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
+* `product` - (Deprecated) Optional argument replaced by the now required `product_id`. Maintained for legacy purposes.
 
-* `rules` — (Required) A JSON encoded string of property rules (see: [`akamai_property_rules`](/docs/providers/akamai/d/property_rules.html))
-* `rule_format` — (Optional) The rule format to use ([more](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats)).
+## Attribute reference
 
-In addition the specifying the rule tree in it's entirety, you can also set the default CP Code and Origin explicitly. *This will override your JSON configuration*.
+The resource returns these attributes:
 
-* `cp_code` — (Optional) The CP Code id or name to use (or create). Required unless a [cpCode behavior](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#cpcode) is present in the default rule.
-* `origin` — (Optional) The property origin (an origin must be specified to activate a property, but may be defined in your rules block).
-  * `hostname` — (Required) The origin hostname.
-  * `port` — (Optional) The origin port to connect to (default: 80).
-  * `forward_hostname` — (Optional) The value for the Hostname header sent to origin. (default: `ORIGIN_HOSTNAME`).
-  * `cache_key_hostname` — (Optional) The hostname uses for the cache key. (default: `ORIGIN_HOSTNAME`).
-  * `compress` — (Optional, boolean) Whether origin supports gzip compression (default: `false`).
-  * `enable_true_client_ip` — (Optional, boolean) Whether the X-True-Client-IP header should be sent to origin (default: `false`).
+* `warnings` - The contents of `warnings` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `errors` - The contents of `errors` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `latest_version` - The version of the property you've created or updated rules for. The Akamai Provider always uses the latest version or creates a new version if latest is not editable.
+* `production_version` - The current version of the property active on the Akamai production network.
+* `staging_version` - The current version of the property active on the Akamai staging network.
 
-You can also define property manager variables. *This will override your JSON configuration*.
+## Import
 
-* `variables` — (Optional) A JSON encoded string of property manager variable definitions (see: [`akamai_property_variables`](/docs/providers/akamai/r/property_variables.html))
+Basic Usage:
 
-### Attribute Reference
+```hcl
+resource "akamai_property" "example" {
+    # (resource arguments)
+  }
+```
 
-The following attributes are returned:
+You can import Akamai properties using either the `property_id` or a comma-delimited 
+string of the property, contract, and group IDs. You'll need to enter the string of IDs if the property belongs to multiple groups or contracts.
 
-* `account` — the Account ID under which the property is created.
-* `version` — the current version of the property config.
-* `production_version` — the current version of the property active on the production network.
-* `staging_version` — the current version of the property active on the staging network.
-* `edge_hostnames` — the final public hostname to edge hostname map
+If using the string of IDs, you need to enter them in this order:
+
+`property_id,contract_id,group_id`
+
+Here are some examples:
+
+```shell
+$ terraform import akamai_property.example prp_123
+```
+
+Or
+
+```shell
+$ terraform import akamai_property.example prp_123,ctr_1-AB123,grp_123
+```

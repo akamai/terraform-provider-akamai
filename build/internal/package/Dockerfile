@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.0-experimental
-ARG TERRAFORM_VERSION="0.13.1"
+ARG TERRAFORM_VERSION="0.13.5"
 FROM golang:1.15.1-alpine AS builder
 ENV GO111MODULE="on" \
      CGO_ENABLED=0 \

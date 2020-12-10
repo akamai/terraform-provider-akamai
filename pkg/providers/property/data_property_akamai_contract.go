@@ -3,13 +3,13 @@ package property
 import (
 	"context"
 	"errors"
-	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePropertyContract() *schema.Resource {
@@ -17,8 +17,22 @@ func dataSourcePropertyContract() *schema.Resource {
 		ReadContext: dataSourcePropertyContractRead,
 		Schema: map[string]*schema.Schema{
 			"group": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"group", "group_id", "group_name"},
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("group"),
+			},
+			"group_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"group", "group_id", "group_name"},
+			},
+			"group_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"group", "group_id", "group_name"},
 			},
 		},
 	}
@@ -35,22 +49,26 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 		session.WithContextLog(log),
 	)
 
-	group, err := tools.GetStringValue("group", d)
-
-	// If no group, just return the first contract
+	// check if one of group_id/group_name exists.
+	group, err := tools.ResolveKeyStringState(d, "group_id", "group_name")
 	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		contracts, err := inst.Client(meta).GetContracts(ctx)
+		// if both group_id/group_name not present in the state, check for group.
+		group, err = tools.GetStringValue("group", d)
+		// If no group found, just return the first contract
 		if err != nil {
-			return diag.Errorf("error looking up Contracts for group %q: %s", group, err)
+			if !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			contracts, err := inst.Client(meta).GetContracts(ctx)
+			if err != nil {
+				return diag.Errorf("error looking up Contracts for group %v: %s", group, err)
+			}
+			if len(contracts.Contracts.Items) == 0 {
+				return diag.Errorf("%v", ErrNoContractsFound)
+			}
+			d.SetId(contracts.Contracts.Items[0].ContractID)
+			return nil
 		}
-		if len(contracts.Contracts.Items) == 0 {
-			return diag.FromErr(fmt.Errorf("%w", ErrNoContractsFound))
-		}
-		d.SetId(contracts.Contracts.Items[0].ContractID)
-		return nil
 	}
 
 	// Otherwise find the group and return it's first contract
@@ -62,15 +80,23 @@ func dataSourcePropertyContractRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	for _, g := range groups.Groups.Items {
-		if g.GroupID != group && g.GroupID != "grp_"+group && g.GroupName != group {
+		if g.GroupID != group && g.GroupID != tools.AddPrefix(group, "grp_") && g.GroupName != group {
 			continue
 		}
 		if len(g.ContractIDs) == 0 {
-			return diag.FromErr(fmt.Errorf("%w: %s", ErrLookingUpContract, group))
+			return diag.Errorf("%v: %v", ErrLookingUpContract, group)
+		}
+
+		// set group_id/group_name/group in state.
+		if err := d.Set("group_id", tools.AddPrefix(g.GroupID, "grp_")); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
+		if err := d.Set("group_name", g.GroupName); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 		}
 		d.SetId(g.ContractIDs[0])
 		return nil
 	}
 
-	return diag.FromErr(fmt.Errorf("%w; groupID: %q", ErrNoContractsFound, group))
+	return diag.Errorf("%v; groupID: %v", ErrNoContractsFound, group)
 }

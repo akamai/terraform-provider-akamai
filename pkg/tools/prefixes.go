@@ -1,25 +1,22 @@
 package tools
 
 import (
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 )
 
-func AddPrefix(str, pre string) (string, error) {
-	if len(strings.TrimSpace(str)) == 0 {
-		return "", fmt.Errorf("%w: %s", errors.New("Prefix string cannot be blank"), str)
-	}
-	if len(strings.TrimSpace(pre)) == 0 {
-		return "", fmt.Errorf("%w: %s", errors.New("Prefix cannot be blank"), pre)
+// AddPrefix will add prefix to given string.
+func AddPrefix(str, pre string) string {
+	if str == "" {
+		return ""
 	}
 	if strings.HasPrefix(str, pre) {
-		return str, nil
+		return str
 	}
-	return pre + str, nil
+	return pre + str
 }
 
+// GetIntID is used to get the id out from the string.
 func GetIntID(str, prefix string) (int, error) {
 	return strconv.Atoi(strings.TrimPrefix(str, prefix))
 }

@@ -15,4 +15,4 @@ This provider is automatically installed when you run `terraform init` on a conf
 
 ## Documentation
 
-Documentation can be found on the [Terraform Website](https://www.terraform.io/docs/providers/akamai/index.html).
+Documentation can be found on the [Terraform Website](https://registry.terraform.io/providers/akamai/akamai/latest/docs).

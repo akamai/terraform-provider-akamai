@@ -1,0 +1,18 @@
+{
+  "definitions": {
+    "testString": {
+      "type": "anything",
+      "default": "test"
+    },
+    "testJSON": {
+      "type": "jsonBlock",
+      "default": {
+        "abc": "abc"
+      }
+    },
+    "testNumber": {
+      "type": "num",
+      "default": null
+    }
+  }
+}

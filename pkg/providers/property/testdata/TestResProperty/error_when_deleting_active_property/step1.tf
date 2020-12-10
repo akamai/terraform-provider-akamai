@@ -1,0 +1,3 @@
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
