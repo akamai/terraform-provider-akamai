@@ -34,8 +34,8 @@ func (p *provider) dsNotificationProductsRead(ctx context.Context, d *schema.Res
 	}
 
 	products := []interface{}{}
-	for _, ct := range res {
-		products = append(products, ct)
+	for _, product := range res {
+		products = append(products, product)
 	}
 
 	if err := d.Set("products", products); err != nil {

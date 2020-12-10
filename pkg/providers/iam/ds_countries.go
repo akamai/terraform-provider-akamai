@@ -34,8 +34,8 @@ func (p *provider) dsCountriesRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	countries := []interface{}{}
-	for _, ct := range res {
-		countries = append(countries, ct)
+	for _, country := range res {
+		countries = append(countries, country)
 	}
 
 	if err := d.Set("countries", countries); err != nil {

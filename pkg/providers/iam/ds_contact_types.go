@@ -11,7 +11,7 @@ import (
 func (p *provider) dsContactTypes() *schema.Resource {
 	return &schema.Resource{
 		Description: "Retrieve all contact types that Akamai supports",
-		ReadContext: p.tfCRUD("ds:ContractTypes:Read", p.dsContactTypesRead),
+		ReadContext: p.tfCRUD("ds:ContactTypes:Read", p.dsContactTypesRead),
 		Schema: map[string]*schema.Schema{
 			"contact_types": {
 				Type:        schema.TypeSet,
