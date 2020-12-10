@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/apex/log"
@@ -20,7 +21,7 @@ func (p *provider) dsGroups() *schema.Resource {
 				Description: `When enabled, the response includes information about actions such as "edit" or "delete"`,
 				Optional:    true,
 			},
-			"groups": NestedGroupsSchema(25), // Can handle group nesting up to 25 levels deep
+			"groups": NestedGroupsSchema(50), // Can handle groups with nesting up to 50 levels deep
 		},
 	}
 }
@@ -34,12 +35,12 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 			Computed:    true,
 		},
 		"group_id": {
-			Type:        schema.TypeInt,
+			Type:        schema.TypeString,
 			Description: "A unique identifier for each group",
 			Computed:    true,
 		},
 		"parent_group_id": {
-			Type:        schema.TypeInt,
+			Type:        schema.TypeString,
 			Description: "Identifies the parent group to which a group belongs",
 			Computed:    true,
 		},
@@ -99,10 +100,7 @@ func (p *provider) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ i
 		return diag.FromErr(err)
 	}
 
-	groups := []interface{}{}
-	for _, ct := range res {
-		// groups = append(groups, ct)
-	}
+	groups := groupsToState(res)
 
 	if err := d.Set("groups", groups); err != nil {
 		logger.WithError(err).Error("Could not set groups in state")
@@ -110,4 +108,39 @@ func (p *provider) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ i
 
 	d.SetId("akamai_iam_groups")
 	return nil
+}
+
+// Convert many groups to a value that can be stored in state
+func groupsToState(groups []iam.Group) []interface{} {
+	var out []interface{}
+
+	for _, g := range groups {
+		out = append(out, groupToState(g))
+	}
+
+	return out
+}
+
+// Convert a group to a value that can be stored in state
+func groupToState(g iam.Group) map[string]interface{} {
+	m := map[string]interface{}{}
+
+	m["name"] = g.GroupName
+	m["group_id"] = strconv.FormatInt(g.GroupID, 10)
+	m["parent_group_id"] = strconv.FormatInt(g.ParentGroupID, 10)
+	m["time_created"] = g.CreatedDate
+	m["time_modified"] = g.ModifiedDate
+	m["modified_by"] = g.ModifiedBy
+	m["created_by"] = g.CreatedBy
+
+	if g.Actions != nil {
+		m["edit_allowed"] = g.Actions.Edit
+		m["delete_allowed"] = g.Actions.Delete
+	}
+
+	if len(g.SubGroups) > 0 {
+		m["sub_groups"] = groupsToState(g.SubGroups)
+	}
+
+	return m
 }
