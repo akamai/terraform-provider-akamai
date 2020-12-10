@@ -15,7 +15,7 @@ type provider struct {
 	client iam.IAM
 	cache  Cache
 
-	checkMeta func(akamai.OperationMeta)
+	assertMeta func(akamai.OperationMeta)
 }
 
 // Schema returns the subprovider's config schema map
@@ -68,14 +68,14 @@ func (p *provider) Version() string {
 	return "v0.0.1"
 }
 
-// SetClient allows injection of an IAM.Client
-func (p *provider) SetClient(c iam.IAM) {
+// SetIAM allows injection of an IAM.Client
+func (p *provider) SetIAM(c iam.IAM) {
 	p.client = c
 }
 
 // SetSession allows injection of a session.Session
 func (p *provider) SetSession(s session.Session) {
-	p.SetClient(iam.Client(s))
+	p.SetIAM(iam.Client(s))
 }
 
 // SetCache allows injection of a Cache

@@ -5,5 +5,6 @@ import (
 	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/appsec"
 	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/dns"
 	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/gtm"
+	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/iam"
 	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/property"
 )

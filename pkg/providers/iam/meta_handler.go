@@ -18,8 +18,8 @@ func (p *provider) tfCRUD(opName string, impl tfCRUDFunc) tfCRUDFunc {
 	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 		ctx = p.handleMeta(ctx, m, opName)
 
-		log.FromContext(ctx).Debugf("Start of Terraform action")
-		defer func() { log.FromContext(ctx).Debugf("End of Terraform action") }()
+		p.log(ctx).Debugf("Start of Terraform action")
+		defer p.log(ctx).Debugf("End of Terraform action")
 
 		return impl(ctx, d, nil)
 	}
@@ -31,8 +31,8 @@ func (p *provider) tfImporter(opName string, impl schema.StateContextFunc) *sche
 		StateContext: func(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 			ctx = p.handleMeta(ctx, m, opName)
 
-			log.FromContext(ctx).Debugf("Start of Terraform action")
-			defer func() { log.FromContext(ctx).Debugf("End of Terraform action") }()
+			p.log(ctx).Debugf("Start of Terraform action")
+			defer p.log(ctx).Debugf("End of Terraform action")
 
 			return impl(ctx, d, nil)
 		},
@@ -47,23 +47,23 @@ func (p *provider) handleMeta(ctx context.Context, m interface{}, opName string)
 
 	meta := akamai.Meta(m)
 
-	if p.checkMeta == nil {
-		p.checkMeta = makeMetaCheck(meta)
+	if p.assertMeta == nil {
+		p.assertMeta = mkAssertMeta(meta)
 	}
 
-	p.checkMeta(meta)
+	p.assertMeta(meta)
 
 	logger := meta.Log("IAM", opName)
 	logger = logger.WithFields(log.Fields{"operation_id": meta.OperationID()})
 
-	p.SetClient(iam.Client(meta.Session()))
+	p.SetIAM(iam.Client(meta.Session()))
 	p.SetCache(metaCache{p, meta})
 
 	return log.NewContext(ctx, logger)
 }
 
 // Build a function that verifies the assumption that we receive exactly one meta value
-func makeMetaCheck(originalMeta akamai.OperationMeta) func(akamai.OperationMeta) {
+func mkAssertMeta(originalMeta akamai.OperationMeta) func(akamai.OperationMeta) {
 	if originalMeta == nil {
 		panic("BUG: originalMeta can't be nil")
 	}

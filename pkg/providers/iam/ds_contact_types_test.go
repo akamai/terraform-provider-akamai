@@ -20,7 +20,7 @@ func TestDSContactTypes(t *testing.T) {
 
 		p := provider{}
 		p.SetCache(metaCache{})
-		p.SetClient(client)
+		p.SetIAM(client)
 
 		resource.UnitTest(t, resource.TestCase{
 			ProviderFactories: p.ProviderFactories(),

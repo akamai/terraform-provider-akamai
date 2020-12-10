@@ -3,7 +3,6 @@ package iam
 import (
 	"context"
 
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -24,7 +23,7 @@ func (p *provider) dsNotificationProds() *schema.Resource {
 }
 
 func (p *provider) dsNotificationProductsRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := log.FromContext(ctx)
+	logger := p.log(ctx)
 
 	logger.Debug("Fetching notification products")
 	res, err := p.client.ListProducts(ctx)

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,7 +29,7 @@ func (p *provider) dsStates() *schema.Resource {
 }
 
 func (p *provider) dsStatesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := log.FromContext(ctx)
+	logger := p.log(ctx)
 
 	Country := d.Get("country").(string)
 

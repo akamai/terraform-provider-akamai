@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -88,7 +87,7 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 }
 
 func (p *provider) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := log.FromContext(ctx)
+	logger := p.log(ctx)
 
 	Actions := d.Get("get_actions").(bool)
 

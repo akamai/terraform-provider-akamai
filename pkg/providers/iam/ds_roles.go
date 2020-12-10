@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -164,7 +163,7 @@ func (p *provider) dsRoles() *schema.Resource {
 }
 
 func (p *provider) dsRolesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := log.FromContext(ctx)
+	logger := p.log(ctx)
 
 	getActions := d.Get("get_actions").(bool)
 	getUsers := d.Get("get_users").(bool)

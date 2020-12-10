@@ -2,7 +2,10 @@ package iam
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -16,28 +19,495 @@ func (p *provider) resUser() *schema.Resource {
 		DeleteContext: p.tfCRUD("res:User:Delete", p.resUserDelete),
 		Importer:      p.tfImporter("res:User:Import", p.resUserImport),
 		Schema: map[string]*schema.Schema{
-			"identity_id": {
+			// Inputs - Required
+			"first_name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The user's unique identity ID",
+				Description: "The user's first name",
+			},
+			"last_name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The user's surname",
+			},
+			"email": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The user's email address",
+			},
+			"country": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "As part of the user's location, the value can be any that are available from the view-supported-countries operation",
+			},
+			"phone": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The user's main phone number",
+			},
+			"enable_tfa": {
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Indicates whether two-factor authentication is allowed",
+			},
+			"send_otp_email": {
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to send a one-time password to the newly-created user by email",
+			},
+
+			// Inputs - Optional
+			"contact_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "To help characterize the user, the value can be any that are available from the view-contact-types operation",
+			},
+			"user_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A user's `loginId`. Typically, a user's email address",
+			},
+			"job_title": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The user's position at your company",
+			},
+			"time_zone": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The user's time zone. The value can be any that are available from the view-time-zones operation",
+			},
+			"secondary_email": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The user's secondary email address",
+			},
+			"mobile_phone": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The user's mobile phone number",
+			},
+			"address": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The user's street address",
+			},
+			"city": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The user's city",
+			},
+			"state": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The user's state",
+			},
+			"zip_code": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The user's five-digit ZIP code",
+			},
+			"preferred_language": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The value can be any that are available from the view-languages operation",
+			},
+			"session_timeout": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The number of seconds it takes for the user's Control Center session to time out if there hasn't been any activity",
+			},
+			"auth_grants_json": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A user's per-group role assignments, in JSON form",
+			},
+
+			// Notifications
+			"enable_notifications": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `Whether to allow email notifications (notifications emails suspended unless "true")`,
+			},
+			"subscribe_new_users": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether to send emails to group administrators when new users are created",
+			},
+			"subscribe_password_expiration": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether to send emails regarding password expiration",
+			},
+			"subscribe_product_issues": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Products for which the user receives notification emails about service issues",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"subscribe_product_upgrades": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Products for which the user receives notification emails about upgrades",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+
+			// Purely computed
+			"is_locked": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "The user's lock status",
+			},
+			"last_login": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ISO 8601 timestamp indicating when the user last logged in",
+			},
+			"password_expired_after": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The date a user's password expires",
+			},
+			"tfa_configured": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether two-factor authentication is configured",
+			},
+			"email_update_pending": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				// Description: "TODO", // 🤷‍♂️ Couldn't find this in docs or service descriptors
 			},
 		},
 	}
 }
 
 func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	return nil
+	logger := p.log(ctx)
+
+	AuthGrantsJSON := []byte(d.Get("auth_grants_json").(string))
+	EnableEmail := d.Get("enable_notifications").(bool)
+	SubPasswordExpiry := d.Get("subscribe_password_expiration").(bool)
+	SubNewUser := d.Get("subscribe_new_users").(bool)
+	SendEmail := d.Get("send_otp_email").(bool)
+	proactiveProductSet := d.Get("subscribe_product_issues").(*schema.Set)
+	upgradeProductSet := d.Get("subscribe_product_upgrades").(*schema.Set)
+
+	needNotificationOpts := SubNewUser || SubPasswordExpiry
+	needNotificationOpts = needNotificationOpts || upgradeProductSet.Len() > 0
+	needNotificationOpts = needNotificationOpts || proactiveProductSet.Len() > 0
+
+	needNotifications := needNotificationOpts || EnableEmail
+
+	var AuthGrants []iam.AuthGrant
+	if len(AuthGrantsJSON) > 0 {
+		if err := json.Unmarshal(AuthGrantsJSON, &AuthGrants); err != nil {
+			logger.WithError(err).Errorf("auth_grants is not valid")
+			return diag.Errorf("auth_grants is not valid: %s", err)
+		}
+	}
+
+	BasicUser := iam.UserBasicInfo{
+		FirstName:         d.Get("first_name").(string),
+		LastName:          d.Get("last_name").(string),
+		UserName:          d.Get("user_name").(string),
+		Email:             d.Get("email").(string),
+		Phone:             d.Get("phone").(string),
+		TimeZone:          d.Get("time_zone").(string),
+		JobTitle:          d.Get("job_title").(string),
+		TFAEnabled:        d.Get("enable_tfa").(bool),
+		SecondaryEmail:    d.Get("secondary_email").(string),
+		MobilePhone:       d.Get("mobile_phone").(string),
+		Address:           d.Get("address").(string),
+		City:              d.Get("city").(string),
+		State:             d.Get("state").(string),
+		ZipCode:           d.Get("zip_code").(string),
+		Country:           d.Get("country").(string),
+		ContactType:       d.Get("contact_type").(string),
+		PreferredLanguage: d.Get("preferred_language").(string),
+	}
+
+	if st, ok := d.GetOk("session_timeout"); ok {
+		SessionTimeout := st.(int)
+		BasicUser.SessionTimeOut = &SessionTimeout
+	}
+
+	var Notifications *iam.UserNotifications
+	if needNotifications {
+		Notifications = &iam.UserNotifications{EnableEmail: EnableEmail}
+
+		if needNotificationOpts {
+			Notifications.Options = &iam.UserNotificationOptions{
+				PasswordExpiry: SubPasswordExpiry,
+				NewUser:        SubNewUser,
+			}
+
+			if proactiveProductSet.Len() > 0 {
+				for _, v := range proactiveProductSet.List() {
+					Notifications.Options.Proactive = append(Notifications.Options.Proactive, v.(string))
+				}
+			}
+
+			if upgradeProductSet.Len() > 0 {
+				for _, v := range upgradeProductSet.List() {
+					Notifications.Options.Upgrade = append(Notifications.Options.Upgrade, v.(string))
+				}
+			}
+		}
+	}
+
+	User, err := p.client.CreateUser(ctx, iam.CreateUserRequest{
+		User:          BasicUser,
+		Notifications: Notifications,
+		AuthGrants:    AuthGrants,
+		SendEmail:     SendEmail,
+	})
+	if err != nil {
+		logger.WithError(err).Errorf("failed to create user")
+		return diag.Errorf("failed to create user: %s", err)
+	}
+
+	d.SetId(User.IdentityID)
+	return p.resUserRead(ctx, d, nil)
 }
 
 func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	logger := p.log(ctx)
+
+	req := iam.GetUserRequest{
+		IdentityID:    d.Id(),
+		Actions:       true,
+		AuthGrants:    true,
+		Notifications: true,
+	}
+
+	User, err := p.client.GetUser(ctx, req)
+	if err != nil {
+		logger.WithError(err).Errorf("failed to fetch user")
+		return diag.Errorf("failed to fetch user: %s", err)
+	}
+
+	if User.SessionTimeOut == nil {
+		SessionTimeOut := 0
+		User.SessionTimeOut = &SessionTimeOut
+	}
+
+	if User.Notifications == nil {
+		User.Notifications = &iam.UserNotifications{}
+	}
+
+	if User.Notifications.Options == nil {
+		User.Notifications.Options = &iam.UserNotificationOptions{}
+	}
+
+	var AuthGrantsJSON []byte
+	if len(User.AuthGrants) > 0 {
+		AuthGrantsJSON, err = json.Marshal(User.AuthGrants)
+		if err != nil {
+			logger.WithError(err).Error("could not marshal AuthGrants")
+			return diag.Errorf("could not marshal AuthGrants: %s", err)
+		}
+	}
+
+	err = tools.SetAttrs(d, map[string]interface{}{
+		"first_name":             User.FirstName,
+		"last_name":              User.LastName,
+		"user_name":              User.UserName,
+		"email":                  User.Email,
+		"phone":                  User.Phone,
+		"time_zone":              User.TimeZone,
+		"job_title":              User.JobTitle,
+		"enable_tfa":             User.TFAEnabled,
+		"secondary_email":        User.SecondaryEmail,
+		"mobile_phone":           User.MobilePhone,
+		"address":                User.Address,
+		"city":                   User.City,
+		"state":                  User.State,
+		"zip_code":               User.ZipCode,
+		"country":                User.Country,
+		"contact_type":           User.ContactType,
+		"preferred_language":     User.PreferredLanguage,
+		"is_locked":              User.IsLocked,
+		"last_login":             User.LastLoginDate,
+		"password_expired_after": User.PasswordExpiryDate,
+		"tfa_configured":         User.TFAConfigured,
+		"email_update_pending":   User.EmailUpdatePending,
+		"session_timeout":        *User.SessionTimeOut,
+
+		"auth_grants_json": string(AuthGrantsJSON),
+
+		"enable_notifications":          User.Notifications.EnableEmail,
+		"subscribe_new_users":           User.Notifications.Options.NewUser,
+		"subscribe_password_expiration": User.Notifications.Options.PasswordExpiry,
+		"subscribe_product_issues":      User.Notifications.Options.Proactive,
+		"subscribe_product_upgrades":    User.Notifications.Options.Upgrade,
+	})
+	if err != nil {
+		logger.WithError(err).Error("could not save attributes to state")
+		return diag.Errorf("could not save attributes to state: %s", err)
+	}
+
 	return nil
 }
 
 func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	logger := p.log(ctx)
+
+	// TODO: Can't be changed wat do?
+	// SendEmail := d.Get("send_otp_email").(bool)
+
+	var needRead bool
+
+	// Basic Info
+	updateBasicInfo := d.HasChanges(
+		"first_name",
+		"last_name",
+		"user_name",
+		"email",
+		"email",
+		"phone",
+		"time_zone",
+		"job_title",
+		"enable_tfa",
+		"secondary_email",
+		"mobile_phone",
+		"address",
+		"city",
+		"state",
+		"zip_code",
+		"country",
+		"contact_type",
+		"preferred_language",
+	)
+	if updateBasicInfo {
+		BasicUser := iam.UserBasicInfo{
+			FirstName:         d.Get("first_name").(string),
+			LastName:          d.Get("last_name").(string),
+			UserName:          d.Get("user_name").(string),
+			Email:             d.Get("email").(string),
+			Phone:             d.Get("phone").(string),
+			TimeZone:          d.Get("time_zone").(string),
+			JobTitle:          d.Get("job_title").(string),
+			TFAEnabled:        d.Get("enable_tfa").(bool),
+			SecondaryEmail:    d.Get("secondary_email").(string),
+			MobilePhone:       d.Get("mobile_phone").(string),
+			Address:           d.Get("address").(string),
+			City:              d.Get("city").(string),
+			State:             d.Get("state").(string),
+			ZipCode:           d.Get("zip_code").(string),
+			Country:           d.Get("country").(string),
+			ContactType:       d.Get("contact_type").(string),
+			PreferredLanguage: d.Get("preferred_language").(string),
+		}
+
+		if st, ok := d.GetOk("session_timeout"); ok {
+			SessionTimeout := st.(int)
+			BasicUser.SessionTimeOut = &SessionTimeout
+		}
+
+		req := iam.UpdateUserInfoRequest{
+			IdentityID: d.Id(),
+			User:       BasicUser,
+		}
+		if _, err := p.client.UpdateUserInfo(ctx, req); err != nil {
+			logger.WithError(err).Errorf("failed to update user")
+			return diag.Errorf("failed to update user: %s", err)
+		}
+
+		needRead = true
+	}
+
+	// AuthGrants
+	if d.HasChange("auth_grants_json") {
+		var AuthGrants []iam.AuthGrant
+
+		AuthGrantsJSON := []byte(d.Get("auth_grants_json").(string))
+		if len(AuthGrantsJSON) > 0 {
+			if err := json.Unmarshal(AuthGrantsJSON, &AuthGrants); err != nil {
+				logger.WithError(err).Errorf("auth_grants is not valid")
+				return diag.Errorf("auth_grants is not valid: %s", err)
+			}
+		}
+
+		req := iam.UpdateUserAuthGrantsRequest{
+			IdentityID: d.Id(),
+			AuthGrants: AuthGrants,
+		}
+		if _, err := p.client.UpdateUserAuthGrants(ctx, req); err != nil {
+			logger.WithError(err).Errorf("failed to update user AuthGrants")
+			return diag.Errorf("failed to update user AuthGrants: %s", err)
+		}
+
+		needRead = true
+	}
+
+	// Notifications
+	updateNotifications := d.HasChanges(
+		"enable_notifications",
+		"subscribe_password_expiration",
+		"subscribe_new_users",
+		"subscribe_product_issues",
+		"subscribe_product_upgrades",
+	)
+	if updateNotifications {
+		EnableEmail := d.Get("enable_notifications").(bool)
+		SubPasswordExpiry := d.Get("subscribe_password_expiration").(bool)
+		SubNewUser := d.Get("subscribe_new_users").(bool)
+		proactiveProductSet := d.Get("subscribe_product_issues").(*schema.Set)
+		upgradeProductSet := d.Get("subscribe_product_upgrades").(*schema.Set)
+
+		needNotificationOpts := SubNewUser || SubPasswordExpiry
+		needNotificationOpts = needNotificationOpts || upgradeProductSet.Len() > 0
+		needNotificationOpts = needNotificationOpts || proactiveProductSet.Len() > 0
+
+		Notifications := iam.UserNotifications{EnableEmail: EnableEmail}
+
+		if needNotificationOpts {
+			Notifications.Options = &iam.UserNotificationOptions{
+				PasswordExpiry: SubPasswordExpiry,
+				NewUser:        SubNewUser,
+			}
+
+			if proactiveProductSet.Len() > 0 {
+				for _, v := range proactiveProductSet.List() {
+					Notifications.Options.Proactive = append(Notifications.Options.Proactive, v.(string))
+				}
+			}
+
+			if upgradeProductSet.Len() > 0 {
+				for _, v := range upgradeProductSet.List() {
+					Notifications.Options.Upgrade = append(Notifications.Options.Upgrade, v.(string))
+				}
+			}
+		}
+
+		req := iam.UpdateUserNotificationsRequest{
+			IdentityID:    d.Id(),
+			Notifications: Notifications,
+		}
+		if _, err := p.client.UpdateUserNotifications(ctx, req); err != nil {
+			logger.WithError(err).Errorf("failed to update user notifications")
+			return diag.Errorf("failed to update user notifications: %s", err)
+		}
+
+		needRead = true
+	}
+
+	if needRead {
+		return p.resUserRead(ctx, d, nil)
+	}
+
 	return nil
 }
 
 func (p *provider) resUserDelete(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	logger := p.log(ctx)
+
+	if err := p.client.RemoveUser(ctx, iam.RemoveUserRequest{IdentityID: d.Id()}); err != nil {
+		logger.WithError(err).Error("could not remove user")
+		return diag.Errorf("could not remove user: %s", err)
+	}
+
 	return nil
 }
 
