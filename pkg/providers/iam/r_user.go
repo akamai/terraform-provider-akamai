@@ -364,7 +364,6 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 		"last_name",
 		"user_name",
 		"email",
-		"email",
 		"phone",
 		"time_zone",
 		"job_title",
@@ -378,6 +377,7 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 		"country",
 		"contact_type",
 		"preferred_language",
+		"session_timeout",
 	)
 	if updateBasicInfo {
 		BasicUser := iam.UserBasicInfo{
@@ -410,6 +410,7 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 			User:       BasicUser,
 		}
 		if _, err := p.client.UpdateUserInfo(ctx, req); err != nil {
+			d.Partial(true)
 			logger.WithError(err).Errorf("failed to update user")
 			return diag.Errorf("failed to update user: %s", err)
 		}
@@ -424,6 +425,7 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 		AuthGrantsJSON := []byte(d.Get("auth_grants_json").(string))
 		if len(AuthGrantsJSON) > 0 {
 			if err := json.Unmarshal(AuthGrantsJSON, &AuthGrants); err != nil {
+				d.Partial(true)
 				logger.WithError(err).Errorf("auth_grants is not valid")
 				return diag.Errorf("auth_grants is not valid: %s", err)
 			}
@@ -434,6 +436,7 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 			AuthGrants: AuthGrants,
 		}
 		if _, err := p.client.UpdateUserAuthGrants(ctx, req); err != nil {
+			d.Partial(true)
 			logger.WithError(err).Errorf("failed to update user AuthGrants")
 			return diag.Errorf("failed to update user AuthGrants: %s", err)
 		}
@@ -486,6 +489,7 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 			Notifications: Notifications,
 		}
 		if _, err := p.client.UpdateUserNotifications(ctx, req); err != nil {
+			d.Partial(true)
 			logger.WithError(err).Errorf("failed to update user notifications")
 			return diag.Errorf("failed to update user notifications: %s", err)
 		}
@@ -494,9 +498,11 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 	}
 
 	if needRead {
+		d.Partial(false)
 		return p.resUserRead(ctx, d, nil)
 	}
 
+	d.Partial(false)
 	return nil
 }
 
