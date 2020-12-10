@@ -104,6 +104,7 @@ func (p *provider) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ i
 
 	if err := d.Set("groups", groups); err != nil {
 		logger.WithError(err).Error("Could not set groups in state")
+		return diag.FromErr(err)
 	}
 
 	d.SetId("akamai_iam_groups")

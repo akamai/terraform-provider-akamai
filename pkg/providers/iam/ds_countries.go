@@ -40,6 +40,7 @@ func (p *provider) dsCountriesRead(ctx context.Context, d *schema.ResourceData, 
 
 	if err := d.Set("countries", countries); err != nil {
 		logger.WithError(err).Error("Could not set countries in state")
+		return diag.FromErr(err)
 	}
 
 	d.SetId("countries")

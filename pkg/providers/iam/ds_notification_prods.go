@@ -40,6 +40,7 @@ func (p *provider) dsNotificationProductsRead(ctx context.Context, d *schema.Res
 
 	if err := d.Set("products", products); err != nil {
 		logger.WithError(err).Error("Could not set notification products in state")
+		return diag.FromErr(err)
 	}
 
 	d.SetId("akamai_iam_notification_prods")

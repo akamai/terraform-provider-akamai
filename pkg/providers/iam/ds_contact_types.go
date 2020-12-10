@@ -40,6 +40,7 @@ func (p *provider) dsContactTypesRead(ctx context.Context, d *schema.ResourceDat
 
 	if err := d.Set("contact_types", types); err != nil {
 		logger.WithError(err).Error("Could not set contact types in state")
+		return diag.FromErr(err)
 	}
 
 	d.SetId("contact types")
