@@ -15,7 +15,7 @@ func (p *provider) dsRoles() *schema.Resource {
 			// inputs
 			"group_id": {
 				Type:        schema.TypeInt,
-				Description: "A unique identifier for a group",
+				Description: "A unique identifier for a group", // These descriptions were taken from the API docs
 				Required:    true,
 			},
 			"get_actions": {
