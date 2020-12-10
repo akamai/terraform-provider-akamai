@@ -49,6 +49,7 @@ This resource supports these arguments:
 
 * `name` - (Required) The name of the edge hostname.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
 * `product_id` - (Required) A product's unique ID, including the `prd_` prefix.
 * `edge_hostname` - (Required) One or more edge hostnames. The number of edge hostnames must be less than or equal to the number of public hostnames.
 * `certificate` - (Optional) Required only when creating an Enhanced TLS edge hostname. This argument sets the certificate enrollment ID. Edge hostnames for Enhanced TLS end in `edgekey.net`. You can retrieve this ID from the [Certificate Provisioning Service CLI](https://github.com/akamai/cli-cps) .
@@ -57,6 +58,7 @@ This resource supports these arguments:
 ### Deprecated arguments
 
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
+* `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
 * `product` - (Deprecated) Replaced by `product_id`. Maintained for legacy purposes.
 
 ## Attributes reference
