@@ -14,6 +14,52 @@ type IAM struct {
 	mock.Mock
 }
 
+// CreateUser provides a mock function with given fields: _a0, _a1
+func (_m *IAM) CreateUser(_a0 context.Context, _a1 iam.CreateUserRequest) (*iam.User, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *iam.User
+	if rf, ok := ret.Get(0).(func(context.Context, iam.CreateUserRequest) *iam.User); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*iam.User)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, iam.CreateUserRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetUser provides a mock function with given fields: _a0, _a1
+func (_m *IAM) GetUser(_a0 context.Context, _a1 iam.GetUserRequest) (*iam.User, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *iam.User
+	if rf, ok := ret.Get(0).(func(context.Context, iam.GetUserRequest) *iam.User); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*iam.User)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, iam.GetUserRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListGroups provides a mock function with given fields: _a0, _a1
 func (_m *IAM) ListGroups(_a0 context.Context, _a1 iam.ListGroupsRequest) ([]iam.Group, error) {
 	ret := _m.Called(_a0, _a1)
@@ -129,6 +175,20 @@ func (_m *IAM) ListTimeoutPolicies(_a0 context.Context) ([]iam.TimeoutPolicy, er
 	return r0, r1
 }
 
+// RemoveUser provides a mock function with given fields: _a0, _a1
+func (_m *IAM) RemoveUser(_a0 context.Context, _a1 iam.RemoveUserRequest) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, iam.RemoveUserRequest) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SupportedContactTypes provides a mock function with given fields: _a0
 func (_m *IAM) SupportedContactTypes(_a0 context.Context) ([]string, error) {
 	ret := _m.Called(_a0)
@@ -191,6 +251,75 @@ func (_m *IAM) SupportedLanguages(_a0 context.Context) ([]string, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateUserAuthGrants provides a mock function with given fields: _a0, _a1
+func (_m *IAM) UpdateUserAuthGrants(_a0 context.Context, _a1 iam.UpdateUserAuthGrantsRequest) ([]iam.AuthGrant, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 []iam.AuthGrant
+	if rf, ok := ret.Get(0).(func(context.Context, iam.UpdateUserAuthGrantsRequest) []iam.AuthGrant); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]iam.AuthGrant)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, iam.UpdateUserAuthGrantsRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateUserInfo provides a mock function with given fields: _a0, _a1
+func (_m *IAM) UpdateUserInfo(_a0 context.Context, _a1 iam.UpdateUserInfoRequest) (*iam.UserBasicInfo, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *iam.UserBasicInfo
+	if rf, ok := ret.Get(0).(func(context.Context, iam.UpdateUserInfoRequest) *iam.UserBasicInfo); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*iam.UserBasicInfo)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, iam.UpdateUserInfoRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateUserNotifications provides a mock function with given fields: _a0, _a1
+func (_m *IAM) UpdateUserNotifications(_a0 context.Context, _a1 iam.UpdateUserNotificationsRequest) (*iam.UserNotifications, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *iam.UserNotifications
+	if rf, ok := ret.Get(0).(func(context.Context, iam.UpdateUserNotificationsRequest) *iam.UserNotifications); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*iam.UserNotifications)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, iam.UpdateUserNotificationsRequest) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
