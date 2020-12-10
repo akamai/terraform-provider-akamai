@@ -12,19 +12,19 @@ configurations in Terraform. You can use the Akamai Provider today for
 your Property Manager, Application Security, Edge DNS, and Global
 Traffic Management configurations.
 
-!> Version 1.0.0 of the Akamai Terraform Provider is a major release that's currently available for the Provisioning module. Before upgrading, you need to make changes to some of your Provisioning resources and data sources. See the [migration guide](guides/1.0_migration.md) for details.
+!> Version 1.0.0 of the Akamai Terraform Provider is a major release that's currently available for the Provisioning module. Before upgrading, you need to make changes to some of your Provisioning resources and data sources. See the [migration guide](/guides/1.0_migration.md) for details.
 
 Last updated: December 2020.
 
 ## Migrate to the newest version
 
-If you're using the Provisioning module, the latest major version of the Akamai Provider is now available. See [1.0.0 Migration Guide](../guides/1.0_migration.md) for more information.
+If you're using the Provisioning module, the latest major version of the Akamai Provider is now available. See [1.0.0 Migration Guide](/guides/1.0_migration.md) for more information.
 
 ## Workflows
 
 Here are the most common workflows for the Akamai Provider:
 
-* **Set up the Provider the first time.** To do this, finish reviewing this guide, then go to [Get Started with the Akamai Terraform Provider](../guides/get_started_provider.md). When setting up the Provider, you need to choose an [authentication method](../guides/akamai_provider_auth.md), and decide whether to import existing Akamai configurations, or create new ones.
+* **Set up the Provider the first time.** To do this, finish reviewing this guide, then go to [Get Started with the Akamai Terraform Provider](/guides/get_started_provider.md). When setting up the Provider, you need to choose an [authentication method](/guides/akamai_provider_auth.md), and decide whether to import existing Akamai configurations, or create new ones.
 * **Add a new module to your existing Akamai Provider configuration.** If the Akamai  Provider is already set up, and you're adding a new module, read the guide for the module you're adding:
                               
   * [Application Security](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec)

@@ -28,8 +28,8 @@ To set up the Provisioning module, you need to:
 * [Add or create an edge hostname](#add-an-edge-hostname).
 * [Set up rules for your property](#set-up-property-rules). A separate `rules.json` file contains the base rules for the property. 
 * [Import or create a property](#import-or-create-a-property).
-* [Apply your property changes](#apply_your_property_changes). This step adds the property to your Terraform configuration.
-* [Activate your property](#activate_your_property]). Once you apply your property changes, you have to activate the property configuration for it to be live.
+* [Apply your property changes](#apply-your-property-changes). This step adds the property to your Terraform configuration.
+* [Activate your property](#activate-your-property). Once you apply your property changes, you have to activate the property configuration for it to be live.
 
 ## Retrieve the product ID
 
@@ -240,14 +240,14 @@ subdirectory that contains all of the smaller JSON rule files, or snippets. In t
 
 ```json
 {
-    rules": {
+    "rules": {
       "name": "default",
       "children": [
         "#include:snippets/performance.json",
         "#include:snippets/routing.json"
       ],
       "options": {
-            "is_secure": “${env.secure}"
+            "is_secure": {${env.secure}"
       }
     },
     "ruleFormat": "v2018-02-27"

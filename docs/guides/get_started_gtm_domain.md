@@ -69,7 +69,7 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ## Retrieving The Group ID
 
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources//group.md). To fetch the default group ID no attributes other than contract need to be set:
+Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/group.md). To fetch the default group ID no attributes other than contract need to be set:
 
 ```hcl
 data "akamai_group" "default" {
@@ -104,7 +104,7 @@ resource "akamai_gtm_domain" "example" {
 	type = "weighted"				# Domain type
 	group_id    = data.akamai_group.default.id         # Group ID variable
 	contract_id = data.akamai_contract.default.id      # Contract ID variable
-	email_notification_list = [user@demo.me]        # email notification list
+	email_notification_list = "user@demo.me"        # email notification list
 	comment = "example domain demo"
 }
 ```

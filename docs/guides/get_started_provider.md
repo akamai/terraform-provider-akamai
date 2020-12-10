@@ -84,7 +84,7 @@ Control Center, or by using other Akamai APIs or CLIs.
 
 ### Retrieve contract IDs with akamai_contract
 
-You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). This data source requires access to the Property Manager (PAPI) API service. See [Set up your API clients](guides/akamai_provider_auth.md#set-up-your-api-clients)
+You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). This data source requires access to the Property Manager (PAPI) API service. See [Set up your API clients](../guides/akamai_provider_auth.md#set-up-your-api-clients)
 
 To retrieve the default contract you need to enter a group name or ID no attributes need to be set:
 

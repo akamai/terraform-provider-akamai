@@ -149,7 +149,7 @@ The following field is required:
 
 * target - One or more domain names that specifies a host willing to act as a mail exchange for the owner name.
 
-The following fields are optional depending on configuration type. See [DNS Getting Started Guide](get_started_dns_zone.md#working-with-mx-records) for more information.
+The following fields are optional depending on configuration type. See [DNS Getting Started Guide](../guides/get_started_dns_zone.md#working-with-mx-records) for more information.
 
 * priority - The preference value given to the MX record among MX records. When a mailer needs to send mail to a certain DNS domain, it first contacts a DNS server for that domain and retrieves all the MX records. It then contacts the mailer with the lowest preference value. Ignored if embedded priority specified in target
 * priority_increment - auto priority increment when multiple targets are provided with no embedded priority.
