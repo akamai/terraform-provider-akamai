@@ -11,7 +11,7 @@ import (
 func (p *provider) dsGroups() *schema.Resource {
 	return &schema.Resource{
 		Description: `List all groups in which you have a scope of "admin" for the current account and contract`,
-		ReadContext: p.dsGroupsRead,
+		ReadContext: p.tfCRUD("ds:Groups:Read", p.dsGroupsRead),
 		Schema: map[string]*schema.Schema{
 			"get_actions": {
 				Type:        schema.TypeBool,
@@ -93,6 +93,6 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 	}
 }
 
-func (p *provider) dsGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *provider) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }

@@ -9,12 +9,19 @@ import (
 
 func (p *provider) dsContactTypes() *schema.Resource {
 	return &schema.Resource{
-		Description: "TODO",
-		ReadContext: p.dsContactTypesRead,
-		Schema:      map[string]*schema.Schema{},
+		Description: "Retrieve all contact types that Akamai supports",
+		ReadContext: p.tfCRUD("ds:ContractTypes:Read", p.dsContactTypesRead),
+		Schema: map[string]*schema.Schema{
+			"contact_types": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Supported contact types",
+				Elem:        &schema.Schema{Type: schema.TypeString, Computed: true},
+			},
+		},
 	}
 }
 
-func (p *provider) dsContactTypesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *provider) dsContactTypesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }

@@ -10,12 +10,12 @@ import (
 func (p *provider) dsRoles() *schema.Resource {
 	return &schema.Resource{
 		Description: "Get roles for the current account and contract",
-		ReadContext: p.dsRolesRead,
+		ReadContext: p.tfCRUD("ds:Roles:Read", p.dsRolesRead),
 		Schema: map[string]*schema.Schema{
 			// inputs
 			"group_id": {
 				Type:        schema.TypeInt,
-				Description: "A unique identifier for a group", // These descriptions were taken from the API docs
+				Description: "A unique identifier for a group",
 				Required:    true,
 			},
 			"get_actions": {
@@ -82,7 +82,7 @@ func (p *provider) dsRoles() *schema.Resource {
 			},
 			"users": {
 				Type:        schema.TypeSet,
-				Description: "Permissions available to the user for this group",
+				Description: "Permissions available to the user for this group", // These descriptions were taken from the API docs
 				Computed:    true,
 				Elem: schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -142,7 +142,6 @@ func (p *provider) dsRoles() *schema.Resource {
 	}
 }
 
-func (p *provider) dsRolesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	p.handleMeta(m)
+func (p *provider) dsRolesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }

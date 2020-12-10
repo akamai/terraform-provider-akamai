@@ -9,12 +9,12 @@ import (
 
 func (p *provider) dsStates() *schema.Resource {
 	return &schema.Resource{
-		Description: "TODO",
-		ReadContext: p.dsStatesRead,
+		Description: "List US states or Canadian provinces",
+		ReadContext: p.tfCRUD("ds:States:Read", p.dsStatesRead),
 		Schema:      map[string]*schema.Schema{},
 	}
 }
 
-func (p *provider) dsStatesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *provider) dsStatesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }

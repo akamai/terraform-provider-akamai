@@ -9,14 +9,12 @@ import (
 
 func (p *provider) resUser() *schema.Resource {
 	return &schema.Resource{
-		Description:   "TODO",
-		CreateContext: p.resUserCreate,
-		ReadContext:   p.resUserRead,
-		UpdateContext: p.resUserUpdate,
-		DeleteContext: p.resUserDelete,
-		Importer: &schema.ResourceImporter{
-			StateContext: p.resUserImport,
-		},
+		Description:   "Manage a user in your account",
+		CreateContext: p.tfCRUD("res:User:Create", p.resUserCreate),
+		ReadContext:   p.tfCRUD("res:User:Read", p.resUserRead),
+		UpdateContext: p.tfCRUD("res:User:Update", p.resUserUpdate),
+		DeleteContext: p.tfCRUD("res:User:Delete", p.resUserDelete),
+		Importer:      p.tfImporter("res:User:Import", p.resUserImport),
 		Schema: map[string]*schema.Schema{
 			"identity_id": {
 				Type:        schema.TypeString,
@@ -27,22 +25,22 @@ func (p *provider) resUser() *schema.Resource {
 	}
 }
 
-func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }
 
-func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }
 
-func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }
 
-func (p *provider) resUserDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *provider) resUserDelete(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }
 
-func (p *provider) resUserImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (p *provider) resUserImport(ctx context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 	return []*schema.ResourceData{d}, nil
 }

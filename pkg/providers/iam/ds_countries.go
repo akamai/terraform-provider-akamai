@@ -9,12 +9,12 @@ import (
 
 func (p *provider) dsCountries() *schema.Resource {
 	return &schema.Resource{
-		Description: "TODO",
-		ReadContext: p.dsCountriesRead,
+		Description: "List all the possible countries that Akamai supports",
+		ReadContext: p.tfCRUD("ds:Countries:Read", p.dsCountriesRead),
 		Schema:      map[string]*schema.Schema{},
 	}
 }
 
-func (p *provider) dsCountriesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *provider) dsCountriesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	return nil
 }

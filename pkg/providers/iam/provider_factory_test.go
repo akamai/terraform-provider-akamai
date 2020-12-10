@@ -4,6 +4,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// Alias for the function signature expected by the Terraform test driver
 type FactoryFunc = func() (*schema.Provider, error)
 
 // A function that can be used for ProviderFactories member in Terraform resource.TestCase tests
