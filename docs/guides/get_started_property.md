@@ -86,7 +86,7 @@ resource "akamai_edge_hostname" "example" {
 
 A property contains the delivery configuration, or rule tree, that determines how Akamai handles requests. This rule tree is usually represented using JSON, and is often refered to as `rules.json`.
 
-You can specify the rule tree as a JSON string, using the [`rules` argument of the `akamai_property` resource](../resources/property.md#rules).
+You can specify the rule tree as a JSON string, using the [`rules` argument of the `akamai_property` resource](../resources/property.md).
 
 As a best practice, you should store the rule tree as a JSON file on disk and ingest it using Terraform's `file` function. For example, if you name your file `rules.json`, you set up the `file` function like this:
 
@@ -132,7 +132,7 @@ of the property, contact email, product ID, group ID, CP code, property hostname
  and edge hostnames.
 
 Finally, you set up the property rules. You first specify the 
-[rule format argument](../resources/property.md#rule_format),
+[rule format argument](../resources/property.md),
 then add the path to the `rules.json` file. You can set a variable for the path, like `${path.module}`. 
 
 Once you're done, your property should look like this:
@@ -247,7 +247,7 @@ subdirectory that contains all of the smaller JSON rule files, or snippets. In t
         "#include:snippets/routing.json"
       ],
       "options": {
-            "is_secure": {${env.secure}"
+            "is_secure": "${env.secure}"
       }
     },
     "ruleFormat": "v2018-02-27"
@@ -274,7 +274,7 @@ data "akamai_property_rules_template" "example" {
 }
 
 resource "akamai_property" "example" {
-    ....
+    ...
     rules  = data.akamai_property_rules_template.example.json
 }
 ```

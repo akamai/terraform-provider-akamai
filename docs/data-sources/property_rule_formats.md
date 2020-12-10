@@ -19,7 +19,7 @@ would update automatically and generate unexpected errors.
 
 Use this example to list available property rule formats:
 
-```hcl-terraform
+```hcl
 datasource "akamai_property_rule_formats" "my-example" {
 }
 

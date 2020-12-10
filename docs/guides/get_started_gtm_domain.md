@@ -69,7 +69,7 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ## Retrieving The Group ID
 
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/group.md). To fetch the default group ID no attributes other than contract need to be set:
+Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/property_group.md). To fetch the default group ID no attributes other than contract need to be set:
 
 ```hcl
 data "akamai_group" "default" {

@@ -82,7 +82,7 @@ templates/main.json:
     ],
     "behaviors": "#include:behaviors_default.json",
     "options": {
-      "is_secure": “${env.secure}"
+      "is_secure": "${env.secure}"
     },
     "variables": "#include:akamai_variables.json",
     "comments": "The behaviors in the Default Rule apply to all requests for the property hostnames unless another rule overrides the Default Rule settings."
@@ -92,7 +92,7 @@ templates/main.json:
 
 You can then define a Terraform configuration file like this, which pulls in the `main.json` file above and uses it with a property:
 
-```hcl-terraform
+```hcl
 data "akamai_property_rules_template" "example" {
   template_file = abspath("${path.root}/templates/main.json")
   variables {

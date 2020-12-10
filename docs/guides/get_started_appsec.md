@@ -144,7 +144,7 @@ Note that you cannot modify a security configuration version that is currently a
 
 ## Activating a Security Configuration Version
 
-You can activate a specific version of a security configuration using the [`akamai_appsec_activations`](../data-sources/akamai_appsec_activations.md) resource. Add the following resource block to your `akamai.tf` file, replacing the `version` value with the number of a currently inactive version, such as the one you modified using the `akamai_appsec_selected_hostnames` resource above.
+You can activate a specific version of a security configuration using the [`akamai_appsec_activations`](../resources/appsec_activations.md) resource. Add the following resource block to your `akamai.tf` file, replacing the `version` value with the number of a currently inactive version, such as the one you modified using the `akamai_appsec_selected_hostnames` resource above.
 
 ```hcl
 resource "akamai_appsec_activations" "activation" {
