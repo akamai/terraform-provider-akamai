@@ -16,7 +16,7 @@ func (p *provider) dsRoles() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			// inputs
 			"group_id": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Description: "A unique identifier for a group",
 				Optional:    true,
 			},
@@ -169,18 +169,16 @@ func (p *provider) dsRolesRead(ctx context.Context, d *schema.ResourceData, _ in
 	getUsers := d.Get("get_users").(bool)
 	IgnoreContext := d.Get("ignore_context").(bool)
 
-	GroupID, err := strconv.ParseInt(d.Get("group_id").(string), 10, 64)
-	if err != nil {
-		logger.WithError(err).Error("group_id must be an integer")
-		return diag.FromErr(err)
-	}
+	GroupID := int64(d.Get("group_id").(int))
 
 	logger.Debug("Fetching roles")
 	req := iam.ListRolesRequest{
-		GroupID:       &GroupID,
 		Actions:       getActions,
 		IgnoreContext: IgnoreContext,
 		Users:         getUsers,
+	}
+	if GroupID != 0 {
+		req.GroupID = &GroupID
 	}
 	res, err := p.client.ListRoles(ctx, req)
 	if err != nil {
