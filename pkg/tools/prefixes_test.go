@@ -10,6 +10,8 @@ func TestAddPrefix(t *testing.T) {
 	tests := map[string]struct {
 		givenStr, givenPrefix, expected string
 	}{
+		"blank string":                {"", "pre_", ""},
+		"blank prefix":                {"test", "", "test"},
 		"append prefix":                {"test", "pre_", "pre_test"},
 		"prefix exists, return string": {"pre_test", "pre_", "pre_test"},
 	}

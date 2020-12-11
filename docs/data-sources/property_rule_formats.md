@@ -15,7 +15,7 @@ and criteria a rule tree invokes. Without this mechanism, behaviors and criteria
 generate unexpected errors. 
 
 
-## Example Usage
+## Example usage
 
 Use this example to list available property rule formats:
 
@@ -28,11 +28,11 @@ output "property_match" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 There are no arguments available for this data source.
 
-## Attributes Reference
+## Attributes reference
 
 This data source returns this attribute:
 

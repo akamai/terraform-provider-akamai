@@ -8,12 +8,14 @@ description: |-
 
 # akamai_property_activation
 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](guides/1.0_migration.md) for details. 
+
 The `akamai_property_activation` resource lets you activate a property version. An activation deploys the version to either the Akamai staging or production network. You can activate a specific version multiple times if you need to.  
 
 Before activating on production, activate on staging first. This way you can detect any problems in staging before your changes progress to production.
 
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -62,7 +64,7 @@ resource "akamai_property_activation" "example_prod" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 The following arguments are supported:
 
@@ -71,11 +73,11 @@ The following arguments are supported:
 * `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. 
 * `network` - (Optional) Akamai network to activate on, either `STAGING` or `PRODUCTION`. `STAGING` is the default.
 
-### Deprecated Arguments
+### Deprecated arguments
 
 * `property` - (Deprecated) Replaced by `property_id`. Maintained for legacy purposes.
 
-## Attribute Reference
+## Attribute reference
 
 The following attributes are returned:
 

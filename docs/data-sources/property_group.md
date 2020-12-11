@@ -8,7 +8,6 @@ description: |-
 
 # akamai_group
 
-
 Use the `akamai_group` data source to retrieve a group ID by name. 
 
 Each account features a hierarchy of groups, which control access to your Akamai configurations and 
@@ -17,7 +16,7 @@ Control Center or the [Identity Management: User Administration API](https://dev
 account administrators can assign properties to specific groups, each with its own set of users and 
 accompanying roles.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -37,17 +36,17 @@ resource "akamai_property" "example" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 This data source supports these arguments:
 
 * `name` - (Required) The group name.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 
-### Deprecated Arguments 
+### Deprecated arguments 
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
 
-## Attributes Reference
+## Attributes reference
 
 This data source returns this attribute:
 
