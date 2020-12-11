@@ -40,13 +40,13 @@ data "akamai_appsec_eval_rule_actions" "rule_action" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
-  eval_rule_id = var.eval_rule_id
+  rule_id = var.rule_id
 }
 output "rule_action" {
   value = akamai_appsec_eval_rule_actions.rule_action.action
 }
-output "eval_rule_id" {
-  value = akamai_appsec_eval_rule_actions.rule_action.eval_rule_id
+output "rule_id" {
+  value = akamai_appsec_eval_rule_actions.rule_action.rule_id
 }
 ```
 
@@ -60,7 +60,7 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `eval_rule_id` - (Optional) The ID of a specific rule. If not supplied, information about all eval rules will be returned.
+* `rule_id` - (Optional) The ID of a specific rule. If not supplied, information about all eval rules will be returned.
 
 ## Attributes Reference
 

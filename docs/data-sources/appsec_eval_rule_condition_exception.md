@@ -27,7 +27,7 @@ data "akamai_appsec_eval_rule_condition_exception" "condition_exception" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
-  eval_rule_id = var.eval_rule_id
+  rule_id = var.rule_id
 }
 output "condition_exception_text" {
   value = data.akamai_appsec_eval_rule_condition_exception.condition_exception.output_text
@@ -47,7 +47,7 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `eval_rule_id` - (Required) The ID of the rule to use.
+* `rule_id` - (Required) The ID of the rule to use.
 
 ## Attributes Reference
 
