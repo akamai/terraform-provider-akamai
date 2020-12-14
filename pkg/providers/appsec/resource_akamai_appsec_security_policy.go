@@ -85,7 +85,6 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 
 	d.Set("security_policy_id", spcr.PolicyID)
 	d.Set("security_policy_name", spcr.PolicyName)
-	//d.Set("policy_prefix", spcr.PolicyPrefix)
 	d.SetId(spcr.PolicyID)
 
 	return resourceSecurityPolicyRead(ctx, d, m)

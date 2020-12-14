@@ -57,30 +57,11 @@ func compareConditionExceptionJSON(old, new string) bool {
 
 func compareConditionException(old, new *appsec.UpdateRuleConditionExceptionResponse) bool {
 	if len(old.Conditions) != len(new.Conditions) ||
-		//len(old.FileExtensions) != len(new.FileExtensions) ||
+
 		len(old.Exception.HeaderCookieOrParamValues) != len(new.Exception.HeaderCookieOrParamValues) {
-		/*} ||
-		len(old.Exception.SpecificHeaderCookieOrParamNames.Name) != len(new.Exception.SpecificHeaderCookieOrParamNames.Name) {*/
 		return false
 	}
-	/*
-		sort.Strings(old.FilePaths)
-		sort.Strings(new.FilePaths)
 
-		sort.Strings(old.FileExtensions)
-		sort.Strings(new.FileExtensions)
-
-		sort.Strings(old.Hostnames)
-		sort.Strings(new.Hostnames)
-
-		new.EffectiveSecurityControls = old.EffectiveSecurityControls
-
-		new.TargetID = 0
-		old.TargetID = 0
-
-		new.Sequence = 0
-		old.Sequence = 0
-	*/
 	return reflect.DeepEqual(old, new)
 }
 

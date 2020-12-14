@@ -176,35 +176,3 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	return nil
 }
-
-/*
-func matchTargetAsJSONDString(d *schema.ResourceData) (string, error) {
-
-	updateMatchTarget := v2.UpdateMatchTargetRequest{}
-	updateMatchTarget.ConfigID = d.Get("config_id").(int)
-	updateMatchTarget.ConfigVersion = d.Get("version").(int)
-	updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
-	updateMatchTarget.Type = d.Get("type").(string)
-	updateMatchTarget.IsNegativePathMatch = d.Get("is_negative_path_match").(bool)
-	updateMatchTarget.IsNegativeFileExtensionMatch = d.Get("is_negative_file_extension_match").(bool)
-	updateMatchTarget.DefaultFile = d.Get("default_file").(string)
-	updateMatchTarget.Hostnames = tools.SetToStringSlice(d.Get("hostnames").(*schema.Set))
-	updateMatchTarget.FilePaths = tools.SetToStringSlice(d.Get("file_paths").(*schema.Set))
-	updateMatchTarget.FileExtensions = tools.SetToStringSlice(d.Get("file_extensions").(*schema.Set))
-	updateMatchTarget.SecurityPolicy.PolicyID = d.Get("security_policy").(string)
-	bypassnetworklists := d.Get("bypass_network_lists").(*schema.Set).List()
-
-	for _, b := range bypassnetworklists {
-		bl := v2.BypassNetworkList{}
-		bl.ID = b.(string)
-		updateMatchTarget.BypassNetworkLists = append(updateMatchTarget.BypassNetworkLists, bl)
-	}
-
-	jsonBody, err := json.Marshal(updateMatchTarget)
-	if err != nil {
-		return "", err
-	}
-	return string(jsonBody), nil
-
-}
-*/

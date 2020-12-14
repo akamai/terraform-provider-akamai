@@ -77,7 +77,6 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "reputationProfilesDS", reputationprofiles)
-	//logger.Errorf("calling 'getReputationProfiles': %s", err.Error())
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}
