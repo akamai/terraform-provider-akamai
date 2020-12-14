@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -47,7 +47,7 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePoliciesRead")
 
-	getRatePolicies := v2.GetRatePoliciesRequest{}
+	getRatePolicies := appsec.GetRatePoliciesRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

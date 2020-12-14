@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -50,7 +50,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceExportConfigurationRead")
 
-	getExportConfiguration := v2.GetExportConfigurationsRequest{}
+	getExportConfiguration := appsec.GetExportConfigurationsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -56,7 +56,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectableHostnamesRead")
 
-	getSelectableHostnames := v2.GetSelectableHostnamesRequest{}
+	getSelectableHostnames := appsec.GetSelectableHostnamesRequest{}
 
 	getSelectableHostnames.ConfigID = d.Get("config_id").(int)
 	getSelectableHostnames.Version = d.Get("version").(int)

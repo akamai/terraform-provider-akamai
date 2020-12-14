@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -60,7 +60,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionRead")
 
-	getRatePolicyAction := v2.GetRatePolicyActionRequest{}
+	getRatePolicyAction := appsec.GetRatePolicyActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -110,7 +110,7 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionRemove")
 
-	updateRatePolicyAction := v2.UpdateRatePolicyActionRequest{}
+	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -155,7 +155,7 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionUpdate")
 
-	updateRatePolicyAction := v2.UpdateRatePolicyActionRequest{}
+	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

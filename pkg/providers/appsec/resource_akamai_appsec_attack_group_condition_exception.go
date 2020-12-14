@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -62,7 +62,7 @@ func resourceAttackGroupConditionExceptionRead(ctx context.Context, d *schema.Re
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAttackGroupConditionExceptionRead")
 
-	getAttackGroupConditionException := v2.GetAttackGroupConditionExceptionRequest{}
+	getAttackGroupConditionException := appsec.GetAttackGroupConditionExceptionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -114,7 +114,7 @@ func resourceAttackGroupConditionExceptionDelete(ctx context.Context, d *schema.
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAttackGroupConditionExceptionRemove")
 
-	removeAttackGroupConditionException := v2.RemoveAttackGroupConditionExceptionRequest{}
+	removeAttackGroupConditionException := appsec.RemoveAttackGroupConditionExceptionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -157,7 +157,7 @@ func resourceAttackGroupConditionExceptionUpdate(ctx context.Context, d *schema.
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAttackGroupConditionExceptionUpdate")
 
-	updateAttackGroupConditionException := v2.UpdateAttackGroupConditionExceptionRequest{}
+	updateAttackGroupConditionException := appsec.UpdateAttackGroupConditionExceptionRequest{}
 
 	jsonpostpayload := d.Get("condition_exception")
 

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -56,7 +56,7 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionRead")
 
-	getReputationProfileAction := v2.GetReputationProfileActionRequest{}
+	getReputationProfileAction := appsec.GetReputationProfileActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -99,7 +99,7 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionRemove")
 
-	removeReputationProfileAction := v2.UpdateReputationProfileActionRequest{}
+	removeReputationProfileAction := appsec.UpdateReputationProfileActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -143,7 +143,7 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionUpdate")
 
-	updateReputationProfileAction := v2.UpdateReputationProfileActionRequest{}
+	updateReputationProfileAction := appsec.UpdateReputationProfileActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

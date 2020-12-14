@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -67,7 +67,7 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingRead")
 
-	getSlowPostProtectionSetting := v2.GetSlowPostProtectionSettingRequest{}
+	getSlowPostProtectionSetting := appsec.GetSlowPostProtectionSettingRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -104,7 +104,7 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingDelete")
 
-	updateSlowPostProtection := v2.UpdateSlowPostProtectionRequest{}
+	updateSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -141,7 +141,7 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
 
-	updateSlowPostProtectionSetting := v2.UpdateSlowPostProtectionSettingRequest{}
+	updateSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

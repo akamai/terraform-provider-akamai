@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -59,7 +59,7 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameRead")
 
-	getSelectedHostname := v2.GetSelectedHostnameRequest{}
+	getSelectedHostname := appsec.GetSelectedHostnameRequest{}
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
@@ -109,7 +109,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameUpdate")
 
-	updateSelectedHostname := v2.UpdateSelectedHostnameRequest{}
+	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -125,17 +125,17 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 
 	mode := d.Get("mode").(string)
 
-	hn := v2.GetSelectedHostnamesRequest{}
+	hn := appsec.GetSelectedHostnamesRequest{}
 
 	hostnamelist := d.Get("hostnames").([]interface{})
 
 	for _, h := range hostnamelist {
-		h1 := v2.Hostname{}
+		h1 := appsec.Hostname{}
 		h1.Hostname = h.(string)
 		hn.HostnameList = append(hn.HostnameList, h1)
 	}
 
-	getSelectedHostnames := v2.GetSelectedHostnamesRequest{}
+	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
 	getSelectedHostnames.ConfigID = configid
 	getSelectedHostnames.Version = version
 
@@ -157,7 +157,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	case Append:
 		for _, h := range selectedhostnames.HostnameList {
-			m := v2.Hostname{}
+			m := appsec.Hostname{}
 			m.Hostname = h.Hostname
 			hn.HostnameList = append(hn.HostnameList, m)
 		}
@@ -179,7 +179,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 //RemoveIndex reemove host from list
-func RemoveIndex(hl []v2.Hostname, index int) []v2.Hostname {
+func RemoveIndex(hl []appsec.Hostname, index int) []appsec.Hostname {
 	return append(hl[:index], hl[index+1:]...)
 }
 

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -48,8 +48,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceUpdate")
 
-	updateMatchTargetSequence := v2.UpdateMatchTargetSequenceRequest{}
-	//targetsequence := v2.TargetSequence{}
+	updateMatchTargetSequence := appsec.UpdateMatchTargetSequenceRequest{}
 
 	jsonpostpayload, ok := d.GetOk("match_target_sequence")
 	if ok {
@@ -94,7 +93,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
 
-	getMatchTargetSequence := v2.GetMatchTargetSequenceRequest{}
+	getMatchTargetSequence := appsec.GetMatchTargetSequenceRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
 		getMatchTargetSequence.ConfigID, _ = strconv.Atoi(s[0])

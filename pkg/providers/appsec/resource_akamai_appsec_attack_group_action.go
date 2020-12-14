@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -61,7 +61,7 @@ func resourceAttackGroupActionRead(ctx context.Context, d *schema.ResourceData, 
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAttackGroupActionRead")
 
-	getAttackGroupAction := v2.GetAttackGroupActionRequest{}
+	getAttackGroupAction := appsec.GetAttackGroupActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -112,7 +112,7 @@ func resourceAttackGroupActionDelete(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAttackGroupActionRemove")
 
-	removeAttackGroupAction := v2.UpdateAttackGroupActionRequest{}
+	removeAttackGroupAction := appsec.UpdateAttackGroupActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -155,7 +155,7 @@ func resourceAttackGroupActionUpdate(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAttackGroupActionUpdate")
 
-	updateAttackGroupAction := v2.UpdateAttackGroupActionRequest{}
+	updateAttackGroupAction := appsec.UpdateAttackGroupActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

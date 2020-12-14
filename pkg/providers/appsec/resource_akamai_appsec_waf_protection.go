@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -55,7 +55,7 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFProtectionRead")
 
-	getWAFProtection := v2.GetWAFProtectionRequest{}
+	getWAFProtection := appsec.GetWAFProtectionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -100,7 +100,7 @@ func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m 
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFProtectionRemove")
 
-	removeWAFProtection := v2.UpdateWAFProtectionRequest{}
+	removeWAFProtection := appsec.UpdateWAFProtectionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -136,7 +136,7 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFProtectionUpdate")
 
-	updateWAFProtection := v2.UpdateWAFProtectionRequest{}
+	updateWAFProtection := appsec.UpdateWAFProtectionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

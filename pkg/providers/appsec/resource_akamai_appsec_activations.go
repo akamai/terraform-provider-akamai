@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -91,11 +91,11 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 
-	createActivations := v2.CreateActivationsRequest{}
+	createActivations := appsec.CreateActivationsRequest{}
 
-	createActivationsreq := v2.GetActivationsRequest{}
+	createActivationsreq := appsec.GetActivationsRequest{}
 
-	ap := v2.ActivationConfigs{}
+	ap := appsec.ActivationConfigs{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -130,7 +130,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	createActivationsreq.ActivationID = postresp.ActivationID
 	activation, err := lookupActivation(ctx, client, createActivationsreq)
-	for activation.Status != v2.StatusActive {
+	for activation.Status != appsec.StatusActive {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, createActivationsreq)
@@ -163,8 +163,8 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 
-	removeActivations := v2.RemoveActivationsRequest{}
-	createActivationsreq := v2.GetActivationsRequest{}
+	removeActivations := appsec.RemoveActivationsRequest{}
+	createActivationsreq := appsec.GetActivationsRequest{}
 
 	if d.Id() == "" {
 		return nil
@@ -172,7 +172,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	removeActivations.ActivationID, _ = strconv.Atoi(d.Id())
 	//postpayload := appsec.NewActivationsPost()
-	ap := v2.ActivationConfigs{}
+	ap := appsec.ActivationConfigs{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -210,7 +210,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	createActivationsreq.ActivationID = postresp.ActivationID
 
 	activation, err := lookupActivation(ctx, client, createActivationsreq)
-	for activation.Status != v2.StatusDeactivated {
+	for activation.Status != appsec.StatusDeactivated {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, createActivationsreq)
@@ -237,7 +237,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
 
-	getActivations := v2.GetActivationsRequest{}
+	getActivations := appsec.GetActivationsRequest{}
 
 	getActivations.ActivationID, _ = strconv.Atoi(d.Id())
 
@@ -253,7 +253,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func lookupActivation(ctx context.Context, client v2.APPSEC, query v2.GetActivationsRequest) (*v2.GetActivationsResponse, error) {
+func lookupActivation(ctx context.Context, client appsec.APPSEC, query appsec.GetActivationsRequest) (*appsec.GetActivationsResponse, error) {
 	activations, err := client.GetActivations(ctx, query)
 	if err != nil {
 		return nil, err

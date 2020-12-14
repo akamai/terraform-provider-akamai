@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -53,7 +53,7 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
 
-	getSecurityPolicy := v2.GetSecurityPoliciesRequest{}
+	getSecurityPolicy := appsec.GetSecurityPoliciesRequest{}
 
 	configName := d.Get("name").(string)
 

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -60,7 +60,7 @@ func resourceEvalRuleActionRead(ctx context.Context, d *schema.ResourceData, m i
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleActionRead")
 
-	getEvalRuleAction := v2.GetEvalRuleActionRequest{}
+	getEvalRuleAction := appsec.GetEvalRuleActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -110,7 +110,7 @@ func resourceEvalRuleActionDelete(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleActionRemove")
 
-	removeEvalRuleAction := v2.UpdateEvalRuleActionRequest{}
+	removeEvalRuleAction := appsec.UpdateEvalRuleActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -151,7 +151,7 @@ func resourceEvalRuleActionUpdate(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleActionUpdate")
 
-	updateEvalRuleAction := v2.UpdateEvalRuleActionRequest{}
+	updateEvalRuleAction := appsec.UpdateEvalRuleActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

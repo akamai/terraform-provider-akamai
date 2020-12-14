@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -46,7 +46,7 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleCreate")
 
-	createCustomRule := v2.CreateCustomRuleRequest{}
+	createCustomRule := appsec.CreateCustomRuleRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -74,7 +74,7 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleUpdate")
 
-	updateCustomRule := v2.UpdateCustomRuleRequest{}
+	updateCustomRule := appsec.UpdateCustomRuleRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -100,7 +100,7 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleRemove")
 
-	removeCustomRule := v2.RemoveCustomRuleRequest{}
+	removeCustomRule := appsec.RemoveCustomRuleRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -126,7 +126,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleRead")
 
-	getCustomRule := v2.GetCustomRuleRequest{}
+	getCustomRule := appsec.GetCustomRuleRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

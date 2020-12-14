@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -56,7 +56,7 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCloneCreate")
 
-	createSecurityPolicyClone := v2.CreateSecurityPolicyCloneRequest{}
+	createSecurityPolicyClone := appsec.CreateSecurityPolicyCloneRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -107,7 +107,7 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCloneRead")
 
-	getSecurityPolicyClone := v2.GetSecurityPolicyCloneRequest{}
+	getSecurityPolicyClone := appsec.GetSecurityPolicyCloneRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -141,7 +141,7 @@ func resourceSecurityPolicyCloneDelete(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCloneRead")
 
-	removeSecurityPolicyClone := v2.RemoveSecurityPolicyRequest{}
+	removeSecurityPolicyClone := appsec.RemoveSecurityPolicyRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

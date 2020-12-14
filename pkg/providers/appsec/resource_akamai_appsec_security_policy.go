@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -51,7 +51,7 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCreate")
 
-	createSecurityPolicy := v2.CreateSecurityPolicyRequest{}
+	createSecurityPolicy := appsec.CreateSecurityPolicyRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -95,7 +95,7 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyUpdate")
 
-	updateSecurityPolicy := v2.UpdateSecurityPolicyRequest{}
+	updateSecurityPolicy := appsec.UpdateSecurityPolicyRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -137,7 +137,7 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRemove")
 
-	removeSecurityPolicy := v2.RemoveSecurityPolicyRequest{}
+	removeSecurityPolicy := appsec.RemoveSecurityPolicyRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -169,7 +169,7 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
 
-	getSecurityPolicy := v2.GetSecurityPolicyRequest{}
+	getSecurityPolicy := appsec.GetSecurityPolicyRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

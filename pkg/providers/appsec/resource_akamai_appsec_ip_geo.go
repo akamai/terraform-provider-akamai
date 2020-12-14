@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -75,7 +75,7 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoRead")
 
-	getIPGeo := v2.GetIPGeoRequest{}
+	getIPGeo := appsec.GetIPGeoRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -120,7 +120,7 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoDelete")
 
-	updatePolicyProtections := v2.UpdateNetworkLayerProtectionRequest{}
+	updatePolicyProtections := appsec.UpdateNetworkLayerProtectionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -157,7 +157,7 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoUpdate")
 
-	updateIPGeo := v2.UpdateIPGeoRequest{}
+	updateIPGeo := appsec.UpdateIPGeoRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -51,7 +51,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetCreate")
 
-	createMatchTarget := v2.CreateMatchTargetRequest{}
+	createMatchTarget := appsec.CreateMatchTargetRequest{}
 
 	jsonpostpayload := d.Get("match_target")
 
@@ -81,7 +81,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetUpdate")
 
-	updateMatchTarget := v2.UpdateMatchTargetRequest{}
+	updateMatchTarget := appsec.UpdateMatchTargetRequest{}
 
 	jsonpostpayload := d.Get("match_target")
 
@@ -111,7 +111,7 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetRemove")
 
-	removeMatchTarget := v2.RemoveMatchTargetRequest{}
+	removeMatchTarget := appsec.RemoveMatchTargetRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -143,7 +143,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetRead")
 
-	getMatchTarget := v2.GetMatchTargetRequest{}
+	getMatchTarget := appsec.GetMatchTargetRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

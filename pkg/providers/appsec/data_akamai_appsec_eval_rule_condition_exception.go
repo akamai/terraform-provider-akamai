@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -51,7 +51,7 @@ func dataSourceEvalRuleConditionExceptionRead(ctx context.Context, d *schema.Res
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleConditionExceptionRead")
 
-	getEvalRuleConditionException := v2.GetEvalRuleConditionExceptionRequest{}
+	getEvalRuleConditionException := appsec.GetEvalRuleConditionExceptionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

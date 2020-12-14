@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -76,7 +76,7 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFModeRead")
 
-	getWAFMode := v2.GetWAFModeRequest{}
+	getWAFMode := appsec.GetWAFModeRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -130,7 +130,7 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFModeUpdate")
 
-	updateWAFMode := v2.UpdateWAFModeRequest{}
+	updateWAFMode := appsec.UpdateWAFModeRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -157,7 +157,7 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	updateWAFMode.Mode = mode
 
 	//if current mode = one to updare skip this call
-	getWAFMode := v2.GetWAFModeRequest{}
+	getWAFMode := appsec.GetWAFModeRequest{}
 	getWAFMode.ConfigID = configid
 	getWAFMode.Version = version
 	getWAFMode.PolicyID = policyid

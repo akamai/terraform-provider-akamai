@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -48,7 +48,7 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationRead")
 
-	getConfiguration := v2.GetConfigurationsRequest{}
+	getConfiguration := appsec.GetConfigurationsRequest{}
 
 	configName := d.Get("name").(string)
 

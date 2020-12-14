@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -50,7 +50,7 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationCloneCreate")
 
-	createConfigurationClone := v2.CreateConfigurationCloneRequest{}
+	createConfigurationClone := appsec.CreateConfigurationCloneRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -81,7 +81,7 @@ func resourceConfigurationCloneRead(ctx context.Context, d *schema.ResourceData,
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationCloneRead")
 
-	getConfigurationClone := v2.GetConfigurationCloneRequest{}
+	getConfigurationClone := appsec.GetConfigurationCloneRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

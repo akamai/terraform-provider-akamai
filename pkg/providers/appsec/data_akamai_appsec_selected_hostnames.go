@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -52,7 +52,7 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnamesRead")
 
-	getSelectedHostnames := v2.GetSelectedHostnamesRequest{}
+	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")

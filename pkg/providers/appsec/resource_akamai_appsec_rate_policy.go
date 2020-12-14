@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -51,7 +51,7 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyCreate")
 
-	createRatePolicy := v2.CreateRatePolicyRequest{}
+	createRatePolicy := appsec.CreateRatePolicyRequest{}
 
 	jsonpostpayload := d.Get("rate_policy")
 	json.Unmarshal([]byte(jsonpostpayload.(string)), &createRatePolicy)
@@ -84,7 +84,7 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyUpdate")
 
-	updateRatePolicy := v2.UpdateRatePolicyRequest{}
+	updateRatePolicy := appsec.UpdateRatePolicyRequest{}
 
 	jsonpostpayload := d.Get("rate_policy")
 	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateRatePolicy)
@@ -117,7 +117,7 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyDelete")
 
-	deleteRatePolicy := v2.RemoveRatePolicyRequest{}
+	deleteRatePolicy := appsec.RemoveRatePolicyRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -149,7 +149,7 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyRead")
 
-	getRatePolicy := v2.GetRatePolicyRequest{}
+	getRatePolicy := appsec.GetRatePolicyRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
