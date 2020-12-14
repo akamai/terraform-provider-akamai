@@ -17,7 +17,7 @@ Basic usage:
 ```hcl
 data "akamai_iam_groups" "my-groups" {
     group_id = "1234567"
-    get_actions = true
+    actions = true
 }
 
 output "groups" {
@@ -29,7 +29,7 @@ output "groups" {
 
 The following arguments are supported:
 
-* `get_actions` - (optional, bool) When enabled, the response includes information about actions such as "edit" or "delete"
+* `actions` - (optional, bool) When enabled, the response includes information about actions such as "edit" or "delete"
 
 ## Attributes Reference
 
