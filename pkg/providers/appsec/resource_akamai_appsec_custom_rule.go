@@ -82,7 +82,13 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	updateCustomRule.ConfigID = configid
 
-	updateCustomRule.ID, _ = strconv.Atoi(d.Id())
+	ID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	updateCustomRule.ID = ID
+
 	jsonpostpayload := d.Get("custom_rule").(string)
 	json.Unmarshal([]byte(jsonpostpayload), &updateCustomRule)
 
@@ -108,7 +114,12 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 	removeCustomRule.ConfigID = configid
 
-	removeCustomRule.ID, _ = strconv.Atoi(d.Id())
+	ID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	removeCustomRule.ID = ID
 
 	_, errd := client.RemoveCustomRule(ctx, removeCustomRule)
 	if errd != nil {
@@ -134,7 +145,12 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	getCustomRule.ConfigID = configid
 
-	getCustomRule.ID, _ = strconv.Atoi(d.Id())
+	ID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	getCustomRule.ID = ID
 
 	customrule, err := client.GetCustomRule(ctx, getCustomRule)
 	if err != nil {

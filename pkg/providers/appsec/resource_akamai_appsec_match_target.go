@@ -86,7 +86,14 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	jsonpostpayload := d.Get("match_target")
 
 	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTarget)
-	updateMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
+
+	targetID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	updateMatchTarget.TargetID = targetID
+
 	jsonBody, err := json.Marshal(updateMatchTarget)
 	if err != nil {
 		return diag.FromErr(err)
@@ -125,7 +132,12 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 	removeMatchTarget.ConfigVersion = version
 
-	removeMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
+	targetID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	removeMatchTarget.TargetID = targetID
 
 	_, errd := client.RemoveMatchTarget(ctx, removeMatchTarget)
 	if errd != nil {
@@ -157,7 +169,12 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	getMatchTarget.ConfigVersion = version
 
-	getMatchTarget.TargetID, _ = strconv.Atoi(d.Id())
+	targetID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	getMatchTarget.TargetID = targetID
 
 	matchtarget, err := client.GetMatchTarget(ctx, getMatchTarget)
 	if err != nil {

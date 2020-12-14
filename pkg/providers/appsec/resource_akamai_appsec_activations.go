@@ -170,8 +170,13 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 
-	removeActivations.ActivationID, _ = strconv.Atoi(d.Id())
-	//postpayload := appsec.NewActivationsPost()
+	ActivationID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(err)
+	}
+	removeActivations.ActivationID = ActivationID
+
 	ap := appsec.ActivationConfigs{}
 
 	configid, err := tools.GetIntValue("config_id", d)
@@ -239,7 +244,12 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	getActivations := appsec.GetActivationsRequest{}
 
-	getActivations.ActivationID, _ = strconv.Atoi(d.Id())
+	activationID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	getActivations.ActivationID = activationID
 
 	activations, err := client.GetActivations(ctx, getActivations)
 	if err != nil {
@@ -259,10 +269,7 @@ func lookupActivation(ctx context.Context, client appsec.APPSEC, query appsec.Ge
 		return nil, err
 	}
 
-	// There is an activation in progress, if it's for the same version/network/type we can re-use it
-	//if activations.Action == query.activationType && activations.Network == query.network {
 	return activations, nil
-	//}
 
 	return nil, nil
 }

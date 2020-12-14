@@ -106,7 +106,12 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	}
 	updateReputationProfile.ConfigVersion = configversion
 
-	updateReputationProfile.ReputationProfileId, _ = strconv.Atoi(d.Id())
+	reputationProfileId, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	updateReputationProfile.ReputationProfileId = reputationProfileId
 
 	_, erru := client.UpdateReputationProfile(ctx, updateReputationProfile)
 	if erru != nil {
@@ -136,7 +141,12 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 	}
 	removeReputationProfile.ConfigVersion = configversion
 
-	removeReputationProfile.ReputationProfileId, _ = strconv.Atoi(d.Id())
+	reputationProfileId, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	removeReputationProfile.ReputationProfileId = reputationProfileId
 
 	_, errd := client.RemoveReputationProfile(ctx, removeReputationProfile)
 	if errd != nil {
@@ -168,7 +178,12 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 	}
 	getReputationProfile.ConfigVersion = configversion
 
-	getReputationProfile.ReputationProfileId, _ = strconv.Atoi(d.Id())
+	reputationProfileId, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	getReputationProfile.ReputationProfileId = reputationProfileId
 
 	reputationprofile, err := client.GetReputationProfile(ctx, getReputationProfile)
 	if err != nil {

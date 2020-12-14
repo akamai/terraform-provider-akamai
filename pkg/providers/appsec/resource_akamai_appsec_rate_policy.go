@@ -101,7 +101,12 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	updateRatePolicy.ConfigVersion = version
 
-	updateRatePolicy.RatePolicyID, _ = strconv.Atoi(d.Id())
+	ratePolicyID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	updateRatePolicy.RatePolicyID = ratePolicyID
 
 	_, erru := client.UpdateRatePolicy(ctx, updateRatePolicy)
 	if erru != nil {
@@ -131,7 +136,12 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 	deleteRatePolicy.ConfigVersion = version
 
-	deleteRatePolicy.RatePolicyID, _ = strconv.Atoi(d.Id())
+	ratePolicyID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	deleteRatePolicy.RatePolicyID = ratePolicyID
 
 	_, errd := client.RemoveRatePolicy(ctx, deleteRatePolicy)
 	if errd != nil {
@@ -163,7 +173,12 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	getRatePolicy.ConfigVersion = version
 
-	getRatePolicy.RatePolicyID, _ = strconv.Atoi(d.Id())
+	ratePolicyID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	getRatePolicy.RatePolicyID = ratePolicyID
 
 	ratepolicy, errd := client.GetRatePolicy(ctx, getRatePolicy)
 	if errd != nil {
