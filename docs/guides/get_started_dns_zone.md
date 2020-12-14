@@ -194,7 +194,7 @@ The file, example_primary_zone_com_resources.json, will be generated with the fo
 }
 ```
 
-Next, update the Terraform Zone configuration file using the previously generated json as input.
+Next, update the Terraform Zone configuration file using the previously generated JSON as input.
 
 ```
 $ akamai terraform create-zone example_primary_zone.com --createconfig
@@ -327,7 +327,7 @@ $ terraform import akamai_dns_zone.{{zone resource name}} {{edge dns zone name}}
 $ terraform import akamai_dns_record.{{record resource name}} {{edge dns zone name}}#{{edge dns recordset name}}#{{record type}}
 ```
 
-[Migrating A DNS Zone](faq.md#migrating-an-edge-dns-zone-and-records-to-terraform) discusses DNS resource import in more detail.
+[Migrating A DNS Zone](../guides/faq.md#migrating-an-edge-dns-zone-and-records-to-terraform) discusses DNS resource import in more detail.
 
 ## Working With MX Records
 

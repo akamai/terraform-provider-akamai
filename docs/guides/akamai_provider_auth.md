@@ -10,7 +10,7 @@ description: |-
 Authentication of Akamai Terraform Provider relies on the Akamai EdgeGrid
 authentication scheme. The Akamai Provider code acts as a
 wrapper for our APIs and reuses the same authentication mechanism. We
-recommend storing your API credentials in a local .edgerc file.
+recommend storing your API credentials in a local `.edgerc` file.
 
 See [Get Started with APIs](https://developer.akamai.com/api/getting-started) 
 for more information about the process of creating Akamai credentials.
@@ -23,9 +23,8 @@ these permissions, your Terraform configurations won't execute.
 
 To get authenticated you need to:
 
-* Set up your API clients
-
-* Add your local .edgerc file to your Akamai Provider config
+* Set up your API clients.
+* Add your local .edgerc file to your Akamai Provider configuration.
 
 ## Set up your API clients
 
@@ -47,7 +46,7 @@ supporting API service names:
 
 | **Module** | **API service name** |
 |-------------|----------------------|
-| Property Manager (Provisioning and Common modules) | Property Manager (PAPI)|
+| Property Manager (Provisioning and Common modules) | Property Manager (PAPI) |
 | Edge DNS (DNS) | DNS-Zone Record Management |
 | Global Traffic Management | Traffic Management Configurations |
 | Application Security | Application Security |
@@ -58,11 +57,14 @@ Once you create the supporting API clients you can update your local
 ## Add your local .edgerc file to your Akamai Provider config
 
 
-To reference a local .edgerc file, you add this line to the top of the
-Akamai Provider configuration file (akamai.tf): edgerc =
-\"\~/.edgerc\".
+To reference a local `.edgerc` file, you add this line to the top of the
+Akamai Provider configuration file (`akamai.tf`): 
 
-The \~/.edgerc is the location of your file on your local machine. In
+```
+edgerc = \"\~/.edgerc\"
+```
+
+The `\~/.edgerc` is the location of your file on your local machine. In
 your Terraform files you can reference individual sections inside the
 .edgerc file:
 
@@ -136,7 +138,7 @@ resource "akamai_dns_record" "example_record" {
 Arguments supported in the `provider` block:
 
 * edgerc - (Optional) The location of the `.edgerc` file containing credentials. The default is `\$HOME/.edgerc`.
-* config_section - (Optional) The credential section to use within the `.edgerc` file for all Edge Grid calls. If you don't use `config_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
+* config_section - (Optional) The credential section to use within the `.edgerc` file for all EdgeGrid calls. If you don't use `config_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
 
 #### Deprecated arguments
 
@@ -230,7 +232,7 @@ terraform apply
 ```
 
 ### Variable reference
-When using variables, you'll need to set them up based on the sections of your `.edgerc` they represent. Your environment variables should be in this format: `AKAMAI{_SECTION_NAME}_\*`
+When using variables, you'll need to set them up based on the sections of your `.edgerc` file they represent. Your environment variables should be in this format: `AKAMAI{_SECTION_NAME}_\*`
 
 These are the variables for the `default` section of your `.edgerc` and what they represent: 
 

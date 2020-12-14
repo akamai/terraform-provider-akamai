@@ -8,7 +8,6 @@ description: |-
 
 # akamai_contract
 
-
 Use the `akamai_contract` data source to find a contract ID.
 
 ## Example usage

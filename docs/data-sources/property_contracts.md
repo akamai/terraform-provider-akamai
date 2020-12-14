@@ -15,7 +15,7 @@ Use the `akamai_property_contracts` data source to list contracts associated wit
 
 Return contracts associated with the EdgeGrid API client token currently used for authentication:
 
-```hcl-terraform
+```hcl
 datasource "akamai_property_contracts" "my-example" {
 }
 
@@ -34,7 +34,5 @@ This data source returns these attributes:
 
 * `contracts` - A list of supported contracts, with the following properties:
   * `contract_id` - The contract's unique ID, including the `ctr_` prefix.
-  * `contract_type_name` - The type of contract, either `DIRECT_CUSTOMER`, `INDIRECT_CUSTOMER`, `PARENT_CUSTOMER`,
-  `REFERRAL_PARTNER`, `TIER_1_RESELLER`, `VAR_CUSTOMER`, `VALUE_ADDED_RESELLER`, `PARTNER`, `PORTAL_PARTNER`,
-  `STREAMING_RESELLER`, `AKAMAI_INTERNAL`, or `UNKNOWN`.
+  * `contract_type_name` - The type of contract, either `DIRECT_CUSTOMER`, `INDIRECT_CUSTOMER`, `PARENT_CUSTOMER`, `REFERRAL_PARTNER`, `TIER_1_RESELLER`, `VAR_CUSTOMER`, `VALUE_ADDED_RESELLER`, `PARTNER`, `PORTAL_PARTNER`, `STREAMING_RESELLER`, `AKAMAI_INTERNAL`, or `UNKNOWN`.
 

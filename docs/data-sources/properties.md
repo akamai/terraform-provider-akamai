@@ -17,7 +17,7 @@ based on the [EdgeGrid API client token](https://developer.akamai.com/getting-st
 Return properties associated with the EdgeGrid API client token currently used for authentication:
 
 
-```hcl-terraform
+```hcl
 datasource "akamai_properties" "example" {
     contract_id = "ctr_1-AB123"
     group_id   = "grp_12345"

@@ -8,18 +8,18 @@ description: |-
 
 # akamai_property_rule_formats
 
-Use the `akamai_property_rule_formats` data source to query the list of known rule formats. 
+Use the `akamai_property_rule_formats` data source to query the list of 
+known rule formats. 
 You use rule formats to [freeze](https://developer.akamai.com/api/core_features/property_manager/v1.html#freezerf) or 
 [update](https://developer.akamai.com/api/core_features/property_manager/v1.html#updaterf) the versioned set of behaviors
-and criteria a rule tree invokes. Without this mechanism, behaviors and criteria would update automatically and 
-generate unexpected errors. 
-
+and criteria a rule tree invokes. Without this mechanism, behaviors and criteria 
+would update automatically and generate unexpected errors. 
 
 ## Example usage
 
 Use this example to list available property rule formats:
 
-```hcl-terraform
+```hcl
 datasource "akamai_property_rule_formats" "my-example" {
 }
 

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_property_activation
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](guides/1.0_migration.md) for details. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details. 
 
 The `akamai_property_activation` resource lets you activate a property version. An activation deploys the version to either the Akamai staging or production network. You can activate a specific version multiple times if you need to.  
 
@@ -70,7 +70,7 @@ The following arguments are supported:
 
 * `property_id` - (Required) The property’s unique identifier, including the `prp_` prefix. 
 * `contact` - (Required) One or more email addresses to send activation status changes to.
-* `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. 
+* `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `akamai_property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. To always use the latest version, enter this value `{resource}.{resource identifier}.{field name}`. Using the example code above, the entry would be `akamai_property.example.latest_version` since we want the value of the `latest_version` attribute in the `akamai_property` resource labeled `example`.
 * `network` - (Optional) Akamai network to activate on, either `STAGING` or `PRODUCTION`. `STAGING` is the default.
 
 ### Deprecated arguments

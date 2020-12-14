@@ -8,16 +8,17 @@ description: |-
 
 # akamai_property_rules
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this data source. See the [migration guide](guides/1.0_migration.md) for details. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this data source. See the [migration guide](../guides/1.0_migration.md) for details. 
 
-Use the `akamai_property_rules` data source to query and retrieve the rule tree of an existing property version.  Lets you 
-search across contracts and groups you have access to.
+Use the `akamai_property_rules` data source to query and retrieve the rule tree of 
+an existing property version. This data source lets you search across the contracts 
+and groups you have access to.
 
 ## Basic usage
 
 This example returns the rule tree for version 3 of a property based on the selected contract and group:
 
-```hcl-terraform
+```hcl
 datasource "akamai_property_rules" "my-example" {
     property_id = "prp_123"
     group_id = "grp_12345"
