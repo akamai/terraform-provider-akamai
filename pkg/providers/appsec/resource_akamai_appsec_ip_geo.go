@@ -42,8 +42,8 @@ func resourceIPGeo() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					ALLOW,
-					BLOCK,
+					Allow,
+					Block,
 				}, false),
 			},
 			"geo_network_lists": {
@@ -182,11 +182,11 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 
-	if mode == "allow" {
+	if mode == Allow {
 		updateIPGeo.Block = "blockAllTrafficExceptAllowedIPs"
 	}
 
-	if mode == "block" {
+	if mode == Block {
 		updateIPGeo.Block = "blockSpecificIPGeo"
 	}
 
@@ -204,6 +204,6 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 const (
-	ALLOW = "allow"
-	BLOCK = "block"
+	Allow = "allow"
+	Block = "block"
 )
