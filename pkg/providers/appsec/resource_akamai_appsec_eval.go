@@ -42,11 +42,11 @@ func resourceEval() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					START,
-					STOP,
-					RESTART,
-					UPDATE,
-					COMPLETE,
+					Start,
+					Stop,
+					Restart,
+					Update,
+					Complete,
 				}, false),
 			},
 			"current_ruleset": {
@@ -208,9 +208,9 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 const (
-	START    = "START"
-	STOP     = "STOP"
-	RESTART  = "RESTART"
-	UPDATE   = "UPDATE"
-	COMPLETE = "COMPLETE"
+	Start    = "START"
+	Stop     = "STOP"
+	Restart  = "RESTART"
+	Update   = "UPDATE"
+	Complete = "COMPLETE"
 )
