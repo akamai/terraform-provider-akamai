@@ -31,19 +31,19 @@ data "akamai_appsec_waf_mode" "waf_mode" {
 }
 
 output "waf_mode_mode" {
-  value = akamai_appsec_waf_mode.waf_mode.mode
+  value = data.akamai_appsec_waf_mode.waf_mode.mode
 }
 output "waf_mode_current_ruleset" {
-  value = akamai_appsec_waf_mode.waf_mode.current_ruleset
+  value = data.akamai_appsec_waf_mode.waf_mode.current_ruleset
 }
 output "waf_mode_eval_status" {
-  value = akamai_appsec_waf_mode.waf_mode.eval_status //-- enabled/disabled
+  value = data.akamai_appsec_waf_mode.waf_mode.eval_status //-- enabled/disabled
 }
 output "waf_mode_eval_ruleset" {
-  value = akamai_appsec_waf_mode.waf_mode.eval_ruleset
+  value = data.akamai_appsec_waf_mode.waf_mode.eval_ruleset
 }
 output "waf_mode_eval_expiration_date" {
-  value = akamai_appsec_waf_mode.waf_mode.eval_expiration_date
+  value = data.akamai_appsec_waf_mode.waf_mode.eval_expiration_date
 }
 output "waf_mode_text" {
   value = data.akamai_appsec_waf_mode.waf_mode.output_text
