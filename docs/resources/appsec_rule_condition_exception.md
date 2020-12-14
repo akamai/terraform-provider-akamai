@@ -50,5 +50,5 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display showing the ID, name, and action of all rules associated with the specified security configuration, version and security policy.
+* None
 
