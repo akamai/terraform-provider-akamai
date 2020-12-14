@@ -58,7 +58,9 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 
 	jsonpostpayload := d.Get("reputation_profile")
 
-	json.Unmarshal([]byte(jsonpostpayload.(string)), &createReputationProfile)
+	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &createReputationProfile); err != nil {
+		return diag.FromErr(err)
+	}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -92,7 +94,9 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 
 	jsonpostpayload := d.Get("reputation_profile")
 
-	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateReputationProfile)
+	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateReputationProfile); err != nil {
+		return diag.FromErr(err)
+	}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

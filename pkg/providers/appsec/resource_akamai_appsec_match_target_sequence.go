@@ -53,7 +53,9 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	jsonpostpayload, ok := d.GetOk("match_target_sequence")
 	if ok {
 
-		json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTargetSequence)
+		if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTargetSequence); err != nil {
+			return diag.FromErr(err)
+		}
 
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {

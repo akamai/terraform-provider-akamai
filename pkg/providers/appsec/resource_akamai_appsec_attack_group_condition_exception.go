@@ -161,7 +161,9 @@ func resourceAttackGroupConditionExceptionUpdate(ctx context.Context, d *schema.
 
 	jsonpostpayload := d.Get("condition_exception")
 
-	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateAttackGroupConditionException)
+	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateAttackGroupConditionException); err != nil {
+		return diag.FromErr(err)
+	}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

@@ -55,7 +55,9 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	jsonpostpayload := d.Get("match_target")
 
-	json.Unmarshal([]byte(jsonpostpayload.(string)), &createMatchTarget)
+	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &createMatchTarget); err != nil {
+		return diag.FromErr(err)
+	}
 
 	postresp, err := client.CreateMatchTarget(ctx, createMatchTarget)
 	if err != nil {
@@ -85,7 +87,9 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	jsonpostpayload := d.Get("match_target")
 
-	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTarget)
+	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTarget); err != nil {
+		return diag.FromErr(err)
+	}
 
 	targetID, errconv := strconv.Atoi(d.Id())
 

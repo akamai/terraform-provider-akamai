@@ -169,7 +169,9 @@ func resourceRuleConditionExceptionUpdate(ctx context.Context, d *schema.Resourc
 
 	jsonpostpayload := d.Get("condition_exception")
 
-	json.Unmarshal([]byte(jsonpostpayload.(string)), &updateRuleConditionException)
+	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateRuleConditionException); err != nil {
+		return diag.FromErr(err)
+	}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

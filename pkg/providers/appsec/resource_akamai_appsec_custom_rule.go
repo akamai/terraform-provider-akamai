@@ -55,7 +55,10 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	createCustomRule.ConfigID = configid
 
 	jsonpostpayload := d.Get("custom_rule").(string)
-	json.Unmarshal([]byte(jsonpostpayload), &createCustomRule)
+
+	if err := json.Unmarshal([]byte(jsonpostpayload), &createCustomRule); err != nil {
+		return diag.FromErr(err)
+	}
 
 	customrule, err := client.CreateCustomRule(ctx, createCustomRule)
 	if err != nil {
@@ -90,7 +93,10 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 	updateCustomRule.ID = ID
 
 	jsonpostpayload := d.Get("custom_rule").(string)
-	json.Unmarshal([]byte(jsonpostpayload), &updateCustomRule)
+
+	if err := json.Unmarshal([]byte(jsonpostpayload), &updateCustomRule); err != nil {
+		return diag.FromErr(err)
+	}
 
 	_, erru := client.UpdateCustomRule(ctx, updateCustomRule)
 	if erru != nil {
