@@ -27,5 +27,5 @@ resource "akamai_iam_user" "test" {
   subscribe_product_issues      = ["issues product"]
   subscribe_product_upgrades    = ["upgrades product"]
 
-  auth_grants_json = "[{\"groupId\":0,\"groupName\":\"\",\"isBlocked\":false,\"roleDescription\":\"\",\"roleName\":\"\"}]"
+  auth_grants_json = "[{\"groupId\":0,\"groupName\":\"B\",\"isBlocked\":false,\"roleDescription\":\"\",\"roleName\":\"\"}]"
 }

@@ -20,5 +20,5 @@ resource "akamai_iam_user" "test" {
   preferred_language = "language A"
   session_timeout    = 1
 
-  auth_grants_json = "[{\"groupId\":0,\"groupName\":\"\",\"isBlocked\":false,\"roleDescription\":\"\",\"roleName\":\"\"}]"
+  auth_grants_json = "[{\"groupId\":0,\"groupName\":\"A\",\"isBlocked\":false,\"roleDescription\":\"\",\"roleName\":\"\"}]"
 }

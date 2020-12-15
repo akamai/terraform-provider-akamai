@@ -6,11 +6,30 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func (p *provider) resUser() *schema.Resource {
+	validateAuthGrantJS := func(v interface{}, _ cty.Path) diag.Diagnostics {
+		js := []byte(v.(string))
+		if len(js) == 0 {
+			return nil
+		}
+
+		var AuthGrants []iam.AuthGrant
+		if err := json.Unmarshal(js, &AuthGrants); err != nil {
+			return diag.Errorf("auth_grants_json is not valid: %s", err)
+		}
+
+		if len(AuthGrants) == 0 {
+			return diag.Errorf("auth_grants_json must contain at least one entry")
+		}
+
+		return nil
+	}
+
 	return &schema.Resource{
 		Description:   "Manage a user in your account",
 		CreateContext: p.tfCRUD("res:User:Create", p.resUserCreate),
@@ -54,6 +73,12 @@ func (p *provider) resUser() *schema.Resource {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "Whether to send a one-time password to the newly-created user by email",
+			},
+			"auth_grants_json": {
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "A user's per-group role assignments, in JSON form",
+				ValidateDiagFunc: validateAuthGrantJS,
 			},
 
 			// Inputs - Optional
@@ -116,11 +141,6 @@ func (p *provider) resUser() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "The number of seconds it takes for the user's Control Center session to time out if there hasn't been any activity",
-			},
-			"auth_grants_json": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "A user's per-group role assignments, in JSON form",
 			},
 
 			// Notifications
@@ -276,7 +296,6 @@ func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ in
 
 	req := iam.GetUserRequest{
 		IdentityID:    d.Id(),
-		Actions:       true,
 		AuthGrants:    true,
 		Notifications: true,
 	}

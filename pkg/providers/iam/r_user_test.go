@@ -21,7 +21,8 @@ func TestResUserLifecycle(t *testing.T) {
 	// optional attributes can be added, changed, and removed; and to ensure correct interpretations of defaults.
 
 	// encoded slice of one zero-value AuthGrant
-	OneAuthGrantJSON := `[{"groupId":0,"groupName":"","isBlocked":false,"roleDescription":"","roleName":""}]`
+	OneAuthGrantJSONA := `[{"groupId":0,"groupName":"A","isBlocked":false,"roleDescription":"","roleName":""}]`
+	OneAuthGrantJSONB := `[{"groupId":0,"groupName":"B","isBlocked":false,"roleDescription":"","roleName":""}]`
 
 	type TestState struct {
 		Provider   *provider
@@ -52,7 +53,6 @@ func TestResUserLifecycle(t *testing.T) {
 	ExpectGetUser := func(State *TestState) {
 		req := iam.GetUserRequest{
 			IdentityID:    "test uiIdentityId",
-			Actions:       true,
 			AuthGrants:    true,
 			Notifications: true,
 		}
@@ -136,6 +136,10 @@ func TestResUserLifecycle(t *testing.T) {
 			State.UserExists = false
 			call.Return(nil)
 		})
+	}
+
+	authGrants := func(name string) []iam.AuthGrant {
+		return []iam.AuthGrant{{GroupName: name}}
 	}
 
 	mkUser := func(Basic iam.UserBasicInfo, Notifications *iam.UserNotifications, AuthGrants []iam.AuthGrant) iam.User {
@@ -254,7 +258,14 @@ func TestResUserLifecycle(t *testing.T) {
 		var AuthGrantsJSON string
 		var ProductChecks []resource.TestCheckFunc
 		if len(User.AuthGrants) > 0 {
-			AuthGrantsJSON = OneAuthGrantJSON
+			switch User.AuthGrants[0].GroupName {
+			case "A":
+				AuthGrantsJSON = OneAuthGrantJSONA
+			case "B":
+				AuthGrantsJSON = OneAuthGrantJSONB
+			default:
+				panic("unknown auth grant group name")
+			}
 		}
 
 		EnableNotifications := "false"
@@ -356,7 +367,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							tv.Transition(&State)
 						},
-						Check: CheckState(mkUser(minUserB(), nil, nil)),
+						Check: CheckState(mkUser(minUserB(), nil, authGrants("B"))),
 					},
 					{ // Step 2 - All user attributes variation B
 						Config: test.Fixture("%s/step02.tf", fixturePrefix),
@@ -364,25 +375,25 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							ExpectUpdateUserInfo(&State, allUserB())
 						},
-						Check: CheckState(mkUser(allUserB(), nil, nil)),
+						Check: CheckState(mkUser(allUserB(), nil, authGrants("B"))),
 					},
 					{ // Step 3 - All user attributes variation B, notifications C, grants
 						Config: test.Fixture("%s/step03.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, *notifC())
-							ExpectUpdateAuthGrants(&State, []iam.AuthGrant{{}})
+							// ExpectUpdateAuthGrants(&State, authGrants("A"))
 						},
-						Check: CheckState(mkUser(allUserB(), notifC(), []iam.AuthGrant{{}})),
+						Check: CheckState(mkUser(allUserB(), notifC(), authGrants("B"))),
 					},
 					{ // Step 4 - All user attributes variation B, notifications B
 						Config: test.Fixture("%s/step04.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, iam.UserNotifications{})
-							ExpectUpdateAuthGrants(&State, nil)
+							// ExpectUpdateAuthGrants(&State, authGrants("A"))
 						},
-						Check: CheckState(mkUser(allUserB(), nil, nil)),
+						Check: CheckState(mkUser(allUserB(), nil, authGrants("B"))),
 					},
 					{ // Step 5 - All user attributes variation B, notifications A
 						Config: test.Fixture("%s/step05.tf", fixturePrefix),
@@ -390,7 +401,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, iam.UserNotifications{EnableEmail: true})
 						},
-						Check: CheckState(mkUser(allUserB(), notifA(), nil)),
+						Check: CheckState(mkUser(allUserB(), notifA(), authGrants("B"))),
 					},
 					{ // Step 6 - All user attributes variation B, notifications B
 						Config: test.Fixture("%s/step06.tf", fixturePrefix),
@@ -398,7 +409,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, iam.UserNotifications{})
 						},
-						Check: CheckState(mkUser(allUserB(), nil, nil)),
+						Check: CheckState(mkUser(allUserB(), nil, authGrants("B"))),
 					},
 					{ // Step 7 - minimum user attributes variation B
 						Config: test.Fixture("%s/step07.tf", fixturePrefix),
@@ -407,7 +418,7 @@ func TestResUserLifecycle(t *testing.T) {
 							ExpectUpdateUserInfo(&State, minUserB())
 							ExpectRemoveUser(&State)
 						},
-						Check: CheckState(mkUser(minUserB(), nil, nil)),
+						Check: CheckState(mkUser(minUserB(), nil, authGrants("B"))),
 					},
 				}, // Steps
 			}) // resource.UnitTest()
@@ -418,83 +429,88 @@ func TestResUserLifecycle(t *testing.T) {
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "minimum basic info A",
-		Check: CheckState(mkUser(minUserA(), nil, nil)),
+		Check: CheckState(mkUser(minUserA(), nil, authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(minUserA(), nil, nil))
+			ExpectCreateUser(State, mkUser(minUserA(), nil, authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
+			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A",
-		Check: CheckState(mkUser(allUserA(), nil, nil)),
+		Check: CheckState(mkUser(allUserA(), nil, authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), nil, nil))
+			ExpectCreateUser(State, mkUser(allUserA(), nil, authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
+			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with notifications C",
-		Check: CheckState(mkUser(allUserA(), notifC(), nil)),
+		Check: CheckState(mkUser(allUserA(), notifC(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), notifC(), nil))
+			ExpectCreateUser(State, mkUser(allUserA(), notifC(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
 			ExpectUpdateUserNotifications(State, iam.UserNotifications{})
+			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with grants",
-		Check: CheckState(mkUser(allUserA(), nil, []iam.AuthGrant{{}})),
+		Check: CheckState(mkUser(allUserA(), nil, authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), nil, []iam.AuthGrant{{}}))
+			ExpectCreateUser(State, mkUser(allUserA(), nil, authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
-			ExpectUpdateAuthGrants(State, nil)
+			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with notifications C and grants",
-		Check: CheckState(mkUser(allUserA(), notifC(), []iam.AuthGrant{{}})),
+		Check: CheckState(mkUser(allUserA(), notifC(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), notifC(), []iam.AuthGrant{{}}))
+			ExpectCreateUser(State, mkUser(allUserA(), notifC(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
 			ExpectUpdateUserNotifications(State, iam.UserNotifications{})
-			ExpectUpdateAuthGrants(State, nil)
+			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with notifications A",
-		Check: CheckState(mkUser(allUserA(), notifA(), nil)),
+		Check: CheckState(mkUser(allUserA(), notifA(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), notifA(), nil))
+			ExpectCreateUser(State, mkUser(allUserA(), notifA(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
 			ExpectUpdateUserNotifications(State, iam.UserNotifications{})
+			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with notifications B",
-		Check: CheckState(mkUser(allUserA(), nil, nil)),
+		Check: CheckState(mkUser(allUserA(), nil, authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), nil, nil))
+			ExpectCreateUser(State, mkUser(allUserA(), nil, authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
+			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 }

@@ -25,4 +25,6 @@ resource "akamai_iam_user" "test" {
   subscribe_password_expiration = false
   subscribe_product_issues      = []
   subscribe_product_upgrades    = []
+
+  auth_grants_json = "[{\"groupId\":0,\"groupName\":\"A\",\"isBlocked\":false,\"roleDescription\":\"\",\"roleName\":\"\"}]"
 }

@@ -21,4 +21,6 @@ resource "akamai_iam_user" "test" {
   session_timeout    = 1
 
   enable_notifications = true
+
+  auth_grants_json = "[{\"groupId\":0,\"groupName\":\"A\",\"isBlocked\":false,\"roleDescription\":\"\",\"roleName\":\"\"}]"
 }
