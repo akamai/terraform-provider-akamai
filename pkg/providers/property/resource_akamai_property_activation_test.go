@@ -616,8 +616,6 @@ resource "akamai_edge_hostname" "test" {
 resource "akamai_property" "property" {
   name = "terraform-test3"
 
-  contact = ["user@exampleterraform.io"]
-
   product = "prd_SPM"
   cp_code = "${akamai_cp_code.cp_code.id}"
   contract = "${data.akamai_contract.contract.id}"

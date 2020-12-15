@@ -109,7 +109,6 @@ data "akamai_property_rules_template" "example" {
 
 resource "akamai_property" "example" {
     name = "dev.example.com"
-    contact = ["admin@example.com"]
     contract_id = var.contractid
     group_id    = var.groupid
     hostnames = {

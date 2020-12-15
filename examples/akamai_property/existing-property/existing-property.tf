@@ -13,7 +13,6 @@ resource "akamai_property" "prop" {
   name    = "host.example.com"
   product = "prd_SPM"
   cp_code = "XXXXX"
-  contact = ["you@example.com"]
   hostnames = {
     examplehost = "host.example.com"
   }
