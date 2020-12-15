@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -103,7 +104,9 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	d.Set("json", string(jsonBody))
 
 	if len(reputationprofileactions.ReputationProfiles) > 0 {
-		d.Set("action", reputationprofileactions.ReputationProfiles[0].Action)
+		if err := d.Set("action", reputationprofileactions.ReputationProfiles[0].Action); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	d.SetId(strconv.Itoa(getReputationProfileActions.ConfigID))

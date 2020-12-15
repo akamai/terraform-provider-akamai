@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -104,7 +105,11 @@ func dataSourceAttackGroupActionsRead(ctx context.Context, d *schema.ResourceDat
 	d.Set("json", string(jsonBody))
 
 	if len(attackgroupactions.AttackGroupActions) > 0 {
-		d.Set("action", attackgroupactions.AttackGroupActions[0].Action)
+
+		if err := d.Set("action", attackgroupactions.AttackGroupActions[0].Action); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+
 	}
 
 	d.SetId(strconv.Itoa(getAttackGroupActions.ConfigID))

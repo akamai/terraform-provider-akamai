@@ -95,7 +95,9 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 		d.Set("output_text", outputtext)
 	}
 	if len(securitypolicy.Policies) > 0 {
-		d.Set("policy_id", securitypolicy.Policies[0].PolicyID)
+		if err := d.Set("policy_id", securitypolicy.Policies[0].PolicyID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 	d.SetId(fmt.Sprintf("%d:%d", getSecurityPolicy.ConfigID, getSecurityPolicy.Version))
 
