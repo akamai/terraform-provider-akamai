@@ -96,6 +96,14 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 		d.Set("output_text", outputtext)
 	}
 
+	if ipgeo.Block == "blockAllTrafficExceptAllowedIPs" {
+		d.Set("mode", "allow")
+	}
+
+	if ipgeo.Block == "blockSpecificIPGeo" {
+		d.Set("mode", "block")
+	}
+
 	d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList)
 	d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList)
 	d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList)
