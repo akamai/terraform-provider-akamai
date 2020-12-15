@@ -15,11 +15,6 @@ func (p *provider) dsGroups() *schema.Resource {
 		Description: `List all groups in which you have a scope of "admin" for the current account and contract`,
 		ReadContext: p.tfCRUD("ds:Groups:Read", p.dsGroupsRead),
 		Schema: map[string]*schema.Schema{
-			"get_actions": {
-				Type:        schema.TypeBool,
-				Description: `When enabled, the response includes information about actions such as "edit" or "delete"`,
-				Optional:    true,
-			},
 			"groups": NestedGroupsSchema(50), // Can handle groups with nesting up to 50 levels deep
 		},
 	}
@@ -63,16 +58,6 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 			Description: "The user name or email of the person who created the group",
 			Computed:    true,
 		},
-		"delete_allowed": {
-			Type:        schema.TypeBool,
-			Description: "Indicates whether the user can remove items from the group",
-			Computed:    true,
-		},
-		"edit_allowed": {
-			Type:        schema.TypeBool,
-			Description: "Indicates whether the user can modify items in the group",
-			Computed:    true,
-		},
 	}
 
 	if depth > 1 {
@@ -89,11 +74,8 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 func (p *provider) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
-	Actions := d.Get("get_actions").(bool)
-
 	logger.Debug("Fetching groups")
-	req := iam.ListGroupsRequest{Actions: Actions}
-	res, err := p.client.ListGroups(ctx, req)
+	res, err := p.client.ListGroups(ctx, iam.ListGroupsRequest{})
 	if err != nil {
 		logger.WithError(err).Error("Could not get groups")
 		return diag.FromErr(err)
@@ -132,11 +114,6 @@ func groupToState(g iam.Group) map[string]interface{} {
 	m["time_modified"] = g.ModifiedDate
 	m["modified_by"] = g.ModifiedBy
 	m["created_by"] = g.CreatedBy
-
-	if g.Actions != nil {
-		m["edit_allowed"] = g.Actions.Edit
-		m["delete_allowed"] = g.Actions.Delete
-	}
 
 	if len(g.SubGroups) > 0 {
 		m["sub_groups"] = groupsToState(g.SubGroups)
