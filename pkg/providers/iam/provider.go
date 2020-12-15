@@ -2,10 +2,10 @@ package iam
 
 import (
 	"context"
+	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,8 +14,7 @@ import (
 type provider struct {
 	client iam.IAM
 	cache  Cache
-
-	assertMeta func(akamai.OperationMeta)
+	mtx    sync.Mutex
 }
 
 // Schema returns the subprovider's config schema map
