@@ -77,7 +77,7 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: false,
+				IsUnitTest: true,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{

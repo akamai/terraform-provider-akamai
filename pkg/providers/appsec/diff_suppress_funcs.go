@@ -9,28 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-//suppressJsonProvided to handle when json supplied vs HCL values
-func suppressJsonProvidedSimple(_, old, new string, d *schema.ResourceData) bool {
-
-	json := d.Get("match_target").(string)
-	if json != "" {
-		if old == "" && new == "" {
-			return true
-		}
-		return true
-	}
-
-	return false
-}
-
 func suppressEquivalentJSONDiffs(k, old, new string, d *schema.ResourceData) bool {
-	//TODO remove old HCL driven parameters
-	/*if new == "" {
-		jsonfromschema, err := matchTargetAsJSONDString(d)
-		if err == nil {
-			return compareMatchTargetsJSON(old, jsonfromschema)
-		}
-	}*/
 
 	return compareMatchTargetsJSON(old, new)
 }
