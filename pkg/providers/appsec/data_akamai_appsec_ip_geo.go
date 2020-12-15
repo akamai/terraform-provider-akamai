@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -93,20 +94,34 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	outputtext, err := RenderTemplates(ots, "IPGeoDS", ipgeo)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	if ipgeo.Block == "blockAllTrafficExceptAllowedIPs" {
-		d.Set("mode", "allow")
+		if err := d.Set("mode", "allow"); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	if ipgeo.Block == "blockSpecificIPGeo" {
-		d.Set("mode", "block")
+		if err := d.Set("mode", "block"); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
-	d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList)
-	d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList)
-	d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList)
+	if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	d.SetId(strconv.Itoa(getIPGeo.ConfigID))
 

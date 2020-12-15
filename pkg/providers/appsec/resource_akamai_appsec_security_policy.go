@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -83,8 +84,14 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(errc)
 	}
 
-	d.Set("security_policy_id", spcr.PolicyID)
-	d.Set("security_policy_name", spcr.PolicyName)
+	if err := d.Set("security_policy_id", spcr.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_name", spcr.PolicyName); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(spcr.PolicyID)
 
 	return resourceSecurityPolicyRead(ctx, d, m)
@@ -190,8 +197,15 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 		logger.Errorf("calling 'getSecurityPolicy': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	d.Set("policy_name", securitypolicy.PolicyName)
-	d.Set("security_policy_id", securitypolicy.PolicyID)
+
+	if err := d.Set("security_policy_id", securitypolicy.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_name", securitypolicy.PolicyName); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(securitypolicy.PolicyID)
 
 	return nil

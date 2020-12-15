@@ -83,7 +83,9 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	d.Set("hostnames_json", string(jsonBody))
+	if err := d.Set("hostnames_json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	newhdata := make([]string, 0, len(selectedhostnames.HostnameList))
 
@@ -91,16 +93,26 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 		newhdata = append(newhdata, hosts.Hostname)
 	}
 
-	d.Set("hostnames", newhdata)
-	d.Set("config_id", getSelectedHostnames.ConfigID)
-	d.Set("version", getSelectedHostnames.Version)
+	if err := d.Set("hostnames", newhdata); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("config_id", getSelectedHostnames.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getSelectedHostnames.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "selectedHostsDS", selectedhostnames)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	d.SetId(fmt.Sprintf("%d:%d", getSelectedHostnames.ConfigID, getSelectedHostnames.Version))

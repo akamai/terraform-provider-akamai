@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -98,7 +99,9 @@ func dataSourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	outputtext, err := RenderTemplates(ots, "wafModesDS", wafmode)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	jsonBody, err := json.Marshal(wafmode)
@@ -106,13 +109,30 @@ func dataSourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	d.Set("json", string(jsonBody))
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
-	d.Set("current_ruleset", wafmode.Current)
-	d.Set("mode", wafmode.Mode)
-	d.Set("eval_status", wafmode.Eval)
-	d.Set("eval_ruleset", wafmode.Evaluating)
-	d.Set("eval_expiration_date", wafmode.Expires)
+	if err := d.Set("current_ruleset", wafmode.Current); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("mode", wafmode.Mode); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("eval_status", wafmode.Eval); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("eval_ruleset", wafmode.Evaluating); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("eval_expiration_date", wafmode.Expires); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(getWAFMode.ConfigID))
 
 	return nil

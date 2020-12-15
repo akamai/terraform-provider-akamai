@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -83,11 +84,19 @@ func dataSourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m int
 
 	outputtext, err := RenderTemplates(ots, "penaltyBoxDS", penaltybox)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
-	d.Set("action", penaltybox.Action)
-	d.Set("enabled", penaltybox.PenaltyBoxProtection)
+	if err := d.Set("action", penaltybox.Action); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("enabled", penaltybox.PenaltyBoxProtection); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(getPenaltyBox.ConfigID))
 
 	return nil

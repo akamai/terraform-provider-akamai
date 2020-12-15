@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -86,9 +87,15 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 
 	outputtext, err := RenderTemplates(ots, "reputationProtectionDS", reputationprotection)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
-	d.Set("enabled", reputationprotection.ApplyReputationControls)
+
+	if err := d.Set("enabled", reputationprotection.ApplyReputationControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(getReputationProtection.ConfigID))
 
 	return nil

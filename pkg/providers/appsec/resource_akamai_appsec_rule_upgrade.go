@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -127,9 +128,18 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(erru)
 	}
 
-	d.Set("current_ruleset", ruleupgrade.Current)
-	d.Set("eval_status", ruleupgrade.Eval)
-	d.Set("mode", ruleupgrade.Mode)
+	if err := d.Set("current_ruleset", ruleupgrade.Current); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("mode", ruleupgrade.Mode); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("eval_status", ruleupgrade.Eval); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(updateRuleUpgrade.ConfigID))
 
 	return resourceRuleUpgradeRead(ctx, d, m)

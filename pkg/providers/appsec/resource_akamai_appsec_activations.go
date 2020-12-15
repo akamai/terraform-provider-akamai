@@ -126,7 +126,10 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	d.SetId(strconv.Itoa(postresp.ActivationID))
-	d.Set("status", string(postresp.Status))
+
+	if err := d.Set("status", postresp.Status); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	createActivationsreq.ActivationID = postresp.ActivationID
 	activation, err := lookupActivation(ctx, client, createActivationsreq)
@@ -211,7 +214,11 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	d.SetId(strconv.Itoa(postresp.ActivationID))
-	d.Set("status", string(postresp.Status))
+
+	if err := d.Set("status", postresp.Status); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	createActivationsreq.ActivationID = postresp.ActivationID
 
 	activation, err := lookupActivation(ctx, client, createActivationsreq)
@@ -230,7 +237,9 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		}
 	}
 
-	d.Set("status", string(activation.Status))
+	if err := d.Set("status", activation.Status); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	d.SetId("")
 
@@ -257,7 +266,9 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	d.Set("status", activations.Status)
+	if err := d.Set("status", activations.Status); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(strconv.Itoa(activations.ActivationID))
 
 	return nil

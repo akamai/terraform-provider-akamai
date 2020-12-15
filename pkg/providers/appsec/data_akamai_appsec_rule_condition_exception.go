@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -89,7 +90,9 @@ func dataSourceRuleConditionExceptionRead(ctx context.Context, d *schema.Resourc
 	outputtext, err := RenderTemplates(ots, "RuleConditionException", ruleconditionexception)
 
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	jsonBody, err := json.Marshal(ruleconditionexception)
@@ -97,7 +100,9 @@ func dataSourceRuleConditionExceptionRead(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	d.Set("json", string(jsonBody))
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	d.SetId(strconv.Itoa(getRuleConditionException.ConfigID))
 

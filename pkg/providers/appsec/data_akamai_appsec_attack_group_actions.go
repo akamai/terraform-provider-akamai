@@ -94,7 +94,9 @@ func dataSourceAttackGroupActionsRead(ctx context.Context, d *schema.ResourceDat
 
 	outputtext, err := RenderTemplates(ots, "AttackGroupActionDS", attackgroupactions)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	jsonBody, err := json.Marshal(attackgroupactions)
@@ -102,7 +104,9 @@ func dataSourceAttackGroupActionsRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	d.Set("json", string(jsonBody))
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	if len(attackgroupactions.AttackGroupActions) > 0 {
 

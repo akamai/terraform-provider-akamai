@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -70,7 +71,11 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	logger.Errorf("calling 'createConfigurationClone CCR ': %v", ccr)
-	d.Set("version", ccr.Version)
+
+	if err := d.Set("version", ccr.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(ccr.ConfigID))
 
 	return resourceConfigurationCloneRead(ctx, d, m)

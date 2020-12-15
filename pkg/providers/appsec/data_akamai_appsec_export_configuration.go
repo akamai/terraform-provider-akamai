@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -75,7 +76,9 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	d.Set("json", string(jsonBody))
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	searchlist, ok := d.GetOk("search")
 	if ok {
@@ -92,7 +95,9 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 		}
 
 		if len(outputtextresult) > 0 {
-			d.Set("output_text", outputtextresult)
+			if err := d.Set("output_text", outputtextresult); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
 		}
 	}
 	d.SetId(strconv.Itoa(exportconfiguration.ConfigID))

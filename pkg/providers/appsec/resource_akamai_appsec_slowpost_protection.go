@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -86,9 +87,15 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 
 	outputtext, err := RenderTemplates(ots, "slowpostProtectionDS", slowpostprotection)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
-	d.Set("enabled", slowpostprotection.ApplySlowPostControls)
+
+	if err := d.Set("enabled", slowpostprotection.ApplySlowPostControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(getSlowPostProtection.ConfigID))
 
 	return nil

@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -116,13 +117,26 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	outputtext, err := RenderTemplates(ots, "EvalDS", eval)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
-	d.Set("current_ruleset", eval.Current)
-	d.Set("eval_status", eval.Eval)
-	d.Set("evaluating_ruleset", eval.Evaluating)
-	d.Set("expiration_date", eval.Expires)
+	if err := d.Set("current_ruleset", eval.Current); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("eval_status", eval.Eval); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("evaluating_ruleset", eval.Evaluating); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("expiration_date", eval.Expires); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	d.SetId(strconv.Itoa(getEval.ConfigID))
 

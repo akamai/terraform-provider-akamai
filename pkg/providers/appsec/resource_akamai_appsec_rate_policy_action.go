@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -96,8 +97,15 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	for _, configval := range ratepolicyaction.RatePolicyActions {
 		if configval.ID == getRatePolicyAction.ID {
 			d.SetId(strconv.Itoa(configval.ID))
-			d.Set("ipv4_action", configval.Ipv4Action)
-			d.Set("ipv6_action", configval.Ipv6Action)
+
+			if err := d.Set("ipv4_action", configval.Ipv4Action); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+
+			if err := d.Set("ipv6_action", configval.Ipv6Action); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+
 			d.SetId(strconv.Itoa(configval.ID))
 		}
 	}
@@ -201,8 +209,15 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger.Warnf("calling 'updateRatePolicyAction': %s", resp)
 
 	d.SetId(strconv.Itoa(resp.ID))
-	d.Set("ipv4_action", resp.Ipv4Action)
-	d.Set("ipv6_action", resp.Ipv6Action)
+
+	if err := d.Set("ipv4_action", resp.Ipv4Action); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("ipv6_action", resp.Ipv6Action); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(resp.ID))
 
 	return resourceRatePolicyActionRead(ctx, d, m)

@@ -2,10 +2,12 @@ package appsec
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -65,10 +67,21 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 	for _, configval := range configuration.Configurations {
 
 		if configval.Name == configName {
-			d.Set("config_id", configval.ID)
-			d.Set("latest_version", configval.LatestVersion)
-			d.Set("staging_version", configval.StagingVersion)
-			d.Set("production_version", configval.ProductionVersion)
+			if err := d.Set("config_id", configval.ID); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+
+			if err := d.Set("latest_version", configval.LatestVersion); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+
+			if err := d.Set("staging_version", configval.StagingVersion); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+
+			if err := d.Set("production_version", configval.ProductionVersion); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
 			configidfound = configval.ID
 		}
 	}
@@ -78,7 +91,9 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 
 	outputtext, err := RenderTemplates(ots, "configuration", configuration)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	d.SetId(strconv.Itoa(configidfound))

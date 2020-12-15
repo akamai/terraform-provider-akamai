@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -94,9 +95,18 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	d.Set("security_policy_id", spcr.PolicyID)
-	d.Set("security_policy_name", spcr.PolicyName)
-	d.Set("security_policy_prefix", createSecurityPolicyClone.PolicyPrefix)
+	if err := d.Set("security_policy_id", spcr.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_name", spcr.PolicyName); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_prefix", createSecurityPolicyClone.PolicyPrefix); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(spcr.PolicyID)
 
 	return resourceSecurityPolicyCloneRead(ctx, d, m)
@@ -129,8 +139,14 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	d.Set("security_policy_name", securitypolicyclone.PolicyName)
-	d.Set("security_policy_id", securitypolicyclone.PolicyID)
+	if err := d.Set("security_policy_name", securitypolicyclone.PolicyName); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", securitypolicyclone.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(securitypolicyclone.PolicyID)
 
 	return nil

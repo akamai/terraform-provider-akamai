@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -106,7 +107,9 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 
 	outputtext, err := RenderTemplates(ots, "wafProtectionDS", policyprotections)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	jsonBody, err := json.Marshal(policyprotections)
@@ -114,15 +117,37 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	d.Set("json", string(jsonBody))
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
-	d.Set("apply_application_layer_controls", policyprotections.ApplyApplicationLayerControls)
-	d.Set("apply_network_layer_controls", policyprotections.ApplyNetworkLayerControls)
-	d.Set("apply_api_constraints", policyprotections.ApplyAPIConstraints)
-	d.Set("apply_rate_controls", policyprotections.ApplyRateControls)
-	d.Set("apply_reputation_controls", policyprotections.ApplyReputationControls)
-	d.Set("apply_botman_controls", policyprotections.ApplyBotmanControls)
-	d.Set("apply_slow_post_controls", policyprotections.ApplySlowPostControls)
+	if err := d.Set("apply_application_layer_controls", policyprotections.ApplyApplicationLayerControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("apply_network_layer_controls", policyprotections.ApplyNetworkLayerControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("apply_api_constraints", policyprotections.ApplyAPIConstraints); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("apply_rate_controls", policyprotections.ApplyRateControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("apply_reputation_controls", policyprotections.ApplyReputationControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("apply_botman_controls", policyprotections.ApplyBotmanControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("apply_slow_post_controls", policyprotections.ApplySlowPostControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	d.SetId(strconv.Itoa(getPolicyProtections.ConfigID))
 

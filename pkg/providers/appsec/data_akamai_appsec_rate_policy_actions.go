@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -87,7 +88,9 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 
 	outputtext, err := RenderTemplates(ots, "ratePolicyActions", ratepolicyactions)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	return nil

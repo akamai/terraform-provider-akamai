@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -88,7 +89,10 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	logger.Warnf("calling 'getCustomRuleAction': %s", customruleaction)
 
-	d.Set("custom_rule_id", ruleid)
+	if err := d.Set("custom_rule_id", ruleid); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(ruleid))
 
 	return nil

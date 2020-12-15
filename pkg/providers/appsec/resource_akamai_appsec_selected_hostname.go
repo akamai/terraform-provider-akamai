@@ -91,9 +91,18 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		newhdata = append(newhdata, hosts.Hostname)
 	}
 
-	d.Set("hostnames", newhdata)
-	d.Set("config_id", getSelectedHostname.ConfigID)
-	d.Set("version", getSelectedHostname.Version)
+	if err := d.Set("hostnames", newhdata); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("config_id", getSelectedHostname.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getSelectedHostname.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d", getSelectedHostname.ConfigID, getSelectedHostname.Version))
 
 	return nil

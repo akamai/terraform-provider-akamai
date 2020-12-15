@@ -69,7 +69,9 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 		}
 		updateMatchTargetSequence.ConfigVersion = version
 
-		d.Set("type", updateMatchTargetSequence.Type)
+		if err := d.Set("type", updateMatchTargetSequence.Type); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 
 	}
 
