@@ -63,8 +63,18 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
-		getSelectedHostname.ConfigID, _ = strconv.Atoi(s[0])
-		getSelectedHostname.Version, _ = strconv.Atoi(s[1])
+
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSelectedHostname.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSelectedHostname.Version = version
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {

@@ -98,14 +98,12 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 		s := strings.Split(d.Id(), ":")
 
 		configid, errconv := strconv.Atoi(s[0])
-
 		if errconv != nil {
 			return diag.FromErr(errconv)
 		}
 		getMatchTargetSequence.ConfigID = configid
 
 		configVersion, errconv := strconv.Atoi(s[1])
-
 		if errconv != nil {
 			return diag.FromErr(errconv)
 		}

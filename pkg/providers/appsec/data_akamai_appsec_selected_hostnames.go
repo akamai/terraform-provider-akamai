@@ -56,8 +56,18 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
-		getSelectedHostnames.ConfigID, _ = strconv.Atoi(s[0])
-		getSelectedHostnames.Version, _ = strconv.Atoi(s[1])
+
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSelectedHostnames.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSelectedHostnames.Version = version
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
