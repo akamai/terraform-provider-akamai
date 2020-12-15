@@ -69,10 +69,6 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 		}
 		updateMatchTargetSequence.ConfigVersion = version
 
-		if err := d.Set("type", updateMatchTargetSequence.Type); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-
 	}
 
 	_, err := client.UpdateMatchTargetSequence(ctx, updateMatchTargetSequence)
@@ -100,8 +96,20 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	getMatchTargetSequence := appsec.GetMatchTargetSequenceRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
-		getMatchTargetSequence.ConfigID, _ = strconv.Atoi(s[0])
-		getMatchTargetSequence.ConfigVersion, _ = strconv.Atoi(s[1])
+
+		configid, errconv := strconv.Atoi(s[0])
+
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getMatchTargetSequence.ConfigID = configid
+
+		configVersion, errconv := strconv.Atoi(s[1])
+
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getMatchTargetSequence.ConfigVersion = configVersion
 
 		getMatchTargetSequence.Type = s[2]
 

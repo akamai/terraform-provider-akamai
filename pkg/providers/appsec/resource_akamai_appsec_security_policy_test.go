@@ -66,6 +66,7 @@ func TestAccAkamaiSecurityPolicy_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_security_policy.test", "id", "PLE_114049"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

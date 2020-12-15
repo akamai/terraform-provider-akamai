@@ -22,8 +22,5 @@ resource "akamai_appsec_match_target_sequence" "test" {
     ]
 }
 EOF
- /*   sequence_map = {
-      2971336 = 1
-      2052813 = 2
-    }  */
+
 }
