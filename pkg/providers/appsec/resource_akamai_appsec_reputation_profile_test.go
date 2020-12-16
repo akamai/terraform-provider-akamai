@@ -41,55 +41,7 @@ func TestAccAkamaiReputationProfile_res_basic(t *testing.T) {
 
 		client.On("CreateReputationProfile",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.CreateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, Name: "Web Attack Rep Profile", Description: "Reputation profile description", Context: "WEBATCK", Threshold: 5, SharedIPHandling: "NON_SHARED", Condition: struct {
-				PositiveMatch    bool "json:\"positiveMatch\""
-				AtomicConditions []struct {
-					PositiveMatch bool     "json:\"positiveMatch\""
-					ClassName     string   "json:\"className\""
-					Value         []string "json:\"value,omitempty\""
-					NameWildcard  bool     "json:\"nameWildcard,omitempty\""
-					ValueWildcard bool     "json:\"valueWildcard,omitempty\""
-					NameCase      bool     "json:\"nameCase,omitempty\""
-					Name          string   "json:\"name,omitempty\""
-					Host          []string "json:\"host,omitempty\""
-				} "json:\"atomicConditions\""
-			}{PositiveMatch: true, AtomicConditions: []struct {
-				PositiveMatch bool     "json:\"positiveMatch\""
-				ClassName     string   "json:\"className\""
-				Value         []string "json:\"value,omitempty\""
-				NameWildcard  bool     "json:\"nameWildcard,omitempty\""
-				ValueWildcard bool     "json:\"valueWildcard,omitempty\""
-				NameCase      bool     "json:\"nameCase,omitempty\""
-				Name          string   "json:\"name,omitempty\""
-				Host          []string "json:\"host,omitempty\""
-			}{struct {
-				PositiveMatch bool     "json:\"positiveMatch\""
-				ClassName     string   "json:\"className\""
-				Value         []string "json:\"value,omitempty\""
-				NameWildcard  bool     "json:\"nameWildcard,omitempty\""
-				ValueWildcard bool     "json:\"valueWildcard,omitempty\""
-				NameCase      bool     "json:\"nameCase,omitempty\""
-				Name          string   "json:\"name,omitempty\""
-				Host          []string "json:\"host,omitempty\""
-			}{PositiveMatch: true, ClassName: "AsNumberCondition", Value: []string{"1"}, NameWildcard: false, ValueWildcard: false, NameCase: false, Name: "", Host: []string(nil)}, struct {
-				PositiveMatch bool     "json:\"positiveMatch\""
-				ClassName     string   "json:\"className\""
-				Value         []string "json:\"value,omitempty\""
-				NameWildcard  bool     "json:\"nameWildcard,omitempty\""
-				ValueWildcard bool     "json:\"valueWildcard,omitempty\""
-				NameCase      bool     "json:\"nameCase,omitempty\""
-				Name          string   "json:\"name,omitempty\""
-				Host          []string "json:\"host,omitempty\""
-			}{PositiveMatch: true, ClassName: "RequestCookieCondition", Value: []string(nil), NameWildcard: true, ValueWildcard: true, NameCase: true, Name: "x-header", Host: []string(nil)}, struct {
-				PositiveMatch bool     "json:\"positiveMatch\""
-				ClassName     string   "json:\"className\""
-				Value         []string "json:\"value,omitempty\""
-				NameWildcard  bool     "json:\"nameWildcard,omitempty\""
-				ValueWildcard bool     "json:\"valueWildcard,omitempty\""
-				NameCase      bool     "json:\"nameCase,omitempty\""
-				Name          string   "json:\"name,omitempty\""
-				Host          []string "json:\"host,omitempty\""
-			}{PositiveMatch: true, ClassName: "HostCondition", Value: []string(nil), NameWildcard: false, ValueWildcard: true, NameCase: false, Name: "", Host: []string{"*.com"}}}}},
+			appsec.CreateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7},
 		).Return(&crp, nil)
 
 		client.On("UpdateReputationProfile",
@@ -108,12 +60,6 @@ func TestAccAkamaiReputationProfile_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile.test", "id", "12345"),
 						),
 					},
-					/*	{
-						Config: loadFixtureString("testdata/TestResReputationProfile/update_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile.test", "id", "12345"),
-						),
-					},*/
 				},
 			})
 		})

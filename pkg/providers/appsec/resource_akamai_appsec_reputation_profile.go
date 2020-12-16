@@ -58,10 +58,12 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	createReputationProfile := appsec.CreateReputationProfileRequest{}
 
 	jsonpostpayload := d.Get("reputation_profile")
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &createReputationProfile); err != nil {
-		return diag.FromErr(err)
-	}
+	createReputationProfile.JsonPayloadRaw = rawJSON
+
+	logger.Errorf("calling 'createReputationProfile JSONRAW ': %s", rawJSON)
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -94,10 +96,9 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	updateReputationProfile := appsec.UpdateReputationProfileRequest{}
 
 	jsonpostpayload := d.Get("reputation_profile")
-
-	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateReputationProfile); err != nil {
-		return diag.FromErr(err)
-	}
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
+	updateReputationProfile.JsonPayloadRaw = rawJSON
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
