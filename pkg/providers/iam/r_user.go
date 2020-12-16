@@ -36,7 +36,7 @@ func (p *provider) resUser() *schema.Resource {
 		ReadContext:   p.tfCRUD("res:User:Read", p.resUserRead),
 		UpdateContext: p.tfCRUD("res:User:Update", p.resUserUpdate),
 		DeleteContext: p.tfCRUD("res:User:Delete", p.resUserDelete),
-		Importer:      p.tfImporter("res:User:Import", p.resUserImport),
+		Importer:      p.tfImporter("res:User:Import", schema.ImportStatePassthroughContext),
 		Schema: map[string]*schema.Schema{
 			// Inputs - Required
 			"first_name": {
@@ -213,12 +213,6 @@ func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ 
 	proactiveProductSet := d.Get("subscribe_product_issues").(*schema.Set)
 	upgradeProductSet := d.Get("subscribe_product_upgrades").(*schema.Set)
 
-	needNotificationOpts := SubNewUser || SubPasswordExpiry
-	needNotificationOpts = needNotificationOpts || upgradeProductSet.Len() > 0
-	needNotificationOpts = needNotificationOpts || proactiveProductSet.Len() > 0
-
-	needNotifications := needNotificationOpts || EnableEmail
-
 	var AuthGrants []iam.AuthGrant
 	if len(AuthGrantsJSON) > 0 {
 		if err := json.Unmarshal(AuthGrantsJSON, &AuthGrants); err != nil {
@@ -252,28 +246,21 @@ func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ 
 		BasicUser.SessionTimeOut = &SessionTimeout
 	}
 
-	var Notifications *iam.UserNotifications
-	if needNotifications {
-		Notifications = &iam.UserNotifications{EnableEmail: EnableEmail}
+	Notifications := iam.UserNotifications{EnableEmail: EnableEmail}
 
-		if needNotificationOpts {
-			Notifications.Options = &iam.UserNotificationOptions{
-				PasswordExpiry: SubPasswordExpiry,
-				NewUser:        SubNewUser,
-			}
+	Notifications.Options = iam.UserNotificationOptions{
+		PasswordExpiry: SubPasswordExpiry,
+		NewUser:        SubNewUser,
+	}
 
-			if proactiveProductSet.Len() > 0 {
-				for _, v := range proactiveProductSet.List() {
-					Notifications.Options.Proactive = append(Notifications.Options.Proactive, v.(string))
-				}
-			}
+	Notifications.Options.Proactive = []string{}
+	for _, v := range proactiveProductSet.List() {
+		Notifications.Options.Proactive = append(Notifications.Options.Proactive, v.(string))
+	}
 
-			if upgradeProductSet.Len() > 0 {
-				for _, v := range upgradeProductSet.List() {
-					Notifications.Options.Upgrade = append(Notifications.Options.Upgrade, v.(string))
-				}
-			}
-		}
+	Notifications.Options.Upgrade = []string{}
+	for _, v := range upgradeProductSet.List() {
+		Notifications.Options.Upgrade = append(Notifications.Options.Upgrade, v.(string))
 	}
 
 	User, err := p.client.CreateUser(ctx, iam.CreateUserRequest{
@@ -309,14 +296,6 @@ func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ in
 	if User.SessionTimeOut == nil {
 		SessionTimeOut := 0
 		User.SessionTimeOut = &SessionTimeOut
-	}
-
-	if User.Notifications == nil {
-		User.Notifications = &iam.UserNotifications{}
-	}
-
-	if User.Notifications.Options == nil {
-		User.Notifications.Options = &iam.UserNotificationOptions{}
 	}
 
 	var AuthGrantsJSON []byte
@@ -478,29 +457,21 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 		proactiveProductSet := d.Get("subscribe_product_issues").(*schema.Set)
 		upgradeProductSet := d.Get("subscribe_product_upgrades").(*schema.Set)
 
-		needNotificationOpts := SubNewUser || SubPasswordExpiry
-		needNotificationOpts = needNotificationOpts || upgradeProductSet.Len() > 0
-		needNotificationOpts = needNotificationOpts || proactiveProductSet.Len() > 0
-
 		Notifications := iam.UserNotifications{EnableEmail: EnableEmail}
 
-		if needNotificationOpts {
-			Notifications.Options = &iam.UserNotificationOptions{
-				PasswordExpiry: SubPasswordExpiry,
-				NewUser:        SubNewUser,
-			}
+		Notifications.Options = iam.UserNotificationOptions{
+			PasswordExpiry: SubPasswordExpiry,
+			NewUser:        SubNewUser,
+		}
 
-			if proactiveProductSet.Len() > 0 {
-				for _, v := range proactiveProductSet.List() {
-					Notifications.Options.Proactive = append(Notifications.Options.Proactive, v.(string))
-				}
-			}
+		Notifications.Options.Proactive = []string{}
+		for _, v := range proactiveProductSet.List() {
+			Notifications.Options.Proactive = append(Notifications.Options.Proactive, v.(string))
+		}
 
-			if upgradeProductSet.Len() > 0 {
-				for _, v := range upgradeProductSet.List() {
-					Notifications.Options.Upgrade = append(Notifications.Options.Upgrade, v.(string))
-				}
-			}
+		Notifications.Options.Upgrade = []string{}
+		for _, v := range upgradeProductSet.List() {
+			Notifications.Options.Upgrade = append(Notifications.Options.Upgrade, v.(string))
 		}
 
 		req := iam.UpdateUserNotificationsRequest{
@@ -534,8 +505,4 @@ func (p *provider) resUserDelete(ctx context.Context, d *schema.ResourceData, _ 
 	}
 
 	return nil
-}
-
-func (p *provider) resUserImport(ctx context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
-	return []*schema.ResourceData{d}, nil
 }

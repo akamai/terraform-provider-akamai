@@ -73,6 +73,7 @@ func TestResUserLifecycle(t *testing.T) {
 			User:      CopyBasicUser(User.UserBasicInfo),
 			SendEmail: true,
 		}
+
 		req.Notifications = User.Notifications
 		req.AuthGrants = User.AuthGrants
 
@@ -107,9 +108,8 @@ func TestResUserLifecycle(t *testing.T) {
 
 		call := State.Client.On("UpdateUserNotifications", mock.Anything, req).Once()
 		call.Run(func(mock.Arguments) {
-			n := CopyUserNotifications(Notifications)
 			res := CopyUserNotifications(Notifications)
-			State.User.Notifications = &n
+			State.User.Notifications = CopyUserNotifications(Notifications)
 			call.Return(&res, nil)
 		})
 	}
@@ -142,7 +142,7 @@ func TestResUserLifecycle(t *testing.T) {
 		return []iam.AuthGrant{{GroupName: name}}
 	}
 
-	mkUser := func(Basic iam.UserBasicInfo, Notifications *iam.UserNotifications, AuthGrants []iam.AuthGrant) iam.User {
+	mkUser := func(Basic iam.UserBasicInfo, Notifications iam.UserNotifications, AuthGrants []iam.AuthGrant) iam.User {
 		User := iam.User{
 			IdentityID:         "test uiIdentityId",
 			LastLoginDate:      "last login",
@@ -158,15 +158,31 @@ func TestResUserLifecycle(t *testing.T) {
 	}
 
 	// Notifications variation A
-	notifA := func() *iam.UserNotifications {
-		return &iam.UserNotifications{EnableEmail: true}
+	notifA := func() iam.UserNotifications {
+		return iam.UserNotifications{
+			EnableEmail: true,
+			Options: iam.UserNotificationOptions{
+				Proactive: []string{},
+				Upgrade:   []string{},
+			},
+		}
+	}
+
+	// Empty Notifications (variation B)
+	emptyNotif := func() iam.UserNotifications {
+		return iam.UserNotifications{
+			Options: iam.UserNotificationOptions{
+				Proactive: []string{},
+				Upgrade:   []string{},
+			},
+		}
 	}
 
 	// Notifications variation C
-	notifC := func() *iam.UserNotifications {
-		return &iam.UserNotifications{
+	notifC := func() iam.UserNotifications {
+		return iam.UserNotifications{
 			EnableEmail: true,
-			Options: &iam.UserNotificationOptions{
+			Options: iam.UserNotificationOptions{
 				NewUser:        true,
 				PasswordExpiry: true,
 				Proactive:      []string{"issues product"},
@@ -271,23 +287,19 @@ func TestResUserLifecycle(t *testing.T) {
 		EnableNotifications := "false"
 		PasswordExpiry := "false"
 		NewUsers := "false"
-		if User.Notifications != nil {
-			EnableNotifications = fmt.Sprintf("%t", User.Notifications.EnableEmail)
+		EnableNotifications = fmt.Sprintf("%t", User.Notifications.EnableEmail)
 
-			if User.Notifications.Options != nil {
-				NewUsers = fmt.Sprintf("%t", User.Notifications.Options.NewUser)
-				PasswordExpiry = fmt.Sprintf("%t", User.Notifications.Options.PasswordExpiry)
+		NewUsers = fmt.Sprintf("%t", User.Notifications.Options.NewUser)
+		PasswordExpiry = fmt.Sprintf("%t", User.Notifications.Options.PasswordExpiry)
 
-				for _, p := range User.Notifications.Options.Proactive {
-					chk := resource.TestCheckTypeSetElemAttr("akamai_iam_user.test", "subscribe_product_issues.*", p)
-					ProductChecks = append(ProductChecks, chk)
-				}
+		for _, p := range User.Notifications.Options.Proactive {
+			chk := resource.TestCheckTypeSetElemAttr("akamai_iam_user.test", "subscribe_product_issues.*", p)
+			ProductChecks = append(ProductChecks, chk)
+		}
 
-				for _, p := range User.Notifications.Options.Upgrade {
-					chk := resource.TestCheckTypeSetElemAttr("akamai_iam_user.test", "subscribe_product_upgrades.*", p)
-					ProductChecks = append(ProductChecks, chk)
-				}
-			}
+		for _, p := range User.Notifications.Options.Upgrade {
+			chk := resource.TestCheckTypeSetElemAttr("akamai_iam_user.test", "subscribe_product_upgrades.*", p)
+			ProductChecks = append(ProductChecks, chk)
 		}
 
 		checks := []resource.TestCheckFunc{
@@ -367,7 +379,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							tv.Transition(&State)
 						},
-						Check: CheckState(mkUser(minUserB(), nil, authGrants("B"))),
+						Check: CheckState(mkUser(minUserB(), emptyNotif(), authGrants("B"))),
 					},
 					{ // Step 2 - All user attributes variation B
 						Config: test.Fixture("%s/step02.tf", fixturePrefix),
@@ -375,13 +387,13 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							ExpectUpdateUserInfo(&State, allUserB())
 						},
-						Check: CheckState(mkUser(allUserB(), nil, authGrants("B"))),
+						Check: CheckState(mkUser(allUserB(), emptyNotif(), authGrants("B"))),
 					},
 					{ // Step 3 - All user attributes variation B, notifications C, grants
 						Config: test.Fixture("%s/step03.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
-							ExpectUpdateUserNotifications(&State, *notifC())
+							ExpectUpdateUserNotifications(&State, notifC())
 							// ExpectUpdateAuthGrants(&State, authGrants("A"))
 						},
 						Check: CheckState(mkUser(allUserB(), notifC(), authGrants("B"))),
@@ -390,16 +402,16 @@ func TestResUserLifecycle(t *testing.T) {
 						Config: test.Fixture("%s/step04.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
-							ExpectUpdateUserNotifications(&State, iam.UserNotifications{})
+							ExpectUpdateUserNotifications(&State, emptyNotif())
 							// ExpectUpdateAuthGrants(&State, authGrants("A"))
 						},
-						Check: CheckState(mkUser(allUserB(), nil, authGrants("B"))),
+						Check: CheckState(mkUser(allUserB(), emptyNotif(), authGrants("B"))),
 					},
 					{ // Step 5 - All user attributes variation B, notifications A
 						Config: test.Fixture("%s/step05.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
-							ExpectUpdateUserNotifications(&State, iam.UserNotifications{EnableEmail: true})
+							ExpectUpdateUserNotifications(&State, notifA())
 						},
 						Check: CheckState(mkUser(allUserB(), notifA(), authGrants("B"))),
 					},
@@ -407,9 +419,9 @@ func TestResUserLifecycle(t *testing.T) {
 						Config: test.Fixture("%s/step06.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
-							ExpectUpdateUserNotifications(&State, iam.UserNotifications{})
+							ExpectUpdateUserNotifications(&State, emptyNotif())
 						},
-						Check: CheckState(mkUser(allUserB(), nil, authGrants("B"))),
+						Check: CheckState(mkUser(allUserB(), emptyNotif(), authGrants("B"))),
 					},
 					{ // Step 7 - minimum user attributes variation B
 						Config: test.Fixture("%s/step07.tf", fixturePrefix),
@@ -418,7 +430,7 @@ func TestResUserLifecycle(t *testing.T) {
 							ExpectUpdateUserInfo(&State, minUserB())
 							ExpectRemoveUser(&State)
 						},
-						Check: CheckState(mkUser(minUserB(), nil, authGrants("B"))),
+						Check: CheckState(mkUser(minUserB(), emptyNotif(), authGrants("B"))),
 					},
 				}, // Steps
 			}) // resource.UnitTest()
@@ -429,9 +441,9 @@ func TestResUserLifecycle(t *testing.T) {
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "minimum basic info A",
-		Check: CheckState(mkUser(minUserA(), nil, authGrants("A"))),
+		Check: CheckState(mkUser(minUserA(), emptyNotif(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(minUserA(), nil, authGrants("A")))
+			ExpectCreateUser(State, mkUser(minUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
@@ -441,9 +453,9 @@ func TestResUserLifecycle(t *testing.T) {
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A",
-		Check: CheckState(mkUser(allUserA(), nil, authGrants("A"))),
+		Check: CheckState(mkUser(allUserA(), emptyNotif(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), nil, authGrants("A")))
+			ExpectCreateUser(State, mkUser(allUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
@@ -459,16 +471,16 @@ func TestResUserLifecycle(t *testing.T) {
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
-			ExpectUpdateUserNotifications(State, iam.UserNotifications{})
+			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with grants",
-		Check: CheckState(mkUser(allUserA(), nil, authGrants("A"))),
+		Check: CheckState(mkUser(allUserA(), emptyNotif(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), nil, authGrants("A")))
+			ExpectCreateUser(State, mkUser(allUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
@@ -484,7 +496,7 @@ func TestResUserLifecycle(t *testing.T) {
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
-			ExpectUpdateUserNotifications(State, iam.UserNotifications{})
+			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
@@ -497,16 +509,16 @@ func TestResUserLifecycle(t *testing.T) {
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
-			ExpectUpdateUserNotifications(State, iam.UserNotifications{})
+			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with notifications B",
-		Check: CheckState(mkUser(allUserA(), nil, authGrants("A"))),
+		Check: CheckState(mkUser(allUserA(), emptyNotif(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), nil, authGrants("A")))
+			ExpectCreateUser(State, mkUser(allUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			ExpectUpdateUserInfo(State, minUserB())
@@ -541,33 +553,28 @@ func CopyUser(User iam.User) iam.User {
 		User.AuthGrants = AuthGrants
 	}
 
-	if User.Notifications != nil {
-		Notifications := CopyUserNotifications(*User.Notifications)
-		User.Notifications = &Notifications
-	}
+	User.Notifications = CopyUserNotifications(User.Notifications)
 
 	return User
 }
 
 // Deeply duplicate a UserNotifications
 func CopyUserNotifications(Notifications iam.UserNotifications) iam.UserNotifications {
-	if Notifications.Options != nil {
-		Options := *Notifications.Options
+	Options := Notifications.Options
 
-		if Options.Proactive != nil {
-			Proactive := make([]string, len(Options.Proactive))
-			copy(Proactive, Options.Proactive)
-			Options.Proactive = Proactive
-		}
-
-		if Options.Upgrade != nil {
-			Upgrade := make([]string, len(Options.Upgrade))
-			copy(Upgrade, Options.Upgrade)
-			Options.Upgrade = Upgrade
-		}
-
-		Notifications.Options = &Options
+	if Options.Proactive != nil {
+		Proactive := make([]string, len(Options.Proactive))
+		copy(Proactive, Options.Proactive)
+		Options.Proactive = Proactive
 	}
+
+	if Options.Upgrade != nil {
+		Upgrade := make([]string, len(Options.Upgrade))
+		copy(Upgrade, Options.Upgrade)
+		Options.Upgrade = Upgrade
+	}
+
+	Notifications.Options = Options
 
 	return Notifications
 }
