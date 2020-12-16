@@ -3,6 +3,7 @@ package iam
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -271,7 +272,7 @@ func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ 
 	})
 	if err != nil {
 		logger.WithError(err).Errorf("failed to create user")
-		return diag.Errorf("failed to create user: %s", err)
+		return diag.Errorf("failed to create user: %s\n%s", err, resUserErrorAdvice(err))
 	}
 
 	d.SetId(User.IdentityID)
@@ -410,7 +411,7 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 		if _, err := p.client.UpdateUserInfo(ctx, req); err != nil {
 			d.Partial(true)
 			logger.WithError(err).Errorf("failed to update user")
-			return diag.Errorf("failed to update user: %s", err)
+			return diag.Errorf("failed to update user: %s\n%s", err, resUserErrorAdvice(err))
 		}
 
 		needRead = true
@@ -505,4 +506,25 @@ func (p *provider) resUserDelete(ctx context.Context, d *schema.ResourceData, _ 
 	}
 
 	return nil
+}
+
+func resUserErrorAdvice(e error) string {
+	switch {
+	case regexp.MustCompile(`\b(preferredLanguage|[pP]referred [lL]anguage)\b`).FindStringIndex(e.Error()) != nil:
+		return `Tip: Use the "akamai_iam_supported_langs" data source to get possible values for "preferred_language"`
+
+	case regexp.MustCompile(`\b(contactType|[cC]ontact [tT]ype)\b`).FindStringIndex(e.Error()) != nil:
+		return `Tip: Use the "akamai_iam_contact_types" data source to get possible values for "contact_type"`
+
+	case regexp.MustCompile(`\b[cC]ountry\b`).FindStringIndex(e.Error()) != nil:
+		return `Tip: Use the "akamai_iam_countries" data source to get possible values for "country"`
+
+	case regexp.MustCompile(`\b(sessionTimeOut|[sS]ession [tT]ime ?[oO]ut)\b`).FindStringIndex(e.Error()) != nil:
+		return `Tip: Use the "akamai_iam_timeout_policies" data source to get possible values for "session_timeout"`
+
+	case regexp.MustCompile(`\b[sS]tate\b`).FindStringIndex(e.Error()) != nil:
+		return `Tip: Use the "akamai_iam_states" data source to get possible values for "state"`
+	}
+
+	return ""
 }
