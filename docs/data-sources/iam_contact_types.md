@@ -10,7 +10,7 @@ description: |-
 
 Use `akamai_iam_contact_types` datasource to retrieve all the possible contact_types that Akamai supports. Use the values from this operation to add or update a user’s contactType.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -23,14 +23,14 @@ output "supported_contact_types" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 There are no arguments for this data source.
 
-## Attributes Reference
+## Attributes reference
 
-The following attributes are returned:
+These attributes are returned:
 
-* `contact_types` — A list of contact types
+* `contact_types` — A list of contact types.
 
 [API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadmincontacttypes)

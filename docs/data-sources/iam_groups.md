@@ -10,31 +10,34 @@ description: |-
 
 Use `akamai_iam_groups` to list all groups in which you have a scope of admin for the current account and contract type. The account and contract type are determined by the access tokens in your API client.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
 ```hcl
-data "akamai_iam_groups" "my-groups" {
-    group_id = "1234567"
-    get_actions = true
-}
+data "akamai_iam_groups" "my-groups" {}
 
 output "groups" {
   value = data.akamai_iam_groups.my-groups
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are supported:
+There are no arguments for this data source.
 
-* `get_actions` - (optional, bool) When enabled, the response includes information about actions such as "edit" or "delete"
+## Attributes reference
 
-## Attributes Reference
+This data source returns this attribute:
 
-The following attributes are returned:
-
-* `groups` — A list of groups
+* `groups` — A set of groups for the contract, including:
+  * `group_id` - Unique identifier for each group.
+  * `name` - The name you supply for the group.
+  * `time_created` - ISO 8601 timestamp indicating when the group was originally created.
+  * `created_by` - The username of the person who created the group.
+  * `time_modified` - ISO 8601 timestamp indicating when the group was last updated.
+  * `modified_by` - The username of the last person to edit the group.
+  * `parent_group_id` - For nested groups, identifies the parent group to which the current group belongs.
+  * `sub_groups` - Set of nested Group objects.
 
 [API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getgroups)

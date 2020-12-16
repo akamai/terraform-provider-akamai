@@ -10,7 +10,7 @@ description: |-
 
 Use `akamai_iam_states` to list U.S. states or Canadian provinces. If country=USA you may enter a value of TBD if you don’t know a user’s state. Administrators use this operation to set a user’s state.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -24,16 +24,16 @@ output "supported_states" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are supported:
+These attributes are supported:
 
 * `country` — (required, string) Sepcifies USA or Canada.
 
-## Attributes Reference
+## Attributes reference
 
-The following attributes are returned:
+These attributes are returned:
 
-* `states` — A list of states
+* `states` — A list of states.
 
 [API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadmincountrystates)

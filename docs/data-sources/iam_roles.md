@@ -10,34 +10,26 @@ description: |-
 
 Use `akamai_iam_roles` to list roles for the current account and contract type. The account and contract type are determined by the access tokens in your API client.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
 ```hcl
-data "akamai_iam_roles" "my-roles" {
-    group_id = "1234567"
-    get_actions = true
-}
+data "akamai_iam_roles" "my-roles" {}
 
 output "roles" {
   value = data.akamai_iam_roles.my-roles
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are supported:
+There are no arguments for this data source.
 
-* `group_id` — (optional, string) A unique identifier for a group.
-* `get_actions` - (optional, bool) When enabled, the response includes information about actions such as "edit" or "delete"
-* `get_users` - (optional, bool) When enabled, returns users assigned to the roles
-* `ignore_context` - (optional, bool) When enabled, returns all roles for the current account without regard the contract type associated with your API client
+## Attributes reference
 
-## Attributes Reference
+These attributes are returned:
 
-The following attributes are returned:
-
-* `roles` — A list of roles
+* `roles` — A list of roles.
 
 [API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getroles)

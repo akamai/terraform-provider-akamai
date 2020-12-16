@@ -10,7 +10,7 @@ description: |-
 
 Use `akamai_iam_notification_prods` to list all products a user can subscribe to and receive notifications for on the account. The account is determined by the tokens in your API client.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -23,14 +23,14 @@ output "supported_notification_prods" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 There are no arguments for this data source.
 
-## Attributes Reference
+## Attributes reference
 
-The following attributes are returned:
+These attributes are returned:
 
-* `products` — Products a user can subscribe to and receive notifications for on the account
+* `products` — Products users subscribe to and receive notifications for on the account.
 
 [API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadminnotificationproducts)

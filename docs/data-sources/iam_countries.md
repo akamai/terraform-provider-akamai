@@ -10,7 +10,7 @@ description: |-
 
 Use `akamai_iam_countries` datasource to retrieve all the possible countries that Akamai supports. Use the values from this operation to add or update a user’s country information.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -23,14 +23,14 @@ output "supported_countries" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
 There are no arguments for this data source.
 
-## Attributes Reference
+## Attributes reference
 
-The following attributes are returned:
+These attributes are returned:
 
-* `countries` — A list of countries
+* `countries` — A list of countries.
 
 [API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadmincountries)
