@@ -32,14 +32,13 @@ func (p *provider) Resources() map[string]*schema.Resource {
 // DataSources returns the subprovider's data source schema map
 func (p *provider) DataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_iam_roles":              p.dsRoles(),
-		"akamai_iam_groups":             p.dsGroups(),
-		"akamai_iam_countries":          p.dsCountries(),
-		"akamai_iam_contact_types":      p.dsContactTypes(),
-		"akamai_iam_supported_langs":    p.dsLanguages(),
-		"akamai_iam_notification_prods": p.dsNotificationProds(),
-		"akamai_iam_timeout_policies":   p.dsTimeoutPolicies(),
-		"akamai_iam_states":             p.dsStates(),
+		"akamai_iam_roles":            p.dsRoles(),
+		"akamai_iam_groups":           p.dsGroups(),
+		"akamai_iam_countries":        p.dsCountries(),
+		"akamai_iam_contact_types":    p.dsContactTypes(),
+		"akamai_iam_supported_langs":  p.dsLanguages(),
+		"akamai_iam_timeout_policies": p.dsTimeoutPolicies(),
+		"akamai_iam_states":           p.dsStates(),
 	}
 }
 
