@@ -11,7 +11,7 @@ description: |-
 
 The `resource_akamai_appsec_configuration_clone` resource allows you to create or re-use ConfigurationClones.
 
-If the ConfigurationClone already exists it will be used instead of creating a new one.
+If the ConfigurationClone already exists, it will be used instead of creating a new one.
 
 ## Example Usage
 

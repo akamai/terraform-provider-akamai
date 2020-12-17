@@ -38,7 +38,7 @@ resource  "akamai_appsec_ip_geo" "ip_geo_block" {
   exception_ip_network_lists= var.exception_ip_network_lists
 }
 
-// USE CASE: user wants to update the IP/GEO firewall mode to "block all traffic except IPs/Subnets in block execptions" and update the Exception list
+// USE CASE: user wants to update the IP/GEO firewall mode to "block all traffic except IPs/Subnets in block exceptions" and update the Exception list
 resource  "akamai_appsec_ip_geo" "ip_geo_allow" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version

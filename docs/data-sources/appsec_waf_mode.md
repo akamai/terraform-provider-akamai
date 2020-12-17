@@ -80,4 +80,5 @@ In addition to the arguments above, the following attributes are exported:
 
 * `output_text` - A tabular display of the mode information.
 
-* `json` - A JSON-formmated list of the mode information.
+* `json` - A JSON-formatted list of the mode information.
+
