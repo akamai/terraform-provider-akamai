@@ -240,7 +240,7 @@ resource "akamai_appsec_custom_rule_action" "appsecreatecustomruleaction" {
     config_id = data.akamai_appsec_configuration.appsecconfigedge.config_id
     version = data.akamai_appsec_configuration.appsecconfigedge.latest_version
     security_policy_id = "AAAA_81230"
-    custom_rule_id = akamai_appsec_custom_rule.appseccustomrule1.custom_rule_id
+    custom_rule_id = akamai_appsec_custom_rule.appseccustomrule.custom_rule_id
     custom_rule_action = "alert"
 }
 output "customruleaction" {
