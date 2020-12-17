@@ -64,10 +64,19 @@ func resourceCPCode() *schema.Resource {
 				StateFunc:    addPrefixToState("grp_"),
 			},
 			"product": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Deprecated:    `use "product_id" attribute instead`,
+				StateFunc:     addPrefixToState("prd_"),
+				ConflictsWith: []string{"product_id"},
+			},
+			"product_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"product"},
+				StateFunc:     addPrefixToState("prd_"),
 			},
 		},
 	}
@@ -83,8 +92,14 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		name = got.(string)
 	}
 
-	product := d.Get("product").(string)
-	product = tools.AddPrefix(product, "prd_")
+	// Schema guarantees product_id/product are strings and one or the other is set
+	var productID string
+	if got, ok := d.GetOk("product_id"); ok {
+		productID = got.(string)
+	} else {
+		productID = d.Get("product").(string)
+	}
+	productID = tools.AddPrefix(productID, "prd_")
 
 	// Schema guarantees group_id/group are strings and one or the other is set
 	var groupID string
@@ -111,7 +126,7 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if cpCode == nil {
-		cpcID, err := createCPCode(ctx, name, product, contractID, groupID, meta)
+		cpcID, err := createCPCode(ctx, name, productID, contractID, groupID, meta)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -196,6 +211,9 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
+	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(cpCode.ID)
 	logger.Debugf("Read CP Code: %+v", cpCode)
 	return nil
@@ -232,7 +250,7 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 	if len(cpCode.ProductIDs) == 0 {
 		return nil, fmt.Errorf("could not find product id on the CP Code")
 	}
-	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
+	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	d.SetId(cpCode.ID)
