@@ -55,9 +55,7 @@ Akamai Terraform Provider.
 
 If you're new to Akamai, here are some links to help you get started:
 
-* [Akamai Provider blogs](https://developer.akamai.com/blog/terraform)
 * [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started)
-* [Akamai Community site](https://community.akamai.com/customers/s/)
 * [Akamai Community site](https://community.akamai.com/customers/s/)
 
 ### New to Terraform?
