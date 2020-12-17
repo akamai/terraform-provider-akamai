@@ -84,8 +84,6 @@ func dataSourceAttackGroupConditionExceptionRead(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	logger.Errorf("calling 'getAttackGroupConditionException FOUND : %s", attackgroupconditionexception)
-
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
