@@ -89,11 +89,6 @@ func (p *provider) resUser() *schema.Resource {
 				Computed:    true,
 				Description: "To help characterize the user, the value can be any that are available from the view-contact-types operation",
 			},
-			"user_name": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "A user's `loginId`. Typically, a user's email address",
-			},
 			"job_title": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -102,6 +97,7 @@ func (p *provider) resUser() *schema.Resource {
 			"time_zone": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "The user's time zone. The value can be any that are available from the view-time-zones operation",
 			},
 			"secondary_email": {
@@ -117,6 +113,7 @@ func (p *provider) resUser() *schema.Resource {
 			"address": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "The user's street address",
 			},
 			"city": {
@@ -137,11 +134,13 @@ func (p *provider) resUser() *schema.Resource {
 			"preferred_language": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "The value can be any that are available from the view-languages operation",
 			},
 			"session_timeout": {
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Computed:    true,
 				Description: "The number of seconds it takes for the user's Control Center session to time out if there hasn't been any activity",
 			},
 
@@ -175,6 +174,11 @@ func (p *provider) resUser() *schema.Resource {
 			},
 
 			// Purely computed
+			"user_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A user's `loginId`. Typically, a user's email address",
+			},
 			"is_locked": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -362,7 +366,6 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 	updateBasicInfo := d.HasChanges(
 		"first_name",
 		"last_name",
-		"user_name",
 		"email",
 		"phone",
 		"time_zone",

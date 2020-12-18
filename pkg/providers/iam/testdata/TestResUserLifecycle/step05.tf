@@ -9,7 +9,6 @@ resource "akamai_iam_user" "test" {
   send_otp_email = false
 
   contact_type       = "contact type B"
-  user_name          = "user name B"
   job_title          = "job title B"
   time_zone          = "Timezone B"
   secondary_email    = "secondary-email-B@akamai.net"

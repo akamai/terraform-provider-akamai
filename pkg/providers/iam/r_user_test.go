@@ -81,9 +81,26 @@ func TestResUserLifecycle(t *testing.T) {
 		call := State.Client.On("CreateUser", mock.Anything, req).Once()
 		call.Run(func(mock.Arguments) {
 			State.User = CopyUser(User)
+			// Assign defaults where not set
 			if State.User.ContactType == "" {
-				// Assign default if not set
 				State.User.ContactType = "Billing"
+			}
+
+			if State.User.PreferredLanguage == "" {
+				State.User.PreferredLanguage = "English"
+			}
+
+			if State.User.Address == "" {
+				State.User.Address = "TBD"
+			}
+
+			if State.User.SessionTimeOut == nil {
+				SessionTimeout := 42
+				State.User.SessionTimeOut = &SessionTimeout
+			}
+
+			if State.User.TimeZone == "" {
+				State.User.TimeZone = "GMT"
 			}
 
 			res := CopyUser(State.User)
@@ -215,7 +232,6 @@ func TestResUserLifecycle(t *testing.T) {
 		return iam.UserBasicInfo{
 			FirstName:         "first name A",
 			LastName:          "last name A",
-			UserName:          "user name A",
 			Email:             "email-A@akamai.net",
 			Phone:             "phone A",
 			TimeZone:          "Timezone A",
@@ -251,7 +267,6 @@ func TestResUserLifecycle(t *testing.T) {
 		return iam.UserBasicInfo{
 			FirstName:         "first name B",
 			LastName:          "last name B",
-			UserName:          "user name B",
 			Email:             "email-B@akamai.net",
 			Phone:             "phone B",
 			TimeZone:          "Timezone B",
@@ -342,7 +357,7 @@ func TestResUserLifecycle(t *testing.T) {
 		return resource.ComposeAggregateTestCheckFunc(append(checks, ProductChecks...)...)
 	}
 
-	CheckStateBlankContactType := func(User *iam.User) resource.TestCheckFunc {
+	CheckLiveState := func(User *iam.User) resource.TestCheckFunc {
 		return func(tfState *terraform.State) error {
 			return CheckState(*User)(tfState)
 		}
@@ -391,7 +406,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							tv.Transition(&State)
 						},
-						Check: CheckStateBlankContactType(&State.User),
+						Check: CheckLiveState(&State.User),
 					},
 					{ // Step 2 - All user attributes variation B
 						Config: test.Fixture("%s/step02.tf", fixturePrefix),
@@ -399,7 +414,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							ExpectUpdateUserInfo(&State, allUserB())
 						},
-						Check: CheckState(mkUser(allUserB(), emptyNotif(), authGrants("B"))),
+						Check: CheckLiveState(&State.User),
 					},
 					{ // Step 3 - All user attributes variation B, notifications C, grants
 						Config: test.Fixture("%s/step03.tf", fixturePrefix),
@@ -407,7 +422,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, notifC())
 						},
-						Check: CheckState(mkUser(allUserB(), notifC(), authGrants("B"))),
+						Check: CheckLiveState(&State.User),
 					},
 					{ // Step 4 - All user attributes variation B, notifications B
 						Config: test.Fixture("%s/step04.tf", fixturePrefix),
@@ -415,7 +430,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, emptyNotif())
 						},
-						Check: CheckState(mkUser(allUserB(), emptyNotif(), authGrants("B"))),
+						Check: CheckLiveState(&State.User),
 					},
 					{ // Step 5 - All user attributes variation B, notifications A
 						Config: test.Fixture("%s/step05.tf", fixturePrefix),
@@ -423,7 +438,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, notifA())
 						},
-						Check: CheckState(mkUser(allUserB(), notifA(), authGrants("B"))),
+						Check: CheckLiveState(&State.User),
 					},
 					{ // Step 6 - All user attributes variation B, notifications B
 						Config: test.Fixture("%s/step06.tf", fixturePrefix),
@@ -431,7 +446,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, emptyNotif())
 						},
-						Check: CheckState(mkUser(allUserB(), emptyNotif(), authGrants("B"))),
+						Check: CheckLiveState(&State.User),
 					},
 					{ // Step 7 - minimum user attributes variation B
 						Config: test.Fixture("%s/step07.tf", fixturePrefix),
@@ -441,11 +456,15 @@ func TestResUserLifecycle(t *testing.T) {
 							// Contact type removed in this step -- expect to receive an update with the previously set value
 							User := minUserB()
 							User.ContactType = allUserB().ContactType
+							User.PreferredLanguage = allUserB().PreferredLanguage
+							User.SessionTimeOut = allUserB().SessionTimeOut
+							User.Address = allUserB().Address
+							User.TimeZone = allUserB().TimeZone
 							ExpectUpdateUserInfo(&State, User)
 
 							ExpectRemoveUser(&State)
 						},
-						Check: CheckStateBlankContactType(&State.User),
+						Check: CheckLiveState(&State.User),
 					},
 				}, // Steps
 			}) // resource.UnitTest()
@@ -457,9 +476,14 @@ func TestResUserLifecycle(t *testing.T) {
 	AssertLifecycle(t, TestVariant{
 		Name: "minimum basic info A",
 		Check: func(s *terraform.State) error {
-			// This case creates a user with the default
+			// This case creates a user with the defaults
 			User := mkUser(minUserA(), emptyNotif(), authGrants("A"))
 			User.ContactType = "Billing"
+			User.PreferredLanguage = "English"
+			User.Address = "TBD"
+			User.TimeZone = "GMT"
+			SessionTimeout := 42
+			User.SessionTimeOut = &SessionTimeout // Will have been assigned by service as default
 			return CheckState(User)(s)
 		},
 		Setup: func(State *TestState) {
@@ -467,7 +491,12 @@ func TestResUserLifecycle(t *testing.T) {
 		},
 		Transition: func(State *TestState) {
 			User := minUserB()
-			User.ContactType = "Billing" // Will have been assigned by service as default
+			User.ContactType = "Billing"       // Will have been assigned by service as default
+			User.Address = "TBD"               // Will have been assigned by service as default
+			User.TimeZone = "GMT"              // Will have been assigned by service as default
+			User.PreferredLanguage = "English" // Will have been assigned by service as default
+			SessionTimeout := 42
+			User.SessionTimeOut = &SessionTimeout // Will have been assigned by service as default
 			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
@@ -482,6 +511,11 @@ func TestResUserLifecycle(t *testing.T) {
 		Transition: func(State *TestState) {
 			User := minUserB()
 			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			User.Address = "123 A Street"
+			User.PreferredLanguage = "language A"
+			User.TimeZone = "Timezone A"
+			SessionTimeout := 1
+			User.SessionTimeOut = &SessionTimeout
 			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
@@ -496,6 +530,11 @@ func TestResUserLifecycle(t *testing.T) {
 		Transition: func(State *TestState) {
 			User := minUserB()
 			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			User.Address = "123 A Street"
+			User.TimeZone = "Timezone A"
+			User.PreferredLanguage = "language A"
+			SessionTimeout := 1
+			User.SessionTimeOut = &SessionTimeout
 			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
@@ -511,6 +550,11 @@ func TestResUserLifecycle(t *testing.T) {
 		Transition: func(State *TestState) {
 			User := minUserB()
 			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			User.Address = "123 A Street"
+			User.TimeZone = "Timezone A"
+			User.PreferredLanguage = "language A"
+			SessionTimeout := 1
+			User.SessionTimeOut = &SessionTimeout
 			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
@@ -525,6 +569,11 @@ func TestResUserLifecycle(t *testing.T) {
 		Transition: func(State *TestState) {
 			User := minUserB()
 			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			User.Address = "123 A Street"
+			User.TimeZone = "Timezone A"
+			User.PreferredLanguage = "language A"
+			SessionTimeout := 1
+			User.SessionTimeOut = &SessionTimeout
 			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
@@ -540,6 +589,11 @@ func TestResUserLifecycle(t *testing.T) {
 		Transition: func(State *TestState) {
 			User := minUserB()
 			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			User.Address = "123 A Street"
+			User.TimeZone = "Timezone A"
+			User.PreferredLanguage = "language A"
+			SessionTimeout := 1
+			User.SessionTimeOut = &SessionTimeout
 			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
@@ -555,6 +609,11 @@ func TestResUserLifecycle(t *testing.T) {
 		Transition: func(State *TestState) {
 			User := minUserB()
 			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			User.Address = "123 A Street"
+			User.TimeZone = "Timezone A"
+			User.PreferredLanguage = "language A"
+			SessionTimeout := 1
+			User.SessionTimeOut = &SessionTimeout
 			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
