@@ -219,7 +219,7 @@ func TestResUserLifecycle(t *testing.T) {
 		return iam.UserBasicInfo{
 			FirstName:  "first name A",
 			LastName:   "last name A",
-			Email:      "email-A@akamai.net",
+			Email:      "email@akamai.net",
 			Phone:      "phone A",
 			TFAEnabled: true,
 			Country:    "country A",
@@ -232,7 +232,7 @@ func TestResUserLifecycle(t *testing.T) {
 		return iam.UserBasicInfo{
 			FirstName:         "first name A",
 			LastName:          "last name A",
-			Email:             "email-A@akamai.net",
+			Email:             "email@akamai.net",
 			Phone:             "phone A",
 			TimeZone:          "Timezone A",
 			JobTitle:          "job title A",
@@ -255,7 +255,7 @@ func TestResUserLifecycle(t *testing.T) {
 		return iam.UserBasicInfo{
 			FirstName: "first name B",
 			LastName:  "last name B",
-			Email:     "email-B@akamai.net",
+			Email:     "email@akamai.net",
 			Phone:     "phone B",
 			Country:   "country B",
 		}
@@ -267,7 +267,7 @@ func TestResUserLifecycle(t *testing.T) {
 		return iam.UserBasicInfo{
 			FirstName:         "first name B",
 			LastName:          "last name B",
-			Email:             "email-B@akamai.net",
+			Email:             "email@akamai.net",
 			Phone:             "phone B",
 			TimeZone:          "Timezone B",
 			JobTitle:          "job title B",

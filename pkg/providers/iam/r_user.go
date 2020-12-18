@@ -3,6 +3,7 @@ package iam
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"regexp"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
@@ -360,13 +361,19 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 	// TODO: Can't be changed wat do?
 	// SendEmail := d.Get("send_otp_email").(bool)
 
+	if d.HasChange("email") {
+		d.Partial(true)
+		err := fmt.Errorf("cannot change email address")
+		logger.WithError(err).Errorf("failed to update user")
+		return diag.Errorf("failed to update user: %s", err)
+	}
+
 	var needRead bool
 
 	// Basic Info
 	updateBasicInfo := d.HasChanges(
 		"first_name",
 		"last_name",
-		"email",
 		"phone",
 		"time_zone",
 		"job_title",
