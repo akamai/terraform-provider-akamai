@@ -86,6 +86,7 @@ func (p *provider) resUser() *schema.Resource {
 			"contact_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "To help characterize the user, the value can be any that are available from the view-contact-types operation",
 			},
 			"user_name": {

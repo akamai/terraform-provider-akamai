@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -79,8 +80,13 @@ func TestResUserLifecycle(t *testing.T) {
 
 		call := State.Client.On("CreateUser", mock.Anything, req).Once()
 		call.Run(func(mock.Arguments) {
-			res := CopyUser(User)
 			State.User = CopyUser(User)
+			if State.User.ContactType == "" {
+				// Assign default if not set
+				State.User.ContactType = "Billing"
+			}
+
+			res := CopyUser(State.User)
 			State.UserExists = true
 			call.Return(&res, nil)
 		})
@@ -272,7 +278,6 @@ func TestResUserLifecycle(t *testing.T) {
 		}
 
 		var AuthGrantsJSON string
-		var ProductChecks []resource.TestCheckFunc
 		if len(User.AuthGrants) > 0 {
 			switch User.AuthGrants[0].GroupName {
 			case "A":
@@ -292,6 +297,7 @@ func TestResUserLifecycle(t *testing.T) {
 		NewUsers = fmt.Sprintf("%t", User.Notifications.Options.NewUser)
 		PasswordExpiry = fmt.Sprintf("%t", User.Notifications.Options.PasswordExpiry)
 
+		var ProductChecks []resource.TestCheckFunc
 		for _, p := range User.Notifications.Options.Proactive {
 			chk := resource.TestCheckTypeSetElemAttr("akamai_iam_user.test", "subscribe_product_issues.*", p)
 			ProductChecks = append(ProductChecks, chk)
@@ -334,6 +340,12 @@ func TestResUserLifecycle(t *testing.T) {
 		}
 
 		return resource.ComposeAggregateTestCheckFunc(append(checks, ProductChecks...)...)
+	}
+
+	CheckStateBlankContactType := func(User *iam.User) resource.TestCheckFunc {
+		return func(tfState *terraform.State) error {
+			return CheckState(*User)(tfState)
+		}
 	}
 
 	// Setup each step by Asserting mock expectations then swap in a new mock
@@ -379,7 +391,7 @@ func TestResUserLifecycle(t *testing.T) {
 							InitStep(t, &State)
 							tv.Transition(&State)
 						},
-						Check: CheckState(mkUser(minUserB(), emptyNotif(), authGrants("B"))),
+						Check: CheckStateBlankContactType(&State.User),
 					},
 					{ // Step 2 - All user attributes variation B
 						Config: test.Fixture("%s/step02.tf", fixturePrefix),
@@ -394,7 +406,6 @@ func TestResUserLifecycle(t *testing.T) {
 						PreConfig: func() {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, notifC())
-							// ExpectUpdateAuthGrants(&State, authGrants("A"))
 						},
 						Check: CheckState(mkUser(allUserB(), notifC(), authGrants("B"))),
 					},
@@ -403,7 +414,6 @@ func TestResUserLifecycle(t *testing.T) {
 						PreConfig: func() {
 							InitStep(t, &State)
 							ExpectUpdateUserNotifications(&State, emptyNotif())
-							// ExpectUpdateAuthGrants(&State, authGrants("A"))
 						},
 						Check: CheckState(mkUser(allUserB(), emptyNotif(), authGrants("B"))),
 					},
@@ -427,10 +437,15 @@ func TestResUserLifecycle(t *testing.T) {
 						Config: test.Fixture("%s/step07.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
-							ExpectUpdateUserInfo(&State, minUserB())
+
+							// Contact type removed in this step -- expect to receive an update with the previously set value
+							User := minUserB()
+							User.ContactType = allUserB().ContactType
+							ExpectUpdateUserInfo(&State, User)
+
 							ExpectRemoveUser(&State)
 						},
-						Check: CheckState(mkUser(minUserB(), emptyNotif(), authGrants("B"))),
+						Check: CheckStateBlankContactType(&State.User),
 					},
 				}, // Steps
 			}) // resource.UnitTest()
@@ -440,13 +455,20 @@ func TestResUserLifecycle(t *testing.T) {
 	} // AssertLifecycle
 
 	AssertLifecycle(t, TestVariant{
-		Name:  "minimum basic info A",
-		Check: CheckState(mkUser(minUserA(), emptyNotif(), authGrants("A"))),
+		Name: "minimum basic info A",
+		Check: func(s *terraform.State) error {
+			// This case creates a user with the default
+			User := mkUser(minUserA(), emptyNotif(), authGrants("A"))
+			User.ContactType = "Billing"
+			return CheckState(User)(s)
+		},
 		Setup: func(State *TestState) {
 			ExpectCreateUser(State, mkUser(minUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
-			ExpectUpdateUserInfo(State, minUserB())
+			User := minUserB()
+			User.ContactType = "Billing" // Will have been assigned by service as default
+			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
@@ -458,7 +480,9 @@ func TestResUserLifecycle(t *testing.T) {
 			ExpectCreateUser(State, mkUser(allUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
-			ExpectUpdateUserInfo(State, minUserB())
+			User := minUserB()
+			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
@@ -470,7 +494,9 @@ func TestResUserLifecycle(t *testing.T) {
 			ExpectCreateUser(State, mkUser(allUserA(), notifC(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
-			ExpectUpdateUserInfo(State, minUserB())
+			User := minUserB()
+			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
@@ -483,7 +509,9 @@ func TestResUserLifecycle(t *testing.T) {
 			ExpectCreateUser(State, mkUser(allUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
-			ExpectUpdateUserInfo(State, minUserB())
+			User := minUserB()
+			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
@@ -495,7 +523,9 @@ func TestResUserLifecycle(t *testing.T) {
 			ExpectCreateUser(State, mkUser(allUserA(), notifC(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
-			ExpectUpdateUserInfo(State, minUserB())
+			User := minUserB()
+			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
@@ -508,7 +538,9 @@ func TestResUserLifecycle(t *testing.T) {
 			ExpectCreateUser(State, mkUser(allUserA(), notifA(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
-			ExpectUpdateUserInfo(State, minUserB())
+			User := minUserB()
+			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
@@ -521,7 +553,9 @@ func TestResUserLifecycle(t *testing.T) {
 			ExpectCreateUser(State, mkUser(allUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
-			ExpectUpdateUserInfo(State, minUserB())
+			User := minUserB()
+			User.ContactType = "contact type A" // Set to a non-default in first step and removed in the second
+			ExpectUpdateUserInfo(State, User)
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
