@@ -2,6 +2,8 @@ package iam
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
@@ -103,6 +105,14 @@ func TestResUserLifecycle(t *testing.T) {
 				State.User.TimeZone = "GMT"
 			}
 
+			// Service canonicalizes phone numbers to 10 digits
+			State.User.Phone = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(State.User.Phone, "")
+			State.User.MobilePhone = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(State.User.MobilePhone, "")
+
+			// Service coerces email addresses to lower case
+			State.User.Email = strings.ToLower(State.User.Email)
+			State.User.SecondaryEmail = strings.ToLower(State.User.SecondaryEmail)
+
 			res := CopyUser(State.User)
 			State.UserExists = true
 			call.Return(&res, nil)
@@ -119,6 +129,15 @@ func TestResUserLifecycle(t *testing.T) {
 		call.Run(func(mock.Arguments) {
 			res := CopyBasicUser(User)
 			State.User.UserBasicInfo = CopyBasicUser(User)
+
+			// Service canonicalizes phone numbers to 10 digits
+			State.User.Phone = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(State.User.Phone, "")
+			State.User.MobilePhone = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(State.User.MobilePhone, "")
+
+			// Service coerces email addresses to lower case
+			State.User.Email = strings.ToLower(State.User.Email)
+			State.User.SecondaryEmail = strings.ToLower(State.User.SecondaryEmail)
+
 			call.Return(&res, nil)
 		})
 	}
@@ -220,7 +239,7 @@ func TestResUserLifecycle(t *testing.T) {
 			FirstName:  "first name A",
 			LastName:   "last name A",
 			Email:      "email@akamai.net",
-			Phone:      "phone A",
+			Phone:      "(000) 000-0000",
 			TFAEnabled: true,
 			Country:    "country A",
 		}
@@ -233,12 +252,12 @@ func TestResUserLifecycle(t *testing.T) {
 			FirstName:         "first name A",
 			LastName:          "last name A",
 			Email:             "email@akamai.net",
-			Phone:             "phone A",
+			Phone:             "(000) 000-0000",
 			TimeZone:          "Timezone A",
 			JobTitle:          "job title A",
 			TFAEnabled:        true,
 			SecondaryEmail:    "secondary-email-A@akamai.net",
-			MobilePhone:       "mobile phone A",
+			MobilePhone:       "(000) 000-0000",
 			Address:           "123 A Street",
 			City:              "A-Town",
 			State:             "state A",
@@ -256,7 +275,7 @@ func TestResUserLifecycle(t *testing.T) {
 			FirstName: "first name B",
 			LastName:  "last name B",
 			Email:     "email@akamai.net",
-			Phone:     "phone B",
+			Phone:     "(111) 111-1111",
 			Country:   "country B",
 		}
 	}
@@ -268,12 +287,12 @@ func TestResUserLifecycle(t *testing.T) {
 			FirstName:         "first name B",
 			LastName:          "last name B",
 			Email:             "email@akamai.net",
-			Phone:             "phone B",
+			Phone:             "(111) 111-1111",
 			TimeZone:          "Timezone B",
 			JobTitle:          "job title B",
 			TFAEnabled:        false,
 			SecondaryEmail:    "secondary-email-B@akamai.net",
-			MobilePhone:       "mobile phone B",
+			MobilePhone:       "(111) 111-1111",
 			Address:           "123 B Street",
 			City:              "B-Town",
 			State:             "state B",
@@ -327,16 +346,16 @@ func TestResUserLifecycle(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "id", "test uiIdentityId"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "first_name", User.FirstName),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_name", User.LastName),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "email", User.Email),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "email", strings.ToLower(User.Email)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "country", User.Country),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "phone", User.Phone),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "phone", canonicalPhone(User.Phone)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "enable_tfa", fmt.Sprintf("%t", User.TFAEnabled)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "contact_type", User.ContactType),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_name", User.UserName),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "job_title", User.JobTitle),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "time_zone", User.TimeZone),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", User.SecondaryEmail),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "mobile_phone", User.MobilePhone),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", strings.ToLower(User.SecondaryEmail)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "mobile_phone", canonicalPhone(User.MobilePhone)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "address", User.Address),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "city", User.City),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "state", User.State),

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -32,6 +33,37 @@ func (p *provider) resUser() *schema.Resource {
 		return nil
 	}
 
+	validatePhone := func(v interface{}, _ cty.Path) diag.Diagnostics {
+		ph := v.(string)
+		if v.(string) == "" {
+			return nil
+		}
+
+		if !regexp.MustCompile(`^\(\d{3}\) \d{3}-\d{4}$`).MatchString(ph) {
+			return diag.Errorf(`Phone number must be in the form: (###) ###-####`)
+		}
+
+		return nil
+	}
+
+	statePhone := func(v interface{}) string {
+		return canonicalPhone(v.(string))
+	}
+
+	suppressPhone := func(k, old, new string, d *schema.ResourceData) bool {
+		old = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(old, "")
+		new = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(new, "")
+		return old == new
+	}
+
+	suppressEmail := func(k, old, new string, d *schema.ResourceData) bool {
+		return strings.ToLower(old) == strings.ToLower(new)
+	}
+
+	stateEmail := func(v interface{}) string {
+		return strings.ToLower(v.(string))
+	}
+
 	return &schema.Resource{
 		Description:   "Manage a user in your account",
 		CreateContext: p.tfCRUD("res:User:Create", p.resUserCreate),
@@ -52,9 +84,11 @@ func (p *provider) resUser() *schema.Resource {
 				Description: "The user's surname",
 			},
 			"email": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The user's email address",
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "The user's email address",
+				StateFunc:        stateEmail,
+				DiffSuppressFunc: suppressEmail,
 			},
 			"country": {
 				Type:        schema.TypeString,
@@ -62,9 +96,12 @@ func (p *provider) resUser() *schema.Resource {
 				Description: "As part of the user's location, the value can be any that are available from the view-supported-countries operation",
 			},
 			"phone": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The user's main phone number",
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "The user's main phone number",
+				ValidateDiagFunc: validatePhone,
+				DiffSuppressFunc: suppressPhone,
+				StateFunc:        statePhone,
 			},
 			"enable_tfa": {
 				Type:        schema.TypeBool,
@@ -102,14 +139,19 @@ func (p *provider) resUser() *schema.Resource {
 				Description: "The user's time zone. The value can be any that are available from the view-time-zones operation",
 			},
 			"secondary_email": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The user's secondary email address",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Description:      "The user's secondary email address",
+				StateFunc:        stateEmail,
+				DiffSuppressFunc: suppressEmail,
 			},
 			"mobile_phone": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The user's mobile phone number",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Description:      "The user's mobile phone number",
+				ValidateDiagFunc: validatePhone,
+				DiffSuppressFunc: suppressPhone,
+				StateFunc:        statePhone,
 			},
 			"address": {
 				Type:        schema.TypeString,
@@ -319,12 +361,12 @@ func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ in
 		"last_name":              User.LastName,
 		"user_name":              User.UserName,
 		"email":                  User.Email,
-		"phone":                  User.Phone,
+		"phone":                  canonicalPhone(User.Phone),
 		"time_zone":              User.TimeZone,
 		"job_title":              User.JobTitle,
 		"enable_tfa":             User.TFAEnabled,
 		"secondary_email":        User.SecondaryEmail,
-		"mobile_phone":           User.MobilePhone,
+		"mobile_phone":           canonicalPhone(User.MobilePhone),
 		"address":                User.Address,
 		"city":                   User.City,
 		"state":                  User.State,
@@ -538,4 +580,13 @@ func resUserErrorAdvice(e error) string {
 	}
 
 	return ""
+}
+
+func canonicalPhone(in string) string {
+	ph := regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(in, "")
+	if len(ph) < 10 {
+		return in
+	}
+
+	return fmt.Sprintf("(%s) %s-%s", ph[0:3], ph[3:6], ph[6:10])
 }

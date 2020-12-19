@@ -4,7 +4,7 @@ resource "akamai_iam_user" "test" {
   last_name      = "last name B"
   email          = "email@akamai.net"
   country        = "country B"
-  phone          = "phone B"
+  phone          = "(111) 111-1111"
   enable_tfa     = false
   send_otp_email = false
 
@@ -12,7 +12,7 @@ resource "akamai_iam_user" "test" {
   job_title          = "job title B"
   time_zone          = "Timezone B"
   secondary_email    = "secondary-email-B@akamai.net"
-  mobile_phone       = "mobile phone B"
+  mobile_phone       = "(111) 111-1111"
   address            = "123 B Street"
   city               = "B-Town"
   state              = "state B"
