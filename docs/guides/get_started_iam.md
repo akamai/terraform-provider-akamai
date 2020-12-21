@@ -51,7 +51,19 @@ Once you have a valid country, your user should look like this:
 
 ```hcl
 resource "iam_akamai_user" "example" {
-
+  first_name = "John"
+  last_name = "Doe"
+  email = "john.doe@mycompany.com"
+  country = "USA"
+  phone = "(123) 321-1234"
+  enable_tfa = false
+  send_otp_email = true
+  auth_grants_json = jsonencode([
+    {
+      roleId = 3
+      groupId = 12345
+    }
+  ])
 }
 ```
 
