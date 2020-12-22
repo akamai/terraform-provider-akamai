@@ -18,9 +18,6 @@ var (
 	// ErrDuplicateSchemaKey is returned when a duplicate schema key is detected during merge
 	ErrDuplicateSchemaKey = &Error{"duplicate schema key", false}
 
-	// ErrNoConfiguredProviders is returned when no providers are configured
-	ErrNoConfiguredProviders = &Error{"One or more Akamai Edgegrid provider configurations must be defined", false}
-
 	// ErrCacheEntryNotFound returns a cache entry error
 	ErrCacheEntryNotFound = &Error{"cache entry not found", true}
 
