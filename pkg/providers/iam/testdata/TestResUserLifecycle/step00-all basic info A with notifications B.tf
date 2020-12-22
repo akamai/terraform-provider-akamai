@@ -5,7 +5,6 @@ resource "akamai_iam_user" "test" {
   country        = "country A"
   phone          = "(000) 000-0000"
   enable_tfa     = true
-  send_otp_email = true
 
   contact_type       = "contact type A"
   job_title          = "job title A"

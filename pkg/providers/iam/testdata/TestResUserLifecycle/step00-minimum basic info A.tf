@@ -5,7 +5,6 @@ resource "akamai_iam_user" "test" {
   country        = "country A"
   phone          = "(000) 000-0000"
   enable_tfa     = true
-  send_otp_email = true
 
   auth_grants_json = "[{\"groupId\":0,\"groupName\":\"A\",\"isBlocked\":false,\"roleDescription\":\"\",\"roleName\":\"\"}]"
 }

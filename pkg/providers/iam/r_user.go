@@ -108,11 +108,6 @@ func (p *provider) resUser() *schema.Resource {
 				Required:    true,
 				Description: "Indicates whether two-factor authentication is allowed",
 			},
-			"send_otp_email": {
-				Type:        schema.TypeBool,
-				Required:    true,
-				Description: "Whether to send a one-time password to the newly-created user by email",
-			},
 			"auth_grants_json": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -226,7 +221,6 @@ func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ 
 	logger := p.log(ctx)
 
 	AuthGrantsJSON := []byte(d.Get("auth_grants_json").(string))
-	SendEmail := d.Get("send_otp_email").(bool)
 
 	var AuthGrants []iam.AuthGrant
 	if len(AuthGrantsJSON) > 0 {
@@ -264,7 +258,7 @@ func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ 
 	User, err := p.client.CreateUser(ctx, iam.CreateUserRequest{
 		User:       BasicUser,
 		AuthGrants: AuthGrants,
-		SendEmail:  SendEmail,
+		SendEmail:  true,
 		Notifications: iam.UserNotifications{
 			Options: iam.UserNotificationOptions{
 				Proactive: []string{},
@@ -345,9 +339,6 @@ func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ in
 
 func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
-
-	// TODO: Can't be changed wat do?
-	// SendEmail := d.Get("send_otp_email").(bool)
 
 	if d.HasChange("email") {
 		d.Partial(true)
