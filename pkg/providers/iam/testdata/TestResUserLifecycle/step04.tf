@@ -20,11 +20,5 @@ resource "akamai_iam_user" "test" {
   preferred_language = "language B"
   session_timeout    = 2
 
-  enable_notifications          = false
-  subscribe_new_users           = false
-  subscribe_password_expiration = false
-  subscribe_product_issues      = []
-  subscribe_product_upgrades    = []
-
   auth_grants_json = "[{\"groupId\":0,\"groupName\":\"B\",\"isBlocked\":false,\"roleDescription\":\"\",\"roleName\":\"\"}]"
 }

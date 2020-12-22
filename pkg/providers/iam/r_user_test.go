@@ -55,9 +55,8 @@ func TestResUserLifecycle(t *testing.T) {
 	// Setup the standard GetUser expectation
 	ExpectGetUser := func(State *TestState) {
 		req := iam.GetUserRequest{
-			IdentityID:    "test uiIdentityId",
-			AuthGrants:    true,
-			Notifications: true,
+			IdentityID: "test uiIdentityId",
+			AuthGrants: true,
 		}
 
 		call := State.Client.On("GetUser", mock.Anything, req)
@@ -142,20 +141,6 @@ func TestResUserLifecycle(t *testing.T) {
 		})
 	}
 
-	ExpectUpdateUserNotifications := func(State *TestState, Notifications iam.UserNotifications) {
-		req := iam.UpdateUserNotificationsRequest{
-			IdentityID:    "test uiIdentityId",
-			Notifications: Notifications,
-		}
-
-		call := State.Client.On("UpdateUserNotifications", mock.Anything, req).Once()
-		call.Run(func(mock.Arguments) {
-			res := CopyUserNotifications(Notifications)
-			State.User.Notifications = CopyUserNotifications(Notifications)
-			call.Return(&res, nil)
-		})
-	}
-
 	ExpectUpdateAuthGrants := func(State *TestState, AuthGrants []iam.AuthGrant) {
 		req := iam.UpdateUserAuthGrantsRequest{
 			IdentityID: "test uiIdentityId",
@@ -199,36 +184,12 @@ func TestResUserLifecycle(t *testing.T) {
 		return User
 	}
 
-	// Notifications variation A
-	notifA := func() iam.UserNotifications {
-		return iam.UserNotifications{
-			EnableEmail: true,
-			Options: iam.UserNotificationOptions{
-				Proactive: []string{},
-				Upgrade:   []string{},
-			},
-		}
-	}
-
-	// Empty Notifications (variation B)
+	// Empty Notifications
 	emptyNotif := func() iam.UserNotifications {
 		return iam.UserNotifications{
 			Options: iam.UserNotificationOptions{
 				Proactive: []string{},
 				Upgrade:   []string{},
-			},
-		}
-	}
-
-	// Notifications variation C
-	notifC := func() iam.UserNotifications {
-		return iam.UserNotifications{
-			EnableEmail: true,
-			Options: iam.UserNotificationOptions{
-				NewUser:        true,
-				PasswordExpiry: true,
-				Proactive:      []string{"issues product"},
-				Upgrade:        []string{"upgrades product"},
 			},
 		}
 	}
@@ -323,26 +284,7 @@ func TestResUserLifecycle(t *testing.T) {
 			}
 		}
 
-		EnableNotifications := "false"
-		PasswordExpiry := "false"
-		NewUsers := "false"
-		EnableNotifications = fmt.Sprintf("%t", User.Notifications.EnableEmail)
-
-		NewUsers = fmt.Sprintf("%t", User.Notifications.Options.NewUser)
-		PasswordExpiry = fmt.Sprintf("%t", User.Notifications.Options.PasswordExpiry)
-
-		var ProductChecks []resource.TestCheckFunc
-		for _, p := range User.Notifications.Options.Proactive {
-			chk := resource.TestCheckTypeSetElemAttr("akamai_iam_user.test", "subscribe_product_issues.*", p)
-			ProductChecks = append(ProductChecks, chk)
-		}
-
-		for _, p := range User.Notifications.Options.Upgrade {
-			chk := resource.TestCheckTypeSetElemAttr("akamai_iam_user.test", "subscribe_product_upgrades.*", p)
-			ProductChecks = append(ProductChecks, chk)
-		}
-
-		checks := []resource.TestCheckFunc{
+		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "id", "test uiIdentityId"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "first_name", User.FirstName),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_name", User.LastName),
@@ -368,12 +310,7 @@ func TestResUserLifecycle(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "email_update_pending", fmt.Sprintf("%t", User.EmailUpdatePending)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "session_timeout", fmt.Sprintf("%d", *User.SessionTimeOut)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "auth_grants_json", AuthGrantsJSON),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "enable_notifications", EnableNotifications),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "subscribe_new_users", NewUsers),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "subscribe_password_expiration", PasswordExpiry),
-		}
-
-		return resource.ComposeAggregateTestCheckFunc(append(checks, ProductChecks...)...)
+		)
 	}
 
 	CheckLiveState := func(User *iam.User) resource.TestCheckFunc {
@@ -439,7 +376,6 @@ func TestResUserLifecycle(t *testing.T) {
 						Config: test.Fixture("%s/step03.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
-							ExpectUpdateUserNotifications(&State, notifC())
 						},
 						Check: CheckLiveState(&State.User),
 					},
@@ -447,7 +383,6 @@ func TestResUserLifecycle(t *testing.T) {
 						Config: test.Fixture("%s/step04.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
-							ExpectUpdateUserNotifications(&State, emptyNotif())
 						},
 						Check: CheckLiveState(&State.User),
 					},
@@ -455,7 +390,6 @@ func TestResUserLifecycle(t *testing.T) {
 						Config: test.Fixture("%s/step05.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
-							ExpectUpdateUserNotifications(&State, notifA())
 						},
 						Check: CheckLiveState(&State.User),
 					},
@@ -463,7 +397,6 @@ func TestResUserLifecycle(t *testing.T) {
 						Config: test.Fixture("%s/step06.tf", fixturePrefix),
 						PreConfig: func() {
 							InitStep(t, &State)
-							ExpectUpdateUserNotifications(&State, emptyNotif())
 						},
 						Check: CheckLiveState(&State.User),
 					},
@@ -542,9 +475,9 @@ func TestResUserLifecycle(t *testing.T) {
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with notifications C",
-		Check: CheckState(mkUser(allUserA(), notifC(), authGrants("A"))),
+		Check: CheckState(mkUser(allUserA(), emptyNotif(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), notifC(), authGrants("A")))
+			ExpectCreateUser(State, mkUser(allUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			User := minUserB()
@@ -555,7 +488,6 @@ func TestResUserLifecycle(t *testing.T) {
 			SessionTimeout := 1
 			User.SessionTimeOut = &SessionTimeout
 			ExpectUpdateUserInfo(State, User)
-			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
@@ -581,9 +513,9 @@ func TestResUserLifecycle(t *testing.T) {
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with notifications C and grants",
-		Check: CheckState(mkUser(allUserA(), notifC(), authGrants("A"))),
+		Check: CheckState(mkUser(allUserA(), emptyNotif(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), notifC(), authGrants("A")))
+			ExpectCreateUser(State, mkUser(allUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			User := minUserB()
@@ -594,16 +526,15 @@ func TestResUserLifecycle(t *testing.T) {
 			SessionTimeout := 1
 			User.SessionTimeOut = &SessionTimeout
 			ExpectUpdateUserInfo(State, User)
-			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})
 
 	AssertLifecycle(t, TestVariant{
 		Name:  "all basic info A with notifications A",
-		Check: CheckState(mkUser(allUserA(), notifA(), authGrants("A"))),
+		Check: CheckState(mkUser(allUserA(), emptyNotif(), authGrants("A"))),
 		Setup: func(State *TestState) {
-			ExpectCreateUser(State, mkUser(allUserA(), notifA(), authGrants("A")))
+			ExpectCreateUser(State, mkUser(allUserA(), emptyNotif(), authGrants("A")))
 		},
 		Transition: func(State *TestState) {
 			User := minUserB()
@@ -614,7 +545,6 @@ func TestResUserLifecycle(t *testing.T) {
 			SessionTimeout := 1
 			User.SessionTimeOut = &SessionTimeout
 			ExpectUpdateUserInfo(State, User)
-			ExpectUpdateUserNotifications(State, emptyNotif())
 			ExpectUpdateAuthGrants(State, authGrants("B"))
 		},
 	})

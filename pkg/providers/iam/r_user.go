@@ -187,35 +187,6 @@ func (p *provider) resUser() *schema.Resource {
 				Description: "The number of seconds it takes for the user's Control Center session to time out if there hasn't been any activity",
 			},
 
-			// Notifications
-			"enable_notifications": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: `Whether to allow email notifications (notifications emails suspended unless "true")`,
-			},
-			"subscribe_new_users": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "Whether to send emails to group administrators when new users are created",
-			},
-			"subscribe_password_expiration": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "Whether to send emails regarding password expiration",
-			},
-			"subscribe_product_issues": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Products for which the user receives notification emails about service issues",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-			"subscribe_product_upgrades": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Products for which the user receives notification emails about upgrades",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-
 			// Purely computed
 			"user_name": {
 				Type:        schema.TypeString,
@@ -255,12 +226,7 @@ func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ 
 	logger := p.log(ctx)
 
 	AuthGrantsJSON := []byte(d.Get("auth_grants_json").(string))
-	EnableEmail := d.Get("enable_notifications").(bool)
-	SubPasswordExpiry := d.Get("subscribe_password_expiration").(bool)
-	SubNewUser := d.Get("subscribe_new_users").(bool)
 	SendEmail := d.Get("send_otp_email").(bool)
-	proactiveProductSet := d.Get("subscribe_product_issues").(*schema.Set)
-	upgradeProductSet := d.Get("subscribe_product_upgrades").(*schema.Set)
 
 	var AuthGrants []iam.AuthGrant
 	if len(AuthGrantsJSON) > 0 {
@@ -295,28 +261,16 @@ func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ 
 		BasicUser.SessionTimeOut = &SessionTimeout
 	}
 
-	Notifications := iam.UserNotifications{EnableEmail: EnableEmail}
-
-	Notifications.Options = iam.UserNotificationOptions{
-		PasswordExpiry: SubPasswordExpiry,
-		NewUser:        SubNewUser,
-	}
-
-	Notifications.Options.Proactive = []string{}
-	for _, v := range proactiveProductSet.List() {
-		Notifications.Options.Proactive = append(Notifications.Options.Proactive, v.(string))
-	}
-
-	Notifications.Options.Upgrade = []string{}
-	for _, v := range upgradeProductSet.List() {
-		Notifications.Options.Upgrade = append(Notifications.Options.Upgrade, v.(string))
-	}
-
 	User, err := p.client.CreateUser(ctx, iam.CreateUserRequest{
-		User:          BasicUser,
-		Notifications: Notifications,
-		AuthGrants:    AuthGrants,
-		SendEmail:     SendEmail,
+		User:       BasicUser,
+		AuthGrants: AuthGrants,
+		SendEmail:  SendEmail,
+		Notifications: iam.UserNotifications{
+			Options: iam.UserNotificationOptions{
+				Proactive: []string{},
+				Upgrade:   []string{},
+			},
+		},
 	})
 	if err != nil {
 		logger.WithError(err).Errorf("failed to create user")
@@ -331,9 +285,8 @@ func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ in
 	logger := p.log(ctx)
 
 	req := iam.GetUserRequest{
-		IdentityID:    d.Id(),
-		AuthGrants:    true,
-		Notifications: true,
+		IdentityID: d.Id(),
+		AuthGrants: true,
 	}
 
 	User, err := p.client.GetUser(ctx, req)
@@ -380,14 +333,7 @@ func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ in
 		"tfa_configured":         User.TFAConfigured,
 		"email_update_pending":   User.EmailUpdatePending,
 		"session_timeout":        *User.SessionTimeOut,
-
-		"auth_grants_json": string(AuthGrantsJSON),
-
-		"enable_notifications":          User.Notifications.EnableEmail,
-		"subscribe_new_users":           User.Notifications.Options.NewUser,
-		"subscribe_password_expiration": User.Notifications.Options.PasswordExpiry,
-		"subscribe_product_issues":      User.Notifications.Options.Proactive,
-		"subscribe_product_upgrades":    User.Notifications.Options.Upgrade,
+		"auth_grants_json":       string(AuthGrantsJSON),
 	})
 	if err != nil {
 		logger.WithError(err).Error("could not save attributes to state")
@@ -491,51 +437,6 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 			d.Partial(true)
 			logger.WithError(err).Errorf("failed to update user AuthGrants")
 			return diag.Errorf("failed to update user AuthGrants: %s", err)
-		}
-
-		needRead = true
-	}
-
-	// Notifications
-	updateNotifications := d.HasChanges(
-		"enable_notifications",
-		"subscribe_password_expiration",
-		"subscribe_new_users",
-		"subscribe_product_issues",
-		"subscribe_product_upgrades",
-	)
-	if updateNotifications {
-		EnableEmail := d.Get("enable_notifications").(bool)
-		SubPasswordExpiry := d.Get("subscribe_password_expiration").(bool)
-		SubNewUser := d.Get("subscribe_new_users").(bool)
-		proactiveProductSet := d.Get("subscribe_product_issues").(*schema.Set)
-		upgradeProductSet := d.Get("subscribe_product_upgrades").(*schema.Set)
-
-		Notifications := iam.UserNotifications{EnableEmail: EnableEmail}
-
-		Notifications.Options = iam.UserNotificationOptions{
-			PasswordExpiry: SubPasswordExpiry,
-			NewUser:        SubNewUser,
-		}
-
-		Notifications.Options.Proactive = []string{}
-		for _, v := range proactiveProductSet.List() {
-			Notifications.Options.Proactive = append(Notifications.Options.Proactive, v.(string))
-		}
-
-		Notifications.Options.Upgrade = []string{}
-		for _, v := range upgradeProductSet.List() {
-			Notifications.Options.Upgrade = append(Notifications.Options.Upgrade, v.(string))
-		}
-
-		req := iam.UpdateUserNotificationsRequest{
-			IdentityID:    d.Id(),
-			Notifications: Notifications,
-		}
-		if _, err := p.client.UpdateUserNotifications(ctx, req); err != nil {
-			d.Partial(true)
-			logger.WithError(err).Errorf("failed to update user notifications")
-			return diag.Errorf("failed to update user notifications: %s", err)
 		}
 
 		needRead = true
