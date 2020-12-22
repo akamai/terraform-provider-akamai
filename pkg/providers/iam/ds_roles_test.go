@@ -24,11 +24,6 @@ func TestDSRoles(t *testing.T) {
 			CreatedDate:     "2020-01-01T00:00:00Z",
 			ModifiedBy:      "modifier@akamai.net",
 			ModifiedDate:    "2020-01-01T00:00:00Z",
-			GrantedRoles: []iam.RoleGrantedRole{{
-				RoleName:    "granted test role name",
-				RoleID:      101,
-				Description: "granted role description",
-			}},
 		}}
 
 		req := iam.ListRolesRequest{}
@@ -57,11 +52,6 @@ func TestDSRoles(t *testing.T) {
 							"time_modified": "2020-01-01T00:00:00Z",
 							"created_by":    "creator@akamai.net",
 							"modified_by":   "modifier@akamai.net",
-						}),
-						resource.TestCheckTypeSetElemNestedAttrs("data.akamai_iam_roles.test", "roles.*.granted_roles.*", map[string]string{
-							"name":        "granted test role name",
-							"role_id":     "101",
-							"description": "granted role description",
 						}),
 					),
 				},

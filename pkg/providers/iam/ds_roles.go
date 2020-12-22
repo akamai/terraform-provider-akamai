@@ -61,29 +61,6 @@ func (p *provider) dsRoles() *schema.Resource {
 							Description: "The user name or email of the person who created the role",
 							Computed:    true,
 						},
-						"granted_roles": {
-							Type:     schema.TypeSet,
-							Computed: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"role_id": {
-										Type: schema.TypeString,
-										// Description: "TODO",
-										Computed: true,
-									},
-									"name": {
-										Type: schema.TypeString,
-										// Description: "TODO",
-										Computed: true,
-									},
-									"description": {
-										Type: schema.TypeString,
-										// Description: "TODO",
-										Computed: true,
-									},
-								},
-							},
-						},
 					},
 				},
 			},
@@ -131,27 +108,6 @@ func roleToState(r iam.Role) map[string]interface{} {
 	m["time_modified"] = r.ModifiedDate
 	m["modified_by"] = r.ModifiedBy
 	m["created_by"] = r.CreatedBy
-	m["granted_roles"] = grantedRolesToState(r.GrantedRoles)
-
-	return m
-}
-
-func grantedRolesToState(roles []iam.RoleGrantedRole) []interface{} {
-	var out []interface{}
-
-	for _, r := range roles {
-		out = append(out, grantedRoleToState(r))
-	}
-
-	return out
-}
-
-func grantedRoleToState(r iam.RoleGrantedRole) map[string]interface{} {
-	m := map[string]interface{}{}
-
-	m["name"] = r.RoleName
-	m["role_id"] = strconv.FormatInt(r.RoleID, 10)
-	m["description"] = r.Description
 
 	return m
 }
