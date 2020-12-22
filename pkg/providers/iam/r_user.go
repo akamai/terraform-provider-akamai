@@ -9,6 +9,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -31,6 +33,24 @@ func (p *provider) resUser() *schema.Resource {
 		}
 
 		return nil
+	}
+
+	suppressAuthGrantsJS := func(k, old, new string, d *schema.ResourceData) bool {
+		var Old []iam.AuthGrant
+		if len(old) > 0 {
+			if err := json.Unmarshal([]byte(old), &Old); err != nil {
+				panic(fmt.Sprintf("previous value for %q: %q is not valid: %s", k, old, err))
+			}
+		}
+
+		var New []iam.AuthGrant
+		if len(new) > 0 {
+			if err := json.Unmarshal([]byte(new), &New); err != nil {
+				panic(fmt.Sprintf("new value for %q: %q is not valid: %s", k, new, err))
+			}
+		}
+
+		return cmp.Equal(Old, New, cmpopts.EquateEmpty())
 	}
 
 	validatePhone := func(v interface{}, _ cty.Path) diag.Diagnostics {
@@ -113,6 +133,7 @@ func (p *provider) resUser() *schema.Resource {
 				Required:         true,
 				Description:      "A user's per-group role assignments, in JSON form",
 				ValidateDiagFunc: validateAuthGrantJS,
+				DiffSuppressFunc: suppressAuthGrantsJS,
 			},
 
 			// Inputs - Optional

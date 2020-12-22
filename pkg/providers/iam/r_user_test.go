@@ -25,7 +25,7 @@ func TestResUserLifecycle(t *testing.T) {
 
 	// encoded slice of one zero-value AuthGrant
 	OneAuthGrantJSONA := `[{"groupId":0,"groupName":"A","isBlocked":false,"roleDescription":"","roleName":""}]`
-	OneAuthGrantJSONB := `[{"groupId":0,"groupName":"B","isBlocked":false,"roleDescription":"","roleName":""}]`
+	OneAuthGrantJSONB := `[{"groupId":0,"groupName":"B","isBlocked":true,"roleDescription":"","roleName":""}]`
 
 	type TestState struct {
 		Provider   *provider
@@ -166,7 +166,12 @@ func TestResUserLifecycle(t *testing.T) {
 	}
 
 	authGrants := func(name string) []iam.AuthGrant {
-		return []iam.AuthGrant{{GroupName: name}}
+		ag := []iam.AuthGrant{{GroupName: name}}
+		if name == "B" {
+			ag[0].IsBlocked = true
+		}
+
+		return ag
 	}
 
 	mkUser := func(Basic iam.UserBasicInfo, Notifications iam.UserNotifications, AuthGrants []iam.AuthGrant) iam.User {
@@ -413,6 +418,7 @@ func TestResUserLifecycle(t *testing.T) {
 							User.Address = allUserB().Address
 							User.TimeZone = allUserB().TimeZone
 							ExpectUpdateUserInfo(&State, User)
+							ExpectUpdateAuthGrants(&State, authGrants("A"))
 
 							ExpectRemoveUser(&State)
 						},

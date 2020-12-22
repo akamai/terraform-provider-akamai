@@ -7,5 +7,5 @@ resource "akamai_iam_user" "test" {
   phone          = "(111) 111-1111"
   enable_tfa     = false
 
-  auth_grants_json = "[{\"groupId\":0,\"groupName\":\"B\",\"isBlocked\":false,\"roleDescription\":\"\",\"roleName\":\"\"}]"
+  auth_grants_json = "[{\"groupId\":0,\"groupName\":\"B\",\"isBlocked\":true,\"roleDescription\":\"\",\"roleName\":\"\"}]"
 }
