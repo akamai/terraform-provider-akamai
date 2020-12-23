@@ -4,25 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/allegro/bigcache"
 	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/spf13/cast"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
 const (
@@ -186,7 +186,7 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 
 			edgerc, err := edgegrid.New(edgercOps...)
 			if err != nil {
-				return nil, diag.FromErr(fmt.Errorf("failed to load edgegrid config: %w", err))
+				return nil, diag.Errorf("Akamai EdgeGrid configuration was not specified. Specify the configuration using system environment variables or the location and file name containing the edgerc configuration. Default location the provider checks for is the current user’s home directory. Default configuration file name the provider checks for is .edgerc.")
 			}
 
 			userAgent := instance.UserAgent(ProviderName, instance.TerraformVersion)
