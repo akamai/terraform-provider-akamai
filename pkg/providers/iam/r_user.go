@@ -35,6 +35,26 @@ func (p *provider) resUser() *schema.Resource {
 		return nil
 	}
 
+	stateAuthGrantsJS := func(v interface{}) string {
+		js := []byte(v.(string))
+		if len(js) == 0 {
+			return ""
+		}
+
+		var AuthGrants []iam.AuthGrant
+		if err := json.Unmarshal(js, &AuthGrants); err != nil {
+			panic(fmt.Sprintf(`"auth_grants": %q is not valid: %s`, v.(string), err))
+		}
+
+		var AuthGrantsJSON []byte
+		AuthGrantsJSON, err := json.Marshal(AuthGrants)
+		if err != nil {
+			panic(fmt.Sprintf(`"auth_grants": %q is not valid: %s`, v.(string), err))
+		}
+
+		return string(AuthGrantsJSON)
+	}
+
 	suppressAuthGrantsJS := func(k, old, new string, d *schema.ResourceData) bool {
 		var Old []iam.AuthGrant
 		if len(old) > 0 {
@@ -134,6 +154,7 @@ func (p *provider) resUser() *schema.Resource {
 				Description:      "A user's per-group role assignments, in JSON form",
 				ValidateDiagFunc: validateAuthGrantJS,
 				DiffSuppressFunc: suppressAuthGrantsJS,
+				StateFunc:        stateAuthGrantsJS,
 			},
 
 			// Inputs - Optional

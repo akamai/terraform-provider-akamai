@@ -25,7 +25,7 @@ func TestResUserLifecycle(t *testing.T) {
 
 	// encoded slice of one zero-value AuthGrant
 	OneAuthGrantJSONA := `[{"groupId":0,"groupName":"A","isBlocked":false,"roleDescription":"","roleName":""}]`
-	OneAuthGrantJSONB := `[{"groupId":0,"groupName":"B","isBlocked":true,"roleDescription":"","roleName":""}]`
+	OneAuthGrantJSONB := `[{"groupId":0,"groupName":"B","isBlocked":false,"roleDescription":"","roleName":""}]`
 
 	type TestState struct {
 		Provider   *provider
@@ -167,9 +167,9 @@ func TestResUserLifecycle(t *testing.T) {
 
 	authGrants := func(name string) []iam.AuthGrant {
 		ag := []iam.AuthGrant{{GroupName: name}}
-		if name == "B" {
-			ag[0].IsBlocked = true
-		}
+		// if name == "A" {
+		// 	ag[0].IsBlocked = true
+		// }
 
 		return ag
 	}
