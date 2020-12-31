@@ -21,10 +21,8 @@ type OutputTemplate struct {
 
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
-		fmt.Printf("%s is in the OutputTemplate >> %+v\n", key, f)
 		return f, nil
 	} else {
-		fmt.Printf("%s is NOT in the OutputTemplate!\n", key)
 		return nil, fmt.Errorf("Error not found")
 	}
 }
