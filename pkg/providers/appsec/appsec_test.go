@@ -61,6 +61,156 @@ func (p *mockappsec) RemoveActivations(ctx context.Context, params appsec.Remove
 	return args.Get(0).(*appsec.RemoveActivationsResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetAdvancedSettingsLogging(ctx context.Context, params appsec.GetAdvancedSettingsLoggingRequest) (*appsec.GetAdvancedSettingsLoggingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAdvancedSettingsLoggingResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetAdvancedSettingsPrefetch(ctx context.Context, params appsec.GetAdvancedSettingsPrefetchRequest) (*appsec.GetAdvancedSettingsPrefetchResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAdvancedSettingsPrefetchResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateAdvancedSettingsPrefetch(ctx context.Context, params appsec.UpdateAdvancedSettingsPrefetchRequest) (*appsec.UpdateAdvancedSettingsPrefetchResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateAdvancedSettingsPrefetchResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetAdvancedSettingsPolicyLogging(ctx context.Context, params appsec.GetAdvancedSettingsPolicyLoggingRequest) (*appsec.GetAdvancedSettingsPolicyLoggingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAdvancedSettingsPolicyLoggingResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateAdvancedSettingsLogging(ctx context.Context, params appsec.UpdateAdvancedSettingsLoggingRequest) (*appsec.UpdateAdvancedSettingsLoggingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateAdvancedSettingsLoggingResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateAdvancedSettingsPolicyLogging(ctx context.Context, params appsec.UpdateAdvancedSettingsPolicyLoggingRequest) (*appsec.UpdateAdvancedSettingsPolicyLoggingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateAdvancedSettingsPolicyLoggingResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetApiEndpoints(ctx context.Context, params appsec.GetApiEndpointsRequest) (*appsec.GetApiEndpointsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiEndpointsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetApiRequestConstraints(ctx context.Context, params appsec.GetApiRequestConstraintsRequest) (*appsec.GetApiRequestConstraintsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiRequestConstraintsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateApiRequestConstraints(ctx context.Context, params appsec.UpdateApiRequestConstraintsRequest) (*appsec.UpdateApiRequestConstraintsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateApiRequestConstraintsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetPolicyApiEndpoints(ctx context.Context, params appsec.GetPolicyApiEndpointsRequest) (*appsec.GetPolicyApiEndpointsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetPolicyApiEndpointsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetContractsGroups(ctx context.Context, params appsec.GetContractsGroupsRequest) (*appsec.GetContractsGroupsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetContractsGroupsResponse), args.Error(1)
+}
+
+func (p *mockappsec) CreateConfiguration(ctx context.Context, params appsec.CreateConfigurationRequest) (*appsec.CreateConfigurationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.CreateConfigurationResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveConfiguration(ctx context.Context, params appsec.RemoveConfigurationRequest) (*appsec.RemoveConfigurationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveConfigurationResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateConfiguration(ctx context.Context, params appsec.UpdateConfigurationRequest) (*appsec.UpdateConfigurationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateConfigurationResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetConfiguration(ctx context.Context, params appsec.GetConfigurationRequest) (*appsec.GetConfigurationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetConfigurationResponse), args.Error(1)
+}
+
 func (p *mockappsec) CreateConfigurationClone(ctx context.Context, params appsec.CreateConfigurationCloneRequest) (*appsec.CreateConfigurationCloneResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -129,6 +279,66 @@ func (p *mockappsec) UpdateCustomRule(ctx context.Context, params appsec.UpdateC
 	}
 
 	return args.Get(0).(*appsec.UpdateCustomRuleResponse), args.Error(1)
+}
+
+func (p *mockappsec) CreateCustomDeny(ctx context.Context, params appsec.CreateCustomDenyRequest) (*appsec.CreateCustomDenyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.CreateCustomDenyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetCustomDeny(ctx context.Context, params appsec.GetCustomDenyRequest) (*appsec.GetCustomDenyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetCustomDenyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetCustomDenyList(ctx context.Context, params appsec.GetCustomDenyListRequest) (*appsec.GetCustomDenyListResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetCustomDenyListResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveCustomDeny(ctx context.Context, params appsec.RemoveCustomDenyRequest) (*appsec.RemoveCustomDenyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveCustomDenyResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateCustomDeny(ctx context.Context, params appsec.UpdateCustomDenyRequest) (*appsec.UpdateCustomDenyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateCustomDenyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetFailoverHostnames(ctx context.Context, params appsec.GetFailoverHostnamesRequest) (*appsec.GetFailoverHostnamesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetFailoverHostnamesResponse), args.Error(1)
 }
 
 func (p *mockappsec) CreateMatchTarget(ctx context.Context, params appsec.CreateMatchTargetRequest) (*appsec.CreateMatchTargetResponse, error) {
@@ -308,6 +518,36 @@ func (p *mockappsec) RemoveSecurityPolicy(ctx context.Context, params appsec.Rem
 	}
 
 	return args.Get(0).(*appsec.RemoveSecurityPolicyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetSiemDefinitions(ctx context.Context, params appsec.GetSiemDefinitionsRequest) (*appsec.GetSiemDefinitionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetSiemDefinitionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetSiemSettings(ctx context.Context, params appsec.GetSiemSettingsRequest) (*appsec.GetSiemSettingsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetSiemSettingsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateSiemSettings(ctx context.Context, params appsec.UpdateSiemSettingsRequest) (*appsec.UpdateSiemSettingsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateSiemSettingsResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetCustomRule(ctx context.Context, params appsec.GetCustomRuleRequest) (*appsec.GetCustomRuleResponse, error) {

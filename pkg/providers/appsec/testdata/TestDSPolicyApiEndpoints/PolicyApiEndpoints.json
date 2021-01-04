@@ -1,0 +1,23 @@
+[
+    {
+        "apiEndpoints": [
+            {
+                "id": 296100,
+                "name": "API Test",
+                "basePath": "/api/bootcamp",
+                "apiEndPointHosts": [
+                    "bc.akamaiapibootcamp.com"
+                ],
+                "stagingVersion": {
+                    "status": "ACTIVE",
+                    "versionNumber": 1
+                },
+                "productionVersion": {
+                    "status": "ACTIVE",
+                    "versionNumber": 1
+                },
+                "requestConstraintsEnabled": false
+            }
+        ]
+    }
+]

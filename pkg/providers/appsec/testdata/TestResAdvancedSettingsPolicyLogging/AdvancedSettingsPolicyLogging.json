@@ -1,0 +1,15 @@
+[
+    {
+        "allowSampling": true,
+        "cookies": {
+            "type": "all"
+        },
+        "customHeaders": {
+            "type": "all"
+        },
+        "override": false,
+        "standardHeaders": {
+            "type": "all"
+        }
+    }
+]
