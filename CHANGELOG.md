@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 1.1.0 (Dec 21, 2020) APPSEC - Extended list of supported endpoints from APPSEC API:
+## 1.1.0 (Jan 4, 2021) APPSEC - Extended list of supported endpoints from APPSEC API:
   * DDoS Protection -- Rate Policy & Action
   * DDoS Protection -- Slowpost setting & Action
   * Application Layer Protection -- Rule Action, Exceptions & Conditions
