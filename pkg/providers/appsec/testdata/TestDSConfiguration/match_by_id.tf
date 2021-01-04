@@ -19,6 +19,4 @@ output "configsedgeconfiglist" {
   value = data.akamai_appsec_configuration.test.output_text
 }
 
-output "configsedgeconfigversion" {
-  value = data.akamai_appsec_configuration.test.version
-}
+

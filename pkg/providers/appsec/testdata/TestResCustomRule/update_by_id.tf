@@ -7,7 +7,7 @@ provider "akamai" {
 resource "akamai_appsec_custom_rule" "test" {
     config_id = 43253
     //rules =  file("${path.module}/custom_rules.json")
-    rules = <<-EOF
+    custom_rule = <<-EOF
 {
     "name": "Rule Test New Updated",
     "description": "Can I create all conditions?",

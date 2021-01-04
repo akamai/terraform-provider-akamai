@@ -7,7 +7,7 @@ provider "akamai" {
 resource "akamai_appsec_match_target" "test" {
     config_id = 43253
     version = 15
-    json = <<-EOF
+    match_target = <<-EOF
    {
     "type": "website",
     "configId": 43253,

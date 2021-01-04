@@ -1,0 +1,19 @@
+{
+    "ratePolicyActions": [
+        {
+            "id": 102718,
+            "ipv4Action": "alert",
+            "ipv6Action": "none"
+        },
+        {
+            "id": 102719,
+            "ipv4Action": "deny",
+            "ipv6Action": "deny"
+        },
+        {
+            "id": 102720,
+            "ipv4Action": "alert",
+            "ipv6Action": "deny"
+        }
+    ]
+}

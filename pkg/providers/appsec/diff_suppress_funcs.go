@@ -9,67 +9,39 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-//suppressJsonProvided to handle when json supplied vs HCL values
-func suppressJsonProvidedSimple(_, old, new string, d *schema.ResourceData) bool {
+func suppressEquivalentJSONDiffs(k, old, new string, d *schema.ResourceData) bool {
 
-	json := d.Get("json").(string)
-	if json != "" {
-		if old == "" && new == "" {
-			return true
-		}
-		return true
-	}
-
-	return false
+	return compareMatchTargetsJSON(old, new)
 }
 
-func suppressJsonProvided(k, old, new string, d *schema.ResourceData) bool {
-	json := d.Get("json").(string)
-	if json != "" {
+func suppressEquivalentJSONDiffsConditionException(k, old, new string, d *schema.ResourceData) bool {
+	return compareConditionExceptionJSON(old, new)
 
-		if k == "json" {
+}
 
-			return compareMatchTargetsJSON(old, new)
-
-		}
-
-		if k == "match_target_id" {
-			return true
-		}
-
-		if old == "" && new == "" {
-
-			return true
-		}
-
-		if old == new {
-			return true
-		}
-
-		if new == "" {
-			return false
-		}
-	} else {
-		if k == "json" {
-			return true
-		}
-	}
-
+func compareConditionExceptionJSON(old, new string) bool {
+	var oldJSON, newJSON appsec.UpdateRuleConditionExceptionResponse
 	if old == new {
 		return true
 	}
-	return false
+	if err := json.Unmarshal([]byte(old), &oldJSON); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(new), &newJSON); err != nil {
+		return false
+	}
+	diff := compareConditionException(&oldJSON, &newJSON)
+	return diff
 }
 
-func suppressEquivalentJSONDiffs(k, old, new string, d *schema.ResourceData) bool {
-	if new == "" {
-		jsonfromschema, err := matchTargetAsJSONDString(d)
-		if err == nil {
-			return compareMatchTargetsJSON(old, jsonfromschema)
-		}
+func compareConditionException(old, new *appsec.UpdateRuleConditionExceptionResponse) bool {
+	if len(old.Conditions) != len(new.Conditions) ||
+
+		len(old.Exception.HeaderCookieOrParamValues) != len(new.Exception.HeaderCookieOrParamValues) {
+		return false
 	}
 
-	return compareMatchTargetsJSON(old, new)
+	return reflect.DeepEqual(old, new)
 }
 
 func compareMatchTargetsJSON(old, new string) bool {

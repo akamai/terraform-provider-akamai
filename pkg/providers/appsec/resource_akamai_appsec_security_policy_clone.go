@@ -3,8 +3,9 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -30,19 +31,19 @@ func resourceSecurityPolicyClone() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"create_from_security_policy": {
+			"create_from_security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"policy_name": {
+			"security_policy_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"policy_prefix": {
+			"security_policy_prefix": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"policy_id": &schema.Schema{
+			"security_policy_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Policy ID for clone",
@@ -56,7 +57,7 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCloneCreate")
 
-	createSecurityPolicyClone := v2.CreateSecurityPolicyCloneRequest{}
+	createSecurityPolicyClone := appsec.CreateSecurityPolicyCloneRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -70,19 +71,19 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 	}
 	createSecurityPolicyClone.Version = version
 
-	createfromsecuritypolicy, err := tools.GetStringValue("create_from_security_policy", d)
+	createfromsecuritypolicy, err := tools.GetStringValue("create_from_security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	createSecurityPolicyClone.CreateFromSecurityPolicy = createfromsecuritypolicy
 
-	policyname, err := tools.GetStringValue("policy_name", d)
+	policyname, err := tools.GetStringValue("security_policy_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	createSecurityPolicyClone.PolicyName = policyname
 
-	policyprefix, err := tools.GetStringValue("policy_prefix", d)
+	policyprefix, err := tools.GetStringValue("security_policy_prefix", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -94,9 +95,18 @@ func resourceSecurityPolicyCloneCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	d.Set("policy_id", spcr.PolicyID)
-	d.Set("policy_name", spcr.PolicyName)
-	d.Set("policy_prefix", createSecurityPolicyClone.PolicyPrefix)
+	if err := d.Set("security_policy_id", spcr.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_name", spcr.PolicyName); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_prefix", createSecurityPolicyClone.PolicyPrefix); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(spcr.PolicyID)
 
 	return resourceSecurityPolicyCloneRead(ctx, d, m)
@@ -107,7 +117,7 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCloneRead")
 
-	getSecurityPolicyClone := v2.GetSecurityPolicyCloneRequest{}
+	getSecurityPolicyClone := appsec.GetSecurityPolicyCloneRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -129,15 +139,49 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	d.Set("policy_name", securitypolicyclone.PolicyName)
-	d.Set("policy_id", securitypolicyclone.PolicyID)
+	if err := d.Set("security_policy_name", securitypolicyclone.PolicyName); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", securitypolicyclone.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(securitypolicyclone.PolicyID)
 
 	return nil
 }
 
 func resourceSecurityPolicyCloneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSecurityPolicyCloneRead")
+
+	removeSecurityPolicyClone := appsec.RemoveSecurityPolicyRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSecurityPolicyClone.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSecurityPolicyClone.Version = version
+
+	removeSecurityPolicyClone.PolicyID = d.Id()
+
+	_, errd := client.RemoveSecurityPolicy(ctx, removeSecurityPolicyClone)
+	if errd != nil {
+		logger.Errorf("calling 'removeSecurityPolicyClone': %s", errd.Error())
+		return diag.FromErr(errd)
+	}
+
+	d.SetId("")
+
+	return nil
 }
 
 func resourceSecurityPolicyCloneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

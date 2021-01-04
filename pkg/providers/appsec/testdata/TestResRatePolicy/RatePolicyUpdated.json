@@ -1,0 +1,70 @@
+{
+    "additionalMatchOptions": [
+        {
+            "positiveMatch": true,
+            "type": "IpAddressCondition",
+            "values": [
+                "198.129.76.39"
+            ]
+        },
+        {
+            "positiveMatch": true,
+            "type": "RequestMethodCondition",
+            "values": [
+                "GET"
+            ]
+        }
+    ],
+    "allTraffic": false,
+    "averageThreshold": 5,
+    "burstThreshold": 10,
+    "clientIdentifier": "ip",
+    "createDate": "2020-10-29T04:00:22Z",
+    "description": "AFW Test Extensions",
+    "fileExtensions": {
+        "positiveMatch": false,
+        "values": [
+            "3g2",
+            "3gp",
+            "aif",
+            "aiff",
+            "au",
+            "avi",
+            "bin",
+            "bmp",
+            "cab"
+        ]
+    },
+    "id": 134644,
+    "policyId": "AAAA_81230",
+    "configId": 43253,
+    "configVersion": 7,
+    "matchType": "path",
+    "name": "Test_Paths 2",
+    "path": {
+        "positiveMatch": true,
+        "values": [
+            "/login/",
+            "/path/"
+        ]
+    },
+    "pathMatchType": "Custom",
+    "pathUriPositiveMatch": true,
+    "queryParameters": [
+        {
+            "name": "productId",
+            "positiveMatch": true,
+            "valueInRange": false,
+            "values": [
+                "BUB_12",
+                "SUSH_11"
+            ]
+        }
+    ],
+    "requestType": "ClientRequest",
+    "sameActionOnIpv6": true,
+    "type": "WAF",
+    "updateDate": "2020-10-29T04:00:22Z",
+    "useXForwardForHeaders": true,
+    "used": false
+}

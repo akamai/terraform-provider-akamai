@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -91,11 +91,11 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 
-	createActivations := v2.CreateActivationsRequest{}
+	createActivations := appsec.CreateActivationsRequest{}
 
-	createActivationsreq := v2.GetActivationsRequest{}
+	createActivationsreq := appsec.GetActivationsRequest{}
 
-	ap := v2.ActivationConfigs{}
+	ap := appsec.ActivationConfigs{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -126,11 +126,14 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	d.SetId(strconv.Itoa(postresp.ActivationID))
-	d.Set("status", string(postresp.Status))
+
+	if err := d.Set("status", postresp.Status); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	createActivationsreq.ActivationID = postresp.ActivationID
 	activation, err := lookupActivation(ctx, client, createActivationsreq)
-	for activation.Status != v2.StatusActive {
+	for activation.Status != appsec.StatusActive {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, createActivationsreq)
@@ -163,16 +166,21 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 
-	removeActivations := v2.RemoveActivationsRequest{}
-	createActivationsreq := v2.GetActivationsRequest{}
+	removeActivations := appsec.RemoveActivationsRequest{}
+	createActivationsreq := appsec.GetActivationsRequest{}
 
 	if d.Id() == "" {
 		return nil
 	}
 
-	removeActivations.ActivationID, _ = strconv.Atoi(d.Id())
-	//postpayload := appsec.NewActivationsPost()
-	ap := v2.ActivationConfigs{}
+	ActivationID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(err)
+	}
+	removeActivations.ActivationID = ActivationID
+
+	ap := appsec.ActivationConfigs{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -206,11 +214,15 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	d.SetId(strconv.Itoa(postresp.ActivationID))
-	d.Set("status", string(postresp.Status))
+
+	if err := d.Set("status", postresp.Status); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	createActivationsreq.ActivationID = postresp.ActivationID
 
 	activation, err := lookupActivation(ctx, client, createActivationsreq)
-	for activation.Status != v2.StatusDeactivated {
+	for activation.Status != appsec.StatusDeactivated {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, createActivationsreq)
@@ -225,7 +237,9 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		}
 	}
 
-	d.Set("status", string(activation.Status))
+	if err := d.Set("status", activation.Status); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	d.SetId("")
 
@@ -237,9 +251,14 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
 
-	getActivations := v2.GetActivationsRequest{}
+	getActivations := appsec.GetActivationsRequest{}
 
-	getActivations.ActivationID, _ = strconv.Atoi(d.Id())
+	activationID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	getActivations.ActivationID = activationID
 
 	activations, err := client.GetActivations(ctx, getActivations)
 	if err != nil {
@@ -247,22 +266,21 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	d.Set("status", activations.Status)
+	if err := d.Set("status", activations.Status); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(strconv.Itoa(activations.ActivationID))
 
 	return nil
 }
 
-func lookupActivation(ctx context.Context, client v2.APPSEC, query v2.GetActivationsRequest) (*v2.GetActivationsResponse, error) {
+func lookupActivation(ctx context.Context, client appsec.APPSEC, query appsec.GetActivationsRequest) (*appsec.GetActivationsResponse, error) {
 	activations, err := client.GetActivations(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	// There is an activation in progress, if it's for the same version/network/type we can re-use it
-	//if activations.Action == query.activationType && activations.Network == query.network {
 	return activations, nil
-	//}
 
 	return nil, nil
 }

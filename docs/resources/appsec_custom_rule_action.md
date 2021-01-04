@@ -47,10 +47,7 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-* `custom_rule_action` - (Required) The action to be taken when the custom rule is invoked. Must be one of the following:
-  * alert
-  * deny
-  * none
+* `custom_rule_action` - (Required) The action to take when the custom rule is invoked: `alert` to record the trigger event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
 
 * `policy_id` - (Required) The 
 

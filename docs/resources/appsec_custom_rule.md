@@ -1,9 +1,9 @@
 ---
 layout: "akamai"
-page_title: "Akamai: CustomRule"
+page_title: "Akamai: Custom Rule"
 subcategory: "Application Security"
 description: |-
-  CustomRule
+  Custom Rule
 ---
 
 # akamai_appsec_custom_rule
@@ -30,7 +30,7 @@ data "local_file" "rules" {
 
 resource "akamai_appsec_custom_rule" "custom_rule" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  rules = data.local_file.rules.content
+  custom_rule = data.local_file.rules.content
 }
 
 output "custom_rule_rule_id" {
@@ -42,7 +42,7 @@ output "custom_rule_rule_id" {
 
 * `config_id` - (Required) The ID of the security configuration to use.
 
-* `rules` - (Required) The name of a JSON file containing a custom rule definition ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postcustomrules)).
+* `custom_rule` - (Required) The name of a JSON file containing a custom rule definition ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postcustomrules)).
 
 
 ## Attribute Reference

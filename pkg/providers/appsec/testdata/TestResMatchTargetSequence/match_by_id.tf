@@ -7,8 +7,7 @@ provider "akamai" {
 resource "akamai_appsec_match_target_sequence" "test" {
     config_id = 43253
     version = 7
-    type = "website"
-    json = <<-EOF
+    match_target_sequence = <<-EOF
     {
     "type": "website",
     "targetSequence": [
@@ -23,8 +22,5 @@ resource "akamai_appsec_match_target_sequence" "test" {
     ]
 }
 EOF
- /*   sequence_map = {
-      2971336 = 1
-      2052813 = 2
-    }  */
+
 }

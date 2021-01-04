@@ -3,14 +3,14 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -35,15 +35,11 @@ func resourceCustomRuleAction() *schema.Resource {
 				Required: true,
 			},
 			"custom_rule_action": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					Alert,
-					Deny,
-					None,
-				}, false),
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: ValidateActions,
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -60,7 +56,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
 
-	getCustomRuleAction := v2.GetCustomRuleActionRequest{}
+	getCustomRuleAction := appsec.GetCustomRuleActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -74,7 +70,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	getCustomRuleAction.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -93,7 +89,10 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	logger.Warnf("calling 'getCustomRuleAction': %s", customruleaction)
 
-	d.Set("custom_rule_id", ruleid)
+	if err := d.Set("custom_rule_id", ruleid); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(ruleid))
 
 	return nil
@@ -104,7 +103,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRemove")
 
-	updateCustomRuleAction := v2.UpdateCustomRuleActionRequest{}
+	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -118,7 +117,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	}
 	updateCustomRuleAction.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -148,7 +147,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
 
-	updateCustomRuleAction := v2.UpdateCustomRuleActionRequest{}
+	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -162,7 +161,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 	updateCustomRuleAction.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -177,13 +176,13 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	customruleaction, err := tools.GetStringValue("custom_rule_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
-		return diag.FromErr(err)
 	}
 	updateCustomRuleAction.Action = customruleaction
 
 	_, erru := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if erru != nil {
 		logger.Errorf("calling 'updateCustomRuleAction': %s", erru.Error())
+		return diag.FromErr(erru)
 	}
 
 	return resourceCustomRuleActionRead(ctx, d, m)
