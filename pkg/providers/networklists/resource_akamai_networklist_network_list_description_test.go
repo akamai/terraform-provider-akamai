@@ -23,12 +23,12 @@ func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 
 		client.On("GetNetworkListDescription",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.GetNetworkListDescriptionRequest{UniqueID: "79538_MARTINNETWORKLIST", Name: "Test"},
+			networklists.GetNetworkListDescriptionRequest{UniqueID: "79538_MARTINNETWORKLIST", Name: "Martin Network List"},
 		).Return(&cr, nil)
 
 		client.On("UpdateNetworkListDescription",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.UpdateNetworkListDescriptionRequest{UniqueID: "79538_MARTINNETWORKLIST", Name: "Test", Description: "Description"},
+			networklists.UpdateNetworkListDescriptionRequest{UniqueID: "79538_MARTINNETWORKLIST", Name: "Martin Network List", Description: "Notes about this network list"},
 		).Return(&cu, nil)
 
 		useClient(client, func() {

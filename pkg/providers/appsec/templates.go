@@ -21,8 +21,10 @@ type OutputTemplate struct {
 
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
+		//	fmt.Printf("%s is in the OutputTemplate >> %+v\n", key, f)
 		return f, nil
 	} else {
+		//	fmt.Printf("%s is NOT in the OutputTemplate!\n", key)
 		return nil, fmt.Errorf("Error not found")
 	}
 }
@@ -90,9 +92,19 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 }
 
 func InitTemplates(otm map[string]*OutputTemplate) {
+	otm["advancedSettingsLoggingDS"] = &OutputTemplate{TemplateName: "advancedSettingsLoggingDS", TableTitle: "Allow Sampling|Custom Headers", TemplateType: "TABULAR", TemplateString: "{{.AllowSampling}}|{{.Cookies.Type}}"}
+	otm["advancedSettingsPolicyLoggingDS"] = &OutputTemplate{TemplateName: "advancedSettingsPolicyLoggingDS", TableTitle: "Allow Sampling|Custom Headers", TemplateType: "TABULAR", TemplateString: "{{.AllowSampling}}|{{.Cookies.Type}}"}
+	otm["advancedSettingsPrefetchDS"] = &OutputTemplate{TemplateName: "advancedSettingsPrefetchDS", TableTitle: "Enable App Layer|All Extension|Enable Rate Controls|Extensions", TemplateType: "TABULAR", TemplateString: "{{.AllExtensions}}|{{.EnableAppLayer}}|{{.EnableRateControls}}|{{range $index, $element := .Extensions}}{{.}} {{end}}"}
+
+	//Extensions
+	otm["apiEndpointsDS"] = &OutputTemplate{TemplateName: "apiEndpointsDS", TableTitle: "ID|Endpoint Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .APIEndpoints}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
+	otm["policyApiEndpointsDS"] = &OutputTemplate{TemplateName: "policyApiEndpointsDS", TableTitle: "ID|Endpoint Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .APIEndpoints}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
+	otm["apiHostnameCoverageDS"] = &OutputTemplate{TemplateName: "apiHostnameCoverageDS", TableTitle: "Config ID|Config Name|Version|Status|Has Match Target|Hostname", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .HostnameCoverage}}{{if $index}},{{end}}{{.Configuration.ID}}|{{.Configuration.Name}}|{{.Configuration.Version}}|{{.Status}}|{{.HasMatchTarget}}|{{.Hostname}}{{end}}"}
 
 	otm["configuration"] = &OutputTemplate{TemplateName: "Configurations", TableTitle: "Config_id|Name|Latest_version|Version_active_in_staging|Version_active_in_production", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Configurations}}{{if $index}},{{end}}{{.ID}}|{{.Name}}|{{.LatestVersion}}|{{.StagingVersion}}|{{.ProductionVersion}}{{end}}"}
 	otm["configurationVersion"] = &OutputTemplate{TemplateName: "ConfigurationVersion", TableTitle: "Version Number|Staging Status|Production Status", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .VersionList}}{{if $index}},{{end}}{{.Version}}|{{.Staging.Status}}|{{.Production.Status}}{{end}}"}
+	otm["contractsgroupsDS"] = &OutputTemplate{TemplateName: "contractsgroupsDS", TableTitle: "Contract|Groupid|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .ContractGroups}}{{if $index}},{{end}}{{.ContractID}}|{{.DisplayName}}|{{.GroupID}}{{end}}"}
+	otm["failoverHostnamesDS"] = &OutputTemplate{TemplateName: "failoverHostnamesDS", TableTitle: "Config ID|Config Version", TemplateType: "TABULAR", TemplateString: "{{.ConfigID}}|{{.ConfigVersion}}"}
 
 	otm["penaltyBoxDS"] = &OutputTemplate{TemplateName: "penaltyBoxDS", TableTitle: "PenaltyBoxProtection|Action", TemplateType: "TABULAR", TemplateString: "{{.PenaltyBoxProtection}}|{{.Action}}"}
 
@@ -101,6 +113,9 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["selectedHosts"] = &OutputTemplate{TemplateName: "selectedHosts", TableTitle: "Hostnames", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .SelectedHosts}}{{if $index}},{{end}}{{.}}{{end}}"}
 	otm["selectedHostsDS"] = &OutputTemplate{TemplateName: "selectedHosts", TableTitle: "Hostnames", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .HostnameList}}{{if $index}},{{end}}{{.Hostname}}{{end}}"}
 	otm["selectedHosts.tf"] = &OutputTemplate{TemplateName: "selectedHosts.tf", TableTitle: "Hostname", TemplateType: "TERRAFORM", TemplateString: "\nresource \"akamai_appsec_selected_hostnames\" \"appsecselectedhostnames\" { \n config_id = {{.ConfigID}}\n version = {{.Version}}\n hostnames = [{{  range $index, $element := .SelectedHosts }}{{if $index}},{{end}}{{quote .}}{{end}}] \n }"}
+	otm["siemsettingsDS"] = &OutputTemplate{TemplateName: "siemsettingsDS", TableTitle: "Enable For All Policies|Enable Siem|Enabled Botman Siem Events|Siem Definition ID|FirewallPolicyIds", TemplateType: "TABULAR", TemplateString: "{{.EnableForAllPolicies}}|{{.EnableSiem}}|{{.EnabledBotmanSiemEvents}}|{{.SiemDefinitionID}}|{{.FirewallPolicyIds}}"}
+	otm["siemDefinitionsDS"] = &OutputTemplate{TemplateName: "siemDefinitionsDS", TableTitle: "ID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .SiemDefinitions}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
+
 	otm["ratePolicies"] = &OutputTemplate{TemplateName: "ratePolicies", TableTitle: "ID|Policy Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .RatePolicies}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["matchTargets"] = &OutputTemplate{TemplateName: "matchTargets", TableTitle: "ID|PolicyID", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .MatchTargets.WebsiteTargets}}{{if $index}},{{end}}{{.ID}}|{{.SecurityPolicy.PolicyID}}{{end}}"}
 	otm["matchTargetDS"] = &OutputTemplate{TemplateName: "matchTarget", TableTitle: "ID|PolicyID", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .MatchTargets.WebsiteTargets}}{{if $index}},{{end}}{{.TargetID}}|{{.SecurityPolicy.PolicyID}}{{end}}"}
@@ -111,6 +126,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["reputationProfilesActions"] = &OutputTemplate{TemplateName: "reputationProfilesActions", TableTitle: "ID|Action", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .ReputationProfiles}}{{if $index}},{{end}}{{.ID}}| {{.Action}}{{end}}"}
 
 	otm["customRules"] = &OutputTemplate{TemplateName: "customRules", TableTitle: "ID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .CustomRules}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
+	otm["customDenyDS"] = &OutputTemplate{TemplateName: "customDenyDS", TableTitle: "ID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .CustomDenyList}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["customRuleActions"] = &OutputTemplate{TemplateName: "customRuleActions", TableTitle: "ID|Action", TemplateType: "TABULAR", TemplateString: "{{range .SecurityPolicies}}{{range $index, $element := .CustomRuleActions}}{{if $index}},{{end}}{{.ID}}|{{.Action}}{{end}}{{end}}"}
 	otm["customRuleAction"] = &OutputTemplate{TemplateName: "customRuleAction", TableTitle: "ID|Name|Action", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .}}{{if $index}},{{end}}{{.RuleID}}|{{.Name}} |{{.Action}}{{end}}"}
 	otm["ratePolicyActions"] = &OutputTemplate{TemplateName: "ratePolicyActions", TableTitle: "ID|Ipv4Action|Ipv6Action", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .RatePolicyActions}}{{if $index}},{{end}}{{.ID}}| {{.Ipv4Action}}|{{.Ipv6Action}}{{end}}"}
