@@ -131,6 +131,36 @@ func (p *mockappsec) GetApiEndpoints(ctx context.Context, params appsec.GetApiEn
 	return args.Get(0).(*appsec.GetApiEndpointsResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetApiHostnameCoverage(ctx context.Context, params appsec.GetApiHostnameCoverageRequest) (*appsec.GetApiHostnameCoverageResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiHostnameCoverageResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetApiHostnameCoverageOverlapping(ctx context.Context, params appsec.GetApiHostnameCoverageOverlappingRequest) (*appsec.GetApiHostnameCoverageOverlappingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiHostnameCoverageOverlappingResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetApiHostnameCoverageMatchTargets(ctx context.Context, params appsec.GetApiHostnameCoverageMatchTargetsRequest) (*appsec.GetApiHostnameCoverageMatchTargetsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiHostnameCoverageMatchTargetsResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetApiRequestConstraints(ctx context.Context, params appsec.GetApiRequestConstraintsRequest) (*appsec.GetApiRequestConstraintsResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -846,6 +876,66 @@ func (p *mockappsec) UpdateWAFMode(ctx context.Context, params appsec.UpdateWAFM
 	}
 
 	return args.Get(0).(*appsec.UpdateWAFModeResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalProtectHosts(ctx context.Context, params appsec.GetEvalProtectHostsRequest) (*appsec.GetEvalProtectHostsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetEvalProtectHostsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateEvalProtectHost(ctx context.Context, params appsec.UpdateEvalProtectHostRequest) (*appsec.UpdateEvalProtectHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateEvalProtectHostResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateEvalHost(ctx context.Context, params appsec.UpdateEvalHostRequest) (*appsec.UpdateEvalHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateEvalHostResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalProtectHost(ctx context.Context, params appsec.GetEvalProtectHostRequest) (*appsec.GetEvalProtectHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetEvalProtectHostResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalHosts(ctx context.Context, params appsec.GetEvalHostsRequest) (*appsec.GetEvalHostsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetEvalHostsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalHost(ctx context.Context, params appsec.GetEvalHostRequest) (*appsec.GetEvalHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetEvalHostResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetEval(ctx context.Context, params appsec.GetEvalRequest) (*appsec.GetEvalResponse, error) {

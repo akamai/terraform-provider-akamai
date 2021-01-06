@@ -9,17 +9,17 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiApiEndpoints_data_basic(t *testing.T) {
-	t.Run("match by ApiEndpoints ID", func(t *testing.T) {
+func TestAccAkamaiEvalHostnames_data_basic(t *testing.T) {
+	t.Run("match by EvalHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetApiEndpointsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSApiEndpoints/ApiEndpoints.json"))
+		cv := appsec.GetEvalHostsResponse{}
+		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSEvalHostnames/EvalHostnames.json"))
 		json.Unmarshal([]byte(expectJS), &cv)
 
-		client.On("GetApiEndpoints",
+		client.On("GetEvalHostnames",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetApiEndpointsRequest{ConfigID: 43253, Version: 7},
+			appsec.GetEvalHostsRequest{ConfigID: 43253, Version: 7},
 		).Return(&cv, nil)
 
 		useClient(client, func() {
@@ -28,9 +28,9 @@ func TestAccAkamaiApiEndpoints_data_basic(t *testing.T) {
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSApiEndpoints/match_by_id.tf"),
+						Config: loadFixtureString("testdata/TestDSEvalHostnames/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_api_endpoints.test", "id", "296100"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_eval_hostnames.test", "id", "43253"),
 						),
 					},
 				},

@@ -1,0 +1,9 @@
+[
+    {
+        "type": "https://problems.luna.akamaiapis.net/appsec/error-types/INVALID-INPUT-ERROR",
+        "status": 400,
+        "title": "Invalid Input Error",
+        "detail": "Config(43253) is not of type WAP (Web Application Protector).",
+        "instance": "https://problems.luna.akamaiapis.net/appsec/error-instances/b6a06093-2ea0-456a-8056-7d0edeb3c311"
+    }
+]

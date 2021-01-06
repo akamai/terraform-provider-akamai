@@ -2,12 +2,8 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-
-
-
-data "akamai_appsec_api_endpoints" "test" {
+data "akamai_appsec_eval_hostnames" "eval_hostnames" {
   config_id = 43253
     version = 7
-
- // name = var.api_endpoint_name
 }
+
