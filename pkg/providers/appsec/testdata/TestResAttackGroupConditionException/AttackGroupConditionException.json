@@ -1,0 +1,12 @@
+{
+    "conditions": [],
+    "exception": {
+        "headerCookieOrParamValues": [
+            "abc"
+        ],
+        "specificHeaderCookieOrParamPrefix": {
+            "prefix": "a*",
+            "selector": "REQUEST_COOKIES"
+        }
+    }
+}

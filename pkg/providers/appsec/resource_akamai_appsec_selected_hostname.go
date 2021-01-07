@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -59,12 +59,22 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameRead")
 
-	getSelectedHostname := v2.GetSelectedHostnameRequest{}
+	getSelectedHostname := appsec.GetSelectedHostnameRequest{}
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
-		getSelectedHostname.ConfigID, _ = strconv.Atoi(s[0])
-		getSelectedHostname.Version, _ = strconv.Atoi(s[1])
+
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSelectedHostname.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSelectedHostname.Version = version
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -91,9 +101,18 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		newhdata = append(newhdata, hosts.Hostname)
 	}
 
-	d.Set("hostnames", newhdata)
-	d.Set("config_id", getSelectedHostname.ConfigID)
-	d.Set("version", getSelectedHostname.Version)
+	if err := d.Set("hostnames", newhdata); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("config_id", getSelectedHostname.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getSelectedHostname.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d", getSelectedHostname.ConfigID, getSelectedHostname.Version))
 
 	return nil
@@ -109,7 +128,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameUpdate")
 
-	updateSelectedHostname := v2.UpdateSelectedHostnameRequest{}
+	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -125,17 +144,17 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 
 	mode := d.Get("mode").(string)
 
-	hn := v2.GetSelectedHostnamesRequest{}
+	hn := appsec.GetSelectedHostnamesRequest{}
 
 	hostnamelist := d.Get("hostnames").([]interface{})
 
 	for _, h := range hostnamelist {
-		h1 := v2.Hostname{}
+		h1 := appsec.Hostname{}
 		h1.Hostname = h.(string)
 		hn.HostnameList = append(hn.HostnameList, h1)
 	}
 
-	getSelectedHostnames := v2.GetSelectedHostnamesRequest{}
+	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
 	getSelectedHostnames.ConfigID = configid
 	getSelectedHostnames.Version = version
 
@@ -157,7 +176,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	case Append:
 		for _, h := range selectedhostnames.HostnameList {
-			m := v2.Hostname{}
+			m := appsec.Hostname{}
 			m.Hostname = h.Hostname
 			hn.HostnameList = append(hn.HostnameList, m)
 		}
@@ -179,7 +198,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 //RemoveIndex reemove host from list
-func RemoveIndex(hl []v2.Hostname, index int) []v2.Hostname {
+func RemoveIndex(hl []appsec.Hostname, index int) []appsec.Hostname {
 	return append(hl[:index], hl[index+1:]...)
 }
 

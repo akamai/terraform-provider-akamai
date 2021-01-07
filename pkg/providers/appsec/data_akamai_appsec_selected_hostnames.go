@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -52,12 +52,22 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnamesRead")
 
-	getSelectedHostnames := v2.GetSelectedHostnamesRequest{}
+	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
-		getSelectedHostnames.ConfigID, _ = strconv.Atoi(s[0])
-		getSelectedHostnames.Version, _ = strconv.Atoi(s[1])
+
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSelectedHostnames.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSelectedHostnames.Version = version
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -83,7 +93,9 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	d.Set("hostnames_json", string(jsonBody))
+	if err := d.Set("hostnames_json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	newhdata := make([]string, 0, len(selectedhostnames.HostnameList))
 
@@ -91,16 +103,26 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 		newhdata = append(newhdata, hosts.Hostname)
 	}
 
-	d.Set("hostnames", newhdata)
-	d.Set("config_id", getSelectedHostnames.ConfigID)
-	d.Set("version", getSelectedHostnames.Version)
+	if err := d.Set("hostnames", newhdata); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("config_id", getSelectedHostnames.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getSelectedHostnames.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "selectedHostsDS", selectedhostnames)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	d.SetId(fmt.Sprintf("%d:%d", getSelectedHostnames.ConfigID, getSelectedHostnames.Version))

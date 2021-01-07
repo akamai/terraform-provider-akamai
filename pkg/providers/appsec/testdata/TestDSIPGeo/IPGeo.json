@@ -1,0 +1,22 @@
+{
+    "block": "blockSpecificIPGeo",
+    "geoControls": {
+        "blockedIPNetworkLists": {
+            "networkList": [
+                "72138_TEST1"
+            ]
+        }
+    },
+    "ipControls": {
+        "allowedIPNetworkLists": {
+            "networkList": [
+                "56921_TEST"
+            ]
+        },
+        "blockedIPNetworkLists": {
+            "networkList": [
+                "53712_TESTLIST123"
+            ]
+        }
+    }
+}

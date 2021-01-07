@@ -159,4 +159,53 @@ resource "akamai_appsec_activations" "activation" {
 Once you save the file and run `terraform apply`, Terraform will activate the security configuration version in staging. When the activation is complete, an email will be sent to any addresses specified in the `notification_emails` list.
 
 
+## Beta Features
+
+Note that the following data sources and resources are currently in Beta, and their behavior or documentation may change in a future release:
+
+### Data Sources
+  * akamai_appsec_eval
+  * akamai_appsec_eval_rule_actions
+  * akamai_appsec_eval_rule_condition_exception
+  * akamai_appsec_ip_geo
+  * akamai_appsec_rule_actions
+  * akamai_appsec_rule_condition_exception
+  * akamai_appsec_penalty_box
+  * akamai_appsec_security_policy_protections
+  * akamai_appsec_rate_policies
+  * akamai_appsec_rate_policy_actions
+  * akamai_appsec_rate_protections
+  * akamai_appsec_reputation_protections
+  * akamai_appsec_reputation_profiles
+  * akamai_appsec_reputation_profile_actions
+  * akamai_appsec_rule_upgrade_details
+  * akamai_appsec_slow_post
+  * akamai_appsec_slowpost_protections
+  * akamai_appsec_attack_group_actions
+  * akamai_appsec_waf_mode
+  * akamai_appsec_waf_protection
+  * akamai_appsec_attack_group_condition_exception
+
+### Resources
+  * akamai_appsec_eval
+  * akamai_appsec_eval_rule_action
+  * akamai_appsec_eval_rule_condition_exception
+  * akamai_appsec_ip_geo
+  * akamai_appsec_rule_condition_exception
+  * akamai_appsec_rule_action
+  * akamai_appsec_penalty_box
+  * akamai_appsec_security_policy_protections
+  * akamai_appsec_rate_policy
+  * akamai_appsec_rate_policy_action
+  * akamai_appsec_rate_protection
+  * akamai_appsec_reputation_protection
+  * akamai_appsec_reputation_profile
+  * akamai_appsec_reputation_profile_action
+  * akamai_appsec_rule_upgrade
+  * akamai_appsec_slow_post
+  * akamai_appsec_slowpost_protection
+  * akamai_appsec_attack_group_action
+  * akamai_appsec_waf_mode
+  * akamai_appsec_waf_protection
+  * akamai_appsec_attack_group_condition_exception
 

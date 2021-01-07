@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -53,7 +53,7 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
 
-	getSecurityPolicy := v2.GetSecurityPoliciesRequest{}
+	getSecurityPolicy := appsec.GetSecurityPoliciesRequest{}
 
 	configName := d.Get("name").(string)
 
@@ -80,11 +80,15 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	for _, configval := range securitypolicy.Policies {
 		secpolicylist = append(secpolicylist, configval.PolicyID)
 		if configval.PolicyName == configName {
-			d.Set("policy_id", configval.PolicyID)
+			if err := d.Set("policy_id", configval.PolicyID); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
 		}
 	}
 
-	d.Set("policy_list", secpolicylist)
+	if err := d.Set("policy_list", secpolicylist); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
@@ -92,9 +96,15 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	outputtext, err := RenderTemplates(ots, "securityPoliciesDS", securitypolicy)
 
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
-
+	if len(securitypolicy.Policies) > 0 {
+		if err := d.Set("policy_id", securitypolicy.Policies[0].PolicyID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+	}
 	d.SetId(fmt.Sprintf("%d:%d", getSecurityPolicy.ConfigID, getSecurityPolicy.Version))
 
 	return nil

@@ -189,7 +189,8 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				return nil, diag.Errorf("Akamai EdgeGrid configuration was not specified. Specify the configuration using system environment variables or the location and file name containing the edgerc configuration. Default location the provider checks for is the current user’s home directory. Default configuration file name the provider checks for is .edgerc.")
 			}
 
-			userAgent := instance.UserAgent(ProviderName, instance.TerraformVersion)
+			// PROVIDER_VERSION env value must be updated in docker file, for every new release.
+			userAgent := instance.UserAgent(ProviderName, os.Getenv("PROVIDER_VERSION"))
 
 			sess, err := session.New(
 				session.WithSigner(edgerc),
