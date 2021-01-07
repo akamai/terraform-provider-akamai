@@ -33,10 +33,6 @@ This data source returns this attribute:
 * `groups` — A set of groups for the contract, including:
   * `group_id` - Unique identifier for each group.
   * `name` - The name you supply for the group.
-  * `time_created` - ISO 8601 timestamp indicating when the group was originally created.
-  * `created_by` - The username of the person who created the group.
-  * `time_modified` - ISO 8601 timestamp indicating when the group was last updated.
-  * `modified_by` - The username of the last person to edit the group.
   * `parent_group_id` - For nested groups, identifies the parent group to which the current group belongs.
   * `sub_groups` - Set of nested Group objects.
 

@@ -76,23 +76,3 @@ $ terraform init
 ```
 
 This command installs the latest version of the Akamai Provider and any other providers necessary, such as the local provider. To update the Akamai Provider version after a new release, simply run `terraform init` again.
-
-## Test your configuration
-
-To test your configuration, use `terraform plan`:
-
-```bash
-$ terraform plan
-```
-
-This command creates a plan for the work Terraform will do based on the configuration file. It won't make changes and is safe to run as many times as you like.
-
-## Apply changes
-
-To create a property, use this command to instruct Terraform to apply the changes outlined in the plan:
-
-```bash
-$ terraform apply
-```
-
-Once this completes, you can verify the property in [Akamai Control Center](https://control.akamai.com) or via the [Akamai CLI](https://developer.akamai.com/cli). Now, activate the property configuration on Akamai's network
