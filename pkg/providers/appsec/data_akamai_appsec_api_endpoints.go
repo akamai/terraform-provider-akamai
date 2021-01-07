@@ -27,7 +27,7 @@ func dataSourceApiEndpoints() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"name": {
+			"api_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -69,11 +69,11 @@ func dataSourceApiEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getApiEndpoints.Version = version
 
-	name, err := tools.GetStringValue("name", d)
+	apiName, err := tools.GetStringValue("api_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiEndpoints.Name = name
+	getApiEndpoints.Name = apiName
 
 	apiendpoints, err := client.GetApiEndpoints(ctx, getApiEndpoints)
 	if err != nil {
@@ -100,28 +100,20 @@ func dataSourceApiEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	var idList []int
 
-	//	d.Set("id_list", idList)
-
-	//newhdata := make([]string, 0, len(apiendpoints.APIEndpoints))
-
 	for _, ids := range apiendpoints.APIEndpoints {
-		//newhdata = append(newhdata, strconv.Itoa(ids.ID))
-		//newhdata = append(newhdata, ids.Name)
+
 		idList = append(idList, ids.ID)
 	}
-	logger.Errorf("calling 'getApiEndpoints': ARRAY INT %v", idList)
+
 	d.Set("id_list", idList)
+	// TODO errors out trying to set
 	/*if err := d.Set("id_list", idList); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}*/
 
 	if len(apiendpoints.APIEndpoints) > 0 {
-
-		//d.SetId(strconv.Itoa(getCustomDeny.ConfigID))
 		d.SetId(strconv.Itoa(apiendpoints.APIEndpoints[0].ID))
 	}
-
-	//d.SetId(strconv.Itoa(getApiEndpoints.ConfigID))
 
 	return nil
 }

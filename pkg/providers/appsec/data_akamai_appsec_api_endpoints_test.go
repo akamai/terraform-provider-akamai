@@ -30,7 +30,7 @@ func TestAccAkamaiApiEndpoints_data_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSApiEndpoints/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_api_endpoints.test", "id", "296100"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_api_endpoints.test", "id", "619183"),
 						),
 					},
 				},
