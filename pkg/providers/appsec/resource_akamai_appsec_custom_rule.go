@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -28,7 +29,7 @@ func resourceCustomRule() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"rules": {
+			"custom_rule": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsJSON,
@@ -46,7 +47,7 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleCreate")
 
-	createCustomRule := v2.CreateCustomRuleRequest{}
+	createCustomRule := appsec.CreateCustomRuleRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -54,8 +55,11 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	createCustomRule.ConfigID = configid
 
-	jsonpostpayload := d.Get("rules").(string)
-	json.Unmarshal([]byte(jsonpostpayload), &createCustomRule)
+	jsonpostpayload := d.Get("custom_rule").(string)
+
+	if err := json.Unmarshal([]byte(jsonpostpayload), &createCustomRule); err != nil {
+		return diag.FromErr(err)
+	}
 
 	customrule, err := client.CreateCustomRule(ctx, createCustomRule)
 	if err != nil {
@@ -63,7 +67,10 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	d.Set("custom_rule_id", customrule.ID)
+	if err := d.Set("custom_rule_id", customrule.ID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(customrule.ID))
 
 	return resourceCustomRuleRead(ctx, d, m)
@@ -74,7 +81,7 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleUpdate")
 
-	updateCustomRule := v2.UpdateCustomRuleRequest{}
+	updateCustomRule := appsec.UpdateCustomRuleRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -82,9 +89,18 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	updateCustomRule.ConfigID = configid
 
-	updateCustomRule.ID, _ = strconv.Atoi(d.Id())
-	jsonpostpayload := d.Get("rules").(string)
-	json.Unmarshal([]byte(jsonpostpayload), &updateCustomRule)
+	ID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	updateCustomRule.ID = ID
+
+	jsonpostpayload := d.Get("custom_rule").(string)
+
+	if err := json.Unmarshal([]byte(jsonpostpayload), &updateCustomRule); err != nil {
+		return diag.FromErr(err)
+	}
 
 	_, erru := client.UpdateCustomRule(ctx, updateCustomRule)
 	if erru != nil {
@@ -100,7 +116,7 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleRemove")
 
-	removeCustomRule := v2.RemoveCustomRuleRequest{}
+	removeCustomRule := appsec.RemoveCustomRuleRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -108,7 +124,12 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 	removeCustomRule.ConfigID = configid
 
-	removeCustomRule.ID, _ = strconv.Atoi(d.Id())
+	ID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	removeCustomRule.ID = ID
 
 	_, errd := client.RemoveCustomRule(ctx, removeCustomRule)
 	if errd != nil {
@@ -126,7 +147,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleRead")
 
-	getCustomRule := v2.GetCustomRuleRequest{}
+	getCustomRule := appsec.GetCustomRuleRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -134,7 +155,12 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	getCustomRule.ConfigID = configid
 
-	getCustomRule.ID, _ = strconv.Atoi(d.Id())
+	ID, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	getCustomRule.ID = ID
 
 	customrule, err := client.GetCustomRule(ctx, getCustomRule)
 	if err != nil {
@@ -142,7 +168,9 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	d.Set("custom_rule_id", customrule.ID)
+	if err := d.Set("custom_rule_id", customrule.ID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(strconv.Itoa(customrule.ID))
 
 	return nil

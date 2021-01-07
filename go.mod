@@ -1,7 +1,7 @@
 module github.com/akamai/terraform-provider-akamai/v2
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.3
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.4
 	github.com/allegro/bigcache v1.2.1
 	github.com/apex/log v1.9.0
 	github.com/aws/aws-sdk-go v1.30.12 // indirect
@@ -22,7 +22,7 @@ require (
 )
 
 replace (
-	// github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 => ../AkamaiOPEN-edgegrid-golang
+	//github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 => ../AkamaiOPEN-edgegrid-golang
 
 	// https://github.com/golang/lint/issues/446
 	github.com/golang/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422

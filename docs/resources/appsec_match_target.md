@@ -28,7 +28,7 @@ data "akamai_appsec_configuration" "configuration" {
 resource "akamai_appsec_match_target" "match_target" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
-  json =  file("${path.module}/match_targets.json")
+  match_target =  file("${path.module}/match_targets.json")
 }
 
 ```
@@ -41,7 +41,7 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-* `json` - (Required) The name of a JSON file containing one or more match target definitions ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postmatchtargets)).
+* `match_target` - (Required) The name of a JSON file containing one or more match target definitions ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postmatchtargets)).
 
 ## Attribute Reference
 

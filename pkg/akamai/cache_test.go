@@ -264,23 +264,23 @@ func (d *cacheSubprovider) Version() string {
 	return "0.0"
 }
 
-func (c *cacheSubprovider) Schema() map[string]*schema.Schema {
+func (d *cacheSubprovider) Schema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{}
 }
 
-func (c *cacheSubprovider) Resources() map[string]*schema.Resource {
+func (d *cacheSubprovider) Resources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cache": testResource(),
 	}
 }
 
-func (c *cacheSubprovider) DataSources() map[string]*schema.Resource {
+func (d *cacheSubprovider) DataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cache": testDatasource(),
 	}
 }
 
-func (c *cacheSubprovider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+func (d *cacheSubprovider) Configure(log log.Interface, dig *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
 
 	return nil

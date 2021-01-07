@@ -3,9 +3,10 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -34,7 +35,7 @@ func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRulesRead")
 
-	getCustomRules := v2.GetCustomRulesRequest{}
+	getCustomRules := appsec.GetCustomRulesRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -53,7 +54,9 @@ func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m in
 
 	outputtext, err := RenderTemplates(ots, "customRules", customrules)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	d.SetId(strconv.Itoa(getCustomRules.ConfigID))

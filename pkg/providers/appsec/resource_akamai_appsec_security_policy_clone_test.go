@@ -21,6 +21,11 @@ func TestAccAkamaiSecurityPolicyClone_res_basic(t *testing.T) {
 		cr := appsec.GetSecurityPolicyCloneResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicyClone/SecurityPolicyClone.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
+
+		crr := appsec.RemoveSecurityPolicyResponse{}
+		expectJSR := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicyClone/SecurityPolicyClone.json"))
+		json.Unmarshal([]byte(expectJSR), &crr)
+
 		fmt.Sprintf("TEST %v", cr)
 		client.On("GetSecurityPolicyClone",
 			mock.Anything, // ctx is irrelevant for this test
@@ -31,6 +36,11 @@ func TestAccAkamaiSecurityPolicyClone_res_basic(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.CreateSecurityPolicyCloneRequest{ConfigID: 43253, Version: 15, CreateFromSecurityPolicy: "LNPD_76189", PolicyName: "Cloned Test for Launchpad 15", PolicyPrefix: "LN"},
 		).Return(&cu, nil)
+
+		client.On("RemoveSecurityPolicy",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.RemoveSecurityPolicyRequest{ConfigID: 43253, Version: 15, PolicyID: "LNPD_76189"},
+		).Return(&crr, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

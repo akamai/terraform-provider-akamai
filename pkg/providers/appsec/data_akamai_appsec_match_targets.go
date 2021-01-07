@@ -3,9 +3,10 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -24,6 +25,10 @@ func dataSourceMatchTargets() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
+			"match_target_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -38,7 +43,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetsRead")
 
-	getMatchTargets := v2.GetMatchTargetsRequest{}
+	getMatchTargets := appsec.GetMatchTargetsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -52,6 +57,12 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getMatchTargets.ConfigVersion = version
 
+	matchtargetid, err := tools.GetIntValue("match_target_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getMatchTargets.TargetID = matchtargetid
+
 	matchtargets, err := client.GetMatchTargets(ctx, getMatchTargets)
 	if err != nil {
 		logger.Errorf("calling 'getMatchTargets': %s", err.Error())
@@ -61,9 +72,11 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "DSmatchTarget", matchtargets)
+	outputtext, err := RenderTemplates(ots, "matchTargetDS", matchtargets)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	d.SetId(strconv.Itoa(getMatchTargets.ConfigID))

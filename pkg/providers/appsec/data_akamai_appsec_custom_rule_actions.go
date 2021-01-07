@@ -3,9 +3,10 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -24,9 +25,13 @@ func dataSourceCustomRuleActions() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"custom_rule_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
 			},
 			"output_text": {
 				Type:        schema.TypeString,
@@ -42,7 +47,7 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionsRead")
 
-	getCustomRuleActions := v2.GetCustomRuleActionsRequest{}
+	getCustomRuleActions := appsec.GetCustomRuleActionsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -56,11 +61,17 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	}
 	getCustomRuleActions.Version = version
 
-	policyid, err := tools.GetStringValue("policy_id", d)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getCustomRuleActions.PolicyID = policyid
+
+	customruleid, err := tools.GetIntValue("custom_rule_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getCustomRuleActions.RuleID = customruleid
 
 	customruleactions, err := client.GetCustomRuleActions(ctx, getCustomRuleActions)
 	if err != nil {
@@ -73,10 +84,11 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 
 	outputtext, err := RenderTemplates(ots, "customRuleAction", customruleactions)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
-	//d.Set("custom_rule_id", ruleid)
 	d.SetId(strconv.Itoa(getCustomRuleActions.ConfigID))
 
 	return nil
