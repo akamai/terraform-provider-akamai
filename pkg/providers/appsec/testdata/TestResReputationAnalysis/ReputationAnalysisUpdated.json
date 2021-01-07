@@ -1,0 +1,5 @@
+
+    {
+        "forwardSharedIPToHTTPHeaderAndSIEM": true,
+        "forwardToHTTPHeader": false
+    }

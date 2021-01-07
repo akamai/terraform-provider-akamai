@@ -31,6 +31,36 @@ func (p *mockappsec) GetConfigurationVersions(ctx context.Context, params appsec
 	return args.Get(0).(*appsec.GetConfigurationVersionsResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetReputationAnalysis(ctx context.Context, params appsec.GetReputationAnalysisRequest) (*appsec.GetReputationAnalysisResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetReputationAnalysisResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateReputationAnalysis(ctx context.Context, params appsec.UpdateReputationAnalysisRequest) (*appsec.UpdateReputationAnalysisResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateReputationAnalysisResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveReputationAnalysis(ctx context.Context, params appsec.RemoveReputationAnalysisRequest) (*appsec.RemoveReputationAnalysisResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveReputationAnalysisResponse), args.Error(1)
+}
+
 func (p *mockappsec) CreateActivations(ctx context.Context, params appsec.CreateActivationsRequest, acknowledgeWarnings bool) (*appsec.CreateActivationsResponse, error) {
 	args := p.Called(ctx, params)
 
