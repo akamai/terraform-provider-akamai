@@ -31,6 +31,26 @@ func (p *mockappsec) GetConfigurationVersions(ctx context.Context, params appsec
 	return args.Get(0).(*appsec.GetConfigurationVersionsResponse), args.Error(1)
 }
 
+func (p *mockappsec) RemoveConfigurationVersionClone(ctx context.Context, params appsec.RemoveConfigurationVersionCloneRequest) (*appsec.RemoveConfigurationVersionCloneResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveConfigurationVersionCloneResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetConfigurationVersionClone(ctx context.Context, params appsec.GetConfigurationVersionCloneRequest) (*appsec.GetConfigurationVersionCloneResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetConfigurationVersionCloneResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetReputationAnalysis(ctx context.Context, params appsec.GetReputationAnalysisRequest) (*appsec.GetReputationAnalysisResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -69,6 +89,16 @@ func (p *mockappsec) CreateActivations(ctx context.Context, params appsec.Create
 	}
 
 	return args.Get(0).(*appsec.CreateActivationsResponse), args.Error(1)
+}
+
+func (p *mockappsec) CreateConfigurationVersionClone(ctx context.Context, params appsec.CreateConfigurationVersionCloneRequest) (*appsec.CreateConfigurationVersionCloneResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.CreateConfigurationVersionCloneResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetActivations(ctx context.Context, params appsec.GetActivationsRequest) (*appsec.GetActivationsResponse, error) {
