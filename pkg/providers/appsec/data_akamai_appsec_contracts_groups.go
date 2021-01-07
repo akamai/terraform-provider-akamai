@@ -36,11 +36,11 @@ func dataSourceContractsGroups() *schema.Resource {
 				Computed:    true,
 				Description: "Text Export representation",
 			},
-			"default_contractId": {
+			"default_contractid": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"default_groupId": {
+			"default_groupid": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -93,10 +93,10 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 	for _, configval := range contractsgroups.ContractGroups {
 
 		if configval.ContractID == contract && configval.GroupID == group {
-			if err := d.Set("default_contractId", contract); err != nil {
+			if err := d.Set("default_contractid", contract); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
-			if err := d.Set("default_groupId", strconv.Itoa(group)); err != nil {
+			if err := d.Set("default_groupid", strconv.Itoa(group)); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
 		}
