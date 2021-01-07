@@ -3,7 +3,9 @@ package appsec
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -17,7 +19,14 @@ func dataSourceContractsGroups() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceContractsGroupsRead,
 		Schema: map[string]*schema.Schema{
-
+			"contract": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"group": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -26,6 +35,14 @@ func dataSourceContractsGroups() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Text Export representation",
+			},
+			"default_contract": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"default_group": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}
@@ -37,6 +54,18 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceContractsGroupsRead")
 
 	getContractsGroups := v2.GetContractsGroupsRequest{}
+
+	contract, err := tools.GetStringValue("contract", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getContractsGroups.ContractID = contract
+
+	group, err := tools.GetIntValue("group", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getContractsGroups.GroupID = group
 
 	contractsgroups, err := client.GetContractsGroups(ctx, getContractsGroups)
 	if err != nil {
@@ -61,8 +90,20 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	for _, configval := range contractsgroups.ContractGroups {
+
+		if configval.ContractID == contract && configval.GroupID == group {
+			if err := d.Set("default_contract", contract); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+			if err := d.Set("default_group", strconv.Itoa(group)); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+		}
+	}
 	if len(contractsgroups.ContractGroups) > 0 {
 		d.SetId(contractsgroups.ContractGroups[0].ContractID)
 	}
+
 	return nil
 }

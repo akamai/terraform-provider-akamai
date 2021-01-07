@@ -72,7 +72,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_api_request_constraints":             dataSourceApiRequestConstraints(),
 			"akamai_appsec_configuration":                       dataSourceConfiguration(),
 			"akamai_appsec_configuration_version":               dataSourceConfigurationVersion(),
-			"akamai_appsec_contract_groups":                     dataSourceContractsGroups(),
+			"akamai_appsec_contracts_groups":                    dataSourceContractsGroups(),
 			"akamai_appsec_custom_deny":                         dataSourceCustomDeny(),
 			"akamai_appsec_custom_rules":                        dataSourceCustomRules(),
 			"akamai_appsec_custom_rule_actions":                 dataSourceCustomRuleActions(),
