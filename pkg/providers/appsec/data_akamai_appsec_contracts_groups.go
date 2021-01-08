@@ -19,11 +19,11 @@ func dataSourceContractsGroups() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceContractsGroupsRead,
 		Schema: map[string]*schema.Schema{
-			"contract": {
+			"contractid": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"group": {
+			"groupid": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
@@ -55,13 +55,13 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 
 	getContractsGroups := v2.GetContractsGroupsRequest{}
 
-	contract, err := tools.GetStringValue("contract", d)
+	contract, err := tools.GetStringValue("contractid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getContractsGroups.ContractID = contract
 
-	group, err := tools.GetIntValue("group", d)
+	group, err := tools.GetIntValue("groupid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
