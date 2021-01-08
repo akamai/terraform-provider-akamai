@@ -101,7 +101,36 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 
 func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchRemove")
+
+	updateAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateAdvancedSettingsPrefetch.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateAdvancedSettingsPrefetch.Version = version
+
+	updateAdvancedSettingsPrefetch.EnableAppLayer = false
+
+	updateAdvancedSettingsPrefetch.EnableRateControls = false
+
+	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, updateAdvancedSettingsPrefetch)
+	if erru != nil {
+		logger.Errorf("calling 'removeAdvancedSettingsPrefetch': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId("")
+	return nil
 }
 
 func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
