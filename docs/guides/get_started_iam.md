@@ -2,12 +2,12 @@
 layout: "akamai"
 page_title: "Akamai: Get Started with Identity and Access Management"
 description: |-
-  Get Started with Akamai Identity and Access Management using Terraform
+  Get Started with the Akamai Identity and Access Management using Terraform
 ---
 
-# Get Started with Identity and Access Management Module
+# Get Started with the Identity and Access Management Module
 
-The Akamai Provider for Terraform lets you automate the creation and management of users, user notifications, and user grants.
+The Identity and Access Management module lets you automate the creation and management of users and user grants.
 
 To get more information about Identity and Access Management, see:
 
@@ -21,7 +21,7 @@ Before you can create a user, you need:
 * The user's country
 * To complete the tasks in the 
 [Get Started with the Akamai Terraform Provider](../guides/get_started_provider.md) 
-guide.
+guide
 
 ## Identity and Access Management workflow
 To set up the Identity and Access Management module, you need to:
@@ -50,7 +50,6 @@ resource "iam_akamai_user" "example" {
   country = "USA"
   phone = "(123) 321-1234"
   enable_tfa = false
-  send_otp_email = true
   auth_grants_json = jsonencode([
     {
       roleId = 3
