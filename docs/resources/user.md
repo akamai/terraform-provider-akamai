@@ -8,6 +8,8 @@ description: |-
 
 # akamai_iam_user
 
+The `akamai_iam_user` resource represents a user in the Akamai Control Center. 
+
 ## Argument reference
 
 This resource supports these arguments:

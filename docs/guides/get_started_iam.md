@@ -5,43 +5,36 @@ description: |-
   Get Started with Akamai Identity and Access Management using Terraform
 ---
 
-# Get Started with Identity and Access Management
+# Get Started with Identity and Access Management Module
 
 The Akamai Provider for Terraform lets you automate the creation and management of users, user notifications, and user grants.
 
 To get more information about Identity and Access Management, see:
 
-* [API documentation](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html)
-* How-to Guides
-    * [Official Documentation](https://learn.akamai.com/en-us/products/core_features/identity_management.html)
-
-## Configure the Terraform Provider
-
-Set up your .edgerc credential files as described in [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started), and include read-write permissions for the Property Manager API.
-
-1. Create a new folder called `terraform`
-1. Inside the new folder, create a new file called `akamai.tf`.
-1. Add the provider configuration to your `akamai.tf` file:
-
-```hcl
-provider "akamai" {
-	edgerc = "~/.edgerc"
-	config_section = "papi"
-}
-```
+* [API and developer docs](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html)
+* [Product docs and resources](https://learn.akamai.com/en-us/products/core_features/identity_management.html)
 
 ## Prerequisites
 
-To create a user, you need to meet this dependency:
+Before you can create a user, you need:
 
-* **Country**: The user's country
+* The user's country
+* To complete the tasks in the 
+[Get Started with the Akamai Terraform Provider](../guides/get_started_provider.md) 
+guide.
 
+## Identity and Access Management workflow
+To set up the Identity and Access Management module, you need to:
 
-## Retrieving supported countries
+* [Retrieve supported countries](#retrieve-supported-countries)
+* [Create a user](#create-a-user)
+* [Initialize the user](#initialize-the user)
+
+## Retrieve supported countries
 
 To fetch a list of supported countries, use the [`iam_akamai_countries` data source](../data-sources/iam_supported_countries.md). Attributes aren't needed to fetch the default contract ID.
 
-## Creating a user
+## Create a user
 
 The [`iam_akamai_user` resource](../resources/user.md) represents the user.
 
