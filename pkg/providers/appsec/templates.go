@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -39,12 +40,26 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 			funcs = template.FuncMap{
 				"join":  strings.Join,
 				"quote": func(in string) string { return fmt.Sprintf("\"%s\"", in) },
+				"marshal": func(v interface{}) string {
+					a, _ := json.Marshal(v)
+					return string(a)
+				},
 				"dash": func(in int) string {
 					if in == 0 {
 						return "-"
 					} else {
 						return strconv.Itoa(in)
 					}
+				},
+
+				"substring": func(start, end int, s string) string {
+					if start < 0 {
+						return s[:end]
+					}
+					if end < 0 || end > len(s) {
+						return s[start:]
+					}
+					return s[start:end]
 				},
 			}
 		)
@@ -112,7 +127,6 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["selectableHostsDS"] = &OutputTemplate{TemplateName: "selectableHosts", TableTitle: "Hostname|ConfigIDInProduction|ConfigNameInProduction", TemplateType: "TABULAR", TemplateString: "{{range .AvailableSet}}{{.Hostname}}|{{ dash .ConfigIDInProduction }}|{{.ConfigNameInProduction}},{{end}}"}
 	otm["selectedHosts"] = &OutputTemplate{TemplateName: "selectedHosts", TableTitle: "Hostnames", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .SelectedHosts}}{{if $index}},{{end}}{{.}}{{end}}"}
 	otm["selectedHostsDS"] = &OutputTemplate{TemplateName: "selectedHosts", TableTitle: "Hostnames", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .HostnameList}}{{if $index}},{{end}}{{.Hostname}}{{end}}"}
-	otm["selectedHosts.tf"] = &OutputTemplate{TemplateName: "selectedHosts.tf", TableTitle: "Hostname", TemplateType: "TERRAFORM", TemplateString: "\nresource \"akamai_appsec_selected_hostnames\" \"appsecselectedhostnames\" { \n config_id = {{.ConfigID}}\n version = {{.Version}}\n hostnames = [{{  range $index, $element := .SelectedHosts }}{{if $index}},{{end}}{{quote .}}{{end}}] \n }"}
 	otm["siemsettingsDS"] = &OutputTemplate{TemplateName: "siemsettingsDS", TableTitle: "Enable For All Policies|Enable Siem|Enabled Botman Siem Events|Siem Definition ID|FirewallPolicyIds", TemplateType: "TABULAR", TemplateString: "{{.EnableForAllPolicies}}|{{.EnableSiem}}|{{.EnabledBotmanSiemEvents}}|{{.SiemDefinitionID}}|{{.FirewallPolicyIds}}"}
 	otm["siemDefinitionsDS"] = &OutputTemplate{TemplateName: "siemDefinitionsDS", TableTitle: "ID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .SiemDefinitions}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 
@@ -149,4 +163,20 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["reputationProtectionDS"] = &OutputTemplate{TemplateName: "reputationProtection", TableTitle: "APIConstraints|ApplicationLayerControls|BotmanControls|NetworkLayerControls|RateControls|ReputationControls|SlowPostControls", TemplateType: "TABULAR", TemplateString: "{{.ApplyAPIConstraints}}|{{.ApplyApplicationLayerControls}}|{{.ApplyBotmanControls}}|{{.ApplyNetworkLayerControls}}|{{.ApplyRateControls}}|{{.ApplyReputationControls}}|{{.ApplySlowPostControls}}"}
 	otm["slowpostProtectionDS"] = &OutputTemplate{TemplateName: "slowpostProtection", TableTitle: "APIConstraints|ApplicationLayerControls|BotmanControls|NetworkLayerControls|RateControls|ReputationControls|SlowPostControls", TemplateType: "TABULAR", TemplateString: "{{.ApplyAPIConstraints}}|{{.ApplyApplicationLayerControls}}|{{.ApplyBotmanControls}}|{{.ApplyNetworkLayerControls}}|{{.ApplyRateControls}}|{{.ApplyReputationControls}}|{{.ApplySlowPostControls}}"}
 	otm["RuleConditionException"] = &OutputTemplate{TemplateName: "RuleConditionException", TableTitle: "Conditions|Exceptions", TemplateType: "TABULAR", TemplateString: "{{range $index, $element :=.Conditions}}True{{else}}False{{end}}|{{with .Exception}}True{{else}}False{{end}}"}
+
+	// TF templates
+	otm["AdvancedSettingsLogging.tf"] = &OutputTemplate{TemplateName: "AdvancedSettingsLogging.tf", TableTitle: "AdvancedSettingsLogging", TemplateType: "TERRAFORM", TemplateString: "\nresource \"akamai_appsec_advanced_settings_logging\" \"appsec_advanced_settings_logging\" { \n config_id = {{.ConfigID}}\n version = {{.Version}}\n logging  = <<-EOF  {{marshal .AdvancedOptions.Logging}} EOF \n }"}
+	otm["AdvancedSettingsPrefetch.tf"] = &OutputTemplate{TemplateName: "AdvancedSettingsPrefetch.tf", TableTitle: "AdvancedSettingsPrefetch", TemplateType: "TERRAFORM", TemplateString: "\nresource \"akamai_appsec_advanced_settings_prefetch\" \"appsec_advanced_settings_prefetch\" { \n  config_id = {{.ConfigID}}\n  version = {{.Version}}\n enable_app_layer = {{.AdvancedOptions.Prefetch.EnableAppLayer}} \n all_extensions = {{.AdvancedOptions.Prefetch.AllExtensions}}\n enable_rate_controls = {{.AdvancedOptions.Prefetch.EnableRateControls}}\n extensions = [{{  range $index, $element := .AdvancedOptions.Prefetch.Extensions }}{{if $index}},{{end}}{{quote .}}{{end}}] \n } \n"}
+	otm["AttackGroupAction.tf"] = &OutputTemplate{TemplateName: "AttackGroupAction.tf", TableTitle: "AttackGroupAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{range $index, $element := .WebApplicationFirewall.AttackGroupActions}}\nresource \"akamai_appsec_attack_group_action\" \"appsec_attack_group_action{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  attack_group = \"{{.Group}}\" \n  attack_group_action = \"{{.Action}}\" \n }\n{{end}}{{end}}"}
+	otm["CustomRule.tf"] = &OutputTemplate{TemplateName: "CustomRule.tf", TableTitle: "CustomRule", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{range $index, $element := .CustomRules}}{{if $index}},{{end}}\nresource \"akamai_appsec_custom_rule\" \"appsec_custom_rule{{if $index}}_{{$index}}{{end}}\" { \n config_id = {{$config}}\n  custom_rule = <<-EOF {{marshal .}}  \n EOF \n }\n {{end}}"}
+	otm["CustomRuleAction.tf"] = &OutputTemplate{TemplateName: "CustomRuleAction.tf", TableTitle: "CustomRuleAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{  range $index, $element := .SecurityPolicies }}{{$prev_secpolicy:=$element.ID}}  {{  range $index, $element := .CustomRuleActions }}  \nresource \"akamai_appsec_custom_rule_action\" \"appsec_custom_rule_action{{if $index}}_{{$index}}{{end}}\" { \n config_id = {{$config}}\n version = {{$version}}\n security_policy_id = \"{{$prev_secpolicy}}\"  \n custom_rule_id = {{.ID}} \n custom_rule_action = \"{{.Action}}\" \n } \n {{end}}{{end}}"}
+	otm["MatchTarget.tf"] = &OutputTemplate{TemplateName: "MatchTarget.tf", TableTitle: "MatchTarget", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .MatchTargets.WebsiteTargets}}\nresource \"akamai_appsec_match_target\" \"appsec_match_target{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}}\n  match_target = <<-EOF {{marshal .}}  \n EOF  \n }\n {{end}}"}
+	otm["RatePolicy.tf"] = &OutputTemplate{TemplateName: "RatePolicy.tf", TableTitle: "RatePolicy", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .RatePolicies}}\nresource \"akamai_appsec_rate_policy\" \"appsec_rate_policy{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config }}\n  version = {{ $version }}\n  rate_policy = <<-EOF {{marshal .}}  \n EOF \n \n }\n{{end}}"}
+	otm["RatePolicyAction.tf"] = &OutputTemplate{TemplateName: "RatePolicyAction.tf", TableTitle: "RatePolicyAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{  range $index, $element := .RatePolicyActions }}\nresource \"akamai_appsec_rate_policy_action\" \"appsec_rate_policy_action{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  rate_policy_id = {{.ID}} \n  ipv4_action = \"{{.Ipv4Action}}\" \n  ipv6_action = \"{{.Ipv6Action}}\" \n }\n {{end}} {{end}}"}
+	otm["ReputationProfile.tf"] = &OutputTemplate{TemplateName: "ReputationProfile.tf", TableTitle: "ReputationProfile", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .ReputationProfiles}}\nresource \"akamai_appsec_reputation_profile\" \"appsec_reputation_profile{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config}}\n  version = {{ $version }}\n  reputation_profile = <<-EOF {{marshal .}}  \n \n EOF \n }{{end}}"}
+	otm["ReputationProfileAction.tf"] = &OutputTemplate{TemplateName: "ReputationProfileAction.tf", TableTitle: "ReputationProfileAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{range $index, $element := .ClientReputation.ReputationProfileActions}}\nresource \"akamai_appsec_reputation_profile_action\" \"appsec_reputation_profile_action{{if $index}}_{{$index}}{{end}}\" { \n config_id = {{ $config }}\n  version = {{ $version }}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  reputation_profile_id =  \"{{.Action}}\" \n }\n{{end}}{{end}}"}
+	otm["RuleAction.tf"] = &OutputTemplate{TemplateName: "RuleAction.tf", TableTitle: "RuleAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{range $index, $element := .WebApplicationFirewall.RuleActions}}\nresource \"akamai_appsec_rule_action\" \"appsec_rule_action{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}} \n  security_policy_id = \"{{$prev_secpolicy}}\" \n  rule_id = {{.ID}} \n  action = \"{{.Action}}\" \n }\n{{end}}{{end}}"}
+	otm["SecurityPolicy.tf"] = &OutputTemplate{TemplateName: "SecurityPolicy.tf", TableTitle: "SecurityPolicy", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range $index, $element :=  .SecurityPolicies}}{{$prev_secpolicy := .ID}}\nresource \"akamai_appsec_security_policy\" \"appsec_security_policy{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config }}\n  version = {{ $version }}\n  security_policy_name = \"{{.Name}}\" \n  security_policy_prefix = \"{{substring 0 2 .ID}}\" \n  default_settings = true \n }{{end}}"}
+	otm["SelectedHostname.tf"] = &OutputTemplate{TemplateName: "SelectedHostname.tf", TableTitle: "SelectedHostname", TemplateType: "TERRAFORM", TemplateString: "\nresource \"akamai_appsec_selected_hostname\" \"appsec_selected_hostname\" { \n config_id = {{.ConfigID}}\n version = {{.Version}}\n hostnames = [{{  range $index, $element := .SelectedHosts }}{{if $index}},{{end}}{{quote .}}{{end}}] \n }"}
+
 }
