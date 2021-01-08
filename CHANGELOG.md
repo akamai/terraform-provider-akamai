@@ -1,5 +1,8 @@
 # RELEASE NOTES
 
+## 1.1.1 (Jan 8, 2021)
+* APPSEC - Documentation formatting fixes
+
 ## 1.1.0 (Jan 7, 2021) APPSEC - Extended list of supported endpoints from APPSEC API:
   * DDoS Protection -- Rate Policy & Action
   * DDoS Protection -- Slowpost setting & Action
