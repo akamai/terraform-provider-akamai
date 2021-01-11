@@ -62,13 +62,11 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_appsec_advanced_settings_logging":           dataSourceAdvancedSettingsLogging(),
-			"akamai_appsec_advanced_settings_policy_logging":    dataSourceAdvancedSettingsPolicyLogging(),
 			"akamai_appsec_advanced_settings_prefetch":          dataSourceAdvancedSettingsPrefetch(),
 			"akamai_appsec_api_endpoints":                       dataSourceApiEndpoints(),
 			"akamai_appsec_api_hostname_coverage":               dataSourceApiHostnameCoverage(),
 			"akamai_appsec_api_hostname_coverage_overlapping":   dataSourceApiHostnameCoverageOverlapping(),
 			"akamai_appsec_api_hostname_coverage_match_targets": dataSourceApiHostnameCoverageMatchTargets(),
-			"akamai_appsec_policy_api_endpoints":                dataSourcePolicyApiEndpoints(),
 			"akamai_appsec_api_request_constraints":             dataSourceApiRequestConstraints(),
 			"akamai_appsec_configuration":                       dataSourceConfiguration(),
 			"akamai_appsec_configuration_version":               dataSourceConfigurationVersion(),
@@ -111,7 +109,7 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_appsec_advanced_settings":                resourceAdvancedSettingsLogging(),
 			"akamai_appsec_advanced_settings_prefetch":       resourceAdvancedSettingsPrefetch(),
-			"akamai_api_request_constraints":                 resourceApiRequestConstraints(),
+			"akamai_appsec_api_request_constraints":          resourceApiRequestConstraints(),
 			"akamai_appsec_configuration":                    resourceConfiguration(),
 			"akamai_appsec_configuration_clone":              resourceConfigurationClone(),
 			"akamai_appsec_configuration_version_clone":      resourceConfigurationVersionClone(),

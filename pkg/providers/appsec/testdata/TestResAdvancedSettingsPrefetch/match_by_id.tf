@@ -2,7 +2,7 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-resource "akamai_appsec_advanced_settings_prefetch" "prefetch" {
+resource "akamai_appsec_advanced_settings_prefetch" "test" {
   config_id = 43253
     version = 7
   enable_app_layer =  false

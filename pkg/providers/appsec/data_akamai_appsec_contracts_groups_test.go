@@ -30,7 +30,7 @@ func TestAccAkamaiContractsGroups_data_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSContractsGroups/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_contracts_groups.test", "id", "43253"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_contracts_groups.test", "id", "C-1FRYVV3"),
 						),
 					},
 				},

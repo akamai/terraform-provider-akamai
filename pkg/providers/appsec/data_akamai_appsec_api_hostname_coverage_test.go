@@ -19,7 +19,7 @@ func TestAccAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
 
 		client.On("GetApiHostnameCoverage",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetApiHostnameCoverageRequest{ConfigID: 43253, Version: 7},
+			appsec.GetApiHostnameCoverageRequest{},
 		).Return(&cv, nil)
 
 		useClient(client, func() {
@@ -30,7 +30,7 @@ func TestAccAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSApiHostnameCoverage/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_api_hostname_coverage.test", "id", "43253"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_api_hostname_coverage.test", "id", "3644"),
 						),
 					},
 				},

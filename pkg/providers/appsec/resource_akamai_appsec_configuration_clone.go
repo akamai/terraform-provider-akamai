@@ -123,7 +123,7 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 		logger.Errorf("calling 'createConfigurationClone': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	logger.Errorf("calling 'createConfigurationClone CCR ': %v", ccr)
+	//logger.Errorf("calling 'createConfigurationClone CCR ': %v", ccr)
 
 	if err := d.Set("version", ccr.Version); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -194,5 +194,6 @@ func resourceConfigurationCloneDelete(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceConfigurationCloneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	//return schema.NoopContext(nil, d, m)
+	return resourceConfigurationCloneRead(ctx, d, m)
 }

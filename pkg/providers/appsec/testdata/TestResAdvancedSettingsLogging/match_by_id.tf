@@ -3,10 +3,9 @@ provider "akamai" {
 }
 
 
-resource "akamai_appsec_advanced_settings" "logging" {
+resource "akamai_appsec_advanced_settings" "test" {
   config_id = 43253
     version = 7
-    security_policy_id = "AAAA_81230"
   logging  = <<-EOF
 {
     "allowSampling": true,

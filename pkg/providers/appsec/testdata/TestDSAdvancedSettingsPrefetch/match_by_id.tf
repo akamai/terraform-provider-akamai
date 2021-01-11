@@ -3,9 +3,7 @@ provider "akamai" {
 }
 
 
-data "akamai_appsec_api_request_constraints" "api_request_constraints" {
+data "akamai_appsec_advanced_settings_prefetch" "test" {
   config_id = 43253
     version = 7
-    security_policy_id = "AAAA_81230"
-  api_id = var.api_id
 }

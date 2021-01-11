@@ -151,16 +151,6 @@ func (p *mockappsec) UpdateAdvancedSettingsPrefetch(ctx context.Context, params 
 	return args.Get(0).(*appsec.UpdateAdvancedSettingsPrefetchResponse), args.Error(1)
 }
 
-func (p *mockappsec) GetAdvancedSettingsPolicyLogging(ctx context.Context, params appsec.GetAdvancedSettingsPolicyLoggingRequest) (*appsec.GetAdvancedSettingsPolicyLoggingResponse, error) {
-	args := p.Called(ctx, params)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	return args.Get(0).(*appsec.GetAdvancedSettingsPolicyLoggingResponse), args.Error(1)
-}
-
 func (p *mockappsec) UpdateAdvancedSettingsLogging(ctx context.Context, params appsec.UpdateAdvancedSettingsLoggingRequest) (*appsec.UpdateAdvancedSettingsLoggingResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -169,16 +159,6 @@ func (p *mockappsec) UpdateAdvancedSettingsLogging(ctx context.Context, params a
 	}
 
 	return args.Get(0).(*appsec.UpdateAdvancedSettingsLoggingResponse), args.Error(1)
-}
-
-func (p *mockappsec) UpdateAdvancedSettingsPolicyLogging(ctx context.Context, params appsec.UpdateAdvancedSettingsPolicyLoggingRequest) (*appsec.UpdateAdvancedSettingsPolicyLoggingResponse, error) {
-	args := p.Called(ctx, params)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	return args.Get(0).(*appsec.UpdateAdvancedSettingsPolicyLoggingResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetApiEndpoints(ctx context.Context, params appsec.GetApiEndpointsRequest) (*appsec.GetApiEndpointsResponse, error) {
@@ -239,16 +219,6 @@ func (p *mockappsec) UpdateApiRequestConstraints(ctx context.Context, params app
 	}
 
 	return args.Get(0).(*appsec.UpdateApiRequestConstraintsResponse), args.Error(1)
-}
-
-func (p *mockappsec) GetPolicyApiEndpoints(ctx context.Context, params appsec.GetPolicyApiEndpointsRequest) (*appsec.GetPolicyApiEndpointsResponse, error) {
-	args := p.Called(ctx, params)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	return args.Get(0).(*appsec.GetPolicyApiEndpointsResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetContractsGroups(ctx context.Context, params appsec.GetContractsGroupsRequest) (*appsec.GetContractsGroupsResponse, error) {

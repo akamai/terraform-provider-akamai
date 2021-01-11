@@ -1,15 +1,8 @@
-provider "akamai" {
-  edgerc = "~/.edgerc"
-}
-
-resource "akamai_appsec_custom_deny" "test" {
- config_id = 43253
-    version = 7
-  custom_deny = <<-EOF
 {
     "name": "new_custom_deny",
     "description": "testing",
     "isPageUrl" : false,
+    "id": "deny_custom_622918",
     "parameters": [
         {
             "name": "response_status_code",
@@ -29,8 +22,3 @@ resource "akamai_appsec_custom_deny" "test" {
         }
     ]
 }
-EOF
-}
-
-
-

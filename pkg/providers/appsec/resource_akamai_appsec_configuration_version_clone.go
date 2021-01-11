@@ -87,14 +87,14 @@ func resourceConfigurationVersionCloneRead(ctx context.Context, d *schema.Resour
 	}
 	getConfigurationVersionClone.Version = version
 
-	_, err := client.GetConfigurationVersionClone(ctx, getConfigurationVersionClone)
+	configurationversionclone, err := client.GetConfigurationVersionClone(ctx, getConfigurationVersionClone)
 	if err != nil {
 		logger.Errorf("calling 'getConfigurationVersionClone': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
 	//d.SetId(strconv.Itoa(configurationversionclone.ConfigID))
-	d.SetId(strconv.Itoa(version))
+	d.SetId(strconv.Itoa(configurationversionclone.Version))
 	return nil
 }
 

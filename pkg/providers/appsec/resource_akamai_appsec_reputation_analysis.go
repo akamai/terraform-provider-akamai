@@ -92,6 +92,7 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 		logger.Errorf("calling 'updateReputationAnalysis': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
+	d.SetId(strconv.Itoa(updateReputationAnalysis.ConfigID))
 
 	return resourceReputationAnalysisRead(ctx, d, m)
 }
@@ -99,37 +100,37 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceReputationAnalysisUpdate")
+	logger := meta.Log("APPSEC", "resourceReputationAnalysisRemove")
 
-	updateReputationAnalysis := appsec.UpdateReputationAnalysisRequest{}
+	RemoveReputationAnalysis := appsec.RemoveReputationAnalysisRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateReputationAnalysis.ConfigID = configid
+	RemoveReputationAnalysis.ConfigID = configid
 
 	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateReputationAnalysis.Version = version
+	RemoveReputationAnalysis.Version = version
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateReputationAnalysis.PolicyID = policyid
+	RemoveReputationAnalysis.PolicyID = policyid
 
-	updateReputationAnalysis.ForwardToHTTPHeader = false
+	RemoveReputationAnalysis.ForwardToHTTPHeader = false
 
-	updateReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = false
+	RemoveReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = false
 
-	logger.Errorf("calling 'removeReputationAnalysis': STRUCT  %v", updateReputationAnalysis)
+	logger.Errorf("calling 'removeReputationAnalysis': STRUCT  %v", RemoveReputationAnalysis)
 
-	_, erru := client.UpdateReputationAnalysis(ctx, updateReputationAnalysis)
+	_, erru := client.RemoveReputationAnalysis(ctx, RemoveReputationAnalysis)
 	if erru != nil {
-		logger.Errorf("calling 'updateReputationAnalysis': %s", erru.Error())
+		logger.Errorf("calling 'RemoveReputationAnalysis': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
 
@@ -163,12 +164,12 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 	}
 	getReputationAnalysis.PolicyID = policyid
 
-	_, errg := client.GetReputationAnalysis(ctx, getReputationAnalysis)
+	getresp, errg := client.GetReputationAnalysis(ctx, getReputationAnalysis)
 	if errg != nil {
 		logger.Errorf("calling 'getReputationAnalysis': %s", errg.Error())
 		return diag.FromErr(errg)
 	}
-
+	logger.Errorf("calling 'getReputationAnalysis': %v", getresp)
 	d.SetId(strconv.Itoa(getReputationAnalysis.ConfigID))
 
 	return nil

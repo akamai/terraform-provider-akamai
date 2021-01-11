@@ -28,7 +28,7 @@ func TestAccAkamaiEvalProtectHost_res_basic(t *testing.T) {
 
 		client.On("UpdateEvalProtectHost",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateEvalProtectHostRequest{ConfigID: 43253, Version: 7},
+			appsec.UpdateEvalProtectHostRequest{ConfigID: 43253, Version: 7, Hostnames: []string{"example.com"}},
 		).Return(&cu, nil)
 
 		useClient(client, func() {

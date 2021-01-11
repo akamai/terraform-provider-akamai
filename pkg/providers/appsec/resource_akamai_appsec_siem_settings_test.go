@@ -28,7 +28,7 @@ func TestAccAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.On("UpdateSiemSettings",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7},
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: true, SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"}},
 		).Return(&cu, nil)
 
 		useClient(client, func() {

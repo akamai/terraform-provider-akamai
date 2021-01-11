@@ -17,7 +17,7 @@ resource "akamai_appsec_custom_deny" "test" {
         },
         {
             "name": "prevent_browser_cache",
-            "value": "true"
+            "value": "false"
         },
         {
             "name": "response_content_type",

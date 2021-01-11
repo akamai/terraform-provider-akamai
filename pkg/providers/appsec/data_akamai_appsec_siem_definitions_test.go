@@ -19,7 +19,7 @@ func TestAccAkamaiSiemDefinitions_data_basic(t *testing.T) {
 
 		client.On("GetSiemDefinitions",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetSiemDefinitionsRequest{SiemDefinitionName: "SIEM Version 01"},
+			appsec.GetSiemDefinitionsRequest{ID: 0, SiemDefinitionName: "SIEM Version 01"},
 		).Return(&cv, nil)
 
 		useClient(client, func() {

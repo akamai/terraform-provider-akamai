@@ -1,4 +1,4 @@
-[
+
     {
         "configurations": [
             {
@@ -7,6 +7,14 @@
                 "id": 43253,
                 "latestVersion": 23,
                 "name": "Akamai Tools",
+                "targetProduct": "KSD"
+            },
+            {
+                "description": "Akamai Tools",
+                "fileType": "RBAC",
+                "id": 432531,
+                "latestVersion": 23,
+                "name": "Akamai Tools New",
                 "targetProduct": "KSD"
             },
             {
@@ -44,4 +52,3 @@
             }
         ]
     }
-]

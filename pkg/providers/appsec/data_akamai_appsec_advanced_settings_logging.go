@@ -60,6 +60,18 @@ func dataSourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resour
 	}
 	getAdvancedSettingsLogging.Version = version
 
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getAdvancedSettingsLogging.PolicyID = policyid
+
+	if policyid != "" {
+
+	} else {
+
+	}
+
 	advancedsettingslogging, err := client.GetAdvancedSettingsLogging(ctx, getAdvancedSettingsLogging)
 	if err != nil {
 		logger.Errorf("calling 'getAdvancedSettingsLogging': %s", err.Error())

@@ -28,12 +28,12 @@ func TestAccAkamaiAdvancedSettingsPrefetch_res_basic(t *testing.T) {
 
 		client.On("UpdateAdvancedSettingsPrefetch",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7},
+			appsec.UpdateAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7, AllExtensions: true, EnableAppLayer: false, EnableRateControls: false, Extensions: []string{"cgi", "jsp", "aspx", "EMPTY_STRING", "php", "py", "asp"}},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
+				IsUnitTest: false,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{

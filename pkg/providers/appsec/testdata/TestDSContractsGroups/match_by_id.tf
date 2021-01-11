@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 
-data "akamai_appsec_contract_groups" "contract_groups" {
+data "akamai_appsec_contracts_groups" "test" {
 }

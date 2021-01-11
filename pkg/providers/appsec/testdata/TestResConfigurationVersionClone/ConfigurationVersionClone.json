@@ -1,6 +1,6 @@
-[
+
     {
-        "basedOn": 3,
+        "basedOn": 7,
         "configId": 43253,
         "configName": "Akamai Tools",
         "createDate": "2020-10-06T18:00:20Z",
@@ -13,4 +13,3 @@
         },
         "version": 15
     }
-]
