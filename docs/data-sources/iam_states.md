@@ -8,7 +8,7 @@ description: |-
 
 # akamai_iam_states
 
-Use `akamai_iam_states` to list U.S. states or Canadian provinces. If country=USA you may enter a value of TBD if you don’t know a user’s state. Administrators use this operation to set a user’s state.
+Use `akamai_iam_states` to list US states or Canadian provinces. If `country=USA` you may enter a value of `TBD` if you don’t know a user’s state. Administrators use this data source to set a user’s state.
 
 ## Example usage
 

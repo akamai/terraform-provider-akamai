@@ -8,7 +8,7 @@ description: |-
 
 # akamai_iam_timezones
 
-Use `akamai_iam_timezones` all time zones Akamai supports. Time zones are in ISO 8601 format. Use the values from this operation to set the timeZone for a user. Administrators use this operation to set a user’s time zone. Users who modify it need to run View time zones for a user profile. The default time zone is GMT.
+Use `akamai_iam_timezones` to list all time zones Akamai supports. Time zones are in ISO 8601 format. Use the values from this data source to set the time zone for a user. Administrators use this data source to set a user’s time zone. Users who modify it need to run View time zones for a user profile. The default time zone is GMT.
 
 ## Example usage
 

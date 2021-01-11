@@ -8,7 +8,7 @@ description: |-
 
 # akamai_iam_groups
 
-Use `akamai_iam_groups` to list all groups in which you have a scope of admin for the current account and contract type. The account and contract type are determined by the access tokens in your API client. Use the `groupId` from this operation to construct the `auth_grants_json` when creating or updating a user's auth grants.
+Use `akamai_iam_groups` to list all groups in which you have a scope of admin for the current account and contract type. The account and contract type are determined by the access tokens in your API client. Use the `group_id` from this data source to construct the `auth_grants_json` when creating or updating a user's auth grants.
 
 ## Example usage
 

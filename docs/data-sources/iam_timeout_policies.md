@@ -8,7 +8,7 @@ description: |-
 
 # akamai_iam_timeout_policies
 
-Use `akamai_iam_timeout_policies` to list all the possible session timeout policies that Akamai supports. Use the values from this operation to set the sessionTimeout for a user. The name for each timeout period is in minutes, and the time value is in seconds.
+Use `akamai_iam_timeout_policies` to list all the possible session timeout policies that Akamai supports. Use the values from this data source to set the session timeout for a user. The name for each timeout period is in minutes, and the time value is in seconds.
 
 ## Example usage
 

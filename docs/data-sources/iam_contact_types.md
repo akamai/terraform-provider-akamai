@@ -8,7 +8,7 @@ description: |-
 
 # akamai_iam_contact_types
 
-Use `akamai_iam_contact_types` datasource to retrieve all the possible contact_types that Akamai supports. Use the values from this operation to add or update a user’s contactType.
+Use `akamai_iam_contact_types` to retrieve all the possible `contact_types` that Akamai supports. Use the values from this data source to add or update a user’s contact type.
 
 ## Example usage
 

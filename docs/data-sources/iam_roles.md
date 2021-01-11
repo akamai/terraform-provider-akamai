@@ -8,7 +8,7 @@ description: |-
 
 # akamai_iam_roles
 
-Use `akamai_iam_roles` to list roles for the current account and contract type. The account and contract type are determined by the access tokens in your API client. Use the `roleId` from this operation to construct the `auth_grants_json` when creating or updating a user's auth grants.
+Use `akamai_iam_roles` to list roles for the current account and contract type. The account and contract type are determined by the access tokens in your API client. Use the `roleId` from this data source to construct the `auth_grants_json` when creating or updating a user's auth grants.
 
 ## Example usage
 
