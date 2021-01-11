@@ -27,6 +27,10 @@ func dataSourceApiEndpoints() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
+			"security_policy_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"api_name": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -68,6 +72,12 @@ func dataSourceApiEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	getApiEndpoints.Version = version
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getApiEndpoints.PolicyID = policyid
 
 	apiName, err := tools.GetStringValue("api_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

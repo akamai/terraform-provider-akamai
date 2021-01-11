@@ -27,7 +27,10 @@ func dataSourceAdvancedSettingsLogging() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-
+			"security_policy_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
