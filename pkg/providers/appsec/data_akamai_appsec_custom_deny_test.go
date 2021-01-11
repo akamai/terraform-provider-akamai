@@ -13,13 +13,13 @@ func TestAccAkamaiCustomDeny_data_basic(t *testing.T) {
 	t.Run("match by CustomDeny ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetCustomDenyResponse{}
+		cv := appsec.GetCustomDenyListResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSCustomDeny/CustomDeny.json"))
 		json.Unmarshal([]byte(expectJS), &cv)
 
-		client.On("GetCustomDeny",
+		client.On("GetCustomDenyList",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
+			appsec.GetCustomDenyListRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
 		).Return(&cv, nil)
 
 		useClient(client, func() {
@@ -30,7 +30,7 @@ func TestAccAkamaiCustomDeny_data_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSCustomDeny/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_custom_deny.test", "custom_deny_id", "deny_custom_54994"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_custom_deny.test", "custom_deny_id", "deny_custom_622918"),
 						),
 					},
 				},

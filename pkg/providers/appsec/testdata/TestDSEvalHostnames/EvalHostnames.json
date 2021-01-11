@@ -1,38 +1,7 @@
-[
-    {
-        "attackGroupActions": [
-            {
-                "action": "none",
-                "group": "TOOL"
-            },
-            {
-                "action": "none",
-                "group": "PROTOCOL"
-            },
-            {
-                "action": "none",
-                "group": "SQL"
-            },
-            {
-                "action": "none",
-                "group": "XSS"
-            },
-            {
-                "action": "none",
-                "group": "LFI"
-            },
-            {
-                "action": "none",
-                "group": "RFI"
-            },
-            {
-                "action": "none",
-                "group": "CMDI"
-            },
-            {
-                "action": "none",
-                "group": "PLATFORM"
-            }
-        ]
-    }
-]
+{
+    "hostnmes": [
+        "*.exsmple.net",
+        "example.com",
+        "m.example.com"
+    ]
+}

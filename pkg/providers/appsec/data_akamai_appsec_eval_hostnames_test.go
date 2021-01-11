@@ -17,7 +17,7 @@ func TestAccAkamaiEvalHostnames_data_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSEvalHostnames/EvalHostnames.json"))
 		json.Unmarshal([]byte(expectJS), &cv)
 
-		client.On("GetEvalHostnames",
+		client.On("GetEvalHosts",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetEvalHostsRequest{ConfigID: 43253, Version: 7},
 		).Return(&cv, nil)

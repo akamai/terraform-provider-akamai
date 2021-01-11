@@ -19,7 +19,7 @@ func TestAccAkamaiApiHostnameCoverageOverlapping_data_basic(t *testing.T) {
 
 		client.On("GetApiHostnameCoverageOverlapping",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetApiHostnameCoverageOverlappingRequest{ConfigID: 43253, Version: 7},
+			appsec.GetApiHostnameCoverageOverlappingRequest{ConfigID: 43253, Version: 7, Hostname: "example.com"},
 		).Return(&cv, nil)
 
 		useClient(client, func() {

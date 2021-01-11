@@ -19,7 +19,7 @@ func TestAccAkamaiAdvancedSettingsLogging_data_basic(t *testing.T) {
 
 		client.On("GetAdvancedSettingsLogging",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+			appsec.GetAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7},
 		).Return(&cv, nil)
 
 		useClient(client, func() {

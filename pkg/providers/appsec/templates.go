@@ -61,6 +61,8 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 					}
 					return s[start:end]
 				},
+
+				"replace": func(old, new, src string) string { return strings.Replace(src, old, new, -1) },
 			}
 		)
 
@@ -118,7 +120,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 
 	otm["configuration"] = &OutputTemplate{TemplateName: "Configurations", TableTitle: "Config_id|Name|Latest_version|Version_active_in_staging|Version_active_in_production", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Configurations}}{{if $index}},{{end}}{{.ID}}|{{.Name}}|{{.LatestVersion}}|{{.StagingVersion}}|{{.ProductionVersion}}{{end}}"}
 	otm["configurationVersion"] = &OutputTemplate{TemplateName: "ConfigurationVersion", TableTitle: "Version Number|Staging Status|Production Status", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .VersionList}}{{if $index}},{{end}}{{.Version}}|{{.Staging.Status}}|{{.Production.Status}}{{end}}"}
-	otm["contractsgroupsDS"] = &OutputTemplate{TemplateName: "contractsgroupsDS", TableTitle: "Contract|Groupid|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .ContractGroups}}{{if $index}},{{end}}{{.ContractID}}|{{.GroupID}}|{{.DisplayName}}{{end}}"}
+	otm["contractsgroupsDS"] = &OutputTemplate{TemplateName: "contractsgroupsDS", TableTitle: "ContractID|GroupID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .ContractGroups}}{{if $index}},{{end}}{{.ContractID}}|{{.GroupID}}|{{.DisplayName}}{{end}}"}
 	otm["failoverHostnamesDS"] = &OutputTemplate{TemplateName: "failoverHostnamesDS", TableTitle: "Config ID|Config Version", TemplateType: "TABULAR", TemplateString: "{{.ConfigID}}|{{.ConfigVersion}}"}
 
 	otm["penaltyBoxDS"] = &OutputTemplate{TemplateName: "penaltyBoxDS", TableTitle: "PenaltyBoxProtection|Action", TemplateType: "TABULAR", TemplateString: "{{.PenaltyBoxProtection}}|{{.Action}}"}
@@ -148,7 +150,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["RulesDS"] = &OutputTemplate{TemplateName: "RulesDS", TableTitle: "ID|Action", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .RuleActions}}{{if $index}},{{end}}{{.ID}}|{{.Action}}{{end}}"}
 	otm["EvalRulesActionsDS"] = &OutputTemplate{TemplateName: "evalRulesActions", TableTitle: "ID|Action", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .RuleActions}}{{if $index}},{{end}}{{.ID}}| {{.Action}}{{end}}"}
 	otm["evalHostnamesDS"] = &OutputTemplate{TemplateName: "evalHostnamesDS", TableTitle: "Hostnames", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Hostnames}}{{if $index}},{{end}}{{.}}{{end}}"}
-	otm["rulesets"] = &OutputTemplate{TemplateName: "rulesets", TableTitle: "ID|Name(Title)", TemplateType: "TABULAR", TemplateString: "{{range .Rulesets}}{{range $index, $element := .Rules}}{{if $index}},{{end}}{{.ID}}| {{.Title}}{{end}}{{end}}"}
+	otm["rulesets"] = &OutputTemplate{TemplateName: "rulesets", TableTitle: "ID|Name(Title)", TemplateType: "TABULAR", TemplateString: "{{range .Rulesets}}{{range $index, $element := .Rules}}{{if $index}},{{end}}{{.ID}}| {{substring  0 45 .Title}}{{end}}{{end}}"}
 	otm["securityPolicies"] = &OutputTemplate{TemplateName: "securityPolicies", TableTitle: "ID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .SecurityPolicies}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["securityPoliciesDS"] = &OutputTemplate{TemplateName: "securityPolicies", TableTitle: "ID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Policies}}{{if $index}},{{end}}{{.PolicyID}}|{{.PolicyName}}{{end}}"}
 
