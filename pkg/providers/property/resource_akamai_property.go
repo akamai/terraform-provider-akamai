@@ -179,7 +179,11 @@ func resourceProperty() *schema.Resource {
 				ValidateDiagFunc: validateRules,
 				DiffSuppressFunc: diffSuppressRules,
 				StateFunc: func(v interface{}) string {
-					return compactJSON([]byte(v.(string)))
+					var js string
+					if json.Unmarshal([]byte(v.(string)), &js) == nil {
+						return compactJSON([]byte(v.(string)))
+					}
+					return v.(string)
 				},
 			},
 			"hostnames": {
