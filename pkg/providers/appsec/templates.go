@@ -109,8 +109,8 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 }
 
 func InitTemplates(otm map[string]*OutputTemplate) {
-	otm["advancedSettingsLoggingDS"] = &OutputTemplate{TemplateName: "advancedSettingsLoggingDS", TableTitle: "Allow Sampling|Custom Headers|Standard Headers", TemplateType: "TABULAR", TemplateString: "{{.AllowSampling}}|{{.Cookies.Type}}|{{.StandardHeaders}}"}
-	otm["advancedSettingsPolicyLoggingDS"] = &OutputTemplate{TemplateName: "advancedSettingsPolicyLoggingDS", TableTitle: "Allow Sampling|Custom Headers|Standard Headers", TemplateType: "TABULAR", TemplateString: "{{.AllowSampling}}|{{.Cookies.Type}}|{{.StandardHeaders}}"}
+	otm["advancedSettingsLoggingDS"] = &OutputTemplate{TemplateName: "advancedSettingsLoggingDS", TableTitle: "Allow Sampling|Custom Headers|Standard Headers", TemplateType: "TABULAR", TemplateString: "{{.AllowSampling}}|{{.CustomHeaders}}|{{.StandardHeaders}}"}
+	otm["advancedSettingsPolicyLoggingDS"] = &OutputTemplate{TemplateName: "advancedSettingsPolicyLoggingDS", TableTitle: "Allow Sampling|Custom Headers|Standard Headers", TemplateType: "TABULAR", TemplateString: "{{.AllowSampling}}|{{.CustomHeaders}}|{{.StandardHeaders}}"}
 	otm["advancedSettingsPrefetchDS"] = &OutputTemplate{TemplateName: "advancedSettingsPrefetchDS", TableTitle: "Enable App Layer|All Extension|Enable Rate Controls|Extensions", TemplateType: "TABULAR", TemplateString: "{{.EnableAppLayer}}|{{.AllExtensions}}|{{.EnableRateControls}}|{{range $index, $element := .Extensions}}{{.}} {{end}}"}
 
 	//Extensions
