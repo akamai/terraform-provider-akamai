@@ -231,6 +231,46 @@ func (p *mockappsec) GetContractsGroups(ctx context.Context, params appsec.GetCo
 	return args.Get(0).(*appsec.GetContractsGroupsResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetBypassNetworkLists(ctx context.Context, params appsec.GetBypassNetworkListsRequest) (*appsec.GetBypassNetworkListsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetBypassNetworkListsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateBypassNetworkLists(ctx context.Context, params appsec.UpdateBypassNetworkListsRequest) (*appsec.UpdateBypassNetworkListsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateBypassNetworkListsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetVersionNotes(ctx context.Context, params appsec.GetVersionNotesRequest) (*appsec.GetVersionNotesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetVersionNotesResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateVersionNotes(ctx context.Context, params appsec.UpdateVersionNotesRequest) (*appsec.UpdateVersionNotesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateVersionNotesResponse), args.Error(1)
+}
+
 func (p *mockappsec) CreateConfiguration(ctx context.Context, params appsec.CreateConfigurationRequest) (*appsec.CreateConfigurationResponse, error) {
 	args := p.Called(ctx, params)
 
