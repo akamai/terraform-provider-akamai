@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_attack_group_actions
 
-Use the `akamai_appsec_attack_group_actions` data source to retrieve a list of attack groups with their associated actions, or the action for a specific attack group.
+The `akamai_appsec_attack_group_actions` data source allows you to retrieve a list of attack groups with their associated actions, or the action for a specific attack group.
 
 ## Example Usage
 
