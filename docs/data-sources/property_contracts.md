@@ -16,7 +16,7 @@ Use the `akamai_property_contracts` data source to list contracts associated wit
 Return contracts associated with the EdgeGrid API client token currently used for authentication:
 
 ```hcl
-datasource "akamai_property_contracts" "my-example" {
+data "akamai_property_contracts" "my-example" {
 }
 
 output "property_match" {
