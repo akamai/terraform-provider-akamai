@@ -119,7 +119,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_selected_hostnames":               resourceSelectedHostname(),
 			"akamai_appsec_security_policy_clone":            resourceSecurityPolicyClone(),
 			"akamai_appsec_eval":                             resourceEval(),
-			"akamai_appsec_eval_host":                        resourceEvalHost(),
+			"akamai_appsec_eval_hostnames":                   resourceEvalHost(),
 			"akamai_appsec_eval_protect_host":                resourceEvalProtectHost(),
 			"akamai_appsec_eval_rule_action":                 resourceEvalRuleAction(),
 			"akamai_appsec_eval_rule_condition_exception":    resourceEvalRuleConditionException(),
