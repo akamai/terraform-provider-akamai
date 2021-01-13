@@ -1,7 +1,6 @@
 # RELEASE NOTES
 
-## 1.1.2 (Jan 14, 2021) Identity and Access Management - List of supported operations from the [Identity Management: User Administration API v2](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html):
- 
+## 1.1.2 (Jan 14, 2021) Identity and Access Management - List of supported operations from the Identity Management: User Administration API v2:
 * Create a new user
 * Update a user’s profile
 * Update a user’s role assignments
