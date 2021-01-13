@@ -53,7 +53,6 @@ resource "akamai_property" "property" {
 
   name        = each.key
   cp_code     = akamai_cp_code.cpcode[each.key].id
-  contact     = [""]
   contract = data.akamai_contract.contract.id
   group = data.akamai_group.group.id
   product     = "prd_Site_Accel"

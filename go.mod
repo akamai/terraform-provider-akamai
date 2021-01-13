@@ -10,8 +10,7 @@ require (
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-getter v1.5.1 // indirect
 	github.com/hashicorp/go-hclog v0.9.2
-	github.com/hashicorp/hcl/v2 v2.8.1 // indirect
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.3.0
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
 	github.com/jedib0t/go-pretty/v6 v6.0.4
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/objx v0.1.1 // indirect
@@ -21,11 +20,10 @@ require (
 	golang.org/x/mod v0.4.0 // indirect
 	golang.org/x/tools v0.0.0-20201207191902-7bb39e4ca9ac // indirect
 	google.golang.org/api v0.34.0 // indirect
-	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
 
 replace (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 => ../AkamaiOPEN-edgegrid-golang
+	//github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 => ../AkamaiOPEN-edgegrid-golang
 
 	// https://github.com/golang/lint/issues/446
 	github.com/golang/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422

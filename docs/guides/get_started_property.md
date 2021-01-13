@@ -140,7 +140,6 @@ Once you're done, your property should look like this:
 ```hcl
 resource "akamai_property" "example" {
 	name = "xyz.example.com"                        # Property Name
-	contact = ["user@example.org"]                  # User to notify of de/activations  
 	product_id  = "prd_SPM"                         # Product Identifier (Ion)
 	group_id    = data.akamai_group.default.id      # Group ID variable
 	contract_id = data.akamai_contract.default.id   # Contract ID variable

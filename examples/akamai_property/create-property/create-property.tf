@@ -12,8 +12,6 @@ provider "akamai" {}
 resource "akamai_property" "property" {
   name = "akavadeveloper"
 
-  contact = ["you@example.com"]
-
   product  = "prd_SPM"
   cp_code  = akamai_cp_code.cp_code.id
   contract = data.akamai_contract.contract.id
