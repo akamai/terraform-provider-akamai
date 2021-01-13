@@ -39,7 +39,6 @@ resource "akamai_edge_hostname" "test-wheep-co-uk-edgesuite-net" {
 resource "akamai_property" "test-wheep-co-uk" {
   name        = "${var.env}.wheep.co.uk"
   cp_code     = akamai_cp_code.test-wheep-co-uk.id
-  contact     = [""]
   contract    = data.akamai_contract.contract.id
   group       = data.akamai_group.group.id
   product     = "prd_Download_Delivery"

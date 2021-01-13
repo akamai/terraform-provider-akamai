@@ -49,7 +49,6 @@ resource "akamai_edge_hostname" "test-wheep-co-uk" {
 resource "akamai_property" "test-wheep-co-uk" {
   name        = "tfsnippets.wheep.co.uk"
   cp_code     = akamai_cp_code.test-wheep-co-uk.id
-  contact     = ["you@example.com"]
   contract    = data.akamai_contract.contract.id
   group       = data.akamai_group.group.id
   product     = "prd_Site_Accel"
