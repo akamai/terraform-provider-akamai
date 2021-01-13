@@ -74,14 +74,5 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	/*ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "securityPoliciesDS", securitypolicy)
-	if err == nil {
-		d.Set("output_text", outputtext)
-	}
-	*/
-
 	return nil
 }
