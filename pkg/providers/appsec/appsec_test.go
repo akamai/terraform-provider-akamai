@@ -640,6 +640,16 @@ func (p *mockappsec) GetSiemSettings(ctx context.Context, params appsec.GetSiemS
 	return args.Get(0).(*appsec.GetSiemSettingsResponse), args.Error(1)
 }
 
+func (p *mockappsec) RemoveSiemSettings(ctx context.Context, params appsec.RemoveSiemSettingsRequest) (*appsec.RemoveSiemSettingsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveSiemSettingsResponse), args.Error(1)
+}
+
 func (p *mockappsec) UpdateSiemSettings(ctx context.Context, params appsec.UpdateSiemSettingsRequest) (*appsec.UpdateSiemSettingsResponse, error) {
 	args := p.Called(ctx, params)
 

@@ -103,7 +103,40 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
+
+	removeSiemSettings := v2.RemoveSiemSettingsRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSiemSettings.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSiemSettings.Version = version
+
+	removeSiemSettings.EnableSiem = false
+
+	siemID, err := tools.GetIntValue("siem_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeSiemSettings.SiemDefinitionID = siemID
+
+	_, erru := client.RemoveSiemSettings(ctx, removeSiemSettings)
+	if erru != nil {
+		logger.Errorf("calling 'removeSiemSettings': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId("")
+	return nil
 }
 
 func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
