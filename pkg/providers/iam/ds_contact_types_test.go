@@ -29,9 +29,9 @@ func TestDSContactTypes(t *testing.T) {
 					Config: test.Fixture("testdata/%s/step0.tf", t.Name()),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttrSet("data.akamai_iam_contact_types.test", "id"),
-						resource.TestCheckTypeSetElemAttr("data.akamai_iam_contact_types.test", "contact_types.*", "first"),
-						resource.TestCheckTypeSetElemAttr("data.akamai_iam_contact_types.test", "contact_types.*", "second"),
-						resource.TestCheckTypeSetElemAttr("data.akamai_iam_contact_types.test", "contact_types.*", "third"),
+						resource.TestCheckResourceAttr("data.akamai_iam_contact_types.test", "contact_types.0", "first"),
+						resource.TestCheckResourceAttr("data.akamai_iam_contact_types.test", "contact_types.1", "second"),
+						resource.TestCheckResourceAttr("data.akamai_iam_contact_types.test", "contact_types.2", "third"),
 					),
 				},
 			},

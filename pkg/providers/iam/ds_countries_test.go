@@ -29,9 +29,9 @@ func TestDSCountries(t *testing.T) {
 					Config: test.Fixture("testdata/%s/step0.tf", t.Name()),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttrSet("data.akamai_iam_countries.test", "id"),
-						resource.TestCheckTypeSetElemAttr("data.akamai_iam_countries.test", "countries.*", "first"),
-						resource.TestCheckTypeSetElemAttr("data.akamai_iam_countries.test", "countries.*", "second"),
-						resource.TestCheckTypeSetElemAttr("data.akamai_iam_countries.test", "countries.*", "third"),
+						resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.0", "first"),
+						resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.1", "second"),
+						resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.2", "third"),
 					),
 				},
 			},

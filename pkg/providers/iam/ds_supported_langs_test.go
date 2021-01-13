@@ -29,9 +29,9 @@ func TestDSSupportedLangs(t *testing.T) {
 					Config: test.Fixture("testdata/%s/step0.tf", t.Name()),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttrSet("data.akamai_iam_supported_langs.test", "id"),
-						resource.TestCheckTypeSetElemAttr("data.akamai_iam_supported_langs.test", "languages.*", "first"),
-						resource.TestCheckTypeSetElemAttr("data.akamai_iam_supported_langs.test", "languages.*", "second"),
-						resource.TestCheckTypeSetElemAttr("data.akamai_iam_supported_langs.test", "languages.*", "third"),
+						resource.TestCheckResourceAttr("data.akamai_iam_supported_langs.test", "languages.0", "first"),
+						resource.TestCheckResourceAttr("data.akamai_iam_supported_langs.test", "languages.1", "second"),
+						resource.TestCheckResourceAttr("data.akamai_iam_supported_langs.test", "languages.2", "third"),
 					),
 				},
 			},

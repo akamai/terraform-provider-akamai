@@ -40,34 +40,6 @@ func TestDSGroups(t *testing.T) {
 			client.On("ListGroups", mock.Anything, req).Return(res, nil)
 		}
 
-		expectedG1 := map[string]string{
-			"name":            "test group 1",
-			"group_id":        "101",
-			"parent_group_id": "100",
-			"time_created":    "2020-01-01T00:00:00Z",
-			"time_modified":   "2020-01-01T00:00:00Z",
-			"modified_by":     "modifier@akamai.net",
-			"created_by":      "creator@akamai.net",
-		}
-		expectedG2 := map[string]string{
-			"name":            "test group 2",
-			"group_id":        "102",
-			"parent_group_id": "100",
-			"time_created":    "2020-01-01T00:00:00Z",
-			"time_modified":   "2020-01-01T00:00:00Z",
-			"modified_by":     "modifier@akamai.net",
-			"created_by":      "creator@akamai.net",
-		}
-		expectedG3 := map[string]string{
-			"name":            "test group 3",
-			"group_id":        "103",
-			"parent_group_id": "102",
-			"time_created":    "2020-01-01T00:00:00Z",
-			"time_modified":   "2020-01-01T00:00:00Z",
-			"modified_by":     "modifier@akamai.net",
-			"created_by":      "creator@akamai.net",
-		}
-
 		p := provider{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
@@ -81,9 +53,27 @@ func TestDSGroups(t *testing.T) {
 						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "id", "akamai_iam_groups"),
 
 						// First level groups
-						resource.TestCheckTypeSetElemNestedAttrs("data.akamai_iam_groups.test", "groups.*", expectedG1),
-						resource.TestCheckTypeSetElemNestedAttrs("data.akamai_iam_groups.test", "groups.*", expectedG2),
-						resource.TestCheckTypeSetElemNestedAttrs("data.akamai_iam_groups.test", "groups.*", expectedG3),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.name", "test group 1"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.group_id", "101"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.parent_group_id", "100"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.time_created", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.time_modified", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.modified_by", "modifier@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.created_by", "creator@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.name", "test group 2"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.group_id", "102"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.parent_group_id", "100"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.time_created", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.time_modified", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.modified_by", "modifier@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.created_by", "creator@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.name", "test group 3"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.group_id", "103"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.parent_group_id", "102"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.time_created", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.time_modified", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.modified_by", "modifier@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.created_by", "creator@akamai.net"),
 					),
 				},
 			},
