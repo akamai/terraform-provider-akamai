@@ -21,6 +21,10 @@ func TestAccAkamaiEvalHost_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResEvalHost/EvalHost.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		crd := appsec.RemoveEvalHostResponse{}
+		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResEvalHost/EvalHost.json"))
+		json.Unmarshal([]byte(expectJSD), &crd)
+
 		client.On("GetEvalHost",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetEvalHostRequest{ConfigID: 43253, Version: 7},
@@ -30,6 +34,11 @@ func TestAccAkamaiEvalHost_res_basic(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.UpdateEvalHostRequest{ConfigID: 43253, Version: 7, Hostnames: []string{"example.com"}},
 		).Return(&cu, nil)
+
+		client.On("RemoveEvalHost",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.RemoveEvalHostRequest{ConfigID: 43253, Version: 7, Hostnames: []string{""}},
+		).Return(&crd, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

@@ -988,6 +988,16 @@ func (p *mockappsec) UpdateEvalHost(ctx context.Context, params appsec.UpdateEva
 	return args.Get(0).(*appsec.UpdateEvalHostResponse), args.Error(1)
 }
 
+func (p *mockappsec) RemoveEvalHost(ctx context.Context, params appsec.RemoveEvalHostRequest) (*appsec.RemoveEvalHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveEvalHostResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetEvalProtectHost(ctx context.Context, params appsec.GetEvalProtectHostRequest) (*appsec.GetEvalProtectHostResponse, error) {
 	args := p.Called(ctx, params)
 

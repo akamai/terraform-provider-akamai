@@ -28,7 +28,7 @@ func TestAccAkamaiVersionNotes_res_basic(t *testing.T) {
 
 		client.On("UpdateVersionNotes",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateVersionNotesRequest{ConfigID: 43253, Version: 7},
+			appsec.UpdateVersionNotesRequest{ConfigID: 43253, Version: 7, Notes: "Test Notes"},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
