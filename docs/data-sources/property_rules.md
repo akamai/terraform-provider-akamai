@@ -19,7 +19,7 @@ and groups you have access to.
 This example returns the rule tree for version 3 of a property based on the selected contract and group:
 
 ```hcl
-datasource "akamai_property_rules" "my-example" {
+data "akamai_property_rules" "my-example" {
     property_id = "prp_123"
     group_id = "grp_12345"
     contract_id = "ctr_1-AB123"

@@ -18,7 +18,7 @@ Return properties associated with the EdgeGrid API client token currently used f
 
 
 ```hcl
-datasource "akamai_properties" "example" {
+data "akamai_properties" "example" {
     contract_id = "ctr_1-AB123"
     group_id   = "grp_12345"
 }

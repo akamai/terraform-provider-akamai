@@ -20,7 +20,7 @@ would update automatically and generate unexpected errors.
 Use this example to list available property rule formats:
 
 ```hcl
-datasource "akamai_property_rule_formats" "my-example" {
+data "akamai_property_rule_formats" "my-example" {
 }
 
 output "property_match" {
