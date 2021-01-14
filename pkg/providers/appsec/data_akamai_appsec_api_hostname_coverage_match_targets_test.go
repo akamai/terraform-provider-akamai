@@ -30,7 +30,7 @@ func TestAccAkamaiApiHostnameCoverageMatchTargets_data_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSApiHostnameCoverageMatchTargets/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_api_hostname_coverage_match_targets.test", "id", "43253"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_hostname_coverage_match_targets.test", "id", "43253"),
 						),
 					},
 				},
