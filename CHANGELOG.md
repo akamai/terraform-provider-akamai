@@ -1,6 +1,18 @@
 # RELEASE NOTES
 
-## 1.1.0 (Jan 4, 2021) APPSEC - Extended list of supported endpoints from APPSEC API:
+## 1.2.0 (Jan 14, 2021) Identity and Access Management support
+
+These are the operations supported in the Identity Management: User Administration API v2:
+
+* Create a new user
+* Update a user’s profile
+* Update a user’s role assignments
+* Delete a user
+
+## 1.1.1 (Jan 8, 2021)
+* APPSEC - Documentation formatting fixes
+
+## 1.1.0 (Jan 7, 2021) APPSEC - Extended list of supported endpoints from APPSEC API:
   * DDoS Protection -- Rate Policy & Action
   * DDoS Protection -- Slowpost setting & Action
   * Application Layer Protection -- Rule Action, Exceptions & Conditions

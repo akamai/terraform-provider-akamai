@@ -23,6 +23,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v2/version"
 )
 
 const (
@@ -189,8 +190,8 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				return nil, diag.Errorf("Akamai EdgeGrid configuration was not specified. Specify the configuration using system environment variables or the location and file name containing the edgerc configuration. Default location the provider checks for is the current user’s home directory. Default configuration file name the provider checks for is .edgerc.")
 			}
 
-			// PROVIDER_VERSION env value must be updated in docker file, for every new release.
-			userAgent := instance.UserAgent(ProviderName, os.Getenv("PROVIDER_VERSION"))
+			// PROVIDER_VERSION env value must be updated in version file, for every new release.
+			userAgent := instance.UserAgent(ProviderName, version.ProviderVersion)
 
 			sess, err := session.New(
 				session.WithSigner(edgerc),

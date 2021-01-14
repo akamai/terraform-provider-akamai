@@ -14,7 +14,6 @@ provider "akamai" {}
 
 resource "akamai_property" "terraform_example" {
   name    = "terraform_example1"
-  contact = ["you@example.com"]
   product = "prd_SPM"
   cp_code = "cpc_846642"
 
