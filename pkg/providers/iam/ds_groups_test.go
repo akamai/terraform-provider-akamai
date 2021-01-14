@@ -1,14 +1,17 @@
 package iam
 
 import (
+	"errors"
+	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
 )
 
 func TestDSGroups(t *testing.T) {
@@ -75,6 +78,35 @@ func TestDSGroups(t *testing.T) {
 						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.modified_by", "modifier@akamai.net"),
 						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.created_by", "creator@akamai.net"),
 					),
+				},
+			},
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("fail path", func(t *testing.T) {
+		t.Parallel()
+
+		client := &IAM{}
+		client.Test(test.TattleT{T: t})
+
+		{
+			req := iam.ListGroupsRequest{}
+
+			client.On("ListGroups", mock.Anything, req).Return(nil, errors.New("failed to list groups"))
+		}
+
+		p := provider{}
+		p.SetCache(metaCache{})
+		p.SetIAM(client)
+
+		resource.UnitTest(t, resource.TestCase{
+			ProviderFactories: p.ProviderFactories(),
+			Steps: []resource.TestStep{
+				{
+					Config:      test.Fixture("testdata/%s/step0.tf", t.Name()),
+					ExpectError: regexp.MustCompile(`failed to list groups`),
 				},
 			},
 		})
