@@ -377,9 +377,8 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:    testAccProviders,
-					Steps:        kase.Steps(State, fixturePrefix),
-					CheckDestroy: resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
+					Providers: testAccProviders,
+					Steps:     kase.Steps(State, fixturePrefix),
 				})
 			})
 
@@ -543,7 +542,6 @@ func TestResProperty(t *testing.T) {
 							),
 						},
 					},
-					CheckDestroy: resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
 				})
 			})
 

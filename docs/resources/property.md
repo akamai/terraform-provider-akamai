@@ -31,7 +31,6 @@ Basic usage:
 ```hcl
 resource "akamai_property" "example" {
     name    = "terraform-demo"
-    contact = ["user@example.org"]
     product_id  = "prd_SPM"
     contract_id = var.contractid
     group_id    = var.groupid
@@ -50,7 +49,6 @@ resource "akamai_property" "example" {
 This resource supports these arguments:
 
 * `name` - (Required) The property name.
-* `contact` - (Required) One or more email addresses to send activation status changes to.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
 * `product_id` - (Required to create, otherwise Optional) A product's unique ID, including the `prd_` prefix.

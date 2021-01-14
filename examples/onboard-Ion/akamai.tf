@@ -49,7 +49,6 @@ resource "akamai_edge_hostname" "example-property" {
 resource "akamai_property" "example-property" {
   name        = "example.mydomain.com"
   cp_code     = data.akamai_cp_code.cp_code.id
-  contact     = ["me@mydomain.com"]
   contract    = data.akamai_contract.contract.id
   group       = data.akamai_group.group.id
   product     = "prd_xxxx"
