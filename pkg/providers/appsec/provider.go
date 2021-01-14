@@ -109,7 +109,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_attack_group_condition_exception": dataSourceAttackGroupConditionException(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_appsec_advanced_settings":                resourceAdvancedSettingsLogging(),
+			"akamai_appsec_advanced_settings_logging":        resourceAdvancedSettingsLogging(),
 			"akamai_appsec_advanced_settings_prefetch":       resourceAdvancedSettingsPrefetch(),
 			"akamai_appsec_api_request_constraints":          resourceApiRequestConstraints(),
 			"akamai_appsec_bypass_network_lists":             resourceBypassNetworkLists(),
