@@ -1,0 +1,18 @@
+
+    {
+        "action": "DEACTIVATE",
+        "activationConfigs": [
+            {
+                "configId": 43253,
+                "configName": "Akamai Tools",
+                "configVersion": 4
+            }
+        ],
+        "activationId": 547694,
+        "createDate": "2020-10-07T12:30:49Z",
+        "createdBy": "lap2lreucgguhekn",
+        "dispatchCount": 1,
+        "network": "STAGING",
+        "reasons": [],
+        "status": "DEACTIVATED"
+    }
