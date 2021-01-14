@@ -1,12 +1,15 @@
 package iam
 
 import (
+	"errors"
+	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDSRoles(t *testing.T) {
@@ -52,6 +55,32 @@ func TestDSRoles(t *testing.T) {
 						resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.created_by", "creator@akamai.net"),
 						resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.modified_by", "modifier@akamai.net"),
 					),
+				},
+			},
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("fail path", func(t *testing.T) {
+		t.Parallel()
+
+		req := iam.ListRolesRequest{}
+
+		client := &IAM{}
+		client.Test(test.TattleT{T: t})
+		client.On("ListRoles", mock.Anything, req).Return(nil, errors.New("failed to get roles"))
+
+		p := provider{}
+		p.SetCache(metaCache{})
+		p.SetIAM(client)
+
+		resource.UnitTest(t, resource.TestCase{
+			ProviderFactories: p.ProviderFactories(),
+			Steps: []resource.TestStep{
+				{
+					Config:      test.Fixture("testdata/%s/step0.tf", t.Name()),
+					ExpectError: regexp.MustCompile(`failed to get roles`),
 				},
 			},
 		})
