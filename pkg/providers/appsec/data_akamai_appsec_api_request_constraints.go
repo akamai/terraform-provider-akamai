@@ -2,7 +2,9 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -86,9 +88,18 @@ func dataSourceApiRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "apirequestconstraintsDS", apirequestconstraints)
+	outputtext, err := RenderTemplates(ots, "apiRequestConstraintsDS", apirequestconstraints)
 	if err == nil {
 		d.Set("output_text", outputtext)
+	}
+
+	jsonBody, err := json.Marshal(apirequestconstraints)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	d.SetId(strconv.Itoa(getApiRequestConstraints.ConfigID))

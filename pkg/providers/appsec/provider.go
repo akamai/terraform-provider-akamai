@@ -64,7 +64,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_advanced_settings_logging":           dataSourceAdvancedSettingsLogging(),
 			"akamai_appsec_advanced_settings_prefetch":          dataSourceAdvancedSettingsPrefetch(),
 			"akamai_appsec_api_endpoints":                       dataSourceApiEndpoints(),
-			"akamai_appsec_api_hostname_coverage":               dataSourceApiHostnameCoverage(),
+			"akamai_appsec_hostname_coverage":                   dataSourceApiHostnameCoverage(),
 			"akamai_appsec_api_hostname_coverage_overlapping":   dataSourceApiHostnameCoverageOverlapping(),
 			"akamai_appsec_api_hostname_coverage_match_targets": dataSourceApiHostnameCoverageMatchTargets(),
 			"akamai_appsec_api_request_constraints":             dataSourceApiRequestConstraints(),

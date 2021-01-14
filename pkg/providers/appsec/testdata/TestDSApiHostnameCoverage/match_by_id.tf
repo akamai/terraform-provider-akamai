@@ -2,6 +2,6 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-data "akamai_appsec_api_hostname_coverage" "test" {
+data "akamai_appsec_hostname_coverage" "test" {
 }
 
