@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -103,6 +104,12 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingUpdate")
 
 	updateAdvancedSettingsLogging := appsec.UpdateAdvancedSettingsLoggingRequest{}
+
+	jsonpostpayload := d.Get("logging").(string)
+
+	if err := json.Unmarshal([]byte(jsonpostpayload), &updateAdvancedSettingsLogging); err != nil {
+		return diag.FromErr(err)
+	}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
