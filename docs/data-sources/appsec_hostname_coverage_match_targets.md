@@ -34,7 +34,7 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the configuration.
 
-* `hostname` - (Optional) The hostname for which to retrieve information. 
+* `hostname` - (Required) The hostname for which to retrieve information.
 
 ## Attributes Reference
 

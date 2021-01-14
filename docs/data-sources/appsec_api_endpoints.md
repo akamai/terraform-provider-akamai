@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_api_endpoints
 
-Use the `akamai_appsec_api_endpoints` data source to retrieve information about the API endpoints associated with a security policy version, or about a specific API endpoint. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getapiendpoints).
+Use the `akamai_appsec_api_endpoints` data source to retrieve information about the API Endpoints associated with a security policy or configuration version. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getapiendpoints).
 
 ## Example Usage
 
@@ -33,6 +33,8 @@ The following arguments are supported:
 * `config_id` - (Required) The configuration ID.
 
 * `version` - (Required) The version number of the configuration.
+
+* `security_policy_id` - (Optional) The ID of the security policy to use.
 
 * `api_name` - (Optional) The name of a specific endpoint.
 
