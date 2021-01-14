@@ -251,6 +251,16 @@ func (p *mockappsec) UpdateBypassNetworkLists(ctx context.Context, params appsec
 	return args.Get(0).(*appsec.UpdateBypassNetworkListsResponse), args.Error(1)
 }
 
+func (p *mockappsec) RemoveBypassNetworkLists(ctx context.Context, params appsec.RemoveBypassNetworkListsRequest) (*appsec.RemoveBypassNetworkListsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveBypassNetworkListsResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetVersionNotes(ctx context.Context, params appsec.GetVersionNotesRequest) (*appsec.GetVersionNotesResponse, error) {
 	args := p.Called(ctx, params)
 
