@@ -28,15 +28,15 @@ func TestAccAkamaiAdvancedSettingsLogging_res_basic(t *testing.T) {
 
 		client.On("UpdateAdvancedSettingsLogging",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7, PolicyID: "", AllowSampling: false, Cookies: struct {
+			appsec.UpdateAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7, PolicyID: "", Override: false, AllowSampling: true, Cookies: struct {
 				Type string "json:\"type\""
-			}{Type: ""}, CustomHeaders: struct {
+			}{Type: "all"}, CustomHeaders: struct {
 				Type   string   "json:\"type\""
 				Values []string "json:\"values\""
-			}{Type: "", Values: []string(nil)}, StandardHeaders: struct {
+			}{Type: "exclude", Values: []string{"csdasdad"}}, StandardHeaders: struct {
 				Type   string   "json:\"type\""
 				Values []string "json:\"values\""
-			}{Type: "", Values: []string(nil)}},
+			}{Type: "only", Values: []string{"Accept"}}},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
