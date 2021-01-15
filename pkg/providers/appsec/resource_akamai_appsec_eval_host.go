@@ -106,11 +106,7 @@ func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	removeEvalHost.Version = version
 
-	hn := make([]string, 0, 1)
-
-	hn = append(hn, "")
-
-	removeEvalHost.Hostnames = hn
+	removeEvalHost.Hostnames = nil
 
 	_, erru := client.RemoveEvalHost(ctx, removeEvalHost)
 	if erru != nil {
