@@ -40,7 +40,7 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-*`json` - A JSON-formatted list of the overlap information.
+* `json` - A JSON-formatted list of the overlap information.
 
-*`output_text` - A tabular display of the overlap information.
+* `output_text` - A tabular display of the overlap information.
 
