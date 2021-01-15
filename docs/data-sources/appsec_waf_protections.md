@@ -83,3 +83,4 @@ In addition to the arguments above, the following attributes are exported:
 * `apply_reputation_controls` - true if reputation controls are applied, otherwise false 
 
 * `apply_slow_post_controls` - true if slow post controls are applied, otherwise false 
+

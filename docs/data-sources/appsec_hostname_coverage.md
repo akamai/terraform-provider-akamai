@@ -24,6 +24,7 @@ data "akamai_appsec_hostname_coverage" "hostname_coverage" {
 ```
 
 ## Argument Reference
+
 The following arguments are supported:
 
 * None

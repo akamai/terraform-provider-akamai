@@ -66,3 +66,4 @@ In addition to the arguments above, the following attributes are exported:
 * `output_text` - A tabular display showing the ID and name of all security policies.
 
 * `policy_id` - The ID of the security policy. Included only if `name` was specified.
+

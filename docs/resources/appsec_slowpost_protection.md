@@ -44,7 +44,6 @@ The following arguments are supported:
 
 * `enabled` - (Required) Whether to enable slowpost controls: either `true` or `false`.
 
-
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:

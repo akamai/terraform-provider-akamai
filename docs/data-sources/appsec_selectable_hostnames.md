@@ -50,7 +50,6 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:

@@ -78,12 +78,20 @@ The following arguments are supported:
 In addition to the arguments above, the following attributes are exported:
 
 * `apply_application_layer_controls` - `true` or `false`, indicating whether application layer controls are in effect.
+
 * `apply_network_layer_controls` - `true` or `false`, indicating whether network layer controls are in effect.
+
 * `apply_rate_controls` - `true` or `false`, indicating whether rate controls are in effect.
+
 * `apply_reputation_controls` - `true` or `false`, indicating whether reputation controls are in effect.
+
 * `apply_botman_controls` - `true` or `false`, indicating whether botman controls are in effect.
+
 * `apply_api_constraints` - `true` or `false`, indicating whether API constraints are in effect.
+
 * `apply_slow_post_controls` - `true` or `false`, indicating whether slow post controls are in effect.
+
 * `json` - a JSON-formatted list showing the status of the protection settings
+
 * `output_text` - a tabular display showing the status of the protection settings
 
