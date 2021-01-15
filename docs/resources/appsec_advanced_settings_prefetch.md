@@ -58,7 +58,7 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-*`output_text` - A tabular display showing the following updated prefetch settings.
+* `output_text` - A tabular display showing the following updated prefetch settings.
   * `ENABLE APP LAYER`
   * `ALL EXTENSION`
   * `ENABLE RATE CONTROLS`
