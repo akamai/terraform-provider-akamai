@@ -163,10 +163,10 @@ func resourceAttackGroupConditionExceptionUpdate(ctx context.Context, d *schema.
 	updateAttackGroupConditionException := appsec.UpdateAttackGroupConditionExceptionRequest{}
 
 	jsonpostpayload := d.Get("condition_exception")
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateAttackGroupConditionException); err != nil {
-		return diag.FromErr(err)
-	}
+	updateAttackGroupConditionException.JsonPayloadRaw = rawJSON
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

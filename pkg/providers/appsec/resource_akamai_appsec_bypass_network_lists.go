@@ -106,7 +106,9 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 	}
 	removeBypassNetworkLists.Version = version
 
-	removeBypassNetworkLists.NetworkLists = nil
+	hn := make([]string, 0, 1)
+
+	removeBypassNetworkLists.NetworkLists = hn
 
 	_, erru := client.RemoveBypassNetworkLists(ctx, removeBypassNetworkLists)
 	if erru != nil {

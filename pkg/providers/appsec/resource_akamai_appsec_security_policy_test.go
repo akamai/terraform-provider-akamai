@@ -36,7 +36,7 @@ func TestAccAkamaiSecurityPolicy_res_basic(t *testing.T) {
 
 		client.On("CreateSecurityPolicy",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.CreateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyName: "Cloned Test for Launchpad 15", PolicyPrefix: "LN"},
+			appsec.CreateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyName: "Cloned Test for Launchpad 15", PolicyPrefix: "LN", DefaultSettings: true},
 		).Return(&crp, nil)
 
 		client.On("UpdateSecurityPolicy",

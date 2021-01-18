@@ -105,11 +105,11 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 
 	updateAdvancedSettingsLogging := appsec.UpdateAdvancedSettingsLoggingRequest{}
 
-	jsonpostpayload := d.Get("logging").(string)
+	jsonpostpayload := d.Get("logging")
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	if err := json.Unmarshal([]byte(jsonpostpayload), &updateAdvancedSettingsLogging); err != nil {
-		return diag.FromErr(err)
-	}
+	updateAdvancedSettingsLogging.JsonPayloadRaw = rawJSON
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

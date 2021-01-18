@@ -37,7 +37,7 @@ func TestAccAkamaiEvalHost_res_basic(t *testing.T) {
 
 		client.On("RemoveEvalHost",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.RemoveEvalHostRequest{ConfigID: 43253, Version: 7, Hostnames: []string(nil)},
+			appsec.RemoveEvalHostRequest{ConfigID: 43253, Version: 7, Hostnames: []string{}},
 		).Return(&crd, nil)
 
 		useClient(client, func() {

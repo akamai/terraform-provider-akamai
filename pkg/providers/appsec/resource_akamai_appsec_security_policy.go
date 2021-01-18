@@ -34,6 +34,11 @@ func resourceSecurityPolicy() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"default_settings": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
 			"security_policy_prefix": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -71,6 +76,12 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 	createSecurityPolicy.PolicyName = policyname
+
+	defaultSettings, err := tools.GetBoolValue("default_settings", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createSecurityPolicy.DefaultSettings = defaultSettings
 
 	policyprefix, err := tools.GetStringValue("security_policy_prefix", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

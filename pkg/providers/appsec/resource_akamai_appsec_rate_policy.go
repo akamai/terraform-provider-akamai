@@ -55,10 +55,10 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 	createRatePolicy := appsec.CreateRatePolicyRequest{}
 
 	jsonpostpayload := d.Get("rate_policy")
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &createRatePolicy); err != nil {
-		return diag.FromErr(err)
-	}
+	createRatePolicy.JsonPayloadRaw = rawJSON
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -91,10 +91,10 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	updateRatePolicy := appsec.UpdateRatePolicyRequest{}
 
 	jsonpostpayload := d.Get("rate_policy")
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateRatePolicy); err != nil {
-		return diag.FromErr(err)
-	}
+	updateRatePolicy.JsonPayloadRaw = rawJSON
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
