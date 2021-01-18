@@ -24,6 +24,9 @@ func resourceMatchTarget() *schema.Resource {
 		ReadContext:   resourceMatchTargetRead,
 		UpdateContext: resourceMatchTargetUpdate,
 		DeleteContext: resourceMatchTargetDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,

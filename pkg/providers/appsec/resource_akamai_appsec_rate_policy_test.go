@@ -57,14 +57,14 @@ func TestAccAkamaiRatePolicy_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResRatePolicy/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_rate_policy.test", "id", "134644"),
+							resource.TestCheckResourceAttr("akamai_appsec_rate_policy.test", "id", "43253:7:134644"),
 						),
 					},
 
 					{
 						Config: loadFixtureString("testdata/TestResRatePolicy/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_rate_policy.test", "id", "134644"),
+							resource.TestCheckResourceAttr("akamai_appsec_rate_policy.test", "id", "43253:7:134644"),
 						),
 					},
 				},
