@@ -292,7 +292,7 @@ func TestResCPCode(t *testing.T) {
 							rs := s[0]
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
 							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
-							assert.Equal(t, "prd_2", rs.Attributes["product"])
+							assert.Equal(t, "prd_2", rs.Attributes["product_id"])
 							assert.Equal(t, "cpc_123", rs.Attributes["id"])
 							assert.Equal(t, "test cpcode", rs.Attributes["name"])
 							return nil
