@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
-page_title: "Akamai: EvalHost"
+page_title: "Akamai: EvalHostnames"
 subcategory: "Application Security"
 description: |-
-  EvalHost
+  EvalHostnames
 ---
 
-# resource_akamai_appsec_eval_host
+# resource_akamai_appsec_eval_hostnames
 
-The `resource_akamai_appsec_eval_host` resource allows you to update the list of hostnames you want to evaluate for a configuration version.
+The `resource_akamai_appsec_eval_hostnames` resource allows you to update the list of hostnames you want to evaluate for a configuration version.
 
 ## Example Usage
 
@@ -24,7 +24,7 @@ data "akamai_appsec_configuration" "configuration" {
 }
 
 // USE CASE: user wants to specify the hostnames to evaluate
-resource "akamai_appsec_eval_host" "eval_host" {
+resource "akamai_appsec_eval_hostnames" "eval_hostnames" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   hostnames = var.hostnames
