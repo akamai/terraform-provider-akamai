@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_failover_hostnames
 
-The `akamai_appsec_failover_hostnames` data source allows you to retrieve a list of the failover hostnames in a configuration. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getfailoverhostnames).
+Use the `akamai_appsec_failover_hostnames` data source to retrieve a list of the failover hostnames in a configuration. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getfailoverhostnames).
 
 ## Example Usage
 

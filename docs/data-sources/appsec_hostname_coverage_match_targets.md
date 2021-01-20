@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_hostname_coverage_match_targets
 
-The `akamai_appsec_hostname_coverage_match_targets` data source allows you to retrieve information about the API and website match targets that protect a hostname. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoveragematchtargets).
+Use the `akamai_appsec_hostname_coverage_match_targets` data source to retrieve information about the API and website match targets that protect a hostname. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoveragematchtargets).
 
 ## Example Usage
 

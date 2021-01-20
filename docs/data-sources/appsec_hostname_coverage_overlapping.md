@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_hostname_coverage_overlapping
 
-The `akamai_appsec_hostname_coverage_overlapping` data source allows you to retrieve information about the configuration versions that contain a hostname also included in the current configuration version. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoverageoverlapping).
+Use the `akamai_appsec_hostname_coverage_overlapping` data source to retrieve information about the configuration versions that contain a hostname also included in the current configuration version. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoverageoverlapping).
 
 ## Example Usage
 

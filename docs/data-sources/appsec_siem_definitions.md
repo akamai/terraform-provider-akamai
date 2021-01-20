@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_siem_definitions
 
-The `akamai_appsec_siem_definitions` data source allows you to retrieve information about the available SIEM versions, or about a specific SIEM version. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemversions).
+Use the `akamai_appsec_siem_definitions` data source to retrieve information about the available SIEM versions, or about a specific SIEM version. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemversions).
 
 ## Example Usage
 

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_contracts_groups
 
-The `akamai_appsec_contracts_groups` data source allows you to retrieve information about the contracts and groups for your account. Each object contains the contract, groups associated with the contract, and whether Kona Site Defender or Web Application Protector is the product for that contract. You’ll need this information when you create a new security configuration or when you want to get a list of hostnames still available for use in a security policy. The information available via this data source is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcontractsandgroupswithksdorwaf).
+Use the `akamai_appsec_contracts_groups` data source to retrieve information about the contracts and groups for your account. Each object contains the contract, groups associated with the contract, and whether Kona Site Defender or Web Application Protector is the product for that contract. You’ll need this information when you create a new security configuration or when you want to get a list of hostnames still available for use in a security policy. The information available via this data source is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcontractsandgroupswithksdorwaf).
 
 ## Example Usage
 

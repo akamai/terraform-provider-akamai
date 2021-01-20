@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_siem_settings
 
-The `akamai_appsec_siem_settings` data source allows you to retrieve the SIEM settings for a specific configuration. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemsettings).
+Use the `akamai_appsec_siem_settings` data source to retrieve the SIEM settings for a specific configuration. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemsettings).
 
 ## Example Usage
 

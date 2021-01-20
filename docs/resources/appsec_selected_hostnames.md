@@ -1,15 +1,15 @@
 ---
 layout: "akamai"
-page_title: "Akamai: SelectedHostname"
+page_title: "Akamai: SelectedHostnames"
 subcategory: "Application Security"
 description: |-
-  SelectedHostname
+  SelectedHostnames
 ---
 
-# akamai_appsec_selected_hostname
+# akamai_appsec_selected_hostnames
 
 
-The `akamai_appsec_selected_hostname` resource allows you to set the list of hostnames protected under a given security configuration version.
+The `akamai_appsec_selected_hostnames` resource allows you to set the list of hostnames protected under a given security configuration version.
 
 
 ## Example Usage
