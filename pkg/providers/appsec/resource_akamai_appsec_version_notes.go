@@ -33,7 +33,7 @@ func resourceVersionNotes() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"notes": {
+			"version_notes": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -108,7 +108,7 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	}
 	updateVersionNotes.Version = version
 
-	notes, err := tools.GetStringValue("notes", d)
+	notes, err := tools.GetStringValue("version_notes", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}

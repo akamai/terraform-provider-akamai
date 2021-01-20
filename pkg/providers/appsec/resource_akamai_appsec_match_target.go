@@ -24,6 +24,9 @@ func resourceMatchTarget() *schema.Resource {
 		ReadContext:   resourceMatchTargetRead,
 		UpdateContext: resourceMatchTargetUpdate,
 		DeleteContext: resourceMatchTargetDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -56,9 +59,10 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	jsonpostpayload := d.Get("match_target")
 
-	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &createMatchTarget); err != nil {
-		return diag.FromErr(err)
-	}
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
+
+	createMatchTarget.JsonPayloadRaw = rawJSON
 
 	postresp, err := client.CreateMatchTarget(ctx, createMatchTarget)
 	if err != nil {
@@ -93,9 +97,10 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	jsonpostpayload := d.Get("match_target")
 
-	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateMatchTarget); err != nil {
-		return diag.FromErr(err)
-	}
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
+
+	updateMatchTarget.JsonPayloadRaw = rawJSON
 
 	targetID, errconv := strconv.Atoi(d.Id())
 

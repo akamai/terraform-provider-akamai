@@ -41,7 +41,7 @@ func resourceApiRequestConstraints() *schema.Resource {
 			},
 			"api_endpoint_id": {
 				Type:     schema.TypeInt,
-				Required: true,
+				Optional: true,
 			},
 			"action": {
 				Type:     schema.TypeString,

@@ -1,6 +1,6 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Security Policy Protections
+page_title: "Akamai: Security Policy Protections"
 subcategory: "Application Security"
 description: |-
  Security Policy Protections

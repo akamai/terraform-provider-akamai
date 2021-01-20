@@ -88,7 +88,35 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceEvalHostRemove")
+
+	removeEvalHost := appsec.RemoveEvalHostRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeEvalHost.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeEvalHost.Version = version
+
+	hn := make([]string, 0, 1)
+
+	removeEvalHost.Hostnames = hn
+
+	_, erru := client.RemoveEvalHost(ctx, removeEvalHost)
+	if erru != nil {
+		logger.Errorf("calling 'updateEvalHost': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+	d.SetId("")
+	return nil
 }
 
 func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

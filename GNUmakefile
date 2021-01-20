@@ -28,7 +28,7 @@ check: errcheck fmtcheck lint vet
 
 .PHONY: test
 test: fmtcheck
-	go test $(TEST) -v $(TESTARGS) -timeout 2m
+	go test $(TEST) -v $(TESTARGS) -timeout 10m
 
 .PHONY: testacc
 testacc: fmtcheck

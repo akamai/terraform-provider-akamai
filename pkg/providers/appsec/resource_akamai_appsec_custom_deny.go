@@ -58,10 +58,10 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 	createCustomDeny := appsec.CreateCustomDenyRequest{}
 
 	jsonpostpayload := d.Get("custom_deny")
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &createCustomDeny); err != nil {
-		return diag.FromErr(err)
-	}
+	createCustomDeny.JsonPayloadRaw = rawJSON
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -94,10 +94,10 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	updateCustomDeny := appsec.UpdateCustomDenyRequest{}
 
 	jsonpostpayload := d.Get("custom_deny")
+	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	if err := json.Unmarshal([]byte(jsonpostpayload.(string)), &updateCustomDeny); err != nil {
-		return diag.FromErr(err)
-	}
+	updateCustomDeny.JsonPayloadRaw = rawJSON
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

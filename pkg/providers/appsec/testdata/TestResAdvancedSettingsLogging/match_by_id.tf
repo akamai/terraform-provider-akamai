@@ -3,7 +3,7 @@ provider "akamai" {
 }
 
 
-resource "akamai_appsec_advanced_settings" "test" {
+resource "akamai_appsec_advanced_settings_logging" "test" {
   config_id = 43253
     version = 7
   logging  = <<-EOF
