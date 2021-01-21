@@ -57,6 +57,8 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
+* `bypass_network_list` - A list of strings containing the network list IDs.
+
 * `json` - A JSON-formatted list of information about the bypass network lists.
 
 * `output_text` - A tabular display showing the bypass network list information.
