@@ -15,7 +15,6 @@ The `resource_akamai_appsec_custom_deny` resource allows you to create a new cus
 Basic usage:
 
 ```hcl
-// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#postcustomdeny
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
