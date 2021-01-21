@@ -131,6 +131,16 @@ func (p *mockappsec) GetAdvancedSettingsLogging(ctx context.Context, params apps
 	return args.Get(0).(*appsec.GetAdvancedSettingsLoggingResponse), args.Error(1)
 }
 
+func (p *mockappsec) RemoveAdvancedSettingsLogging(ctx context.Context, params appsec.RemoveAdvancedSettingsLoggingRequest) (*appsec.RemoveAdvancedSettingsLoggingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveAdvancedSettingsLoggingResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetAdvancedSettingsPrefetch(ctx context.Context, params appsec.GetAdvancedSettingsPrefetchRequest) (*appsec.GetAdvancedSettingsPrefetchResponse, error) {
 	args := p.Called(ctx, params)
 

@@ -116,7 +116,64 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 
 func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingRemove")
+
+	removeAdvancedSettingsLogging := appsec.RemoveAdvancedSettingsLoggingRequest{}
+
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
+
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeAdvancedSettingsLogging.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeAdvancedSettingsLogging.Version = version
+
+		policyid := s[2]
+
+		removeAdvancedSettingsLogging.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAdvancedSettingsLogging.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAdvancedSettingsLogging.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAdvancedSettingsLogging.PolicyID = policyid
+	}
+
+	if removeAdvancedSettingsLogging.PolicyID != "" {
+		removeAdvancedSettingsLogging.Override = false
+	} else {
+		removeAdvancedSettingsLogging.AllowSampling = false
+	}
+
+	_, erru := client.RemoveAdvancedSettingsLogging(ctx, removeAdvancedSettingsLogging)
+	if erru != nil {
+		logger.Errorf("calling 'updateAdvancedSettingsLogging': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+	d.SetId("")
+	return nil
 }
 
 func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
