@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -66,7 +66,7 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsRead")
 
-	getApiRequestConstraints := v2.GetApiRequestConstraintsRequest{}
+	getApiRequestConstraints := appsec.GetApiRequestConstraintsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -113,7 +113,46 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 
 func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsRemove")
+
+	removeApiRequestConstraints := appsec.RemoveApiRequestConstraintsRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeApiRequestConstraints.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeApiRequestConstraints.Version = version
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeApiRequestConstraints.PolicyID = policyid
+
+	apiEndpointID, err := tools.GetIntValue("api_endpoint_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeApiRequestConstraints.ApiID = apiEndpointID
+
+	removeApiRequestConstraints.Action = "none"
+
+	_, erru := client.RemoveApiRequestConstraints(ctx, removeApiRequestConstraints)
+	if erru != nil {
+		logger.Errorf("calling 'removeApiRequestConstraints': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId("")
+	return nil
 }
 
 func resourceApiRequestConstraintsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -121,7 +160,7 @@ func resourceApiRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsUpdate")
 
-	updateApiRequestConstraints := v2.UpdateApiRequestConstraintsRequest{}
+	updateApiRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

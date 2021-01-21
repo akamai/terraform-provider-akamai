@@ -231,6 +231,16 @@ func (p *mockappsec) UpdateApiRequestConstraints(ctx context.Context, params app
 	return args.Get(0).(*appsec.UpdateApiRequestConstraintsResponse), args.Error(1)
 }
 
+func (p *mockappsec) RemoveApiRequestConstraints(ctx context.Context, params appsec.RemoveApiRequestConstraintsRequest) (*appsec.RemoveApiRequestConstraintsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveApiRequestConstraintsResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetContractsGroups(ctx context.Context, params appsec.GetContractsGroupsRequest) (*appsec.GetContractsGroupsResponse, error) {
 	args := p.Called(ctx, params)
 
