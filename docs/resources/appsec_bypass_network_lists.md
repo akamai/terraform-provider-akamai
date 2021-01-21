@@ -28,8 +28,6 @@ resource "akamai_appsec_bypass_network_lists" "bypass_network_lists" {
   version = data.akamai_appsec_configuration.configuration.latest_version
   bypass_network_list = ["id1","id2"]
 }
-
-//TF destroy - remove all the hosts, call the same API with empty payload
 ```
 
 ## Argument Reference
