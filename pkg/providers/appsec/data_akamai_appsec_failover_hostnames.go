@@ -79,6 +79,16 @@ func dataSourceFailoverHostnamesRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	newhdata := make([]string, 0, len(failoverhostnames.HostnameList))
+
+	for _, hosts := range failoverhostnames.HostnameList {
+		newhdata = append(newhdata, hosts.Hostname)
+	}
+
+	if err := d.Set("hostnames", newhdata); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(strconv.Itoa(getFailoverHostnames.ConfigID))
 
 	return nil
