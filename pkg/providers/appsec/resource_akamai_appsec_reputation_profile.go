@@ -82,7 +82,7 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(errc)
 	}
 
-	d.SetId(strconv.Itoa(postresp.ID))
+	d.SetId(fmt.Sprintf("%d:%d:%d", createReputationProfile.ConfigID, createReputationProfile.ConfigVersion, postresp.ID))
 
 	return resourceReputationProfileRead(ctx, d, m)
 }
