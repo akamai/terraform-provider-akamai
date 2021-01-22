@@ -63,7 +63,7 @@ func resourceProperty() *schema.Resource {
 			return false
 		}
 
-		return compareRules(&oldRules.Rules, &newRules.Rules)
+		return compareRuleTree(&oldRules, &newRules)
 	}
 
 	diffSuppressHostNames := func(_, oldHostname, newHostname string, _ *schema.ResourceData) bool {
@@ -768,7 +768,10 @@ func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pro
 	}
 
 	logger.WithFields(logFields(*res)).Debug("fetched property rules")
-	Rules = papi.RulesUpdate{Rules: res.Rules}
+	Rules = papi.RulesUpdate{
+		Rules:   res.Rules,
+		Comments:res.Comments,
+	}
 	Format = res.RuleFormat
 	Errors = res.Errors
 	Warnings = res.Warnings
