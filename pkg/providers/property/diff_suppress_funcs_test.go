@@ -28,7 +28,7 @@ func TestCompareRules(t *testing.T) {
 					},
 				},
 				Children: []papi.Rules{},
-				Comment:  "comment",
+				Comments: "comment",
 				Criteria: []papi.RuleBehavior{
 					{
 						Locked:  "locked",
@@ -83,7 +83,7 @@ func TestCompareRules(t *testing.T) {
 					},
 				},
 				Children: []papi.Rules{},
-				Comment:  "comment",
+				Comments: "comment",
 				Criteria: []papi.RuleBehavior{
 					{
 						Locked:  "locked",
