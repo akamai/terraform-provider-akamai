@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -20,6 +21,14 @@ func dataSourceCustomRules() *schema.Resource {
 			"config_id": {
 				Type:     schema.TypeInt,
 				Required: true,
+			},
+			"custom_rule_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"json": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"output_text": {
 				Type:        schema.TypeString,
@@ -43,6 +52,12 @@ func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 	getCustomRules.ConfigID = configid
 
+	customzruleid, err := tools.GetIntValue("custom_rule_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getCustomRules.ID = customzruleid
+
 	customrules, err := client.GetCustomRules(ctx, getCustomRules)
 	if err != nil {
 		logger.Errorf("calling 'getCustomRules': %s", err.Error())
@@ -57,6 +72,15 @@ func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m in
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
+	}
+
+	jsonBody, err := json.Marshal(customrules)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	d.SetId(strconv.Itoa(getCustomRules.ConfigID))
