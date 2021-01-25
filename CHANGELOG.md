@@ -1,5 +1,11 @@
 # RELEASE NOTES
 
+## 1.2.1 (Jan 26, 2021)
+
+#### BUG FIXES:
+* PAPI -- Fixed crash caused by passing computed cpCode as a variable in rules to akamai_property
+* PAPI -- Deprecated "product" attribute in akamai_cp_code resource and changed it "product_id"
+
 ## 1.2.0 (Jan 14, 2021) Identity and Access Management support
 
 These are the operations supported in the Identity Management: User Administration API v2:
