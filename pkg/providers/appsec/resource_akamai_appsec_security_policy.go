@@ -37,16 +37,16 @@ func resourceSecurityPolicy() *schema.Resource {
 			},
 			"security_policy_name": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
+			},
+			"security_policy_prefix": {
+				Type:     schema.TypeString,
+				Required: true,
 			},
 			"default_settings": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
-			},
-			"security_policy_prefix": {
-				Type:     schema.TypeString,
-				Optional: true,
 			},
 			"security_policy_id": &schema.Schema{
 				Type:        schema.TypeString,
