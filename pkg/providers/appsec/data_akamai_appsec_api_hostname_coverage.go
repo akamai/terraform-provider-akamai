@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -18,6 +17,7 @@ import (
 func dataSourceApiHostnameCoverage() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceApiHostnameCoverageRead,
+		Schema: map[string]*schema.Schema{
 			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
