@@ -18,11 +18,6 @@ import (
 func dataSourceApiHostnameCoverage() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceApiHostnameCoverageRead,
-		Schema: map[string]*schema.Schema{
-			"hostname": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
 			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -42,12 +37,6 @@ func dataSourceApiHostnameCoverageRead(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("APPSEC", "resourceApiHostnameCoverageRead")
 
 	getApiHostnameCoverage := appsec.GetApiHostnameCoverageRequest{}
-
-	hostname, err := tools.GetStringValue("hostname", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getApiHostnameCoverage.Hostname = hostname
 
 	apihostnamecoverage, err := client.GetApiHostnameCoverage(ctx, getApiHostnameCoverage)
 	if err != nil {
