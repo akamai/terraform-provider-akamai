@@ -76,27 +76,7 @@ func resourceConfigurationRenameUpdate(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceConfigurationRenameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceConfigurationRenameRemove")
-
-	removeConfiguration := appsec.RemoveConfigurationRequest{}
-
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeConfiguration.ConfigID = configid
-
-	_, errd := client.RemoveConfiguration(ctx, removeConfiguration)
-	if errd != nil {
-		logger.Errorf("calling 'removeConfiguration': %s", errd.Error())
-		return diag.FromErr(errd)
-	}
-
-	d.SetId("")
-
-	return nil
+	return schema.NoopContext(nil, d, m)
 }
 
 func resourceConfigurationRenameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
