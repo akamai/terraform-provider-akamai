@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -41,7 +40,7 @@ func dataSourceContractsGroups() *schema.Resource {
 				Computed: true,
 			},
 			"default_groupid": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 		},
@@ -96,7 +95,7 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 			if err := d.Set("default_contractid", contract); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
-			if err := d.Set("default_groupid", strconv.Itoa(group)); err != nil {
+			if err := d.Set("default_groupid", group); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
 		}
