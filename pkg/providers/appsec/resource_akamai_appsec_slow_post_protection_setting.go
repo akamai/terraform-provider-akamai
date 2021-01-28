@@ -3,7 +3,9 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -68,32 +70,62 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingRead")
 
 	getSlowPostProtectionSetting := appsec.GetSlowPostProtectionSettingRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSlowPostProtectionSetting.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getSlowPostProtectionSetting.Version = version
+
+		policyid := s[2]
+		getSlowPostProtectionSetting.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getSlowPostProtectionSetting.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getSlowPostProtectionSetting.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getSlowPostProtectionSetting.PolicyID = policyid
 	}
-	getSlowPostProtectionSetting.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getSlowPostProtectionSetting.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getSlowPostProtectionSetting.PolicyID = policyid
-
 	_, errg := client.GetSlowPostProtectionSetting(ctx, getSlowPostProtectionSetting)
 	if errg != nil {
 		logger.Errorf("calling 'getSlowPostProtectionSetting': %s", errg.Error())
 		return diag.FromErr(errg)
 	}
 
-	d.SetId(strconv.Itoa(getSlowPostProtectionSetting.ConfigID))
+	if err := d.Set("config_id", getSlowPostProtectionSetting.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getSlowPostProtectionSetting.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", getSlowPostProtectionSetting.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d:%s", getSlowPostProtectionSetting.ConfigID, getSlowPostProtectionSetting.Version, getSlowPostProtectionSetting.PolicyID))
 
 	return nil
 }
@@ -105,28 +137,45 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingDelete")
 
 	updateSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateSlowPostProtection.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateSlowPostProtection.Version = version
+
+		policyid := s[2]
+		updateSlowPostProtection.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateSlowPostProtection.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateSlowPostProtection.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateSlowPostProtection.PolicyID = policyid
 	}
-	updateSlowPostProtection.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateSlowPostProtection.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateSlowPostProtection.PolicyID = policyid
-
 	updateSlowPostProtection.ApplySlowPostControls = false
 
-	logger.Errorf("calling 'updateSlowPostProtection': %v", updateSlowPostProtection)
 	_, erru := client.UpdateSlowPostProtection(ctx, updateSlowPostProtection)
 	if erru != nil {
 		logger.Errorf("calling 'updateSlowPostProtection': %s", erru.Error())
@@ -142,25 +191,43 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
 
 	updateSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateSlowPostProtectionSetting.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateSlowPostProtectionSetting.Version = version
+
+		policyid := s[2]
+		updateSlowPostProtectionSetting.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateSlowPostProtectionSetting.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateSlowPostProtectionSetting.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateSlowPostProtectionSetting.PolicyID = policyid
 	}
-	updateSlowPostProtectionSetting.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateSlowPostProtectionSetting.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateSlowPostProtectionSetting.PolicyID = policyid
-
 	slowrateaction, err := tools.GetStringValue("slow_rate_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

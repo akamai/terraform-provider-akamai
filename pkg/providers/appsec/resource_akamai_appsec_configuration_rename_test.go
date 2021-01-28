@@ -21,10 +21,6 @@ func TestAccAkamaiConfigurationRename_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResConfigurationRename/Configuration.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
-		crd := appsec.RemoveConfigurationResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResConfigurationRename/Configuration.json"))
-		json.Unmarshal([]byte(expectJSD), &crd)
-
 		client.On("GetConfigurations",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetConfigurationsRequest{ConfigID: 432531, Name: "Akamai Tools New"},
@@ -34,11 +30,6 @@ func TestAccAkamaiConfigurationRename_res_basic(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.UpdateConfigurationRequest{ConfigID: 432531, Name: "Akamai Tools New", Description: "TF Tools"},
 		).Return(&cu, nil)
-
-		client.On("RemoveConfiguration",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.RemoveConfigurationRequest{ConfigID: 432531},
-		).Return(&crd, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

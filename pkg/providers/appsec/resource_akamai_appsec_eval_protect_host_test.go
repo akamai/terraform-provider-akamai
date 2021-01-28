@@ -39,7 +39,7 @@ func TestAccAkamaiEvalProtectHost_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResEvalProtectHost/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_eval_protect_host.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_eval_protect_host.test", "id", "43253:7"),
 						),
 					},
 				},
