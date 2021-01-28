@@ -117,6 +117,7 @@ func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsRemove")
 
+	getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
 	removeApiRequestConstraints := appsec.RemoveApiRequestConstraintsRequest{}
 	removePolicyProtections := appsec.RemovePolicyProtectionsRequest{}
 
@@ -124,43 +125,63 @@ func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	removeApiRequestConstraints.ConfigID = configid
-	removePolicyProtections.ConfigID = configid
 
 	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	removeApiRequestConstraints.Version = version
-	removePolicyProtections.Version = version
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
+	getPolicyProtections.ConfigID = configid
+	removeApiRequestConstraints.ConfigID = configid
+	removePolicyProtections.ConfigID = configid
+
+	getPolicyProtections.Version = version
+	removeApiRequestConstraints.Version = version
+	removePolicyProtections.Version = version
+
+	getPolicyProtections.PolicyID = policyid
 	removeApiRequestConstraints.PolicyID = policyid
 	removePolicyProtections.PolicyID = policyid
+
+	policyprotections, err := client.GetPolicyProtections(ctx, getPolicyProtections)
+	if err != nil {
+		logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
+		return diag.FromErr(err)
+	}
 
 	apiEndpointID, err := tools.GetIntValue("api_endpoint_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	removeApiRequestConstraints.ApiID = apiEndpointID
-	if removeApiRequestConstraints.ApiID != 0 {
-		removeApiRequestConstraints.Action = "none"
-	}
 
-	_, erru := client.RemoveApiRequestConstraints(ctx, removeApiRequestConstraints)
-	if erru != nil {
-		logger.Errorf("calling 'removeApiRequestConstraints': %s", erru.Error())
-		return diag.FromErr(erru)
-	}
 	if removeApiRequestConstraints.ApiID == 0 {
-		removePolicyProtections.ApplyAPIConstraints = false
-		_, errd := client.RemovePolicyProtections(ctx, removePolicyProtections)
-		if errd != nil {
-			logger.Errorf("calling 'removePolicyProtections': %s", errd.Error())
-			return diag.FromErr(errd)
+		if policyprotections.ApplyAPIConstraints == true {
+			removePolicyProtections.ApplyAPIConstraints = false
+			removePolicyProtections.ApplyApplicationLayerControls = policyprotections.ApplyApplicationLayerControls
+			removePolicyProtections.ApplyBotmanControls = policyprotections.ApplyBotmanControls
+			removePolicyProtections.ApplyNetworkLayerControls = policyprotections.ApplyNetworkLayerControls
+			removePolicyProtections.ApplyRateControls = policyprotections.ApplyRateControls
+			removePolicyProtections.ApplyReputationControls = policyprotections.ApplyReputationControls
+			removePolicyProtections.ApplySlowPostControls = policyprotections.ApplySlowPostControls
+
+			_, errd := client.RemovePolicyProtections(ctx, removePolicyProtections)
+			if errd != nil {
+				logger.Errorf("calling 'removePolicyProtections': %s", errd.Error())
+				return diag.FromErr(errd)
+			}
+		}
+	} else {
+		removeApiRequestConstraints.Action = "none"
+		_, erru := client.RemoveApiRequestConstraints(ctx, removeApiRequestConstraints)
+		if erru != nil {
+			logger.Errorf("calling 'removeApiRequestConstraints': %s", erru.Error())
+			return diag.FromErr(erru)
 		}
 	}
 
