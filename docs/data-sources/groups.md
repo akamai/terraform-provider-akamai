@@ -9,7 +9,7 @@ description: |-
 # akamai_groups
 
 
-Use the `akamai_property_groups` data source to list groups associated with the [EdgeGrid API client token](https://developer.akamai.com/getting-started/edgegrid) you're using.
+Use the `akamai_groups` data source to list groups associated with the [EdgeGrid API client token](https://developer.akamai.com/getting-started/edgegrid) you're using.
 
 ## Basic usage
 
