@@ -18,7 +18,7 @@ To get more information about Edge DNS, see:
 
 ## Configure the Terraform Provider
 
-Set up your credential files as described in [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started), and include authorization for the GTM Config API 
+Set up your credential files as described in [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started), and include authorization for the GTM Config API. 
 
 Next, we need to configure the provider with our credentials. This is done using a provider configuration block.
 
