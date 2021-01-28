@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_selectable_hostnames
 
-Use the `akamai_appsec_selectable_hostnames` data source to retrieve the list of hostnames that may be protected under a given security configuration version. You can use specify the list to be retrieved either by supplying the name and version of a security configuration, or by supplying a group ID and contract ID.
+Use the `akamai_appsec_selectable_hostnames` data source to retrieve the list of hostnames that may be protected under a given security configuration version. You can specify the list to be retrieved either by supplying the name and version of a security configuration, or by supplying a group ID and contract ID.
 
 ## Example Usage
 
