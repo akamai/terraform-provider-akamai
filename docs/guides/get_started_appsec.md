@@ -96,7 +96,7 @@ When you have identified the desired security configuration by name, you can loa
 
 To load a specific configuration:
 1. Identify the desired security configuration by name, 
-1. Edit your `akamai.tf` file to add the desired  `name` parameter to the `akamai_appsec_configuration` data block.
+1. Edit your `akamai.tf` file to add the desired `name` parameter to the `akamai_appsec_configuration` data block.
 1. Change the `output` block so that it gives just the `config_id` attribute of the configuration. 
 
 After these changes, the section of your file below the initial `provider` block looks like the following example:
@@ -117,7 +117,7 @@ After running `terraform apply` on this file, the terminal displays `config_id` 
 
 The provider's [`akamai_appsec_export_configuration`](../data-sources/appsec_export_configuration.md) data source can display complete information about any configuration that you specify, including attributes like custom rules, and selected hostnames. 
 
-To show custom rule and selected hostname data for the your most recent configuration, add the following blocks to your `akamai.tf` file:
+To show custom rule and selected hostname data for your most recent configuration, add the following blocks to your `akamai.tf` file:
 
 ```hcl
 data "akamai_appsec_export_configuration" "export" {
