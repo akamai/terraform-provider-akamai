@@ -33,7 +33,7 @@ Required
 
 * `domain` - GTM Domain name for the AS Map.
 * `name` - A descriptive label for the AS map. Properties set up for asmapping can use this as reference.
-* `default_datacenter` - A placeholder for all other AS zones, AS IDs not found in these AS zones.
+* `default_datacenter` - A placeholder for all other AS zones not found in these AS zones.
   * `datacenter_id` - A unique identifier for an existing data center in the domain.
   * `nickname` - A descriptive label for all other AS zones, up to 128 characters.
 

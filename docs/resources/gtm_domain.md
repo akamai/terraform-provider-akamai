@@ -32,22 +32,22 @@ Required
 
 * `contract` - The contract ID (if creating domain).
 * `group` - The currently selected group ID (if creating domain).
-* `name` - Domain name.
-* `type` - Domain type. 
+* `name` - DNS name for a collection of GTM Properties.
+* `type` - GTM Domain type of `failover-only`, `static`, `weighted`, `basic` or `full`. 
 
 Optional 
 
-* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
-* `comment` - A descriptive comment
-* `email_notification_list` - (List)
-* `default_timeout_penalty` - (Default: 25)
-* `load_imbalance_percentage`
-* `default_ssl_client_private_key`
+* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete.
+* `comment` - A descriptive note about changes to the domain. The maximum is 4000 characters.
+* `email_notification_list` - (List) A list of email addresses to notify when a change is made to the domain.
+* `default_timeout_penalty` - (Default: 25) Specifies the timeout penalty score.
+* `load_imbalance_percentage` - Indicates the percent of load imbalance factor (LIF) for the domain.
+* `default_ssl_client_private_key` - Specifies an optional Base64-encoded private key that corresponds with the TLS certificate for TLS-based liveness tests (HTTPS, SMTPS, POPS, and TCPS).
 * `default_error_penalty` - (Default: 75) Specifies the download penalty score. If the download encounters an error, the web agent computes a score that is either the download time in seconds or a penalty score.
-* `cname_coalescing_enabled` - (Boolean)
-* `load_feedback` - (Boolean)
-* `default_ssl_client_certificate`
-* `end_user_mapping_enabled` - (Boolean)
+* `cname_coalescing_enabled` - (Boolean) If enabled, GTM collapses CNAME redirections in DNS answers when it knows the target of the CNAME.
+* `load_feedback` - (Boolean) Indicates whether one or more measurements of load (resources) are defined by you and supplied by each data center in real time to balance load.
+* `default_ssl_client_certificate` - Specifies an optional Base64-encoded certificate that corresponds with the private key for TLS-based liveness tests (HTTPS, SMTPS, POPS, and TCPS).
+* `end_user_mapping_enabled` - (Boolean) Indicates whether the GTM Domain is using end user client subnet mapping.
 
 Computed
 

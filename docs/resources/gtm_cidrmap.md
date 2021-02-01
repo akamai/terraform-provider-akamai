@@ -33,8 +33,8 @@ Required
 
 * `domain` - GTM Domain name for the AS Map.
 * `name` - A descriptive label for the CIDR map, up to 255 characters.
-* `default_datacenter` - A placeholder for all other CIDR zones, CIDR blocks not found in these CIDR zones.
-  * `datacenter_id` - For each property, an identifier for all other CIDR zones’ CNAME. For example, 5400.
+* `default_datacenter` - A placeholder for all other CIDR zones not found in these CIDR zones.
+  * `datacenter_id` - For each property, an identifier for all other CIDR zones.
   * `nickname` - A descriptive label for the all other CIDR blocks.
 
 Optional
