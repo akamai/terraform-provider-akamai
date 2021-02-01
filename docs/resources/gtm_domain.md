@@ -28,14 +28,14 @@ resource "akamai_gtm_domain" "demodomain" {
 
 The following arguments are supported:
 
-Required
+### Required
 
 * `contract` - The contract ID (if creating domain).
 * `group` - The currently selected group ID (if creating domain).
 * `name` - DNS name for a collection of GTM Properties.
 * `type` - GTM Domain type of `failover-only`, `static`, `weighted`, `basic` or `full`. 
 
-Optional 
+### Optional 
 
 * `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete.
 * `comment` - A descriptive note about changes to the domain. The maximum is 4000 characters.
@@ -49,7 +49,7 @@ Optional
 * `default_ssl_client_certificate` - Specifies an optional Base64-encoded certificate that corresponds with the private key for TLS-based liveness tests (HTTPS, SMTPS, POPS, and TCPS).
 * `end_user_mapping_enabled` - (Boolean) Indicates whether the GTM Domain is using end user client subnet mapping.
 
-Computed
+### Computed
 
 The following arguments will be found in `terraform.tfstate` and can be referenced throughout the configuration. The values cannot be changed.
 
@@ -74,6 +74,6 @@ The following arguments will be found in `terraform.tfstate` and can be referenc
 * `min_test_interval`.
 * `ping_packet_size`.
 
-### Backing Schema Reference
+### Schema Reference
 
-The GTM Domain backing schema and element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#domain).
+The GTM Domain backing schema and more complete element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#domain).

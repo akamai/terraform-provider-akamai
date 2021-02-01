@@ -29,7 +29,7 @@ resource "akamai_gtm_asmap" "demo_asmap" {
 
 The following arguments are supported:
 
-Required
+### Required
 
 * `domain` - GTM Domain name for the AS Map.
 * `name` - A descriptive label for the AS map. Properties set up for asmapping can use this as reference.
@@ -37,7 +37,7 @@ Required
   * `datacenter_id` - A unique identifier for an existing data center in the domain.
   * `nickname` - A descriptive label for all other AS zones, up to 128 characters.
 
-Optional
+### Optional
  
 * `wait_on_complete` - (Boolean, Default: `true`) Wait for transaction to complete.
 * `assignment` - (multiple allowed) Contains information about the AS zone groupings of AS IDs.
@@ -45,7 +45,7 @@ Optional
   * `nickname` - A descriptive label for the group.
   * `as_numbers` - (List) Specifies an array of AS numbers.
 
-### Backing Schema Reference
+### Schema Reference
 
-The GTM AS Map backing schema and element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#asmap)
+The GTM AS Map backing schema and more complete element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#asmap)
 

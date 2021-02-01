@@ -27,15 +27,15 @@ resource "akamai_gtm_resource" "demo_resource" {
 
 The following arguments are supported:
 
-Required
+### Required
 
 * `domain` - Domain name 
 * `name` - Resource name
 * `aggregation_type`
 * `type` - Resource type
 
-Optional
- 
+### Optional
+
 * `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
 * `resource_instance`  - (multiple allowed) 
   * `datacenter_id`
@@ -53,7 +53,7 @@ Optional
 * `max_u_multiplicative_increment`
 * `decay_rate`
 
-### Backing Schema Reference
+### Schema Reference
 
 The GTM Resource backing schema and element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#resource)
 

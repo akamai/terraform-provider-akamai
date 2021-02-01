@@ -29,7 +29,7 @@ resource "akamai_gtm_geomap" "demo_geomap" {
 
 The following arguments are supported:
 
-Required
+### Required
 
 * `domain` - GTM Domain name for the Geographic Map.
 * `name` - A descriptive label for the Geographic map.
@@ -37,7 +37,7 @@ Required
   * `datacenter_id` - For each property, an identifier for all other geographic zones.
   * `nickname` - A descriptive label for all other geographic zones.
 
-Optional
+### Optional
  
 * `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
 * `assignment` - (multiple allowed) Contains information about the geographic zone groupings of countries.
@@ -45,6 +45,6 @@ Optional
   * `nickname` - A descriptive label for the group.
   * `countries` - (List) Specifies an array of two-letter ISO 3166 country codes, or for finer subdivisions, the two-letter country code and the two-letter stateOrProvince code separated by a forward slash.
 
-### Backing Schema Reference
+### Schema Reference
 
-The GTM Geographic Map backing schema and element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#geographicmap).
+The GTM Geographic Map backing schema and more complete element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#geographicmap).

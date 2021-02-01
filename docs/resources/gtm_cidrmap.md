@@ -29,7 +29,7 @@ resource "akamai_gtm_cidrmap" "demo_cidrmap" {
 
 The following arguments are supported:
 
-Required
+### Required
 
 * `domain` - GTM Domain name for the AS Map.
 * `name` - A descriptive label for the CIDR map, up to 255 characters.
@@ -37,7 +37,7 @@ Required
   * `datacenter_id` - For each property, an identifier for all other CIDR zones.
   * `nickname` - A descriptive label for the all other CIDR blocks.
 
-Optional
+### Optional
  
 * `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete.
 * `assignment` - (multiple allowed) Contains information about the CIDR zone groupings of CIDR blocks.
@@ -45,7 +45,7 @@ Optional
   * `nickname` - A descriptive label for the CIDR zone group, up to 256 characters.
   * `blocks` - (List) Specifies an array of CIDR blocks.
 
-### Backing Schema Reference
+### Schema Reference
 
-The GTM Cidr Map backing schema and element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#cidrmap).
+The GTM Cidr Map backing schema and more complete element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#cidrmap).
 

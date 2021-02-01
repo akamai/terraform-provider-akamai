@@ -25,11 +25,11 @@ resource "akamai_gtm_datacenter" "demo_datacenter" {
 
 The following arguments are supported:
 
-Required
+### Required
 
 * `domain` - GTM Domain name for the Datacenter.
 
-Optional
+### Optional
  
 * `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete.
 * `nickname` - A descriptive label for the data center.
@@ -47,7 +47,7 @@ Optional
 * `longitude` - Specifies the geographic longitude of the data center’s position. See also latitude within this object.
 * `state_or_province` - Specifies a two-letter ISO 3166 country code for the state or province where the data center is located.
 
-Computed
+### Computed
 
 The following arguments will be found in `terraform.tfstate` and can be referenced throughout the configuration. The values cannot be changed.
 
@@ -60,6 +60,6 @@ The following arguments will be found in `terraform.tfstate` and can be referenc
 * `servermonitor_pool`.
 * `virtual` - (Boolean).
 
-### Backing Schema Reference
+### Schema Reference
 
-The GTM Datacenter backing schema and element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#datacenter).
+The GTM Datacenter backing schema and more complete element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#datacenter).
