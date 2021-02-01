@@ -8,7 +8,7 @@ description: |-
 
 # akamai_gtm_property
 
-`akamai_gtm_property` provides the resource for creating, configuring and importing a GTM property, a set of IP addresses or CNAMEs that GTM provides in response to DNS queries based on a set of rules. Note: Import requires an ID of the format: `existing_domain_name`:`existing_property_name`
+`akamai_gtm_property` provides the resource for creating, configuring and importing a GTM property, a set of IP addresses or CNAMEs that GTM provides in response to DNS queries based on a set of rules. Note: Import requires an ID of the format: `existing_domain_name`:`existing_property_name`.
 
 ## Example Usage
 
@@ -77,7 +77,7 @@ The following arguments are supported:
   * `test_object_port` - Specifies the port number for the testObject.
   * `test_object_username` - A descriptive name for the testObject.
   * `timeout_penalty`- Specifies the score to be reported if the liveness test times out.
-* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
+* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete.
 * `failover_delay` - Specifies the failover delay in seconds.
 * `failback_delay` - Specifies the failback delay in seconds.
 * `ipv6` - (Boolean) Indicates the type of IP address handed out by a Property.

@@ -39,7 +39,7 @@ The following arguments are supported:
 
 ### Optional
  
-* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
+* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete.
 * `assignment` - (multiple allowed) Contains information about the geographic zone groupings of countries.
   * `datacenter_id` - A unique identifier for an existing data center in the domain.
   * `nickname` - A descriptive label for the group.
