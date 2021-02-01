@@ -149,7 +149,7 @@ The following field is required:
 
 * target - One or more domain names that specify a host willing to act as a mail exchange for the owner name.
 
-The following fields are optional depending on configuration type. See [DNS Getting Started Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone#working-with-mx-records) for more information.
+The following fields are optional depending on configuration type. See [DNS Getting Started Guide](../guides/get_started_dns_zone#working-with-mx-records) for more information.
 
 * priority - The preference value given to the MX record among MX records. When a mailer needs to send mail to a certain DNS domain, it first contacts a DNS server for that domain and retrieves all the MX records. It then contacts the mailer with the lowest preference value. Ignored if an embedded priority exists in the target.
 * priority_increment - auto priority increment when multiple targets are provided with no embedded priority.

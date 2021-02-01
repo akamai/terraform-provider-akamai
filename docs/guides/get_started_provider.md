@@ -10,7 +10,7 @@ description: |-
 If you've set up Akamai APIs before, some of the Akamai Provider 
 setup tasks will look familiar. You'll need to create Akamai API clients 
 for each of the modules you'll be using, and retrieve IDs for your contracts 
-and groups. Other tasks, like setting up your `akamai.tf` file, are very
+and groups. Other tasks, like setting up your `akamai.tf` file, are 
 specific to Terraform.
 
 Complete the tasks in this guide when setting up the Akamai
@@ -84,22 +84,13 @@ Control Center, or by using other Akamai APIs or CLIs.
 
 ### Retrieve contract IDs with akamai_contract
 
-You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). This data source requires access to the Property Manager (PAPI) API service. See [Set up your API clients](../guides/akamai_provider_auth.md#set-up-your-api-clients)
+You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). This data source requires access to the Property Manager (PAPI) API service. See [Set up your API clients](../guides/akamai_provider_auth.md#set-up-your-api-clients).
 
-To retrieve the default contract you need to enter a group name or ID no attributes need to be set:
+To retrieve the default contract, you need to enter a group name or ID. No attributes need to be set:
 
 ```hcl
 data "akamai_contract" "default" {
      group_name = "example group name"
-
-}
-```
-
-Alternatively, if you have multiple contracts, you can specify the `group` that contains it:
-
-```hcl
-data "akamai_contract" "default" {
-	group_name = "default"
 }
 ```
 
@@ -152,7 +143,7 @@ Akamai modules you're using:
 
 -> **Note** Both Terraform and the Akamai Terraform CLI package come
 pre-installed in the Akamai Development Environment. Get more details in
-our [[installation
+our [installation
 Instructions](https://developer.akamai.com/blog/2020/05/26/set-development-environment).
 
 Once you're done with the module-level setup, continue with the next

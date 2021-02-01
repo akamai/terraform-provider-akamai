@@ -47,12 +47,12 @@ supporting API service names:
 | **Module** | **API service name** |
 |-------------|----------------------|
 | Property Manager (Provisioning and Common modules) | Property Manager (PAPI) |
-| Edge DNS (DNS) | DNS-Zone Record Management |
-| Global Traffic Management | Traffic Management Configurations |
+| Edge DNS (DNS) | DNS Zone Management |
+| Global Traffic Management | Global Traffic Management |
 | Application Security | Application Security |
 
 Once you create the supporting API clients you can update your local
-`.edgerc file`.
+`.edgerc` file.
 
 ## Add your local .edgerc file to your Akamai Provider config
 
@@ -61,12 +61,12 @@ To reference a local `.edgerc` file, you add this line to the top of the
 Akamai Provider configuration file (`akamai.tf`): 
 
 ```
-edgerc = \"\~/.edgerc\"
+edgerc = "~/.edgerc"
 ```
 
-The `\~/.edgerc` is the location of your file on your local machine. In
-your Terraform files you can reference individual sections inside the
-.edgerc file:
+`~/.edgerc` is the location of your file on your local machine. In
+your Terraform files, you can reference individual sections inside the
+`.edgerc` file:
 
 ### Example usage
 
@@ -137,7 +137,7 @@ resource "akamai_dns_record" "example_record" {
 
 Arguments supported in the `provider` block:
 
-* edgerc - (Optional) The location of the `.edgerc` file containing credentials. The default is `\$HOME/.edgerc`.
+* edgerc - (Optional) The location of the `.edgerc` file containing credentials. The default is `$HOME/.edgerc`.
 * config_section - (Optional) The credential section to use within the `.edgerc` file for all EdgeGrid calls. If you don't use `config_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
 
 #### Deprecated arguments
@@ -167,7 +167,7 @@ provider "akamai" {
 }
 ```
 
-You don't need the `edgerc` or `config_section` attributes that you'd use if you were adding your local `.edgerc` file to your Akamai Provider config.
+You don't need the `edgerc` or `config_section` attributes that you'd use if you were adding your local `.edgerc` file to your Akamai Provider configuration.
 
 ### Argument reference
 
@@ -191,7 +191,7 @@ You can also use environment variables to set credential values.
 Environment variables take precedence over the settings in the `.edgerc`
 file.
 
-Your environment variables should be in this format: `AKAMAI{_SECTION_NAME}_\*`
+Your environment variables should be in this format: `AKAMAI{_SECTION_NAME}_*`
 
 For example, if you're setting up the Provisioning module, you'll need an API client for Property Manager. In your `akamai.tf` file, you'll need to add a `config_section` block with these environment variables:
 
@@ -232,7 +232,7 @@ terraform apply
 ```
 
 ### Variable reference
-When using variables, you'll need to set them up based on the sections of your `.edgerc` file they represent. Your environment variables should be in this format: `AKAMAI{_SECTION_NAME}_\*`
+When using variables, you'll need to set them up based on the sections of your `.edgerc` file they represent. Your environment variables should be in this format: `AKAMAI{_SECTION_NAME}_*`
 
 These are the variables for the `default` section of your `.edgerc` and what they represent: 
 
