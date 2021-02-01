@@ -50,7 +50,7 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `api_endpoint_id` - (Required) The ID of the API endpoint to use.
+* `api_endpoint_id` - (Optional) The ID of the API endpoint to use. If not supplied, the request constraint action will be updated for all APIs.
 
 * `action` - (Required) The action to assign to API request constraints: either `alert`, `deny`, or `none`.
 

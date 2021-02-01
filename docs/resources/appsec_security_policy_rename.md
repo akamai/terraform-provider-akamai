@@ -27,7 +27,7 @@ resource "akamai_appsec_security_policy" "security_policy_rename" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
-  name = var.name
+  security_policy_name = var.name
 }
 ```
 
