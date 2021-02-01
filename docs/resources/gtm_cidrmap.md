@@ -8,7 +8,7 @@ description: |-
 
 # akamai_gtm_cidrmap
 
-`akamai_gtm_cidrmap` provides the resource for creating, configuring and importing a GTM Cidr Map. Classless Inter-Domain Routing (CIDR) mapping uses the IP addresses of the requesting name server to provide IP-specific CNAME entries, which lets you direct internal users to a specific environment or direct to the origin. This provides different responses to an internal corporate DNS infrastructure such as internal test environments and another answer for all other (defaultDatacenter) name servers. CIDR maps split the Internet into multiple CIDR block zones. Properties that use a map can specify a handout CNAME for each zone on the property’s editing page. To configure a property for CIDR mapping, your domain needs at least one CIDR map defined.. Note: Import requires an ID of the format: `existing_domain_name`:`existing_map_name`
+`akamai_gtm_cidrmap` provides the resource for creating, configuring and importing a GTM Classless Inter-Domain Routing (CIDR) Map. CIDR mapping uses the IP addresses of the requesting name server to provide IP-specific CNAME entries, which lets you direct internal users to a specific environment or direct to the origin. This provides different responses to an internal corporate DNS infrastructure such as internal test environments and another answer for all other (defaultDatacenter) name servers. CIDR maps split the Internet into multiple CIDR block zones. Properties that use a map can specify a handout CNAME for each zone on the property’s editing page. To configure a property for CIDR mapping, your domain needs at least one CIDR map defined.. Note: Import requires an ID of the format: `existing_domain_name`:`existing_map_name`
 
 ## Example Usage
 
@@ -39,13 +39,13 @@ Required
 
 Optional
  
-* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete
-* `assignment` - (multiple allowed)
-  * `datacenter_id`
-  * `nickname`
-  * `blocks` - (List)
+* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete.
+* `assignment` - (multiple allowed) Contains information about the CIDR zone groupings of CIDR blocks.
+  * `datacenter_id` - A unique identifier for an existing data center in the domain.
+  * `nickname` - A descriptive label for the CIDR zone group, up to 256 characters.
+  * `blocks` - (List) Specifies an array of CIDR blocks.
 
 ### Backing Schema Reference
 
-The GTM Cidr Map backing schema and element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#cidrmap)
+The GTM Cidr Map backing schema and element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#cidrmap).
 
