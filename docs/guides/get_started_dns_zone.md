@@ -19,7 +19,7 @@ Remember to start with the Get Started with the [Akamai Terraform Provider Guide
 
 ## Creating a DNS Zone
 
-The zone itself is represented by a [`akamai_dns_zone` resource](../resources/dns_zone.md). Add this new resource block to your `akamai.tf` file after the provider block. Note: the zone should be the first DNS resource created as it provides operating context for all other recordset resources.
+The zone itself is represented by a [`akamai_dns_zone` resource](../resources/dns_zone.md). Add this new resource block to your `akamai.tf` file after the provider block. **Note:** the zone should be the first DNS resource created as it provides operating context for all other recordset resources.
 
 To define the entire configuration, we start by opening the resource block and giving the `zone` a name. In this case we’re going to use the name "example."
 
@@ -61,7 +61,7 @@ resource "akamai_dns_zone" "example_com" {
 	comment = "example zone demo"
 }
 ```
-> **Note:** Notice the use of variables from the previous section to reference the group and contract IDs. These will automatically be replaced at runtime by Terraform with the actual values.
+> **Note:** Notice the use of variables from the previous section to reference the group and contract IDs. These will be replaced at runtime by Terraform with the actual values.
 
 ### Primary Zones
 
@@ -71,7 +71,7 @@ Creating primary zones through Terraform is best performed through the following
 
 Create the zone configuration in a new zone configuration file. For this example, use `example_primary_zone_com.tf`.
 
-Note: Subsequent steps will require the zone configuration file be named `<zone>.tf` with dots replaced by underscores.
+**Note:** Subsequent steps will require the zone configuration file be named `<zone>.tf` with dots replaced by underscores.
 
 ##### Example configuration:
 
@@ -109,7 +109,7 @@ resource "akamai_dns_zone" "primary_example" {
 $ terraform plan
 ```
 
-Notes: You can run `terraform plan` many times.
+**Note:** You can run `terraform plan` many times.
 
 ### Adding Zone SOA and NS Records To TF Configuration
 
@@ -177,7 +177,7 @@ resource "akamai_dns_record" "example_primary_zone_com_example_primary_zone_com_
 	ttl = 86400
 }
 ```
-Note: Name server targets have been masked. Also, a default `dnsvars.tf` file is generated. It can be ignored, deleted or used. Other Terraform configuration files can reference variables in this file.
+**Note:** Name server targets have been masked. Also, a default `dnsvars.tf` file is generated. It can be ignored, deleted or used. Other Terraform configuration files can reference variables in this file.
 
 #### Generate a Resource Import Script
 
@@ -244,7 +244,7 @@ $ terraform apply
 
 Once this completes, your zone and recordset will have been created. You can verify this in [Akamai Control Center](https://control.akamai.com).
 
-## Import
+## Import Records
 
 Existing DNS resources may be imported using one of the following formats:
 
@@ -259,9 +259,9 @@ $ terraform import akamai_dns_record.{{record resource name}} {{edge dns zone na
 
 MX Record resource configurations may be instantiated in three different forms:
 
-1. Coupling Priority and Host
-2. Assigning Priority to Hosts via Variables
-3. Instance Generation
+1. Coupling Priority and Host.
+2. Assigning Priority to Hosts via Variables.
+3. Instance Generation.
 
 ### Coupling Priority and Host
 

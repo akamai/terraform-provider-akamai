@@ -18,13 +18,13 @@ Remember to start by reviewing the Get Started with the [Akamai Terraform Provid
 
 ## Create a GTM Domain
 
-The domain itself is represented by a [`akamai_gtm_domain` resource](../resources/gtm_domain.md). Add this new resource block to your `akamai.tf` file after the provider block. Note: the domain must be the first GTM resource created as it provides operating context for all other contained objects.
+The Domain itself is represented by a [`akamai_gtm_domain` resource](../resources/gtm_domain.md). Add this new resource block to your `akamai.tf` file after the provider block. **Note:** the domain must be the first GTM resource created as it provides operating context for all other contained objects.
 
-To define the entire configuration, we start by opening the resource block and giving the domain a name. In this case we’re going to use the name "example".
+To define the entire configuration, we start by opening the resource block and giving the domain a `name`. In this case, we’re going to use the name "example".
 
-Next, we set the required (domain, type) and optional (group ID, contract ID, email list, comment) arguments.
+Next, we set the required (`name`, `type`) and optional (`group_id`, `contract_id`, `email_notification_list`, `comment`) arguments.
 
-Once you’re done, your domain configuration should look like this:
+Once you’re done, your Domain configuration should look like this:
 
 ```hcl
 resource "akamai_gtm_domain" "example" {
@@ -36,17 +36,17 @@ resource "akamai_gtm_domain" "example" {
 	comment = "example domain demo"
 }
 ```
-> **Note:** Notice that we’re using variables from the previous section to reference the group and contract IDs. These will automatically be replaced at runtime by Terraform with the actual values.
+> **Note:** Notice the use of variables from the previous section to reference the group and contract IDs. These will be replaced at runtime by Terraform with the actual values.
 
 ## Create a GTM Datacenter
 
-The datacenter itself is represented by an [`akamai_gtm_datacenter` resource](../resources/gtm_datacenter.md). Add this new block to your `akamai.tf` file after the provider block.
+The Datacenter itself is represented by a [`akamai_gtm_datacenter` resource](../resources/gtm_datacenter.md). Add this new block to your `akamai.tf` file after the provider block.
 
-To define the entire configuration, we start by opening the resource block and give it a name. In this case we’re going to use the name "example_dc".
+To define the entire configuration, we start by opening the resource block and giving it a name. In this case, we’re going to use the name "example_dc".
 
-Next, we set the required (domain name) and optional (nickname) arguments.
+Next, we set the required (`domain` name) and optional (`nickname`) arguments.
 
-Once you’re done, your datacenter configuration should look like this:
+Once done, your Datacenter configuration should look like this:
 
 ```hcl
 resource "akamai_gtm_datacenter" "example_dc" {
@@ -58,13 +58,13 @@ resource "akamai_gtm_datacenter" "example_dc" {
 
 ## Create a GTM Property
 
-The property itself is represented by an [`akamai_gtm_property` resource](../resources/gtm_property.md). Add this new block to your `akamai.tf` file after the provider block.
+The Property itself is represented by a [`akamai_gtm_property` resource](../resources/gtm_property.md). Add this new block to your `akamai.tf` file after the provider block.
 
-To define the entire configuration, we start by opening the resource block and give it a name. In this case we’re going to use the name "example_prop".
+To define the entire configuration, we start by opening the resource block and giving it a name. In this case, we’re going to use the name "example_prop".
 
-Next, we set the required (domain name, property name, property type, traffic_targets, liveness_tests, score_aggregation_type, handout_limit, handout_mode) and optional (failover_delay, failback_delay) arguments.
+Next, we set the required (`domain` name, property `name`, property `type`, `traffic_target`s, `liveness_test`s, `score_aggregation_type`, `handout_limit`, `handout_mode`) and optional (`failover_delay`, `failback_delay`) arguments.
 
-Once you’re done, your property configuration should look like this:
+Once you’re done, your Property configuration should look like this:
 
 ```hcl
 resource "akamai_gtm_property" "example_prop" {
@@ -135,17 +135,17 @@ To test your configuration, use `terraform plan`:
 $ terraform plan
 ```
 
-This command will make Terraform create a plan for the work it will do based on the configuration file. This will not actually make any changes and is safe to run as many times as you like.
+This command will make Terraform create a plan for the work set by the configuration file. This will not actually make any changes and is safe to run as many times.
 
 ## Apply Changes
 
-To actually create our domain, datacenter and property;, we need to instruct Terraform to apply the changes outlined in the plan. To do this, in the terminal, run the command:
+To actually create our Domain, Datacenter and Property, we need to instruct Terraform to apply the changes outlined in the plan. To do this, run the command:
 
 ```
 $ terraform apply
 ```
 
-Once this completes your domain, datacenter and property will have been created. You can verify this in [Akamai Control Center](https://control.akamai.com) or via the [Akamai CLI](https://developer.akamai.com/cli).
+Once this completes your Domain, Datacenter and Property will have been created. You can verify this in [Akamai Control Center](https://control.akamai.com) or via the [Akamai CLI](https://developer.akamai.com/cli).
 
 ## Import Existing GTM Resource
 
