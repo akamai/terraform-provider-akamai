@@ -158,6 +158,30 @@ resource "akamai_appsec_activations" "activation" {
 
 Once you save the file and run `terraform apply`, Terraform will activate the security configuration version in staging. When the activation is complete, an email will be sent to any addresses specified in the `notification_emails` list.
 
+## Importing a Resource
+
+Terraform allows you to add a resource to its state even if this resource was created outside of Terraform, for example by using the Control Center application. This allows you to keep Terraform's state in sync with the state of your actual infrastructure. To do this, use the `terraform import` command with a configuration file that includes a description of the existing resource. The `import` command requires that you specify both the `address` and `ID` of the resource. The `address` indicates the destination to which the resource should be imported; typically this is the resource type and local name of the resource as described in the local configuration file. For example, suppose a new security policy has been created outside of Terraform. You can use the information available in the Control Center to create a matching description of this policy in your local configuration file. Here is an example using fictitious values for the resource's parameters:
+
+```hcl
+data "akamai_appsec_configuration" "configuration" {
+  name = "Configuration XYZ"
+}
+resource "akamai_appsec_security_policy" "security_policy_create" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
+  default_settings = true
+  security_policy_name = "Security Policy XYZ"
+  security_policy_prefix = "XYZ"
+}
+```
+
+The `address` of this resource is found by combining the resource type and its local name within the configuration file: "akamai_appsec_security_policy.security_policy_create".
+
+The `ID` indicates the unique identifier for this resource within Terraform's state. Its format varies depending on the resource type, but in general it is formed by combining the values of the resource's required parameters with a `:` separator, starting with the more general parameters. Using the example above, assume that the security policy resource has been created with these values: configuration ID: 33673, latest_version: 55, and security policy ID: "XYZ_12345". In this example, the `ID` would be "33673:55:XYZ_12345". To import this resource into your local Terrform state, you would run this command:
+
+```bash
+$ terraform import akamai_appsec_security_policy.security_policy_create 33673:55:PL5_138221
+```
 
 ## Beta Features
 
