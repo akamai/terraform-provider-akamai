@@ -62,10 +62,7 @@ Now that you made some decisions, you need to set up a Terraform configuration f
 
 ## Create Akamai API clients
 
-Create an Akamai API client with the right permissions and valid
-credentials to authenticate your Akamai Provider files. Your Akamai API
-client needs read-write permission to the APIs associated with the
-Akamai Provider modules you're using, like DNS or Provisioning.
+Create an Akamai API client with the right permissions and valid credentials to authenticate your Akamai Provider files. Your Akamai API client needs read-write permission to the APIs associated with the Akamai Provider modules you're using, like DNS or Provisioning.
 
 Once you set up the API clients, you add credential information from those clients to your `akamai.tf` file.
 
@@ -73,13 +70,14 @@ See the [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_a
 guide for details. Once you're done authenticating, come back here to complete 
 the Akamai Provider setup.
 
+**Note:** The Edge DNS and GTM modules depend on both Property Manager APIs as well. Be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
+
 ## Retrieve contract and group IDs
 
 You'll need contract and group IDs to use most Akamai Provider modules. 
 
 You can retrieve these IDs through the [`akamai_contract`](../data-sources/property_contract.md) and
-[`akamai_group`](../data-sources/property_group.md) data sources, which require read access to the Property
-Manager API. You can also get this information from the Contracts app in Akamai
+[`akamai_group`](../data-sources/property_group.md) data sources, which require read access to the Property Manager API. You can also get this information from the Contracts app in Akamai
 Control Center, or by using other Akamai APIs or CLIs.
 
 ### Retrieve contract IDs with akamai_contract
@@ -127,11 +125,9 @@ You can now refer to the group ID using the `id` attribute: `data.akamai_group.d
 
 ## Set up your Akamai configurations in Terraform
 
-You're now ready to import existing configurations or create new ones
-from scratch.
+You're now ready to import existing configurations or create new ones from scratch.
 
-At this point in the setup, you should refer to the guides for the
-Akamai modules you're using:
+At this point in the setup, you should refer to the guides for the Akamai modules you're using:
 
 | **Module** | **Guide** |
 |------------|------------|

@@ -54,6 +54,8 @@ supporting API service names:
 Once you create the supporting API clients you can update your local
 `.edgerc` file.
 
+**Note:** The Edge DNS and GTM modules depend on both Property Manager APIs as well. Be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
+
 ## Add your local .edgerc file to your Akamai Provider config
 
 

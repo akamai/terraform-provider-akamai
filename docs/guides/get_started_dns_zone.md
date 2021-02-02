@@ -15,7 +15,7 @@ To get more information about Edge DNS, see:
 * Developer - [API documentation](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html).
 * User Guide - [Official Documentation](https://learn.akamai.com/en-us/products/cloud_security/edge_dns.html).
 
-Remember to start with the Get Started with the [Akamai Terraform Provider Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have a valid `akamai.tf` Terraform configuration at this point before adding the DNS module configuration.
+Remember to start with the Get Started with the [Akamai Terraform Provider Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have an API Client and a valid `akamai.tf` Terraform configuration at this point before adding the DNS module configuration.
 
 ## Creating a DNS Zone
 
@@ -23,9 +23,9 @@ The zone itself is represented by a [`akamai_dns_zone` resource](../resources/dn
 
 To define the entire configuration, we start by opening the resource block and giving the `zone` a name. In this case we’re going to use the name "example."
 
-Next, we set the required (`zone`, `type`, `group`, `contract`) and optional (`comment`) arguments.
+Next, we set the required (`zone`, `type`, `group`, `contract`) and optional (`comment`) arguments for a simpler secondary `type`.
 
-Once done, your zone configuration file should include configuration items such as:
+Once done, your `akamai.tf` configuration file should include configuration items such as:
 
 ```hcl
 terraform {
@@ -53,23 +53,31 @@ data "akamai_group" "default" {
 }
 
 resource "akamai_dns_zone" "example_com" {
-	zone = "examplezone.com"                        # Zone Name
-	type = "secondary"				                # Zone type
-	master = [ "1.2.3.4" ]				            # Zone master(s)
-	group    = data.akamai_group.default.id         # Group ID variable
-	contract = data.akamai_contract.default.id      # Contract ID variable
+	zone = "examplezone.com"                      # Zone Name
+	type = "secondary"				              # Zone type
+	masters = [ "1.2.3.4" ]				          # Zone master(s)
+	group = data.akamai_group.default.id          # Group ID variable
+	contract = data.akamai_contract.default.id    # Contract ID variable
 	comment = "example zone demo"
 }
 ```
 > **Note:** Notice the use of variables from the previous section to reference the group and contract IDs. These will be replaced at runtime by Terraform with the actual values.
 
+### Validate Terraform Zone Configuration and State
+
+To validate the configuration up to this point, run the following command. The actual commit will come later in the procedure with an apply command.
+
+```
+$ terraform plan
+```
+
 ### Primary Zones
 
-Creating primary zones through Terraform is best performed through the following multi-step process. To complete this step, you will need to download and install the [Akamai CLI](https://developer.akamai.com/cli) and [CLI-Terraform package](https://github.com/akamai/cli-terraform). 
+Unlike creating secondary zone types, creating primary zone types through Terraform is best by following a multi-step process. To complete these steps, you will need to download and install the [Akamai CLI](https://developer.akamai.com/cli) and [CLI-Terraform package](https://github.com/akamai/cli-terraform). 
 
 #### Configure Zone
 
-Create the zone configuration in a new zone configuration file. For this example, use `example_primary_zone_com.tf`.
+In addition to `akamai.tf` set with Get Started with the [Akamai Terraform Provider Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider), create the zone configuration in a new zone configuration file. For this example, use `example_primary_zone_com.tf`.
 
 **Note:** Subsequent steps will require the zone configuration file be named `<zone>.tf` with dots replaced by underscores.
 
@@ -103,7 +111,11 @@ resource "akamai_dns_zone" "primary_example" {
 }
 ```
 
+**Note:** Referencing items in the locals block is done so with a singular `local` prefix such as `local.section`. Because Terraform references variables in all `.tf` files, the locals and provider blocks may not necessary in this zone file.
+
 ### Validate Terraform Zone Configuration and State
+
+To validate the configuration up to this point, run the following command. The actual commit will come later in the procedure with an apply command.
 
 ```
 $ terraform plan
@@ -116,6 +128,7 @@ $ terraform plan
 Creating a primary zone has the side effect of creating both initial SOA and NS records. Without these two recordsets, the zone cannot be managed. Using the CLI-Terraform CLI package, the zone's top level SOA and NS records now need to be added to the Terraform configuration as follows.
 
 #### Create a List of Zone Recordsets
+
 First, create a list of the zone's current recordsets.
 
 ```
@@ -138,7 +151,7 @@ The command will generate a file, `example_primary_zone_com_resources.json`, wit
 
 #### Update the Terraform Zone Configuration File
 
-Next, update the Terraform Zone configuration file using the previously generated JSON as input.
+Next, update the Terraform Zone configuration file using the previously generated JSON file as input and the following command.
 
 ```
 $ akamai terraform create-zone example_primary_zone.com --createconfig
@@ -177,7 +190,7 @@ resource "akamai_dns_record" "example_primary_zone_com_example_primary_zone_com_
 	ttl = 86400
 }
 ```
-**Note:** Name server targets have been masked. Also, a default `dnsvars.tf` file is generated. It can be ignored, deleted or used. Other Terraform configuration files can reference variables in this file.
+**Note:** Name server targets have been masked. Also, a default `dnsvars.tf` file is generated. It can be ignored, deleted or used. Other Terraform configuration files can reference variables in this file with a macro such as "${dnsvar.zone}".
 
 #### Generate a Resource Import Script
 
@@ -210,6 +223,8 @@ The Terraform configuration and state will now contain the zone's SOA and NS Rec
 
 ### Validate Terraform Zone Configuration and State
 
+To validate the configuration up to this point, run the following command. The actual commit will come later in the procedure with an apply command.
+
 ```
 $ terraform plan
 ```
@@ -232,6 +247,14 @@ resource "akamai_dns_record" "example_a_record" {
 	recordtype = "A"
 	ttl = 3600
 }
+```
+
+## Validate Terraform Zone Configuration and State
+
+To validate the configuration up to this point, run the following command. The actual commit will come later in the procedure with an apply command.
+
+```
+$ terraform plan
 ```
 
 ## Apply Changes

@@ -14,7 +14,7 @@ To get more information about Global Traffic Management, see:
 * Developer - [API documentation](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html)
 * User Guide - [Official Documentation](https://learn.akamai.com/en-us/products/web_performance/global_traffic_management.html)
 
-Remember to start by reviewing the Get Started with the [Akamai Terraform Provider Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have a valid `akamai.tf` Terraform configuration at this point before adding the GTM module configuration.
+Remember to start by reviewing the Get Started with the [Akamai Terraform Provider Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have a valid `akamai.tf` Terraform configuration at this point before adding the GTM module configuration to `akamai.tf`.
 
 ## Create a GTM Domain
 
