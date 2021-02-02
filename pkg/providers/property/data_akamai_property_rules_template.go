@@ -132,6 +132,7 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	dir := filepath.Dir(file)
+	logger.Debugf("directory %s" ,dir)
 	templateFiles := make(map[string]string)
 	err = filepath.Walk(dir,
 		func(path string, info os.FileInfo, err error) error {
@@ -147,8 +148,15 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	var diags diag.Diagnostics
 	for name, f := range templateFiles {
 		templateStr, err := convertToTemplate(f)
+
+		var target map[string]interface{}
+		if err := json.Unmarshal([]byte(templateStr), &target); err != nil {
+			logger.Warnf("invalid JSON result found in template snippet json here %s: ",f)
+			diags = append(diags, diag.Errorf("invalid JSON result found in template snippet json here %s: %s",f,err)...)
+		}
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -156,6 +164,9 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 		if err != nil {
 			return diag.FromErr(err)
 		}
+	}
+	if diags.HasError() {
+		return diags
 	}
 	wr := bytes.Buffer{}
 	err = tmpl.ExecuteTemplate(&wr, "main", varsMap)
