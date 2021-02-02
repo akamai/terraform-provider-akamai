@@ -174,16 +174,12 @@ Note that the following data sources and resources are currently in Beta, and th
   * akamai_appsec_security_policy_protections
   * akamai_appsec_rate_policies
   * akamai_appsec_rate_policy_actions
-  * akamai_appsec_rate_protections
-  * akamai_appsec_reputation_protections
   * akamai_appsec_reputation_profiles
   * akamai_appsec_reputation_profile_actions
   * akamai_appsec_rule_upgrade_details
   * akamai_appsec_slow_post
-  * akamai_appsec_slowpost_protections
   * akamai_appsec_attack_group_actions
   * akamai_appsec_waf_mode
-  * akamai_appsec_waf_protection
   * akamai_appsec_attack_group_condition_exception
 
 ### Resources
