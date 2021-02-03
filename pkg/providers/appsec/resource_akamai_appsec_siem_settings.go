@@ -120,6 +120,17 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("enable_siem", siemsettings.EnableSiem); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("enable_for_all_policies", siemsettings.EnableForAllPolicies); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("enable_botman_siem", siemsettings.EnabledBotmanSiemEvents); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(fmt.Sprintf("%d:%d", getSiemSettings.ConfigID, getSiemSettings.Version))
 
 	return nil

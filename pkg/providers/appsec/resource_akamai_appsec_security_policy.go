@@ -299,6 +299,15 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("default_settings", securitypolicy.DefaultSettings); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	pp := strings.Split(securitypolicy.PolicyID, "_")
+	if err := d.Set("security_policy_prefix", pp[0]); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d:%s", getSecurityPolicy.ConfigID, getSecurityPolicy.Version, securitypolicy.PolicyID))
 
 	return nil

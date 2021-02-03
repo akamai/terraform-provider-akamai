@@ -50,6 +50,7 @@ func TestAccAkamaiSiemSettings_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_siem_settings.test", "id", "43253:7"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})
