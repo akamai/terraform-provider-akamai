@@ -25,7 +25,7 @@ A package, [CLI-Terraform](https://github.com/akamai/cli-terraform), for the [Ak
 2. Generate a Terraform configuration for the zone and select recordsets.
 3. Generate a command line script to import all defined resources.
 
-Each step will produce produce or update existing files.
+Each step will produce or update existing files.
  
 #### Notes
 1. Terraform limits the characters that can be part of its resource names. During construction of the resource configurations, invalid characters are replaced with underscore , '_'.
@@ -55,7 +55,7 @@ A package, [CLI-Terraform](https://github.com/akamai/cli-terraform), for the [Ak
 2. Generate a Terraform configuration for the domain and contained objects.
 3. Generate a command line script to import all defined resources.
 
-Each step will produce produce or update existing files.
+Each step will produce or update existing files.
 
 #### Notes
 1. Terraform limits the characters that can be part of it's resource names. During construction of the resource configurations invalid characters are replaced with underscore , '_'.

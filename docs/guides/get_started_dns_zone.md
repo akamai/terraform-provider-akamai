@@ -73,13 +73,13 @@ $ terraform plan
 
 ### Primary Zones
 
-Unlike creating secondary zone types, creating primary zone types through Terraform is best by following a multi-step process. To complete these steps, you will need to download and install the [Akamai CLI](https://developer.akamai.com/cli) and [CLI-Terraform package](https://github.com/akamai/cli-terraform). 
+Unlike creating secondary zone types, creating primary zone types is best by following a multi-step process as follows. To complete these steps, you need to download and install the [Akamai CLI](https://developer.akamai.com/cli) and [CLI-Terraform package](https://github.com/akamai/cli-terraform). 
 
 #### Configure Zone
 
 In addition to `akamai.tf` set with Get Started with the [Akamai Terraform Provider Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider), create the zone configuration in a new zone configuration file. For this example, use `example_primary_zone_com.tf`.
 
-**Note:** Subsequent steps will require the zone configuration file be named `<zone>.tf` with dots replaced by underscores.
+**Note:** Subsequent steps will require the zone configuration file be named `<zone>.tf` with dots replaced by underscores. Edge DNS will automatically create NS and SOA records. Steps below show how to synchronize these records to the local Terraform state.
 
 ##### Example configuration:
 

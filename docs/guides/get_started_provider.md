@@ -70,7 +70,7 @@ See the [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_a
 guide for details. Once you're done authenticating, come back here to complete 
 the Akamai Provider setup.
 
-**Note:** The Edge DNS and GTM modules depend on both Property Manager APIs as well. Be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
+**Note:** Depending on the select contract and group, the Edge DNS and GTM modules may depend on both Property Manager APIs as well. If so, be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
 
 ## Retrieve contract and group IDs
 
@@ -139,8 +139,7 @@ At this point in the setup, you should refer to the guides for the Akamai module
 
 -> **Note** Both Terraform and the Akamai Terraform CLI package come
 pre-installed in the Akamai Development Environment. Get more details in
-our [installation
-Instructions](https://developer.akamai.com/blog/2020/05/26/set-development-environment).
+our [installation Instructions](https://developer.akamai.com/blog/2020/05/26/set-development-environment).
 
 Once you're done with the module-level setup, continue with the next
 sections to initialize and test the Akamai Provider.
