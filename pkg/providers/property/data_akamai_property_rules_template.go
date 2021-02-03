@@ -149,12 +149,13 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 	var diags diag.Diagnostics
 	for name, f := range templateFiles {
-		templateStr, err := convertToTemplate(f)
+		b, _ := ioutil.ReadFile(f)
 		var target map[string]interface{}
-		if err := json.Unmarshal([]byte(templateStr), &target); err != nil {
+		if err := json.Unmarshal(b, &target); err != nil {
 			logger.Warnf("invalid JSON result found in template snippet json here %s: ",f)
 			diags = append(diags, diag.Errorf("invalid JSON result found in template snippet json here %s: %s",f,err)...)
 		}
+		templateStr, err := convertToTemplate(f)
 		if err != nil {
 			return diag.FromErr(err)
 		}

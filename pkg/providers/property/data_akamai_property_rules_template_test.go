@@ -158,6 +158,20 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 			})
 		})
 	})
+	t.Run("json has invalid format", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
+						ExpectError: regexp.MustCompile(`Error: invalid JSON result found in template snippet json here`),
+					},
+				},
+			})
+		})
+	})
 }
 
 func TestFormatValue(t *testing.T) {
