@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
-page_title: "Akamai: ReputationAnalysis"
+page_title: "Akamai: ReputationProfileAnalysis"
 subcategory: "Application Security"
 description: |-
- ReputationAnalysis
+ ReputationProfileAnalysis
 ---
 
-# akamai_appsec_reputation_analysis
+# akamai_appsec_reputation_profile_analysis
 
-Use the `` data source to retrieve information about the current reputation analysis settings. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getreputationanalysis).
+Use the `akamai_appsec_reputation_profile_analysis` data source to retrieve information about the current reputation analysis settings. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getreputationanalysis).
 
 ## Example Usage
 
@@ -24,18 +24,18 @@ data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
 
-data "akamai_appsec_reputation_analysis" "reputation_analysis" {
+data "akamai_appsec_reputation_profile_analysis" "reputation_analysis" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
 
 output "reputation_analysis_text" {
-  value = data.akamai_appsec_reputation_analysis.reputation_analysis.output_text
+  value = data.akamai_appsec_reputation_profile_analysis.reputation_analysis.output_text
 }
 
 output "reputation_analysis_json" {
-  value = data.akamai_appsec_reputation_analysis.reputation_analysis.json
+  value = data.akamai_appsec_reputation_profile_analysis.reputation_analysis.json
 }
 ```
 
