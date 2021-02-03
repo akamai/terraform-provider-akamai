@@ -48,13 +48,13 @@ func TestAccAkamaiReputationAnalysis_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResReputationAnalysis/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_reputation_analysis.test", "id", "43253:12:AAAA_81230"),
+							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_analysis.test", "id", "43253:12:AAAA_81230"),
 						),
 					},
 					{
 						Config: loadFixtureString("testdata/TestResReputationAnalysis/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_reputation_analysis.test", "id", "43253:12:AAAA_81230"),
+							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_analysis.test", "id", "43253:12:AAAA_81230"),
 						),
 					},
 				},
