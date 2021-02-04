@@ -140,7 +140,7 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 			}
 			if !info.IsDir() && path != file {
 				logger.Debugf("Template snippet found: %s", path)
-				templateFiles[strings.TrimPrefix(path, fmt.Sprintf("%s/", dir))] = path
+				templateFiles[strings.TrimPrefix(filepath.ToSlash(path), fmt.Sprintf("%s/", filepath.ToSlash(dir)))] = path
 			}
 			return nil
 		})
