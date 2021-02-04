@@ -58,7 +58,8 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 			},
 			"duration_threshold_timeout": {
 				Type:     schema.TypeInt,
-				Required: true,
+				Optional: true,
+				Default:  0,
 			},
 		},
 	}
