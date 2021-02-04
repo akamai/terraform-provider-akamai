@@ -140,7 +140,11 @@ func resourceAttackGroupActionRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("attack_group", getAttackGroupAction.PolicyID); err != nil {
+	if err := d.Set("attack_group", getAttackGroupAction.Group); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("attack_group_action", attackgroupaction.Action); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
