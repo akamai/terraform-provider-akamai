@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
-page_title: "Akamai: WAF Protection"
+page_title: "Akamai: EvalHostnames"
 subcategory: "Application Security"
 description: |-
- WAF Protection
+  EvalHostnames
 ---
 
-# akamai_appsec_waf_protection
+# resource_akamai_appsec_eval_hostnames
 
-Use the `akamai_appsec_waf_protection` resource to enable or disable WAF protection for a given configuration version and security policy.
+The `resource_akamai_appsec_eval_hostnames` resource allows you to update the list of hostnames you want to evaluate for a configuration version.
 
 ## Example Usage
 
@@ -19,16 +19,15 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to enable or disable WAF protection
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
 
-resource "akamai_appsec_waf_protection" "protection" {
+// USE CASE: user wants to specify the hostnames to evaluate
+resource "akamai_appsec_eval_hostnames" "eval_hostnames" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
-  security_policy_id = var.security_policy_id
-  enabled = var.enabled
+  hostnames = var.hostnames
 }
 ```
 
@@ -40,13 +39,11 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
-
-* `enabled` - (Required) Whether to enable WAF controls: either `true` or `false`.
+* `hostnames` - (Required) A list of evaluation hostnames to be used for the specified configuration version.
 
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display showing the current protection settings.
+* `output_text` - A tabular display of the updated evaluation hostname information.
 
