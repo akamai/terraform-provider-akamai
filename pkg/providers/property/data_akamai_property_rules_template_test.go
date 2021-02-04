@@ -138,7 +138,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
-						ExpectError: regexp.MustCompile(`invalid JSON result:`),
+						ExpectError: regexp.MustCompile(`Error: invalid JSON result found in template snippet json here`),
 					},
 				},
 			})
@@ -153,6 +153,20 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_not_found.tf"),
 						ExpectError: regexp.MustCompile(`template "snippets/not_found.json" not defined`),
+					},
+				},
+			})
+		})
+	})
+	t.Run("json has invalid format", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
+						ExpectError: regexp.MustCompile(`Error: invalid JSON result found in template snippet json here`),
 					},
 				},
 			})
