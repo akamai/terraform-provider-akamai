@@ -264,6 +264,17 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("config_id", getRatePolicy.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getRatePolicy.ConfigVersion); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("rate_policy_id", ratepolicy.ID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(fmt.Sprintf("%d:%d:%d", getRatePolicy.ConfigID, getRatePolicy.ConfigVersion, ratepolicy.ID))
 
 	return nil

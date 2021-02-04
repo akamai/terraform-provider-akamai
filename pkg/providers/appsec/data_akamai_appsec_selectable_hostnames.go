@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -18,12 +19,24 @@ func dataSourceSelectableHostnames() *schema.Resource {
 		ReadContext: dataSourceSelectableHostnamesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:          schema.TypeInt,
+				Optional:      true,
+				ConflictsWith: []string{"contractid", "groupid"},
 			},
 			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:          schema.TypeInt,
+				Optional:      true,
+				ConflictsWith: []string{"contractid", "groupid"},
+			},
+			"contractid": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"config_id", "version"},
+			},
+			"groupid": {
+				Type:          schema.TypeInt,
+				Optional:      true,
+				ConflictsWith: []string{"config_id", "version"},
 			},
 			"active_in_staging": {
 				Type:     schema.TypeBool,
@@ -60,8 +73,29 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 
 	getSelectableHostnames := appsec.GetSelectableHostnamesRequest{}
 
-	getSelectableHostnames.ConfigID = d.Get("config_id").(int)
-	getSelectableHostnames.Version = d.Get("version").(int)
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getSelectableHostnames.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getSelectableHostnames.Version = version
+
+	contract, err := tools.GetStringValue("contractid", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getSelectableHostnames.ContractID = contract
+
+	group, err := tools.GetIntValue("groupid", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getSelectableHostnames.GroupID = group
 
 	selectablehostnames, err := client.GetSelectableHostnames(ctx, getSelectableHostnames)
 	if err != nil {

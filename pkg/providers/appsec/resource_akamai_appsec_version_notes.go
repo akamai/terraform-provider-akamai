@@ -3,7 +3,9 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -52,19 +54,34 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceVersionNotesRead")
 
 	getVersionNotes := appsec.GetVersionNotesRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getVersionNotes.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getVersionNotes.Version = version
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getVersionNotes.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getVersionNotes.Version = version
 	}
-	getVersionNotes.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getVersionNotes.Version = version
-
 	versionnotes, err := client.GetVersionNotes(ctx, getVersionNotes)
 	if err != nil {
 		logger.Errorf("calling 'getVersionNotes': %s", err.Error())
@@ -79,7 +96,15 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 		d.Set("output_text", outputtext)
 	}
 
-	d.SetId(strconv.Itoa(getVersionNotes.ConfigID))
+	if err := d.Set("config_id", getVersionNotes.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getVersionNotes.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d", getVersionNotes.ConfigID, getVersionNotes.Version))
 
 	return nil
 }
@@ -95,19 +120,34 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceVersionNotesUpdate")
 
 	updateVersionNotes := appsec.UpdateVersionNotesRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateVersionNotes.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateVersionNotes.Version = version
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateVersionNotes.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateVersionNotes.Version = version
 	}
-	updateVersionNotes.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateVersionNotes.Version = version
-
 	notes, err := tools.GetStringValue("version_notes", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

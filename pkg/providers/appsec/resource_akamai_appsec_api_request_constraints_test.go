@@ -21,6 +21,14 @@ func TestAccAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		crd := appsec.RemoveApiRequestConstraintsResponse{}
+		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"))
+		json.Unmarshal([]byte(expectJSD), &crd)
+
+		crp := appsec.GetPolicyProtectionsResponse{}
+		expectJSP := compactJSON(loadFixtureBytes("testdata/TestDSPolicyProtections/PolicyProtections.json"))
+		json.Unmarshal([]byte(expectJSP), &crp)
+
 		client.On("GetApiRequestConstraints",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
@@ -30,6 +38,16 @@ func TestAccAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.UpdateApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1, Action: "alert"},
 		).Return(&cu, nil)
+
+		client.On("GetPolicyProtections",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&crp, nil)
+
+		client.On("RemoveApiRequestConstraints",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.RemoveApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1, Action: "none"},
+		).Return(&crd, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

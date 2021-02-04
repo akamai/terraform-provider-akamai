@@ -27,7 +27,11 @@ func dataSourceBypassNetworkLists() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-
+			"bypass_network_list": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
 			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -69,7 +73,7 @@ func dataSourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceDat
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "AttackGroupActionDS", bypassnetworklists)
+	outputtext, err := RenderTemplates(ots, "bypassNetworkListsDS", bypassnetworklists)
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}
@@ -80,6 +84,16 @@ func dataSourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	nldata := make([]string, 0, len(bypassnetworklists.NetworkLists))
+
+	for _, hosts := range bypassnetworklists.NetworkLists {
+		nldata = append(nldata, hosts.ID)
+	}
+
+	if err := d.Set("bypass_network_list", nldata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -66,7 +66,7 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsRead")
 
-	getApiRequestConstraints := v2.GetApiRequestConstraintsRequest{}
+	getApiRequestConstraints := appsec.GetApiRequestConstraintsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -113,7 +113,80 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 
 func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsRemove")
+
+	getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
+	removeApiRequestConstraints := appsec.RemoveApiRequestConstraintsRequest{}
+	removePolicyProtections := appsec.RemovePolicyProtectionsRequest{}
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	getPolicyProtections.ConfigID = configid
+	removeApiRequestConstraints.ConfigID = configid
+	removePolicyProtections.ConfigID = configid
+
+	getPolicyProtections.Version = version
+	removeApiRequestConstraints.Version = version
+	removePolicyProtections.Version = version
+
+	getPolicyProtections.PolicyID = policyid
+	removeApiRequestConstraints.PolicyID = policyid
+	removePolicyProtections.PolicyID = policyid
+
+	policyprotections, err := client.GetPolicyProtections(ctx, getPolicyProtections)
+	if err != nil {
+		logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	apiEndpointID, err := tools.GetIntValue("api_endpoint_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	removeApiRequestConstraints.ApiID = apiEndpointID
+
+	if removeApiRequestConstraints.ApiID == 0 {
+		if policyprotections.ApplyAPIConstraints == true {
+			removePolicyProtections.ApplyAPIConstraints = false
+			removePolicyProtections.ApplyApplicationLayerControls = policyprotections.ApplyApplicationLayerControls
+			removePolicyProtections.ApplyBotmanControls = policyprotections.ApplyBotmanControls
+			removePolicyProtections.ApplyNetworkLayerControls = policyprotections.ApplyNetworkLayerControls
+			removePolicyProtections.ApplyRateControls = policyprotections.ApplyRateControls
+			removePolicyProtections.ApplyReputationControls = policyprotections.ApplyReputationControls
+			removePolicyProtections.ApplySlowPostControls = policyprotections.ApplySlowPostControls
+
+			_, errd := client.RemovePolicyProtections(ctx, removePolicyProtections)
+			if errd != nil {
+				logger.Errorf("calling 'removePolicyProtections': %s", errd.Error())
+				return diag.FromErr(errd)
+			}
+		}
+	} else {
+		removeApiRequestConstraints.Action = "none"
+		_, erru := client.RemoveApiRequestConstraints(ctx, removeApiRequestConstraints)
+		if erru != nil {
+			logger.Errorf("calling 'removeApiRequestConstraints': %s", erru.Error())
+			return diag.FromErr(erru)
+		}
+	}
+
+	d.SetId("")
+	return nil
 }
 
 func resourceApiRequestConstraintsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -121,7 +194,7 @@ func resourceApiRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsUpdate")
 
-	updateApiRequestConstraints := v2.UpdateApiRequestConstraintsRequest{}
+	updateApiRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

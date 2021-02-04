@@ -109,6 +109,18 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		d.Set("output_text", outputtext)
 	}
 
+	if err := d.Set("config_id", getAdvancedSettingsLogging.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getAdvancedSettingsLogging.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", getAdvancedSettingsLogging.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d:%s", getAdvancedSettingsLogging.ConfigID, getAdvancedSettingsLogging.Version, getAdvancedSettingsLogging.PolicyID))
 
 	return nil
@@ -116,7 +128,64 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 
 func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingRemove")
+
+	removeAdvancedSettingsLogging := appsec.RemoveAdvancedSettingsLoggingRequest{}
+
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
+
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeAdvancedSettingsLogging.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeAdvancedSettingsLogging.Version = version
+
+		policyid := s[2]
+
+		removeAdvancedSettingsLogging.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAdvancedSettingsLogging.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAdvancedSettingsLogging.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAdvancedSettingsLogging.PolicyID = policyid
+	}
+
+	if removeAdvancedSettingsLogging.PolicyID != "" {
+		removeAdvancedSettingsLogging.Override = false
+	} else {
+		removeAdvancedSettingsLogging.AllowSampling = false
+	}
+
+	_, erru := client.RemoveAdvancedSettingsLogging(ctx, removeAdvancedSettingsLogging)
+	if erru != nil {
+		logger.Errorf("calling 'updateAdvancedSettingsLogging': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+	d.SetId("")
+	return nil
 }
 
 func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

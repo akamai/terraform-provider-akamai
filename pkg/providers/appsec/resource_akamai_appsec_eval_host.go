@@ -3,7 +3,9 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -54,19 +56,34 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 	logger := meta.Log("APPSEC", "resourceEvalHostRead")
 
 	getEvalHost := appsec.GetEvalHostRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getEvalHost.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getEvalHost.Version = version
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getEvalHost.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getEvalHost.Version = version
 	}
-	getEvalHost.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getEvalHost.Version = version
-
 	evalhost, err := client.GetEvalHost(ctx, getEvalHost)
 	if err != nil {
 		logger.Errorf("calling 'getEvalHost': %s", err.Error())
@@ -81,7 +98,15 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 		d.Set("output_text", outputtext)
 	}
 
-	d.SetId(strconv.Itoa(getEvalHost.ConfigID))
+	if err := d.Set("config_id", getEvalHost.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getEvalHost.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d", getEvalHost.ConfigID, getEvalHost.Version))
 
 	return nil
 }
@@ -93,19 +118,34 @@ func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceEvalHostRemove")
 
 	removeEvalHost := appsec.RemoveEvalHostRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeEvalHost.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeEvalHost.Version = version
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeEvalHost.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeEvalHost.Version = version
 	}
-	removeEvalHost.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeEvalHost.Version = version
-
 	hn := make([]string, 0, 1)
 
 	removeEvalHost.Hostnames = hn
@@ -125,19 +165,34 @@ func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceEvalHostUpdate")
 
 	updateEvalHost := appsec.UpdateEvalHostRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateEvalHost.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateEvalHost.Version = version
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateEvalHost.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateEvalHost.Version = version
 	}
-	updateEvalHost.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateEvalHost.Version = version
-
 	hostnames := d.Get("hostnames").([]interface{})
 	hn := make([]string, 0, len(hostnames))
 

@@ -48,8 +48,9 @@ func TestAccAkamaiSiemSettings_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResSiemSettings/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_siem_settings.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_siem_settings.test", "id", "43253:7"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

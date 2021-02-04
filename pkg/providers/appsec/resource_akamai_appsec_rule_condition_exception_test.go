@@ -48,7 +48,7 @@ func TestAccAkamaiRuleConditionException_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResRuleConditionException/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_rule_condition_exception.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_rule_condition_exception.test", "id", "43253:7:AAAA_81230:12345"),
 						),
 					},
 				},

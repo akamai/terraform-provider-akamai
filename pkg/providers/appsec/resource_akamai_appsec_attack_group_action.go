@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -63,31 +64,54 @@ func resourceAttackGroupActionRead(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceAttackGroupActionRead")
 
 	getAttackGroupAction := appsec.GetAttackGroupActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getAttackGroupAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getAttackGroupAction.Version = version
+
+		policyid := s[2]
+
+		getAttackGroupAction.PolicyID = policyid
+
+		attackgroup := s[3]
+
+		getAttackGroupAction.Group = attackgroup
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getAttackGroupAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getAttackGroupAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getAttackGroupAction.PolicyID = policyid
+
+		attackgroup, err := tools.GetStringValue("attack_group", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getAttackGroupAction.Group = attackgroup
 	}
-	getAttackGroupAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getAttackGroupAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getAttackGroupAction.PolicyID = policyid
-
-	attackgroup, err := tools.GetStringValue("attack_group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getAttackGroupAction.Group = attackgroup
-
 	attackgroupaction, err := client.GetAttackGroupAction(ctx, getAttackGroupAction)
 	if err != nil {
 		logger.Errorf("calling 'getAttackGroupAction': %s", err.Error())
@@ -104,7 +128,23 @@ func resourceAttackGroupActionRead(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	d.SetId(strconv.Itoa(getAttackGroupAction.ConfigID))
+	if err := d.Set("config_id", getAttackGroupAction.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getAttackGroupAction.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", getAttackGroupAction.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("attack_group", getAttackGroupAction.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d:%s:%s", getAttackGroupAction.ConfigID, getAttackGroupAction.Version, getAttackGroupAction.PolicyID, getAttackGroupAction.Group))
 
 	return nil
 }
@@ -116,31 +156,54 @@ func resourceAttackGroupActionDelete(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceAttackGroupActionRemove")
 
 	removeAttackGroupAction := appsec.UpdateAttackGroupActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeAttackGroupAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeAttackGroupAction.Version = version
+
+		policyid := s[2]
+
+		removeAttackGroupAction.PolicyID = policyid
+
+		attackgroup := s[3]
+
+		removeAttackGroupAction.Group = attackgroup
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAttackGroupAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAttackGroupAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAttackGroupAction.PolicyID = policyid
+
+		attackgroup, err := tools.GetStringValue("attack_group", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeAttackGroupAction.Group = attackgroup
 	}
-	removeAttackGroupAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeAttackGroupAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeAttackGroupAction.PolicyID = policyid
-
-	attackgroup, err := tools.GetStringValue("attack_group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeAttackGroupAction.Group = attackgroup
-
 	removeAttackGroupAction.Action = "none"
 
 	_, erru := client.UpdateAttackGroupAction(ctx, removeAttackGroupAction)
@@ -159,31 +222,54 @@ func resourceAttackGroupActionUpdate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceAttackGroupActionUpdate")
 
 	updateAttackGroupAction := appsec.UpdateAttackGroupActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateAttackGroupAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateAttackGroupAction.Version = version
+
+		policyid := s[2]
+
+		updateAttackGroupAction.PolicyID = policyid
+
+		attackgroup := s[3]
+
+		updateAttackGroupAction.Group = attackgroup
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateAttackGroupAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateAttackGroupAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateAttackGroupAction.PolicyID = policyid
+
+		attackgroup, err := tools.GetStringValue("attack_group", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateAttackGroupAction.Group = attackgroup
 	}
-	updateAttackGroupAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateAttackGroupAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateAttackGroupAction.PolicyID = policyid
-
-	attackgroup, err := tools.GetStringValue("attack_group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateAttackGroupAction.Group = attackgroup
-
 	attackgroupaction, err := tools.GetStringValue("attack_group_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

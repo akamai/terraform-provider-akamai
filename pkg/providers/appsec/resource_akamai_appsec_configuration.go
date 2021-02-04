@@ -183,13 +183,7 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceConfigurationRead")
 
 	getConfiguration := appsec.GetConfigurationsRequest{}
-	/*
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getConfiguration.ConfigID = configid
-	*/
+
 	ID, errconv := strconv.Atoi(d.Id())
 
 	if errconv != nil {

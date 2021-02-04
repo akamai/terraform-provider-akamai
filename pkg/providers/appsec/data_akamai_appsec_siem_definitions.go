@@ -43,11 +43,11 @@ func dataSourceSiemDefinitionsRead(ctx context.Context, d *schema.ResourceData, 
 
 	getSiemDefinitions := appsec.GetSiemDefinitionsRequest{}
 
-	siem_definition_name, err := tools.GetStringValue("siem_definition_name", d)
+	siemDdefinitionName, err := tools.GetStringValue("siem_definition_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSiemDefinitions.SiemDefinitionName = siem_definition_name
+	getSiemDefinitions.SiemDefinitionName = siemDdefinitionName
 
 	siemdefinitions, err := client.GetSiemDefinitions(ctx, getSiemDefinitions)
 	if err != nil {
@@ -71,8 +71,6 @@ func dataSourceSiemDefinitionsRead(ctx context.Context, d *schema.ResourceData, 
 	if err := d.Set("json", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	//d.Set("enabled", GetSlowPostProtection.ApplySlowPostControls)
-	//d.SetId(strconv.Itoa(getRateProtection.ConfigID))
 
 	if len(siemdefinitions.SiemDefinitions) > 0 {
 		d.SetId(strconv.Itoa(siemdefinitions.SiemDefinitions[0].ID))

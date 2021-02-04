@@ -37,16 +37,16 @@ func resourceSecurityPolicy() *schema.Resource {
 			},
 			"security_policy_name": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
+			},
+			"security_policy_prefix": {
+				Type:     schema.TypeString,
+				Required: true,
 			},
 			"default_settings": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
-			},
-			"security_policy_prefix": {
-				Type:     schema.TypeString,
-				Optional: true,
 			},
 			"security_policy_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -108,7 +108,6 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(spcr.PolicyID)
 	d.SetId(fmt.Sprintf("%d:%d:%s", createSecurityPolicy.ConfigID, createSecurityPolicy.Version, spcr.PolicyID))
 
 	return resourceSecurityPolicyRead(ctx, d, m)
@@ -289,6 +288,23 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("security_policy_name", securitypolicy.PolicyName); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("config_id", getSecurityPolicy.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getSecurityPolicy.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("default_settings", securitypolicy.DefaultSettings); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	pp := strings.Split(securitypolicy.PolicyID, "_")
+	if err := d.Set("security_policy_prefix", pp[0]); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
