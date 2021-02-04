@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 1.2.1 (Feb 3, 2021)
+## 1.2.1 (Feb 4, 2021)
 
 #### BUG FIXES:
 * PAPI -- Fixed crash caused by passing computed cpCode as a variable in rules to akamai_property
