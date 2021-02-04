@@ -150,10 +150,12 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	var diags diag.Diagnostics
 	for name, f := range templateFiles {
 		b, _ := ioutil.ReadFile(f)
-		var target map[string]interface{}
-		if err := json.Unmarshal(b, &target); err != nil {
-			logger.Warnf("invalid JSON result found in template snippet json here %s: ",f)
-			diags = append(diags, diag.Errorf("invalid JSON result found in template snippet json here %s: %s",f,err)...)
+		if jsonFileRegexp.MatchString(name) {
+			var target map[string]interface{}
+			if err := json.Unmarshal(b, &target); err != nil {
+				logger.Warnf("invalid JSON result found in template snippet json here %s: ", f)
+				diags = append(diags, diag.Errorf("invalid JSON result found in template snippet json here %s: %s", f, err)...)
+			}
 		}
 		templateStr, err := convertToTemplate(f)
 		if err != nil {
@@ -189,6 +191,7 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 var (
 	includeRegexp = regexp.MustCompile(`"#include:.+"`)
 	varRegexp     = regexp.MustCompile(`"\${.+}"`)
+    jsonFileRegexp = regexp.MustCompile(`\.json+$`)
 )
 
 var (

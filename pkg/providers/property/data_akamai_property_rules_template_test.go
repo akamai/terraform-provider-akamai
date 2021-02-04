@@ -138,7 +138,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
-						ExpectError: regexp.MustCompile(`invalid JSON result:`),
+						ExpectError: regexp.MustCompile(`Error: invalid JSON result found in template snippet json here`),
 					},
 				},
 			})
