@@ -27,7 +27,6 @@ locals {
 
 resource "akamai_property" "example" {
     name    = "terraform-demo"
-    contact = ["user@example.org"]
     product_id  = "prd_SPM"
     contract_id = var.contractid
     group_id    = var.groupid

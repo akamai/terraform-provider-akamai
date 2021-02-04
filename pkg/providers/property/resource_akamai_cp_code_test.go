@@ -3,10 +3,11 @@ package property
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/tj/assert"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/tj/assert"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -87,7 +88,6 @@ func TestResCPCode(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
 					),
 				}},
-				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
 			})
 		})
 	})
@@ -120,7 +120,6 @@ func TestResCPCode(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_test"),
 					),
 				}},
-				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
 			})
 		})
 	})
@@ -154,7 +153,6 @@ func TestResCPCode(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_test"),
 					),
 				}},
-				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
 			})
 		})
 	})
@@ -182,7 +180,6 @@ func TestResCPCode(t *testing.T) {
 					Config:      loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
 					ExpectError: regexp.MustCompile("Couldn't find product id on the CP Code"),
 				}},
-				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
 			})
 		})
 	})
@@ -214,7 +211,6 @@ func TestResCPCode(t *testing.T) {
 						Check:  resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_1"),
 					},
 				},
-				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
 			})
 		})
 	})
@@ -264,7 +260,6 @@ func TestResCPCode(t *testing.T) {
 						),
 					},
 				},
-				CheckDestroy: resource.TestCheckNoResourceAttr("akamai_cp_code.test", "id"),
 			})
 		})
 	})
