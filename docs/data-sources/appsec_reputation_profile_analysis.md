@@ -3,7 +3,7 @@ layout: "akamai"
 page_title: "Akamai: ReputationProfileAnalysis"
 subcategory: "Application Security"
 description: |-
- ReputationProfileAnalysis
+ Reputation Profile Analysis
 ---
 
 # akamai_appsec_reputation_profile_analysis
