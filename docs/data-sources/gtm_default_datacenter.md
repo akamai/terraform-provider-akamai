@@ -3,14 +3,14 @@ layout: "akamai"
 page_title: "Akamai: gtm_default_datacenter"
 subcategory: "Global Traffic Management"
 description: |-
- Default Datacenter
+ Default data center
 ---
 
 # akamai_gtm_default_datacenter
 
-Use `akamai_gtm_default_datacenter` data source to retrieve default datacenter id and nickname.
+Use the `akamai_gtm_default_datacenter` data source to retrieve the default data center, ID, and nickname.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -29,17 +29,17 @@ resource "akamai_gtm_cidrmap" "example_cidrmap" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are supported:
+This data source supports these arguments:
 
 * `domain` - (Required)
-* `datacenter` - (Optional. Default 5400)
+* `datacenter` - (Optional) The default is `5400`.
 
-## Attributes Reference
+## Attributes reference
 
-The following attributes are returned:
+This data source supports these attributes:
 
-* `id` - The data resource ID. Format: `<domain>:default_datacenter:<datacenter_id>`
-* `datacenter_id` - The default datacenter ID
-* `nickname` - The default datacenter nickname
+* `id` - The data resource ID. Enter in this format: `<domain>:default_datacenter:<datacenter_id>`.
+* `datacenter_id` - The default data center ID.
+* `nickname` - The default data center nickname.

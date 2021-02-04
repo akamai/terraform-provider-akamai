@@ -1,17 +1,16 @@
 ---
 layout: "akamai"
-page_title: "Akamai: dns record"
+page_title: "Akamai: DNS Record"
 subcategory: "DNS"
 description: |-
-  DNS Record
+  DNS record
 ---
 
 # akamai_dns_record
 
+Use the `akamai_dns_record` resource to configure a DNS record that can integrate with your existing DNS infrastructure.
 
-The `akamai_dns_record` provides the resource for configuring a dns record to integrate easily with your existing DNS infrastructure to provide a secure, high performance, highly available and scalable solution for DNS hosting.
-
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -37,34 +36,35 @@ resource "akamai_dns_record" "www" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are necessary for all record types:
+This resource supports these arguments:
 
-* `name` - (Required) The name of the record. The name is an owner name, that is, the name of the node to which this resource record pertains.  
-* `zone` - (Required) Domain zone, encapsulating any nested subdomains.  
+* `name` - (Required) The DNS record name. This is the node this DNS record is associated with. Also known as an owner name. 
+* `zone` - (Required) The domain zone, including any nested subdomains.  
 * `recordType` - (Required) The DNS record type.  
-* `ttl` - (Required,Boolean) The TTL is a 32-bit signed integer that specifies the time interval that the resource record may be cached before the source of the information should be consulted again. A value of zero means that the RR can only be used for the transaction in progress, and should not be cached. Zero values can also be used for extremely volatile data.  
+* `ttl` - (Required, Boolean) The time to live. This is a 32-bit signed integer for the time the resource record is cached. <br /> A value of `0` means that the resource record is not cached. It's only used for the transaction in progress and may be useful for extremely volatile data.  
 
-## Required Fields Per Record Type
+## Required fields per record type
 
-In addition to the fields listed in the prior section, type specific fields define the data makeup of each Record's data. This section identfies required fields per type.
+This section lists required arguments by record type. These are needed in addition to the ones listed in the argument reference above.
 
-### A Record
 
-The following field is required:
+### A record
+
+An A record requires this argument:
 
 * target - One or more IPv4 addresses, for example, 1.2.3.4.
 
-### AAAA Record
+### AAAA record
 
-The following field is required:
+An AAAA record requires this argument:
 
 * target - One or more IPv6 addresses, for example, 2001:0db8::ff00:0042:8329.
 
-### AFSDB Record
+### AFSDB record
 
-The following fields are required:
+An A record requires these arguments:
 
 * target - The domain name of the host having a server for the cell named by the owner name of the resource record.
 * subtype- An integer between 0 and 65535, indicating the type of service provided by the host.
