@@ -56,3 +56,4 @@ In addition to the arguments above, the following attributes are exported:
 * `output_text` - A tabular display showing the condition and exception information.
 
 * `json` - The condition and exception information in JSON format.
+

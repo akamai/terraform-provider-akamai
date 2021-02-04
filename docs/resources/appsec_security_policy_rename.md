@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
-page_title: "Akamai: WAF Protection"
+page_title: "Akamai: SecurityPolicyRename"
 subcategory: "Application Security"
 description: |-
- WAF Protection
+  SecurityPolicyRename
 ---
 
-# akamai_appsec_waf_protection
+# akamai_appsec_security_policy_rename
 
-Use the `akamai_appsec_waf_protection` resource to enable or disable WAF protection for a given configuration version and security policy.
+The `akamai_appsec_security_policy_rename` resource allows you to rename an existing security policy.
 
 ## Example Usage
 
@@ -19,16 +19,15 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to enable or disable WAF protection
+// USE CASE: user wants to rename a security policy
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
-
-resource "akamai_appsec_waf_protection" "protection" {
+resource "akamai_appsec_security_policy" "security_policy_rename" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
-  enabled = var.enabled
+  security_policy_name = var.name
 }
 ```
 
@@ -40,13 +39,13 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+* `security_policy_id` - (Required) The ID of the security policy to be renamed.
 
-* `enabled` - (Required) Whether to enable WAF controls: either `true` or `false`.
+* `security_policy_name` - (Required) The new name to be given to the security policy.
 
-## Attributes Reference
+## Attribute Reference
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display showing the current protection settings.
+* None
 

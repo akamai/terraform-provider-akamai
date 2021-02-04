@@ -54,7 +54,6 @@ output "specific_version_production" {
 }
 ```
 
-
 ## Argument Reference
 
 The following arguments are supported:
@@ -62,7 +61,6 @@ The following arguments are supported:
 * `config_id` - (Required) The ID of the security configuration to use.
 
 * `version` - (Optional) The version number of the security configuration to use. If not supplied, information about all versions of the specified security configuration is returned.
-
 
 ## Attributes Reference
 
