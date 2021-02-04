@@ -1,14 +1,14 @@
 ---
 layout: "akamai"
-page_title: "Akamai: ReputationAnalysis"
+page_title: "Akamai: ReputationProfileAnalysis"
 subcategory: "Application Security"
 description: |-
-  ReputationAnalysis
+  Reputation Profile Analysis
 ---
 
-# resource_akamai_appsec_reputation_analysis
+# resource_akamai_appsec_reputation_profile_analysis
 
-The `resource_akamai_appsec_reputation_analysis` resource allows you to toggle the reputation analysis settings for a given security policy. The `forward_to_http_header` parameter indicates whether to add client reputation details to requests forwarded to origin in an HTTP header. The `forward_shared_ip_to_http_header_siem` parameter indicates whether to add value indicating that shared IPs are included in HTTP header and SIEM integration.
+The `resource_akamai_appsec_reputation_profile_analysis` resource allows you to toggle the reputation analysis settings for a given security policy. The `forward_to_http_header` parameter indicates whether to add client reputation details to requests forwarded to origin in an HTTP header. The `forward_shared_ip_to_http_header_siem` parameter indicates whether to add value indicating that shared IPs are included in HTTP header and SIEM integration.
 
 ## Example Usage
 
@@ -24,7 +24,7 @@ data "akamai_appsec_configuration" "configuration" {
 }
 
 // USE CASE: user wants to set reputation analysis settings
-resource "akamai_appsec_reputation_analysis" "reputation_analysis" {
+resource "akamai_appsec_reputation_profile_analysis" "reputation_analysis" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
