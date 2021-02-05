@@ -1,5 +1,10 @@
 # RELEASE NOTES
 
+## Next
+* DNS
+    * Fail on attempted Zone deletion. Not supported.
+    * Create SOA and NS Records on zone read if don't exist.
+
 ## 1.2.0 (Jan 14, 2021) Identity and Access Management support
 
 These are the operations supported in the Identity Management: User Administration API v2:
