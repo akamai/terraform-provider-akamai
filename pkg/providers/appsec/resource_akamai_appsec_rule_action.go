@@ -48,11 +48,6 @@ func resourceRuleAction() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -117,16 +112,6 @@ func resourceRuleActionRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "RuleAction", ruleaction)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-	}
-
 	if err := d.Set("config_id", getRuleAction.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -139,6 +124,13 @@ func resourceRuleActionRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("rule_id", ruleaction.ID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("rule_action", ruleaction.Action); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	d.SetId(fmt.Sprintf("%d:%d:%s:%d", getRuleAction.ConfigID, getRuleAction.Version, getRuleAction.PolicyID, getRuleAction.RuleID))
 
 	return nil
