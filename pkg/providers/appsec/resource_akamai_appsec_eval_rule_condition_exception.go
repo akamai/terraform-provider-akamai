@@ -130,10 +130,13 @@ func resourceEvalRuleConditionExceptionRead(ctx context.Context, d *schema.Resou
 		}
 	}
 
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
+	jsonBody, err := json.Marshal(evalruleconditionexception)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	logger.Warnf("calling 'getEvalRuleConditionException JSON ': %s", string(jsonBody))
+	if err := d.Set("condition_exception", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	if err := d.Set("rule_id", getEvalRuleConditionException.RuleID); err != nil {
