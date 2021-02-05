@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -132,12 +131,7 @@ func resourceEvalRuleActionRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	jsonBody, err := json.Marshal(evalruleaction)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("rule_action", string(jsonBody)); err != nil {
+	if err := d.Set("rule_action", evalruleaction.Action); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
