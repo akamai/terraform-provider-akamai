@@ -130,6 +130,10 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("custom_rule_action", customruleaction.Action); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d:%s:%d", getCustomRuleAction.ConfigID, getCustomRuleAction.Version, getCustomRuleAction.PolicyID, getCustomRuleAction.RuleID))
 
 	return nil

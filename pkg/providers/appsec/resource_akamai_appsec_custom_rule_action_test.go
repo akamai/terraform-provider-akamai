@@ -41,6 +41,7 @@ func TestAccAkamaiCustomRuleAction_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_rule_action.test", "id", "43253:7:AAAA_81230:60036362"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})
