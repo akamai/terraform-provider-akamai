@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -47,11 +48,6 @@ func resourceEvalRuleAction() *schema.Resource {
 			"rule_id": {
 				Type:     schema.TypeInt,
 				Required: true,
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
 			},
 		},
 	}
@@ -116,16 +112,6 @@ func resourceEvalRuleActionRead(ctx context.Context, d *schema.ResourceData, m i
 		logger.Warnf("calling 'getEvalRuleAction': %s", err.Error())
 	}
 
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "EvalRuleAction", evalruleaction)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-	}
-
 	if err := d.Set("rule_id", getEvalRuleAction.RuleID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -139,6 +125,19 @@ func resourceEvalRuleActionRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("security_policy_id", getEvalRuleAction.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("rule_id", getEvalRuleAction.RuleID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	jsonBody, err := json.Marshal(evalruleaction)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("rule_action", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -268,7 +267,6 @@ func resourceEvalRuleActionUpdate(ctx context.Context, d *schema.ResourceData, m
 	}
 	ruleaction, err := tools.GetStringValue("rule_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
 		return diag.FromErr(err)
 	}
 	updateEvalRuleAction.Action = ruleaction
