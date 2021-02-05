@@ -133,6 +133,14 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("penalty_box_protection", penaltybox.PenaltyBoxProtection); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("penalty_box_action", penaltybox.Action); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d:%s", getPenaltyBox.ConfigID, getPenaltyBox.Version, getPenaltyBox.PolicyID))
 
 	return nil
