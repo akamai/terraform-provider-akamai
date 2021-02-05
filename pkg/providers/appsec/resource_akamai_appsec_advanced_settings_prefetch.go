@@ -54,11 +54,6 @@ func resourceAdvancedSettingsPrefetch() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of extensions",
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -97,18 +92,10 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 		}
 		getAdvancedSettingsPrefetch.Version = version
 	}
-	advancedsettingsprefetch, err := client.GetAdvancedSettingsPrefetch(ctx, getAdvancedSettingsPrefetch)
+	_, err := client.GetAdvancedSettingsPrefetch(ctx, getAdvancedSettingsPrefetch)
 	if err != nil {
 		logger.Errorf("calling 'getAdvancedSettingsPrefetch': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "advancedSettingsPrefetchDS", advancedsettingsprefetch)
-	if err == nil {
-		d.Set("output_text", outputtext)
 	}
 
 	if err := d.Set("config_id", getAdvancedSettingsPrefetch.ConfigID); err != nil {
