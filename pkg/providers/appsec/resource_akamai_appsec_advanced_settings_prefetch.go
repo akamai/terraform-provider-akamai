@@ -92,7 +92,7 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 		}
 		getAdvancedSettingsPrefetch.Version = version
 	}
-	_, err := client.GetAdvancedSettingsPrefetch(ctx, getAdvancedSettingsPrefetch)
+	prefetchget, err := client.GetAdvancedSettingsPrefetch(ctx, getAdvancedSettingsPrefetch)
 	if err != nil {
 		logger.Errorf("calling 'getAdvancedSettingsPrefetch': %s", err.Error())
 		return diag.FromErr(err)
@@ -102,7 +102,17 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("version", getAdvancedSettingsPrefetch.Version); err != nil {
+	if err := d.Set("enable_app_layer", prefetchget.EnableAppLayer); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("all_extensions", prefetchget.AllExtensions); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("enable_rate_controls", prefetchget.EnableRateControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("extensions", prefetchget.Extensions); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
