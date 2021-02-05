@@ -49,11 +49,6 @@ func resourceAttackGroupAction() *schema.Resource {
 				Required:     true,
 				ValidateFunc: ValidateActions,
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -116,16 +111,6 @@ func resourceAttackGroupActionRead(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		logger.Errorf("calling 'getAttackGroupAction': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "AttackGroupActionDS", attackgroupaction)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
 	}
 
 	if err := d.Set("config_id", getAttackGroupAction.ConfigID); err != nil {
