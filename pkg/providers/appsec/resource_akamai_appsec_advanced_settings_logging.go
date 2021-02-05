@@ -72,9 +72,11 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		}
 		getAdvancedSettingsLogging.Version = version
 
-		policyid := s[2]
+		if len(s) >= 3 {
+			policyid := s[2]
 
-		getAdvancedSettingsLogging.PolicyID = policyid
+			getAdvancedSettingsLogging.PolicyID = policyid
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
@@ -158,9 +160,11 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		}
 		removeAdvancedSettingsLogging.Version = version
 
-		policyid := s[2]
+		if len(s) >= 3 {
+			policyid := s[2]
 
-		removeAdvancedSettingsLogging.PolicyID = policyid
+			removeAdvancedSettingsLogging.PolicyID = policyid
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
@@ -224,9 +228,11 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 		}
 		updateAdvancedSettingsLogging.Version = version
 
-		policyid := s[2]
+		if len(s) >= 3 {
+			policyid := s[2]
 
-		updateAdvancedSettingsLogging.PolicyID = policyid
+			updateAdvancedSettingsLogging.PolicyID = policyid
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
