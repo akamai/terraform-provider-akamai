@@ -152,6 +152,10 @@ func resourceRuleConditionExceptionRead(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("rule_id", getRuleConditionException.RuleID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d:%s:%d", getRuleConditionException.ConfigID, getRuleConditionException.Version, getRuleConditionException.PolicyID, getRuleConditionException.RuleID))
 
 	return nil
