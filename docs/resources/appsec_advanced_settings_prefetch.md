@@ -32,6 +32,10 @@ resource "akamai_appsec_advanced_settings_prefetch" "prefetch" {
   enable_rate_controls = false
   extensions = var.extensions
 }
+
+output "prefetch_settings" {
+  value = akamai_appsec_advanced_settings_prefetch.prefetch.output_text
+}
 ```
 
 ## Argument Reference
@@ -54,5 +58,8 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* None
-
+* `output_text` - A tabular display showing the following updated prefetch settings.
+  * `ENABLE APP LAYER`
+  * `ALL EXTENSION`
+  * `ENABLE RATE CONTROLS`
+  * `EXTENSIONS`

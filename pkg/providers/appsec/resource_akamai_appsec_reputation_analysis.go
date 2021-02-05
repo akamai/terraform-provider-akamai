@@ -165,6 +165,8 @@ func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceDat
 
 	RemoveReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = false
 
+	logger.Errorf("calling 'removeReputationAnalysis': STRUCT  %v", RemoveReputationAnalysis)
+
 	_, erru := client.RemoveReputationAnalysis(ctx, RemoveReputationAnalysis)
 	if erru != nil {
 		logger.Errorf("calling 'RemoveReputationAnalysis': %s", erru.Error())
