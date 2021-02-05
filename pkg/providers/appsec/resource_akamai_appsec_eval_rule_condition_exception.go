@@ -217,7 +217,6 @@ func resourceEvalRuleConditionExceptionDelete(ctx context.Context, d *schema.Res
 		}
 		removeEvalRuleConditionException.RuleID = ruleid
 	}
-	logger.Errorf("calling 'RemoveEvalRuleConditionException': %v", removeEvalRuleConditionException)
 
 	_, errd := client.RemoveEvalRuleConditionException(ctx, removeEvalRuleConditionException)
 	if errd != nil {

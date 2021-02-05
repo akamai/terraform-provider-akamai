@@ -143,8 +143,6 @@ func resourceAttackGroupConditionExceptionDelete(ctx context.Context, d *schema.
 	}
 	removeAttackGroupConditionException.Group = attackgroup
 
-	logger.Errorf("calling 'RemoveAttackGroupConditionException': %v", removeAttackGroupConditionException)
-
 	_, errd := client.RemoveAttackGroupConditionException(ctx, removeAttackGroupConditionException)
 	if errd != nil {
 		logger.Errorf("calling 'RemoveAttackGroupConditionException': %s", errd.Error())
@@ -192,11 +190,10 @@ func resourceAttackGroupConditionExceptionUpdate(ctx context.Context, d *schema.
 	}
 	updateAttackGroupConditionException.Group = attackgroup
 
-	resp, erru := client.UpdateAttackGroupConditionException(ctx, updateAttackGroupConditionException)
+	_, erru := client.UpdateAttackGroupConditionException(ctx, updateAttackGroupConditionException)
 	if erru != nil {
 		logger.Errorf("calling 'updateAttackGroupConditionException': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
-	logger.Warnf("calling 'updateAttackGroupConditionException': %s", resp)
 	return resourceAttackGroupConditionExceptionRead(ctx, d, m)
 }
