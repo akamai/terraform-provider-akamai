@@ -121,6 +121,15 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	jsonBody, err := json.Marshal(advancedsettingslogging)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("logging", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d:%s", getAdvancedSettingsLogging.ConfigID, getAdvancedSettingsLogging.Version, getAdvancedSettingsLogging.PolicyID))
 
 	return nil
