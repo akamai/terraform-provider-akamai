@@ -124,7 +124,7 @@ func resourceRuleActionRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("rule_id", ruleaction.ID); err != nil {
+	if err := d.Set("rule_id", getRuleAction.RuleID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
