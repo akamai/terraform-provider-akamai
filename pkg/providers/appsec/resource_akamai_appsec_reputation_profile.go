@@ -273,6 +273,15 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	jsonBody, err := json.Marshal(reputationprofile)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("reputation_profile", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d:%d", getReputationProfile.ConfigID, getReputationProfile.ConfigVersion, reputationprofile.ID))
 
 	return nil
