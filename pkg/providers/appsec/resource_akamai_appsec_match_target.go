@@ -273,7 +273,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	logger.Warnf("calling 'getMatchTarget': JSON  %s", string(jsonBody))
 	if err := d.Set("match_target", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}

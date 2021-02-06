@@ -102,6 +102,10 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("version", getAdvancedSettingsPrefetch.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	if err := d.Set("enable_app_layer", prefetchget.EnableAppLayer); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
