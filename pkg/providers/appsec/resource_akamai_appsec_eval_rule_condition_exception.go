@@ -134,7 +134,6 @@ func resourceEvalRuleConditionExceptionRead(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Warnf("calling 'getEvalRuleConditionException JSON ': %s", string(jsonBody))
 	if err := d.Set("condition_exception", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -217,7 +216,6 @@ func resourceEvalRuleConditionExceptionDelete(ctx context.Context, d *schema.Res
 		}
 		removeEvalRuleConditionException.RuleID = ruleid
 	}
-	logger.Errorf("calling 'RemoveEvalRuleConditionException': %v", removeEvalRuleConditionException)
 
 	_, errd := client.RemoveEvalRuleConditionException(ctx, removeEvalRuleConditionException)
 	if errd != nil {

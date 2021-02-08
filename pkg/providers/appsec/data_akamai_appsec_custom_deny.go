@@ -74,8 +74,6 @@ func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	logger.Errorf("calling 'getCustomDeny': %v", customdeny)
-
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
