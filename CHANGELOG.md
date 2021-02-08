@@ -4,6 +4,7 @@
 * DNS
     * Fail on attempted Zone deletion. Not supported.
     * Create SOA and NS Records on zone read if don't exist.
+    * Add HTTPS, SVCB record support
 
 ## 1.2.0 (Jan 14, 2021) Identity and Access Management support
 
