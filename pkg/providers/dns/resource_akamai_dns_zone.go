@@ -636,19 +636,19 @@ func checkDNSv2Zone(d tools.ResourceDataFetcher) error {
 // Util func to create SOA and NS records
 func checkZoneSOAandNSRecords(ctx context.Context, meta akamai.OperationMeta, zone *dns.ZoneResponse, logger log.Interface) error {
 	logger.Debugf("Checking SOA and NS records exist for zone %s", zone.Zone)
-	/*
-		if zone.ActivationState != "NEW" {
-			return errors.New("Zone is in an indeterminate state") // Should not have been called.
+	var resp *dns.RecordSetResponse
+	var err error
+	if zone.ActivationState != "NEW" {
+		// See if SOA and NS recs exist already. Both or none.
+		resp, err = inst.Client(meta).GetRecordsets(ctx, zone.Zone, dns.RecordsetQueryArgs{Types: "SOA,NS"})
+		if err != nil {
+			return err
 		}
-	*/
-	// See if SOA and NS recs exist already. Both or none.
-	resp, err := inst.Client(meta).GetRecordsets(ctx, zone.Zone, dns.RecordsetQueryArgs{Types: "SOA,NS"})
-	if err != nil {
-		return err
 	}
-	if len(resp.Recordsets) == 2 {
+	if len(resp.Recordsets) >= 2 {
 		return nil
 	}
+
 	logger.Warnf("SOA and NS records don't exist. Creating ...")
 	nameservers, err := inst.Client(meta).GetNameServerRecordList(ctx, zone.ContractID) // ([]string, error)
 	if err != nil {

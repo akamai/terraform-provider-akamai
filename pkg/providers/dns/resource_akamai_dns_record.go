@@ -81,6 +81,8 @@ func resourceDNSv2Record() *schema.Resource {
 					RRTypeCaa,
 					RRTypeCert,
 					RRTypeTlsa,
+					RRTypeSvcb,
+					RRTypeHttps,
 				}, false),
 			},
 			"ttl": {
@@ -309,6 +311,18 @@ func resourceDNSv2Record() *schema.Resource {
 			"record_sha": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"svc_priority": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"svc_params": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"target_name": {
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 		},
 	}
@@ -571,6 +585,8 @@ var recordCreateLock = map[string]*sync.Mutex{
 	"NSEC3":      {},
 	"NSEC3PARAM": {},
 	"RRSIG":      {},
+	"SVCB":       {},
+	"HTTPS":      {},
 }
 
 // Retrieves record lock per record type
@@ -1933,6 +1949,22 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		records := []string{strconv.Itoa(usage) + " " + strconv.Itoa(selector) + " " + strconv.Itoa(matchtype) + " " + certificate}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
+	case RRTypeSvcb, RRTypeHttps:
+		pri, err := tools.GetIntValue("svc_priority", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return dns.RecordBody{}, err
+		}
+		tname, err := tools.GetStringValue("target_name", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return dns.RecordBody{}, err
+		}
+		params, err := tools.GetStringValue("svc_params", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return dns.RecordBody{}, err
+		}
+		records := []string{strconv.Itoa(pri) + " " + tname + " " + params}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+
 	default:
 		return dns.RecordBody{}, fmt.Errorf("unable to create a Record Body for %s : %s", host, recordType)
 	}
@@ -2045,6 +2077,10 @@ func validateRecord(d *schema.ResourceData) error {
 		return checkCertRecord(d)
 	case RRTypeTlsa:
 		return checkTlsaRecord(d)
+	case RRTypeSvcb:
+		return checkSvcbRecord(d)
+	case RRTypeHttps:
+		return checkHttpsRecord(d)
 	default:
 		return fmt.Errorf("invalid recordtype %v", recordType)
 	}
@@ -2713,6 +2749,55 @@ func checkTlsaRecord(d *schema.ResourceData) error {
 
 }
 
+func checkSvcbRecord(d *schema.ResourceData) error {
+
+	return checkServiceRecord(d, "SVCB")
+}
+
+func checkHttpsRecord(d *schema.ResourceData) error {
+
+	return checkServiceRecord(d, "HTTPS")
+}
+
+func checkServiceRecord(d *schema.ResourceData, rtype string) error {
+
+	pri, err := tools.GetIntValue("svc_priority", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	tname, err := tools.GetStringValue("target_name", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+	params, err := tools.GetStringValue("svc_params", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
+	}
+
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+
+	if pri < 0 || pri > 65535 {
+		return fmt.Errorf("configuration argument svc_priority must be positive int for %s", rtype)
+	}
+
+	if tname == "" {
+		return fmt.Errorf("configuration argument target_name must be set for %s", rtype)
+	}
+
+	if params == "" && pri > 0 {
+		return fmt.Errorf("configuration argument svc_params must be set for %s", rtype)
+	}
+
+	if pri == 0 && params != "" {
+		return fmt.Errorf("configuration argument svc_params cannot be set for %s if svc_priority is zero", rtype)
+	}
+
+	return nil
+
+}
+
 // Resource record types supported by the Akamai Edge DNS API
 const (
 	RRTypeA          = "A"
@@ -2741,4 +2826,6 @@ const (
 	RRTypeNsec3Param = "NSEC3PARAM"
 	RRTypeRrsig      = "RRSIG"
 	RRTypeCert       = "CERT"
+	RRTypeHttps      = "HTTPS"
+	RRTypeSvcb       = "SVCB"
 )

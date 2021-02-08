@@ -137,6 +137,14 @@ The following fields are required:
 * hardware - Type of hardware the host uses. A machine name or CPU type may be up to 40 characters taken from the set of uppercase letters, digits, and the two punctuation characters hyphen and slash. It must start with a letter, and end with a letter.
 * software - Type of software the host uses. A system name may be up to 40 characters taken from the set of uppercase letters, digits, and the two punctuation characters hyphen and slash. It must start with a letter, and end with a letter or digit.
 
+### HTTPS Record
+
+The following fields are required:
+
+* svc_priority - Service priority associated with endpoint. Value mist be between 0 and 65535. A piority of 0 enables alias mode. 
+* svc_params - Space seperated list of endpoint parameters. Not allowed if service priority is 0.
+* target_name - Domain name of the service endpoint.
+
 ### LOC Record
 
 The following field is required:
@@ -252,6 +260,14 @@ The following fields are required:
 * retry - A time interval between 0 and 214748364 that should elapse before a failed refresh should be retried.
 * expiry - A time value between 0 and 214748364 that specifies the upper limit on the time interval that can elapse before the zone is no longer authoritative.
 * nxdomain_ttl - The unsigned minimum TTL between 0 and 214748364 that should be exported with any resource record from this zone.
+
+### SVCB Record
+
+The following fields are required:
+
+* svc_priority - Service priority associated with endpoint. Value mist be between 0 and 65535. A piority of 0 enables alias mode.
+* svc_params - Space seperated list of endpoint parameters. Not allowed if service priority is 0.
+* target_name - Domain name of the service endpoint.
 
 ### TLSA Record
 
