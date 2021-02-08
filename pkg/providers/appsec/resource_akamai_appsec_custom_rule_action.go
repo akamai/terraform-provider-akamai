@@ -107,7 +107,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 		}
 		getCustomRuleAction.RuleID = ruleid
 	}
-	_, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
+	customruleaction, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
 	if err != nil {
 		logger.Errorf("calling 'getCustomRuleAction': %s", err.Error())
 		return diag.FromErr(err)
