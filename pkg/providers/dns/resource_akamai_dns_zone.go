@@ -645,7 +645,7 @@ func checkZoneSOAandNSRecords(ctx context.Context, meta akamai.OperationMeta, zo
 			return err
 		}
 	}
-	if len(resp.Recordsets) >= 2 {
+	if resp != nil && len(resp.Recordsets) >= 2 {
 		return nil
 	}
 

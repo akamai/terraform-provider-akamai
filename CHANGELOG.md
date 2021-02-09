@@ -5,6 +5,8 @@
     * Fail on attempted Zone deletion. Not supported.
     * Create SOA and NS Records on zone read if don't exist.
     * Add HTTPS, SVCB record support
+* GTM
+    * Add validation for property type and traffic targets combination
 
 ## 1.2.0 (Jan 14, 2021) Identity and Access Management support
 
