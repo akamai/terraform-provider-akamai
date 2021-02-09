@@ -25,7 +25,8 @@ You can split each template out into a series of smaller template files. To add
 them to this data source, you need to include them in the currently loaded file, 
 which corresponds to the value in the `template_file` argument.  For example, to 
 include `example-file.json` from the `property-snippets` directory, use this syntax 
-including the quotes: `"#include:example-file.json"`.  All files are resolved in 
+including the quotes: `"#include:example-file.json"`.  Please make sure the `property-snippets` 
+folder only contain `.json` files.  All files are resolved in 
 relation to the directory that contains the starting template file. 
 
 ## Inserting variables in a template
