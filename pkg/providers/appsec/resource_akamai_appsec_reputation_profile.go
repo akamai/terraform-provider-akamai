@@ -39,9 +39,10 @@ func resourceReputationProfile() *schema.Resource {
 				Required: true,
 			},
 			"reputation_profile": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsJSON,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateFunc:     validation.StringIsJSON,
+				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
 			},
 			"reputation_profile_id": {
 				Type:     schema.TypeInt,
