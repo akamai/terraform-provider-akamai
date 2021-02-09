@@ -42,8 +42,8 @@ github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXva
 github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412/go.mod h1:WPjqKcmVOxf0XSf3YxCJs6N6AOSrOx3obionmG7T0y0=
 github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.2/go.mod h1:e4jVI35KrlGsi4hGikCk9qnl1fXrmGMr/BxYgUhtwt4=
-github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.1.0 h1:nZCdK1S+L0ZgF5wnpA8fBa5NSDxAIIb7sqbgVqhYebU=
-github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.1.0/go.mod h1:LranbWFYt2swa2wCwWmQlfFJQff1FdvSxBflKLr7L8A=
+github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.1.1 h1:qVrzjI9sq7F/3Fc9nScKa3/HnrMYUiVjRQz9mpbvlO0=
+github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.1.1/go.mod h1:LranbWFYt2swa2wCwWmQlfFJQff1FdvSxBflKLr7L8A=
 github.com/akamai/terraform-provider-akamai/v2 v2.0.0-20201119213117-25c506db3dcd/go.mod h1:QpVH4lxViHpbmzNu1hAVDZUtamQS5UrNYeFR0va8DMk=
 github.com/allegro/bigcache v1.2.1 h1:hg1sY1raCwic3Vnsvje6TT7/pnZba83LeFck5NrFKSc=
 github.com/allegro/bigcache v1.2.1/go.mod h1:Cb/ax3seSYIx7SuZdm2G2xzfwmv3TPSk2ucNfQESPXM=
