@@ -132,6 +132,11 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	dir := filepath.Dir(file)
+	folders := snippetsFolderRegexp.FindStringSubmatch(file)
+	if folders[1] != "property-snippets" {
+		logger.Warnf("Snippets file should be under 'property-snippets' folder instead of: %s", folders[1])
+		return diag.FromErr(fmt.Errorf("Snippets file should be under 'property-snippets' folder instead of %s folder", folders[1]))
+	}
 	templateFiles := make(map[string]string)
 	err = filepath.Walk(dir,
 		func(path string, info os.FileInfo, err error) error {
@@ -189,9 +194,10 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 var (
-	includeRegexp = regexp.MustCompile(`"#include:.+"`)
-	varRegexp     = regexp.MustCompile(`"\${.+}"`)
-    jsonFileRegexp = regexp.MustCompile(`\.json+$`)
+	includeRegexp        = regexp.MustCompile(`"#include:.+"`)
+	varRegexp            = regexp.MustCompile(`"\${.+}"`)
+	jsonFileRegexp       = regexp.MustCompile(`\.json+$`)
+	snippetsFolderRegexp = regexp.MustCompile(`.*\/(.*)\/`)
 )
 
 var (
