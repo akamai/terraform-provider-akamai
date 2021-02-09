@@ -187,6 +187,21 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("snippets files are non-json invalid error", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_file_not_json.tf"),
+						ExpectError: regexp.MustCompile(`Error: Snippets file under 'property-snippets' folder should have .json files`),
+					},
+				},
+			})
+		})
+	})
 }
 
 func TestFormatValue(t *testing.T) {

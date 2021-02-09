@@ -161,6 +161,8 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 				logger.Warnf("invalid JSON result found in template snippet json here %s: ", f)
 				diags = append(diags, diag.Errorf("invalid JSON result found in template snippet json here %s: %s", f, err)...)
 			}
+		} else {
+			return diag.FromErr(fmt.Errorf("Snippets file under 'property-snippets' folder should have .json files. Invalid file %s ",f ))
 		}
 		templateStr, err := convertToTemplate(f)
 		if err != nil {
