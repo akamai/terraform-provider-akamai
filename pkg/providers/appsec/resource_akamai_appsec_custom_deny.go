@@ -39,9 +39,10 @@ func resourceCustomDeny() *schema.Resource {
 				Required: true,
 			},
 			"custom_deny": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsJSON,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateFunc:     validation.StringIsJSON,
+				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
 			},
 			"custom_deny_id": {
 				Type:        schema.TypeString,
@@ -252,6 +253,15 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if err := d.Set("version", getCustomDeny.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	jsonBody, err := json.Marshal(customdeny)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("custom_deny", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
