@@ -15,9 +15,50 @@ To get more information about Edge DNS, see:
 * Developer - [API documentation](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html).
 * User Guide - [Official Documentation](https://learn.akamai.com/en-us/products/cloud_security/edge_dns.html).
 
-Remember to start with the Get Started with the [Akamai Terraform Provider Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have an API Client and a valid `akamai.tf` Terraform configuration at this point before adding the DNS module configuration.
 
-## Creating a DNS Zone
+## Prerequisites 
+
+Before starting with the DNS module, you need to:
+
+1. Complete the tasks in [Akamai: Get Started with the Akamai Terraform Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). 
+2. Determine whether you want to import an existing DNS zone and records or create new ones.
+3. If you're importing an existing DNS configuration, continue with [Import a DNS zone and records](#import-a-dns-zone-and-records).
+3. If you're creating a new DNS configuration, continue with [Create a DNS zone
+](#create-a-dns-zone) and [Create a DNS record](#create-a-dns-record).
+
+## Import a DNS zone and records
+
+You can migrate an existing Edge DNS zone into your Terraform configuration using either a command line utility or step-by-step construction.
+
+### Import using the command line utility
+
+You can use the [Akamai CLI for Akamai Terraform Provider](https://github.com/akamai/cli-terraform) to generate a configuration for and import an existing Edge DNS zone and its recordsets. With the package, you can generate:
+
+* a JSON-formatted list of the zone and recordsets.
+* a Terraform configuration for the zone and select recordsets.
+* a command line script to import all defined resources.
+
+Before using this CLI, keep the following in mind:
+
+* Download the existing zone configuration and master file to have as a backup and reference during an import. You can download these by using the [Edge DNS Zone Management API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html) or the Edge DNS app on [Control Center](https://control.akamai.com).  
+* Terraform limits the characters that can be part of its resource names. During construction of the resource configurations, invalid characters are replaced with underscore , '_'.
+* Terraform doesn't provide any state information during import. When you run `plan` and `apply` after an import, Terraform lists discrepencies and reconciles configurations and state. Any discrepencies clear following the first `apply`. 
+* After first time you run `plan` or `apply`, the `contract` and `group` attributes are updated.
+* Run `terraform plan` after importing to validate the generated `tfstate` file.
+
+### Import using step-by-step construction
+
+To import using step-by-step construction, complete these tasks:
+
+1. Determine how you want to test your Terraform import. For example, you may want to set up your zone and recordset imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to your existing DNS zone configuration.
+1. Download the existing zone configuration and master file to have as a backup and reference during an import. You can download these from the [Edge DNS Zone Management API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html) or from the Edge DNS app on [Control Center](https://control.akamai.com) .  
+1. Using the zone master file as a reference, create a Terraform configuration representing the existing zone and all contained recordsets. 
+1. Verify that your Terraform configuration addresses all required attributes and any optional and computed attributes you need.
+1. Run `terraform import`. This command imports the existing zone and contained recordsets. The import happens in serial order.
+1. Compare the downloaded zone master file with the `terraform.tfstate` file to confirm that the zone and all recordsets are represented correctly.
+1. Run `terraform plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the Edge DNS backend.
+
+## Create a DNS zone
 
 The zone itself is represented by a [`akamai_dns_zone` resource](../resources/dns_zone.md). Add this new resource block to your `akamai.tf` file after the provider block. **Note:** the zone should be the first DNS resource created as it provides operating context for all other recordset resources.
 
@@ -229,7 +270,7 @@ To validate the configuration up to this point, run the following command. The a
 $ terraform plan
 ```
 
-## Creating a DNS Record
+## Create a DNS record
 
 The recordset itself is represented by a [`akamai_dns_record` resource](../resources/dns_record.md). Add this new block to your `akamai.tf` file after the provider block.
 
@@ -276,7 +317,13 @@ $ terraform import akamai_dns_zone.{{zone resource name}} {{edge dns zone name}}
 $ terraform import akamai_dns_record.{{record resource name}} {{edge dns zone name}}#{{edge dns recordset name}}#{{record type}}
 ```
 
-[Migrating A DNS Zone](../guides/faq.md#migrating-an-edge-dns-zone-and-records-to-terraform) discusses DNS resource import in more detail.
+## How you can use the DNS module
+
+These sections include information on different ways to use the Akamai's Terraform DNS module:
+
+* [Working With MX Records](#working-with-mx-records)
+* [Important Behavior Considerations](#important-behavior-considerations)
+* [Primary Zone Partially Created](#primary-zone-partially-created)
 
 ## Working With MX Records
 
@@ -358,3 +405,11 @@ This means that Terraform did not detect any differences between your
 configuration and real physical resources that exist. As a result, no
 actions need to be performed.
 ```
+
+## Primary Zone Partially Created
+
+While it's rare, sometimes a primary zone is only partially created on the Akamai backend. For example, a network error happens and while the zone was created, the SOA and NS records were not. 
+
+Any attempt to manage or administer recordsets in the zone will fail. To resolve this issue, you have to manually create the SOA and NS records before you can manage the configuration.
+
+You can create these records can be created from the Edge DNS application available from [Akamai Control Center](https://control.akamai.com). You also have the option of using the [Akamai CLI for Edge DNS](https://github.com/akamai/cli-dns).
