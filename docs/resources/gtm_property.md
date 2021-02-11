@@ -101,7 +101,7 @@ This resource supports these arguments:
   * `ttl` - (Optional) The number of seconds that this record should live in a resolver’s cache before being refetched.
   * `rdata` - (Optional) (List) An array of data strings, representing multiple records within a set.
 
-### Computed argument reference
+### Computed arguments
 
 This resource returns these computed arguments in the `terraform.tfstate` file:
 

@@ -46,7 +46,7 @@ This resource supports these arguments:
 * `default_ssl_client_certificate` - (Optional) Specifies an optional Base64-encoded certificate that corresponds with the private key for TLS-based liveness tests (HTTPS, SMTPS, POPS, and TCPS).
 * `end_user_mapping_enabled` - (Optional) A boolean indicating whether whether the GTM Domain is using end user client subnet mapping.
 
-### Computed argument reference
+### Computed arguments
 
 This resource returns these computed arguments in the `terraform.tfstate` file:
 
