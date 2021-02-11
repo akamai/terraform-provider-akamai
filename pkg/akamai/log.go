@@ -2,6 +2,7 @@ package akamai
 
 import (
 	"context"
+	"os"
 	"strings"
 
 	"github.com/apex/log"
@@ -15,6 +16,19 @@ type (
 		l hclog.Logger
 	}
 )
+
+// 2020/12/02 11:51:03
+const (
+	DefaultTimestampFormat = "2006/01/02 03:04:05"
+)
+
+func init() {
+	if fmt, ok := os.LookupEnv("AKAMAI_TS_FORMAT"); ok {
+		hclog.DefaultOptions.TimeFormat = fmt
+	} else {
+		hclog.DefaultOptions.TimeFormat = DefaultTimestampFormat
+	}
+}
 
 // LogFromHCLog returns a new log.Interface from an hclog.Logger
 func LogFromHCLog(l hclog.Logger) log.Interface {

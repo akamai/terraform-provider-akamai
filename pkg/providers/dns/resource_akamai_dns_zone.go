@@ -282,6 +282,26 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 	if strings.ToUpper(zone.Type) != strings.ToUpper(zoneType) {
 		return diag.Errorf("zone type has changed from %s to %s", zoneType, zone.Type)
 	}
+	if strings.ToUpper(zone.Type) == "PRIMARY" {
+		// TFP-196 - check if SOA and NS exist. If not, create
+		err = checkZoneSOAandNSRecords(ctx, meta, zone, logger)
+		if err != nil {
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Zone is in an indeterminate state",
+				Detail:   err.Error(),
+			})
+		}
+		// Need updated state
+		zone, err = inst.Client(meta).GetZone(ctx, hostname)
+		if err != nil {
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Zone read failure",
+				Detail:   err.Error(),
+			})
+		}
+	}
 	if err := populateDNSv2ZoneState(d, zone); err != nil {
 		return diag.FromErr(err)
 	}
@@ -392,6 +412,19 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		return nil, err
 	}
 
+	if strings.ToUpper(zone.Type) == "PRIMARY" {
+		// TFP-196 - check if SOA and NS exist. If not, create
+		err = checkZoneSOAandNSRecords(ctx, meta, zone, logger)
+		if err != nil {
+			return nil, err
+		}
+		// Need updated state
+		zone, err = inst.Client(meta).GetZone(ctx, hostname)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err := d.Set("zone", zone.Zone); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
@@ -409,7 +442,6 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 }
 
 func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
 	hostname, err := tools.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -420,7 +452,7 @@ func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Warn("DNS Zone deletion not allowed")
 
 	// No ZONE delete operation permitted.
-	return schema.NoopContext(ctx, d, meta)
+	return diag.Errorf("DNS zone deletion is not supported via this sub provider")
 }
 
 // validateZoneType is a SchemaValidateFunc to validate the Zone type.
@@ -599,4 +631,56 @@ func checkDNSv2Zone(d tools.ResourceDataFetcher) error {
 
 	return nil
 
+}
+
+// Util func to create SOA and NS records
+func checkZoneSOAandNSRecords(ctx context.Context, meta akamai.OperationMeta, zone *dns.ZoneResponse, logger log.Interface) error {
+	logger.Debugf("Checking SOA and NS records exist for zone %s", zone.Zone)
+	var resp *dns.RecordSetResponse
+	var err error
+	if zone.ActivationState != "NEW" {
+		// See if SOA and NS recs exist already. Both or none.
+		resp, err = inst.Client(meta).GetRecordsets(ctx, zone.Zone, dns.RecordsetQueryArgs{Types: "SOA,NS"})
+		if err != nil {
+			return err
+		}
+	}
+	if resp != nil && len(resp.Recordsets) >= 2 {
+		return nil
+	}
+
+	logger.Warnf("SOA and NS records don't exist. Creating ...")
+	nameservers, err := inst.Client(meta).GetNameServerRecordList(ctx, zone.ContractID) // ([]string, error)
+	if err != nil {
+		return err
+	}
+	if len(nameservers) < 1 {
+		return fmt.Errorf("No authoritative nameservers exist for zone %s contract ID", zone.Zone)
+	}
+	rs := &dns.Recordsets{Recordsets: make([]dns.Recordset, 0)}
+	rs.Recordsets = append(rs.Recordsets, createSOARecord(zone.Zone, nameservers, logger))
+	rs.Recordsets = append(rs.Recordsets, createNSRecord(zone.Zone, nameservers, logger))
+
+	// create recordsets
+	err = inst.Client(meta).CreateRecordsets(ctx, rs, zone.Zone, true)
+
+	return err
+}
+
+func createSOARecord(zone string, nameservers []string, logger log.Interface) dns.Recordset {
+	rec := dns.Recordset{Name: zone, Type: "SOA"}
+	rec.TTL = 86400
+	pemail := fmt.Sprintf("hostmaster.%s.", zone)
+	soaData := fmt.Sprintf("%s %s 1 14400 7200 604800 1200", nameservers[0], pemail)
+	rec.Rdata = []string{soaData}
+
+	return rec
+}
+
+func createNSRecord(zone string, nameservers []string, logger log.Interface) dns.Recordset {
+	rec := dns.Recordset{Name: zone, Type: "NS"}
+	rec.TTL = 86400
+	rec.Rdata = nameservers
+
+	return rec
 }
