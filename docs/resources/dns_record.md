@@ -93,6 +93,7 @@ A certificate authority authorization (CAA) record requires this argument:
 * `target` - One or more certificate authority authorizations. Each authorization contains three attributes: flags, property tag, and property value.
 
 Example:
+
 ```
 target = ["0 issue \"caa1.example.net\"", "0 issuewild \"ca2.example.org\"", "0 issue ca1.example.net"]
 ```
