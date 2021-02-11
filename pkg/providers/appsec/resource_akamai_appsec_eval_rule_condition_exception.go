@@ -51,11 +51,6 @@ func resourceEvalRuleConditionException() *schema.Resource {
 				ValidateFunc:     validation.StringIsJSON,
 				DiffSuppressFunc: suppressEquivalentJSONDiffsConditionException,
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -117,17 +112,6 @@ func resourceEvalRuleConditionExceptionRead(ctx context.Context, d *schema.Resou
 	evalruleconditionexception, err := client.GetEvalRuleConditionException(ctx, getEvalRuleConditionException)
 	if err != nil {
 		logger.Warnf("calling 'getEvalRuleConditionException': %s", err.Error())
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "EvalRuleConditionExceptions", evalruleconditionexception)
-
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
 	}
 
 	jsonBody, err := json.Marshal(evalruleconditionexception)

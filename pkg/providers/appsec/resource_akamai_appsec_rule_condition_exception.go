@@ -51,11 +51,6 @@ func resourceRuleConditionException() *schema.Resource {
 				ValidateFunc:     validation.StringIsJSON,
 				DiffSuppressFunc: suppressEquivalentJSONDiffsConditionException,
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -118,17 +113,6 @@ func resourceRuleConditionExceptionRead(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		logger.Errorf("calling 'getRuleConditionException': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "RuleConditionExceptions", ruleconditionexception)
-
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
 	}
 
 	jsonBody, err := json.Marshal(ruleconditionexception)
