@@ -32,7 +32,7 @@ This resource supports these arguments:
 * `domain` - (Required) The GTM domain name for the data center.
 * `wait_on_complete` - (Optional) A boolean, that if set to `true`, waits for transaction to complete.
 * `nickname` - (Optional) A descriptive label for the data center.
-* `default_load_object` - (Optional) Specifies the load reporting interface between you and the GTM system. Requires these additional arguments:
+* `default_load_object` - (Optional) Specifies the load reporting interface between you and the GTM system. If used, requires these additional arguments:
   * `load_object` - A load object is a file that provides real-time information about the current load, maximum allowable load, and target load on each resource.
   * `load_object_port` - Specifies the TCP port to connect to when requesting the load object.
   * `load_servers` - Specifies a list of servers to request the load object from.
@@ -46,7 +46,7 @@ This resource supports these arguments:
 * `longitude` - (Optional) Specifies the geographic longitude of the data center’s position. See also latitude within this object.
 * `state_or_province` - (Optional) Specifies a two-letter ISO 3166 country code for the state or province where the data center is located.
 
-### Computed argument reference
+### Computed arguments
 
 This resource returns these computed arguments in the `terraform.tfstate` file:
 
@@ -57,7 +57,7 @@ This resource returns these computed arguments in the `terraform.tfstate` file:
 * `servermonitor_liveness_count`
 * `servermonitor_load_count`
 * `servermonitor_pool`
-* `virtual` - A boolean indicating whether the data center is `virtual` or physical, the latter meaning the data center has an Akamai Network Agent installed, and its physical location (`latitude`, `longitude`) is fixed. Either `true` if `virtual` or `false` if physical.
+* `virtual` - A boolean indicating whether the data center is virtual or physical, the latter meaning the data center has an Akamai Network Agent installed, and its physical location (`latitude`, `longitude`) is fixed. Either `true` if virtual or `false` if physical.
 
 ## Schema reference
 

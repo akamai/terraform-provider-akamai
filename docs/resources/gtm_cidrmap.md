@@ -39,7 +39,7 @@ This resource supports these arguments:
   * `datacenter_id` - (Required) For each property, an identifier for all other CIDR zones.
   * `nickname` - (Required) A descriptive label for the all other CIDR blocks.
 * `wait_on_complete` - (Optional) A boolean that, if set to `true`, waits for transaction to complete.
-* `assignment` - (Optional) Contains information about the CIDR zone groupings of CIDR blocks. You can have multiple entries with this argument. Requires these additional arguments:
+* `assignment` - (Optional) Contains information about the CIDR zone groupings of CIDR blocks. You can have multiple entries with this argument. If used, requires these additional arguments:
   * `datacenter_id` - (Optional) A unique identifier for an existing data center in the domain.
   * `nickname` - (Optional) A descriptive label for the CIDR zone group, up to 256 characters.
   * `blocks` - (Optional, list) Specifies an array of CIDR blocks.

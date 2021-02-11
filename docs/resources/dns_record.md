@@ -47,7 +47,7 @@ This resource supports these arguments:
 * `name` - (Required) The DNS record name. This is the node this DNS record is associated with. Also known as an owner name. 
 * `zone` - (Required) The domain zone, including any nested subdomains.  
 * `recordType` - (Required) The DNS record type.  
-* `ttl` - (Required) A boolean indicating whether the time to live (TTL). This is a 32-bit signed integer for the time the resource record is cached. <br /> A value of `0` means that the resource record is not cached. It's only used for the transaction in progress and may be useful for extremely volatile data.  
+* `ttl` - (Required) The time to live (TTL) is a 32-bit signed integer for the time the resource record is cached. <br /> A value of `0` means that the resource record is not cached. It's only used for the transaction in progress and may be useful for extremely volatile data.  
 
 ## Additional arguments by record type
 
