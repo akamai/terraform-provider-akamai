@@ -51,11 +51,6 @@ func resourceAttackGroupConditionException() *schema.Resource {
 				ValidateFunc:     validation.StringIsJSON,
 				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -120,16 +115,6 @@ func resourceAttackGroupConditionExceptionRead(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "AttackGroupConditionExceptions", attackgroupconditionexception)
-
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-	}
 	if err := d.Set("config_id", getAttackGroupConditionException.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
