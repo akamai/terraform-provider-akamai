@@ -8,9 +8,9 @@ description: |-
 
 # akamai_dns_zone
 
-The `akamai_dns_zone` provides the resource for configuring a DNS zone to integrate easily with your existing DNS infrastructure to provide a secure, high performance, highly available and scalable solution for DNS hosting.
+Use the `akamai_dns_zone` resource to configure a DNS zone that integrates  with your existing DNS infrastructure.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
@@ -29,21 +29,21 @@ resource "akamai_dns_zone" "demozone" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are supported:
+This resource supports these arguments:
 
+* `comment` - (Required) A descriptive comment.
 * `contract` - (Required) The contract ID.
 * `group` - (Required) The currently selected group ID.
-* `zone` - (Required) Domain zone, encapsulating any nested subdomains.
-* `type` - (Required) Whether the zone is `primary`, `secondary` or `alias`.
-* `masters` - (Required for `secondary`) The names or addresses of the customer’s nameservers from which the zone data should be retrieved.
-* `comment` - (Required) A descriptive comment.
-* `sign_and_serve` - (Optional) Whether DNSSEC Sign&Serve is enabled.
-* `sign_and_serve_algorithm` - (Optional) Algorithm used by Sign&Serve.
-* `target` - (Required for Alias zones) The name of the zone whose configuration this zone will copy.
-* `tsig_key` - (Optional) TSIG Key used in secure zone transfers.
-  * `name` - key name.
-  * `algorithm` - hashing algorithm.
-  * `secret` - string known between transfer endpoints.
-* `end_customer_id` - (Optional) free form identifier for the zone.
+* `zone` - (Required) The domain zone, encapsulating any nested subdomains.
+* `type` - (Required) Whether the zone is `primary`, `secondary`, or `alias`.
+* `masters` - (Required for `secondary` zones) The names or IP addresses of the nameservers that the zone data should be retrieved from.
+* `target` - (Required for `alias` zones) The name of the zone whose configuration this zone will copy.
+* `sign_and_serve` - (Optional) Whether DNSSEC Sign and Serve is enabled.
+* `sign_and_serve_algorithm` - (Optional) The algorithm used by Sign and Serve.
+* `tsig_key` - (Optional) The TSIG Key used in secure zone transfers. If used, requires these arguments:
+    * `name` - The key name.
+    * `algorithm` - The hashing algorithm.
+    * `secret` - String known between transfer endpoints.
+* `end_customer_id` - (Optional) A free form identifier for the zone.

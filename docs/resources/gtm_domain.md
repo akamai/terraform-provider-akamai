@@ -8,9 +8,11 @@ description: |-
 
 # akamai_gtm_domain
 
-`akamai_gtm_domain` provides the resource for creating, configuring and importing a GTM Domain, a basic building block of a traffic management configuration. Note: Import requires an ID of the format: `existing_domain_name`.
+Use the `akamai_gtm_domain` resource to create, configure, and import a GTM Domain, which is a basic building block of a traffic management configuration. 
 
-## Example Usage
+~> **Note** Import requires an ID with this format: `existing_domain_name`.
+
+## Example usage
 
 Basic usage:
 
@@ -24,56 +26,51 @@ resource "akamai_gtm_domain" "demodomain" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are supported:
+This resource supports these arguments:
 
-### Required
+* `contract` - (Required) If creating a domain, the contract ID.
+* `group` - (Required) If creating a domain, the currently selected group ID.
+* `name` - (Required) The DNS name for a collection of GTM Properties.
+* `type` - (Required) Th type of GTM domain. Options include `failover-only`, `static`, `weighted`, `basic`, or `full`. 
+* `wait_on_complete` - (Optional) A boolean that, if set to `true`, waits for transaction to complete.
+* `comment` - (Optional) A descriptive note about changes to the domain. The maximum is 4000 characters.
+* `email_notification_list` - (Optional) A list of email addresses to notify when a change is made to the domain.
+* `default_timeout_penalty` - (Optional) Specifies the timeout penalty score. Default is `25`.
+* `load_imbalance_percentage` - (Optional) Indicates the percentage of load imbalance factor (LIF) for the domain.
+* `default_ssl_client_private_key` - (Optional) Specifies a Base64-encoded private key that corresponds with the TLS certificate for HTTPS, SMTPS, POPS, and TCPS liveness tests.
+* `default_error_penalty` - (Optional) Specifies the download penalty score. The default is `75`. If the download encounters an error, the web agent computes a score that is either the download time in seconds or a penalty score.
+* `cname_coalescing_enabled` - (Optional) A boolean that if set to `true`, GTM collapses CNAME redirections in DNS answers when it knows the target of the CNAME.
+* `load_feedback` - (Optional) A boolean indicating whether one or more measurements of load (resources) are defined by you and supplied by each data center in real time to balance load.
+* `default_ssl_client_certificate` - (Optional) Specifies an optional Base64-encoded certificate that corresponds with the private key for TLS-based liveness tests (HTTPS, SMTPS, POPS, and TCPS).
+* `end_user_mapping_enabled` - (Optional) A boolean indicating whether whether the GTM Domain is using end user client subnet mapping.
 
-* `contract` - The contract ID (if creating domain).
-* `group` - The currently selected group ID (if creating domain).
-* `name` - DNS name for a collection of GTM Properties.
-* `type` - GTM Domain type of `failover-only`, `static`, `weighted`, `basic` or `full`. 
+### Computed argument reference
 
-### Optional 
+This resource returns these computed arguments in the `terraform.tfstate` file:
 
-* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete.
-* `comment` - A descriptive note about changes to the domain. The maximum is 4000 characters.
-* `email_notification_list` - (List) A list of email addresses to notify when a change is made to the domain.
-* `default_timeout_penalty` - (Default: 25) Specifies the timeout penalty score.
-* `load_imbalance_percentage` - Indicates the percent of load imbalance factor (LIF) for the domain.
-* `default_ssl_client_private_key` - Specifies an optional Base64-encoded private key that corresponds with the TLS certificate for TLS-based liveness tests (HTTPS, SMTPS, POPS, and TCPS).
-* `default_error_penalty` - (Default: 75) Specifies the download penalty score. If the download encounters an error, the web agent computes a score that is either the download time in seconds or a penalty score.
-* `cname_coalescing_enabled` - (Boolean) If enabled, GTM collapses CNAME redirections in DNS answers when it knows the target of the CNAME.
-* `load_feedback` - (Boolean) Indicates whether one or more measurements of load (resources) are defined by you and supplied by each data center in real time to balance load.
-* `default_ssl_client_certificate` - Specifies an optional Base64-encoded certificate that corresponds with the private key for TLS-based liveness tests (HTTPS, SMTPS, POPS, and TCPS).
-* `end_user_mapping_enabled` - (Boolean) Indicates whether the GTM Domain is using end user client subnet mapping.
+* `default_unreachable_threshold`
+* `min_pingable_region_fraction`
+* `servermonitor_liveness_count`
+* `round_robin_prefix`
+* `servermonitor_load_count`
+* `ping_interval`
+* `max_ttl`
+* `default_health_max`
+* `map_update_interval`
+* `max_properties`
+* `max_resources`
+* `default_error_penalty`
+* `max_test_timeout`
+* `default_health_multiplier`
+* `servermonitor_pool`
+* `min_ttl`
+* `default_max_unreachable_penalty`
+* `default_health_threshold`
+* `min_test_interval`
+* `ping_packet_size`
 
-### Computed
+### Schema reference
 
-The following arguments will be found in `terraform.tfstate` and can be referenced throughout the configuration. The values cannot be changed.
-
-* `default_unreachable_threshold`.
-* `min_pingable_region_fraction`.
-* `servermonitor_liveness_count`.
-* `round_robin_prefix`.
-* `servermonitor_load_count`.
-* `ping_interval`.
-* `max_ttl`.
-* `default_health_max`.
-* `map_update_interval`.
-* `max_properties`.
-* `max_resources`.
-* `default_error_penalty`.
-* `max_test_timeout`.
-* `default_health_multiplier`.
-* `servermonitor_pool`.
-* `min_ttl`.
-* `default_max_unreachable_penalty`.
-* `default_health_threshold`.
-* `min_test_interval`.
-* `ping_packet_size`.
-
-### Schema Reference
-
-The GTM Domain backing schema and more complete element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#domain).
+You can download the GTM Domain backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#domain) page.

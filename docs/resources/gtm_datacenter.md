@@ -8,9 +8,13 @@ description: |-
 
 # akamai_gtm_datacenter
 
-`akamai_gtm_datacenter` provides the resource for creating, configuring and importing a GTM datacenter that represents a customer data center, also known as a traffic target, which is a location that contains many servers to which GTM directs traffic. More generally, a data center is a name for a set of possible answers that GTM can return for a query and the unit GTM uses to scale load balancing. For example, you might have data centers in New York and in Amsterdam, and want to balance load between them, but prefer that U.S. users are sent to the New York data center and European users are sent to the Amsterdam data center. Note: Import requires an ID of the format: `existing_domain_name`:`existing_datacenter_id`.
+Use the `akamai_gtm_datacenter` resource to create, configure, and import a GTM data center. A GTM data center represents a customer data center and is also known as a traffic target, a location containing many servers GTM can direct traffic to. 
 
-## Example Usage
+GTM uses data centers to scale load balancing. For example, you might have data centers in both New York and Amsterdam and want to balance load between them. You can configure GTM to send US users to the New York data center and European users to the data center in Amsterdam. 
+
+~> **Note** Import requires an ID with this format: `existing_domain_name`:`existing_datacenter_id`.
+
+## Example usage
 
 Basic usage:
 
@@ -21,45 +25,40 @@ resource "akamai_gtm_datacenter" "demo_datacenter" {
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are supported:
+This resource supports these arguments:
 
-### Required
-
-* `domain` - GTM Domain name for the Datacenter.
-
-### Optional
- 
-* `wait_on_complete` - (Boolean, Default: true) Wait for transaction to complete.
-* `nickname` - A descriptive label for the data center.
-* `default_load_object` - Specifies the load reporting interface between you and the GTM system.
+* `domain` - (Required) The GTM domain name for the data center.
+* `wait_on_complete` - (Optional) A boolean, that if set to `true`, waits for transaction to complete.
+* `nickname` - (Optional) A descriptive label for the data center.
+* `default_load_object` - (Optional) Specifies the load reporting interface between you and the GTM system. Requires these additional arguments:
   * `load_object` - A load object is a file that provides real-time information about the current load, maximum allowable load, and target load on each resource.
   * `load_object_port` - Specifies the TCP port to connect to when requesting the load object.
-  * `load_servers` - (List) Specifies a list of servers to request the load object from.
-* `city` - The name of the city where the data center is located.
-* `clone_of` - Identifies the data center’s datacenterId of which this data center is a clone.
-* `cloud_server_targeting` - (Boolean) Balances load between two or more servers in a cloud environment.
-* `cloud_server_host_header_override` - (Boolean) Akamai's liveness test agents will populate the Host header with the host header value configured in the liveness test.
-* `continent` - A two-letter code that specifies the continent where the data center maps to.
-* `country` - A two-letter ISO 3166 country code that specifies the country where the data center maps to.
-* `latitude` - Specifies the geographical latitude of the data center’s position. See also longitude within this object.
-* `longitude` - Specifies the geographic longitude of the data center’s position. See also latitude within this object.
-* `state_or_province` - Specifies a two-letter ISO 3166 country code for the state or province where the data center is located.
+  * `load_servers` - Specifies a list of servers to request the load object from.
+* `city` - (Optional) The name of the city where the data center is located.
+* `clone_of` - (Optional) Identifies the data center’s `datacenter_id` of which this data center is a clone.
+* `cloud_server_targeting` - (Optional) A boolean indicating whether to balance load between two or more servers in a cloud environment.
+* `cloud_server_host_header_override` - (Optional) A boolean that, if set to `true`, Akamai's liveness test agents use the Host header configured in the liveness test.
+* `continent` - (Optional) A two-letter code that specifies the continent where the data center maps to.
+* `country` - (Optional) A two-letter ISO 3166 country code that specifies the country where the data center maps to.
+* `latitude` - (Optional) Specifies the geographical latitude of the data center’s position. See also longitude within this object.
+* `longitude` - (Optional) Specifies the geographic longitude of the data center’s position. See also latitude within this object.
+* `state_or_province` - (Optional) Specifies a two-letter ISO 3166 country code for the state or province where the data center is located.
 
-### Computed
+### Computed argument reference
 
-The following arguments will be found in `terraform.tfstate` and can be referenced throughout the configuration. The values cannot be changed.
+This resource returns these computed arguments in the `terraform.tfstate` file:
 
-* `datacenter_id`.
-* `ping_interval`.
-* `ping_packet_size`.
-* `score_penalty`.
-* `servermonitor_liveness_count`.
-* `servermonitor_load_count`.
-* `servermonitor_pool`.
-* `virtual` - (Boolean).
+* `datacenter_id` - A unique identifier for an existing data center in the domain.
+* `ping_interval`
+* `ping_packet_size`
+* `score_penalty`
+* `servermonitor_liveness_count`
+* `servermonitor_load_count`
+* `servermonitor_pool`
+* `virtual` - A boolean indicating whether the data center is `virtual` or physical, the latter meaning the data center has an Akamai Network Agent installed, and its physical location (`latitude`, `longitude`) is fixed. Either `true` if `virtual` or `false` if physical.
 
-### Schema Reference
+## Schema reference
 
-The GTM Datacenter backing schema and more complete element descriptions can be found at [Akamai Developer Website](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#datacenter).
+You can download the GTM Data Center backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#datacenter) page.

@@ -36,7 +36,7 @@ Each step will produce or update existing files.
 ### Via Step By Step Construction
 
 1. Download your existing zone master file configuration (using the API or Control Center) as a backup and reference.
-2. Using the zone master file as a reference, create a Terraform configuration representing the existing zone and all contained recordsets. Note: In creating each resource block, make note of `required`, `optional` and `computed` fields.
+2. Using the zone master file as a reference, create a Terraform configuration representing the existing zone and all contained recordsets. Note: In creating each resource block, make note of required, optional and computed fields.
 3. Use the Terraform Import command to import the existing zone and contained recordsets; singularly and in serial order.
 4. (Optional, Recommended) Review and compare the zone master file content and created `terraform.tfstate` to confirm the zone and all recordsets are represented correctly.
 5. Execute a `Terraform Plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the Edge DNS Backend.
@@ -66,7 +66,7 @@ Each step will produce or update existing files.
 ### Via Step By Step Construction
 
 1. Download your existing domain configuration (using the API or Control Center) as a backup and reference.
-2. Using the domain download as a reference, create a Terraform configuration representing the existing domain and all contained GTM objects. Note: In creating each resource block, make note of `required`, `optional`, and `computed` fields.
+2. Using the domain download as a reference, create a Terraform configuration representing the existing domain and all contained GTM objects. Note: In creating each resource block, make note of required, optional, and computed fields.
 3. Run `terraform import`. This command imports the existing domain and contained objects one at a time based on the order in the configuration.
 4. (Optional, Recommended) Review domain download content and created `terraform.tfstate` to confirm the domain and all objects are represented correctly.
 5. Run `terraform plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the GTM Backend.
@@ -75,4 +75,4 @@ Since Terraform assumes it is the de facto state for any resource it leverages, 
 
 ## GTM Terraform Resource Field Representation During Plan and/or Apply
 
-When using `terraform plan` or `terraform apply`, Terraform presents fields defined in the configuration and all defined resource fields. Fields are either required, optional or computed as specified in each resource description. Default values for fields will display if not explicitly configured. In many cases, the default will be zero, empty string, or empty list depending on the type. These default or empty values are informational and not included in resource updates.
+When using `terraform plan` or `terraform apply`, Terraform presents fields defined in the configuration and all defined resource fields. Fields are either required, optional, or computed as specified in each resource description. Default values for fields will display if not explicitly configured. In many cases, the default will be zero, empty string, or empty list depending on the type. These default or empty values are informational and not included in resource updates.
