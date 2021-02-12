@@ -13,7 +13,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -46,18 +45,9 @@ func resourceApiRequestConstraints() *schema.Resource {
 				Optional: true,
 			},
 			"action": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					Alert,
-					Deny,
-					None,
-				}, false),
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: ValidateActions,
 			},
 		},
 	}
@@ -121,18 +111,10 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 		}
 		getApiRequestConstraints.ApiID = ApiID
 	}
-	apirequestconstraints, err := client.GetApiRequestConstraints(ctx, getApiRequestConstraints)
+	_, err := client.GetApiRequestConstraints(ctx, getApiRequestConstraints)
 	if err != nil {
 		logger.Errorf("calling 'getApiRequestConstraints': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "apirequestconstraintsDS", apirequestconstraints)
-	if err == nil {
-		d.Set("output_text", outputtext)
 	}
 
 	if err := d.Set("config_id", getApiRequestConstraints.ConfigID); err != nil {
