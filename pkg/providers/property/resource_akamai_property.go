@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"net/http"
 	"regexp"
 	"strings"
@@ -71,6 +72,9 @@ func resourceProperty() *schema.Resource {
 		ReadContext:   resourcePropertyRead,
 		UpdateContext: resourcePropertyUpdate,
 		DeleteContext: resourcePropertyDelete,
+		CustomizeDiff: customdiff.Sequence(
+			resourceCustomDiffCustomizeDiff,
+		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyImport,
 		},
@@ -174,8 +178,14 @@ func resourceProperty() *schema.Resource {
 				},
 			},
 			"hostnames": {
-				Type:        schema.TypeMap,
-				Optional:    true,
+				Type:     schema.TypeMap,
+				Optional: true,
+				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+					if len(i.(map[string]interface{})) == 0 {
+						return diag.Errorf("hostnames cannot be empty when defined")
+					}
+					return nil
+				},
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
 			},
@@ -247,7 +257,21 @@ func resourceProperty() *schema.Resource {
 		},
 	}
 }
-
+func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	o, n := d.GetChange("hostnames")
+	oldVal, ok := o.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("cannot parse hostnames state properly %v", o)
+	}
+	newVal, ok := n.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("cannot parse hostnames state properly %v", n)
+	}
+	if len(oldVal) > 0 && len(newVal) == 0 {
+		return fmt.Errorf("atleast one hostname required to update existing list of hostnames associated to a property")
+	}
+	return nil
+}
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
@@ -759,8 +783,8 @@ func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pro
 
 	logger.WithFields(logFields(*res)).Debug("fetched property rules")
 	Rules = papi.RulesUpdate{
-		Rules:   res.Rules,
-		Comments:res.Comments,
+		Rules:    res.Rules,
+		Comments: res.Comments,
 	}
 	Format = res.RuleFormat
 	Errors = res.Errors

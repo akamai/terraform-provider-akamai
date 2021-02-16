@@ -730,7 +730,7 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.test", "hostnames.#", "0"),
 							),
-							ExpectNonEmptyPlan: false,
+							ExpectError: regexp.MustCompile("atleast one hostname required to update existing list of hostnames associated to a property"),
 						},
 					},
 				})
