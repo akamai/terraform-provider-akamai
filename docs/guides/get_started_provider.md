@@ -138,8 +138,7 @@ At this point in the setup, you should refer to the guides for the Akamai module
 | Property Manager (Provisioning and Common modules) | [Get Started with Property Provisioning](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) |
 
 -> **Note** Both Terraform and the Akamai Terraform CLI package come
-pre-installed in the Akamai Development Environment. Get more details in
-our [installation Instructions](https://developer.akamai.com/blog/2020/05/26/set-development-environment).
+pre-installed in the Akamai Development Environment. See [Set Up a Development Environment](https://developer.akamai.com/blog/2020/05/26/set-development-environment) for more information.
 
 Once you're done with the module-level setup, continue with the next
 sections to initialize and test the Akamai Provider.

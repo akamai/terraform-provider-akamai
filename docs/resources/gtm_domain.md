@@ -16,7 +16,7 @@ Use the `akamai_gtm_domain` resource to create, configure, and import a GTM Doma
 
 Basic usage:
 
-```hcl
+```
 resource "akamai_gtm_domain" "demodomain" {
     contract = "XXX"
     group = 100
@@ -46,9 +46,9 @@ This resource supports these arguments:
 * `default_ssl_client_certificate` - (Optional) Specifies an optional Base64-encoded certificate that corresponds with the private key for TLS-based liveness tests (HTTPS, SMTPS, POPS, and TCPS).
 * `end_user_mapping_enabled` - (Optional) A boolean indicating whether whether the GTM Domain is using end user client subnet mapping.
 
-### Computed arguments
+## Attribute reference
 
-This resource returns these computed arguments in the `terraform.tfstate` file:
+This resource returns these computed attributes in the `terraform.tfstate` file:
 
 * `default_unreachable_threshold`
 * `min_pingable_region_fraction`
@@ -71,6 +71,6 @@ This resource returns these computed arguments in the `terraform.tfstate` file:
 * `min_test_interval`
 * `ping_packet_size`
 
-### Schema reference
+## Schema reference
 
 You can download the GTM Domain backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#domain) page.

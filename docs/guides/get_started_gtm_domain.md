@@ -67,7 +67,7 @@ Next, we set the required (`name`, `type`) and optional (`group_id`, `contract_i
 
 Once you’re done, your Domain configuration should look like this:
 
-```hcl
+```
 resource "akamai_gtm_domain" "example" {
 	name = "example.akadns.net"                     # Domain Name
 	type = "weighted"				# Domain type
@@ -89,7 +89,7 @@ Next, we set the required (`domain` name) and optional (`nickname`) arguments.
 
 Once done, your Datacenter configuration should look like this:
 
-```hcl
+```
 resource "akamai_gtm_datacenter" "example_dc" {
 	domain = akamai_gtm_domain.example.name		# domain
 	nickname = "datacenter_1"   			# Datacenter Nickname
@@ -107,7 +107,7 @@ Next, we set the required (`domain` name, property `name`, property `type`, `tra
 
 Once you’re done, your Property configuration should look like this:
 
-```hcl
+```
 resource "akamai_gtm_property" "example_prop" {
 	domain = akamai_gtm_domain.example.name         # domain
 	name = "example_prop_1"                         # Property Name

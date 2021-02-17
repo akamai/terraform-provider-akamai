@@ -18,7 +18,7 @@ You can reuse maps for multiple properties or create new ones. To configure a pr
 
 Basic usage:
 
-```hcl
+```
 resource "akamai_gtm_geomap" "demo_geomap" {
     domain = "demo_domain.akadns.net"
     name = "demo_geo"

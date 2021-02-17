@@ -42,7 +42,7 @@ resource "akamai_dns_record" "www" {
 
 ## Argument reference [argument-reference]
 
-This resource supports these arguments:
+This resource supports these arguments for all record types:
 
 * `name` - (Required) The DNS record name. This is the node this DNS record is associated with. Also known as an owner name. 
 * `zone` - (Required) The domain zone, including any nested subdomains.  
@@ -81,7 +81,7 @@ An AKAMAICDN record requires this argument:
 
 ### AKAMAITLC record
 
-No additional arguments are needed for AKAMAITLC records. This resource returns these computed fields for this record type:
+No additional arguments are needed for AKAMAITLC records. This resource returns these computed attributes for this record type:
 
 * `dns_name` - A valid DNS name.
 * `answer_type` - The answer type.
@@ -146,7 +146,7 @@ A HINFO record requires these arguments:
 The following fields are required:
 
 * `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A piority of 0 enables alias mode. 
-* `svc_params` - Space seperated list of endpoint parameters. Not allowed if service priority is 0.
+* `svc_params` - Space separated list of endpoint parameters. Not allowed if service priority is 0.
 * `target_name` - Domain name of the service endpoint.
 
 ### LOC record
@@ -266,10 +266,10 @@ An SOA record requires these arguments:
 
 ### SVCB record
 
-An SVDB record requires these arguments:
+An SVCB record requires these arguments:
 
 * `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A piority of 0 enables alias mode.
-* `svc_params` - Space seperated list of endpoint parameters. Not allowed if service priority is 0.
+* `svc_params` - Space separated list of endpoint parameters. Not allowed if service priority is 0.
 * `target_name` - Domain name of the service endpoint.
 
 ### TLSA record

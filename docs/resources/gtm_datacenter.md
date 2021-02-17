@@ -18,7 +18,7 @@ GTM uses data centers to scale load balancing. For example, you might have data 
 
 Basic usage:
 
-```hcl
+```
 resource "akamai_gtm_datacenter" "demo_datacenter" {
     domain = "demo_domain.akadns.net"
     nickname = "demo_datacenter"
@@ -46,9 +46,9 @@ This resource supports these arguments:
 * `longitude` - (Optional) Specifies the geographic longitude of the data center’s position. See also latitude within this object.
 * `state_or_province` - (Optional) Specifies a two-letter ISO 3166 country code for the state or province where the data center is located.
 
-### Computed arguments
+## Attribute reference
 
-This resource returns these computed arguments in the `terraform.tfstate` file:
+This resource returns these computed attributes in the `terraform.tfstate` file:
 
 * `datacenter_id` - A unique identifier for an existing data center in the domain.
 * `ping_interval`

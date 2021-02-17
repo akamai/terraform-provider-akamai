@@ -16,7 +16,7 @@ Use the `akamai_gtm_property` resource provides the resource for creating, confi
 
 Basic usage:
 
-```hcl
+```
 resource "akamai_gtm_property" "demo_property" {
     domain = "demo_domain.akadns.net"
     name = "demo_property"
@@ -101,13 +101,13 @@ This resource supports these arguments:
   * `ttl` - (Optional) The number of seconds that this record should live in a resolver’s cache before being refetched.
   * `rdata` - (Optional) (List) An array of data strings, representing multiple records within a set.
 
-### Computed arguments
+## Attribute reference
 
-This resource returns these computed arguments in the `terraform.tfstate` file:
+This resource returns these computed attributes in the `terraform.tfstate` file:
 
 * `weighted_hash_bits_for_ipv4`
 * `weighted_hash_bits_for_ipv6`
 
-### Schema reference
+## Schema reference
 
 You can download the GTM Property backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#property) page.

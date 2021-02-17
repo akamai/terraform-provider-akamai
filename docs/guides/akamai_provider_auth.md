@@ -54,7 +54,7 @@ supporting API service names:
 Once you create the supporting API clients you can update your local
 `.edgerc` file.
 
-**Note:** Depending on the select contract and group, the Edge DNS and GTM modules may depend on both Property Manager APIs as well. If so, be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
+**Note:** If you're using the Edge DNS or GTM module, you may also need the Property Manager API service. Whether you need this additional service depends on the contract and group you're using.
 
 ## Add your local .edgerc file to your Akamai Provider config
 
@@ -66,7 +66,7 @@ Akamai Provider configuration file (`akamai.tf`):
 edgerc = "~/.edgerc"
 ```
 
-`~/.edgerc` is the location of your file on your local machine. In
+`~/.edgerc` is the location of your credentials file on your local machine. In
 your Terraform files, you can reference individual sections inside the
 `.edgerc` file:
 

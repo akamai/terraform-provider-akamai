@@ -8,13 +8,13 @@ description: |-
 
 # akamai_dns_zone
 
-Use the `akamai_dns_zone` resource to configure a DNS zone that integrates  with your existing DNS infrastructure.
+Use the `akamai_dns_zone` resource to configure a DNS zone that integrates with your existing DNS infrastructure.
 
 ## Example usage
 
 Basic usage:
 
-```hcl
+```
 resource "akamai_dns_zone" "demozone" {
     contract = "ctr_1-AB123"
     group = 100

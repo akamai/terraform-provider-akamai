@@ -17,7 +17,7 @@ The `akamai_gtm_resource` lets you create, configure, and import a GTM resource.
 
 Basic usage:
 
-```hcl
+```
 resource "akamai_gtm_resource" "demo_resource" {
     domain = "demo_domain.akadns.net"
     name = "demo_resource"
@@ -51,6 +51,6 @@ This resource supports these arguments:
 * `max_u_multiplicative_increment` - (Optional) For Akamai internal use only. You can omit the value or set it to `null`.
 * `decay_rate` - (Optional) For Akamai internal use only. You can omit the value or set it to `null`.
 
-### Schema reference
+## Schema reference
 
 You can download the GTM Resource backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#resource) page.

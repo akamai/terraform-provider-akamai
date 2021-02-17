@@ -14,7 +14,7 @@ Use the `akamai_authorities_set` data source to retrieve a contract's authoritie
 
 Basic usage:
 
-```hcl
+```
 data "akamai_authorities_set" "example" {
      contract = "ctr_1-AB123"
 }

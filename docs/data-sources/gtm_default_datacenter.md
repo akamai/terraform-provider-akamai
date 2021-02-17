@@ -14,7 +14,7 @@ Use the `akamai_gtm_default_datacenter` data source to retrieve the default data
 
 Basic usage:
 
-```hcl
+```
 data "akamai_gtm_default_datacenter" "example_ddc" {
      name = "example_domain.akadns.net"
      datacenter = 5400

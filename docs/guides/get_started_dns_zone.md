@@ -68,7 +68,7 @@ Next, we set the required (`zone`, `type`, `group`, `contract`) and optional (`c
 
 Once done, your `akamai.tf` configuration file should include configuration items such as:
 
-```hcl
+```
 terraform {
   required_providers {
     akamai = {
@@ -124,7 +124,7 @@ In addition to `akamai.tf` set with Get Started with the [Akamai Terraform Provi
 
 ##### Example configuration:
 
-```hcl
+```
 locals {
 	section     = "default"
 	zone        = "example_primary_zone.com"
@@ -280,7 +280,7 @@ Next, we set the required (zone, recordtype, ttl) and any optional/required argu
 
 Once complete, your record configuration should look like this:
 
-```hcl
+```
 resource "akamai_dns_record" "example_a_record" {
 	zone = akamai_dns_zone.example.zone
 	target = ["10.0.0.2"]
@@ -412,4 +412,4 @@ While it's rare, sometimes a primary zone is only partially created on the Akama
 
 Any attempt to manage or administer recordsets in the zone will fail. To resolve this issue, you have to manually create the SOA and NS records before you can manage the configuration.
 
-You can create these records can be created from the Edge DNS application available from [Akamai Control Center](https://control.akamai.com). You also have the option of using the [Akamai CLI for Edge DNS](https://github.com/akamai/cli-dns).
+You can create these records from the Edge DNS application available from [Akamai Control Center](https://control.akamai.com). You also have the option of using the [Akamai CLI for Edge DNS](https://github.com/akamai/cli-dns).

@@ -18,7 +18,7 @@ You can reuse maps for multiple properties or create new ones. AS maps split the
 
 Basic usage:
 
-```hlc
+```
 resource "akamai_gtm_asmap" "demo_asmap" {
     domain = "demo_domain.akadns.net"
     name = "demo_as"
@@ -45,7 +45,7 @@ This resource supports these arguments:
   * `nickname` - A descriptive label for the group.
   * `as_numbers` - Specifies an array of AS numbers.
 
-### Schema reference
+## Schema reference
 
 You can download the GTM AS Map backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#asmap) page.
 
