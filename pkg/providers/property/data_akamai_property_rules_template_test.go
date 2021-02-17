@@ -173,7 +173,22 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		})
 	})
 
-	t.Run("snippets files are under incorrect folder", func(t *testing.T) {
+	t.Run("snippets files are under incorrect folder deeply nested", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
+						ExpectError: regexp.MustCompile(`Error: Snippets file should be under 'property-snippets' folder instead of output`),
+					},
+				},
+			})
+		})
+	})
+
+	t.Run("snippets files are under incorrect folder e.g. property-snippets/rules.json", func(t *testing.T) {
 		client := mockpapi{}
 		useClient(&client, func() {
 			resource.UnitTest(t, resource.TestCase{

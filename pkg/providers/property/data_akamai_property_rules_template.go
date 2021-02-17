@@ -133,6 +133,9 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 	dir := filepath.Dir(file)
 	folders := snippetsFolderRegexp.FindStringSubmatch(file)
+	if len(folders) == 0 {
+		folders = snippetsOneFolderRegex.FindStringSubmatch(file)
+	}
 	if folders[1] != "property-snippets" {
 		logger.Warnf("Snippets file should be under 'property-snippets' folder instead of: %s", folders[1])
 		return diag.FromErr(fmt.Errorf("Snippets file should be under 'property-snippets' folder instead of %s folder", folders[1]))
@@ -162,7 +165,7 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 				diags = append(diags, diag.Errorf("invalid JSON result found in template snippet json here %s: %s", f, err)...)
 			}
 		} else {
-			return diag.FromErr(fmt.Errorf("Snippets file under 'property-snippets' folder should have .json files. Invalid file %s ",f ))
+			return diag.FromErr(fmt.Errorf("Snippets file under 'property-snippets' folder should have .json files. Invalid file %s ", f))
 		}
 		templateStr, err := convertToTemplate(f)
 		if err != nil {
@@ -196,10 +199,11 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 var (
-	includeRegexp        = regexp.MustCompile(`"#include:.+"`)
-	varRegexp            = regexp.MustCompile(`"\${.+}"`)
-	jsonFileRegexp       = regexp.MustCompile(`\.json+$`)
-	snippetsFolderRegexp = regexp.MustCompile(`.*\/(.*)\/`)
+	includeRegexp          = regexp.MustCompile(`"#include:.+"`)
+	varRegexp              = regexp.MustCompile(`"\${.+}"`)
+	jsonFileRegexp         = regexp.MustCompile(`\.json+$`)
+	snippetsFolderRegexp   = regexp.MustCompile(`.*\/(.*)\/`)
+	snippetsOneFolderRegex = regexp.MustCompile(`(.+)\/([^\/]+)`)
 )
 
 var (
