@@ -195,8 +195,8 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
-						ExpectError: regexp.MustCompile(`Error: Snippets file should be under 'property-snippets' folder instead of output`),
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_only_one_folder_json.tf"),
+						ExpectError: regexp.MustCompile(`Error: Snippets file should be under 'property-snippets' folder instead of property-snippet`),
 					},
 				},
 			})

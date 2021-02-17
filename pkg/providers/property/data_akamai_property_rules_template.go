@@ -136,9 +136,13 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	if len(folders) == 0 {
 		folders = snippetsOneFolderRegex.FindStringSubmatch(file)
 	}
-	if folders[1] != "property-snippets" {
-		logger.Warnf("Snippets file should be under 'property-snippets' folder instead of: %s", folders[1])
-		return diag.FromErr(fmt.Errorf("Snippets file should be under 'property-snippets' folder instead of %s folder", folders[1]))
+	if len(folders) != 0 || folders != nil {
+		if folders[1] != "property-snippets" {
+			logger.Warnf("Snippets file should be under 'property-snippets' folder instead of: %s", folders[1])
+			return diag.FromErr(fmt.Errorf("Snippets file should be under 'property-snippets' folder instead of %s folder", folders[1]))
+		}
+	} else {
+		return diag.FromErr(fmt.Errorf("Snippets file should be under 'property-snippets' folder instead of %s folder", folders))
 	}
 	templateFiles := make(map[string]string)
 	err = filepath.Walk(dir,
