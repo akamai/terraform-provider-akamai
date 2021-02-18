@@ -1,12 +1,16 @@
 # RELEASE NOTES
 
 ## Next
+
 * DNS
-    * Fail on attempted Zone deletion. Not supported.
     * Create SOA and NS Records on zone read if don't exist.
     * Add HTTPS, SVCB record support
 * GTM
     * Add validation for property type and traffic targets combination
+
+#### BUG FIXES:
+* DNS -- Suppress NS Record target diff if old and new equal without trailing 'period' (#189)
+* DNS -- Fail on attempted Zone deletion. Not supported.
 
 ## 1.2.1 (Feb 3, 2021)
 

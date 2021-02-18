@@ -533,7 +533,7 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, old str
 		return false
 	}
 
-	if recordType == RRTypeAfsdb || recordType == RRTypeCname || recordType == RRTypePtr || recordType == RRTypeSrv {
+	if recordType == RRTypeAfsdb || recordType == RRTypeCname || recordType == RRTypePtr || recordType == RRTypeSrv || recordType == RRTypeNs {
 		baseVal = strings.TrimRight(baseVal, ".")
 		for _, compval := range compList {
 			compval = strings.TrimRight(compval, ".")
