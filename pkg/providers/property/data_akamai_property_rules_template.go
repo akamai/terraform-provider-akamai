@@ -97,6 +97,16 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	if _, err := os.Stat(file); err != nil {
+		if os.IsNotExist(err) {
+			return diag.FromErr(err)
+		}
+	}
+	dir := filepath.Dir(file)
+	if filepath.Base(dir) != "property-snippets" || filepath.Ext(file) != ".json" {
+		logger.Errorf("snippets file should be under 'property-snippets' folder with .json extension: %s", file)
+		return diag.FromErr(fmt.Errorf("snippets file should be under 'property-snippets' folder with .json extension. Invalid file: %s ", file))
+	}
 	varsMap := make(map[string]interface{})
 	vars, err := tools.GetSetValue("variables", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -130,19 +140,6 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	tmpl, err := template.New("main").Delims(leftDelim, rightDelim).Option("missingkey=error").Parse(templateStr)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-	dir := filepath.Dir(file)
-	folders := snippetsFolderRegexp.FindStringSubmatch(file)
-	if len(folders) == 0 {
-		folders = snippetsOneFolderRegex.FindStringSubmatch(file)
-	}
-	if len(folders) != 0 || folders != nil {
-		if folders[1] != "property-snippets" {
-			logger.Warnf("Snippets file should be under 'property-snippets' folder instead of: %s", folders[1])
-			return diag.FromErr(fmt.Errorf("Snippets file should be under 'property-snippets' folder instead of %s folder", folders[1]))
-		}
-	} else {
-		return diag.FromErr(fmt.Errorf("Snippets file should be under 'property-snippets' folder instead of %s folder", folders))
 	}
 	templateFiles := make(map[string]string)
 	err = filepath.Walk(dir,
@@ -206,11 +203,9 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 var (
-	includeRegexp          = regexp.MustCompile(`"#include:.+"`)
-	varRegexp              = regexp.MustCompile(`"\${.+}"`)
-	jsonFileRegexp         = regexp.MustCompile(`\.json+$`)
-	snippetsFolderRegexp   = regexp.MustCompile(`.*\/(.*)\/`)
-	snippetsOneFolderRegex = regexp.MustCompile(`(.+)\/([^\/]+)`)
+	includeRegexp  = regexp.MustCompile(`"#include:.+"`)
+	varRegexp      = regexp.MustCompile(`"\${.+}"`)
+	jsonFileRegexp = regexp.MustCompile(`\.json+$`)
 )
 
 var (

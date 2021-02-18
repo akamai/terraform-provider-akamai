@@ -152,7 +152,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_not_found.tf"),
-						ExpectError: regexp.MustCompile(`template "snippets/not_found.json" not defined`),
+						ExpectError: regexp.MustCompile(`Error: stat testdata/TestDSRulesTemplate/rules/property-snippets/non-existent.json: no such file or directory`),
 					},
 				},
 			})
@@ -181,7 +181,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
-						ExpectError: regexp.MustCompile(`Error: Snippets file should be under 'property-snippets' folder instead of output`),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension. Invalid file: testdata/TestDSRulesTemplate/output/template_invalid_json.json`),
 					},
 				},
 			})
@@ -196,7 +196,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_only_one_folder_json.tf"),
-						ExpectError: regexp.MustCompile(`Error: Snippets file should be under 'property-snippets' folder instead of property-snippet`),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension. Invalid file: property-snippet/template_invalid_json.json`),
 					},
 				},
 			})
@@ -423,7 +423,8 @@ func TestConvertToTypedMap(t *testing.T) {
 }
 
 func TestConvertToTemplate(t *testing.T) {
-	templates := "testData/TestDSRulesTemplate/rules/templates"
+	templates := "testData/TestDSRulesTemplate/rules/property-snippets"
+	templatesOut := "testData/TestDSRulesTemplate/output"
 	tests := map[string]struct {
 		givenFile    string
 		expectedFile string
@@ -450,7 +451,7 @@ func TestConvertToTemplate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			expected := loadFixtureString(fmt.Sprintf("%s/%s", templates, test.expectedFile))
+			expected := loadFixtureString(fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
 			assert.Equal(t, expected, res)
 		})
 	}
