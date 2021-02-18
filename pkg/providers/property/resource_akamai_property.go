@@ -759,8 +759,8 @@ func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pro
 
 	logger.WithFields(logFields(*res)).Debug("fetched property rules")
 	Rules = papi.RulesUpdate{
-		Rules:   res.Rules,
-		Comments:res.Comments,
+		Rules:    res.Rules,
+		Comments: res.Comments,
 	}
 	Format = res.RuleFormat
 	Errors = res.Errors

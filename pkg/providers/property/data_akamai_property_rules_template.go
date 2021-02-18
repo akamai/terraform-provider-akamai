@@ -188,6 +188,9 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	if !jsonFileRegexp.MatchString(file) {
+		return diag.FromErr(fmt.Errorf("Snippets file under 'property-snippets' folder should have .json files. Invalid file %s ", file))
+	}
 	d.SetId(file)
 	formatted := bytes.Buffer{}
 	result := wr.Bytes()
