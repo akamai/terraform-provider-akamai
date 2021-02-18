@@ -1,5 +1,20 @@
 # RELEASE NOTES
 
+## 1.3.0 (Feb. 18, 2021) APPSEC - Extended list of supported list endpoints from APPSEC API:
+  * Custom Deny
+  * SIEM Setting
+  * Advanced Options Settings
+  * API Match Target
+  * API Request Constraint
+  * Create/Delete/Rename Security Policy
+  * Host Coverage / Edit Version Notes
+  * All WAP Features / WAP Hostname Evaluation
+  * Create Security Configuration
+  * Rename Security Configuration Version
+  * Delete Security Configuration Version
+  * Clone Security Configuration
+  * Import tool for adding existing resources to Terraform state
+
 ## 1.2.1 (Feb 3, 2021)
 
 #### BUG FIXES:
