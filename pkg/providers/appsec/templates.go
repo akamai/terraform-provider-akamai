@@ -22,10 +22,8 @@ type OutputTemplate struct {
 
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
-		//fmt.Printf("%s is in the OutputTemplate >> %+v\n", key, f)
 		return f, nil
 	} else {
-		//fmt.Printf("%s is NOT in the OutputTemplate!\n", key)
 		return nil, fmt.Errorf("Error not found")
 	}
 }
@@ -125,8 +123,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 
 	//Extensions
 	otm["apiEndpointsDS"] = &OutputTemplate{TemplateName: "apiEndpointsDS", TableTitle: "ID|Endpoint Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .APIEndpoints}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
-	//	otm["AttackGroupConditionException"] = &OutputTemplate{TemplateName: "AttackGroupConditionException", TableTitle: "Conditions|Exceptions|Advanced Exceptions", TemplateType: "TABULAR", TemplateString: "{{$length := len .AdvancedExceptionsList.Conditions}}{{ if eq $length 0 }}False{{else}}True{{end}}|{{if .Exception}}True{{else}}False{{end}}|{{if  .AdvancedExceptionsList }}True{{else}}False{{end}}"}
-	//otm["AttackGroupConditionException"] = &OutputTemplate{TemplateName: "AttackGroupConditionException", TableTitle: "Conditions|Exceptions|Advanced Exceptions", TemplateType: "TABULAR", TemplateString: "{{$length := len .AdvancedExceptionsList.Conditions}}{{ if eq $length 0 }}False{{else}}True{{end}}|{{if .Exception}}True{{else}}False{{end}}|{{if  .AdvancedExceptionsList }}True{{else}}False{{end}}"}
+	otm["AttackGroupConditionException"] = &OutputTemplate{TemplateName: "AttackGroupConditionException", TableTitle: "Conditions|Exceptions|Advanced Exceptions", TemplateType: "TABULAR", TemplateString: "{{$length := len .AdvancedExceptionsList.Conditions}}{{ if eq $length 0 }}False{{else}}True{{end}}|{{if .Exception}}True{{else}}False{{end}}|{{if  .AdvancedExceptionsList }}True{{else}}False{{end}}"}
 
 	otm["policyApiEndpointsDS"] = &OutputTemplate{TemplateName: "policyApiEndpointsDS", TableTitle: "ID|Endpoint Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .APIEndpoints}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["apiHostnameCoverageDS"] = &OutputTemplate{TemplateName: "apiHostnameCoverageDS", TableTitle: "Config ID|Config Name|Version|Status|Has Match Target|Hostname", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .HostnameCoverage}}{{if $index}},{{end}}{{.Configuration.ID}}|{{.Configuration.Name}}|{{.Configuration.Version}}|{{.Status}}|{{.HasMatchTarget}}|{{.Hostname}}{{end}}"}
