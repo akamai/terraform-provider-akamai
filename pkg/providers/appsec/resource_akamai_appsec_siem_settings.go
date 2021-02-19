@@ -45,7 +45,7 @@ func resourceSiemSettings() *schema.Resource {
 			},
 			"enable_botman_siem": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 			},
 			"siem_id": {
 				Type:     schema.TypeInt,
