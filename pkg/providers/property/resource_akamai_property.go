@@ -260,28 +260,44 @@ func resourceProperty() *schema.Resource {
 }
 
 func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "hostNamesCustomDiff")
+	ctx = log.NewContext(ctx, logger)
+
 	o, n := d.GetChange("hostnames")
 	oldVal, ok := o.(map[string]interface{})
 	if !ok {
+		logger.Errorf("error parsing local state for old value %s", oldVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", o)
 	}
 	newVal, ok := n.(map[string]interface{})
 	if !ok {
+		logger.Errorf("error parsing local state for new value %s", newVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", n)
 	}
+	//PAPI doesn't allow hostnames to become empty if they already exist on server
+	//TODO Do we add support for hostnames patch operation to enable this?
 	if len(oldVal) > 0 && len(newVal) == 0 {
+		logger.Errorf("Hostnames exist on server and cannot be updated to empty for %d", d.Id())
 		return fmt.Errorf("atleast one hostname required to update existing list of hostnames associated to a property")
 	}
 	return nil
 }
 
 func computedValuesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "computedValuesCustomDiff")
+	ctx = log.NewContext(ctx, logger)
+
+	//These computed attributes can be changed on server through other clients and the state needs to be synced to local
 	for _, key := range []string{"latest_version", "staging_version", "production_version", "rule_errors", "rule_warnings"} {
 		if d.HasChange(key) || d.NewValueKnown(key) {
 			err := d.SetNewComputed(key)
 			if err != nil {
+				logger.Errorf("%s state failed to update with new value from server", key)
 				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 			}
+			logger.Debugf("%s state will be updated with new value from server", key)
 		}
 	}
 	return nil
