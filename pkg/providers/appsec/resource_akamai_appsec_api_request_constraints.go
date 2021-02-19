@@ -40,14 +40,14 @@ func resourceApiRequestConstraints() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"api_endpoint_id": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
 			"action": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: ValidateActions,
+			},
+			"api_endpoint_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
 			},
 		},
 	}
@@ -75,7 +75,6 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 		getApiRequestConstraints.Version = version
 
 		policyid := s[2]
-
 		getApiRequestConstraints.PolicyID = policyid
 
 		if len(s) >= 4 {
@@ -83,7 +82,6 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 			if errconv != nil {
 				return diag.FromErr(errconv)
 			}
-
 			getApiRequestConstraints.ApiID = apiID
 		}
 	} else {
@@ -111,7 +109,7 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 		}
 		getApiRequestConstraints.ApiID = ApiID
 	}
-	_, err := client.GetApiRequestConstraints(ctx, getApiRequestConstraints)
+	response, err := client.GetApiRequestConstraints(ctx, getApiRequestConstraints)
 	if err != nil {
 		logger.Errorf("calling 'getApiRequestConstraints': %s", err.Error())
 		return diag.FromErr(err)
@@ -127,6 +125,22 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 
 	if err := d.Set("security_policy_id", getApiRequestConstraints.PolicyID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("api_endpoint_id", getApiRequestConstraints.ApiID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if getApiRequestConstraints.ApiID != 0 {
+		if len(response.APIEndpoints) > 0 {
+			for _, val := range response.APIEndpoints {
+				if val.ID == getApiRequestConstraints.ApiID {
+					if err := d.Set("action", val.Action); err != nil {
+						return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+					}
+				}
+			}
+		}
 	}
 
 	d.SetId(fmt.Sprintf("%d:%d:%s", getApiRequestConstraints.ConfigID, getApiRequestConstraints.Version, getApiRequestConstraints.PolicyID))
