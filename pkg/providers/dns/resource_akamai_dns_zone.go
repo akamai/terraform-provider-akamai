@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -448,7 +449,12 @@ func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	meta := akamai.Meta(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneDelete")
-	logger.WithField("zone", hostname).Info("Zone Import")
+	logger.WithField("zone", hostname).Info("Zone Delete")
+	// Ignore for Unit test Lifecycle
+	if _, ok := os.LookupEnv("DNS_ZONE_SKIP_DELETE"); ok {
+		logger.Info("DNS Zone delete: intentially skipping")
+		return nil
+	}
 	logger.Warn("DNS Zone deletion not allowed")
 
 	// No ZONE delete operation permitted.
@@ -650,7 +656,7 @@ func checkZoneSOAandNSRecords(ctx context.Context, meta akamai.OperationMeta, zo
 	}
 
 	logger.Warnf("SOA and NS records don't exist. Creating ...")
-	nameservers, err := inst.Client(meta).GetNameServerRecordList(ctx, zone.ContractID) // ([]string, error)
+	nameservers, err := inst.Client(meta).GetNameServerRecordList(ctx, zone.ContractID)
 	if err != nil {
 		return err
 	}
