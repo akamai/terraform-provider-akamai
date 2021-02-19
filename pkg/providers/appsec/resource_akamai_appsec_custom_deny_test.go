@@ -57,14 +57,16 @@ func TestAccAkamaiCustomDeny_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCustomDeny/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_custom_deny.test", "id", "deny_custom_622918"),
+							resource.TestCheckResourceAttr("akamai_appsec_custom_deny.test", "id", "43253:7:deny_custom_622918"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResCustomDeny/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_custom_deny.test", "id", "deny_custom_622918"),
+							resource.TestCheckResourceAttr("akamai_appsec_custom_deny.test", "id", "43253:7:deny_custom_622918"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

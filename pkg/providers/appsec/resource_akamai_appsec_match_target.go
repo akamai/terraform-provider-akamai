@@ -65,6 +65,18 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	createMatchTarget.JsonPayloadRaw = rawJSON
 
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createMatchTarget.ConfigID = configid
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createMatchTarget.ConfigVersion = version
+
 	postresp, err := client.CreateMatchTarget(ctx, createMatchTarget)
 	if err != nil {
 		logger.Errorf("calling 'createMatchTarget': %s", err.Error())
@@ -273,7 +285,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	logger.Warnf("calling 'getMatchTarget': JSON  %s", string(jsonBody))
 	if err := d.Set("match_target", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}

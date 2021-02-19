@@ -48,7 +48,7 @@ func TestAccAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResBypassNetworkLists/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_bypass_network_lists.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_bypass_network_lists.test", "id", "43253:7"),
 						),
 					},
 				},

@@ -19,7 +19,7 @@ func TestAccAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
 
 		client.On("GetApiHostnameCoverage",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetApiHostnameCoverageRequest{ConfigID: 0, Version: 0, Hostname: "example.com"},
+			appsec.GetApiHostnameCoverageRequest{ConfigID: 0, Version: 0},
 		).Return(&cv, nil)
 
 		useClient(client, func() {

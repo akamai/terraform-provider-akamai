@@ -53,3 +53,4 @@ In addition to the arguments above, the following attributes are exported:
 * `output_text` - A tabular display showing changes (additions and deletions) to the rules for the specified security policy.
 
 * `json` - A JSON-formatted list of the changes (additions and deletions) to the rules for the specified security policy.
+

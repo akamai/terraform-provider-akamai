@@ -50,6 +50,7 @@ func TestAccAkamaiEvalRuleConditionException_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_eval_rule_condition_exception.test", "id", "43253"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

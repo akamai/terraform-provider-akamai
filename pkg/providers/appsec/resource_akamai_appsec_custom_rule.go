@@ -34,9 +34,10 @@ func resourceCustomRule() *schema.Resource {
 				Required: true,
 			},
 			"custom_rule": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsJSON,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateFunc:     validation.StringIsJSON,
+				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
 			},
 			"custom_rule_id": {
 				Type:     schema.TypeInt,
@@ -223,6 +224,15 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if err := d.Set("config_id", getCustomRule.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	jsonBody, err := json.Marshal(customrule)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("custom_rule", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 

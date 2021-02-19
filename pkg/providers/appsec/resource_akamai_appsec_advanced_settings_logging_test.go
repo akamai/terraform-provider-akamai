@@ -50,6 +50,7 @@ func TestAccAkamaiAdvancedSettingsLogging_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_logging.test", "id", "43253:7:"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

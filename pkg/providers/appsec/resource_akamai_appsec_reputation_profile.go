@@ -39,9 +39,10 @@ func resourceReputationProfile() *schema.Resource {
 				Required: true,
 			},
 			"reputation_profile": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsJSON,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateFunc:     validation.StringIsJSON,
+				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
 			},
 			"reputation_profile_id": {
 				Type:     schema.TypeInt,
@@ -270,6 +271,15 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := d.Set("version", getReputationProfile.ConfigVersion); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	jsonBody, err := json.Marshal(reputationprofile)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("reputation_profile", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 

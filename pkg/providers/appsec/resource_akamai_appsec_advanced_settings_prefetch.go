@@ -3,7 +3,9 @@ package appsec
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -52,11 +54,6 @@ func resourceAdvancedSettingsPrefetch() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of extensions",
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -67,34 +64,63 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchRead")
 
 	getAdvancedSettingsPrefetch := appsec.GetAdvancedSettingsPrefetchRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getAdvancedSettingsPrefetch.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getAdvancedSettingsPrefetch.Version = version
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getAdvancedSettingsPrefetch.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getAdvancedSettingsPrefetch.Version = version
 	}
-	getAdvancedSettingsPrefetch.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getAdvancedSettingsPrefetch.Version = version
-
-	advancedsettingsprefetch, err := client.GetAdvancedSettingsPrefetch(ctx, getAdvancedSettingsPrefetch)
+	prefetchget, err := client.GetAdvancedSettingsPrefetch(ctx, getAdvancedSettingsPrefetch)
 	if err != nil {
 		logger.Errorf("calling 'getAdvancedSettingsPrefetch': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "advancedSettingsPrefetchDS", advancedsettingsprefetch)
-	if err == nil {
-		d.Set("output_text", outputtext)
+	if err := d.Set("config_id", getAdvancedSettingsPrefetch.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(strconv.Itoa(getAdvancedSettingsPrefetch.ConfigID))
+	if err := d.Set("version", getAdvancedSettingsPrefetch.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("enable_app_layer", prefetchget.EnableAppLayer); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("all_extensions", prefetchget.AllExtensions); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("enable_rate_controls", prefetchget.EnableRateControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("extensions", prefetchget.Extensions); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d", getAdvancedSettingsPrefetch.ConfigID, getAdvancedSettingsPrefetch.Version))
 
 	return nil
 }
@@ -106,19 +132,34 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchRemove")
 
 	updateAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateAdvancedSettingsPrefetch.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateAdvancedSettingsPrefetch.Version = version
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateAdvancedSettingsPrefetch.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateAdvancedSettingsPrefetch.Version = version
 	}
-	updateAdvancedSettingsPrefetch.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateAdvancedSettingsPrefetch.Version = version
-
 	updateAdvancedSettingsPrefetch.EnableAppLayer = false
 
 	updateAdvancedSettingsPrefetch.EnableRateControls = false
@@ -139,19 +180,34 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchUpdate")
 
 	updateAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateAdvancedSettingsPrefetch.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateAdvancedSettingsPrefetch.Version = version
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateAdvancedSettingsPrefetch.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateAdvancedSettingsPrefetch.Version = version
 	}
-	updateAdvancedSettingsPrefetch.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateAdvancedSettingsPrefetch.Version = version
-
 	enableAppLayer, err := tools.GetBoolValue("enable_app_layer", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

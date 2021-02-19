@@ -3,11 +3,10 @@ layout: "akamai"
 page_title: "Akamai: ConfigurationClone"
 subcategory: "Application Security"
 description: |-
-  ConfigurationClone
+  ConfigurationVersionClone
 ---
 
 # akamai_appsec_configuration_version_clone
-
 
 The `akamai_appsec_configuration_version_clone` resource allows you to create a new version of a security configuration by cloning an existing version.
 

@@ -1,5 +1,26 @@
 # RELEASE NOTES
 
+## 1.3.0 (Feb. 18, 2021) APPSEC - Extended list of supported list endpoints from APPSEC API:
+  * Custom Deny
+  * SIEM Setting
+  * Advanced Options Settings
+  * API Match Target
+  * API Request Constraint
+  * Create/Delete/Rename Security Policy
+  * Host Coverage / Edit Version Notes
+  * All WAP Features / WAP Hostname Evaluation
+  * Create Security Configuration
+  * Rename Security Configuration Version
+  * Delete Security Configuration Version
+  * Clone Security Configuration
+  * Import tool for adding existing resources to Terraform state
+
+## 1.2.1 (Feb 3, 2021)
+
+#### BUG FIXES:
+* PAPI -- Fixed crash caused by passing computed cpCode as a variable in rules to akamai_property
+* PAPI -- Deprecated "product" attribute in akamai_cp_code resource and changed it "product_id"
+
 ## 1.2.0 (Jan 14, 2021) Identity and Access Management support
 
 These are the operations supported in the Identity Management: User Administration API v2:

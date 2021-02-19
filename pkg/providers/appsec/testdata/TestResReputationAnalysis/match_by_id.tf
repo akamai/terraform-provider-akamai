@@ -3,7 +3,7 @@ provider "akamai" {
 }
 
 
-resource "akamai_appsec_reputation_analysis" "test" {
+resource "akamai_appsec_reputation_profile_analysis" "test" {
   config_id = 43253
   version = 12
   security_policy_id = "AAAA_81230"
