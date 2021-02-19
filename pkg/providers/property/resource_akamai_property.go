@@ -72,8 +72,9 @@ func resourceProperty() *schema.Resource {
 		ReadContext:   resourcePropertyRead,
 		UpdateContext: resourcePropertyUpdate,
 		DeleteContext: resourcePropertyDelete,
-		CustomizeDiff: customdiff.Sequence(
-			resourceCustomDiffCustomizeDiff,
+		CustomizeDiff: customdiff.All(
+			hostNamesCustomDiff,
+			computedValuesCustomDiff,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyImport,
@@ -257,7 +258,8 @@ func resourceProperty() *schema.Resource {
 		},
 	}
 }
-func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+
+func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
 	o, n := d.GetChange("hostnames")
 	oldVal, ok := o.(map[string]interface{})
 	if !ok {
@@ -269,6 +271,18 @@ func resourceCustomDiffCustomizeDiff(ctx context.Context, d *schema.ResourceDiff
 	}
 	if len(oldVal) > 0 && len(newVal) == 0 {
 		return fmt.Errorf("atleast one hostname required to update existing list of hostnames associated to a property")
+	}
+	return nil
+}
+
+func computedValuesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	for _, key := range []string{"latest_version", "staging_version", "production_version", "rule_errors", "rule_warnings"} {
+		if d.HasChange(key) || d.NewValueKnown(key) {
+			err := d.SetNewComputed(key)
+			if err != nil {
+				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			}
+		}
 	}
 	return nil
 }
