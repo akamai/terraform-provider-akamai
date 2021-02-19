@@ -50,7 +50,7 @@ func dataSourceContractsGroups() *schema.Resource {
 func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceContractsGroupsRead")
+	logger := meta.Log("APPSEC", "dataSourceContractsGroupsRead")
 
 	getContractsGroups := v2.GetContractsGroupsRequest{}
 

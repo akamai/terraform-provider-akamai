@@ -51,7 +51,7 @@ func dataSourceApiRequestConstraints() *schema.Resource {
 func dataSourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsRead")
+	logger := meta.Log("APPSEC", "dataSourceApiRequestConstraintsRead")
 
 	getApiRequestConstraints := v2.GetApiRequestConstraintsRequest{}
 

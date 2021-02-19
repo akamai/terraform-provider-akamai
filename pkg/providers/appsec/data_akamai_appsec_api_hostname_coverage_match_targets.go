@@ -47,7 +47,7 @@ func dataSourceApiHostnameCoverageMatchTargets() *schema.Resource {
 func dataSourceApiHostnameCoverageMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceApiHostnameCoverageMatchTargetsRead")
+	logger := meta.Log("APPSEC", "dataSourceApiHostnameCoverageMatchTargetsRead")
 
 	getApiHostnameCoverageMatchTargets := appsec.GetApiHostnameCoverageMatchTargetsRequest{}
 

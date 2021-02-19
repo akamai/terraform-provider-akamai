@@ -43,7 +43,7 @@ func dataSourceAdvancedSettingsPrefetch() *schema.Resource {
 func dataSourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchRead")
+	logger := meta.Log("APPSEC", "dataSourceAdvancedSettingsPrefetchRead")
 
 	getAdvancedSettingsPrefetch := appsec.GetAdvancedSettingsPrefetchRequest{}
 

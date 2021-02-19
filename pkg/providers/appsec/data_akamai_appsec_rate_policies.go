@@ -46,7 +46,7 @@ func dataSourceRatePolicies() *schema.Resource {
 func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceRatePoliciesRead")
+	logger := meta.Log("APPSEC", "dataSourceRatePoliciesRead")
 
 	getRatePolicies := appsec.GetRatePoliciesRequest{}
 

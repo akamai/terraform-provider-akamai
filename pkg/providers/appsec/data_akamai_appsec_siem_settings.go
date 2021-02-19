@@ -42,7 +42,7 @@ func dataSourceSiemSettings() *schema.Resource {
 func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSiemSettingsRead")
+	logger := meta.Log("APPSEC", "dataSourceSiemSettingsRead")
 
 	getSiemSettings := v2.GetSiemSettingsRequest{}
 
@@ -80,7 +80,6 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	if err := d.Set("json", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	//d.Set("enabled", GetSlowPostProtection.ApplySlowPostControls)
 	d.SetId(strconv.Itoa(getSiemSettings.ConfigID))
 
 	return nil

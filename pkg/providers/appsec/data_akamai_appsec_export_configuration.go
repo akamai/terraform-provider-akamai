@@ -49,7 +49,7 @@ func dataSourceExportConfiguration() *schema.Resource {
 func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceExportConfigurationRead")
+	logger := meta.Log("APPSEC", "dataSourceExportConfigurationRead")
 
 	getExportConfiguration := appsec.GetExportConfigurationsRequest{}
 

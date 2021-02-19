@@ -39,7 +39,7 @@ func dataSourceSiemDefinitions() *schema.Resource {
 func dataSourceSiemDefinitionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSiemDefinitionsRead")
+	logger := meta.Log("APPSEC", "dataSourceSiemDefinitionsRead")
 
 	getSiemDefinitions := appsec.GetSiemDefinitionsRequest{}
 

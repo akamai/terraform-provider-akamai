@@ -41,7 +41,7 @@ func dataSourceWAFProtections() *schema.Resource {
 func dataSourceWAFProtectionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceWAFProtectionsRead")
+	logger := meta.Log("APPSEC", "dataSourceWAFProtectionsRead")
 
 	getWAFProtections := appsec.GetWAFProtectionsRequest{}
 

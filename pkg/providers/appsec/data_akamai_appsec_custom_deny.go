@@ -46,7 +46,7 @@ func dataSourceCustomDeny() *schema.Resource {
 func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceCustomDenyRead")
+	logger := meta.Log("APPSEC", "dataSourceCustomDenyRead")
 
 	getCustomDeny := appsec.GetCustomDenyListRequest{}
 

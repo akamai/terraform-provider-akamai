@@ -15,7 +15,6 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 
 		cu := appsec.UpdateMatchTargetResponse{}
 		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json"))
-		//expectJSU := compactJSON(loadFixtureBytes("testdata/TestResMatchTarget/MatchTarget.json"))
 		json.Unmarshal([]byte(expectJSU), &cu)
 
 		cr := appsec.GetMatchTargetResponse{}
@@ -24,7 +23,6 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 
 		crmt := appsec.CreateMatchTargetResponse{}
 		expectJSMT := compactJSON(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json"))
-		//expectJSMT := compactJSON(loadFixtureBytes("testdata/TestResMatchTarget/MatchTarget.json"))
 		json.Unmarshal([]byte(expectJSMT), &crmt)
 
 		rmmt := appsec.RemoveMatchTargetResponse{}
@@ -59,7 +57,7 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResMatchTarget/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "id", "43253:15:3008967"), //3008967
+							resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "id", "43253:15:3008967"),
 						),
 						ExpectNonEmptyPlan: true,
 					},
@@ -67,7 +65,6 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 						Config: loadFixtureString("testdata/TestResMatchTarget/update_by_id.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "id", "43253:15:3008967"),
-							//resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "is_negative_file_extension_match", "false"),
 						),
 						ExpectNonEmptyPlan: true,
 					},

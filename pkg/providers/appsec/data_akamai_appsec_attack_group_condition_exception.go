@@ -50,7 +50,7 @@ func dataSourceAttackGroupConditionException() *schema.Resource {
 func dataSourceAttackGroupConditionExceptionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAttackGroupConditionExceptionsRead")
+	logger := meta.Log("APPSEC", "dataSourceAttackGroupConditionExceptionRead")
 
 	getAttackGroupConditionException := appsec.GetAttackGroupConditionExceptionRequest{}
 

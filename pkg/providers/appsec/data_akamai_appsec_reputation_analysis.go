@@ -47,7 +47,7 @@ func dataSourceReputationAnalysis() *schema.Resource {
 func dataSourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceReputationAnalysisRead")
+	logger := meta.Log("APPSEC", "dataSourceReputationAnalysisRead")
 
 	getReputationAnalysis := appsec.GetReputationAnalysisRequest{}
 

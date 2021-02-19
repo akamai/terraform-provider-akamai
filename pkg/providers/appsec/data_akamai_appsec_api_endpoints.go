@@ -57,7 +57,7 @@ func dataSourceApiEndpoints() *schema.Resource {
 func dataSourceApiEndpointsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceApiEndpointsRead")
+	logger := meta.Log("APPSEC", "dataSourceApiEndpointsRead")
 
 	getApiEndpoints := appsec.GetApiEndpointsRequest{}
 

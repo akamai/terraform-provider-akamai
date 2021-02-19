@@ -43,7 +43,7 @@ func dataSourceVersionNotes() *schema.Resource {
 func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceVersionNotesRead")
+	logger := meta.Log("APPSEC", "dataSourceVersionNotesRead")
 
 	getVersionNotes := appsec.GetVersionNotesRequest{}
 

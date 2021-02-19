@@ -47,7 +47,7 @@ func dataSourceAdvancedSettingsLogging() *schema.Resource {
 func dataSourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingRead")
+	logger := meta.Log("APPSEC", "dataSourceAdvancedSettingsLoggingRead")
 
 	getAdvancedSettingsLogging := appsec.GetAdvancedSettingsLoggingRequest{}
 
