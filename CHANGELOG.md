@@ -7,7 +7,7 @@
 
 #### BUG FIXES:
 * PAPI -- Fixed issue causing hostnames to be appended instead of being replaced
-* PAPI -- Fixed issue causing version and rule comments being dropped 
+* PAPI -- Fixed issue causing version and rule comments being dropped ([#55](https://github.com/akamai/terraform-provider-akamai/issues/55))
 * PAPI -  Fixed client side validation to allow certain PAPI errors to passthrough
 * PAPI -  Fixed issue causing incorrect property version being stored in state for certain scenarios
 
