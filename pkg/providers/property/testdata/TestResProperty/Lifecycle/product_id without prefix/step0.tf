@@ -9,6 +9,9 @@ resource "akamai_property" "test" {
   product_id  = "0"
 
   hostnames = {
-    "from.test.domain" = "to.test.domain"
+
+    "cnameTo": "to.test.domain",
+    "cnameFrom": "from.test.domain",
+    "certProvisioningType": "CPS_MANAGED"
   }
 }

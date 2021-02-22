@@ -846,7 +846,9 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 func hostnamesToMap(Hostnames []papi.Hostname) map[string]interface{} {
 	m := map[string]interface{}{}
 	for _, hn := range Hostnames {
-		m[hn.CnameFrom] = hn.CnameTo
+		m["cnameFrom"] = hn.CnameFrom
+		m["cnameTo"] = hn.CnameTo
+		m["certProvisioningType"] = hn.CertProvisioningType
 	}
 
 	return m
@@ -856,14 +858,19 @@ func hostnamesToMap(Hostnames []papi.Hostname) map[string]interface{} {
 func mapToHostnames(given map[string]interface{}) []papi.Hostname {
 	var Hostnames []papi.Hostname
 
-	for from, to := range given {
-		Hostnames = append(Hostnames, papi.Hostname{
-			CnameType: "EDGE_HOSTNAME",
-			CnameFrom: from,
-			CnameTo:   to.(string), // guaranteed by schema to be a string
-		})
-	}
-
+	//for _, _ = range given {
+	cnameFrom := given["cnameFrom"]
+	cnameTo := given["cnameTo"]
+	certProvisioningType := given["certProvisioningType"]
+	if len(given) != 0 {
+	Hostnames = append(Hostnames, papi.Hostname{
+		CnameType:            "EDGE_HOSTNAME",
+		CnameFrom:            cnameFrom.(string),
+		CnameTo:              cnameTo.(string), // guaranteed by schema to be a string
+		CertProvisioningType: certProvisioningType.(string),
+	})
+}
+	// }
 	return Hostnames
 }
 

@@ -12,7 +12,9 @@ resource "akamai_property" "test" {
     akamai_property.test
   ]
    hostnames = {
-    "terraform.provider.myu877.test.net" = "terraform.provider.myu877.test.net.edgesuite.net"
+     "cnameTo": "terraform.provider.myu877.test.net.edgesuite.net",
+     "cnameFrom": "terraform.provider.myu877.test.net",
+     "certProvisioningType": "CPS_MANAGED"
  }
 }
 
