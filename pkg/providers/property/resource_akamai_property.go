@@ -174,11 +174,37 @@ func resourceProperty() *schema.Resource {
 				},
 			},
 			"hostnames": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:        schema.TypeMap,
+					Elem:        &schema.Schema{Type: schema.TypeString},
+					Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
+				},
+				/*	Alt way
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cnameFrom":{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"cnameTo":{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"certProvisioningType":{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},*/
 			},
+			//"hostnames": {
+			//	Type:        schema.TypeMap,
+			//	Optional:    true,
+			//	Elem:        &schema.Schema{Type: schema.TypeString},
+			//	Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
+			//},
 
 			// Computed
 			"latest_version": {
@@ -284,8 +310,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		}
 	}
 	ProductID = tools.AddPrefix(ProductID, "prd_")
-
-	Hostnames := mapToHostnames(d.Get("hostnames").(map[string]interface{}))
+	Hostnames := mapToHostnames(d.Get("hostnames").([]interface{}))
 	RuleFormat := d.Get("rule_format").(string)
 
 	RulesJSON := []byte(d.Get("rules").(string))
@@ -526,7 +551,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Hostnames
 	if d.HasChange("hostnames") {
-		Hostnames := mapToHostnames(d.Get("hostnames").(map[string]interface{}))
+		Hostnames := mapToHostnames(d.Get("hostnames").([]interface{}))
 
 		if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
 			d.Partial(true)
@@ -843,34 +868,38 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 }
 
 // Convert given hostnames to the map form that can be stored in a schema.ResourceData
-func hostnamesToMap(Hostnames []papi.Hostname) map[string]interface{} {
-	m := map[string]interface{}{}
+func hostnamesToMap(Hostnames []papi.Hostname) []map[string]interface{} {
+
+	var res []map[string]interface{}
+
 	for _, hn := range Hostnames {
+		m := map[string]interface{}{}
 		m["cnameFrom"] = hn.CnameFrom
 		m["cnameTo"] = hn.CnameTo
 		m["certProvisioningType"] = hn.CertProvisioningType
+		res = append(res, m)
 	}
-
-	return m
+	return res
 }
 
 // Convert the given map from a schema.ResourceData to a slice of papi.Hostnames
-func mapToHostnames(given map[string]interface{}) []papi.Hostname {
+func mapToHostnames(givenList []interface{}) []papi.Hostname {
 	var Hostnames []papi.Hostname
 
-	//for _, _ = range given {
-	cnameFrom := given["cnameFrom"]
-	cnameTo := given["cnameTo"]
-	certProvisioningType := given["certProvisioningType"]
-	if len(given) != 0 {
-	Hostnames = append(Hostnames, papi.Hostname{
-		CnameType:            "EDGE_HOSTNAME",
-		CnameFrom:            cnameFrom.(string),
-		CnameTo:              cnameTo.(string), // guaranteed by schema to be a string
-		CertProvisioningType: certProvisioningType.(string),
-	})
-}
-	// }
+	for _, givenMap := range givenList {
+		var r = givenMap.(map[string]interface{})
+		cnameFrom := r["cnameFrom"]
+		cnameTo := r["cnameTo"]
+		certProvisioningType := r["certProvisioningType"]
+		if len(r) != 0 {
+			Hostnames = append(Hostnames, papi.Hostname{
+				CnameType:            "EDGE_HOSTNAME",
+				CnameFrom:            cnameFrom.(string),
+				CnameTo:              cnameTo.(string), // guaranteed by schema to be a string
+				CertProvisioningType: certProvisioningType.(string),
+			})
+		}
+	}
 	return Hostnames
 }
 

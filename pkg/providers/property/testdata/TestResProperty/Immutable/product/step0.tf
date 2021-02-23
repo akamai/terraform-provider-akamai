@@ -8,10 +8,12 @@ resource "akamai_property" "test" {
   group_id    = "grp_0"
   product     = "prd_0"
 
-  hostnames = {
-
-    "cnameTo": "to.test.domain",
-    "cnameFrom": "from.test.domain",
-    "certProvisioningType": "CPS_MANAGED"
+  hostnames = [
+    {
+    cnameTo: "to.test.domain",
+    cnameFrom: "from.test.domain",
+    certProvisioningType: "CPS_MANAGED"
   }
+]
+
 }
