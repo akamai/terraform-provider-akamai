@@ -128,7 +128,7 @@ func TestResProperty(t *testing.T) {
 	CheckAttrs := func(PropertyID, CnameTo, LatestVersion, StagingVersion, ProductionVersion string) resource.TestCheckFunc {
 		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_property.test", "id", PropertyID),
-			//resource.TestCheckResourceAttr("akamai_property.test", "hostnames", CnameTo),
+			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cnameTo", CnameTo),
 			resource.TestCheckResourceAttr("akamai_property.test", "latest_version", LatestVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "staging_version", StagingVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "production_version", ProductionVersion),

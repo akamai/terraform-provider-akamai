@@ -176,28 +176,22 @@ func resourceProperty() *schema.Resource {
 			"hostnames": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem: &schema.Schema{
-					Type:        schema.TypeMap,
-					Elem:        &schema.Schema{Type: schema.TypeString},
-					Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
-				},
-				/*	Alt way
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"cnameFrom":{
+						"cname_from": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"cnameTo":{
+						"cname_to": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"certProvisioningType":{
+						"cert_provisioning_type": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
 					},
-				},*/
+				},
 			},
 			//"hostnames": {
 			//	Type:        schema.TypeMap,
@@ -871,14 +865,14 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 func hostnamesToMap(Hostnames []papi.Hostname) []map[string]interface{} {
 
 	var res []map[string]interface{}
-
 	for _, hn := range Hostnames {
 		m := map[string]interface{}{}
-		m["cnameFrom"] = hn.CnameFrom
-		m["cnameTo"] = hn.CnameTo
-		m["certProvisioningType"] = hn.CertProvisioningType
+		m["cname_from"] = hn.CnameFrom
+		m["cname_to"] = hn.CnameTo
+		m["cert_provisioning_type"] = hn.CertProvisioningType
 		res = append(res, m)
 	}
+	fmt.Printf("RES %s", res)
 	return res
 }
 
@@ -888,9 +882,10 @@ func mapToHostnames(givenList []interface{}) []papi.Hostname {
 
 	for _, givenMap := range givenList {
 		var r = givenMap.(map[string]interface{})
-		cnameFrom := r["cnameFrom"]
-		cnameTo := r["cnameTo"]
-		certProvisioningType := r["certProvisioningType"]
+		fmt.Printf("REQ %s", r)
+		cnameFrom := r["cname_from"]
+		cnameTo := r["cname_to"]
+		certProvisioningType := r["cert_provisioning_type"]
 		if len(r) != 0 {
 			Hostnames = append(Hostnames, papi.Hostname{
 				CnameType:            "EDGE_HOSTNAME",
