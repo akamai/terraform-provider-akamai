@@ -11,13 +11,12 @@ import (
 )
 
 func suppressEquivalentJsonDiffsGeneric(k, old, new string, d *schema.ResourceData) bool {
-	ob := bytes.NewBufferString("")
-	if err := json.Compact(ob, []byte(old)); err != nil {
+	var ob, nb bytes.Buffer
+	if err := json.Compact(&ob, []byte(old)); err != nil {
 		return false
 	}
 
-	nb := bytes.NewBufferString("")
-	if err := json.Compact(nb, []byte(new)); err != nil {
+	if err := json.Compact(&nb, []byte(new)); err != nil {
 		return false
 	}
 
