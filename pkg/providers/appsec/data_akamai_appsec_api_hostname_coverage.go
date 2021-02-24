@@ -63,8 +63,7 @@ func dataSourceApiHostnameCoverageRead(ctx context.Context, d *schema.ResourceDa
 
 	if len(apihostnamecoverage.HostnameCoverage) > 0 {
 		for _, configval := range apihostnamecoverage.HostnameCoverage {
-
-			if configval.Configuration.ID != 0 {
+			if configval.Configuration != nil && configval.Configuration.ID != 0 {
 				d.SetId(strconv.Itoa(configval.Configuration.ID))
 			}
 		}
