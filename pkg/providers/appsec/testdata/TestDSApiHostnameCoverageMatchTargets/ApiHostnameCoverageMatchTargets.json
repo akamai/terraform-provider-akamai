@@ -1,0 +1,85 @@
+{
+    "matchTargets": {
+        "apiTargets": [],
+        "websiteTargets": [
+            {
+                "bypassNetworkLists": [
+                    {
+                        "id": "1410_BYPASSWAFLIST",
+                        "name": "gus - BypassWAFList"
+                    }
+                ],
+                "configId": 2481,
+                "configVersion": 428,
+                "defaultFile": "NO_MATCH",
+                "effectiveSecurityControls": {
+                    "applyApplicationLayerControls": true,
+                    "applyBotmanControls": true,
+                    "applyNetworkLayerControls": true,
+                    "applyPageIntegrityControls": false,
+                    "applyRateControls": true,
+                    "applyReputationControls": true,
+                    "applySlowPostControls": true
+                },
+                "fileExtensions": [],
+                "filePaths": [
+                    "/content/tealeaf"
+                ],
+                "firewallPolicy": {
+                    "evaluated": false,
+                    "policyId": "GRD_4186",
+                    "policyName": "Grainger USA",
+                    "policySecurityControls": {
+                        "applyApiConstraints": false,
+                        "applyApplicationLayerControls": true,
+                        "applyBotmanControls": true,
+                        "applyNetworkLayerControls": true,
+                        "applyPageIntegrityControls": false,
+                        "applyRateControls": true,
+                        "applyReputationControls": true,
+                        "applySlowPostControls": true
+                    }
+                },
+                "hostnames": [
+                    "failover-m.lt.gcom.grainger.com",
+                    "www.grainger.com",
+                    "m.grainger.com",
+                    "failover-m.lt2.gcom.grainger.com",
+                    "keepstockselectiontool.grainger.com",
+                    "failover-m.grainger.com",
+                    "m.new.grainger.com",
+                    "template-www.grainger.com",
+                    "a.gc1.co",
+                    "safety.grainger.com",
+                    "static.grainger.net",
+                    "failover-www.grainger.com",
+                    "s.gc1.co",
+                    "static.grainger.com",
+                    "lt2.gcom.grainger.com",
+                    "m.lt2.gcom.grainger.com",
+                    "images.grainger.com",
+                    "akamai-test.qa.graingercloud.com",
+                    "failover-lt2.gcom.grainger.com",
+                    "www.keepstocksecuredemo.com",
+                    "waffailover.grainger.com",
+                    "espanol.grainger.com"
+                ],
+                "isNegativeFileExtensionMatch": false,
+                "isNegativePathMatch": false,
+                "isTargetSecurityControlsEditable": false,
+                "logicalId": 1730010,
+                "sequence": 3,
+                "targetId": 2555705,
+                "targetSecurityControls": {
+                    "applyApplicationLayerControls": true,
+                    "applyNetworkLayerControls": true,
+                    "applyPageIntegrityControls": false,
+                    "applyRateControls": true,
+                    "applyReputationControls": true,
+                    "applySlowPostControls": true
+                },
+                "type": "website"
+            }
+        ]
+    }
+}

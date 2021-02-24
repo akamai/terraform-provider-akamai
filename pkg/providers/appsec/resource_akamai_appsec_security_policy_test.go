@@ -13,10 +13,6 @@ func TestAccAkamaiSecurityPolicy_res_basic(t *testing.T) {
 	t.Run("match by SecurityPolicy ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateSecurityPolicyResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicy/SecurityPolicyUpdate.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
-
 		cr := appsec.GetSecurityPolicyResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicy/SecurityPolicy.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
@@ -36,13 +32,8 @@ func TestAccAkamaiSecurityPolicy_res_basic(t *testing.T) {
 
 		client.On("CreateSecurityPolicy",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.CreateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyName: "Cloned Test for Launchpad 15", PolicyPrefix: "LN"},
+			appsec.CreateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyName: "Cloned Test for Launchpad 15", PolicyPrefix: "LN", DefaultSettings: true},
 		).Return(&crp, nil)
-
-		client.On("UpdateSecurityPolicy",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049", PolicyName: "Cloned Test for Launchpad 21", PolicyPrefix: "LN"},
-		).Return(&cu, nil)
 
 		client.On("RemoveSecurityPolicy",
 			mock.Anything, // ctx is irrelevant for this test
@@ -57,14 +48,7 @@ func TestAccAkamaiSecurityPolicy_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResSecurityPolicy/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_security_policy.test", "id", "PLE_114049"),
-						),
-						ExpectNonEmptyPlan: true,
-					},
-					{
-						Config: loadFixtureString("testdata/TestResSecurityPolicy/update_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_security_policy.test", "id", "PLE_114049"),
+							resource.TestCheckResourceAttr("akamai_appsec_security_policy.test", "id", "43253:7:PLE_114049"),
 						),
 						ExpectNonEmptyPlan: true,
 					},

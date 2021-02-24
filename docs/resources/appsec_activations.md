@@ -34,6 +34,10 @@ resource "akamai_appsec_activations" "activation" {
 
 ```
 
+## Argument Reference
+
+The following arguments are supported:
+
 * `config_id` - (Required) The ID of the security configuration to use.
 
 * `version` - (Required) The version number of the security configuration to use.

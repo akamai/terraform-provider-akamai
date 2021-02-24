@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -47,11 +48,6 @@ func resourceEvalRuleAction() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -62,47 +58,84 @@ func resourceEvalRuleActionRead(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceEvalRuleActionRead")
 
 	getEvalRuleAction := appsec.GetEvalRuleActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getEvalRuleAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getEvalRuleAction.Version = version
+
+		policyid := s[2]
+		getEvalRuleAction.PolicyID = policyid
+
+		ruleid, errconv := strconv.Atoi(s[3])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getEvalRuleAction.RuleID = ruleid
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getEvalRuleAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getEvalRuleAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getEvalRuleAction.PolicyID = policyid
+
+		ruleid, err := tools.GetIntValue("rule_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getEvalRuleAction.RuleID = ruleid
 	}
-	getEvalRuleAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getEvalRuleAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getEvalRuleAction.PolicyID = policyid
-
-	ruleid, err := tools.GetIntValue("rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getEvalRuleAction.RuleID = ruleid
-
 	evalruleaction, err := client.GetEvalRuleAction(ctx, getEvalRuleAction)
 	if err != nil {
 		logger.Warnf("calling 'getEvalRuleAction': %s", err.Error())
 	}
 
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "EvalRuleAction", evalruleaction)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
+	if err := d.Set("rule_id", getEvalRuleAction.RuleID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(strconv.Itoa(getEvalRuleAction.ConfigID))
+	if err := d.Set("config_id", getEvalRuleAction.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getEvalRuleAction.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", getEvalRuleAction.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("rule_id", getEvalRuleAction.RuleID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("rule_action", evalruleaction.Action); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d:%s:%d", getEvalRuleAction.ConfigID, getEvalRuleAction.Version, getEvalRuleAction.PolicyID, getEvalRuleAction.RuleID))
 
 	return nil
 }
@@ -114,31 +147,54 @@ func resourceEvalRuleActionDelete(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceEvalRuleActionRemove")
 
 	removeEvalRuleAction := appsec.UpdateEvalRuleActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeEvalRuleAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeEvalRuleAction.Version = version
+
+		policyid := s[2]
+		removeEvalRuleAction.PolicyID = policyid
+
+		ruleid, errconv := strconv.Atoi(s[3])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeEvalRuleAction.RuleID = ruleid
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeEvalRuleAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeEvalRuleAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeEvalRuleAction.PolicyID = policyid
+
+		ruleid, err := tools.GetIntValue("rule_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeEvalRuleAction.RuleID = ruleid
 	}
-	removeEvalRuleAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeEvalRuleAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeEvalRuleAction.PolicyID = policyid
-
-	ruleid, err := tools.GetIntValue("rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeEvalRuleAction.RuleID = ruleid
-
 	removeEvalRuleAction.Action = "none"
 
 	_, erru := client.UpdateEvalRuleAction(ctx, removeEvalRuleAction)
@@ -155,34 +211,56 @@ func resourceEvalRuleActionUpdate(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceEvalRuleActionUpdate")
 
 	updateEvalRuleAction := appsec.UpdateEvalRuleActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateEvalRuleAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateEvalRuleAction.Version = version
+
+		policyid := s[2]
+		updateEvalRuleAction.PolicyID = policyid
+
+		ruleid, errconv := strconv.Atoi(s[3])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateEvalRuleAction.RuleID = ruleid
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateEvalRuleAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateEvalRuleAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateEvalRuleAction.PolicyID = policyid
+
+		ruleid, err := tools.GetIntValue("rule_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateEvalRuleAction.RuleID = ruleid
 	}
-	updateEvalRuleAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateEvalRuleAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateEvalRuleAction.PolicyID = policyid
-
-	ruleid, err := tools.GetIntValue("rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateEvalRuleAction.RuleID = ruleid
-
 	ruleaction, err := tools.GetStringValue("rule_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
 		return diag.FromErr(err)
 	}
 	updateEvalRuleAction.Action = ruleaction

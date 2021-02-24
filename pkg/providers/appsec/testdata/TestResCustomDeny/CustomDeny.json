@@ -1,0 +1,28 @@
+
+        {
+            "description": "Custom Deny Example 1",
+            "name": "Custom Deny Example 1",
+            "id": "deny_custom_622918",
+            "parameters": [
+                {
+                    "displayName": "Prevent browser caching",
+                    "name": "prevent_browser_cache",
+                    "value": "true"
+                },
+                {
+                    "displayName": "Response body content",
+                    "name": "response_body_content",
+                    "value": "body comes here2222."
+                },
+                {
+                    "displayName": "Response content type",
+                    "name": "response_content_type",
+                    "value": "application/json"
+                },
+                {
+                    "displayName": "Response status code",
+                    "name": "response_status_code",
+                    "value": "403"
+                }
+            ]
+        }

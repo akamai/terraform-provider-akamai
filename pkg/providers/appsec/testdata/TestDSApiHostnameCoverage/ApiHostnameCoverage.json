@@ -1,0 +1,1938 @@
+
+    {
+        "hostnameCoverage": [
+            {
+                "hasMatchTarget": false,
+                "hostname": "interlude.org.uk",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "configuration": {
+                    "id": 3644,
+                    "name": "WAF Security File",
+                    "version": 12
+                },
+                "hasMatchTarget": true,
+                "hostname": "arm.slackware.com",
+                "policyNames": [
+                    "Slackware Sites"
+                ],
+                "status": "covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.350.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "rbaraut.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "fareportal-fppowerhotelxml.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "daveyshafik.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.schan-sf.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "2.bendell.ca",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "captainakamai-insecure.captainwhite.cool",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "apitest1.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "philipbrown.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "bfrancisproperty.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "anblanco.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.priyankasharma-delhi.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.canipush.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "gmt-demo.iwishtechdemoswere.cool",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "nverkland.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "kweechuan.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.tvaliji-london.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "kimmich.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.kirsten.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "s1.daveyshafik.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "static.hk.zalora.net.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*-msltest-lh.akamaihd.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "test.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "ipa.akamaitools.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "mjaganna.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "nael.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "api.irresistibleapis.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.iahmed-yyz.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "configuration": {
+                    "id": 3644,
+                    "name": "WAF Security File",
+                    "version": 12
+                },
+                "hasMatchTarget": true,
+                "hostname": "www.colinbendell.com",
+                "policyNames": [
+                    "Bot"
+                ],
+                "status": "covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jakebr.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "data.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "imoppty.akam.ai",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "edge2017-jramer.www.wp1.akamaiuweb.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "biscuit.org.uk.edgesuite.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.leokimseoul.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.aevans-seattle.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "yoav.ws",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.ezhang-sydney.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "rgamoji.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jennip.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "stage-www.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.261.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "prod.config-as-code.web.astronaut.training",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dereka.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "180125johnh.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "openapidemo.akamaized.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "static.urbancrawlapp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "configuration": {
+                    "id": 3644,
+                    "name": "WAF Security File",
+                    "version": 12
+                },
+                "hasMatchTarget": true,
+                "hostname": "*.colinbendell.com",
+                "policyNames": [
+                    "Bot"
+                ],
+                "status": "covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "h1cwnd24.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "sjevsejev.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.liquidmatrix.org",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "kirsten.im.edgesuite.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "4.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "shouldipush.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.dquintero.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "push-ext.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "base-template.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "gtm-demo.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "lawlait.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.jthur-ams.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "fst.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "api.urbancrawlapp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "im-florist.akamaiflowershop.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "test68.randomnoise.us",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "golang.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.bmt-shtakuma.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "justogusto1212.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.westest-waterloo.world-tour.akamaidevveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.geekgonenomad.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "tp7.utkarshgoel.in",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.aviso-madrid18.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "rodin.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "kj.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.biscuits.org.uk",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "pl242v_sea02.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "purgedemo.example.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "ak2.vaz.ac",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.168.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "imrtks.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "soorajb.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "shock1.iwishtechdemoswere.cool.edgesuite-staging.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "khunter.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.nmohammad-sfo.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jake.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "rdias-london.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "cztest2.sanbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dmbsdemo8.akamaized.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "geekgonenomad.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "khide.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev-www.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "pravin-costco.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "devhack7.sanguinesoul.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dshafik.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dquintero.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "configuration": {
+                    "id": 3644,
+                    "name": "WAF Security File",
+                    "version": 12
+                },
+                "hasMatchTarget": true,
+                "hostname": "bendell.ca",
+                "policyNames": [
+                    "Bot"
+                ],
+                "status": "covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "mk12345.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "test111.randomnoise.us",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.kirstenscats.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jgarza-sea5-dev.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dh.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jackieliuawesome.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "faster.akamaidev.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "static-hk.zacdn.com.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "terraform-example-1.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jgarza-sea5.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.krao-bangalore.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "akadev2tree.interlude.org.uk.internal",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "saurabh-demo.akamaized.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.config-as-code.web.astronaut.training",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.zacdn.com.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "vangeler.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "edgeworkers.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dynamic.zacdn.com.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.rdias-london.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "edgeworld.web.astronaut.training",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "2.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "domwuttke.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "johnsmith-wt2.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.jgarza-sea.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "h1cwnd10.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "3.bendell.ca",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.brandonyap1-sydney.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.sangjinn-seoul.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "shock1.iwishtechdemoswere.cool",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "pravin-costco-dev.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.jcao_sydney.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "push-san.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "robertzimmardi.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.akamaihd.net.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "tylake-addhosts.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "api-acs.urbancrawlapp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "tp8.utkarshgoel.in",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "1.bendell.ca",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "static-sg.zacdn.com.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dmopendemo.akamaized.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "img.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "pl242v_att.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "test97.randomnoise.us",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jackieliu.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "netstorage-test.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.24.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.barneys.me.uk",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.171.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "akadev.interlude.org.uk",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "ak.vaz.ac",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.daveyshafik.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.domwuttke.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.prophostname1-origin1.iwishtechdemoswere.cool",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "qa.bendell.ca",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "javier-madrid.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "test67.randomnoise.us",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.jgarza-01.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "aarondotsteele.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "eddyl.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.5.gensess.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "testactivation2.example.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.dlovellsyd18.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.hermanw-sanfrancisco.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jose-ph.worldtour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "configuration": {
+                    "id": 3644,
+                    "name": "WAF Security File",
+                    "version": 12
+                },
+                "hasMatchTarget": true,
+                "hostname": "www.slackware.com",
+                "policyNames": [
+                    "Slackware Sites"
+                ],
+                "status": "covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.msltest-lh.akamaihd.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "static.sg.zalora.net.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "api.zalora.sg.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dom.akamai.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.synedra.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jgarza3.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "javiergarza-20180911.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.princesspolymath.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "joncarva3.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "pkok.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.219.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.hwang-la2019.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dmbsdemo7.akamaized.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.hsn-bellevue.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "tp9.utkarshgoel.in",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "5.bendell.ca",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.316.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "raitaarakawa.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "tomonori.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "qa-www.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "tai.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "api.zalora.com.hk.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "purge.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "siraj01.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.ychao-singapore.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "akaivadeveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "vpdemo.akamaiedge.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "akamai7devhack.meepity.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.pcoirault-sydney.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "urbancrawlapp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "catfish.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "sravan1.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.api.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "zacdn.com.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "ak1.vaz.ac",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "amazon.iwishtechdemoswere.cool",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "api.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "kohls.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.275.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "cloudmonitor.princesspolymath.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "stage.config-as-code.web.astronaut.training",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.yoav.ws",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.kirstenscats.com.edgesuite.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.barrington.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "devops.iwishtechdemoswere.cool",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "edge2017-ezpc.www.wpl.akamaiuweb.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "zstatictw02-a.akamaihd.net.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "joncarva.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.akamaiapibootcamp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "ankursi.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "bc.akamaiapibootcamp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "fareportal-mobile-xml.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "meetup2.example.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "configuration": {
+                    "id": 3644,
+                    "name": "WAF Security File",
+                    "version": 12
+                },
+                "hasMatchTarget": true,
+                "hostname": "www.biscuit.org.uk",
+                "policyNames": [
+                    "Slackware Sites"
+                ],
+                "status": "covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "h1cwnd16.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "akamaitools.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "awesome2.iwishtechdemoswere2.cool",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "static-sg.zalora.net.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jgarza-muc-int.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.328.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "failover.akadev.interlude.org.uk",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "smakki.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "js.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "cloudmonitor.akamaitools.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "erahman.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "kirsten.im.edgesuite-staging.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.shouldipush.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.dsouzaa8g-sydney.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "sstest.akamaitools.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "edge2017-ah01.www.wpl.akamaiuweb.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "h1cwnd32.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.jgarza-20180928.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.urbancrawlapp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "gsiewhia.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "akamaiapibootcamp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "shock1.iwishtechdemoswere.cool.edgesuite.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.money-mitch.world-tour.akamaidevelpoer.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "1.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "2tree.singledns.interlude.org.uk",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "soha.io.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "2ndakadev2tree.interlude.org.uk",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "test72.randomnoise.us",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "push.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "tylake.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "wp-akamai.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "bootcamp.akamaiapibootcamp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "mwisborg.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "brain.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "diegoproperty.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.173.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "h2cwnd24.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "h2cwnd32.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "srjones.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "static-hg.zacdn.com.akamaiedgedemo.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.donfr-bellevue.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "4.bendell.ca",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "canipush.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "testactivation.example.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "configuration": {
+                    "id": 3644,
+                    "name": "WAF Security File",
+                    "version": 12
+                },
+                "hasMatchTarget": true,
+                "hostname": "*.bendell.ca",
+                "policyNames": [
+                    "Bot"
+                ],
+                "status": "covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "devops7.iwishtechdemoswere.cool",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.kirstenscats.com.edgesuite-staging.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "improxy.akam.ai",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "usage.akam.ai",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "edge2017-chad.www.wp1.akamaiuweb.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "kirsten.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.akamaiapibootcamp.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "s2.daveyshafik.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "akamai7devhack.akamaized.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.akamaidev.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.nverkland.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "h2cwnd16.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "akadev2tree.interlude.org.uk",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.mkoerner.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "acedergr.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.akamaitools.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "ksinghchapitestdevops.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "3.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "angautam.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "achoi.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev-www.akamaiedgedemo.com.local",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.hgsydney.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "docs.slackware.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "bchitrakar.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "psalvado.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "benlin.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "www.irresistibleapis.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "production.kirsten",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "shashi1.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.tarambale.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "*.shouldipush.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "ksinghchtest.sanbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "h2cwnd10.colinbendell.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "margaretkho.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "devhack4.iwishtechdemoswere.cool",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.ferdinand-amsterdamn",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "vlours.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "papin.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "dev.ogravier-paris.world-tour.akamaideveloper.net",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "schan.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "george-bc.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.184.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "n.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "jenkins.4.gensess.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "testing123.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "kweechuan1.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "anokulka.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "tomhartnett.sandbox.akamaideveloper.com",
+                "policyNames": [],
+                "status": "not_covered"
+            },
+            {
+                "hasMatchTarget": false,
+                "hostname": "logstash.sztykman.com",
+                "policyNames": [],
+                "status": "not_covered"
+            }
+        ]
+    }

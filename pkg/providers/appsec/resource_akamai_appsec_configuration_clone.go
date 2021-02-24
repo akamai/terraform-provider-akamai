@@ -23,7 +23,28 @@ func resourceConfigurationClone() *schema.Resource {
 		UpdateContext: resourceConfigurationCloneUpdate,
 		DeleteContext: resourceConfigurationCloneDelete,
 		Schema: map[string]*schema.Schema{
-			"config_id": {
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"contract_id": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"group_id": {
+				Type:     schema.TypeInt,
+				Required: true,
+			},
+			"host_names": {
+				Type:     schema.TypeList,
+				Required: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"create_from_config_id": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -31,11 +52,10 @@ func resourceConfigurationClone() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-
-			"rule_update": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+			"config_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Config id  of cloned configuration",
 			},
 			"version": {
 				Type:        schema.TypeInt,
@@ -53,26 +73,63 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 
 	createConfigurationClone := appsec.CreateConfigurationCloneRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	createFromConfigID, err := tools.GetIntValue("create_from_config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createConfigurationClone.ConfigID = configid
+	createConfigurationClone.CreateFrom.ConfigID = createFromConfigID
 
 	version, err := tools.GetIntValue("create_from_version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createConfigurationClone.CreateFromVersion = version
+	createConfigurationClone.CreateFrom.Version = version
+
+	name, err := tools.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createConfigurationClone.Name = name
+
+	description, err := tools.GetStringValue("description", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createConfigurationClone.Description = description
+
+	contractID, err := tools.GetStringValue("contract_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createConfigurationClone.ContractID = contractID
+
+	groupID, err := tools.GetIntValue("group_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createConfigurationClone.GroupID = groupID
+
+	hostnamelist := d.Get("host_names").([]interface{})
+	hnl := make([]string, 0, len(hostnamelist))
+
+	for _, h := range hostnamelist {
+		hnl = append(hnl, h.(string))
+
+	}
+	createConfigurationClone.Hostnames = hnl
 
 	ccr, err := client.CreateConfigurationClone(ctx, createConfigurationClone)
 	if err != nil {
 		logger.Errorf("calling 'createConfigurationClone': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	logger.Errorf("calling 'createConfigurationClone CCR ': %v", ccr)
+	//logger.Errorf("calling 'createConfigurationClone CCR ': %v", ccr)
 
 	if err := d.Set("version", ccr.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("config_id", ccr.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -100,21 +157,43 @@ func resourceConfigurationCloneRead(ctx context.Context, d *schema.ResourceData,
 	}
 	getConfigurationClone.Version = version
 
-	configurationclone, err := client.GetConfigurationClone(ctx, getConfigurationClone)
+	Configurationclone, err := client.GetConfigurationClone(ctx, getConfigurationClone)
 	if err != nil {
 		logger.Errorf("calling 'getConfigurationClone': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configurationclone.ConfigID))
+	d.SetId(strconv.Itoa(Configurationclone.ConfigID))
 
 	return nil
 }
 
 func resourceConfigurationCloneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceConfigurationRemove")
+
+	removeConfiguration := appsec.RemoveConfigurationRequest{}
+
+	configid, errconv := strconv.Atoi(d.Id())
+
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	removeConfiguration.ConfigID = configid
+
+	_, errd := client.RemoveConfiguration(ctx, removeConfiguration)
+	if errd != nil {
+		logger.Errorf("calling 'removeConfiguration': %s", errd.Error())
+		return diag.FromErr(errd)
+	}
+
+	d.SetId("")
+
+	return nil
 }
 
 func resourceConfigurationCloneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	//return schema.NoopContext(nil, d, m)
+	return resourceConfigurationCloneRead(ctx, d, m)
 }

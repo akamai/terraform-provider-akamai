@@ -39,7 +39,7 @@ func TestAccAkamaiWAFProtection_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResWAFProtection/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_waf_protection.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_waf_protection.test", "id", "43253:7:AAAA_81230"),
 						),
 					},
 				},

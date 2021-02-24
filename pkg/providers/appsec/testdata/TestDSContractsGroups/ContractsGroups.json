@@ -1,0 +1,25 @@
+
+    {
+        "contract_groups": [
+            {
+                "contractId": "C-1FRYVV3",
+                "displayName": "Akamai DevRel",
+                "groupId": 64867
+            },
+            {
+                "contractId": "C-1FRYVV3",
+                "displayName": "akava-test",
+                "groupId": 173935
+            },
+            {
+                "contractId": "C-1FRYVV3",
+                "displayName": "code-club-2020",
+                "groupId": 178167
+            },
+            {
+                "contractId": "C-1FRYVV3",
+                "displayName": "Josh Cheshire",
+                "groupId": 181212
+            }
+        ]
+    }
