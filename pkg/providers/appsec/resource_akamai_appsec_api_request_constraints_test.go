@@ -57,7 +57,7 @@ func TestAccAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResApiRequestConstraints/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_api_request_constraints.test", "id", "43253:7:AAAA_81230"),
+							resource.TestCheckResourceAttr("akamai_appsec_api_request_constraints.test", "id", "43253:7:AAAA_81230:1"),
 						),
 					},
 				},

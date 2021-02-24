@@ -142,9 +142,11 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 			}
 		}
 	}
-
-	d.SetId(fmt.Sprintf("%d:%d:%s", getApiRequestConstraints.ConfigID, getApiRequestConstraints.Version, getApiRequestConstraints.PolicyID))
-
+	if getApiRequestConstraints.ApiID != 0 {
+		d.SetId(fmt.Sprintf("%d:%d:%s:%d", getApiRequestConstraints.ConfigID, getApiRequestConstraints.Version, getApiRequestConstraints.PolicyID, getApiRequestConstraints.ApiID))
+	} else {
+		d.SetId(fmt.Sprintf("%d:%d:%s", getApiRequestConstraints.ConfigID, getApiRequestConstraints.Version, getApiRequestConstraints.PolicyID))
+	}
 	return nil
 }
 
