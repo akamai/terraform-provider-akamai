@@ -31,7 +31,7 @@ func TestAccAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 
 		client.On("GetApiRequestConstraints",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+			appsec.GetApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1},
 		).Return(&cr, nil)
 
 		client.On("UpdateApiRequestConstraints",

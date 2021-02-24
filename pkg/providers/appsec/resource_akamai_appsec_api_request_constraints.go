@@ -103,7 +103,7 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 		}
 		getApiRequestConstraints.PolicyID = policyid
 
-		ApiID, err := tools.GetIntValue("api_id", d)
+		ApiID, err := tools.GetIntValue("api_endpoint_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
