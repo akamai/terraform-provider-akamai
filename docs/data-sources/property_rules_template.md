@@ -24,9 +24,9 @@ You can pass user-defined variables by supplying either:
 You can split each template out into a series of smaller template files. To add 
 them to this data source, you need to include them in the currently loaded file, 
 which corresponds to the value in the `template_file` argument.  For example, to 
-include `example-file.json` from the `template` directory, use this syntax 
-including the quotes: `"#include:example-file.json"`.  All files are resolved in 
-relation to the directory that contains the starting template file. 
+include `example-file.json` from the `property-snippets` directory, use this syntax 
+including the quotes: `"#include:example-file.json"`.  Make sure the `property-snippets` folder contains only `.json` files.
+All files are resolved in relation to the directory that contains the starting template file. 
 
 ## Inserting variables in a template
 You can also add variables to a template by using a string like `“${env.<variableName>}"`. You'll need the quotes here too.  
@@ -56,7 +56,7 @@ In this second example, the variables defined refer to files shared with a [Prop
 
 ```hcl
 data "akamai_property_rules_template" "akarules" {
-  template_file = abspath("${path.root}/templates/main.json")
+  template_file = abspath("${path.root}/property-snippets/main.json")
   var_definition_file = abspath("${path.root}/environments/variableDefinitions.json")
   var_values_file = abspath("${path.root}/environments/dev.example.com/variables.json")
 }
@@ -66,7 +66,7 @@ data "akamai_property_rules_template" "akarules" {
 
 Here's an example of what a JSON-based template file with its nested templates might look like:
 
-templates/main.json:
+property-snippets/main.json:
 ```json
 {
   "rules": {
@@ -94,7 +94,7 @@ You can then define a Terraform configuration file like this, which pulls in the
 
 ```hcl
 data "akamai_property_rules_template" "example" {
-  template_file = abspath("${path.root}/templates/main.json")
+  template_file = abspath("${path.root}/property-snippets/main.json")
   variables {
       name = "secure"
       value = "false"

@@ -1,5 +1,16 @@
 # RELEASE NOTES
 
+## 1.2.2 (TBD, 2021)
+
+#### BREAKING CHANGES:
+* PAPI: `data_akamai_property_rules_template:` snippets files should now be placed under `property-snippets` directory and should have `.json` extension
+
+#### BUG FIXES:
+* PAPI -- Fixed issue causing hostnames to be appended instead of being replaced
+* PAPI -- Fixed issue causing version and rule comments being dropped ([#55](https://github.com/akamai/terraform-provider-akamai/issues/55))
+* PAPI -  Fixed client side validation to allow certain PAPI errors to passthrough
+* PAPI -  Fixed issue causing incorrect property version being stored in state for certain scenarios
+
 ## 1.2.1 (Feb 3, 2021)
 
 #### BUG FIXES:

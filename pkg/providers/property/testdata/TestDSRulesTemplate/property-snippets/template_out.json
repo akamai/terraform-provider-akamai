@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "name": @+#.name#+@,
+    "children": [
+      @+#template "snippets/some-template.json" .#+@
+    ]
+  }
+}

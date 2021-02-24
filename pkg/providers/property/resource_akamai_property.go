@@ -63,20 +63,7 @@ func resourceProperty() *schema.Resource {
 			return false
 		}
 
-		return compareRules(&oldRules.Rules, &newRules.Rules)
-	}
-
-	diffSuppressHostNames := func(_, oldHostname, newHostname string, _ *schema.ResourceData) bool {
-		logger := akamai.Log("PAPI", "suppressRulesJSON")
-		logger.Debugf("old hostname %v, newhostname %v:", oldHostname, newHostname)
-
-		// There are times where newHostname is comming as Zero.
-		if newHostname == "0" {
-			return true
-		}
-
-		// If oldHostname is not empty and newHostname is empty, the return true (i.e, supress diff).
-		return oldHostname != "" && newHostname == ""
+		return compareRuleTree(&oldRules, &newRules)
 	}
 
 	return &schema.Resource{
@@ -187,11 +174,10 @@ func resourceProperty() *schema.Resource {
 				},
 			},
 			"hostnames": {
-				Type:             schema.TypeMap,
-				Optional:         true,
-				Elem:             &schema.Schema{Type: schema.TypeString},
-				Description:      "Mapping of edge hostname CNAMEs to other CNAMEs",
-				DiffSuppressFunc: diffSuppressHostNames,
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
 			},
 
 			// Computed
@@ -772,7 +758,10 @@ func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pro
 	}
 
 	logger.WithFields(logFields(*res)).Debug("fetched property rules")
-	Rules = papi.RulesUpdate{Rules: res.Rules}
+	Rules = papi.RulesUpdate{
+		Rules:    res.Rules,
+		Comments: res.Comments,
+	}
 	Format = res.RuleFormat
 	Errors = res.Errors
 	Warnings = res.Warnings
