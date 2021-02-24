@@ -13,6 +13,18 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
+var hostnameElements = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"cname_type":             {Type: schema.TypeString, Computed: true},
+		"edge_hostname_id":       {Type: schema.TypeString, Computed: true},
+		"cname_from":             {Type: schema.TypeString, Computed: true},
+		"cname_to":               {Type: schema.TypeString, Computed: true},
+		"cert_provisioning_type": {Type: schema.TypeString, Computed: true},
+		"staging_status":         {Type: schema.TypeString, Computed: true},
+		"production_status":      {Type: schema.TypeString, Computed: true},
+	},
+}
+
 func dataSourceAkamaiPropertyHostnames() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataAkamaiPropertyHostnamesRead,
@@ -43,15 +55,7 @@ func dataSourceAkamaiPropertyHostnames() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "List of hostnames",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"cnameType":            {Type: schema.TypeString, Computed: true},
-						"edgeHostnameId":       {Type: schema.TypeString, Computed: true},
-						"cnameFrom":            {Type: schema.TypeString, Computed: true},
-						"cnameTo":              {Type: schema.TypeString, Computed: true},
-						//"certProvisioningType": {Type: schema.TypeString, Computed: true},
-					},
-				},
+				Elem:        hostnameElements,
 			},
 		},
 	}
@@ -133,13 +137,23 @@ func dataAkamaiPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData
 }
 
 func slicePropertyHostnames(hostnamesResponse *papi.GetPropertyVersionHostnamesResponse) []map[string]interface{} {
+
 	var hostnames []map[string]interface{}
 	for _, item := range hostnamesResponse.Hostnames.Items {
 		hostname := map[string]interface{}{
-			"cnameType":      item.CnameType,
-			"edgeHostnameId": item.EdgeHostnameID,
-			"cnameFrom":      item.CnameFrom,
-			"cnameTo":        item.CnameTo,
+			"cname_type":             item.CnameType,
+			"edge_hostname_id":       item.EdgeHostnameID,
+			"cname_from":             item.CnameFrom,
+			"cname_to":               item.CnameTo,
+			"cert_provisioning_type": item.CertProvisioningType,
+		}
+		//Setting statuses for default certs if they exist
+		// TODO Set certstatus object for cps managed certs and default certs once PAPI adds support
+		if len(item.CertStatus.Staging) > 0 {
+			hostname["staging_status"] = item.CertStatus.Staging[0].Status
+		}
+		if len(item.CertStatus.Production) > 0 {
+			hostname["production_status"] = item.CertStatus.Production[0].Status
 		}
 		hostnames = append(hostnames, hostname)
 	}
