@@ -35,6 +35,10 @@ func resourceNetworkList() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					IP,
+					Geo,
+				}, false),
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -224,4 +228,7 @@ const (
 	Append  = "APPEND"
 	Replace = "REPLACE"
 	Remove  = "REMOVE"
+
+	IP  = "IP"
+	Geo = "GEO"
 )
