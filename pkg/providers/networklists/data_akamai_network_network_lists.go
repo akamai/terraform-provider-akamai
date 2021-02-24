@@ -35,6 +35,11 @@ func dataSourceNetworkList() *schema.Resource {
 				Computed:    true,
 				Description: "Text Export representation",
 			},
+			"list": {
+				Type:     schema.TypeList,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Computed: true,
+			},
 		},
 	}
 }
@@ -71,6 +76,14 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	ids := make([]string, 0, len(networklist.NetworkLists))
+	for _, networkList := range networklist.NetworkLists {
+		ids = append(ids, networkList.UniqueID)
+	}
+	if err := d.Set("list", ids); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
