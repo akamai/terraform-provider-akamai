@@ -1,0 +1,38 @@
+{
+    "apiEndpoints": [
+        {
+            "id": 619183,
+            "name": "Orders",
+            "basePath": "/v1/orders",
+            "apiEndPointHosts": [
+                "sg.akamai.com"
+            ],
+            "stagingVersion": {
+                "status": "ACTIVE",
+                "versionNumber": 1
+            },
+            "productionVersion": {
+                "status": "ACTIVE",
+                "versionNumber": 1
+            },
+            "requestConstraintsEnabled": false
+        },
+        {
+            "id": 624913,
+            "name": "Catalog",
+            "basePath": "/v1/catalog",
+            "apiEndPointHosts": [
+                "sg.akamai.com"
+            ],
+            "stagingVersion": {
+                "status": "ACTIVE",
+                "versionNumber": 1
+            },
+            "productionVersion": {
+                "status": "ACTIVE",
+                "versionNumber": 1
+            },
+            "requestConstraintsEnabled": true
+        }
+    ]
+}

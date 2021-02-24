@@ -51,7 +51,7 @@ func dataSourcePenaltyBox() *schema.Resource {
 func dataSourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourcePenaltyBoxRead")
+	logger := meta.Log("APPSEC", "dataSourcePenaltyBoxRead")
 
 	getPenaltyBox := appsec.GetPenaltyBoxRequest{}
 

@@ -1,0 +1,14 @@
+{
+      "name": "New Clone config",
+      "description": "description1",
+      "contractId": "C-AVLN15",
+      "groupId": 42085,
+      "hostnames": [
+        "new.acklandsgrainger.com",
+        "www.acklandsgrainger.com"
+      ],
+     "createFrom": {
+        "configId": 56879,
+        "version": 3
+      }
+}

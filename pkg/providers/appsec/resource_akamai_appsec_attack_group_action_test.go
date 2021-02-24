@@ -39,8 +39,9 @@ func TestAccAkamaiAttackGroupAction_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResAttackGroupAction/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_attack_group_action.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_attack_group_action.test", "id", "43253:7:AAAA_81230:SQL"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -78,25 +79,43 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	logger := meta.Log("APPSEC", "resourceWAFModeRead")
 
 	getWAFMode := appsec.GetWAFModeRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getWAFMode.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getWAFMode.Version = version
+
+		policyid := s[2]
+		getWAFMode.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getWAFMode.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getWAFMode.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getWAFMode.PolicyID = policyid
 	}
-	getWAFMode.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getWAFMode.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getWAFMode.PolicyID = policyid
-
 	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
 		logger.Errorf("calling 'getWAFMode': %s", err.Error())
@@ -130,7 +149,19 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(strconv.Itoa(getWAFMode.ConfigID))
+	if err := d.Set("config_id", getWAFMode.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getWAFMode.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", getWAFMode.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d:%s", getWAFMode.ConfigID, getWAFMode.Version, getWAFMode.PolicyID))
 
 	return nil
 }
@@ -146,25 +177,43 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	logger := meta.Log("APPSEC", "resourceWAFModeUpdate")
 
 	updateWAFMode := appsec.UpdateWAFModeRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateWAFMode.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateWAFMode.Version = version
+
+		policyid := s[2]
+		updateWAFMode.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateWAFMode.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateWAFMode.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateWAFMode.PolicyID = policyid
 	}
-	updateWAFMode.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateWAFMode.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateWAFMode.PolicyID = policyid
-
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -173,9 +222,9 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	//if current mode = one to updare skip this call
 	getWAFMode := appsec.GetWAFModeRequest{}
-	getWAFMode.ConfigID = configid
-	getWAFMode.Version = version
-	getWAFMode.PolicyID = policyid
+	getWAFMode.ConfigID = updateWAFMode.ConfigID
+	getWAFMode.Version = updateWAFMode.Version
+	getWAFMode.PolicyID = updateWAFMode.PolicyID
 
 	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {

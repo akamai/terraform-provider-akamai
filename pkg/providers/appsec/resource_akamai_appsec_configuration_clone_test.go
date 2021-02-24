@@ -21,6 +21,10 @@ func TestAccAkamaiConfigurationClone_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResConfigurationClone/ConfigurationClone.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		crd := appsec.RemoveConfigurationResponse{}
+		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResConfigurationClone/ConfigurationClone.json"))
+		json.Unmarshal([]byte(expectJSD), &crd)
+
 		client.On("GetConfigurationClone",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetConfigurationCloneRequest{ConfigID: 43253, Version: 15},
@@ -28,8 +32,16 @@ func TestAccAkamaiConfigurationClone_res_basic(t *testing.T) {
 
 		client.On("CreateConfigurationClone",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.CreateConfigurationCloneRequest{ConfigID: 43253, CreateFromVersion: 7},
+			appsec.CreateConfigurationCloneRequest{Name: "Test Configuratin", Description: "New configuration test", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}, CreateFrom: struct {
+				ConfigID int "json:\"configId\""
+				Version  int "json:\"version\""
+			}{ConfigID: 43253, Version: 7}},
 		).Return(&cu, nil)
+
+		client.On("RemoveConfiguration",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.RemoveConfigurationRequest{ConfigID: 43253},
+		).Return(&crd, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -39,7 +51,7 @@ func TestAccAkamaiConfigurationClone_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResConfigurationClone/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_configuration_version_clone.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_configuration_clone.test", "id", "43253"),
 						),
 					},
 				},

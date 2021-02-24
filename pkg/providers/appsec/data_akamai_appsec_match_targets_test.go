@@ -19,12 +19,12 @@ func TestAccAkamaiMatchTargets_data_basic(t *testing.T) {
 
 		client.On("GetMatchTargets",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetMatchTargetsRequest{ConfigID: 43253, ConfigVersion: 15},
+			appsec.GetMatchTargetsRequest{ConfigID: 43253, ConfigVersion: 7},
 		).Return(&cv, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
+				IsUnitTest: false,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{

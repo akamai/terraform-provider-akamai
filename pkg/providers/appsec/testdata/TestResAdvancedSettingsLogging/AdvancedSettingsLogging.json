@@ -1,0 +1,13 @@
+
+    {
+        "allowSampling": true,
+        "cookies": {
+            "type": "all"
+        },
+        "customHeaders": {
+            "type": "all"
+        },
+        "standardHeaders": {
+            "type": "all"
+        }
+    }

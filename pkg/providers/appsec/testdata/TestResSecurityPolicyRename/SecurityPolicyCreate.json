@@ -1,0 +1,16 @@
+{
+    "configId": 43253,
+    "version": 7,
+    "policyId": "PLE_114049",
+    "policyName": "PLE Cloned Test for Launchpad 15",
+    "policyPrefix": "PL",
+    "policySecurityControls": {
+        "applyApiConstraints": true,
+        "applyApplicationLayerControls": true,
+        "applyBotmanControls": true,
+        "applyNetworkLayerControls": true,
+        "applyRateControls": true,
+        "applyReputationControls": true,
+        "applySlowPostControls": false
+    }
+}

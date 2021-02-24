@@ -46,7 +46,7 @@ func dataSourceRuleUpgrade() *schema.Resource {
 func dataSourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceRuleUpgradeRead")
+	logger := meta.Log("APPSEC", "dataSourceRuleUpgradeRead")
 
 	getRuleUpgrade := appsec.GetRuleUpgradeRequest{}
 

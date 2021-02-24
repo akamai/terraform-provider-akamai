@@ -41,7 +41,7 @@ func dataSourceSlowPostProtectionSettings() *schema.Resource {
 func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingsRead")
+	logger := meta.Log("APPSEC", "dataSourceSlowPostProtectionSettingsRead")
 
 	getSlowPostProtectionSettings := appsec.GetSlowPostProtectionSettingsRequest{}
 
