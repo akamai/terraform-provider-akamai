@@ -11,11 +11,11 @@ resource "akamai_property" "test" {
   depends_on = [
     akamai_property.test
   ]
-   hostnames = [{
-     cname_to: "terraform.provider.myu877.test.net.edgesuite.net",
-     cname_from: "terraform.provider.myu877.test.net",
-     cert_provisioning_type: "CPS_MANAGED"
- }]
+   hostnames {
+     cname_to = "terraform.provider.myu877.test.net.edgesuite.net"
+     cname_from = "terraform.provider.myu877.test.net"
+     cert_provisioning_type = "DEFAULT"
+ }
 }
 
 variable "groupid" {

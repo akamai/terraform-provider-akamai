@@ -872,7 +872,6 @@ func hostnamesToMap(Hostnames []papi.Hostname) []map[string]interface{} {
 		m["cert_provisioning_type"] = hn.CertProvisioningType
 		res = append(res, m)
 	}
-	fmt.Printf("RES %s", res)
 	return res
 }
 
@@ -882,7 +881,6 @@ func mapToHostnames(givenList []interface{}) []papi.Hostname {
 
 	for _, givenMap := range givenList {
 		var r = givenMap.(map[string]interface{})
-		fmt.Printf("REQ %s", r)
 		cnameFrom := r["cname_from"]
 		cnameTo := r["cname_to"]
 		certProvisioningType := r["cert_provisioning_type"]

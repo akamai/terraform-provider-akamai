@@ -39,7 +39,7 @@ func TestResProperty(t *testing.T) {
 				CnameType: "EDGE_HOSTNAME",
 				CnameFrom: "from.test.domain",
 				CnameTo:   CnameTo,
-				CertProvisioningType: "CPS_MANAGED",
+				CertProvisioningType: "DEFAULT",
 			}}
 
 			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames).Once().Run(func(mock.Arguments) {
@@ -128,7 +128,7 @@ func TestResProperty(t *testing.T) {
 	CheckAttrs := func(PropertyID, CnameTo, LatestVersion, StagingVersion, ProductionVersion string) resource.TestCheckFunc {
 		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_property.test", "id", PropertyID),
-			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cnameTo", CnameTo),
+			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_to", CnameTo),
 			resource.TestCheckResourceAttr("akamai_property.test", "latest_version", LatestVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "staging_version", StagingVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "production_version", ProductionVersion),
@@ -680,7 +680,7 @@ func TestResProperty(t *testing.T) {
 					CnameType: "EDGE_HOSTNAME",
 					CnameFrom: "terraform.provider.myu877.test.net",
 					CnameTo:   "terraform.provider.myu877.test.net.edgesuite.net",
-					CertProvisioningType: "CPS_MANAGED",
+					CertProvisioningType: "DEFAULT",
 				}},
 			).Once()
 
@@ -697,7 +697,7 @@ func TestResProperty(t *testing.T) {
 				&[]papi.Hostname{{
 					CnameFrom: "terraform.provider.myu877.test.net",
 					CnameTo:   "terraform.provider.myu877.test.net.edgesuite.net",
-					CertProvisioningType: "CPS_MANAGED",
+					CertProvisioningType: "DEFAULT",
 				}},
 			).Times(3)
 
