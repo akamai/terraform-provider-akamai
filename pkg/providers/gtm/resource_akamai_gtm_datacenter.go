@@ -194,7 +194,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 		logger.Errorf("Datacenter Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Datacenter Create failed: %s",
+			Summary:  "Datacenter Create failed",
 			Detail:   err.Error(),
 		})
 	}
@@ -222,7 +222,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 				logger.Errorf("Datacenter Create failed [%s]", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Datacenter Create failed: %s",
+					Summary:  "Datacenter Create failed",
 					Detail:   err.Error(),
 				})
 			}
