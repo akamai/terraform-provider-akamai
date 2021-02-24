@@ -201,6 +201,38 @@ func resourceProperty() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+						"cert_status":{
+							Type:     schema.TypeSet,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"validation_cname": {
+										Type:     schema.TypeString,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"hostname": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"target": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+											},
+										},
+									},
+									"production_status": {
+										Type: schema.TypeString,
+										Computed: true,
+									},
+									"staging_status": {
+										Type: schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -918,6 +950,14 @@ func hostnamesToMap(Hostnames []papi.Hostname) []map[string]interface{} {
 		m["cname_from"] = hn.CnameFrom
 		m["cname_to"] = hn.CnameTo
 		m["cert_provisioning_type"] = hn.CertProvisioningType
+		m["validation_cname.hostname"] = hn.CertStatus.ValidationCname.Hostname
+		m["validation_cname.target"] = hn.CertStatus.ValidationCname.Hostname
+		if len(hn.CertStatus.Staging) > 0 {
+			m["staging_status"] = hn.CertStatus.Staging[0].Status
+		}
+		if len(hn.CertStatus.Production) > 0 {
+			m["production_status"] = hn.CertStatus.Production[0].Status
+		}
 		res = append(res, m)
 	}
 	return res
