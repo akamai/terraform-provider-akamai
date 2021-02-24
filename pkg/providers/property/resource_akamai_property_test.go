@@ -164,16 +164,18 @@ func TestResProperty(t *testing.T) {
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					Config:             loadFixtureString("%s/step0.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 				{
 					PreConfig: func() {
 						StagingVersion := 1
 						State.Property.StagingVersion = &StagingVersion
 					},
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0"),
+					Config:             loadFixtureString("%s/step1.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 			}
 		},
@@ -192,16 +194,18 @@ func TestResProperty(t *testing.T) {
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					Config:             loadFixtureString("%s/step0.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 				{
 					PreConfig: func() {
 						ProductionVersion := 1
 						State.Property.ProductionVersion = &ProductionVersion
 					},
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1"),
+					Config:             loadFixtureString("%s/step1.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1"),
+					ExpectNonEmptyPlan: true,
 				},
 			}
 		},
@@ -220,16 +224,18 @@ func TestResProperty(t *testing.T) {
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					Config:             loadFixtureString("%s/step0.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 				{
 					PreConfig: func() {
 						StagingVersion := 1
 						State.Property.StagingVersion = &StagingVersion
 					},
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0"),
+					Config:             loadFixtureString("%s/step1.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 			}
 		},
@@ -248,16 +254,18 @@ func TestResProperty(t *testing.T) {
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					Config:             loadFixtureString("%s/step0.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 				{
 					PreConfig: func() {
 						ProductionVersion := 1
 						State.Property.ProductionVersion = &ProductionVersion
 					},
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1"),
+					Config:             loadFixtureString("%s/step1.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1"),
+					ExpectNonEmptyPlan: true,
 				},
 			}
 		},
@@ -275,12 +283,14 @@ func TestResProperty(t *testing.T) {
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					Config:             loadFixtureString("%s/step0.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 				{
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to2.test.domain", "1", "0", "0"),
+					Config:             loadFixtureString("%s/step1.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "1", "0", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 			}
 		},
@@ -296,12 +306,14 @@ func TestResProperty(t *testing.T) {
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					Config:             loadFixtureString("%s/step0.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 				{
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					Config:             loadFixtureString("%s/step1.tf", FixturePath),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+					ExpectNonEmptyPlan: true,
 				},
 			}
 		},
@@ -411,8 +423,9 @@ func TestResProperty(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(fixturePath),
-							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+							Config:             loadFixtureString(fixturePath),
+							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+							ExpectNonEmptyPlan: true,
 						},
 						{
 							ImportState:       true,
@@ -422,8 +435,9 @@ func TestResProperty(t *testing.T) {
 							Config:            loadFixtureString(fixturePath),
 						},
 						{
-							Config: loadFixtureString(fixturePath),
-							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+							Config:             loadFixtureString(fixturePath),
+							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+							ExpectNonEmptyPlan: true,
 						},
 					},
 				})
@@ -531,8 +545,9 @@ func TestResProperty(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/%s-step0.tf", t.Name()),
-							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+							Config:             loadFixtureString("testdata/%s-step0.tf", t.Name()),
+							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+							ExpectNonEmptyPlan: true,
 						},
 						{
 							Config: loadFixtureString("testdata/%s-step1.tf", t.Name()),
@@ -540,6 +555,7 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_1"),
 								resource.TestCheckResourceAttr("akamai_property.test", "name", "renamed property"),
 							),
+							ExpectNonEmptyPlan: true,
 						},
 					},
 				})
@@ -578,12 +594,14 @@ func TestResProperty(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/%s/step0.tf", t.Name()),
-							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+							Config:             loadFixtureString("testdata/%s/step0.tf", t.Name()),
+							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0"),
+							ExpectNonEmptyPlan: true,
 						},
 						{
-							Config:      loadFixtureString("testdata/%s/step1.tf", t.Name()),
-							ExpectError: regexp.MustCompile(`Cannot remove active property`),
+							Config:             loadFixtureString("testdata/%s/step1.tf", t.Name()),
+							ExpectError:        regexp.MustCompile(`Cannot remove active property`),
+							ExpectNonEmptyPlan: true,
 						},
 					},
 				})
@@ -721,8 +739,9 @@ func TestResProperty(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
-							Check:  resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
+							Config:             loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+							Check:              resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
+							ExpectNonEmptyPlan: true,
 						},
 						{
 							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/update/property_update.tf"),
@@ -730,7 +749,8 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.test", "hostnames.#", "0"),
 							),
-							ExpectNonEmptyPlan: false,
+							ExpectError:        regexp.MustCompile("atleast one hostname required to update existing list of hostnames associated to a property"),
+							ExpectNonEmptyPlan: true,
 						},
 					},
 				})
