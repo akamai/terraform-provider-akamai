@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -57,43 +58,82 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
 
 	getCustomRuleAction := appsec.GetCustomRuleActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getCustomRuleAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getCustomRuleAction.Version = version
+
+		policyid := s[2]
+		getCustomRuleAction.PolicyID = policyid
+
+		ruleid, errconv := strconv.Atoi(s[3])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getCustomRuleAction.RuleID = ruleid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getCustomRuleAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getCustomRuleAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getCustomRuleAction.PolicyID = policyid
+
+		ruleid, err := tools.GetIntValue("custom_rule_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getCustomRuleAction.RuleID = ruleid
 	}
-	getCustomRuleAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getCustomRuleAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getCustomRuleAction.PolicyID = policyid
-
-	ruleid, err := tools.GetIntValue("custom_rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getCustomRuleAction.RuleID = ruleid
-
 	customruleaction, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
 	if err != nil {
 		logger.Errorf("calling 'getCustomRuleAction': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	logger.Warnf("calling 'getCustomRuleAction': %s", customruleaction)
 
-	if err := d.Set("custom_rule_id", ruleid); err != nil {
+	if err := d.Set("custom_rule_id", getCustomRuleAction.RuleID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(strconv.Itoa(ruleid))
+	if err := d.Set("config_id", getCustomRuleAction.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getCustomRuleAction.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", getCustomRuleAction.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("custom_rule_action", customruleaction.Action); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d:%s:%d", getCustomRuleAction.ConfigID, getCustomRuleAction.Version, getCustomRuleAction.PolicyID, getCustomRuleAction.RuleID))
 
 	return nil
 }
@@ -104,31 +144,55 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRemove")
 
 	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateCustomRuleAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateCustomRuleAction.Version = version
+
+		policyid := s[2]
+		updateCustomRuleAction.PolicyID = policyid
+
+		ruleid, errconv := strconv.Atoi(s[3])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateCustomRuleAction.RuleID = ruleid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateCustomRuleAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateCustomRuleAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateCustomRuleAction.PolicyID = policyid
+
+		ruleid, err := tools.GetIntValue("custom_rule_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateCustomRuleAction.RuleID = ruleid
 	}
-	updateCustomRuleAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateCustomRuleAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateCustomRuleAction.PolicyID = policyid
-
-	ruleid, err := tools.GetIntValue("custom_rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateCustomRuleAction.RuleID = ruleid
-
 	updateCustomRuleAction.Action = "none"
 
 	_, errd := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
@@ -148,31 +212,55 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
 
 	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateCustomRuleAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateCustomRuleAction.Version = version
+
+		policyid := s[2]
+		updateCustomRuleAction.PolicyID = policyid
+
+		ruleid, errconv := strconv.Atoi(s[3])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateCustomRuleAction.RuleID = ruleid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateCustomRuleAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateCustomRuleAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateCustomRuleAction.PolicyID = policyid
+
+		ruleid, err := tools.GetIntValue("custom_rule_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateCustomRuleAction.RuleID = ruleid
 	}
-	updateCustomRuleAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateCustomRuleAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateCustomRuleAction.PolicyID = policyid
-
-	ruleid, err := tools.GetIntValue("custom_rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateCustomRuleAction.RuleID = ruleid
-
 	customruleaction, err := tools.GetStringValue("custom_rule_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

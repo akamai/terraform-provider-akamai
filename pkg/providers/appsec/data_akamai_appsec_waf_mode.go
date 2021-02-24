@@ -66,7 +66,7 @@ func dataSourceWAFMode() *schema.Resource {
 func dataSourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceWAFModeRead")
+	logger := meta.Log("APPSEC", "dataSourceWAFModeRead")
 
 	getWAFMode := appsec.GetWAFModeRequest{}
 

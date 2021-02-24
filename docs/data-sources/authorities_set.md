@@ -8,26 +8,26 @@ description: |-
 
 # akamai_authorities_set
 
-Use `akamai_authorities_set` datasource to retrieve a contracts authorities set for use when creating new zones.
+Use the `akamai_authorities_set` data source to retrieve a contract's authorities set. You use the authorities set when creating new zones.
 
-## Example Usage
+## Example usage
 
 Basic usage:
 
-```hcl
+```
 data "akamai_authorities_set" "example" {
      contract = "ctr_1-AB123"
 }
 ```
 
-## Argument Reference
+## Argument reference
 
-The following arguments are supported:
+This data source supports this argument:
 
 * `contract` - (Required) The contract ID.
 
-## Attributes Reference
+## Attributes reference
 
-The following attributes are returned:
+This data source supports this attribute:
 
-* `authorities` - A list of authorities
+* `authorities` - A list of authorities.

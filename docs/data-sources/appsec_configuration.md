@@ -55,7 +55,6 @@ The following arguments are supported:
 
 * `name` - (Optional) The name of a specific security configuration. If not supplied, information about all security configurations is returned.
 
-
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
@@ -69,3 +68,4 @@ In addition to the arguments above, the following attributes are exported:
 * `staging_version` - The version of the specified security configuration currently active in staging. Returned only if `name` was specified.
 
 * `production_version` - The version of the specified security configuration currently active in production. Returned only if `name` was specified.
+

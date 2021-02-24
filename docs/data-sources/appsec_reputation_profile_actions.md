@@ -60,7 +60,6 @@ The following arguments are supported:
 
 * `reputation_profile_id` - (Optional) The ID of a given reputation profile. If not supplied, information about all reputation profiles is returned.
 
-
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:

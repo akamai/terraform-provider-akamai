@@ -3,7 +3,7 @@ provider "akamai" {
 }
 
 data "akamai_property_rules_template" "test" {
-  template_file = "testdata/TestDSRulesTemplate/rules/templates/template_file_not_found.json"
+  template_file = "testdata/TestDSRulesTemplate/rules/property-snippets/non-existent.json"
   variables {
     name = "criteriaMustSatisfy"
     value = "all"

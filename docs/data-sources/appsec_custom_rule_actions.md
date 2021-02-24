@@ -24,7 +24,7 @@ data "akamai_appsec_configuration" "configuration" {
 data "akamai_appsec_custom_rule_actions" "custom_rule_actions" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
-  policy_id = "crAP_75829"
+  security_policy_id = "crAP_75829"
 }
 output "custom_rule_actions" {
   value = data.akamai_appsec_custom_rule_actions.custom_rule_actions.output_text

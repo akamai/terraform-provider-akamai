@@ -23,6 +23,14 @@ func compareRulesJSON(old, new string) bool {
 	return diff
 }
 
+func compareRuleTree(old, new *papi.RulesUpdate) bool {
+	if old.Comments != new.Comments {
+		return false
+	}
+	diff := compareRules(&old.Rules, &new.Rules)
+	return diff
+}
+
 // compareRules handles comparison between two papi.Rules objects
 // due to an issue in PAPI we need to compare collections of behaviors, criteria and variables discarding the order from JSON
 func compareRules(old, new *papi.Rules) bool {

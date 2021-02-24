@@ -50,7 +50,7 @@ func dataSourceSelectedHostnames() *schema.Resource {
 func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSelectedHostnamesRead")
+	logger := meta.Log("APPSEC", "dataSourceSelectedHostnamesRead")
 
 	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
 

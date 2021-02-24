@@ -3,7 +3,7 @@ layout: "akamai"
 page_title: "Akamai: CustomRuleAction"
 subcategory: "Application Security"
 description: |-
-  CustomRuleAction
+  Custom Rule Action
 ---
 
 # akamai_appsec_custom_rule_action
@@ -28,7 +28,7 @@ data "akamai_appsec_configuration" "configuration" {
 resource "akamai_appsec_custom_rule_action" "create_custom_rule_action" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
-  policy_id = "crAP_75829"
+  security_policy_id = "crAP_75829"
   custom_rule_id = 12345
   custom_rule_action = "alert"
 }
@@ -47,15 +47,15 @@ The following arguments are supported:
 
 * `version` - (Required) The version number of the security configuration to use.
 
+* `security_policy_id` - (Required) The security policy to use.
+
+* `custom_rule_id` - (Required) The custom rule for which to apply the action.
+
 * `custom_rule_action` - (Required) The action to take when the custom rule is invoked: `alert` to record the trigger event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
-
-* `policy_id` - (Required) The 
-
-* `custom_rule_id` - (Required)
 
 ## Attribute Reference
 
 In addition to the arguments above, the following attribute is exported:
 
-* `custom_rule_id` - The ID of the custom rule.
+* None
 

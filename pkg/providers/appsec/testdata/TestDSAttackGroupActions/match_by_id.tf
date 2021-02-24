@@ -1,5 +1,6 @@
 provider "akamai" {
   edgerc = "~/.edgerc"
+  //version = "1.0.1"
 }
 
 

@@ -1,0 +1,15 @@
+
+    {
+        "allExtensions": false,
+        "enableAppLayer": true,
+        "enableRateControls": false,
+        "extensions": [
+            "cgi",
+            "jsp",
+            "aspx",
+            "EMPTY_STRING",
+            "php",
+            "py",
+            "asp"
+        ]
+    }

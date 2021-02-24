@@ -138,7 +138,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
-						ExpectError: regexp.MustCompile(`invalid JSON result:`),
+						ExpectError: regexp.MustCompile(`Error: invalid JSON result found in template snippet json here`),
 					},
 				},
 			})
@@ -152,7 +152,66 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_not_found.tf"),
-						ExpectError: regexp.MustCompile(`template "snippets/not_found.json" not defined`),
+						ExpectError: regexp.MustCompile(`Error: stat testdata/TestDSRulesTemplate/rules/property-snippets/non-existent.json: no such file or directory`),
+					},
+				},
+			})
+		})
+	})
+	t.Run("json has invalid format", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
+						ExpectError: regexp.MustCompile(`Error: invalid JSON result found in template snippet json here`),
+					},
+				},
+			})
+		})
+	})
+
+	t.Run("snippets files are under incorrect folder deeply nested", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension. Invalid file: testdata/TestDSRulesTemplate/output/template_invalid_json.json`),
+					},
+				},
+			})
+		})
+	})
+
+	t.Run("snippets files are under incorrect folder e.g. property-snippets/rules.json", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_only_one_folder_json.tf"),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension. Invalid file: property-snippet/template_invalid_json.json`),
+					},
+				},
+			})
+		})
+	})
+
+	t.Run("snippets files are non-json invalid error", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_file_not_json.tf"),
+						ExpectError: regexp.MustCompile(`Error: Snippets file under 'property-snippets' folder should have .json files`),
 					},
 				},
 			})
@@ -364,7 +423,8 @@ func TestConvertToTypedMap(t *testing.T) {
 }
 
 func TestConvertToTemplate(t *testing.T) {
-	templates := "testData/TestDSRulesTemplate/rules/templates"
+	templates := "testData/TestDSRulesTemplate/rules/property-snippets"
+	templatesOut := "testData/TestDSRulesTemplate/output"
 	tests := map[string]struct {
 		givenFile    string
 		expectedFile string
@@ -391,7 +451,7 @@ func TestConvertToTemplate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			expected := loadFixtureString(fmt.Sprintf("%s/%s", templates, test.expectedFile))
+			expected := loadFixtureString(fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
 			assert.Equal(t, expected, res)
 		})
 	}

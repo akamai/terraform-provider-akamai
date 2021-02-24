@@ -134,6 +134,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		ValidateRules:   true,
 	})
 	if err != nil {
+		d.Partial(true)
 		return diag.FromErr(err)
 	}
 
@@ -532,6 +533,8 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		ValidateRules:   true,
 	})
 	if err != nil {
+		// Reverting to previous state(property version in this case) when error occurs.
+		d.Partial(true)
 		return diag.FromErr(err)
 	}
 
