@@ -206,7 +206,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	_, erru := client.UpdateSelectedHostname(ctx, updateSelectedHostname)
 	if erru != nil {
 		logger.Errorf("calling 'updateSelectedHostname': %s", erru.Error())
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, erru.Error()))
 	}
 
 	return resourceSelectedHostnameRead(ctx, d, m)
