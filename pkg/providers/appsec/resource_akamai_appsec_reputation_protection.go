@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -57,25 +58,43 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceReputationProtectionRead")
 
 	getReputationProtection := appsec.GetReputationProtectionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getReputationProtection.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getReputationProtection.Version = version
+
+		policyid := s[2]
+		getReputationProtection.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getReputationProtection.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getReputationProtection.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getReputationProtection.PolicyID = policyid
 	}
-	getReputationProtection.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getReputationProtection.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getReputationProtection.PolicyID = policyid
-
 	reputationprotection, err := client.GetReputationProtection(ctx, getReputationProtection)
 	if err != nil {
 		logger.Errorf("calling 'getReputationProtection': %s", err.Error())
@@ -96,7 +115,18 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(strconv.Itoa(getReputationProtection.ConfigID))
+	if err := d.Set("config_id", getReputationProtection.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getReputationProtection.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", getReputationProtection.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	d.SetId(fmt.Sprintf("%d:%d:%s", getReputationProtection.ConfigID, getReputationProtection.Version, getReputationProtection.PolicyID))
 
 	return nil
 }
@@ -108,25 +138,43 @@ func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("APPSEC", "resourceReputationProtectionRemove")
 
 	removeReputationProtection := appsec.UpdateReputationProtectionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeReputationProtection.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		removeReputationProtection.Version = version
+
+		policyid := s[2]
+		removeReputationProtection.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeReputationProtection.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeReputationProtection.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		removeReputationProtection.PolicyID = policyid
 	}
-	removeReputationProtection.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeReputationProtection.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	removeReputationProtection.PolicyID = policyid
-
 	removeReputationProtection.ApplyReputationControls = false
 
 	_, errd := client.UpdateReputationProtection(ctx, removeReputationProtection)
@@ -145,25 +193,43 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("APPSEC", "resourceReputationProtectionUpdate")
 
 	updateReputationProtection := appsec.UpdateReputationProtectionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateReputationProtection.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateReputationProtection.Version = version
+
+		policyid := s[2]
+		updateReputationProtection.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateReputationProtection.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateReputationProtection.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateReputationProtection.PolicyID = policyid
 	}
-	updateReputationProtection.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateReputationProtection.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateReputationProtection.PolicyID = policyid
-
 	applyreputationcontrols, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

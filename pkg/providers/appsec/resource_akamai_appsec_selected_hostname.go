@@ -113,6 +113,10 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if err := d.Set("mode", "REPLACE"); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(fmt.Sprintf("%d:%d", getSelectedHostname.ConfigID, getSelectedHostname.Version))
 
 	return nil

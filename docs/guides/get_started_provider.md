@@ -10,7 +10,7 @@ description: |-
 If you've set up Akamai APIs before, some of the Akamai Provider 
 setup tasks will look familiar. You'll need to create Akamai API clients 
 for each of the modules you'll be using, and retrieve IDs for your contracts 
-and groups. Other tasks, like setting up your `akamai.tf` file, are very
+and groups. Other tasks, like setting up your `akamai.tf` file, are 
 specific to Terraform.
 
 Complete the tasks in this guide when setting up the Akamai
@@ -62,10 +62,7 @@ Now that you made some decisions, you need to set up a Terraform configuration f
 
 ## Create Akamai API clients
 
-Create an Akamai API client with the right permissions and valid
-credentials to authenticate your Akamai Provider files. Your Akamai API
-client needs read-write permission to the APIs associated with the
-Akamai Provider modules you're using, like DNS or Provisioning.
+Create an Akamai API client with the right permissions and valid credentials to authenticate your Akamai Provider files. Your Akamai API client needs read-write permission to the APIs associated with the Akamai Provider modules you're using, like DNS or Provisioning.
 
 Once you set up the API clients, you add credential information from those clients to your `akamai.tf` file.
 
@@ -73,33 +70,25 @@ See the [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_a
 guide for details. Once you're done authenticating, come back here to complete 
 the Akamai Provider setup.
 
+**Note:** Depending on the select contract and group, the Edge DNS and GTM modules may depend on both Property Manager APIs as well. If so, be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
+
 ## Retrieve contract and group IDs
 
 You'll need contract and group IDs to use most Akamai Provider modules. 
 
 You can retrieve these IDs through the [`akamai_contract`](../data-sources/property_contract.md) and
-[`akamai_group`](../data-sources/property_group.md) data sources, which require read access to the Property
-Manager API. You can also get this information from the Contracts app in Akamai
+[`akamai_group`](../data-sources/property_group.md) data sources, which require read access to the Property Manager API. You can also get this information from the Contracts app in Akamai
 Control Center, or by using other Akamai APIs or CLIs.
 
 ### Retrieve contract IDs with akamai_contract
 
-You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). This data source requires access to the Property Manager (PAPI) API service. See [Set up your API clients](../guides/akamai_provider_auth.md#set-up-your-api-clients)
+You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). This data source requires access to the Property Manager (PAPI) API service. See [Set up your API clients](../guides/akamai_provider_auth.md#set-up-your-api-clients).
 
-To retrieve the default contract you need to enter a group name or ID no attributes need to be set:
+To retrieve the default contract, you need to enter a group name or ID. No attributes need to be set:
 
 ```hcl
 data "akamai_contract" "default" {
      group_name = "example group name"
-
-}
-```
-
-Alternatively, if you have multiple contracts, you can specify the `group` that contains it:
-
-```hcl
-data "akamai_contract" "default" {
-	group_name = "default"
 }
 ```
 
@@ -136,11 +125,9 @@ You can now refer to the group ID using the `id` attribute: `data.akamai_group.d
 
 ## Set up your Akamai configurations in Terraform
 
-You're now ready to import existing configurations or create new ones
-from scratch.
+You're now ready to import existing configurations or create new ones from scratch.
 
-At this point in the setup, you should refer to the guides for the
-Akamai modules you're using:
+At this point in the setup, you should refer to the guides for the Akamai modules you're using:
 
 | **Module** | **Guide** |
 |------------|------------|
@@ -151,9 +138,7 @@ Akamai modules you're using:
 | Property Manager (Provisioning and Common modules) | [Get Started with Property Provisioning](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) |
 
 -> **Note** Both Terraform and the Akamai Terraform CLI package come
-pre-installed in the Akamai Development Environment. Get more details in
-our [[installation
-Instructions](https://developer.akamai.com/blog/2020/05/26/set-development-environment).
+pre-installed in the Akamai Development Environment. See [Set Up a Development Environment](https://developer.akamai.com/blog/2020/05/26/set-development-environment) for more information.
 
 Once you're done with the module-level setup, continue with the next
 sections to initialize and test the Akamai Provider.

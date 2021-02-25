@@ -31,6 +31,56 @@ func (p *mockappsec) GetConfigurationVersions(ctx context.Context, params appsec
 	return args.Get(0).(*appsec.GetConfigurationVersionsResponse), args.Error(1)
 }
 
+func (p *mockappsec) RemoveConfigurationVersionClone(ctx context.Context, params appsec.RemoveConfigurationVersionCloneRequest) (*appsec.RemoveConfigurationVersionCloneResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveConfigurationVersionCloneResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetConfigurationVersionClone(ctx context.Context, params appsec.GetConfigurationVersionCloneRequest) (*appsec.GetConfigurationVersionCloneResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetConfigurationVersionCloneResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetReputationAnalysis(ctx context.Context, params appsec.GetReputationAnalysisRequest) (*appsec.GetReputationAnalysisResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetReputationAnalysisResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateReputationAnalysis(ctx context.Context, params appsec.UpdateReputationAnalysisRequest) (*appsec.UpdateReputationAnalysisResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateReputationAnalysisResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveReputationAnalysis(ctx context.Context, params appsec.RemoveReputationAnalysisRequest) (*appsec.RemoveReputationAnalysisResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveReputationAnalysisResponse), args.Error(1)
+}
+
 func (p *mockappsec) CreateActivations(ctx context.Context, params appsec.CreateActivationsRequest, acknowledgeWarnings bool) (*appsec.CreateActivationsResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -39,6 +89,16 @@ func (p *mockappsec) CreateActivations(ctx context.Context, params appsec.Create
 	}
 
 	return args.Get(0).(*appsec.CreateActivationsResponse), args.Error(1)
+}
+
+func (p *mockappsec) CreateConfigurationVersionClone(ctx context.Context, params appsec.CreateConfigurationVersionCloneRequest) (*appsec.CreateConfigurationVersionCloneResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.CreateConfigurationVersionCloneResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetActivations(ctx context.Context, params appsec.GetActivationsRequest) (*appsec.GetActivationsResponse, error) {
@@ -59,6 +119,226 @@ func (p *mockappsec) RemoveActivations(ctx context.Context, params appsec.Remove
 	}
 
 	return args.Get(0).(*appsec.RemoveActivationsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetAdvancedSettingsLogging(ctx context.Context, params appsec.GetAdvancedSettingsLoggingRequest) (*appsec.GetAdvancedSettingsLoggingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAdvancedSettingsLoggingResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveAdvancedSettingsLogging(ctx context.Context, params appsec.RemoveAdvancedSettingsLoggingRequest) (*appsec.RemoveAdvancedSettingsLoggingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveAdvancedSettingsLoggingResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetAdvancedSettingsPrefetch(ctx context.Context, params appsec.GetAdvancedSettingsPrefetchRequest) (*appsec.GetAdvancedSettingsPrefetchResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAdvancedSettingsPrefetchResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateAdvancedSettingsPrefetch(ctx context.Context, params appsec.UpdateAdvancedSettingsPrefetchRequest) (*appsec.UpdateAdvancedSettingsPrefetchResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateAdvancedSettingsPrefetchResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateAdvancedSettingsLogging(ctx context.Context, params appsec.UpdateAdvancedSettingsLoggingRequest) (*appsec.UpdateAdvancedSettingsLoggingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateAdvancedSettingsLoggingResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetApiEndpoints(ctx context.Context, params appsec.GetApiEndpointsRequest) (*appsec.GetApiEndpointsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiEndpointsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetApiHostnameCoverage(ctx context.Context, params appsec.GetApiHostnameCoverageRequest) (*appsec.GetApiHostnameCoverageResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiHostnameCoverageResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetApiHostnameCoverageOverlapping(ctx context.Context, params appsec.GetApiHostnameCoverageOverlappingRequest) (*appsec.GetApiHostnameCoverageOverlappingResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiHostnameCoverageOverlappingResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetApiHostnameCoverageMatchTargets(ctx context.Context, params appsec.GetApiHostnameCoverageMatchTargetsRequest) (*appsec.GetApiHostnameCoverageMatchTargetsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiHostnameCoverageMatchTargetsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetApiRequestConstraints(ctx context.Context, params appsec.GetApiRequestConstraintsRequest) (*appsec.GetApiRequestConstraintsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetApiRequestConstraintsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateApiRequestConstraints(ctx context.Context, params appsec.UpdateApiRequestConstraintsRequest) (*appsec.UpdateApiRequestConstraintsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateApiRequestConstraintsResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveApiRequestConstraints(ctx context.Context, params appsec.RemoveApiRequestConstraintsRequest) (*appsec.RemoveApiRequestConstraintsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveApiRequestConstraintsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetContractsGroups(ctx context.Context, params appsec.GetContractsGroupsRequest) (*appsec.GetContractsGroupsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetContractsGroupsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetBypassNetworkLists(ctx context.Context, params appsec.GetBypassNetworkListsRequest) (*appsec.GetBypassNetworkListsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetBypassNetworkListsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateBypassNetworkLists(ctx context.Context, params appsec.UpdateBypassNetworkListsRequest) (*appsec.UpdateBypassNetworkListsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateBypassNetworkListsResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveBypassNetworkLists(ctx context.Context, params appsec.RemoveBypassNetworkListsRequest) (*appsec.RemoveBypassNetworkListsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveBypassNetworkListsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetVersionNotes(ctx context.Context, params appsec.GetVersionNotesRequest) (*appsec.GetVersionNotesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetVersionNotesResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateVersionNotes(ctx context.Context, params appsec.UpdateVersionNotesRequest) (*appsec.UpdateVersionNotesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateVersionNotesResponse), args.Error(1)
+}
+
+func (p *mockappsec) CreateConfiguration(ctx context.Context, params appsec.CreateConfigurationRequest) (*appsec.CreateConfigurationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.CreateConfigurationResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveConfiguration(ctx context.Context, params appsec.RemoveConfigurationRequest) (*appsec.RemoveConfigurationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveConfigurationResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateConfiguration(ctx context.Context, params appsec.UpdateConfigurationRequest) (*appsec.UpdateConfigurationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateConfigurationResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetConfiguration(ctx context.Context, params appsec.GetConfigurationRequest) (*appsec.GetConfigurationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetConfigurationResponse), args.Error(1)
 }
 
 func (p *mockappsec) CreateConfigurationClone(ctx context.Context, params appsec.CreateConfigurationCloneRequest) (*appsec.CreateConfigurationCloneResponse, error) {
@@ -129,6 +409,66 @@ func (p *mockappsec) UpdateCustomRule(ctx context.Context, params appsec.UpdateC
 	}
 
 	return args.Get(0).(*appsec.UpdateCustomRuleResponse), args.Error(1)
+}
+
+func (p *mockappsec) CreateCustomDeny(ctx context.Context, params appsec.CreateCustomDenyRequest) (*appsec.CreateCustomDenyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.CreateCustomDenyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetCustomDeny(ctx context.Context, params appsec.GetCustomDenyRequest) (*appsec.GetCustomDenyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetCustomDenyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetCustomDenyList(ctx context.Context, params appsec.GetCustomDenyListRequest) (*appsec.GetCustomDenyListResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetCustomDenyListResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveCustomDeny(ctx context.Context, params appsec.RemoveCustomDenyRequest) (*appsec.RemoveCustomDenyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveCustomDenyResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateCustomDeny(ctx context.Context, params appsec.UpdateCustomDenyRequest) (*appsec.UpdateCustomDenyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateCustomDenyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetFailoverHostnames(ctx context.Context, params appsec.GetFailoverHostnamesRequest) (*appsec.GetFailoverHostnamesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetFailoverHostnamesResponse), args.Error(1)
 }
 
 func (p *mockappsec) CreateMatchTarget(ctx context.Context, params appsec.CreateMatchTargetRequest) (*appsec.CreateMatchTargetResponse, error) {
@@ -308,6 +648,46 @@ func (p *mockappsec) RemoveSecurityPolicy(ctx context.Context, params appsec.Rem
 	}
 
 	return args.Get(0).(*appsec.RemoveSecurityPolicyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetSiemDefinitions(ctx context.Context, params appsec.GetSiemDefinitionsRequest) (*appsec.GetSiemDefinitionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetSiemDefinitionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetSiemSettings(ctx context.Context, params appsec.GetSiemSettingsRequest) (*appsec.GetSiemSettingsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetSiemSettingsResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveSiemSettings(ctx context.Context, params appsec.RemoveSiemSettingsRequest) (*appsec.RemoveSiemSettingsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveSiemSettingsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateSiemSettings(ctx context.Context, params appsec.UpdateSiemSettingsRequest) (*appsec.UpdateSiemSettingsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateSiemSettingsResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetCustomRule(ctx context.Context, params appsec.GetCustomRuleRequest) (*appsec.GetCustomRuleResponse, error) {
@@ -606,6 +986,76 @@ func (p *mockappsec) UpdateWAFMode(ctx context.Context, params appsec.UpdateWAFM
 	}
 
 	return args.Get(0).(*appsec.UpdateWAFModeResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalProtectHosts(ctx context.Context, params appsec.GetEvalProtectHostsRequest) (*appsec.GetEvalProtectHostsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetEvalProtectHostsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateEvalProtectHost(ctx context.Context, params appsec.UpdateEvalProtectHostRequest) (*appsec.UpdateEvalProtectHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateEvalProtectHostResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateEvalHost(ctx context.Context, params appsec.UpdateEvalHostRequest) (*appsec.UpdateEvalHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateEvalHostResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveEvalHost(ctx context.Context, params appsec.RemoveEvalHostRequest) (*appsec.RemoveEvalHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveEvalHostResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalProtectHost(ctx context.Context, params appsec.GetEvalProtectHostRequest) (*appsec.GetEvalProtectHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetEvalProtectHostResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalHosts(ctx context.Context, params appsec.GetEvalHostsRequest) (*appsec.GetEvalHostsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetEvalHostsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalHost(ctx context.Context, params appsec.GetEvalHostRequest) (*appsec.GetEvalHostResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetEvalHostResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetEval(ctx context.Context, params appsec.GetEvalRequest) (*appsec.GetEvalResponse, error) {

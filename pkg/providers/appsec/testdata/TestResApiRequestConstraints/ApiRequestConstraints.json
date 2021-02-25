@@ -1,0 +1,8 @@
+{
+    "apiEndpoints": [
+        {
+            "action": "alert",
+            "id": 1
+        }
+    ]
+}
