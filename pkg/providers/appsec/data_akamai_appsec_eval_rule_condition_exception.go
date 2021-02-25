@@ -50,7 +50,7 @@ func dataSourceEvalRuleConditionException() *schema.Resource {
 func dataSourceEvalRuleConditionExceptionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalRuleConditionExceptionRead")
+	logger := meta.Log("APPSEC", "dataSourceEvalRuleConditionExceptionRead")
 
 	getEvalRuleConditionException := appsec.GetEvalRuleConditionExceptionRequest{}
 

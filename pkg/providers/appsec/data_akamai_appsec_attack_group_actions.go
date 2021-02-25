@@ -55,7 +55,7 @@ func dataSourceAttackGroupActions() *schema.Resource {
 func dataSourceAttackGroupActionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAttackGroupActionsRead")
+	logger := meta.Log("APPSEC", "dataSourceAttackGroupActionsRead")
 
 	getAttackGroupActions := appsec.GetAttackGroupActionsRequest{}
 

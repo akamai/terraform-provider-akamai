@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_property_rules_template" "test" {
-  template_file = "testdata/TestDSRulesTemplate/rules/templates/template_invalid_json.json"
+  template_file = "testdata/TestDSRulesTemplate/property-snippets/template_invalid_json.json"
 }

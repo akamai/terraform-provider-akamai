@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -81,25 +82,43 @@ func resourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourcePolicyProtectionsRead")
 
 	getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getPolicyProtections.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getPolicyProtections.Version = version
+
+		policyid := s[2]
+		getPolicyProtections.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getPolicyProtections.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getPolicyProtections.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getPolicyProtections.PolicyID = policyid
 	}
-	getPolicyProtections.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getPolicyProtections.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getPolicyProtections.PolicyID = policyid
-
 	policyprotections, err := client.GetPolicyProtections(ctx, getPolicyProtections)
 	if err != nil {
 		logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
@@ -116,7 +135,19 @@ func resourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	d.SetId(strconv.Itoa(getPolicyProtections.ConfigID))
+	if err := d.Set("config_id", getPolicyProtections.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getPolicyProtections.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", getPolicyProtections.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d:%s", getPolicyProtections.ConfigID, getPolicyProtections.Version, getPolicyProtections.PolicyID))
 
 	return nil
 }
@@ -129,27 +160,49 @@ func resourcePolicyProtectionsDelete(ctx context.Context, d *schema.ResourceData
 
 	updatePolicyProtections := appsec.UpdatePolicyProtectionsRequest{}
 	removePolicyProtections := appsec.RemovePolicyProtectionsRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updatePolicyProtections.ConfigID = configid
-	removePolicyProtections.ConfigID = configid
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updatePolicyProtections.ConfigID = configid
+		removePolicyProtections.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updatePolicyProtections.Version = version
-	removePolicyProtections.Version = version
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updatePolicyProtections.Version = version
+		removePolicyProtections.Version = version
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		policyid := s[2]
+		updatePolicyProtections.PolicyID = policyid
+		removePolicyProtections.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updatePolicyProtections.ConfigID = configid
+		removePolicyProtections.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updatePolicyProtections.Version = version
+		removePolicyProtections.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updatePolicyProtections.PolicyID = policyid
+		removePolicyProtections.PolicyID = policyid
 	}
-	updatePolicyProtections.PolicyID = policyid
-	removePolicyProtections.PolicyID = policyid
 	//TODO remove once API fixed in Jan
 	updatePolicyProtections.ApplyApplicationLayerControls = true
 
@@ -201,25 +254,43 @@ func resourcePolicyProtectionsUpdate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourcePolicyProtectionsUpdate")
 
 	updatePolicyProtections := appsec.UpdatePolicyProtectionsRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updatePolicyProtections.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updatePolicyProtections.Version = version
+
+		policyid := s[2]
+		updatePolicyProtections.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updatePolicyProtections.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updatePolicyProtections.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updatePolicyProtections.PolicyID = policyid
 	}
-	updatePolicyProtections.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updatePolicyProtections.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updatePolicyProtections.PolicyID = policyid
-
 	applyapplicationlayercontrols, err := tools.GetBoolValue("apply_application_layer_controls", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

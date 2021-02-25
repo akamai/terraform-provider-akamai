@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -57,25 +58,43 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceWAFProtectionRead")
 
 	getWAFProtection := appsec.GetWAFProtectionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getWAFProtection.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getWAFProtection.Version = version
+
+		policyid := s[2]
+		getWAFProtection.PolicyID = policyid
+
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getWAFProtection.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getWAFProtection.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getWAFProtection.PolicyID = policyid
 	}
-	getWAFProtection.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getWAFProtection.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getWAFProtection.PolicyID = policyid
-
 	wafprotection, err := client.GetWAFProtection(ctx, getWAFProtection)
 	if err != nil {
 		logger.Errorf("calling 'getWAFProtection': %s", err.Error())
@@ -92,7 +111,19 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 		}
 	}
 
-	d.SetId(strconv.Itoa(getWAFProtection.ConfigID))
+	if err := d.Set("config_id", getWAFProtection.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("version", getWAFProtection.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("security_policy_id", getWAFProtection.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d:%d:%s", getWAFProtection.ConfigID, getWAFProtection.Version, getWAFProtection.PolicyID))
 
 	return nil
 }

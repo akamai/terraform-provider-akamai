@@ -14,7 +14,7 @@ Traffic Management configurations.
 
 !> Version 1.0.0 of the Akamai Terraform Provider is a major release that's currently available for the Provisioning module. Before upgrading, you need to make changes to some of your Provisioning resources and data sources. See the [migration guide](guides/1.0_migration.md) for details.
 
-Last updated: January 2021.
+Last updated: February 2021.
 
 ## Migrate to the newest version
 
@@ -70,9 +70,14 @@ If you're new to Terraform, here are some links you might find helpful:
 
 ## Available guides
 
-* [Frequently Asked Questions](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/faq)
+Here's a list of the guides for the Akamai Provider in the general order you might use them:
+
+* [Get Started with the Akamai Terraform Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider)
+* [Authenticate the Akamai Terraform Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/akamai_provider_auth)
+* [Akamai Terraform Provider: 1.0.0 Migration Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/1.0_migration)
+* [Get Started with the Identity and Access Management Module](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam.md)
+* [Get Started with the Provisioning Module](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property)
+* [Get Started with Application Security](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec)
 * [Get Started with DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone)
 * [Get Started with GTM Domain Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain)
-* [Get Started with the Identity and Access Management Module](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam.md)
-* [Get Started with the Provisioning Module](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) 
 *  [Appendix](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix) 

@@ -51,7 +51,7 @@ func dataSourceSecurityPolicy() *schema.Resource {
 func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
+	logger := meta.Log("APPSEC", "dataSourceSecurityPolicyRead")
 
 	getSecurityPolicy := appsec.GetSecurityPoliciesRequest{}
 

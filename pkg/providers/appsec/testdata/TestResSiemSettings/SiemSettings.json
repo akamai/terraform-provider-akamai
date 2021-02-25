@@ -1,0 +1,6 @@
+{
+    "enableForAllPolicies": true,
+    "enableSiem": true,
+    "enabledBotmanSiemEvents": false,
+    "siemDefinitionId": 1
+}

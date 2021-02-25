@@ -50,8 +50,12 @@ The following arguments are supported:
 In addition to the arguments above, the following attributes are exported:
 
 * `output_text` - A tabular display including the following columns:
+
   * `ACTION` - The action that the rule should trigger (either `alert` or `abort`)
+
   * `SLOW_RATE_THRESHOLD RATE` - The average rate in bytes per second over the period specified by `period` before the specified `action` is triggered.
+
   * `SLOW_RATE_THRESHOLD PERIOD` - The length in seconds of the period during which the server should accept a request before determining whether a POST request is too slow.
+
   * `DURATION_THRESHOLD TIMEOUT` - The time in seconds before the first eight kilobytes of the POST body must be received to avoid triggering the specified `action`.
 

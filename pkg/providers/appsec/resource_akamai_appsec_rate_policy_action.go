@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -62,31 +63,54 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionRead")
 
 	getRatePolicyAction := appsec.GetRatePolicyActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getRatePolicyAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getRatePolicyAction.Version = version
+
+		policyid := s[2]
+		getRatePolicyAction.PolicyID = policyid
+
+		ratepolicyid, errconv := strconv.Atoi(s[3])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		getRatePolicyAction.ID = ratepolicyid
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getRatePolicyAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getRatePolicyAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getRatePolicyAction.PolicyID = policyid
+
+		ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getRatePolicyAction.ID = ratepolicyid
 	}
-	getRatePolicyAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getRatePolicyAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getRatePolicyAction.PolicyID = policyid
-
-	ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getRatePolicyAction.ID = ratepolicyid
-
 	ratepolicyaction, err := client.GetRatePolicyAction(ctx, getRatePolicyAction)
 	if err != nil {
 		logger.Errorf("calling 'getRatePolicyAction': %s", err.Error())
@@ -106,7 +130,20 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
 
-			d.SetId(strconv.Itoa(configval.ID))
+			if err := d.Set("config_id", getRatePolicyAction.ConfigID); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+
+			if err := d.Set("version", getRatePolicyAction.Version); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+
+			if err := d.Set("security_policy_id", getRatePolicyAction.PolicyID); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+
+			d.SetId(fmt.Sprintf("%d:%d:%s:%d", getRatePolicyAction.ConfigID, getRatePolicyAction.Version, getRatePolicyAction.PolicyID, getRatePolicyAction.ID))
+
 		}
 	}
 
@@ -119,31 +156,54 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionRemove")
 
 	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateRatePolicyAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateRatePolicyAction.Version = version
+
+		policyid := s[2]
+		updateRatePolicyAction.PolicyID = policyid
+
+		ratepolicyid, errconv := strconv.Atoi(s[3])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateRatePolicyAction.RatePolicyID = ratepolicyid
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateRatePolicyAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateRatePolicyAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateRatePolicyAction.PolicyID = policyid
+
+		ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateRatePolicyAction.RatePolicyID = ratepolicyid
 	}
-	updateRatePolicyAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateRatePolicyAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateRatePolicyAction.PolicyID = policyid
-
-	ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateRatePolicyAction.RatePolicyID = ratepolicyid
-
 	updateRatePolicyAction.Ipv4Action = "none"
 	updateRatePolicyAction.Ipv6Action = "none"
 
@@ -164,31 +224,54 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionUpdate")
 
 	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateRatePolicyAction.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateRatePolicyAction.Version = version
+
+		policyid := s[2]
+		updateRatePolicyAction.PolicyID = policyid
+
+		ratepolicyid, errconv := strconv.Atoi(s[3])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateRatePolicyAction.RatePolicyID = ratepolicyid
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateRatePolicyAction.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateRatePolicyAction.Version = version
+
+		policyid, err := tools.GetStringValue("security_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateRatePolicyAction.PolicyID = policyid
+
+		ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateRatePolicyAction.RatePolicyID = ratepolicyid
 	}
-	updateRatePolicyAction.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateRatePolicyAction.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateRatePolicyAction.PolicyID = policyid
-
-	ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateRatePolicyAction.RatePolicyID = ratepolicyid
-
 	ipv4action, err := tools.GetStringValue("ipv4_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

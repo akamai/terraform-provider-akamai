@@ -97,6 +97,16 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	if _, err := os.Stat(file); err != nil {
+		if os.IsNotExist(err) {
+			return diag.FromErr(err)
+		}
+	}
+	dir := filepath.Dir(file)
+	if filepath.Base(dir) != "property-snippets" || filepath.Ext(file) != ".json" {
+		logger.Errorf("snippets file should be under 'property-snippets' folder with .json extension: %s", file)
+		return diag.FromErr(fmt.Errorf("snippets file should be under 'property-snippets' folder with .json extension. Invalid file: %s ", file))
+	}
 	varsMap := make(map[string]interface{})
 	vars, err := tools.GetSetValue("variables", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -131,7 +141,6 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	dir := filepath.Dir(file)
 	templateFiles := make(map[string]string)
 	err = filepath.Walk(dir,
 		func(path string, info os.FileInfo, err error) error {
@@ -147,7 +156,18 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	var diags diag.Diagnostics
 	for name, f := range templateFiles {
+		b, _ := ioutil.ReadFile(f)
+		if jsonFileRegexp.MatchString(name) {
+			var target map[string]interface{}
+			if err := json.Unmarshal(b, &target); err != nil {
+				logger.Warnf("invalid JSON result found in template snippet json here %s: ", f)
+				diags = append(diags, diag.Errorf("invalid JSON result found in template snippet json here %s: %s", f, err)...)
+			}
+		} else {
+			return diag.FromErr(fmt.Errorf("Snippets file under 'property-snippets' folder should have .json files. Invalid file %s ", f))
+		}
 		templateStr, err := convertToTemplate(f)
 		if err != nil {
 			return diag.FromErr(err)
@@ -157,10 +177,16 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 			return diag.FromErr(err)
 		}
 	}
+	if diags.HasError() {
+		return diags
+	}
 	wr := bytes.Buffer{}
 	err = tmpl.ExecuteTemplate(&wr, "main", varsMap)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	if !jsonFileRegexp.MatchString(file) {
+		return diag.FromErr(fmt.Errorf("Snippets file under 'property-snippets' folder should have .json files. Invalid file %s ", file))
 	}
 	d.SetId(file)
 	formatted := bytes.Buffer{}
@@ -177,8 +203,9 @@ func dataAkamaiPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 var (
-	includeRegexp = regexp.MustCompile(`"#include:.+"`)
-	varRegexp     = regexp.MustCompile(`"\${.+}"`)
+	includeRegexp  = regexp.MustCompile(`"#include:.+"`)
+	varRegexp      = regexp.MustCompile(`"\${.+}"`)
+	jsonFileRegexp = regexp.MustCompile(`\.json+$`)
 )
 
 var (

@@ -52,7 +52,6 @@ The following arguments are supported:
 
 * `duration_threshold_timeout` - (Required) The time in seconds before the first eight kilobytes of the POST body must be received to avoid triggering the specified `action`.
 
-
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:

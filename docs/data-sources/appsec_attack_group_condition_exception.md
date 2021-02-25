@@ -53,6 +53,7 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display showing the ID, name, and action of all custom rules associated with the specified security configuration, version and security policy.
+* `output_text` - A tabular display showing the condition and exception information.
 
 * `json` - The condition and exception information in JSON format.
+

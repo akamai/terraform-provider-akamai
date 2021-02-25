@@ -90,7 +90,7 @@ func dataAkamaiPropertyRuleSchemaV0() *schema.Resource {
 										Type:     schema.TypeString,
 										Required: true,
 									},
-									"comment": {
+									"comments": {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
@@ -110,7 +110,7 @@ func dataAkamaiPropertyRuleSchemaV0() *schema.Resource {
 													Type:     schema.TypeString,
 													Required: true,
 												},
-												"comment": {
+												"comments": {
 													Type:     schema.TypeString,
 													Optional: true,
 												},
@@ -130,7 +130,7 @@ func dataAkamaiPropertyRuleSchemaV0() *schema.Resource {
 																Type:     schema.TypeString,
 																Required: true,
 															},
-															"comment": {
+															"comments": {
 																Type:     schema.TypeString,
 																Optional: true,
 															},
@@ -150,7 +150,7 @@ func dataAkamaiPropertyRuleSchemaV0() *schema.Resource {
 																			Type:     schema.TypeString,
 																			Required: true,
 																		},
-																		"comment": {
+																		"comments": {
 																			Type:     schema.TypeString,
 																			Optional: true,
 																		},
