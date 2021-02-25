@@ -202,9 +202,29 @@ func resourceProperty() *schema.Resource {
 							Optional: true,
 						},
 						"cert_status":{
-							Type:     schema.TypeMap,
+							Type:     schema.TypeList,
 							Computed: true,
-							Elem: &schema.Schema{Type: schema.TypeString},
+							//	Elem: &schema.Schema{Type: schema.TypeString},
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"target": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"hostname": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"production_status": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"staging_status": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
 						},
 					},
 				},
@@ -917,21 +937,23 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 // Convert given hostnames to the map form that can be stored in a schema.ResourceData
 func hostnamesToMap(Hostnames []papi.Hostname) []map[string]interface{} {
 	var res []map[string]interface{}
+	var c []map[string]interface{}
 	for _, hn := range Hostnames {
 		m := map[string]interface{}{}
 		m["cname_from"] = hn.CnameFrom
 		m["cname_to"] = hn.CnameTo
 		m["cert_provisioning_type"] = hn.CertProvisioningType
 		certs := map[string]interface{}{}
-		certs["validation_cname.hostname"] =  hn.CertStatus.ValidationCname.Hostname
-		certs["validation_cname.target"] =  hn.CertStatus.ValidationCname.Hostname
+		certs["hostname"] =  hn.CertStatus.ValidationCname.Hostname
+		certs["target"] =  hn.CertStatus.ValidationCname.Hostname
 		if len(hn.CertStatus.Staging) > 0 {
 			certs["staging_status"] = hn.CertStatus.Staging[0].Status
 		}
 		if len(hn.CertStatus.Production) > 0 {
 			certs["production_status"] = hn.CertStatus.Production[0].Status
 		}
-		m["cert_status"] = certs
+		c = append(c,certs)
+		m["cert_status"] = c
 		res = append(res, m)
 	}
 	return res
