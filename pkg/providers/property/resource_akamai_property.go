@@ -205,34 +205,6 @@ func resourceProperty() *schema.Resource {
 							Type:     schema.TypeMap,
 							Computed: true,
 							Elem: &schema.Schema{Type: schema.TypeString},
-							/*Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"validation_cname": {
-										Type:     schema.TypeString,
-										Computed: true,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"hostname": {
-													Type:     schema.TypeString,
-													Computed: true,
-												},
-												"target": {
-													Type:     schema.TypeString,
-													Computed: true,
-												},
-											},
-										},
-									},
-									"production_status": {
-										Type: schema.TypeString,
-										Computed: true,
-									},
-									"staging_status": {
-										Type: schema.TypeString,
-										Computed: true,
-									},
-								},
-							},*/
 						},
 					},
 				},
