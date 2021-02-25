@@ -129,19 +129,33 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameUpdate")
 
 	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		s := strings.Split(d.Id(), ":")
 
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		configid, errconv := strconv.Atoi(s[0])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateSelectedHostname.ConfigID = configid
+
+		version, errconv := strconv.Atoi(s[1])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+		updateSelectedHostname.Version = version
+	} else {
+		configid, err := tools.GetIntValue("config_id", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateSelectedHostname.ConfigID = configid
+
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateSelectedHostname.Version = version
 	}
-	updateSelectedHostname.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateSelectedHostname.Version = version
-
 	mode := d.Get("mode").(string)
 
 	hn := appsec.GetSelectedHostnamesRequest{}
@@ -155,8 +169,8 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
-	getSelectedHostnames.ConfigID = configid
-	getSelectedHostnames.Version = version
+	getSelectedHostnames.ConfigID = updateSelectedHostname.ConfigID
+	getSelectedHostnames.Version = updateSelectedHostname.Version
 
 	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
 	if err != nil {
@@ -192,6 +206,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	_, erru := client.UpdateSelectedHostname(ctx, updateSelectedHostname)
 	if erru != nil {
 		logger.Errorf("calling 'updateSelectedHostname': %s", erru.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	return resourceSelectedHostnameRead(ctx, d, m)
