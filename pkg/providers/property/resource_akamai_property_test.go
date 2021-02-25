@@ -43,7 +43,24 @@ func TestResProperty(t *testing.T) {
 			}}
 
 			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames).Once().Run(func(mock.Arguments) {
-				State.Hostnames = append([]papi.Hostname{}, NewHostnames...)
+				NewResponseHostnames := []papi.Hostname{{
+					CnameType: "EDGE_HOSTNAME",
+					CnameFrom: "from.test.domain",
+					CnameTo:   CnameTo,
+					CertProvisioningType: "DEFAULT",
+					CertStatus:  papi.CertStatusItem{
+						ValidationCname: papi.ValidationCname{
+							Hostname: "_acme-challenge.www.example.com",
+							Target:   "{token}.www.example.com.akamai-domain.com",
+						},
+							Staging: []papi.StatusItem{{Status: "NEEDS_VALIDATION",}},
+							Production:  []papi.StatusItem{{
+								Status: "NEEDS_VALIDATION",
+							},
+							},
+					},
+				}}
+				State.Hostnames = append([]papi.Hostname{}, NewResponseHostnames...)
 			})
 		}
 	}

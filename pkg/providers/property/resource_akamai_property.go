@@ -181,12 +181,12 @@ func resourceProperty() *schema.Resource {
 			"hostnames": {
 				Type:     schema.TypeList,
 				Optional: true,
-				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+			/*	ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
 				if len(i.(map[string]interface{})) == 0 {
 				return diag.Errorf("hostnames cannot be empty when defined")
 			}
 				return nil
-			},
+			},*/
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cname_from": {
@@ -202,9 +202,10 @@ func resourceProperty() *schema.Resource {
 							Optional: true,
 						},
 						"cert_status":{
-							Type:     schema.TypeSet,
+							Type:     schema.TypeMap,
 							Computed: true,
-							Elem: &schema.Resource{
+							Elem: &schema.Schema{Type: schema.TypeString},
+							/*Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"validation_cname": {
 										Type:     schema.TypeString,
@@ -231,7 +232,7 @@ func resourceProperty() *schema.Resource {
 										Computed: true,
 									},
 								},
-							},
+							},*/
 						},
 					},
 				},
@@ -311,12 +312,12 @@ func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interfac
 	ctx = log.NewContext(ctx, logger)
 
 	o, n := d.GetChange("hostnames")
-	oldVal, ok := o.(map[string]interface{})
+	oldVal, ok := o.([]interface{})
 	if !ok {
 		logger.Errorf("error parsing local state for old value %s", oldVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", o)
 	}
-	newVal, ok := n.(map[string]interface{})
+	newVal, ok := n.([]interface{})
 	if !ok {
 		logger.Errorf("error parsing local state for new value %s", newVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", n)
@@ -943,27 +944,28 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 
 // Convert given hostnames to the map form that can be stored in a schema.ResourceData
 func hostnamesToMap(Hostnames []papi.Hostname) []map[string]interface{} {
-
 	var res []map[string]interface{}
 	for _, hn := range Hostnames {
 		m := map[string]interface{}{}
 		m["cname_from"] = hn.CnameFrom
 		m["cname_to"] = hn.CnameTo
 		m["cert_provisioning_type"] = hn.CertProvisioningType
-		m["validation_cname.hostname"] = hn.CertStatus.ValidationCname.Hostname
-		m["validation_cname.target"] = hn.CertStatus.ValidationCname.Hostname
+		certs := map[string]interface{}{}
+		certs["validation_cname.hostname"] =  hn.CertStatus.ValidationCname.Hostname
+		certs["validation_cname.target"] =  hn.CertStatus.ValidationCname.Hostname
 		if len(hn.CertStatus.Staging) > 0 {
-			m["staging_status"] = hn.CertStatus.Staging[0].Status
+			certs["staging_status"] = hn.CertStatus.Staging[0].Status
 		}
 		if len(hn.CertStatus.Production) > 0 {
-			m["production_status"] = hn.CertStatus.Production[0].Status
+			certs["production_status"] = hn.CertStatus.Production[0].Status
 		}
+		m["cert_status"] = certs
 		res = append(res, m)
 	}
 	return res
 }
 
-// Convert the given map from a schema.ResourceData to a slice of papi.Hostnames
+// Convert the given map from a schema.ResourceData to a slice of papi.Hostnames /input to papi request
 func mapToHostnames(givenList []interface{}) []papi.Hostname {
 	var Hostnames []papi.Hostname
 
