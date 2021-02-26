@@ -102,10 +102,10 @@ Test your configuration by running `terraform plan` as above. You should see a f
 
 ## Activate a Network List
 
-You can activate a network list by using the `akamai_networklist_activation` resource. Add the following to your `config.tf` file:
+You can activate a network list by using the `akamai_networklist_activations` resource. Add the following to your `config.tf` file:
 
 ```hcl
-resource "akamai_networklist_activation" "activation" {
+resource "akamai_networklist_activations" "activation" {
   network_list_id = data.akamai_networklist_network_lists.network_lists_filter.list[0]
   network = "STAGING"
   notes  = "TEST Notes"
