@@ -181,50 +181,42 @@ func resourceProperty() *schema.Resource {
 			"hostnames": {
 				Type:     schema.TypeList,
 				Optional: true,
-			/*	ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
-				if len(i.(map[string]interface{})) == 0 {
-				return diag.Errorf("hostnames cannot be empty when defined")
-			}
-				return nil
-			},*/
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cname_from": {
 							Type:     schema.TypeString,
 							Optional: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if len(i.(string)) == 0 {
+									return diag.Errorf("'cname_from' cannot be empty when hostnames block is defined - See new hostnames schema")
+								}
+								return nil
+							},
 						},
 						"cname_to": {
 							Type:     schema.TypeString,
 							Optional: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if len(i.(string)) == 0 {
+									return diag.Errorf("'cname_to' cannot be empty when hostnames block is defined - See new hostnames schema")
+								}
+								return nil
+							},
 						},
 						"cert_provisioning_type": {
 							Type:     schema.TypeString,
 							Optional: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if len(i.(string)) == 0 {
+									return diag.Errorf("'cert_provisioning_type' cannot be empty when hostnames block is defined - See new hostnames schema")
+								}
+								return nil
+							},
 						},
-						"cert_status":{
+						"cert_status": {
 							Type:     schema.TypeList,
 							Computed: true,
-							//	Elem: &schema.Schema{Type: schema.TypeString},
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"target": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"hostname": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"production_status": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-									"staging_status": {
-										Type:     schema.TypeString,
-										Computed: true,
-									},
-								},
-							},
+							Elem: certStatus,
 						},
 					},
 				},
@@ -305,9 +297,15 @@ func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interfac
 
 	o, n := d.GetChange("hostnames")
 	oldVal, ok := o.([]interface{})
+
 	if !ok {
 		logger.Errorf("error parsing local state for old value %s", oldVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", o)
+	}
+	// return error if hostnames block exists but is empty
+	_, exists := d.GetOkExists("hostnames")
+	if exists && len(oldVal) == 0 {
+		return fmt.Errorf("hostnames block cannot be empty when defined")
 	}
 	newVal, ok := n.([]interface{})
 	if !ok {
@@ -513,7 +511,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"latest_version":     Property.LatestVersion,
 		"staging_version":    StagingVersion,
 		"production_version": ProductionVersion,
-		"hostnames":          hostnamesToMap(Hostnames),
+		"hostnames":          flattenHostnames(Hostnames),
 		"rules":              string(RulesJSON),
 		"rule_format":        RuleFormat,
 		"rule_errors":        papiErrorsToList(RuleErrors),
@@ -932,31 +930,6 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 
 	logger.WithFields(logFields(*res)).Info("property hostnames updated")
 	return nil
-}
-
-// Convert given hostnames to the map form that can be stored in a schema.ResourceData
-func hostnamesToMap(Hostnames []papi.Hostname) []map[string]interface{} {
-	var res []map[string]interface{}
-	var c []map[string]interface{}
-	for _, hn := range Hostnames {
-		m := map[string]interface{}{}
-		m["cname_from"] = hn.CnameFrom
-		m["cname_to"] = hn.CnameTo
-		m["cert_provisioning_type"] = hn.CertProvisioningType
-		certs := map[string]interface{}{}
-		certs["hostname"] =  hn.CertStatus.ValidationCname.Hostname
-		certs["target"] =  hn.CertStatus.ValidationCname.Hostname
-		if len(hn.CertStatus.Staging) > 0 {
-			certs["staging_status"] = hn.CertStatus.Staging[0].Status
-		}
-		if len(hn.CertStatus.Production) > 0 {
-			certs["production_status"] = hn.CertStatus.Production[0].Status
-		}
-		c = append(c,certs)
-		m["cert_status"] = c
-		res = append(res, m)
-	}
-	return res
 }
 
 // Convert the given map from a schema.ResourceData to a slice of papi.Hostnames /input to papi request
