@@ -185,7 +185,7 @@ func resourceProperty() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"cname_from": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
 								if len(i.(string)) == 0 {
 									return diag.Errorf("'cname_from' cannot be empty when hostnames block is defined - See new hostnames schema")
@@ -195,7 +195,7 @@ func resourceProperty() *schema.Resource {
 						},
 						"cname_to": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
 								if len(i.(string)) == 0 {
 									return diag.Errorf("'cname_to' cannot be empty when hostnames block is defined - See new hostnames schema")
@@ -205,7 +205,7 @@ func resourceProperty() *schema.Resource {
 						},
 						"cert_provisioning_type": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
 								if len(i.(string)) == 0 {
 									return diag.Errorf("'cert_provisioning_type' cannot be empty when hostnames block is defined - See new hostnames schema")
@@ -370,7 +370,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		}
 	}
 	ProductID = tools.AddPrefix(ProductID, "prd_")
-	Hostnames := mapToHostnames(d.Get("hostnames").([]interface{}))
+
 	RuleFormat := d.Get("rule_format").(string)
 
 	RulesJSON := []byte(d.Get("rules").(string))
@@ -422,11 +422,17 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductID:     ProductID,
 		LatestVersion: 1,
 	}
-
-	if len(Hostnames) > 0 {
-		if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
-			return diag.FromErr(err)
+	HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+	if err == nil {
+		Hostnames := make([]papi.Hostname, len(HostnameVal))
+		Hostnames = mapToHostnames(HostnameVal)
+		if len(Hostnames) > 0 {
+			if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
+				return diag.FromErr(err)
+			}
 		}
+	} else {
+		logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
 	}
 
 	if len(RulesJSON) > 0 {
@@ -611,11 +617,18 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Hostnames
 	if d.HasChange("hostnames") {
-		Hostnames := mapToHostnames(d.Get("hostnames").([]interface{}))
-
-		if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
-			d.Partial(true)
-			return diag.FromErr(err)
+		HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+		if err == nil {
+			Hostnames := make([]papi.Hostname, len(HostnameVal))
+			Hostnames = mapToHostnames(HostnameVal)
+			if len(Hostnames) > 0 {
+				if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
+					d.Partial(true)
+					return diag.FromErr(err)
+				}
+			}
+		} else {
+			logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
 		}
 	}
 
