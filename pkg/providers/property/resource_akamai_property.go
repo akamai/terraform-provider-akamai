@@ -216,7 +216,7 @@ func resourceProperty() *schema.Resource {
 						"cert_status": {
 							Type:     schema.TypeList,
 							Computed: true,
-							Elem: certStatus,
+							Elem:     certStatus,
 						},
 					},
 				},
@@ -297,16 +297,11 @@ func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interfac
 
 	o, n := d.GetChange("hostnames")
 	oldVal, ok := o.([]interface{})
-
 	if !ok {
 		logger.Errorf("error parsing local state for old value %s", oldVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", o)
 	}
-	// return error if hostnames block exists but is empty
-	_, exists := d.GetOkExists("hostnames")
-	if exists && len(oldVal) == 0 {
-		return fmt.Errorf("hostnames block cannot be empty when defined")
-	}
+
 	newVal, ok := n.([]interface{})
 	if !ok {
 		logger.Errorf("error parsing local state for new value %s", newVal)
