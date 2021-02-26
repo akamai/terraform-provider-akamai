@@ -41,7 +41,7 @@ func dataSourceEval() *schema.Resource {
 func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalRead")
+	logger := meta.Log("APPSEC", "dataSourceEvalRead")
 
 	getEval := appsec.GetEvalRequest{}
 

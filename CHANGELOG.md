@@ -1,5 +1,48 @@
 # RELEASE NOTES
 
+## 1.3.0 (Feb 25, 2021) APPSEC - Extended list of supported list endpoints from APPSEC API
+
+#### BREAKING CHANGES:
+* PAPI
+    * `data_akamai_property_rules_template:` snippets files should now be placed under `property-snippets` directory and should have `.json` extension
+
+#### FEATURES/ENHANCEMENTS:
+* APPSEC
+    * Custom Deny
+    * SIEM Setting
+    * Advanced Options Settings
+    * API Match Target
+    * API Request Constraint
+    * Create/Delete/Rename Security Policy
+    * Host Coverage / Edit Version Notes
+    * All WAP Features / WAP Hostname Evaluation
+    * Create Security Configuration
+    * Rename Security Configuration Version
+    * Delete Security Configuration Version
+    * Clone Security Configuration
+    * Import tool for adding existing resources to Terraform state ([#207](https://github.com/akamai/terraform-provider-akamai/issues/207))
+* DNS
+    * Create SOA and NS Records on zone read if don't exist.
+    * Add HTTPS, SVCB record support
+* GTM
+    * Add validation for property type and traffic targets combination
+
+#### BUG FIXES:
+* PAPI
+    * Fixed issue causing hostnames to be appended instead of being replaced
+    * Fixed issue causing version and rule comments being dropped ([#55](https://github.com/akamai/terraform-provider-akamai/issues/55))
+    * Fixed client side validation to allow certain PAPI errors to passthrough
+    * Fixed issue causing incorrect property version being stored in state for certain scenarios
+* DNS
+    * Suppress NS Record target diff if old and new equal without trailing 'period' ([#189](https://github.com/akamai/terraform-provider-akamai/issues/189))
+    * Fail on attempted Zone deletion. Not supported.
+    
+## 1.2.1 (Feb 3, 2021)
+
+#### BUG FIXES:
+* PAPI -- Fixed crash caused by passing computed cpCode as a variable in rules to akamai_property
+* PAPI -- Deprecated "product" attribute in akamai_cp_code resource and changed it "product_id"
+
 ## 1.2.0 (Jan 14, 2021) Identity and Access Management support
 
 These are the operations supported in the Identity Management: User Administration API v2:

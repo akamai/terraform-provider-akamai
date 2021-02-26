@@ -54,7 +54,6 @@ The following arguments are supported:
 
 * `action` - (Required) The action to take when the specified reputation profile’s rule is triggered: `alert` to record the trigger event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
 
-
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:

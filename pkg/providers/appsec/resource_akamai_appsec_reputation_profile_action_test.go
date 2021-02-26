@@ -48,7 +48,7 @@ func TestAccAkamaiReputationProfileAction_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResReputationProfileAction/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_action.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_action.test", "id", "43253:7:AAAA_81230:1685099"),
 						),
 						ExpectNonEmptyPlan: true,
 					},

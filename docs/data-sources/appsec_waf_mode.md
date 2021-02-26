@@ -63,7 +63,6 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:

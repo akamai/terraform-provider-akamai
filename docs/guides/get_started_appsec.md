@@ -2,41 +2,41 @@
 layout: "akamai"
 page_title: "Akamai: Get Started with Application Security"
 description: |-
-  Get Started with Akamai Application Security using Terraform
+   Application Security in Akamai provider for Terraform
 ---
 
-# Get Started with Application Security
+# Application Security in Akamai provider for Terraform 
 
-The Akamai Provider for Terraform provides you the ability to automate the creation, deployment, and management of security configurations, custom rules, match targets and other application security resources.
+Application Security (appsec) in the Akamai Terraform provider (provider) enables application 
+security configurations including the following: 
+* custom rules.
+* match targets.
+* other application security resources that operate within the Cloud.
 
-To get more information about Application Security, see the [API documentation](https://developer.akamai.com/api/cloud_security/application_security/v1.html)
-
-## Configure the Terraform Provider
-
-Set up your .edgerc credential files as described in [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started), and include read-write permissions for the Application Security API. 
-
-1. Create a new folder called `terraform`
-1. Inside the new folder, create a new file called `akamai.tf`.
-1. Add the provider configuration to your `akamai.tf` file:
-
-```hcl
-provider "akamai" {
-	edgerc = "~/.edgerc"
-	config_section = "appsec"
-}
-```
+This Guide is for developers who:
+* are interested in implementing or updating an integration of Akamai functionality with Terraform.
+* already have some familiarity with Akamai.
+* understand how to create and edit the 'akamai.tf' file [see](get_started_akamai.md).
+ 
+For details about Akamai's application security, see the [API documentation](https://developer.akamai.com/api/cloud_security/application_security/v1.html)
 
 ## Prerequisites
 
-To manage Application Security resources, you need to obtain at a minimum the following information:
+To manage Application Security resources, you need to obtain information regarding your 
+existing security implementation, including the following information:
 
 * **Configuration ID**: The ID of the specific security configuration under which the resources are defined.
 
-For certain resources, you will also need other information, such as the version number of the security configuration. The process of obtaining this information is described below.
+In many cases, you need additional information, which often includes the 
+version number of the security configuration (see below).
 
-## Retrieving Security Configuration Information
+### Retrieve existing security configuration information
 
-You can obtain the name and ID of the existing security configurations using the [`akamai_appsec_configuration`](../data-sources/appsec_configuration.md) data source. This data source can be used with no additional parameters to output information about all security configurations associated with your account. Add the following to your `akamai.tf` file:
+You can obtain the name and ID of the existing security configurations by using the 
+[`akamai_appsec_configuration`](../data-sources/appsec_configuration.md) data source. 
+Using it without parameters outputs information about all security configurations associated with your account. 
+
+Add the following to your `akamai.tf` file:
 
 ```hcl
 data "akamai_appsec_configuration" "configurations" {
@@ -47,13 +47,30 @@ output "configuration_list" {
 }
 ```
 
-Once you have saved the file, switch to the terminal and initialize Terraform using the command:
+Save the resulting text file, and then use terminal to initialize Terraform with the command:
 
 ```bash
 $ terraform init
 ```
 
-This command will install the latest version of the Akamai provider, as well as any other providers necessary. To update the Akamai provider version after a new release, simply run `terraform init` again.
+This installs the latest version of the Akamai provider, along with any other providers necessary. 
+
+When you need to obtain an update of Akamai provider, run `terraform init` again.
+
+## Configure the Provider
+
+Set up your .edgerc credential files as described in [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started), and include read-write permissions for the Application Security API. 
+
+1. Create a new folder called `terraform`
+1. Inside the new folder, create a new file called `akamai.tf`.
+1. Add the provider configuration to your `akamai.tf` file:
+
+```hcl
+provider "akamai" {
+  edgerc = "~/.edgerc"
+  config_section = "appsec"
+}
+```
 
 ## Test Your Configuration
 
@@ -63,19 +80,26 @@ To test your configuration, use `terraform plan`:
 $ terraform plan
 ```
 
-This command will make Terraform create a plan for the work it will do based on the configuration file. This will not actually make any changes and is safe to run as many times as you like.
+This command causes Terraform to create a plan for the work it will do, based on the configuration file. This does *not* actually make any changes and is safe to run as many times as you like.
 
-## Apply Changes
+## Apply changes
 
-To actually display the configuration information, or to create or modify resources as described further in this guide, we need to instruct Terraform to `apply` the changes outlined in the plan. To do this, in the terminal, run the command:
+To display existing configuration information, or to create or modify resources as described in this guide, tell Terraform to `apply` the changes outlined in the plan by running the command:
 
 ```bash
 $ terraform apply
 ```
 
-Once this command has been executed, Terraform will display to the terminal window a formatted list of all existing security configurations under your account, including for each its name and ID (`config_id`), the number of its most recently created version, and the number of the version currently active in staging and production, if applicable.
+Terraform responds with a formatted list of all existing security configurations in your account, along with names and IDs (`config_id`), the most recently created version, and the version currently active in staging and production, if applicable.
 
-When you have identified the desired security configuration by name, you can load that specific configuration into Terraform's state. To do this, edit your `akamai.tf` file to add the `name` parameter to the `akamai_appsec_configuration` data block using the desired configuration name as its value, and change the `output` block so that it gives just the `config_id` attribute of the configuration. After these changes, the portion of your file below the initial `provider` block will look like this:
+When you have identified the desired security configuration by name, you can load that specific configuration into Terraform's state. 
+
+To load a specific configuration:
+1. Identify the desired security configuration by name, 
+1. Edit your `akamai.tf` file to add the desired `name` parameter to the `akamai_appsec_configuration` data block.
+1. Change the `output` block so that it gives just the `config_id` attribute of the configuration. 
+
+After these changes, the section of your file below the initial `provider` block looks like the following example:
 
 ```hcl
 data "akamai_appsec_configuration" "configuration" {
@@ -87,20 +111,22 @@ output "ID" {
 }
 ```
 
-If you run `terraform apply` on this file, you should see the `config_id` value of the specific configuration displayed on your terminal.
+After running `terraform apply` on this file, the terminal displays `config_id` with the configuration value.
 
-## Displaying Information About a Specific Configuration
+## Specify configuration to display
 
-The provider's [`akamai_appsec_export_configuration`](../data-sources/appsec_export_configuration.md) data source can diplay complete information about a specific configuration, including attributes such as custom rules, selected hostnames, etc. To show these two types of data for the most recent version of your selected configuration, add the following blocks to your `akamai.tf` file:
+The provider's [`akamai_appsec_export_configuration`](../data-sources/appsec_export_configuration.md) data source can display complete information about any configuration that you specify, including attributes like custom rules, and selected hostnames. 
+
+To show custom rule and selected hostname data for your most recent configuration, add the following blocks to your `akamai.tf` file:
 
 ```hcl
 data "akamai_appsec_export_configuration" "export" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   version = data.akamai_appsec_configuration.configuration.latest_version
   search = [
-	"customRules",
-	"selectedHosts"
-	]
+  "customRules",
+  "selectedHosts"
+  ]
 }
 
 output "exported_configuration_text" {
@@ -108,7 +134,10 @@ output "exported_configuration_text" {
 }
 ```
 
-Note that you can specify a version of the configuration other than the most recent version. See the [`akamai_configuration_version`](../data-sources/appsec_configuration_version.md) data source to list the available versions. Also, you can specify other kinds of data to be exported besides `customRules` and `selectedHosts`, using any of these search fields:
+NOTE: You can specify any available version of the configuration. 
+See the [`akamai_configuration_version`](../data-sources/appsec_configuration_version.md) 
+data source to list the available versions. You can also specify other kinds of data for export 
+using any of the following search fields:
 
 * customRules
 * matchTargets
@@ -121,9 +150,12 @@ Note that you can specify a version of the configuration other than the most rec
 
 Save the file and run `terraform apply` to see a formatted display of the selected data.
 
-## Adding a Hostname to the `selectedHosts` List
+## Add a hostname to the `selectedHosts` list
 
-You can modify the list of hosts protected by a given security configuration using the [`akamai_appsec_selected_hostnames`](../data-sources/appsec_selected_hostnames.md) resource. Add the following resource block to your `akamai.tf` file, replacing `example.com` with a hostname from the list reported in the `data_akamai_appsec_export_configuration` data source example above:
+You can modify the list of hosts protected by a specific security configuration using 
+the [`akamai_appsec_selected_hostnames`](../data-sources/appsec_selected_hostnames.md) resource. 
+Add the following resource block to your `akamai.tf` file, replacing `example.com` with a hostname 
+from the list reported in the `data_akamai_appsec_export_configuration` data source example above:
 
 ```hcl
 resource "akamai_appsec_selected_hostnames" "selected_hostnames_append" {
@@ -138,13 +170,17 @@ output "selected_hostnames_appended" {
 }
 ```
 
-Once you save the file and run `terraform apply`, Terraform will update the list of selected hosts and output the new list as the value `selected_hostnames_appended`. 
+When you save the file and run `terraform apply`, Terraform updates the list of selected hosts and outputs the new list as values for `selected_hostnames_appended`. 
 
-Note that you cannot modify a security configuration version that is currently active in staging or production, so the resource block above must specify an inactive version. Once you have completed any changes you want to make to a security configuration version, you can activate it in staging.
+NOTE: You cannot modify a security configuration version that is currently active in staging or production, so the resource block above must specify an inactive version. 
 
-## Activating a Security Configuration Version
+After completing your changes to a security configuration version, you can activate it in staging.
 
-You can activate a specific version of a security configuration using the [`akamai_appsec_activations`](../resources/appsec_activations.md) resource. Add the following resource block to your `akamai.tf` file, replacing the `version` value with the number of a currently inactive version, such as the one you modified using the `akamai_appsec_selected_hostnames` resource above.
+## Activate a configuration version
+
+To activate a specific configuration version, use the [`akamai_appsec_activations`](../resources/appsec_activations.md) resource. 
+
+Add the following resource block to your `akamai.tf` file, replacing the `version` value with the number of a currently inactive version, perhaps the one you modified using the `akamai_appsec_selected_hostnames` resource above.
 
 ```hcl
 resource "akamai_appsec_activations" "activation" {
@@ -156,56 +192,98 @@ resource "akamai_appsec_activations" "activation" {
 }
 ```
 
-Once you save the file and run `terraform apply`, Terraform will activate the security configuration version in staging. When the activation is complete, an email will be sent to any addresses specified in the `notification_emails` list.
+After you save the file and run `terraform apply`, Terraform activates the configuration version in staging. Upon completion of the activation, emails are sent to the addresses specified in the `notification_emails` list.
 
+## Importing a Resource
 
-## Beta Features
+Terraform allows you to add a resource to its state even if this resource was created outside of Terraform, for example by using the Control Center application. This allows you to keep Terraform's state in sync with the state of your actual infrastructure. To do this, use the `terraform import` command with a configuration file that includes a description of the existing resource. The `import` command requires that you specify both the `address` and `ID` of the resource. The `address` indicates the destination to which the resource should be imported; typically this is the resource type and local name of the resource as described in the local configuration file. For example, suppose a new security policy has been created outside of Terraform. You can use the information available in the Control Center to create a matching description of this policy in your local configuration file. Here is an example using fictitious values for the resource's parameters:
 
-Note that the following data sources and resources are currently in Beta, and their behavior or documentation may change in a future release:
+```hcl
+data "akamai_appsec_configuration" "configuration" {
+  name = "Configuration XYZ"
+}
+resource "akamai_appsec_security_policy" "security_policy_create" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  version = data.akamai_appsec_configuration.configuration.latest_version
+  default_settings = true
+  security_policy_name = "Security Policy XYZ"
+  security_policy_prefix = "XYZ"
+}
+```
+
+The `address` of this resource is found by combining the resource type and its local name within the configuration file: "akamai_appsec_security_policy.security_policy_create".
+
+The `ID` indicates the unique identifier for this resource within Terraform's state. Its format varies depending on the resource type, but in general it is formed by combining the values of the resource's required parameters with a `:` separator, starting with the more general parameters. Using the example above, assume that the security policy resource has been created with these values: configuration ID: 33673, latest_version: 55, and security policy ID: "XYZ_12345". In this example, the `ID` would be "33673:55:XYZ_12345". To import this resource into your local Terrform state, you would run this command:
+
+```bash
+$ terraform import akamai_appsec_security_policy.security_policy_create 33673:55:PL5_138221
+```
+
+## Beta features
+
+NOTE: The following data sources and resources are currently in Beta, and their behavior or documentation might change in a future release:
 
 ### Data Sources
+  * akamai_appsec_advanced_settings_logging
+  * akamai_appsec_advanced_settings_prefetch
+  * akamai_appsec_api_endpoints
+  * akamai_appsec_api_request_constraints
+  * akamai_appsec_attack_group_actions
+  * akamai_appsec_attack_group_condition_exception
+  * akamai_appsec_custom_deny
   * akamai_appsec_eval
+  * akamai_appsec_eval_hostnames
   * akamai_appsec_eval_rule_actions
   * akamai_appsec_eval_rule_condition_exception
+  * akamai_appsec_failover_hostnames
+  * akamai_appsec_hostname_coverage
+  * akamai_appsec_hostname_coverage_match_targets
+  * akamai_appsec_hostname_coverage_overlapping
   * akamai_appsec_ip_geo
-  * akamai_appsec_rule_actions
-  * akamai_appsec_rule_condition_exception
   * akamai_appsec_penalty_box
-  * akamai_appsec_security_policy_protections
   * akamai_appsec_rate_policies
   * akamai_appsec_rate_policy_actions
-  * akamai_appsec_rate_protections
-  * akamai_appsec_reputation_protections
-  * akamai_appsec_reputation_profiles
   * akamai_appsec_reputation_profile_actions
+  * akamai_appsec_reputation_profile_analysis
+  * akamai_appsec_reputation_profiles
+  * akamai_appsec_rule_actions
+  * akamai_appsec_rule_condition_exception
   * akamai_appsec_rule_upgrade_details
+  * akamai_appsec_security_policy_protections
+  * akamai_appsec_siem_definitions
+  * akamai_appsec_siem_settings
   * akamai_appsec_slow_post
   * akamai_appsec_slowpost_protections
+  * akamai_appsec_version_notes
   * akamai_appsec_attack_group_actions
   * akamai_appsec_waf_mode
-  * akamai_appsec_waf_protection
-  * akamai_appsec_attack_group_condition_exception
 
 ### Resources
+  * akamai_appsec_advanced_settings_logging
+  * akamai_appsec_advanced_settings_prefetch
+  * akamai_appsec_api_request_constraints
+  * akamai_appsec_attack_group_action
+  * akamai_appsec_attack_group_condition_exception
+  * akamai_appsec_custom_deny
   * akamai_appsec_eval
   * akamai_appsec_eval_rule_action
   * akamai_appsec_eval_rule_condition_exception
   * akamai_appsec_ip_geo
-  * akamai_appsec_rule_condition_exception
-  * akamai_appsec_rule_action
   * akamai_appsec_penalty_box
-  * akamai_appsec_security_policy_protections
   * akamai_appsec_rate_policy
   * akamai_appsec_rate_policy_action
   * akamai_appsec_rate_protection
-  * akamai_appsec_reputation_protection
   * akamai_appsec_reputation_profile
   * akamai_appsec_reputation_profile_action
+  * akamai_appsec_reputation_profile_analysis
+  * akamai_appsec_reputation_protection
+  * akamai_appsec_rule_action
+  * akamai_appsec_rule_condition_exception
   * akamai_appsec_rule_upgrade
+  * akamai_appsec_security_policy_protections
+  * akamai_appsec_siem_settings
   * akamai_appsec_slow_post
   * akamai_appsec_slowpost_protection
-  * akamai_appsec_attack_group_action
+  * akamai_appsec_version_notes
   * akamai_appsec_waf_mode
   * akamai_appsec_waf_protection
-  * akamai_appsec_attack_group_condition_exception
-

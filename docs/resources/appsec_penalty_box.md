@@ -46,10 +46,9 @@ The following arguments are supported:
 
 * `penalty_box_action` - (Required) The action to take when penalty box protection is triggered: `alert` to record the trigger event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action. Ignored if `penalty_box_protection` is set to `false`.
 
-
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display showing the updated penalty box protection settings.
+* None
 
