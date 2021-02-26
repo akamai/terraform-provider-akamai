@@ -57,13 +57,13 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createConfigurationClone.ConfigID = configid
+	createConfigurationClone.CreateFrom.ConfigID = configid
 
 	version, err := tools.GetIntValue("create_from_version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createConfigurationClone.CreateFromVersion = version
+	createConfigurationClone.CreateFrom.Version = version
 
 	ccr, err := client.CreateConfigurationClone(ctx, createConfigurationClone)
 	if err != nil {
