@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"net/http"
 	"regexp"
 	"strings"
@@ -71,6 +72,10 @@ func resourceProperty() *schema.Resource {
 		ReadContext:   resourcePropertyRead,
 		UpdateContext: resourcePropertyUpdate,
 		DeleteContext: resourcePropertyDelete,
+		CustomizeDiff: customdiff.All(
+			hostNamesCustomDiff,
+			computedValuesCustomDiff,
+		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyImport,
 		},
@@ -174,10 +179,47 @@ func resourceProperty() *schema.Resource {
 				},
 			},
 			"hostnames": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cname_from": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if len(i.(string)) == 0 {
+									return diag.Errorf("'cname_from' cannot be empty when hostnames block is defined - See new hostnames schema")
+								}
+								return nil
+							},
+						},
+						"cname_to": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if len(i.(string)) == 0 {
+									return diag.Errorf("'cname_to' cannot be empty when hostnames block is defined - See new hostnames schema")
+								}
+								return nil
+							},
+						},
+						"cert_provisioning_type": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if len(i.(string)) == 0 {
+									return diag.Errorf("'cert_provisioning_type' cannot be empty when hostnames block is defined - See new hostnames schema")
+								}
+								return nil
+							},
+						},
+						"cert_status": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem:     certStatus,
+						},
+					},
+				},
 			},
 
 			// Computed
@@ -248,6 +290,50 @@ func resourceProperty() *schema.Resource {
 	}
 }
 
+func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "hostNamesCustomDiff")
+	ctx = log.NewContext(ctx, logger)
+
+	o, n := d.GetChange("hostnames")
+	oldVal, ok := o.([]interface{})
+	if !ok {
+		logger.Errorf("error parsing local state for old value %s", oldVal)
+		return fmt.Errorf("cannot parse hostnames state properly %v", o)
+	}
+
+	newVal, ok := n.([]interface{})
+	if !ok {
+		logger.Errorf("error parsing local state for new value %s", newVal)
+		return fmt.Errorf("cannot parse hostnames state properly %v", n)
+	}
+	//PAPI doesn't allow hostnames to become empty if they already exist on server
+	//TODO Do we add support for hostnames patch operation to enable this?
+	if len(oldVal) > 0 && len(newVal) == 0 {
+		logger.Errorf("Hostnames exist on server and cannot be updated to empty for %d", d.Id())
+		return fmt.Errorf("atleast one hostname required to update existing list of hostnames associated to a property")
+	}
+	return nil
+}
+
+func computedValuesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "computedValuesCustomDiff")
+	ctx = log.NewContext(ctx, logger)
+
+	//These computed attributes can be changed on server through other clients and the state needs to be synced to local
+	for _, key := range []string{"latest_version", "staging_version", "production_version", "rule_errors", "rule_warnings"} {
+		if d.HasChange(key) || d.NewValueKnown(key) {
+			err := d.SetNewComputed(key)
+			if err != nil {
+				logger.Errorf("%s state failed to update with new value from server", key)
+				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			}
+			logger.Debugf("%s state will be updated with new value from server", key)
+		}
+	}
+	return nil
+}
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
@@ -285,7 +371,6 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	ProductID = tools.AddPrefix(ProductID, "prd_")
 
-	Hostnames := mapToHostnames(d.Get("hostnames").(map[string]interface{}))
 	RuleFormat := d.Get("rule_format").(string)
 
 	RulesJSON := []byte(d.Get("rules").(string))
@@ -337,11 +422,17 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductID:     ProductID,
 		LatestVersion: 1,
 	}
-
-	if len(Hostnames) > 0 {
-		if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
-			return diag.FromErr(err)
+	HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+	if err == nil {
+		Hostnames := make([]papi.Hostname, len(HostnameVal))
+		Hostnames = mapToHostnames(HostnameVal)
+		if len(Hostnames) > 0 {
+			if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
+				return diag.FromErr(err)
+			}
 		}
+	} else {
+		logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
 	}
 
 	if len(RulesJSON) > 0 {
@@ -421,7 +512,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"latest_version":     Property.LatestVersion,
 		"staging_version":    StagingVersion,
 		"production_version": ProductionVersion,
-		"hostnames":          hostnamesToMap(Hostnames),
+		"hostnames":          flattenHostnames(Hostnames),
 		"rules":              string(RulesJSON),
 		"rule_format":        RuleFormat,
 		"rule_errors":        papiErrorsToList(RuleErrors),
@@ -526,11 +617,18 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Hostnames
 	if d.HasChange("hostnames") {
-		Hostnames := mapToHostnames(d.Get("hostnames").(map[string]interface{}))
-
-		if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
-			d.Partial(true)
-			return diag.FromErr(err)
+		HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+		if err == nil {
+			Hostnames := make([]papi.Hostname, len(HostnameVal))
+			Hostnames = mapToHostnames(HostnameVal)
+			if len(Hostnames) > 0 {
+				if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
+					d.Partial(true)
+					return diag.FromErr(err)
+				}
+			}
+		} else {
+			logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
 		}
 	}
 
@@ -842,28 +940,24 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 	return nil
 }
 
-// Convert given hostnames to the map form that can be stored in a schema.ResourceData
-func hostnamesToMap(Hostnames []papi.Hostname) map[string]interface{} {
-	m := map[string]interface{}{}
-	for _, hn := range Hostnames {
-		m[hn.CnameFrom] = hn.CnameTo
-	}
-
-	return m
-}
-
-// Convert the given map from a schema.ResourceData to a slice of papi.Hostnames
-func mapToHostnames(given map[string]interface{}) []papi.Hostname {
+// Convert the given map from a schema.ResourceData to a slice of papi.Hostnames /input to papi request
+func mapToHostnames(givenList []interface{}) []papi.Hostname {
 	var Hostnames []papi.Hostname
 
-	for from, to := range given {
-		Hostnames = append(Hostnames, papi.Hostname{
-			CnameType: "EDGE_HOSTNAME",
-			CnameFrom: from,
-			CnameTo:   to.(string), // guaranteed by schema to be a string
-		})
+	for _, givenMap := range givenList {
+		var r = givenMap.(map[string]interface{})
+		cnameFrom := r["cname_from"]
+		cnameTo := r["cname_to"]
+		certProvisioningType := r["cert_provisioning_type"]
+		if len(r) != 0 {
+			Hostnames = append(Hostnames, papi.Hostname{
+				CnameType:            "EDGE_HOSTNAME",
+				CnameFrom:            cnameFrom.(string),
+				CnameTo:              cnameTo.(string), // guaranteed by schema to be a string
+				CertProvisioningType: certProvisioningType.(string),
+			})
+		}
 	}
-
 	return Hostnames
 }
 

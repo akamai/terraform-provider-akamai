@@ -7,98 +7,67 @@ description: |-
 
 # Get Started with GTM Domain Administration
 
-The Akamai Provider for Terraform provides you the ability to automate the creation, deployment, and management of GTM domain configuration and administration; as well as importing existing domains and contained objects.  
+The Akamai Provider for Terraform provides you the ability to automate the creation, deployment, and management of Global Traffic Management (GTM) domain configuration and administration; as well as importing existing domains and contained objects.  
 
 To get more information about Global Traffic Management, see:
 
-* [API documentation](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html)
-* How-to Guides
-    * [Official Documentation](https://learn.akamai.com/en-us/products/web_performance/global_traffic_management.html)
+* Developer - [API documentation](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html)
+* User Guide - [Official Documentation](https://learn.akamai.com/en-us/products/web_performance/global_traffic_management.html)
 
-## Configure the Terraform Provider
+## Prerequisites 
 
-Set up your credential files as described in [Get Started with Akamai APIs](https://developer.akamai.com/api/getting-started), and include authorization for the GTM Config API 
+Before starting with the DNS module, you need to:
 
-Next, we need to configure the provider with our credentials. This is done using a provider configuration block.
+1. Complete the tasks in [Akamai: Get Started with the Akamai Terraform Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have an API client and a valid `akamai.tf` Terraform configuration at this point before adding the GTM module configuration.
+2. Determine whether you want to import an existing DNS zone and records or create new ones.
+3. If you're importing an existing GTM domain, continue with [Import a GTM  domain](#import-a-gtm-domain).
+3. If you're creating a new GTM domain, continue with [Create a GTM domain
+](#create-a-gtm-domain).
 
-1. Create a new folder called `terraform`
-1. Inside the new folder, create a new file called `akamai.tf`.
-1. Add the provider configuration to your `akamai.tf` file:
+## Import a GTM domain
 
-```hcl
-provider "akamai" {
-	edgerc = "~/.edgerc"
-	config_section = "default"
-	gtm {
-		host = "..."
-		access_token = "..."
-		client_token = "..."
-		client_secret = "..."
-	}
-}
+You can migrate an existing GTM domain into your Terraform configuration using either a command line utility or step-by-step construction.
+
+### Import using the command line utility
+
+You can use the [Akamai CLI for Akamai Terraform Provider](https://github.com/akamai/cli-terraform) to generate a configuration for and import an existing GTM domain. With the package, you can generate:
+
+* a JSON-formatted list of all domain objects.
+* a Terraform configuration for the domain and contained objects.
+* a command line script to import all defined resources.
+
+Before using this CLI, keep the following in mind:
+
+* Download the existing GTM domain configuration to have as a backup and reference during an import. You can download these by using the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html) or the GTM app on [Control Center](https://control.akamai.com).  
+* Terraform limits the characters that can be part of its resource names. During construction of the resource configurations, invalid characters are replaced with underscore , '_'.
+* Terraform doesn't provide any state information during import. When you run `plan` and `apply` after an import, Terraform lists discrepencies and reconciles configurations and state. Any discrepencies clear following the first `apply`. 
+* After first time you run `plan` or `apply`, the `contract`, `group`, and `wait_on_complete` attributes are updated.
+* Run `terraform plan` after importing to validate the generated `tfstate` file.
+
+### Import using step-by-step construction
+
+To import using step-by-step construction, complete these tasks:
+
+1. Determine how you want to test your Terraform import. For example, you may want to set up your zone and recordset imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to your existing DNS zone configuration.
+1. Download the existing domain configuration and master file to have as a backup and reference during an import. You can download these from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html) or from the GTM app on [Control Center](https://control.akamai.com) .  
+1. Using the domain download as a reference, create a Terraform configuration representing the existing domain and all contained GTM objects. 
+1. Verify that your Terraform configuration addresses all required attributes and any optional and computed attributes you need.
+1. Run `terraform import`. This command imports the existing domain and contained objects one at a time based on the order in the configuration.
+1. Compare the downloaded domain file with the `terraform.tfstate` file to confirm that the domain and all objects are represented correctly.
+1. Run `terraform plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the Edge DNS backend.### Via Step By Step Construction
+1. Run `terraform plan` on the configuration. The plan should be empty. If not, correct accordingly and repeat until plan is empty and configuration is in sync with the GTM Backend.
+
+## Create a GTM Domain
+
+The Domain itself is represented by a [`akamai_gtm_domain` resource](../resources/gtm_domain.md). Add this new resource block to your `akamai.tf` file after the provider block. **Note:** the domain must be the first GTM resource created as it provides operating context for all other contained objects.
+
+To define the entire configuration, we start by opening the resource block and giving the domain a `name`. In this case, we’re going to use the name "example".
+
+Next, we set the required (`name`, `type`) and optional (`group_id`, `contract_id`, `email_notification_list`, `comment`) arguments.
+
+Once you’re done, your Domain configuration should look like this:
+
 ```
-
-## Prerequisites
-
-To create a domain there are several dependencies you must first meet:
-
-* **Contract ID**: The ID of the contract under which the domain and contained objects will live
-* **Group ID**: The ID of the group under which the domain and contained objects will live
-
-To import an existing domain and contained objects, you must also know the identifiers or the objects; e.g. domain name, datacenter id or object name in addition to the prior information.
-
-## Retrieving The Contract ID
-
-You can fetch your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). To fetch the default contract ID no attributes need to be set:
-
-```hcl
-data "akamai_contract" "default" {
-
-}
-```
-
-Alternatively, if you have multiple contracts, you can specify the `group` which contains it:
-
-```hcl
-data "akamai_contract" "default" {
-	group_name = "default"
-}
-```
-
-You can now refer to the contract ID using the `id` attribute: `data.akamai_contract.default.id`.
-
-## Retrieving The Group ID
-
-Similarly, you can fetch your group ID automatically using the [`akamai_group` data source](../data-sources/property_group.md). To fetch the default group ID no attributes other than contract need to be set:
-
-```hcl
-data "akamai_group" "default" {
-	contract_id = data.akamai_contract.default.id
-}
-``` 
-
-To fetch a specific group, you can specify the `name` argument:
-
-```hcl
-data "akamai_group" "default" {
-	name = "example"
-	contract_id = data.akamai_contract.default.id
-}
-```
-
-You can now refer to the group ID using the `id` attribute: `data.akamai_group.default.id`.
-
-## Creating a GTM Domain
-
-The domain itself is represented by an [`akamai_gtm_domain` resource](../resources/gtm_domain.md). Add this new resource block to your `akamai.tf` file after the provider block. Note: the domain must be the first GTM resource created as it provides operating context for all other contained objects.
-
-To define the entire configuration, we start by opening the resource block and giving the domain a name. In this case we’re going to use the name "example".
-
-Next, we set the required (domain, type) and optional (group ID, contract ID, email list, comment) arguments.
-
-Once you’re done, your domain configuration should look like this:
-
-```hcl
 resource "akamai_gtm_domain" "example" {
 	name = "example.akadns.net"                     # Domain Name
 	type = "weighted"				# Domain type
@@ -108,19 +77,19 @@ resource "akamai_gtm_domain" "example" {
 	comment = "example domain demo"
 }
 ```
-> **Note:** Notice that we’re using variables from the previous section to reference the group and contract IDs. These will automatically be replaced at runtime by Terraform with the actual values.
+> **Note:** Notice the use of variables from the previous section to reference the group and contract IDs. These will be replaced at runtime by Terraform with the actual values.
 
-## Creating a GTM Datacenter
+## Create a GTM Datacenter
 
-The datacenter itself is represented by an [`akamai_gtm_datacenter` resource](../resources/gtm_datacenter.md). Add this new block to your `akamai.tf` file after the provider block.
+The Datacenter itself is represented by a [`akamai_gtm_datacenter` resource](../resources/gtm_datacenter.md). Add this new block to your `akamai.tf` file after the provider block.
 
-To define the entire configuration, we start by opening the resource block and give it a name. In this case we’re going to use the name "example_dc".
+To define the entire configuration, we start by opening the resource block and giving it a name. In this case, we’re going to use the name "example_dc".
 
-Next, we set the required (domain name) and optional (nickname) arguments.
+Next, we set the required (`domain` name) and optional (`nickname`) arguments.
 
-Once you’re done, your datacenter configuration should look like this:
+Once done, your Datacenter configuration should look like this:
 
-```hcl
+```
 resource "akamai_gtm_datacenter" "example_dc" {
 	domain = akamai_gtm_domain.example.name		# domain
 	nickname = "datacenter_1"   			# Datacenter Nickname
@@ -128,17 +97,17 @@ resource "akamai_gtm_datacenter" "example_dc" {
 }
 ```
 
-## Creating a GTM Property
+## Create a GTM Property
 
-The property itself is represented by an [`akamai_gtm_property` resource](../resources/gtm_property.md). Add this new block to your `akamai.tf` file after the provider block.
+The Property itself is represented by a [`akamai_gtm_property` resource](../resources/gtm_property.md). Add this new block to your `akamai.tf` file after the provider block.
 
-To define the entire configuration, we start by opening the resource block and give it a name. In this case we’re going to use the name "example_prop".
+To define the entire configuration, we start by opening the resource block and giving it a name. In this case, we’re going to use the name "example_prop".
 
-Next, we set the required (domain name, property name, property type, traffic_targets, liveness_tests, score_aggregation_type, handout_limit, handout_mode) and optional (failover_delay, failback_delay) arguments.
+Next, we set the required (`domain` name, property `name`, property `type`, `traffic_target`s, `liveness_test`s, `score_aggregation_type`, `handout_limit`, `handout_mode`) and optional (`failover_delay`, `failback_delay`) arguments.
 
-Once you’re done, your property configuration should look like this:
+Once you’re done, your Property configuration should look like this:
 
-```hcl
+```
 resource "akamai_gtm_property" "example_prop" {
 	domain = akamai_gtm_domain.example.name         # domain
 	name = "example_prop_1"                         # Property Name
@@ -193,7 +162,7 @@ resource "akamai_gtm_property" "example_prop" {
 
 Once you have your configuration complete, save the file. Then switch to the terminal to initialize Terraform using the command:
 
-```bash
+```
 $ terraform init
 ```
 
@@ -203,23 +172,23 @@ This command will install the latest version of the Akamai Provider, as well as 
 
 To test your configuration, use `terraform plan`:
 
-```bash
+```
 $ terraform plan
 ```
 
-This command will make Terraform create a plan for the work it will do based on the configuration file. This will not actually make any changes and is safe to run as many times as you like.
+This command will make Terraform create a plan for the work set by the configuration file. This will not actually make any changes and is safe to run as many times.
 
 ## Apply Changes
 
-To actually create our domain, datacenter and property;, we need to instruct Terraform to apply the changes outlined in the plan. To do this, in the terminal, run the command:
+To actually create our Domain, Datacenter and Property, we need to instruct Terraform to apply the changes outlined in the plan. To do this, run the command:
 
-```bash
+```
 $ terraform apply
 ```
 
-Once this completes your domain, datacenter and property will have been created. You can verify this in [Akamai Control Center](https://control.akamai.com) or via the [Akamai CLI](https://developer.akamai.com/cli).
+Once this completes your Domain, Datacenter and Property will have been created. You can verify this in [Akamai Control Center](https://control.akamai.com) or via the [Akamai CLI](https://developer.akamai.com/cli).
 
-## Import
+## Import Existing GTM Resource
 
 Existing GTM resources may be imported using the following formats:
 
@@ -233,5 +202,6 @@ $ terraform import akamai_gtm_geomap.{{geomap resource name}} {{gtm domain name}
 $ terraform import akamai_gtm_asmap.{{asmap resource name}} {{gtm domain name}}:{{gtm asmap name}}
 ```
 
-[Migrating A GTM Domain](../guides/faq.md#migrating-a-gtm-domain-and-contained-objects-to-terraform) discusses GTM resource import in more detail.
+## GTM field status when running plan and apply
 
+When using `terraform plan` or `terraform apply`, Terraform presents fields defined in the configuration and all defined resource fields. Fields are either required, optional, or computed as specified in each resource description. Default values for fields will display if not explicitly configured. In many cases, the default will be zero, empty string, or empty list depending on the type. These default or empty values are informational and not included in resource updates.

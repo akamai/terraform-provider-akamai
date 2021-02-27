@@ -1,0 +1,54 @@
+
+    {
+        "configurations": [
+            {
+                "description": "Akamai Tools",
+                "fileType": "RBAC",
+                "id": 43253,
+                "latestVersion": 23,
+                "name": "Akamai Tools",
+                "targetProduct": "KSD"
+            },
+            {
+                "description": "Akamai Tools",
+                "fileType": "RBAC",
+                "id": 432531,
+                "latestVersion": 23,
+                "name": "Akamai Tools New",
+                "targetProduct": "KSD"
+            },
+            {
+                "fileType": "RBAC",
+                "id": 39085,
+                "latestVersion": 35,
+                "name": "Example for EDGE",
+                "targetProduct": "KSD"
+            },
+            {
+                "description": "Restrictions for WT events",
+                "fileType": "RBAC",
+                "id": 24728,
+                "latestVersion": 1,
+                "name": "WorldTour",
+                "targetProduct": "KSD"
+            },
+            {
+                "fileType": "WAF",
+                "id": 3644,
+                "latestVersion": 13,
+                "name": "WAF Security File",
+                "productionHostnames": [
+                    "*.bendell.ca",
+                    "bendell.ca",
+                    "www.biscuit.org.uk",
+                    "*.colinbendell.com",
+                    "www.colinbendell.com",
+                    "www.slackware.com",
+                    "arm.slackware.com"
+                ],
+                "productionVersion": 12,
+                "stagingVersion": 12,
+                "targetProduct": "KSD"
+            }
+        ]
+    }

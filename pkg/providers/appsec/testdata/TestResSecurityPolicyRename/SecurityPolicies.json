@@ -1,0 +1,20 @@
+[
+    {
+        "configId": 43253,
+        "policies": [
+            {
+                "policyId": "AAAA_81230",
+                "policyName": "akamaitools"
+            },
+            {
+                "policyId": "PLE_114049",
+                "policyName": "PLE Cloned Test for Launchpad 21"
+            },
+            {
+                "policyId": "PLD_113982",
+                "policyName": "PLD Cloned Test for Launchpad 21"
+            }
+        ],
+        "version": 15
+    }
+]

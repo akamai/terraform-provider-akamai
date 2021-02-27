@@ -40,10 +40,11 @@ output "custom_rule_rule_id" {
 
 ## Argument Reference
 
+The following arguments are supported:
+
 * `config_id` - (Required) The ID of the security configuration to use.
 
 * `custom_rule` - (Required) The name of a JSON file containing a custom rule definition ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postcustomrules)).
-
 
 ## Attribute Reference
 

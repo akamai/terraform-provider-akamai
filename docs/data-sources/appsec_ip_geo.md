@@ -69,5 +69,5 @@ In addition to the arguments above, the following attributes are exported:
 
 * `exception_ip_network_lists` - The network lists to be allowed regardless of `mode`, `geo_network_lists`, and `ip_network_lists` parameters.
 
-* `output_txt` - A tabular display of the IP/Geo firewall settings.
+* `output_text` - A tabular display of the IP/Geo firewall settings.
 

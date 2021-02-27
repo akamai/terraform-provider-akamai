@@ -225,6 +225,8 @@ func (req updatePropertyVersionHostnamesReqFields) Fields() log.Fields {
 	hostnames := map[string]string{}
 	for _, hn := range req.Hostnames {
 		hostnames[hn.CnameFrom] = hn.EdgeHostnameID
+		hostnames["cnameTo"] = hn.CnameTo
+		hostnames["certProvisioningType"] = hn.CertProvisioningType
 	}
 
 	return log.Fields{
@@ -241,6 +243,18 @@ func (res updatePropertyVersionHostnamesResFields) Fields() log.Fields {
 	hostnames := map[string]string{}
 	for _, hn := range res.Hostnames.Items {
 		hostnames[hn.CnameFrom] = hn.EdgeHostnameID
+		hostnames["cnameTo"] = hn.CnameTo
+		hostnames["certProvisioningType"] = hn.CertProvisioningType
+		certs := map[string]interface{}{}
+		certs["validation_cname.hostname"] =  hn.CertStatus.ValidationCname.Hostname
+		certs["validation_cname.target"] =  hn.CertStatus.ValidationCname.Hostname
+		if len(hn.CertStatus.Staging) > 0 {
+			certs["staging_status"] = hn.CertStatus.Staging[0].Status
+		}
+		if len(hn.CertStatus.Production) > 0 {
+			certs["production_status"] = hn.CertStatus.Production[0].Status
+		}
+		//hostnames["cert_status"] = certs
 	}
 
 	return log.Fields{

@@ -62,3 +62,4 @@ In addition to the arguments above, the following attributes are exported:
 * `enabled` - Either `true` or `false`, indicating whether penalty box protection is enabled.
 
 * `output_text` - A tabular display of the `action` and `enabled` information.
+

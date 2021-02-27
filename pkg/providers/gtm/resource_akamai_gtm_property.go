@@ -175,7 +175,7 @@ func resourceGTMv1Property() *schema.Resource {
 			},
 			"traffic_target": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -362,6 +362,21 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	propertyName, err := tools.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	propertyType, err := tools.GetStringValue("type", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	// Static properties cannot have traffic_targets. Non Static properties must
+	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
+	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (traffTargList != nil && len(traffTargList) > 0) {
+		logger.Errorf("Property %s Create failed. Static property cannot have traffic targets", propertyName)
+		return diag.FromErr(fmt.Errorf("Property Create failed. Static property cannot have traffic targets"))
+	}
+	if strings.ToUpper(propertyType) != "STATIC" && (err != nil || (traffTargList == nil || len(traffTargList) < 1)) {
+		logger.Errorf("Property %s Create failed. Property must have one or more traffic targets", propertyName)
+		return diag.FromErr(fmt.Errorf("Property Create failed. Property must have one or more traffic targets"))
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
@@ -596,9 +611,9 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	if err == nil {
 		prop.Name = vstr
 	}
-	vstr, err = tools.GetStringValue("type", d)
+	ptype, err := tools.GetStringValue("type", d)
 	if err == nil {
-		prop.Type = vstr
+		prop.Type = ptype
 	}
 	vstr, err = tools.GetStringValue("score_aggregation_type", d)
 	if err == nil {
@@ -794,7 +809,9 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
 	}
 
-	populateTrafficTargetObject(ctx, d, prop, m)
+	if strings.ToUpper(ptype) != "STATIC" {
+		populateTrafficTargetObject(ctx, d, prop, m)
+	}
 	populateStaticRRSetObject(ctx, meta, d, prop)
 	populateLivenessTestObject(ctx, meta, d, prop)
 
@@ -856,7 +873,9 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 			logger.Errorf("Invalid configuration: %s", err.Error())
 		}
 	}
-	populateTerraformTrafficTargetState(d, prop, m)
+	if strings.ToUpper(prop.Type) != "STATIC" {
+		populateTerraformTrafficTargetState(d, prop, m)
+	}
 	populateTerraformStaticRRSetState(d, prop, m)
 	populateTerraformLivenessTestState(d, prop, m)
 

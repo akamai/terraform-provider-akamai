@@ -1,0 +1,9 @@
+[
+    {
+        "type": "https://problems.luna.akamaiapis.net/appsec-configuration/error-types/UNAUTHORIZED",
+        "status": 403,
+        "title": "Unauthorized Access/Action",
+        "detail": "You do not have the necessary access to perform this operation.",
+        "instance": "https://problems.luna.akamaiapis.net/appsec-configuration/error-instances/eea381926983628b"
+    }
+]
