@@ -34,10 +34,15 @@ resource "akamai_property" "example" {
     product_id  = "prd_SPM"
     contract_id = var.contractid
     group_id    = var.groupid
-    hostnames = {
-      "example.org" = "example.org.edgesuite.net"
-      "www.example.org" = "example.org.edgesuite.net" 
-      "sub.example.org" = "sub.example.org.edgesuite.net"
+    hostnames {                                     # Hostname configuration
+      cname_from = "example.com"
+      cname_to = "example.com.edgekey.net"
+      cert_provisioning_type = "DEFAULT"
+    }
+    hostnames {
+      cname_from = "www.example.com"
+      cname_to = "example.com.edgesuite.net"
+      cert_provisioning_type = "CPS_MANAGED"
     }
     rule_format = "v2020-03-04"
     rules       = data.akamai_property_rules_template.example.json
