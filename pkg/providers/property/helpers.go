@@ -27,6 +27,8 @@ var certStatus = &schema.Resource{
 }
 
 // Convert given hostnames to the map form that can be stored in a schema.ResourceData
+// Setting only statuses for default certs if they exist
+// TODO Set certstatus object for cps managed certs and default certs once PAPI adds support
 func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 	var res []map[string]interface{}
 	var c []map[string]interface{}

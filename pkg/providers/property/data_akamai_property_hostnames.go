@@ -13,18 +13,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 )
 
-var hostnameElements = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"cname_type":             {Type: schema.TypeString, Computed: true},
-		"edge_hostname_id":       {Type: schema.TypeString, Computed: true},
-		"cname_from":             {Type: schema.TypeString, Computed: true},
-		"cname_to":               {Type: schema.TypeString, Computed: true},
-		"cert_provisioning_type": {Type: schema.TypeString, Computed: true},
-		"staging_status":         {Type: schema.TypeString, Computed: true},
-		"production_status":      {Type: schema.TypeString, Computed: true},
-	},
-}
-
 func dataSourceAkamaiPropertyHostnames() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataAkamaiPropertyHostnamesRead,
@@ -55,7 +43,20 @@ func dataSourceAkamaiPropertyHostnames() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "List of hostnames",
-				Elem:        hostnameElements,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cname_type":             {Type: schema.TypeString, Computed: true},
+						"edge_hostname_id":       {Type: schema.TypeString, Computed: true},
+						"cname_from":             {Type: schema.TypeString, Computed: true},
+						"cname_to":               {Type: schema.TypeString, Computed: true},
+						"cert_provisioning_type": {Type: schema.TypeString, Computed: true},
+						"cert_status": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem:     certStatus,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -129,33 +130,9 @@ func dataAkamaiPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData
 	// setting concatenated id to uniquely identify data
 	d.SetId(propertyID + strconv.Itoa(version))
 
-	if err := d.Set("hostnames", slicePropertyHostnames(hostnamesResponse)); err != nil {
+	if err := d.Set("hostnames", flattenHostnames(hostnamesResponse.Hostnames.Items)); err != nil {
 		return diag.Errorf("error setting hostnames: %s", err)
 	}
 
 	return nil
-}
-
-func slicePropertyHostnames(hostnamesResponse *papi.GetPropertyVersionHostnamesResponse) []map[string]interface{} {
-
-	var hostnames []map[string]interface{}
-	for _, item := range hostnamesResponse.Hostnames.Items {
-		hostname := map[string]interface{}{
-			"cname_type":             item.CnameType,
-			"edge_hostname_id":       item.EdgeHostnameID,
-			"cname_from":             item.CnameFrom,
-			"cname_to":               item.CnameTo,
-			"cert_provisioning_type": item.CertProvisioningType,
-		}
-		//Setting statuses for default certs if they exist
-		// TODO Set certstatus object for cps managed certs and default certs once PAPI adds support
-		if len(item.CertStatus.Staging) > 0 {
-			hostname["staging_status"] = item.CertStatus.Staging[0].Status
-		}
-		if len(item.CertStatus.Production) > 0 {
-			hostname["production_status"] = item.CertStatus.Production[0].Status
-		}
-		hostnames = append(hostnames, hostname)
-	}
-	return hostnames
 }
