@@ -70,6 +70,7 @@ func ExpectGetPropertyVersionHostnames(client *mockpapi, PropertyID, GroupID, Co
 		GroupID:         GroupID,
 		ContractID:      ContractID,
 		PropertyVersion: PropertyVersion,
+		IncludeCertStatus: true,
 	}
 
 	fn := func(context.Context, papi.GetPropertyVersionHostnamesRequest) (*papi.GetPropertyVersionHostnamesResponse, error) {

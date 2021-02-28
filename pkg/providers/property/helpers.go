@@ -39,7 +39,7 @@ func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 		m["cert_provisioning_type"] = hn.CertProvisioningType
 		certs := map[string]interface{}{}
 		certs["hostname"] = hn.CertStatus.ValidationCname.Hostname
-		certs["target"] = hn.CertStatus.ValidationCname.Hostname
+		certs["target"] = hn.CertStatus.ValidationCname.Target
 		if len(hn.CertStatus.Staging) > 0 {
 			certs["staging_status"] = hn.CertStatus.Staging[0].Status
 		}

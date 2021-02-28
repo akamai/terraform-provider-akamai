@@ -820,6 +820,7 @@ func fetchPropertyHostnames(ctx context.Context, client papi.PAPI, Property papi
 		GroupID:         Property.GroupID,
 		ContractID:      Property.ContractID,
 		PropertyVersion: Property.LatestVersion,
+		IncludeCertStatus: true,
 	}
 
 	logger := log.FromContext(ctx).WithFields(logFields(req))

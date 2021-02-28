@@ -35,7 +35,6 @@ func dataSourceAkamaiPropertyHostnames() *schema.Resource {
 			},
 			"version": {
 				Type:        schema.TypeInt,
-				Optional:    true,
 				Computed:    true,
 				Description: "This is a computed value - provider will always use 'latest' version, providing own version number is not supported",
 			},
@@ -89,11 +88,8 @@ func dataAkamaiPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	propertyID = tools.AddPrefix(propertyID, "prp_")
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
 		PropertyID: propertyID,
 		ContractID: contractID,
@@ -103,7 +99,7 @@ func dataAkamaiPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version = latestVersion.Version.PropertyVersion
+	version := latestVersion.Version.PropertyVersion
 	contractID = latestVersion.ContractID
 	groupID = latestVersion.GroupID
 
@@ -116,6 +112,7 @@ func dataAkamaiPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData
 		GroupID:         groupID,
 		ContractID:      contractID,
 		PropertyVersion: version,
+		IncludeCertStatus: true,
 	}
 
 	log.Debug("fetching property hostnames")
