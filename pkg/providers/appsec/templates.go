@@ -123,7 +123,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 
 	//Extensions
 	otm["apiEndpointsDS"] = &OutputTemplate{TemplateName: "apiEndpointsDS", TableTitle: "ID|Endpoint Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .APIEndpoints}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
-	otm["AttackGroupConditionException"] = &OutputTemplate{TemplateName: "AttackGroupConditionException", TableTitle: "Conditions|Exceptions|Advanced Exceptions", TemplateType: "TABULAR", TemplateString: "{{$length := len .AdvancedExceptionsList.Conditions}}{{ if eq $length 0 }}False{{else}}True{{end}}|{{if .Exception}}True{{else}}False{{end}}|{{if  .AdvancedExceptionsList }}True{{else}}False{{end}}"}
+	otm["AttackGroupConditionException"] = &OutputTemplate{TemplateName: "AttackGroupConditionException", TableTitle: "Exceptions|Advanced Exceptions", TemplateType: "TABULAR", TemplateString: "{{ if .Exception }}True{{else}}False{{end}}|{{if .AdvancedExceptionsList}}True{{else}}False{{end}}"}
 
 	otm["policyApiEndpointsDS"] = &OutputTemplate{TemplateName: "policyApiEndpointsDS", TableTitle: "ID|Endpoint Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .APIEndpoints}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["apiHostnameCoverageDS"] = &OutputTemplate{TemplateName: "apiHostnameCoverageDS", TableTitle: "Config ID|Config Name|Version|Status|Has Match Target|Hostname", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .HostnameCoverage}}{{if $index}},{{end}}{{.Configuration.ID}}|{{.Configuration.Name}}|{{.Configuration.Version}}|{{.Status}}|{{.HasMatchTarget}}|{{.Hostname}}{{end}}"}
