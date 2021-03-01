@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceNetworkList() *schema.Resource {
@@ -20,6 +21,14 @@ func dataSourceNetworkList() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					IP,
+					Geo,
+				}, false),
 			},
 			"uniqueid": {
 				Type:        schema.TypeString,
@@ -34,6 +43,11 @@ func dataSourceNetworkList() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Text Export representation",
+			},
+			"list": {
+				Type:     schema.TypeList,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Computed: true,
 			},
 		},
 	}
@@ -51,6 +65,12 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	getNetworkList.Name = name
+
+	_type, err := tools.GetStringValue("type", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	getNetworkList.Type = _type
 
 	networklist, err := client.GetNetworkLists(ctx, getNetworkList)
 	if err != nil {
@@ -72,6 +92,24 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	ids := make([]string, 0, len(networklist.NetworkLists))
+	for _, networkList := range networklist.NetworkLists {
+		ids = append(ids, networkList.UniqueID)
+	}
+	if err := d.Set("list", ids); err != nil {
+		logger.Errorf("error setting 'list': %s", err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "networkListsDS", networklist)
+	if err == nil {
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	return nil

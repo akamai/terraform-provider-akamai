@@ -46,9 +46,9 @@ The following arguments are supported:
 
 * `mode` - (Required) A string specifying the interpretation of the `hostnames` parameter. Must be one of the following:
 
-  * Append - the hosts listed in `hostnames` will be added to the current list of selected hostnames
-  * Replace - the hosts listed in `hostnames` will overwrite the current list of selected hostnames
-  * Remove - the hosts listed in `hostnames` will be removed from the current list of select hostnames
+  * APPEND - the hosts listed in `hostnames` will be added to the current list of selected hostnames
+  * REPLACE - the hosts listed in `hostnames` will overwrite the current list of selected hostnames
+  * REMOVE - the hosts listed in `hostnames` will be removed from the current list of select hostnames
 
 # Attributes Reference
 
