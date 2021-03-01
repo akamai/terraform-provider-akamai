@@ -101,6 +101,7 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 	if err := d.Set("list", ids); err != nil {
 		logger.Errorf("error setting 'list': %s", err.Error())
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
