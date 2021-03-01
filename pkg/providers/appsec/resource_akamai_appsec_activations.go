@@ -169,7 +169,15 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	removeActivations := appsec.RemoveActivationsRequest{}
 	createActivationsreq := appsec.GetActivationsRequest{}
 
-	if d.Id() == "" {
+	if d.Id() == "" || d.Id() == "none" {
+		return nil
+	}
+
+	oldVersion, newVersion := d.GetChange("version")
+
+	if oldVersion.(int) != newVersion.(int) {
+		// nothing to do!
+		d.SetId("")
 		return nil
 	}
 
@@ -252,6 +260,10 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
 
 	getActivations := appsec.GetActivationsRequest{}
+
+	if d.Id() == "" || d.Id() == "none" {
+		return nil
+	}
 
 	activationID, errconv := strconv.Atoi(d.Id())
 
