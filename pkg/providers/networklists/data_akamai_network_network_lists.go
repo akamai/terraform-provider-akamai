@@ -74,5 +74,15 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "networkListsDS", networklist)
+	if err == nil {
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+	}
+
 	return nil
 }
