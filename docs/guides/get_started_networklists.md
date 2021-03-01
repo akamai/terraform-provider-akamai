@@ -1,6 +1,6 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Get Started with Network Lists
+page_title: "Akamai: Get Started with Network Lists"
 description: |-
   Get Started with Akamai Network Lists using Terraform
 ---
@@ -71,11 +71,11 @@ $ terraform apply
 
 Once this command has been executed, Terraform will display to the terminal window a formatted display of the ID, name, type, elementCount, syncPoint and readonly status of the existing network lists. The `json` attribute of the `networklist_network_lists` data source will produce a JSON-formatted output containing similar information.
 
-You can filter the network list output by supplying additional parameters to the `networklist_network_lists` data source. The `names` parameter will limit the output to those lists in a list that you supply, while the `type` parameter can be used to display only `IP` or `GEO` network lists. Add the following example of filtering to your `config.tf` file:
+You can filter the network list output by supplying additional parameters to the `networklist_network_lists` data source. The `name` and `type` parameters will limit the output to the list with the specified values. Add the following example of filtering to your `config.tf` file:
 
 ```hcl
 data "akamai_networklist_network_lists" "network_lists_filter" {
-  names = ["test-network-list1", "test-network-list2"]
+  name = "test-network-list1"
   type = "IP"
 }
 ```
@@ -102,10 +102,10 @@ Test your configuration by running `terraform plan` as above. You should see a f
 
 ## Activate a Network List
 
-You can activate a network list by using the `akamai_networklist_activation` resource. Add the following to your `config.tf` file:
+You can activate a network list by using the `akamai_networklist_activations` resource. Add the following to your `config.tf` file:
 
 ```hcl
-resource "akamai_networklist_activation" "activation" {
+resource "akamai_networklist_activations" "activation" {
   network_list_id = data.akamai_networklist_network_lists.network_lists_filter.list[0]
   network = "STAGING"
   notes  = "TEST Notes"
