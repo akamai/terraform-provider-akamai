@@ -56,4 +56,4 @@ This data source returns these attributes:
 
 If your `cert_provisioning_type = "DEFAULT"`, you need to perform domain validation to prove to the certificate authority that you control the domain and are authorized to create certificates for it.
 
-In your DNS configuration, create a CNAME record and map the `object.cert_status.hostname` value to the `cert_status.target` value.
+In your DNS configuration, create a CNAME record and map the `cert_status.hostname` value to the `cert_status.target` value.
