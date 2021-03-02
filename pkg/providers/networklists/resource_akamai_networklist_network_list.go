@@ -133,7 +133,13 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListUpdate")
 
 	updateNetworkList := networklists.UpdateNetworkListRequest{}
-	updateNetworkList.Name = d.Id()
+	updateNetworkList.UniqueID = d.Id()
+
+	name, err := tools.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateNetworkList.Name = name
 
 	listType, err := tools.GetStringValue("type", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
