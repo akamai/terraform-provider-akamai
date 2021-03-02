@@ -8,15 +8,13 @@ description: |-
 
 # akamai_property_hostnames
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this data source. See the [migration guide](../guides/1.0_migration.md) for details. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this data source. See the [migration guide](../guides/1.0_migration.md) for details.
 
-Use the `akamai_property_hostnames` data source to query and retrieve the hostnames of 
-an existing property. It also displays statuses of certificates associated to each hostname. This data source lets you search across the contracts 
-and groups you have access to.
+Use the `akamai_property_hostnames` data source to query and retrieve hostnames and their certificate statuses for an existing property. This data source lets you search across the contracts and groups you have access to.
 
 ## Basic usage
 
-This example returns the hostnames of a property based on the selected contract and group:
+This example returns the property's hostnames based on the selected contract and group:
 
 ```hcl
 datasource "akamai_property_hostnames" "my-example" {
@@ -43,15 +41,13 @@ This data source supports these arguments:
 This data source returns these attributes:
 
 * `hostnames` - A list of hostnames for the property, including:
-  * `cname_type` - A string containing cname type value of hostname.
-  * `edge_hostname_id` - A string containing the edge hostname id including the `ehn_ `prefix of hostname.
-  * `cname_from` - A string containing cname_from value of hostname.
-  * `cname_to` - A string containing cname_to value of hostname.
-  * `cert_provisioning_type` - A string containing cert_provisioning_type value of hostname.
-  * `cert_status` - A list of cert statuses if they exist, including:
-    * `target` - A string containing target value in the certificate.
-    * `hostname` - A string containing hostname value in the certificate.
-    * `production_status` - A string containing production status of certificate.
-    * `staging_status` - A string containing staging status of certificate.
-  
- 
+  * `cname_type` - A string containing the hostname's cname type value.
+  * `edge_hostname_id` - The edge hostname's unique ID, including the `ehn_` prefix.
+  * `cname_from` - A string containing the original origin's hostname.
+  * `cname_to` - A string containing the hostname for edge content.
+  * `cert_provisioning_type` - The certificate’s provisioning type, either the default `CPS_MANAGED` type for the custom certificates you provision with the Certificate Provisioning System (CPS), or `DEFAULT` for certificates provisioned automatically.
+  * `cert_status` - If applicable, this shows a list of certificate statuses, including:
+    * `target` - The destination part of the CNAME record used to validate the certificate’s domain.
+    * `hostname` - The hostname part of the CNAME record used to validate the certificate’s domain.
+    * `production_status` - A string containing the status of the certificate deployment on the production network.
+    * `staging_status` - A string containing the status of the certificate deployment on the staging network.
