@@ -28,7 +28,7 @@ func resourceNetworkListSubscription() *schema.Resource {
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"unique_ids": {
+			"network_list_ids": {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
@@ -56,7 +56,7 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 	extractString := strings.Join(getNetworkListSubscription.Recipients, " ")
 	recSHA := tools.GetSHAString(extractString)
 
-	uniqueids := d.Get("unique_ids").([]interface{})
+	uniqueids := d.Get("network_list_ids").([]interface{})
 	uids := make([]string, 0, len(uniqueids))
 
 	for _, h := range uniqueids {
@@ -98,7 +98,7 @@ func resourceNetworkListSubscriptionDelete(ctx context.Context, d *schema.Resour
 	//	removeNetworkListSubscription.Recipients = tools.SetToStringSlice(d.Get("recipients").(*schema.Set))
 	//	tools.SetToStringSlice(d.Get("notification_recipients").(*schema.Set))
 
-	uniqueids := d.Get("unique_ids").([]interface{})
+	uniqueids := d.Get("network_list_ids").([]interface{})
 	uids := make([]string, 0, len(uniqueids))
 
 	for _, h := range uniqueids {
@@ -136,7 +136,7 @@ func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.Resour
 	extractString := strings.Join(updateNetworkListSubscription.Recipients, " ")
 	recSHA := tools.GetSHAString(extractString)
 
-	uniqueids := d.Get("unique_ids").([]interface{})
+	uniqueids := d.Get("network_list_ids").([]interface{})
 	uids := make([]string, 0, len(uniqueids))
 
 	for _, h := range uniqueids {
