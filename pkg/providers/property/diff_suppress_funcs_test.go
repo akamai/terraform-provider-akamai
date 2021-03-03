@@ -18,7 +18,7 @@ func TestCompareRules(t *testing.T) {
 				AdvancedOverride: "AAA",
 				Behaviors: []papi.RuleBehavior{
 					{
-						Locked: "locked",
+						Locked: false,
 						Name:   "BEH1",
 						Options: map[string]interface{}{
 							"opt1": 123,
@@ -31,13 +31,13 @@ func TestCompareRules(t *testing.T) {
 				Comments: "comment",
 				Criteria: []papi.RuleBehavior{
 					{
-						Locked:  "locked",
+						Locked:  false,
 						Name:    "CRIT1",
 						Options: nil,
 						UUID:    "1234",
 					},
 					{
-						Locked:  "locked",
+						Locked:  false,
 						Name:    "CRIT2",
 						Options: nil,
 						UUID:    "1234",
@@ -73,7 +73,7 @@ func TestCompareRules(t *testing.T) {
 				AdvancedOverride: "AAA",
 				Behaviors: []papi.RuleBehavior{
 					{
-						Locked: "locked",
+						Locked: false,
 						Name:   "BEH1",
 						Options: map[string]interface{}{
 							"opt1": 123,
@@ -86,13 +86,13 @@ func TestCompareRules(t *testing.T) {
 				Comments: "comment",
 				Criteria: []papi.RuleBehavior{
 					{
-						Locked:  "locked",
+						Locked:  false,
 						Name:    "CRIT1",
 						Options: nil,
 						UUID:    "1234",
 					},
 					{
-						Locked:  "locked",
+						Locked:  false,
 						Name:    "CRIT2",
 						Options: nil,
 						UUID:    "1234",
@@ -133,7 +133,7 @@ func TestCompareRules(t *testing.T) {
 				AdvancedOverride: "AAA",
 				Behaviors: []papi.RuleBehavior{
 					{
-						Locked: "locked",
+						Locked: false,
 						Name:   "BEH2",
 						Options: map[string]interface{}{
 							"opt1": 123,
@@ -142,7 +142,7 @@ func TestCompareRules(t *testing.T) {
 						UUID: "4535543",
 					},
 					{
-						Locked: "locked",
+						Locked: false,
 						Name:   "BEH1",
 						Options: map[string]interface{}{
 							"opt1": 123,
@@ -155,13 +155,13 @@ func TestCompareRules(t *testing.T) {
 				Comments:  "comment",
 				Criteria: []papi.RuleBehavior{
 					{
-						Locked:  "locked",
+						Locked:  false,
 						Name:    "CRIT2",
 						Options: nil,
 						UUID:    "1234",
 					},
 					{
-						Locked:  "locked",
+						Locked:  false,
 						Name:    "CRIT1",
 						Options: nil,
 						UUID:    "1234",
@@ -198,7 +198,7 @@ func TestCompareRules(t *testing.T) {
 				AdvancedOverride: "AAA",
 				Behaviors: []papi.RuleBehavior{
 					{
-						Locked: "locked",
+						Locked: false,
 						Name:   "BEH1",
 						Options: map[string]interface{}{
 							"opt1": 123,
@@ -207,7 +207,7 @@ func TestCompareRules(t *testing.T) {
 						UUID: "4535543",
 					},
 					{
-						Locked: "locked",
+						Locked: false,
 						Name:   "BEH2",
 						Options: map[string]interface{}{
 							"opt1": 123,
@@ -220,13 +220,13 @@ func TestCompareRules(t *testing.T) {
 				Comments:  "comment",
 				Criteria: []papi.RuleBehavior{
 					{
-						Locked:  "locked",
+						Locked:  false,
 						Name:    "CRIT1",
 						Options: nil,
 						UUID:    "1234",
 					},
 					{
-						Locked:  "locked",
+						Locked:  false,
 						Name:    "CRIT2",
 						Options: nil,
 						UUID:    "1234",
@@ -270,7 +270,7 @@ func TestCompareRules(t *testing.T) {
 					{
 						Behaviors: []papi.RuleBehavior{
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -279,7 +279,7 @@ func TestCompareRules(t *testing.T) {
 								UUID: "4535543",
 							},
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -294,7 +294,7 @@ func TestCompareRules(t *testing.T) {
 					{
 						Behaviors: []papi.RuleBehavior{
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -303,7 +303,7 @@ func TestCompareRules(t *testing.T) {
 								UUID: "4535543",
 							},
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -337,7 +337,7 @@ func TestCompareRules(t *testing.T) {
 					{
 						Behaviors: []papi.RuleBehavior{
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -346,7 +346,7 @@ func TestCompareRules(t *testing.T) {
 								UUID: "4535543",
 							},
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -361,7 +361,7 @@ func TestCompareRules(t *testing.T) {
 					{
 						Behaviors: []papi.RuleBehavior{
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -370,7 +370,7 @@ func TestCompareRules(t *testing.T) {
 								UUID: "4535543",
 							},
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -408,7 +408,7 @@ func TestCompareRules(t *testing.T) {
 					{
 						Behaviors: []papi.RuleBehavior{
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -417,7 +417,7 @@ func TestCompareRules(t *testing.T) {
 								UUID: "4535543",
 							},
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -432,7 +432,7 @@ func TestCompareRules(t *testing.T) {
 					{
 						Behaviors: []papi.RuleBehavior{
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -441,7 +441,7 @@ func TestCompareRules(t *testing.T) {
 								UUID: "4535543",
 							},
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -475,7 +475,7 @@ func TestCompareRules(t *testing.T) {
 					{
 						Behaviors: []papi.RuleBehavior{
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -484,7 +484,7 @@ func TestCompareRules(t *testing.T) {
 								UUID: "4535543",
 							},
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -499,7 +499,7 @@ func TestCompareRules(t *testing.T) {
 					{
 						Behaviors: []papi.RuleBehavior{
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -508,7 +508,7 @@ func TestCompareRules(t *testing.T) {
 								UUID: "4535543",
 							},
 							{
-								Locked: "locked",
+								Locked: false,
 								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
@@ -543,7 +543,7 @@ func TestCompareRules(t *testing.T) {
 				AdvancedOverride: "AAA",
 				Behaviors: []papi.RuleBehavior{
 					{
-						Locked: "locked",
+						Locked: false,
 						Name:   "BEH1",
 						Options: map[string]interface{}{
 							"opt1": 123,
@@ -552,7 +552,7 @@ func TestCompareRules(t *testing.T) {
 						UUID: "4535543",
 					},
 					{
-						Locked: "locked",
+						Locked: false,
 						Name:   "BEH2",
 						Options: map[string]interface{}{
 							"opt1": 123,
@@ -567,7 +567,7 @@ func TestCompareRules(t *testing.T) {
 				AdvancedOverride: "AAA",
 				Behaviors: []papi.RuleBehavior{
 					{
-						Locked: "locked",
+						Locked: false,
 						Name:   "BEH1",
 						Options: map[string]interface{}{
 							"opt1": 123,
