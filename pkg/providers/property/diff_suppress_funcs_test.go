@@ -152,7 +152,7 @@ func TestCompareRules(t *testing.T) {
 					},
 				},
 				Children: []papi.Rules{},
-				Comments:  "comment",
+				Comments: "comment",
 				Criteria: []papi.RuleBehavior{
 					{
 						Locked:  false,
@@ -217,7 +217,7 @@ func TestCompareRules(t *testing.T) {
 					},
 				},
 				Children: []papi.Rules{},
-				Comments:  "comment",
+				Comments: "comment",
 				Criteria: []papi.RuleBehavior{
 					{
 						Locked:  false,
@@ -316,7 +316,7 @@ func TestCompareRules(t *testing.T) {
 						Name:     "RULE 2",
 					},
 				},
-				Comments:        "comment",
+				Comments:       "comment",
 				Criteria:       []papi.RuleBehavior{},
 				CriteriaLocked: true,
 				CustomOverride: &papi.RuleCustomOverride{
@@ -383,7 +383,7 @@ func TestCompareRules(t *testing.T) {
 						Name:     "RULE 2",
 					},
 				},
-				Comments:        "comment",
+				Comments:       "comment",
 				Criteria:       []papi.RuleBehavior{},
 				CriteriaLocked: true,
 				CustomOverride: &papi.RuleCustomOverride{
@@ -454,7 +454,7 @@ func TestCompareRules(t *testing.T) {
 						Name:     "RULE 1",
 					},
 				},
-				Comments:        "comment",
+				Comments:       "comment",
 				Criteria:       []papi.RuleBehavior{},
 				CriteriaLocked: true,
 				CustomOverride: &papi.RuleCustomOverride{
@@ -521,7 +521,7 @@ func TestCompareRules(t *testing.T) {
 						Name:     "RULE 2",
 					},
 				},
-				Comments:        "comment",
+				Comments:       "comment",
 				Criteria:       []papi.RuleBehavior{},
 				CriteriaLocked: true,
 				CustomOverride: &papi.RuleCustomOverride{

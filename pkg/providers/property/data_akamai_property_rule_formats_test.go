@@ -27,8 +27,8 @@ func Test_readPropertyRuleFormats(t *testing.T) {
 					Config: loadFixtureString("testdata/TestDSPropertyRuleFormats/rule_formats.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_property_rule_formats.akarulesformats", "id", "rule_format"),
-						resource.TestCheckResourceAttr("data.akamai_property_rule_formats.akarulesformats","rule_format.0", "latest"),
-						resource.TestCheckResourceAttr("data.akamai_property_rule_formats.akarulesformats","rule_format.1", "v2015-08-08"),
+						resource.TestCheckResourceAttr("data.akamai_property_rule_formats.akarulesformats", "rule_format.0", "latest"),
+						resource.TestCheckResourceAttr("data.akamai_property_rule_formats.akarulesformats", "rule_format.1", "v2015-08-08"),
 					),
 				}},
 			})
