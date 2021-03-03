@@ -3,8 +3,8 @@ provider "akamai" {
 }
 
 
-resource "akamai_networklist_network_list_subscription" "test" {
+resource "akamai_networklist_subscription" "test" {
    recipients = ["test@email.com"]
-    network_list_ids = ["79536_MARTINNETWORKLIST"] 
+    network_list = ["79536_MARTINNETWORKLIST"] 
    }
 

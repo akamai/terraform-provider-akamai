@@ -48,7 +48,7 @@ func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResNetworkListSubscription/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_networklist_network_list_subscription.test", "id", "f7a36129f691baa1201d963b8537eb69caa28863:dd6085a7b8c8f8efaecbd420aff85a3e865ad5ca"),
+							resource.TestCheckResourceAttr("akamai_networklist_subscription.test", "id", "f7a36129f691baa1201d963b8537eb69caa28863:dd6085a7b8c8f8efaecbd420aff85a3e865ad5ca"),
 						),
 					},
 				},
