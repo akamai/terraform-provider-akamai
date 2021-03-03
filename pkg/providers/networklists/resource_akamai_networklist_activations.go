@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -24,7 +23,7 @@ func resourceActivations() *schema.Resource {
 		ReadContext:   resourceActivationsRead,
 		DeleteContext: resourceActivationsDelete,
 		Schema: map[string]*schema.Schema{
-			"uniqueid": {
+			"network_list_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -35,7 +34,7 @@ func resourceActivations() *schema.Resource {
 				ForceNew: true,
 				Default:  "STAGING",
 			},
-			"comments": {
+			"notes": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
@@ -47,7 +46,7 @@ func resourceActivations() *schema.Resource {
 				ForceNew: true,
 				Default:  true,
 			},
-			"notification_recipients": {
+			"notification_emails": {
 				Type:     schema.TypeSet,
 				Required: true,
 				ForceNew: true,
@@ -88,17 +87,13 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 
-	//createActivations := networklist.CreateActivationsRequest{}
+	lookupActivationreq := networklists.GetActivationRequest{}
 
-	createActivationsreq := networklists.GetActivationsRequest{}
-
-	//ap := networklists.ActivationConfigs{}
-
-	uniqueid, err := tools.GetStringValue("uniqueid", d)
+	networkListID, err := tools.GetStringValue("network_list_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createActivations.UniqueID = uniqueid
+	createActivations.UniqueID = networkListID
 
 	network, err := tools.GetStringValue("network", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -106,24 +101,35 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	createActivations.Network = network
 
+	comments, err := tools.GetStringValue("notes", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createActivations.Comments = comments
+
 	createActivations.Action = "ACTIVATE"
-	//createActivations.ActivationConfigs = append(createActivations.ActivationConfigs, ap)
-	createActivations.NotificationRecipients = tools.SetToStringSlice(d.Get("notification_recipients").(*schema.Set))
+
+	createActivations.NotificationRecipients = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
 
 	postresp, err := client.CreateActivations(ctx, createActivations, true)
 	if err != nil {
-		logger.Warnf("calling 'createActivations': %s", err.Error())
+		logger.Debugf("calling 'createActivations': %s", err.Error())
+		return diag.FromErr(err)
 	}
-
+	logger.Debugf("calling 'createActivations': RESPONSE %v", postresp)
 	d.SetId(strconv.Itoa(postresp.ActivationID))
 	d.Set("status", string(postresp.ActivationStatus))
 
-	createActivationsreq.ActivationID = postresp.ActivationID
-	activation, err := lookupActivation(ctx, client, createActivationsreq)
+	lookupActivationreq.ActivationID = postresp.ActivationID
+
+	logger.Debugf("calling 'createActivations': SET ID %d", postresp.ActivationID)
+	activation, err := lookupActivation(ctx, client, lookupActivationreq)
+	logger.Debugf("calling 'createActivations': GET STATUS ID %v", activation)
+
 	for activation.ActivationStatus != "ACTIVATED" { //!= networklists.StatusActive {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivations(ctx, createActivationsreq)
+			act, err := client.GetActivation(ctx, lookupActivationreq)
 
 			if err != nil {
 				return diag.FromErr(err)
@@ -152,33 +158,32 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
 
-	getActivations := networklists.GetActivationsRequest{}
+	getActivation := networklists.GetActivationRequest{}
 
 	activationID, errconv := strconv.Atoi(d.Id())
 
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
-	getActivations.ActivationID = activationID
+	getActivation.ActivationID = activationID
 
-	activations, err := client.GetActivations(ctx, getActivations)
+	activation, err := client.GetActivation(ctx, getActivation)
 	if err != nil {
 		logger.Warnf("calling 'getActivations': %s", err.Error())
 	}
 
-	d.Set("status", activations.ActivationStatus)
-	d.SetId(strconv.Itoa(activations.ActivationID))
+	d.Set("status", activation.ActivationStatus)
+	d.SetId(strconv.Itoa(activation.ActivationID))
 
 	return nil
 }
 
-func lookupActivation(ctx context.Context, client networklists.NETWORKLISTS, query networklists.GetActivationsRequest) (*networklists.GetActivationsResponse, error) {
-	activations, err := client.GetActivations(ctx, query)
+func lookupActivation(ctx context.Context, client networklists.NETWORKLISTS, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
+	activations, err := client.GetActivation(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
 	return activations, nil
 
-	return nil, nil
 }
