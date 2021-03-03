@@ -1,5 +1,8 @@
 # RELEASE NOTES
 
+## 1.3.1 (Mar 3, 2021)
+* PAPI - Fixed issue with rules causing advanced locked behaviors to fail
+
 ## 1.3.0 (Feb 25, 2021) APPSEC - Extended list of supported list endpoints from APPSEC API
 
 #### BREAKING CHANGES:
