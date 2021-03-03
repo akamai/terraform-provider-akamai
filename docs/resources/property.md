@@ -90,7 +90,7 @@ resource "akamai_property" "example" {
   }
 ```
 
-You can import Akamai properties using either the `property_id` or a comma-delimited
+You can import Akamai properties by using either the `property_id` or a comma-delimited
 string of the property, contract, and group IDs. You'll need to enter the string of IDs if the property belongs to multiple groups or contracts.
 
 If using the string of IDs, you need to enter them in this order:
