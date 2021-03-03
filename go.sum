@@ -45,6 +45,7 @@ github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412/go.mod h1:WPjqKcmVOxf0
 github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.0.2/go.mod h1:e4jVI35KrlGsi4hGikCk9qnl1fXrmGMr/BxYgUhtwt4=
 github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.1.1 h1:qVrzjI9sq7F/3Fc9nScKa3/HnrMYUiVjRQz9mpbvlO0=
 github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.1.1/go.mod h1:LranbWFYt2swa2wCwWmQlfFJQff1FdvSxBflKLr7L8A=
+github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.2.0 h1:AYnhadwF8W+TrDQEOL4tXhyjvbcgtuCNUy+TrjrlYO0=
 github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.2.0/go.mod h1:0WcIjTKudLfTmJQk1d/3KcODnzhQl5P5v5T5w5tOToE=
 github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.2.1 h1:14XcAkgNG34mzJTt+5m/LKbKuyNQI3s4xfO8Hj9xQyk=
 github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.2.1/go.mod h1:0WcIjTKudLfTmJQk1d/3KcODnzhQl5P5v5T5w5tOToE=
