@@ -63,10 +63,10 @@ func Provider() *schema.Provider {
 			"akamai_networklist_network_lists": dataSourceNetworkList(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_networklist_activations":              resourceActivations(),
-			"akamai_networklist_network_list_description": resourceNetworkListDescription(),
-			"akamai_networklist_subscription":             resourceNetworkListSubscription(),
-			"akamai_networklist_network_list":             resourceNetworkList(),
+			"akamai_networklist_activations":  resourceActivations(),
+			"akamai_networklist_description":  resourceNetworkListDescription(),
+			"akamai_networklist_subscription": resourceNetworkListSubscription(),
+			"akamai_networklist_network_list": resourceNetworkList(),
 		},
 	}
 	return provider
