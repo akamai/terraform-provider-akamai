@@ -289,34 +289,11 @@ func resourceNetworkListDelete(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListRemove")
 
-	updateNetworkList := networklists.UpdateNetworkListRequest{}
-	updateNetworkList.UniqueID = d.Id()
-
-	name, err := tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateNetworkList.Name = name
-
-	listType, err := tools.GetStringValue("type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateNetworkList.Type = listType
-
 	removeNetworkList := networklists.RemoveNetworkListRequest{}
 	removeNetworkList.UniqueID = d.Id()
 	_, errd := client.RemoveNetworkList(ctx, removeNetworkList)
 	if errd != nil {
 		logger.Errorf("calling 'removeNetworkList': %s", errd.Error())
-
-		nru := make([]string, 0, 1)
-		updateNetworkList.List = nru
-		_, erru := client.UpdateNetworkList(ctx, updateNetworkList)
-		if erru != nil {
-			logger.Errorf("calling 'updateNetworkList': %s", erru.Error())
-			return diag.FromErr(erru)
-		}
 
 	}
 
