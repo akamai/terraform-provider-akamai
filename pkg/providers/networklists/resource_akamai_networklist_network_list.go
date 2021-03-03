@@ -136,21 +136,19 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	case Append:
 		var oneShot int
 		oneShot = 0
-		for _, hl := range netlist {
-			for _, h := range networklists.NetworkLists {
 
-				if !(h.Name == hl.(string)) {
-					finallist = append(finallist, h.Name)
-				}
+		for _, h := range networklists.NetworkLists {
+			finallist = appendIfMissing(finallist, h.Name)
+			for _, hl := range netlist {
+				finallist = appendIfMissing(finallist, hl.(string))
 			}
 			oneShot = 1
-
 		}
 
 		if oneShot == 0 {
-			for _, hl := range netlist {
-				finallist = append(finallist, hl.(string))
-			}
+
+			finallist = nru
+
 		}
 
 	case Replace:
@@ -255,7 +253,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		}
 		for _, hl := range netlist {
 
-			finallist = append(finallist, hl.(string))
+			finallist = appendIfMissing(finallist, hl.(string))
 
 		}
 	case Replace:
@@ -384,6 +382,15 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 	d.SetId(networklist.UniqueID)
 
 	return nil
+}
+
+func appendIfMissing(slice []string, s string) []string {
+	for _, element := range slice {
+		if element == s {
+			return slice
+		}
+	}
+	return append(slice, s)
 }
 
 // Append Replace Remove mode flags
