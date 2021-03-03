@@ -24,7 +24,7 @@ func resourceNetworkListDescription() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
-			"uniqueid": {
+			"network_list_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -72,7 +72,7 @@ func resourceNetworkListDescriptionUpdate(ctx context.Context, d *schema.Resourc
 
 	updateNetworkListDescription := networklists.UpdateNetworkListDescriptionRequest{}
 
-	uniqueID, err := tools.GetStringValue("uniqueid", d)
+	uniqueID, err := tools.GetStringValue("network_list_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
