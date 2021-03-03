@@ -4,8 +4,8 @@ provider "akamai" {
 
 
 resource "akamai_networklist_network_list_description" "test" {
-   uniqueid =  "79536_MARTINNETWORKLIST"
-     name = "Martin Network List"
+   uniqueid =  "2275_VOYAGERCALLCENTERWHITELI"
+     name = "Voyager Call Center Whitelist"
      description =  "Notes about this network list"  
    }
 

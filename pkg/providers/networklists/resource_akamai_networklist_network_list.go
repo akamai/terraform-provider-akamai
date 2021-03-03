@@ -97,6 +97,20 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	createNetworkList.Description = description
 
+	mode, err := tools.GetStringValue("mode", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	getNetworkLists := networklists.GetNetworkListsRequest{}
+	getNetworkLists.Name = name
+	getNetworkLists.Type = listType
+
+	networklists, err := client.GetNetworkLists(ctx, getNetworkLists)
+	if err != nil {
+		logger.Errorf("calling 'getNetworkList': %s", err.Error())
+		return diag.FromErr(err)
+	}
 	//createNetworkList.List = tools.SetToStringSlice(d.Get("list").(*schema.Set))
 
 	netlist := d.Get("list").([]interface{})
@@ -106,7 +120,38 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		nru = append(nru, h.(string))
 
 	}
-	createNetworkList.List = nru
+
+	finallist := make([]string, 0, len(d.Get("list").([]interface{})))
+
+	switch mode {
+	case Remove:
+		for _, hl := range netlist {
+			for _, h := range networklists.NetworkLists {
+
+				if h.Name == hl.(string) {
+					finallist = append(finallist, h.Name)
+				}
+			}
+		}
+	case Append:
+		for _, h := range networklists.NetworkLists {
+
+			for _, hl := range netlist {
+				if h.Name == hl.(string) {
+					finallist = append(finallist, h.Name)
+				}
+			}
+		}
+	case Replace:
+
+		finallist = nru
+
+	default:
+		finallist = nru
+	}
+
+	createNetworkList.List = finallist
+	logger.Errorf("calling 'createNetworkList FINAL ': %v", finallist)
 
 	spcr, errc := client.CreateNetworkList(ctx, createNetworkList)
 	if errc != nil {
@@ -119,6 +164,10 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	d.Set("sync_point", strconv.Itoa(spcr.SyncPoint))
 
 	if err := d.Set("uniqueid", spcr.UniqueID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("mode", mode); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -153,6 +202,20 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	updateNetworkList.Description = description
 
+	mode, err := tools.GetStringValue("mode", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	getNetworkList := networklists.GetNetworkListRequest{}
+	getNetworkList.UniqueID = d.Id()
+
+	networklists, err := client.GetNetworkList(ctx, getNetworkList)
+	if err != nil {
+		logger.Errorf("calling 'getNetworkList': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
 	//	updateNetworkList.List = tools.SetToStringSlice(d.Get("list").(*schema.Set))
 	netlist := d.Get("list").([]interface{})
 	nru := make([]string, 0, len(netlist))
@@ -161,7 +224,40 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		nru = append(nru, h.(string))
 
 	}
-	updateNetworkList.List = nru
+
+	finallist := make([]string, 0, len(d.Get("list").([]interface{})))
+
+	switch mode {
+	case Remove:
+		for _, hl := range netlist {
+			for _, h := range networklists.List {
+
+				if !(h == hl.(string)) {
+					finallist = append(finallist, h)
+				}
+			}
+		}
+	case Append:
+		for _, h := range networklists.List {
+			finallist = append(finallist, h)
+
+		}
+		for _, hl := range netlist {
+
+			finallist = append(finallist, hl.(string))
+
+		}
+	case Replace:
+
+		finallist = nru
+
+	default:
+
+		finallist = nru
+	}
+
+	updateNetworkList.List = finallist
+	logger.Errorf("calling 'updateNetworkList FINAL ': %v", finallist)
 
 	syncPoint, err := tools.GetIntValue("sync_point", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -184,12 +280,35 @@ func resourceNetworkListDelete(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListRemove")
 
+	updateNetworkList := networklists.UpdateNetworkListRequest{}
+	updateNetworkList.UniqueID = d.Id()
+
+	name, err := tools.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateNetworkList.Name = name
+
+	listType, err := tools.GetStringValue("type", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateNetworkList.Type = listType
+
 	removeNetworkList := networklists.RemoveNetworkListRequest{}
-	removeNetworkList.Name = d.Id()
+	removeNetworkList.UniqueID = d.Id()
 	_, errd := client.RemoveNetworkList(ctx, removeNetworkList)
 	if errd != nil {
 		logger.Errorf("calling 'removeNetworkList': %s", errd.Error())
-		return diag.FromErr(errd)
+
+		nru := make([]string, 0, 1)
+		updateNetworkList.List = nru
+		_, erru := client.UpdateNetworkList(ctx, updateNetworkList)
+		if erru != nil {
+			logger.Errorf("calling 'updateNetworkList': %s", erru.Error())
+			return diag.FromErr(erru)
+		}
+
 	}
 
 	d.SetId("")
@@ -203,7 +322,7 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("NETWORKLISTs", "resourceNetworkListRead")
 
 	getNetworkList := networklists.GetNetworkListRequest{}
-	getNetworkList.Name = d.Id()
+	getNetworkList.UniqueID = d.Id()
 
 	networklist, err := client.GetNetworkList(ctx, getNetworkList)
 	if err != nil {

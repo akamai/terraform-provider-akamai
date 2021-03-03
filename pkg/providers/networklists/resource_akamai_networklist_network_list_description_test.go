@@ -23,12 +23,12 @@ func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 
 		client.On("GetNetworkListDescription",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.GetNetworkListDescriptionRequest{UniqueID: "79538_MARTINNETWORKLIST", Name: "Martin Network List"},
+			networklists.GetNetworkListDescriptionRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI", Name: "Voyager Call Center Whitelist"},
 		).Return(&cr, nil)
 
 		client.On("UpdateNetworkListDescription",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.UpdateNetworkListDescriptionRequest{UniqueID: "79538_MARTINNETWORKLIST", Name: "Martin Network List", Description: "Notes about this network list"},
+			networklists.UpdateNetworkListDescriptionRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI", Name: "Voyager Call Center Whitelist", Description: "Notes about this network list"},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
@@ -39,7 +39,7 @@ func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResNetworkListDescription/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_networklist_network_list_description.test", "id", "79536_MARTINNETWORKLIST"),
+							resource.TestCheckResourceAttr("akamai_networklist_network_list_description.test", "id", "2275_VOYAGERCALLCENTERWHITELI"),
 						),
 					},
 				},

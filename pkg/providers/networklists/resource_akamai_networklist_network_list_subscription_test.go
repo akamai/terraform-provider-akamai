@@ -13,7 +13,7 @@ func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 	t.Run("match by NetworkListSubscription ID", func(t *testing.T) {
 		client := &mocknetworklists{}
 
-		cu := networklists.RemoveNetworkListSubscriptionResponse{}
+		cu := networklists.UpdateNetworkListSubscriptionResponse{}
 		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"))
 		json.Unmarshal([]byte(expectJSU), &cu)
 
@@ -28,7 +28,7 @@ func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 
 		client.On("UpdateNetworkListSubscription",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.RemoveNetworkListSubscriptionRequest{}, //Recipients: ,
+			networklists.UpdateNetworkListSubscriptionRequest{}, //Recipients: ,
 		).Return(&cu, nil)
 
 		useClient(client, func() {

@@ -47,7 +47,7 @@ func resourceNetworkListDescriptionRead(ctx context.Context, d *schema.ResourceD
 
 	getNetworkListDescription := networklists.GetNetworkListDescriptionRequest{}
 
-	getNetworkListDescription.Name = d.Id()
+	getNetworkListDescription.UniqueID = d.Id()
 
 	networklistdescription, err := client.GetNetworkListDescription(ctx, getNetworkListDescription)
 	if err != nil {

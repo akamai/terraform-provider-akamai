@@ -4,7 +4,7 @@ provider "akamai" {
 
 
 resource "akamai_networklist_network_list" "test" {
-   name =  "Martin Network List"
+   name =  "Voyager Call Center Whitelist"
     type =  "IP"
     description = "Notes about this network list"
   

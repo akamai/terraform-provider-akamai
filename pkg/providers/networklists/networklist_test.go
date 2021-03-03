@@ -31,6 +31,16 @@ func (p *mocknetworklists) GetActivations(ctx context.Context, params networklis
 	return args.Get(0).(*networklists.GetActivationsResponse), args.Error(1)
 }
 
+func (p *mocknetworklists) GetActivation(ctx context.Context, params networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*networklists.GetActivationResponse), args.Error(1)
+}
+
 func (p *mocknetworklists) RemoveActivations(ctx context.Context, params networklists.RemoveActivationsRequest) (*networklists.RemoveActivationsResponse, error) {
 	args := p.Called(ctx, params)
 
