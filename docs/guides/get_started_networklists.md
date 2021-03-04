@@ -127,3 +127,38 @@ resource "akamai_networklist_subscription" "subscribe" {
 ```
 Once you `apply` these changes, the `user@example.com` address will be notified when any of the lists in the `network_lists_filter.list` set are modified.
 
+## Import a Network List
+
+Terraform allows you to add a resource to its state even if this resource was created outside of Terraform,
+for example by using the Control Center application. This allows you to keep Terraform's state in sync with
+the state of your actual infrastructure. To do this, use the `terraform import` command with a configuration
+file that includes a description of the existing resource. The `import` command requires that you specify
+both the `address` and `ID` of the resource. The `address` indicates the destination to which the resource
+should be imported; this is formed by combining the resource type and local name of the resource as described
+in the local configuration file, joining them with a period ("."). For example, suppose a nework list has
+been created outside of Terraform. You can use the information available in the Control Center to create a
+matching description of this policy in your local configuration file. Here is an example, using sample values
+for the resource's parameters:
+
+```hcl
+resource "akamai_networklist_network_list" "network_list" {
+  name = "Test-white-list"
+  type = "IP"
+  description = "network list description"
+  list = ["13.230.0.0/15","195.7.50.194","50.23.59.233"]
+  mode = "APPEND"
+}
+```
+
+The `address` of this resource is found by combining the resource type and its local name within the
+configuration file: "akamai_networklist_network_list.network_list"
+
+The `ID` indicates the unique identifier for this resource within Terraform's state. The unique identifier
+for a network list can be found in the Control Center, and typically is of the form "12345_QWERTY". For this
+example, suppose that the network list has been created and given the unique ID "80255_TESTWHITELIST". To
+ import this resource into your local Terrform state, you would run this command:
+
+```bash
+$ terraform import akamai_networklist_network_list.network_list 80255_TESTWHITELISTNL
+```
+
