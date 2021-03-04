@@ -1,5 +1,8 @@
 # RELEASE NOTES
 
+## 1.3.1 (Mar 4, 2021)
+* PAPI - Fixed issue with rules causing advanced locked behaviors to fail
+
 ## 1.3.0 (Feb 25, 2021) APPSEC - Extended list of supported list endpoints from APPSEC API
 
 #### BREAKING CHANGES:
@@ -37,7 +40,7 @@
     * Suppress NS Record target diff if old and new equal without trailing 'period' ([#189](https://github.com/akamai/terraform-provider-akamai/issues/189))
     * Fail on attempted Zone deletion. Not supported.
     
-## 1.2.1 (Feb 3, 2021)
+## 1.2.1 (Feb 4, 2021)
 
 #### BUG FIXES:
 * PAPI -- Fixed crash caused by passing computed cpCode as a variable in rules to akamai_property

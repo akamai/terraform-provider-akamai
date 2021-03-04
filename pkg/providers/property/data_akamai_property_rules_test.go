@@ -25,7 +25,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				Version: papi.PropertyVersionGetItem{
 					PropertyVersion: 1,
 				},
-			}, nil).Twice()
+			}, nil)
 			m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
 				ContractID:      "ctr_2",
 				GroupID:         "grp_2",
