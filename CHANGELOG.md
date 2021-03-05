@@ -1,5 +1,15 @@
 # RELEASE NOTES
 
+## 1.4.0 (Mar 4, 2021) Network Lists
+
+These are the operations supported in the Network Lists API v2:
+
+* Create a network list
+* Update an existing network list
+* Get the existing network lists, optionally filtering by name or type
+* Subscribe to a network list
+* Activate a network list
+
 ## 1.3.0 (Feb 25, 2021) APPSEC - Extended list of supported list endpoints from APPSEC API
 
 #### BREAKING CHANGES:
