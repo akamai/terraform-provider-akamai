@@ -875,6 +875,7 @@ func updatePropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pr
 		ContractID:      Property.ContractID,
 		PropertyVersion: Property.LatestVersion,
 		Rules:           Rules,
+		ValidateRules: true,
 	}
 
 	logger := log.FromContext(ctx).WithFields(logFields(req))

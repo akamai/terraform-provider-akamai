@@ -36,28 +36,28 @@ func TestResProperty(t *testing.T) {
 	SetHostnames := func(PropertyID string, Version int, CnameTo string) BehaviorFunc {
 		return func(State *TestState) {
 			NewHostnames := []papi.Hostname{{
-				CnameType: "EDGE_HOSTNAME",
-				CnameFrom: "from.test.domain",
-				CnameTo:   CnameTo,
+				CnameType:            "EDGE_HOSTNAME",
+				CnameFrom:            "from.test.domain",
+				CnameTo:              CnameTo,
 				CertProvisioningType: "DEFAULT",
 			}}
 
 			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames).Once().Run(func(mock.Arguments) {
 				NewResponseHostnames := []papi.Hostname{{
-					CnameType: "EDGE_HOSTNAME",
-					CnameFrom: "from.test.domain",
-					CnameTo:   CnameTo,
+					CnameType:            "EDGE_HOSTNAME",
+					CnameFrom:            "from.test.domain",
+					CnameTo:              CnameTo,
 					CertProvisioningType: "DEFAULT",
-					CertStatus:  papi.CertStatusItem{
+					CertStatus: papi.CertStatusItem{
 						ValidationCname: papi.ValidationCname{
 							Hostname: "_acme-challenge.www.example.com",
 							Target:   "{token}.www.example.com.akamai-domain.com",
 						},
-							Staging: []papi.StatusItem{{Status: "NEEDS_VALIDATION",}},
-							Production:  []papi.StatusItem{{
-								Status: "NEEDS_VALIDATION",
-							},
-							},
+						Staging: []papi.StatusItem{{Status: "NEEDS_VALIDATION"}},
+						Production: []papi.StatusItem{{
+							Status: "NEEDS_VALIDATION",
+						},
+						},
 					},
 				}}
 				State.Hostnames = append([]papi.Hostname{}, NewResponseHostnames...)
@@ -698,6 +698,52 @@ func TestResProperty(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 
+		t.Run("error validations when updating property with rules tree", func(t *testing.T) {
+			client := &mockpapi{}
+			client.Test(T{t})
+			ExpectCreateProperty(
+				client, "test property", "grp_0",
+				"ctr_0", "prd_0", "prp_1",
+			)
+
+			var err error = &papi.Error{
+				StatusCode: 400,
+				Type:         "/papi/v1/errors/validation.required_behavior",
+				Title:        "Missing required behavior in default rule",
+				Detail:       "In order for this property to work correctly behavior Content Provider Code needs to be present in the default section",
+				Instance:     "/papi/v1/properties/prp_173136/versions/3/rules#err_100",
+				BehaviorName: "cpCode",
+			}
+			var req = papi.UpdateRulesRequest{
+				PropertyID:      "prp_1",
+				ContractID:     "ctr_0",
+				GroupID:         "grp_0",
+				PropertyVersion: 1,
+				Rules:          papi.RulesUpdate{Rules: papi.Rules{
+					Name: "update rule tree",
+				}},
+				ValidateRules: true,
+			}
+			client.On("UpdateRuleTree", AnyCTX, req).Return(nil, err).Once()
+
+			ExpectRemoveProperty(client, "prp_1", "", "")
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString("testdata/TestResProperty/property_update_with_validation_error_for_rules.tf"),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckNoResourceAttr("akamai_property.test", "rules")),
+							ExpectError: regexp.MustCompile(`validation.required_behavior`),
+						},
+					},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
+
 		t.Run("validation - empty plan, when updating a property hostnames to empty", func(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
@@ -712,9 +758,9 @@ func TestResProperty(t *testing.T) {
 			ExpectUpdatePropertyVersionHostnames(
 				client, "prp_0", "grp_0", "ctr_0", 1,
 				[]papi.Hostname{{
-					CnameType: "EDGE_HOSTNAME",
-					CnameFrom: "terraform.provider.myu877.test.net",
-					CnameTo:   "terraform.provider.myu877.test.net.edgesuite.net",
+					CnameType:            "EDGE_HOSTNAME",
+					CnameFrom:            "terraform.provider.myu877.test.net",
+					CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
 					CertProvisioningType: "DEFAULT",
 				}},
 			).Once()
@@ -730,8 +776,8 @@ func TestResProperty(t *testing.T) {
 			ExpectGetPropertyVersionHostnames(
 				client, "prp_0", "grp_0", "ctr_0", 1,
 				&[]papi.Hostname{{
-					CnameFrom: "terraform.provider.myu877.test.net",
-					CnameTo:   "terraform.provider.myu877.test.net.edgesuite.net",
+					CnameFrom:            "terraform.provider.myu877.test.net",
+					CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
 					CertProvisioningType: "DEFAULT",
 				}},
 			).Times(3)

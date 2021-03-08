@@ -214,23 +214,36 @@ func ExpectGetRuleTree(client *mockpapi, PropertyID, GroupID, ContractID string,
 	return client.OnGetRuleTree(AnyCTX, req, fn)
 }
 
-func ExpectUpdateRuleTree(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, Rules papi.RulesUpdate, RuleFormat string) *mock.Call {
+
+func ExpectUpdateRuleTree(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, State *papi.RulesUpdate, RuleFormat string, RuleError []papi.RuleError) *mock.Call {
+	var RulesUpdate papi.RulesUpdate
+	if State != nil {
+		RulesUpdate = *State
+	}
+	var res papi.UpdateRulesResponse
 	req := papi.UpdateRulesRequest{
 		PropertyID:      PropertyID,
 		PropertyVersion: PropertyVersion,
 		ContractID:      ContractID,
 		GroupID:         GroupID,
-		Rules:           Rules,
+		Rules:          RulesUpdate,
+		ValidateRules: true,
 	}
 
-	res := papi.UpdateRulesResponse{
-		PropertyID:      PropertyID,
-		ContractID:      ContractID,
-		GroupID:         GroupID,
-		PropertyVersion: PropertyVersion,
-		RuleFormat:      RuleFormat,
-		Rules:           papi.Rules{},
+
+	fn := func(context.Context, papi.UpdateRulesRequest) (*papi.UpdateRulesResponse, error) {
+
+		res = papi.UpdateRulesResponse{
+			PropertyID:      PropertyID,
+			ContractID:      ContractID,
+			GroupID:         GroupID,
+			PropertyVersion: PropertyVersion,
+			RuleFormat:      RuleFormat,
+			Rules:          RulesUpdate.Rules,
+			Errors:	RuleError,
+		}
+		return &res, nil
 	}
 
-	return client.On("UpdateRuleTree", AnyCTX, req).Return(&res, nil)
+	return client.OnUpdateRuleTree(AnyCTX, req, fn).Return(&res, nil)
 }
