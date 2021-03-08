@@ -31,8 +31,8 @@ data "akamai_appsec_selectable_hostnames" "selectable_hostnames" {
 resource "akamai_appsec_configuration" "create_config" {
   name = var.name
   description = var.description
-  contract_id= data.akamai_appsec_contract_groups.contract_groups.default_contract_id
-  group_id  = data.akamai_appsec_contract_groups.contract_groups.default_group_id
+  contract_id= data.akamai_appsec_contract_groups.contract_groups.default_contractid
+  group_id  = data.akamai_appsec_contract_groups.contract_groups.default_groupid
   host_names = data.akamai_appsec_selectable_hostnames.selectable_hostnames.hostnames
 }
 
