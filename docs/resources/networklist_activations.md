@@ -43,9 +43,6 @@ The following arguments are supported:
 
 * `notes` - (Optional) A comment describing the activation.
 
-* `activate` - (Optional) Whether to activate or deactivate the network list; must be either `true` or `false`. If not
-  specified, defaults to `true`.
-
 * `notification_emails` - (Required) A bracketed, comma-separated list of email addresses that will be notified when the
   operation is complete.
 
