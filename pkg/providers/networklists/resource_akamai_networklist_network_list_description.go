@@ -45,11 +45,11 @@ func resourceNetworkListDescriptionRead(ctx context.Context, d *schema.ResourceD
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListDescriptionRead")
 
-	getNetworkListDescription := networklists.GetNetworkListDescriptionRequest{}
+	getNetworkListDescriptionRequest := networklists.GetNetworkListDescriptionRequest{}
 
-	getNetworkListDescription.UniqueID = d.Id()
+	getNetworkListDescriptionRequest.UniqueID = d.Id()
 
-	networklistdescription, err := client.GetNetworkListDescription(ctx, getNetworkListDescription)
+	networklistdescription, err := client.GetNetworkListDescription(ctx, getNetworkListDescriptionRequest)
 	if err != nil {
 		logger.Errorf("calling 'getNetworkListDescription': %s", err.Error())
 		return diag.FromErr(err)
