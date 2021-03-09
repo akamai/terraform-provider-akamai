@@ -167,7 +167,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	createActivations := appsec.CreateActivationsRequest{}
 
-	createActivationsreq := appsec.GetActivationsRequest{}
+	getActivationsreq := appsec.GetActivationsRequest{}
 
 	ap := appsec.ActivationConfigs{}
 
@@ -205,12 +205,12 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	createActivationsreq.ActivationID = postresp.ActivationID
-	activation, err := lookupActivation(ctx, client, createActivationsreq)
+	getActivationsreq.ActivationID = postresp.ActivationID
+	activation, err := lookupActivation(ctx, client, getActivationsreq)
 	for activation.Status != appsec.StatusActive {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivations(ctx, createActivationsreq)
+			act, err := client.GetActivations(ctx, getActivationsreq)
 
 			if err != nil {
 				return diag.FromErr(err)
