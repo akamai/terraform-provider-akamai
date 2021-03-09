@@ -212,7 +212,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	getNetworkList := networklists.GetNetworkListRequest{}
 	getNetworkList.UniqueID = d.Id()
 
-	networklists, err := client.GetNetworkList(ctx, getNetworkList)
+	networkLists, err := client.GetNetworkList(ctx, getNetworkList)
 	if err != nil {
 		logger.Errorf("calling 'getNetworkList': %s", err.Error())
 		return diag.FromErr(err)
@@ -230,7 +230,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	switch mode {
 	case Remove:
 		for _, hl := range netlist {
-			for _, h := range networklists.List {
+			for _, h := range networkLists.List {
 
 				if !(h == hl.(string)) {
 					finallist = append(finallist, h)
@@ -238,7 +238,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 			}
 		}
 	case Append:
-		for _, h := range networklists.List {
+		for _, h := range networkLists.List {
 			finallist = append(finallist, h)
 		}
 		for _, hl := range netlist {
