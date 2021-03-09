@@ -70,33 +70,33 @@ func resourceNetworkListDescriptionUpdate(ctx context.Context, d *schema.Resourc
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListDescriptionUpdate")
 
-	updateNetworkListDescription := networklists.UpdateNetworkListDescriptionRequest{}
+	updateNetworkListDescriptionRequest := networklists.UpdateNetworkListDescriptionRequest{}
 
 	uniqueID, err := tools.GetStringValue("network_list_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateNetworkListDescription.UniqueID = uniqueID
+	updateNetworkListDescriptionRequest.UniqueID = uniqueID
 
 	name, err := tools.GetStringValue("name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateNetworkListDescription.Name = name
+	updateNetworkListDescriptionRequest.Name = name
 
 	description, err := tools.GetStringValue("description", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateNetworkListDescription.Description = description
+	updateNetworkListDescriptionRequest.Description = description
 
-	_, erru := client.UpdateNetworkListDescription(ctx, updateNetworkListDescription)
+	_, erru := client.UpdateNetworkListDescription(ctx, updateNetworkListDescriptionRequest)
 	if erru != nil {
 		logger.Errorf("calling 'updateNetworkListDescription': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
 
-	d.SetId(updateNetworkListDescription.UniqueID)
+	d.SetId(updateNetworkListDescriptionRequest.UniqueID)
 
 	return resourceNetworkListDescriptionRead(ctx, d, m)
 }
