@@ -11,7 +11,7 @@ type mocknetworklists struct {
 	mock.Mock
 }
 
-func (p *mocknetworklists) CreateActivations(ctx context.Context, params networklists.CreateActivationsRequest, acknowledgeWarnings bool) (*networklists.CreateActivationsResponse, error) {
+func (p *mocknetworklists) CreateActivations(ctx context.Context, params networklists.CreateActivationsRequest) (*networklists.CreateActivationsResponse, error) {
 	args := p.Called(ctx, params)
 
 	if args.Get(0) == nil {
