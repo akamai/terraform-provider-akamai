@@ -171,11 +171,11 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	ap := appsec.ActivationConfigs{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	ap.ConfigID = configid
+	ap.ConfigID = configID
 
 	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
