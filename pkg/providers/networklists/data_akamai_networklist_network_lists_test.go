@@ -17,9 +17,9 @@ func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSNetworkList/NetworkList.json"))
 		json.Unmarshal([]byte(expectJS), &cv)
 
-		client.On("GetNetworkList",
+		client.On("GetNetworkLists",
 			mock.Anything, // ctx is irrelevant for this test
-			network.GetNetworkListsRequest{Name: "40996_ARTYLABWHITELIST"},
+			network.GetNetworkListsRequest{Name: "40996_ARTYLABWHITELIST", Type: "IP"},
 		).Return(&cv, nil)
 
 		useClient(client, func() {
@@ -30,7 +30,7 @@ func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSNetworkList/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_networklist_network_lists.test", "uniqueid", "40996_ARTYLABWHITELIST"),
+							resource.TestCheckResourceAttr("data.akamai_networklist_network_lists.test", "id", "365_AKAMAITOREXITNODES"),
 						),
 					},
 				},
