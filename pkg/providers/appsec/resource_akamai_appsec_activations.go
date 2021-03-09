@@ -193,19 +193,19 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	createActivations.ActivationConfigs = append(createActivations.ActivationConfigs, ap)
 	createActivations.NotificationEmails = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
 
-	postresp, err := client.CreateActivations(ctx, createActivations, true)
+	activations, err := client.CreateActivations(ctx, createActivations, true)
 	if err != nil {
 		logger.Errorf("calling 'createActivations': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(postresp.ActivationID))
+	d.SetId(strconv.Itoa(activations.ActivationID))
 
-	if err := d.Set("status", postresp.Status); err != nil {
+	if err := d.Set("status", activations.Status); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	getActivationsreq.ActivationID = postresp.ActivationID
+	getActivationsreq.ActivationID = activations.ActivationID
 	activation, err := lookupActivation(ctx, client, getActivationsreq)
 	for activation.Status != appsec.StatusActive {
 		select {
