@@ -132,7 +132,7 @@ func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Dia
 
 	_, err := getNETWORKLISTV1Service(d)
 	if err != nil {
-		return nil
+		return diag.FromErr(err)
 	}
 
 	return nil

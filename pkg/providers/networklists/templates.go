@@ -23,16 +23,16 @@ type OutputTemplate struct {
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
 		return f, nil
-	} else {
-		return nil, fmt.Errorf("Error not found")
 	}
+	return nil, fmt.Errorf("Error not found")
+
 }
 
 func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}) (string, error) {
 	var ostr, tstr bytes.Buffer
-	templ, ok := GetTemplate(ots, key)
+	templ, err := GetTemplate(ots, key)
 
-	if ok == nil {
+	if err == nil {
 
 		var (
 			funcs = template.FuncMap{
@@ -82,7 +82,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 
 		if temptype == "TABULAR" {
 			tbl := table.NewWriter()
-			tbl.SetOutputMirror(&ostr) //os.Stdout)
+			tbl.SetOutputMirror(&ostr)
 			tbl.SetTitle(key)
 			headers := templ.TableTitle
 

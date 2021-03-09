@@ -111,7 +111,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	createActivations.NotificationRecipients = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
 
-	postresp, err := client.CreateActivations(ctx, createActivations, true)
+	postresp, err := client.CreateActivations(ctx, createActivations)
 	if err != nil {
 		logger.Debugf("calling 'createActivations': %s", err.Error())
 		return diag.FromErr(err)
@@ -126,7 +126,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	activation, err := lookupActivation(ctx, client, lookupActivationreq)
 	logger.Debugf("calling 'createActivations': GET STATUS ID %v", activation)
 
-	for activation.ActivationStatus != "ACTIVATED" { //!= networklists.StatusActive {
+	for activation.ActivationStatus != "ACTIVATED" {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, lookupActivationreq)
@@ -179,11 +179,11 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func lookupActivation(ctx context.Context, client networklists.NETWORKLISTS, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
-	activations, err := client.GetActivation(ctx, query)
+	activation, err := client.GetActivation(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	return activations, nil
+	return activation, nil
 
 }

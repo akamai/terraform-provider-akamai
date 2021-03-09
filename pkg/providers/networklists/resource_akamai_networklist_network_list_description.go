@@ -90,13 +90,6 @@ func resourceNetworkListDescriptionUpdate(ctx context.Context, d *schema.Resourc
 	}
 	updateNetworkListDescription.Description = description
 
-	/*notificationRecipients, err := tools.GetStringValue("notification_recipients", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateNetworkListDescription.NotificationRecipients = notificationRecipients
-	*/
-
 	_, erru := client.UpdateNetworkListDescription(ctx, updateNetworkListDescription)
 	if erru != nil {
 		logger.Errorf("calling 'updateNetworkListDescription': %s", erru.Error())

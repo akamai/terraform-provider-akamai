@@ -49,7 +49,6 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 
 	for _, h := range recipients {
 		nru = append(nru, h.(string))
-
 	}
 	getNetworkListSubscription.Recipients = nru
 
@@ -61,7 +60,6 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 
 	for _, h := range uniqueids {
 		uids = append(uids, h.(string))
-
 	}
 
 	getNetworkListSubscription.UniqueIds = uids
@@ -72,7 +70,6 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 	_, err := client.GetNetworkListSubscription(ctx, getNetworkListSubscription)
 	if err != nil {
 		logger.Errorf("calling 'getNetworkListSubscription': %s", err.Error())
-		//return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%s:%s", recSHA, recSHAUID))
@@ -92,23 +89,17 @@ func resourceNetworkListSubscriptionDelete(ctx context.Context, d *schema.Resour
 
 	for _, h := range recipients {
 		nru = append(nru, h.(string))
-
 	}
 	removeNetworkListSubscription.Recipients = nru
-	//	removeNetworkListSubscription.Recipients = tools.SetToStringSlice(d.Get("recipients").(*schema.Set))
-	//	tools.SetToStringSlice(d.Get("notification_recipients").(*schema.Set))
 
 	uniqueids := d.Get("network_list").([]interface{})
 	uids := make([]string, 0, len(uniqueids))
 
 	for _, h := range uniqueids {
 		uids = append(uids, h.(string))
-
 	}
 
 	removeNetworkListSubscription.UniqueIds = uids
-	//	removeNetworkListSubscription.UniqueIds = tools.SetToStringSlice(d.Get("unique_ids").(*schema.Set))
-	//	tools.SetToStringSlice(d.Get("notification_recipients").(*schema.Set))
 	_, errd := client.RemoveNetworkListSubscription(ctx, removeNetworkListSubscription)
 	if errd != nil {
 		logger.Errorf("calling 'updateNetworkListSubscription': %s", errd.Error())
@@ -129,7 +120,6 @@ func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.Resour
 
 	for _, h := range recipients {
 		nru = append(nru, h.(string))
-
 	}
 	updateNetworkListSubscription.Recipients = nru
 
@@ -141,7 +131,6 @@ func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.Resour
 
 	for _, h := range uniqueids {
 		uids = append(uids, h.(string))
-
 	}
 
 	updateNetworkListSubscription.UniqueIds = uids
@@ -149,10 +138,10 @@ func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.Resour
 	extractStringUID := strings.Join(updateNetworkListSubscription.UniqueIds, " ")
 	recSHAUID := tools.GetSHAString(extractStringUID)
 
-	_, erru := client.UpdateNetworkListSubscription(ctx, updateNetworkListSubscription)
-	if erru != nil {
-		logger.Errorf("calling 'updateNetworkListSubscription': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err := client.UpdateNetworkListSubscription(ctx, updateNetworkListSubscription)
+	if err != nil {
+		logger.Errorf("calling 'updateNetworkListSubscription': %s", err.Error())
+		return diag.FromErr(err)
 	}
 	d.SetId(fmt.Sprintf("%s:%s", recSHA, recSHAUID))
 
