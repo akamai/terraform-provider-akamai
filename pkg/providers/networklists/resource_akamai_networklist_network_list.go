@@ -260,10 +260,10 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	updateNetworkList.SyncPoint = syncPoint
 
-	_, erru := client.UpdateNetworkList(ctx, updateNetworkList)
-	if erru != nil {
-		logger.Errorf("calling 'updateNetworkList': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateNetworkList(ctx, updateNetworkList)
+	if err != nil {
+		logger.Errorf("calling 'updateNetworkList': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceNetworkListRead(ctx, d, m)

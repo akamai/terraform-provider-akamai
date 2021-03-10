@@ -90,10 +90,10 @@ func resourceNetworkListDescriptionUpdate(ctx context.Context, d *schema.Resourc
 	}
 	updateNetworkListDescriptionRequest.Description = description
 
-	_, erru := client.UpdateNetworkListDescription(ctx, updateNetworkListDescriptionRequest)
-	if erru != nil {
-		logger.Errorf("calling 'updateNetworkListDescription': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateNetworkListDescription(ctx, updateNetworkListDescriptionRequest)
+	if err != nil {
+		logger.Errorf("calling 'updateNetworkListDescription': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(updateNetworkListDescriptionRequest.UniqueID)
