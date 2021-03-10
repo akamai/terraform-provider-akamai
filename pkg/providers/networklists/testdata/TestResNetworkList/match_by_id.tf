@@ -1,5 +1,5 @@
 provider "akamai" {
-  edgerc = "~/.edgerc_network"
+  edgerc = "~/.edgerc"
 }
 
 
