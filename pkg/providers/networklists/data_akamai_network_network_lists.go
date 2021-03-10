@@ -66,11 +66,11 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 	getNetworkList.Name = name
 
-	_type, err := tools.GetStringValue("type", d)
+	networkListType, err := tools.GetStringValue("type", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getNetworkList.Type = _type
+	getNetworkList.Type = networkListType
 
 	networklist, err := client.GetNetworkLists(ctx, getNetworkList)
 	if err != nil {
