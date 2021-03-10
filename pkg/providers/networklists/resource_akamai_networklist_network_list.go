@@ -132,17 +132,17 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 			}
 		}
 	case Append:
-		var oneShot int
+		var oneShot bool
 
 		for _, h := range networklists.NetworkLists {
 			finallist = appendIfMissing(finallist, h.Name)
 			for _, hl := range netlist {
 				finallist = appendIfMissing(finallist, hl.(string))
 			}
-			oneShot = 1
+			oneShot = true
 		}
 
-		if oneShot == 0 {
+		if oneShot == false {
 			finallist = nru
 		}
 
