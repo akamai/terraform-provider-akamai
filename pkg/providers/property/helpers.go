@@ -37,6 +37,8 @@ func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 		m["cname_from"] = hn.CnameFrom
 		m["cname_to"] = hn.CnameTo
 		m["cert_provisioning_type"] = hn.CertProvisioningType
+		m["edge_hostname_id"] = hn.EdgeHostnameID
+		m["cname_type"] = hn.CnameType
 		certs := map[string]interface{}{}
 		certs["hostname"] = hn.CertStatus.ValidationCname.Hostname
 		certs["target"] = hn.CertStatus.ValidationCname.Target

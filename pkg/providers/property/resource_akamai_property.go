@@ -213,8 +213,17 @@ func resourceProperty() *schema.Resource {
 								return nil
 							},
 						},
+						"cname_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"edge_hostname_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"cert_status": {
 							Type:     schema.TypeList,
+							Optional:true,
 							Computed: true,
 							Elem:     certStatus,
 						},
