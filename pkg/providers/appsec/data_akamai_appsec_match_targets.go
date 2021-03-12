@@ -38,7 +38,7 @@ func dataSourceMatchTargets() *schema.Resource {
 			"json": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "JSON representation",
+				Description: "JSON Export representation",
 			},
 		},
 	}
@@ -75,7 +75,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	jsonBody, err := json.Marshal(getMatchTargets)
+	jsonBody, err := json.Marshal(matchtargets)
 	if err != nil {
 		logger.Errorf("calling 'getMatchTargets': %s", err.Error())
 		return diag.FromErr(err)
