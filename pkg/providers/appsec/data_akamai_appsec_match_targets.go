@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -33,6 +34,11 @@ func dataSourceMatchTargets() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Text Export representation",
+			},
+			"json": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 		},
 	}
@@ -67,6 +73,15 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		logger.Errorf("calling 'getMatchTargets': %s", err.Error())
 		return diag.FromErr(err)
+	}
+
+	jsonBody, err := json.Marshal(getMatchTargets)
+	if err != nil {
+		logger.Errorf("calling 'getMatchTargets': %s", err.Error())
+		return diag.FromErr(err)
+	}
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	ots := OutputTemplates{}
