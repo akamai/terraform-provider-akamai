@@ -31,8 +31,8 @@ var certStatus = &schema.Resource{
 // TODO Set certstatus object for cps managed certs and default certs once PAPI adds support
 func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 	var res []map[string]interface{}
-	var c []map[string]interface{}
 	for _, hn := range Hostnames {
+		var c []map[string]interface{}
 		m := map[string]interface{}{}
 		m["cname_from"] = hn.CnameFrom
 		m["cname_to"] = hn.CnameTo

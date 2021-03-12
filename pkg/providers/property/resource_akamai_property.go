@@ -216,6 +216,7 @@ func resourceProperty() *schema.Resource {
 						"cname_type": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 						},
 						"edge_hostname_id": {
 							Type:     schema.TypeString,

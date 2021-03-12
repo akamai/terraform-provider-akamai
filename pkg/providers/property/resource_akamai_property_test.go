@@ -321,8 +321,6 @@ func TestResProperty(t *testing.T) {
 		Name: "No diff found in update",
 		ClientSetup: ComposeBehaviors(
 			PropertyLifecycle("test property", "prp_0", "grp_0"),
-			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			SetHostnames("prp_0", 1, "to.test.domain"),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
@@ -436,8 +434,6 @@ func TestResProperty(t *testing.T) {
 			setup := ComposeBehaviors(
 				PropertyLifecycle("test property", "prp_0", "grp_0"),
 				ImportProperty("prp_0"),
-				GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				SetHostnames("prp_0", 1, "to.test.domain"),
 				SetHostnames("prp_0", 1, "to.test.domain"),
 			)
 			setup(&TestState{Client: client})
