@@ -209,7 +209,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	getNetworkList := networklists.GetNetworkListRequest{}
+	listRequest := networklists.GetNetworkListRequest{}
 	getNetworkList.UniqueID = d.Id()
 
 	networkLists, err := client.GetNetworkList(ctx, getNetworkList)
