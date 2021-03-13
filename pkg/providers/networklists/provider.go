@@ -98,7 +98,9 @@ func getNETWORKLISTV1Service(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	if section != "" {
-		d.Set("config_section", section)
+		if err := d.Set("config_section", section); err != nil {
+			return err
+		}
 	}
 
 	return nil, nil
