@@ -103,7 +103,7 @@ func getNETWORKLISTV1Service(d *schema.ResourceData) (interface{}, error) {
 		}
 	}
 
-	return nil, nil
+	return nil
 }
 
 func (p *provider) Name() string {
