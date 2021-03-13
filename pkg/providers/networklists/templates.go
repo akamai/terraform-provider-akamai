@@ -32,87 +32,87 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 	var ostr, tstr bytes.Buffer
 	templ, err := GetTemplate(ots, key)
 
-	if err == nil {
-
-		var (
-			funcs = template.FuncMap{
-				"join":  strings.Join,
-				"quote": func(in string) string { return fmt.Sprintf("\"%s\"", in) },
-				"marshal": func(v interface{}) string {
-					a, _ := json.Marshal(v)
-					return string(a)
-				},
-				"dash": func(in int) string {
-					if in == 0 {
-						return "-"
-					} else {
-						return strconv.Itoa(in)
-					}
-				},
-
-				"substring": func(start, end int, s string) string {
-					if start < 0 {
-						return s[:end]
-					}
-					if end < 0 || end > len(s) {
-						return s[start:]
-					}
-					return s[start:end]
-				},
-
-				"splitprefix": func(sep, orig string) map[string]string {
-					parts := strings.Split(orig, sep)
-					res := make(map[string]string, len(parts))
-					for i, v := range parts {
-						res["_"+strconv.Itoa(i)] = v
-					}
-					return res
-				},
-
-				"replace": func(old, new, src string) string { return strings.Replace(src, old, new, -1) },
-			}
-		)
-
-		t := template.Must(template.New("").Funcs(funcs).Parse(templ.TemplateString))
-		if err := t.Execute(&tstr, str); err != nil {
-			return "", nil
-		}
-
-		temptype := templ.TemplateType
-
-		if temptype == "TABULAR" {
-			tbl := table.NewWriter()
-			tbl.SetOutputMirror(&ostr)
-			tbl.SetTitle(key)
-			headers := templ.TableTitle
-
-			headercolumns := strings.Split(headers, "|")
-			trhdr := table.Row{}
-			for _, header := range headercolumns {
-				trhdr = append(trhdr, header)
-			}
-			tbl.AppendHeader(trhdr)
-
-			ar := strings.Split(tstr.String(), ",")
-			for _, recContent := range ar {
-				trc := []table.Row{}
-				ac := strings.Split(recContent, "|")
-				tr := table.Row{}
-				for _, colContent := range ac {
-					tr = append(tr, colContent)
-				}
-				trc = append(trc, tr)
-				tbl.AppendRows(trc)
-			}
-
-			tbl.Render()
-		} else {
-			return "\n" + tstr.String(), nil
-		}
-
-		return "\n" + ostr.String(), nil
+	if err != nil {
+		return "", nil
 	}
-	return "", nil
+	var (
+		funcs = template.FuncMap{
+			"join":  strings.Join,
+			"quote": func(in string) string { return fmt.Sprintf("\"%s\"", in) },
+			"marshal": func(v interface{}) string {
+				a, _ := json.Marshal(v)
+				return string(a)
+			},
+			"dash": func(in int) string {
+				if in == 0 {
+					return "-"
+				} else {
+					return strconv.Itoa(in)
+				}
+			},
+
+			"substring": func(start, end int, s string) string {
+				if start < 0 {
+					return s[:end]
+				}
+				if end < 0 || end > len(s) {
+					return s[start:]
+				}
+				return s[start:end]
+			},
+
+			"splitprefix": func(sep, orig string) map[string]string {
+				parts := strings.Split(orig, sep)
+				res := make(map[string]string, len(parts))
+				for i, v := range parts {
+					res["_"+strconv.Itoa(i)] = v
+				}
+				return res
+			},
+
+			"replace": func(old, new, src string) string { return strings.Replace(src, old, new, -1) },
+		}
+	)
+
+	t := template.Must(template.New("").Funcs(funcs).Parse(templ.TemplateString))
+	if err := t.Execute(&tstr, str); err != nil {
+		return "", nil
+	}
+
+	temptype := templ.TemplateType
+
+	if temptype == "TABULAR" {
+		tbl := table.NewWriter()
+		tbl.SetOutputMirror(&ostr)
+		tbl.SetTitle(key)
+		headers := templ.TableTitle
+
+		headercolumns := strings.Split(headers, "|")
+		trhdr := table.Row{}
+		for _, header := range headercolumns {
+			trhdr = append(trhdr, header)
+		}
+		tbl.AppendHeader(trhdr)
+
+		ar := strings.Split(tstr.String(), ",")
+		for _, recContent := range ar {
+			trc := []table.Row{}
+			ac := strings.Split(recContent, "|")
+			tr := table.Row{}
+			for _, colContent := range ac {
+				tr = append(tr, colContent)
+			}
+			trc = append(trc, tr)
+			tbl.AppendRows(trc)
+		}
+
+		tbl.Render()
+	} else {
+		return "\n" + tstr.String(), nil
+	}
+
+	return "\n" + ostr.String(), nil
+
 }
 
 func InitTemplates(otm map[string]*OutputTemplate) {
