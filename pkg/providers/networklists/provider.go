@@ -132,7 +132,7 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
 
-	_, err := getNETWORKLISTV1Service(d)
+	err := getNetworkListV1Service(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
