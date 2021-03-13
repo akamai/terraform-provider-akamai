@@ -18,7 +18,7 @@ type (
 	provider struct {
 		*schema.Provider
 
-		client networklists.NETWORKLISTS
+		client networklists.NTWRKLISTS
 	}
 	// Option is a networklist provider option
 	Option func(p *provider)
@@ -73,14 +73,14 @@ func Provider() *schema.Provider {
 }
 
 // WithClient sets the client interface function, used for mocking and testing
-func WithClient(c networklists.NETWORKLISTS) Option {
+func WithClient(c networklists.NTWRKLISTS) Option {
 	return func(p *provider) {
 		p.client = c
 	}
 }
 
 // Client returns the PAPI interface
-func (p *provider) Client(meta akamai.OperationMeta) network.NETWORKLISTS {
+func (p *provider) Client(meta akamai.OperationMeta) network.NTWRKLISTS {
 	if p.client != nil {
 		return p.client
 	}

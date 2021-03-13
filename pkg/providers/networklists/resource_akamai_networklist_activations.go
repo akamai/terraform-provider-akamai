@@ -178,7 +178,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func lookupActivation(ctx context.Context, client networklists.NETWORKLISTS, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
+func lookupActivation(ctx context.Context, client networklists.NTWRKLISTS, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
 	activation, err := client.GetActivation(ctx, query)
 	if err != nil {
 		return nil, err
