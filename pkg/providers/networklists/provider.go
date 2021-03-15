@@ -87,7 +87,7 @@ func (p *provider) Client(meta akamai.OperationMeta) network.NTWRKLISTS {
 	return networklists.Client(meta.Session())
 }
 
-func getNETWORKLISTV1Service(d *schema.ResourceData) (interface{}, error) {
+func getNETWORKLISTV1Service(d *schema.ResourceData) error {
 	var section string
 
 	for _, s := range tools.FindStringValues(d, "networklist_section", "config_section") {
@@ -132,7 +132,7 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
 
-	err := getNetworkListV1Service(d)
+	err := getNETWORKLISTV1Service(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
