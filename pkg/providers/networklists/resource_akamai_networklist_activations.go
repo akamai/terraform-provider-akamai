@@ -109,10 +109,10 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	createActivations.Action = "ACTIVATE"
 
-    notificationEmails, ok := d.Get("notification_emails").(*schema.Set)
-    if !ok {
-        return diag.fromErr(someErrorOfYourChoice)
-    }
+	notificationEmails, ok := d.Get("notification_emails").(*schema.Set)
+	if !ok {
+		return diag.FromErr(fmt.Errorf("Activation Read failed"))
+	}
 	createActivations.NotificationRecipients = tools.SetToStringSlice(notificationEmails)
 
 	postResp, err := client.CreateActivations(ctx, createActivations)
