@@ -18,7 +18,7 @@ type (
 	provider struct {
 		*schema.Provider
 
-		client networklists.NETWORKLISTS
+		client networklists.NTWRKLISTS
 	}
 	// Option is a networklist provider option
 	Option func(p *provider)
@@ -73,21 +73,21 @@ func Provider() *schema.Provider {
 }
 
 // WithClient sets the client interface function, used for mocking and testing
-func WithClient(c networklists.NETWORKLISTS) Option {
+func WithClient(c networklists.NTWRKLISTS) Option {
 	return func(p *provider) {
 		p.client = c
 	}
 }
 
 // Client returns the PAPI interface
-func (p *provider) Client(meta akamai.OperationMeta) network.NETWORKLISTS {
+func (p *provider) Client(meta akamai.OperationMeta) network.NTWRKLISTS {
 	if p.client != nil {
 		return p.client
 	}
 	return networklists.Client(meta.Session())
 }
 
-func getNETWORKLISTV1Service(d *schema.ResourceData) (interface{}, error) {
+func getNetworkListV1Service(d *schema.ResourceData) error {
 	var section string
 
 	for _, s := range tools.FindStringValues(d, "networklist_section", "config_section") {
@@ -98,10 +98,12 @@ func getNETWORKLISTV1Service(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	if section != "" {
-		d.Set("config_section", section)
+		if err := d.Set("config_section", section); err != nil {
+			return err
+		}
 	}
 
-	return nil, nil
+	return nil
 }
 
 func (p *provider) Name() string {
@@ -130,7 +132,7 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
 
-	_, err := getNETWORKLISTV1Service(d)
+	err := getNetworkListV1Service(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
