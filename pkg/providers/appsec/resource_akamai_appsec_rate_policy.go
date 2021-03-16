@@ -277,5 +277,12 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	d.SetId(fmt.Sprintf("%d:%d:%d", getRatePolicy.ConfigID, getRatePolicy.ConfigVersion, ratepolicy.ID))
 
+	jsonBody, err := json.Marshal(ratepolicy)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("rate_policy", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	return nil
 }
