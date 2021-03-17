@@ -71,6 +71,16 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Computed: true,
 	},
+	"rule_errors": {
+		Type:     schema.TypeList,
+		Computed: true,
+		Elem:     papiError(),
+	},
+	"rule_warnings": {
+		Type:     schema.TypeList,
+		Computed: true,
+		Elem:     papiError(),
+	},
 	"version": {
 		Type:             schema.TypeInt,
 		Required:         true,
@@ -90,6 +100,18 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Computed: true,
 	},
+}
+
+func papiError() *schema.Resource {
+	return &schema.Resource{Schema: map[string]*schema.Schema{
+		"type":           {Type: schema.TypeString, Optional: true},
+		"title":          {Type: schema.TypeString, Optional: true},
+		"detail":         {Type: schema.TypeString, Optional: true},
+		"instance":       {Type: schema.TypeString, Optional: true},
+		"behavior_name":  {Type: schema.TypeString, Optional: true},
+		"error_location": {Type: schema.TypeString, Optional: true},
+		"status_code":    {Type: schema.TypeInt, Optional: true},
+	}}
 }
 
 func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -140,25 +162,14 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 
 	// if there are errors return them cleanly
 	if len(rules.Errors) > 0 {
-		diags := make([]diag.Diagnostic, 0)
-
-		for _, e := range rules.Errors {
-			logger.Warnf("property rule error %s", e.Error())
-
-			// handle errors with no title since summary is required field
-			errorSummary := e.Title
-			if len(errorSummary) == 0 {
-				errorSummary = "Papi error message shown below"
-			}
-
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  errorSummary,
-				Detail:   e.Error(),
-			})
+		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-
-		return diags
+	}
+	if len(rules.Warnings) > 0 {
+		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
@@ -540,25 +551,14 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 
 	// if there are errors return them cleanly
 	if len(rules.Errors) > 0 {
-		diags := make([]diag.Diagnostic, 0)
-
-		for _, e := range rules.Errors {
-			logger.Warnf("property rule error %s", e.Error())
-
-			// handle errors with no title since summary is required field
-			errorSummary := e.Title
-			if len(errorSummary) == 0 {
-				errorSummary = "Papi error message shown below"
-			}
-
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  errorSummary,
-				Detail:   e.Error(),
-			})
+		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-
-		return diags
+	}
+	if len(rules.Warnings) > 0 {
+		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	propertyActivation, err := lookupActivation(ctx, client, lookupActivationRequest{

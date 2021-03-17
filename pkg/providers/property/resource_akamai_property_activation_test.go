@@ -541,9 +541,12 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
 							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "warnings"),
 							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "errors"),
+							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "rule_errors"),
+							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "rule_warnings"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation_update.tf"),
@@ -555,6 +558,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						),
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})
