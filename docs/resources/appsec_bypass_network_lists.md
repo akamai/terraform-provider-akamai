@@ -8,7 +8,9 @@ description: |-
 
 # akamai_appsec_bypass_network_lists
 
-Use the `akamai_appsec_bypass_network_lists` resource to update which network lists to use in the bypass network lists settings.
+Use the `akamai_appsec_bypass_network_lists` resource to update which network lists to use in the
+bypass network lists settings. Note: this resource is only applicable to WAP (Web Application
+Protector) configurations.
 
 ## Example Usage
 
