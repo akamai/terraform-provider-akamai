@@ -1,0 +1,46 @@
+{
+    "accessControlGroup": " Kona Site Defender - C-D5TW8R - C-D5TW8R.G31325",
+    "createDate": "2014-01-31T00:03:19.133+00:00",
+    "createdBy": "ezhang",
+    "elementCount": 0,
+    "expeditedProductionActivationStatus": "INACTIVE",
+    "expeditedStagingActivationStatus": "INACTIVE",
+    "links": {
+        "activateInProduction": {
+            "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/environments/PRODUCTION/activate",
+            "method": "POST"
+        },
+        "activateInStaging": {
+            "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/environments/STAGING/activate",
+            "method": "POST"
+        },
+        "appendItems": {
+            "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/append",
+            "method": "POST"
+        },
+        "retrieve": {
+            "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI"
+        },
+        "statusInProduction": {
+            "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/environments/PRODUCTION/status"
+        },
+        "statusInStaging": {
+            "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/environments/STAGING/status"
+        },
+        "update": {
+            "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI",
+            "method": "PUT"
+        }
+    },
+    "name": "Voyager Call Center Whitelist",
+    "networkListType": "extendedNetworkListResponse",
+    "productionActivationStatus": "ACTIVE",
+    "readOnly": false,
+    "shared": false,
+    "stagingActivationStatus": "ACTIVE",
+    "syncPoint": 0,
+    "type": "IP",
+    "uniqueId": "2275_VOYAGERCALLCENTERWHITELI",
+    "updateDate": "2014-01-31T00:03:19.133+00:00",
+    "updatedBy": "ezhang"
+}

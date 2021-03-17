@@ -23,40 +23,39 @@ func resourceActivations() *schema.Resource {
 		CreateContext: resourceActivationsCreate,
 		ReadContext:   resourceActivationsRead,
 		DeleteContext: resourceActivationsDelete,
+		UpdateContext: resourceActivationsUpdate,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
 				Required: true,
-				ForceNew: true,
 			},
 			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
-				ForceNew: true,
 			},
 			"network": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
-				Default:  "STAGING",
+
+				Default: "STAGING",
 			},
 			"notes": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
-				Default:  "Activation Notes",
+
+				Default: "Activation Notes",
 			},
 			"activate": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				ForceNew: true,
-				Default:  true,
+
+				Default: true,
 			},
 			"notification_emails": {
 				Type:     schema.TypeSet,
 				Required: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"status": {
 				Type:     schema.TypeString,
@@ -151,6 +150,84 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceActivationsRead(ctx, d, m)
 }
 
+func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceActivationsUpdate")
+
+	activate, err := tools.GetBoolValue("activate", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if !activate {
+		d.SetId("none")
+		logger.Debugf("Done")
+		return nil
+	}
+
+	createActivations := appsec.CreateActivationsRequest{}
+
+	getActivationsreq := appsec.GetActivationsRequest{}
+
+	ap := appsec.ActivationConfigs{}
+
+	configID, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	ap.ConfigID = configID
+
+	version, err := tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	ap.ConfigVersion = version
+
+	network, err := tools.GetStringValue("network", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createActivations.Network = network
+
+	createActivations.Action = "ACTIVATE"
+	createActivations.ActivationConfigs = append(createActivations.ActivationConfigs, ap)
+	createActivations.NotificationEmails = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
+
+	activations, err := client.CreateActivations(ctx, createActivations, true)
+	if err != nil {
+		logger.Errorf("calling 'createActivations': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	d.SetId(strconv.Itoa(activations.ActivationID))
+
+	if err := d.Set("status", activations.Status); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	getActivationsreq.ActivationID = activations.ActivationID
+	activation, err := lookupActivation(ctx, client, getActivationsreq)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	for activation.Status != appsec.StatusActive {
+		select {
+		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			act, err := client.GetActivations(ctx, getActivationsreq)
+
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			activation = act
+
+		case <-ctx.Done():
+			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+		}
+	}
+
+	return resourceActivationsRead(ctx, d, m)
+}
+
 func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
@@ -169,7 +246,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	removeActivations := appsec.RemoveActivationsRequest{}
 	createActivationsreq := appsec.GetActivationsRequest{}
 
-	if d.Id() == "" {
+	if d.Id() == "" || d.Id() == "none" {
 		return nil
 	}
 
@@ -252,6 +329,10 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
 
 	getActivations := appsec.GetActivationsRequest{}
+
+	if d.Id() == "" || d.Id() == "none" {
+		return nil
+	}
 
 	activationID, errconv := strconv.Atoi(d.Id())
 

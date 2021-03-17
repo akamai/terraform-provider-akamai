@@ -1,0 +1,86 @@
+
+    {
+        "links": {
+            "create": {
+                "href": "/network-list/v2/network-lists",
+                "method": "POST"
+            }
+        },
+        "networkLists": [
+            {
+                "elementCount": 2,
+                "links": {
+                    "activateInProduction": {
+                        "href": "/network-list/v2/network-lists/365_AKAMAITOREXITNODES/environments/PRODUCTION/activate",
+                        "method": "POST"
+                    },
+                    "activateInStaging": {
+                        "href": "/network-list/v2/network-lists/365_AKAMAITOREXITNODES/environments/STAGING/activate",
+                        "method": "POST"
+                    },
+                    "appendItems": {
+                        "href": "/network-list/v2/network-lists/365_AKAMAITOREXITNODES/append",
+                        "method": "POST"
+                    },
+                    "retrieve": {
+                        "href": "/network-list/v2/network-lists/365_AKAMAITOREXITNODES"
+                    },
+                    "statusInProduction": {
+                        "href": "/network-list/v2/network-lists/365_AKAMAITOREXITNODES/environments/PRODUCTION/status"
+                    },
+                    "statusInStaging": {
+                        "href": "/network-list/v2/network-lists/365_AKAMAITOREXITNODES/environments/STAGING/status"
+                    },
+                    "update": {
+                        "href": "/network-list/v2/network-lists/365_AKAMAITOREXITNODES",
+                        "method": "PUT"
+                    }
+                },
+                "name": "Tor Akamai Network List",
+                "networkListType": "networkListResponse",
+                "readOnly": true,
+                "shared": true,
+                "syncPoint": 43422,
+                "type": "IP",
+                "uniqueId": "365_AKAMAITOREXITNODES"
+            },
+            {
+                "accessControlGroup": " Kona Site Defender - C-D5TW8R - C-D5TW8R.G31325",
+                "elementCount": 0,
+                "links": {
+                    "activateInProduction": {
+                        "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/environments/PRODUCTION/activate",
+                        "method": "POST"
+                    },
+                    "activateInStaging": {
+                        "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/environments/STAGING/activate",
+                        "method": "POST"
+                    },
+                    "appendItems": {
+                        "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/append",
+                        "method": "POST"
+                    },
+                    "retrieve": {
+                        "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI"
+                    },
+                    "statusInProduction": {
+                        "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/environments/PRODUCTION/status"
+                    },
+                    "statusInStaging": {
+                        "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI/environments/STAGING/status"
+                    },
+                    "update": {
+                        "href": "/network-list/v2/network-lists/2275_VOYAGERCALLCENTERWHITELI",
+                        "method": "PUT"
+                    }
+                },
+                "name": "Voyager Call Center Whitelist",
+                "networkListType": "networkListResponse",
+                "readOnly": false,
+                "shared": false,
+                "syncPoint": 0,
+                "type": "IP",
+                "uniqueId": "2275_VOYAGERCALLCENTERWHITELI"
+            }
+        ]
+    }

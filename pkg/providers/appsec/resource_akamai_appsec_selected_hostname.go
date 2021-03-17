@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -90,6 +91,11 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 
 	}
 
+	mode, err := tools.GetStringValue("mode", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	selectedhostname, err := client.GetSelectedHostname(ctx, getSelectedHostname)
 	if err != nil {
 		logger.Errorf("calling 'getSelectedHostname': %s", err.Error())
@@ -101,7 +107,40 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		newhdata = append(newhdata, hosts.Hostname)
 	}
 
-	if err := d.Set("hostnames", newhdata); err != nil {
+	hostnamelist := d.Get("hostnames").([]interface{})
+
+	finalhdata := make([]string, 0, len(d.Get("hostnames").([]interface{})))
+
+	switch mode {
+	case Remove:
+		for _, hl := range hostnamelist {
+			for _, h := range selectedhostname.HostnameList {
+
+				if h.Hostname == hl.(string) {
+					finalhdata = append(finalhdata, h.Hostname)
+				}
+			}
+		}
+	case Append:
+		for _, h := range selectedhostname.HostnameList {
+
+			for _, hl := range hostnamelist {
+				if h.Hostname == hl.(string) {
+					finalhdata = append(finalhdata, h.Hostname)
+				}
+			}
+		}
+	case Replace:
+		for _, h := range selectedhostname.HostnameList {
+			finalhdata = append(finalhdata, h.Hostname)
+		}
+	default:
+		for _, h := range selectedhostname.HostnameList {
+			finalhdata = append(finalhdata, h.Hostname)
+		}
+	}
+	sort.Strings(finalhdata)
+	if err := d.Set("hostnames", finalhdata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -113,7 +152,7 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("mode", "REPLACE"); err != nil {
+	if err := d.Set("mode", mode); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -184,11 +223,11 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 
 	switch mode {
 	case Remove:
-		for idx, h := range selectedhostnames.HostnameList {
+		for _, hl := range hostnamelist {
 
-			for _, hl := range hostnamelist {
+			for idx, h := range selectedhostnames.HostnameList {
 				if h.Hostname == hl.(string) {
-					RemoveIndex(selectedhostnames.HostnameList, idx)
+					selectedhostnames.HostnameList = RemoveIndex(selectedhostnames.HostnameList, idx)
 				}
 			}
 		}
@@ -210,6 +249,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	_, erru := client.UpdateSelectedHostname(ctx, updateSelectedHostname)
 	if erru != nil {
 		logger.Errorf("calling 'updateSelectedHostname': %s", erru.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, erru.Error()))
 	}
 
 	return resourceSelectedHostnameRead(ctx, d, m)
