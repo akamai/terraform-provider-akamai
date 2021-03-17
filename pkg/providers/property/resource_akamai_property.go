@@ -332,7 +332,7 @@ func computedValuesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m int
 	ctx = log.NewContext(ctx, logger)
 
 	//These computed attributes can be changed on server through other clients and the state needs to be synced to local
-	for _, key := range []string{"latest_version", "staging_version", "production_version", "rule_errors", "rule_warnings"} {
+	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
 		if d.HasChange(key) || d.NewValueKnown(key) {
 			err := d.SetNewComputed(key)
 			if err != nil {
