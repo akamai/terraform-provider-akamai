@@ -71,11 +71,11 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `uniqueid` - A list containing the IDs of the specified network list(s).
+* `uniqueid` - The ID of the indicated list (if the `name` argument was supplied).
 
 * `json` - A JSON-formatted list of information about the specified network list(s).
 
 * `output_text` - A tabular display showing the network list information.
 
-* `list` - A list of the IP addresses or locations included in the specified network list(s).
+* `list` - A list containing the IDs of the specified network lists(s).
 
