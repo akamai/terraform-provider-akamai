@@ -54,6 +54,6 @@ This data source returns these attributes:
 
 ## Domain validation for DEFAULT certificates
 
-If your `cert_provisioning_type = "DEFAULT"`, you need to perform domain validation to prove to the certificate authority that you control the domain and are authorized to create certificates for it.
+If your `cert_provisioning_type = "DEFAULT"` and the value for `cert_status.production_status` or `cert_status.staging_status` is either `PENDING`, `EXPIRING_SOON_NEEDS_VALIDATION`, or `EXPIRED_NEEDS_VALIDATION`, you need to perform domain validation. This proves to the certificate authority that you control the domain and are authorized to create certificates for it.
 
 In your DNS configuration, create a CNAME record and map the `cert_status.hostname` value to the `cert_status.target` value.
