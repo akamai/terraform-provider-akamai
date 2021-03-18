@@ -986,37 +986,3 @@ func rdSetAttrs(ctx context.Context, d *schema.ResourceData, AttributeValues map
 
 	return nil
 }
-
-func papiErrorsToList(Errors []*papi.Error) []interface{} {
-	if len(Errors) == 0 {
-		return nil
-	}
-
-	var RuleErrors []interface{}
-
-	for _, err := range Errors {
-		if err == nil {
-			continue
-		}
-
-		RuleErrors = append(RuleErrors, papiErrorToMap(err))
-	}
-
-	return RuleErrors
-}
-
-func papiErrorToMap(err *papi.Error) map[string]interface{} {
-	if err == nil {
-		return nil
-	}
-
-	return map[string]interface{}{
-		"type":           err.Type,
-		"title":          err.Title,
-		"detail":         err.Detail,
-		"instance":       err.Instance,
-		"behavior_name":  err.BehaviorName,
-		"error_location": err.ErrorLocation,
-		"status_code":    err.StatusCode,
-	}
-}
