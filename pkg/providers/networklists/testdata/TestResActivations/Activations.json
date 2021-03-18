@@ -1,0 +1,9 @@
+[
+    {
+        "detail": "Network list 21739 could not be found",
+        "instance": "https://problems.luna.akamaiapis.net/network-lists-activation/error-instances/77a73d4d-292b-4f96-9d16-1d82b716bb21",
+        "status": 404,
+        "title": "Not Found",
+        "type": "https://problems.luna.akamaiapis.net/network-lists-activation/error-types/NOT-FOUND"
+    }
+]

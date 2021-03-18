@@ -31,8 +31,8 @@ data "akamai_appsec_selectable_hostnames" "selectable_hostnames" {
 resource "akamai_appsec_configuration" "create_config" {
   name = var.name
   description = var.description
-  contract_id= data.akamai_appsec_contract_groups.contract_groups.default.contract_id
-  group_id  = data.akamai_appsec_contract_groups.contract_groups.default.group_id
+  contract_id= data.akamai_appsec_contract_groups.contract_groups.default_contractid
+  group_id  = data.akamai_appsec_contract_groups.contract_groups.default_groupid
   host_names = data.akamai_appsec_selectable_hostnames.selectable_hostnames.hostnames
 }
 
@@ -57,7 +57,7 @@ The following arguments are supported:
 
 * `group_id` - (Required) The group ID of the configuration>
 
-* `hostnames` - (Required) The list of hostnames protected by this security configuration.
+* `host_names` - (Required) The list of hostnames protected by this security configuration.
 
 ## Attributes Reference
 

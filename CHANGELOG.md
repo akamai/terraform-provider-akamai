@@ -1,5 +1,15 @@
 # RELEASE NOTES
 
+## 1.4.0 (Mar 17, 2021) Network Lists
+
+These are the operations supported in the Network Lists API v2:
+
+* Create a network list
+* Update an existing network list
+* Get the existing network lists, optionally filtering by name or type
+* Subscribe to a network list
+* Activate a network list
+
 ## 1.3.1 (Mar 4, 2021)
 * PAPI - Fixed issue with rules causing advanced locked behaviors to fail
 
