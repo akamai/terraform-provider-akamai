@@ -161,17 +161,21 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if there are errors return them cleanly
+	var diags1 diag.Diagnostics
 	if len(rules.Errors) > 0 {
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
+		diags1 = append(diags1, diag.Errorf("%s",rules.Errors)...)
 	}
 	if len(rules.Warnings) > 0 {
 		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-
+	if diags1.HasError() {
+		return diags1
+	}
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,
@@ -550,17 +554,21 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if there are errors return them cleanly
+	var diags1 diag.Diagnostics
 	if len(rules.Errors) > 0 {
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
+		diags1 = append(diags1, diag.Errorf("%s",rules.Errors)...)
 	}
 	if len(rules.Warnings) > 0 {
 		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-
+	if diags1.HasError() {
+		return diags1
+	}
 	propertyActivation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,
