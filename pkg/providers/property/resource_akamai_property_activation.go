@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -166,7 +167,8 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-		diags1 = append(diags1, diag.Errorf("%s",rules.Errors)...)
+		msg, _ := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
+		diags1 = append(diags1, diag.Errorf("activation cannot continue due to rule errors: %s",msg)...)
 	}
 	if len(rules.Warnings) > 0 {
 		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
@@ -559,7 +561,8 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-		diags1 = append(diags1, diag.Errorf("%s",rules.Errors)...)
+		msg, _ := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
+		diags1 = append(diags1, diag.Errorf("activation cannot continue due to rule errors: %s",msg)...)
 	}
 	if len(rules.Warnings) > 0 {
 		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
