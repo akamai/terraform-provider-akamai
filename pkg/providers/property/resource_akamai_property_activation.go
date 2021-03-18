@@ -167,7 +167,10 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-		msg, _ := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
+		msg, err := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
+		}
 		diags1 = append(diags1, diag.Errorf("activation cannot continue due to rule errors: %s",msg)...)
 	}
 	if len(rules.Warnings) > 0 {
@@ -561,7 +564,10 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-		msg, _ := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
+		msg, err := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
+		}
 		diags1 = append(diags1, diag.Errorf("activation cannot continue due to rule errors: %s",msg)...)
 	}
 	if len(rules.Warnings) > 0 {
