@@ -3,7 +3,7 @@
 ## 1.5.0 (Mar 29, 2021) PAPI - Secure by default integration
 
 #### BREAKING CHANGES:
-* PAPI -`resource_akamai_property:` Changed hostnames field to a block type syntax to support additional user inputs. Refer [Property Resource](docs/resources/property.md) for new syntax
+* PAPI - `resource_akamai_property:` Changed hostnames field to a block type syntax to support additional user inputs. Refer to [Property Resource](docs/resources/property.md) for new syntax
 
 #### BUG FIXES:
 
@@ -12,8 +12,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 * PAPI
-   * New [Hostnames Datasource](docs/data-sources/property_hostnames.md)  to query hostnames and poll certificate status.
-   * Improved error handling and error messages in property and property activation resources
+   * New [Hostnames Datasource](docs/data-sources/property_hostnames.md) to query hostnames and poll certificate status
+   * Improved error handling and error messages in property and property_activation resources
    
 ## 1.4.0 (Mar 17, 2021) Network Lists
 
