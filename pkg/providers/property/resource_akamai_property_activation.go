@@ -74,11 +74,13 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	},
 	"rule_errors": {
 		Type:     schema.TypeList,
+		Optional: true,
 		Computed: true,
 		Elem:     papiError(),
 	},
 	"rule_warnings": {
 		Type:     schema.TypeList,
+		Optional: true,
 		Computed: true,
 		Elem:     papiError(),
 	},
@@ -162,8 +164,9 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if there are errors return them cleanly
-	var diags1 diag.Diagnostics
+	var diags diag.Diagnostics
 	if len(rules.Errors) > 0 {
+
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
@@ -171,15 +174,15 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
 		}
-		diags1 = append(diags1, diag.Errorf("activation cannot continue due to rule errors: %s",msg)...)
+		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
 	}
 	if len(rules.Warnings) > 0 {
 		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-	if diags1.HasError() {
-		return diags1
+	if diags.HasError() {
+		return diags
 	}
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID: propertyID,
@@ -559,7 +562,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if there are errors return them cleanly
-	var diags1 diag.Diagnostics
+	var diags diag.Diagnostics
 	if len(rules.Errors) > 0 {
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -568,15 +571,15 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
 		}
-		diags1 = append(diags1, diag.Errorf("activation cannot continue due to rule errors: %s",msg)...)
+		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
 	}
 	if len(rules.Warnings) > 0 {
 		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-	if diags1.HasError() {
-		return diags1
+	if diags.HasError() {
+		return diags
 	}
 	propertyActivation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID: propertyID,

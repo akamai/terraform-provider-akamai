@@ -546,7 +546,6 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation_update.tf"),
@@ -558,7 +557,40 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						),
-						ExpectNonEmptyPlan: true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("check schema property activation with rule errors", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{
+			{
+				methodName: "GetRuleTree",
+				papiResponse: &papi.GetRuleTreeResponse{
+					Response: papi.Response{
+						Errors: []*papi.Error{
+							{
+								Title: "some error",
+							},
+						},
+					},
+				},
+				error:    nil,
+				stubOnce: false,
+			},
+		})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+						ExpectError: regexp.MustCompile("activation cannot continue due to rule errors"),
 					},
 				},
 			})
