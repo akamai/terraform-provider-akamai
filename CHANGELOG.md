@@ -13,7 +13,7 @@
 #### FEATURES/ENHANCEMENTS:
 * PAPI
    * New [Hostnames Datasource](docs/data-sources/property_hostnames.md) to query hostnames and poll certificate status
-   * Improved error handling and error messages in property and property_activation resources
+   * Improved error handling and error messages in `property` and `property_activation` resources
    
 ## 1.4.0 (Mar 17, 2021) Network Lists
 
