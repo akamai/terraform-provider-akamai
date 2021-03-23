@@ -108,10 +108,10 @@ func dataAkamaiPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	hostNamesReq := papi.GetPropertyVersionHostnamesRequest{
-		PropertyID:      propertyID,
-		GroupID:         groupID,
-		ContractID:      contractID,
-		PropertyVersion: version,
+		PropertyID:        propertyID,
+		GroupID:           groupID,
+		ContractID:        contractID,
+		PropertyVersion:   version,
 		IncludeCertStatus: true,
 	}
 

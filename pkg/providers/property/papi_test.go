@@ -378,6 +378,7 @@ func (p *mockpapi) OnGetRuleTree(ctx, req interface{}, impl GetRuleTreeFunc) *mo
 // Expect a call to the mock's papi.UpdateRuleTree() where the return value is computed by the given
 // function
 type UpdateRuleTreeFunc = func(context.Context, papi.UpdateRulesRequest) (*papi.UpdateRulesResponse, error)
+
 func (p *mockpapi) OnUpdateRuleTree(ctx, req interface{}, impl UpdateRuleTreeFunc) *mock.Call {
 	call := p.On("UpdateRuleTree", ctx, req)
 	call.Run(func(CallArgs mock.Arguments) {

@@ -66,10 +66,10 @@ func ExpectGetProperty(client *mockpapi, PropertyID, GroupID, ContractID string,
 // copy of the value pointed to by State made at the time of the call to papi.GetPropertyVersionHostnames().
 func ExpectGetPropertyVersionHostnames(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, State *[]papi.Hostname) *mock.Call {
 	req := papi.GetPropertyVersionHostnamesRequest{
-		PropertyID:      PropertyID,
-		GroupID:         GroupID,
-		ContractID:      ContractID,
-		PropertyVersion: PropertyVersion,
+		PropertyID:        PropertyID,
+		GroupID:           GroupID,
+		ContractID:        ContractID,
+		PropertyVersion:   PropertyVersion,
 		IncludeCertStatus: true,
 	}
 
@@ -214,7 +214,6 @@ func ExpectGetRuleTree(client *mockpapi, PropertyID, GroupID, ContractID string,
 	return client.OnGetRuleTree(AnyCTX, req, fn)
 }
 
-
 func ExpectUpdateRuleTree(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, State *papi.RulesUpdate, RuleFormat string, RuleError []papi.RuleError) *mock.Call {
 	var RulesUpdate papi.RulesUpdate
 	if State != nil {
@@ -226,10 +225,9 @@ func ExpectUpdateRuleTree(client *mockpapi, PropertyID, GroupID, ContractID stri
 		PropertyVersion: PropertyVersion,
 		ContractID:      ContractID,
 		GroupID:         GroupID,
-		Rules:          RulesUpdate,
-		ValidateRules: true,
+		Rules:           RulesUpdate,
+		ValidateRules:   true,
 	}
-
 
 	fn := func(context.Context, papi.UpdateRulesRequest) (*papi.UpdateRulesResponse, error) {
 
@@ -239,8 +237,8 @@ func ExpectUpdateRuleTree(client *mockpapi, PropertyID, GroupID, ContractID stri
 			GroupID:         GroupID,
 			PropertyVersion: PropertyVersion,
 			RuleFormat:      RuleFormat,
-			Rules:          RulesUpdate.Rules,
-			Errors:	RuleError,
+			Rules:           RulesUpdate.Rules,
+			Errors:          RuleError,
 		}
 		return &res, nil
 	}

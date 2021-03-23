@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 
 	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
@@ -224,7 +225,7 @@ func resourceProperty() *schema.Resource {
 						},
 						"cert_status": {
 							Type:     schema.TypeList,
-							Optional:true,
+							Optional: true,
 							Computed: true,
 							Elem:     certStatus,
 						},
@@ -434,8 +435,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
 	if err == nil {
-		Hostnames := make([]papi.Hostname, len(HostnameVal))
-		Hostnames = mapToHostnames(HostnameVal)
+		Hostnames := mapToHostnames(HostnameVal)
 		if len(Hostnames) > 0 {
 			if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
 				return diag.FromErr(err)
@@ -629,8 +629,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	if d.HasChange("hostnames") {
 		HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
 		if err == nil {
-			Hostnames := make([]papi.Hostname, len(HostnameVal))
-			Hostnames = mapToHostnames(HostnameVal)
+			Hostnames := mapToHostnames(HostnameVal)
 			if len(Hostnames) > 0 {
 				if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
 					d.Partial(true)
@@ -826,10 +825,10 @@ func fetchProperty(ctx context.Context, client papi.PAPI, PropertyID, GroupID, C
 // Fetch hostnames for latest version of given property
 func fetchPropertyHostnames(ctx context.Context, client papi.PAPI, Property papi.Property) ([]papi.Hostname, error) {
 	req := papi.GetPropertyVersionHostnamesRequest{
-		PropertyID:      Property.PropertyID,
-		GroupID:         Property.GroupID,
-		ContractID:      Property.ContractID,
-		PropertyVersion: Property.LatestVersion,
+		PropertyID:        Property.PropertyID,
+		GroupID:           Property.GroupID,
+		ContractID:        Property.ContractID,
+		PropertyVersion:   Property.LatestVersion,
 		IncludeCertStatus: true,
 	}
 
@@ -885,7 +884,7 @@ func updatePropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pr
 		ContractID:      Property.ContractID,
 		PropertyVersion: Property.LatestVersion,
 		Rules:           Rules,
-		ValidateRules: true,
+		ValidateRules:   true,
 	}
 
 	logger := log.FromContext(ctx).WithFields(logFields(req))

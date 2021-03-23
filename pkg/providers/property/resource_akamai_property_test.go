@@ -48,7 +48,7 @@ func TestResProperty(t *testing.T) {
 					CnameFrom:            "from.test.domain",
 					CnameTo:              CnameTo,
 					CertProvisioningType: "DEFAULT",
-					EdgeHostnameID: "ehn_123",
+					EdgeHostnameID:       "ehn_123",
 					CertStatus: papi.CertStatusItem{
 						ValidationCname: papi.ValidationCname{
 							Hostname: "_acme-challenge.www.example.com",
@@ -147,7 +147,7 @@ func TestResProperty(t *testing.T) {
 		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_property.test", "id", PropertyID),
 			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_to", CnameTo),
- 			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.edge_hostname_id", EdgeHostnameId),
+			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.edge_hostname_id", EdgeHostnameId),
 			resource.TestCheckResourceAttr("akamai_property.test", "latest_version", LatestVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "staging_version", StagingVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "production_version", ProductionVersion),
@@ -185,7 +185,7 @@ func TestResProperty(t *testing.T) {
 			return []resource.TestStep{
 				{
 					Config:             loadFixtureString("%s/step0.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 				{
@@ -194,7 +194,7 @@ func TestResProperty(t *testing.T) {
 						State.Property.StagingVersion = &StagingVersion
 					},
 					Config:             loadFixtureString("%s/step1.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 			}
@@ -215,7 +215,7 @@ func TestResProperty(t *testing.T) {
 			return []resource.TestStep{
 				{
 					Config:             loadFixtureString("%s/step0.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 				{
@@ -224,7 +224,7 @@ func TestResProperty(t *testing.T) {
 						State.Property.ProductionVersion = &ProductionVersion
 					},
 					Config:             loadFixtureString("%s/step1.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 			}
@@ -245,7 +245,7 @@ func TestResProperty(t *testing.T) {
 			return []resource.TestStep{
 				{
 					Config:             loadFixtureString("%s/step0.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 				{
@@ -254,7 +254,7 @@ func TestResProperty(t *testing.T) {
 						State.Property.StagingVersion = &StagingVersion
 					},
 					Config:             loadFixtureString("%s/step1.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 			}
@@ -275,7 +275,7 @@ func TestResProperty(t *testing.T) {
 			return []resource.TestStep{
 				{
 					Config:             loadFixtureString("%s/step0.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 				{
@@ -284,7 +284,7 @@ func TestResProperty(t *testing.T) {
 						State.Property.ProductionVersion = &ProductionVersion
 					},
 					Config:             loadFixtureString("%s/step1.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 			}
@@ -304,12 +304,12 @@ func TestResProperty(t *testing.T) {
 			return []resource.TestStep{
 				{
 					Config:             loadFixtureString("%s/step0.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 				{
 					Config:             loadFixtureString("%s/step1.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to2.test.domain", "1", "0", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 			}
@@ -327,12 +327,12 @@ func TestResProperty(t *testing.T) {
 			return []resource.TestStep{
 				{
 					Config:             loadFixtureString("%s/step0.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 				{
 					Config:             loadFixtureString("%s/step1.tf", FixturePath),
-					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+					Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 					ExpectNonEmptyPlan: true,
 				},
 			}
@@ -444,7 +444,7 @@ func TestResProperty(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							Config:             loadFixtureString(fixturePath),
-							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 							ExpectNonEmptyPlan: true,
 						},
 						{
@@ -456,7 +456,7 @@ func TestResProperty(t *testing.T) {
 						},
 						{
 							Config:             loadFixtureString(fixturePath),
-							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 							ExpectNonEmptyPlan: true,
 						},
 					},
@@ -566,7 +566,7 @@ func TestResProperty(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							Config:             loadFixtureString("testdata/%s-step0.tf", t.Name()),
-							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 							ExpectNonEmptyPlan: true,
 						},
 						{
@@ -615,7 +615,7 @@ func TestResProperty(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							Config:             loadFixtureString("testdata/%s/step0.tf", t.Name()),
-							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0","ehn_123"),
+							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 							ExpectNonEmptyPlan: true,
 						},
 						{
@@ -709,7 +709,7 @@ func TestResProperty(t *testing.T) {
 			)
 
 			var err error = &papi.Error{
-				StatusCode: 400,
+				StatusCode:   400,
 				Type:         "/papi/v1/errors/validation.required_behavior",
 				Title:        "Missing required behavior in default rule",
 				Detail:       "In order for this property to work correctly behavior Content Provider Code needs to be present in the default section",
@@ -718,10 +718,10 @@ func TestResProperty(t *testing.T) {
 			}
 			var req = papi.UpdateRulesRequest{
 				PropertyID:      "prp_1",
-				ContractID:     "ctr_0",
+				ContractID:      "ctr_0",
 				GroupID:         "grp_0",
 				PropertyVersion: 1,
-				Rules:          papi.RulesUpdate{Rules: papi.Rules{
+				Rules: papi.RulesUpdate{Rules: papi.Rules{
 					Name: "update rule tree",
 				}},
 				ValidateRules: true,

@@ -246,8 +246,8 @@ func (res updatePropertyVersionHostnamesResFields) Fields() log.Fields {
 		hostnames["cnameTo"] = hn.CnameTo
 		hostnames["certProvisioningType"] = hn.CertProvisioningType
 		certs := map[string]interface{}{}
-		certs["validation_cname.hostname"] =  hn.CertStatus.ValidationCname.Hostname
-		certs["validation_cname.target"] =  hn.CertStatus.ValidationCname.Hostname
+		certs["validation_cname.hostname"] = hn.CertStatus.ValidationCname.Hostname
+		certs["validation_cname.target"] = hn.CertStatus.ValidationCname.Hostname
 		if len(hn.CertStatus.Staging) > 0 {
 			certs["staging_status"] = hn.CertStatus.Staging[0].Status
 		}

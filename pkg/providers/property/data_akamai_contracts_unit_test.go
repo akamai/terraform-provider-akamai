@@ -1,9 +1,10 @@
 package property
 
 import (
+	"testing"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/stretchr/testify/mock"
-	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
