@@ -37,7 +37,7 @@ func resourceBypassNetworkLists() *schema.Resource {
 				Required: true,
 			},
 			"bypass_network_list": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
@@ -193,10 +193,10 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 		updateBypassNetworkLists.Version = version
 	}
-	netlist := d.Get("bypass_network_list").([]interface{})
-	nru := make([]string, 0, len(netlist))
+	netlist := d.Get("bypass_network_list").(*schema.Set)
+	nru := make([]string, 0, len(netlist.List()))
 
-	for _, h := range netlist {
+	for _, h := range netlist.List() {
 		nru = append(nru, h.(string))
 
 	}

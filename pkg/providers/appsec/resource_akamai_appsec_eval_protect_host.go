@@ -37,7 +37,7 @@ func resourceEvalProtectHost() *schema.Resource {
 				Required: true,
 			},
 			"hostnames": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
@@ -150,10 +150,10 @@ func resourceEvalProtectHostUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 		updateEvalProtectHost.Version = version
 	}
-	hostnames := d.Get("hostnames").([]interface{})
-	hn := make([]string, 0, len(hostnames))
+	hostnames := d.Get("hostnames").(*schema.Set)
+	hn := make([]string, 0, len(hostnames.List()))
 
-	for _, h := range hostnames {
+	for _, h := range hostnames.List() {
 		hn = append(hn, h.(string))
 
 	}

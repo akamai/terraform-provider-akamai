@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -52,7 +52,7 @@ func resourceSiemSettings() *schema.Resource {
 				Required: true,
 			},
 			"security_policy_ids": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
@@ -70,7 +70,7 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsRead")
 
-	getSiemSettings := v2.GetSiemSettingsRequest{}
+	getSiemSettings := appsec.GetSiemSettingsRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
 
@@ -151,7 +151,7 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
 
-	removeSiemSettings := v2.RemoveSiemSettingsRequest{}
+	removeSiemSettings := appsec.RemoveSiemSettingsRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
 
@@ -202,7 +202,7 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
 
-	updateSiemSettings := v2.UpdateSiemSettingsRequest{}
+	updateSiemSettings := appsec.UpdateSiemSettingsRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
 
@@ -254,10 +254,10 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	}
 	updateSiemSettings.SiemDefinitionID = siemID
 
-	security_policy_ids := d.Get("security_policy_ids").([]interface{})
-	spids := make([]string, 0, len(security_policy_ids))
+	security_policy_ids := d.Get("security_policy_ids").(*schema.Set)
+	spids := make([]string, 0, len(security_policy_ids.List()))
 
-	for _, h := range security_policy_ids {
+	for _, h := range security_policy_ids.List() {
 		spids = append(spids, h.(string))
 
 	}

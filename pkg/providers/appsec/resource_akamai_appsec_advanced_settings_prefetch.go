@@ -49,7 +49,7 @@ func resourceAdvancedSettingsPrefetch() *schema.Resource {
 				Required: true,
 			},
 			"extensions": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of extensions",
@@ -226,10 +226,10 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	}
 	updateAdvancedSettingsPrefetch.EnableRateControls = enableRateControls
 
-	extensions := d.Get("extensions").([]interface{})
-	exts := make([]string, 0, len(extensions))
+	extensions := d.Get("extensions").(*schema.Set)
+	exts := make([]string, 0, len(extensions.List()))
 
-	for _, h := range extensions {
+	for _, h := range extensions.List() {
 		exts = append(exts, h.(string))
 
 	}
