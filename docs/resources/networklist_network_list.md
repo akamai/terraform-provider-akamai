@@ -51,7 +51,7 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `uniqueid` - The ID of the network list.
+* `network_list_id` - The ID of the network list.
 
 * `sync_point` - An integer that identifies the current version of the network list; this value is incremented each time
   the list is modified. 

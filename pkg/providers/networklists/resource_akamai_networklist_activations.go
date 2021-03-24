@@ -109,20 +109,24 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	createActivations.Action = "ACTIVATE"
 
-	createActivations.NotificationRecipients = tools.SetToStringSlice(d.Get("notification_emails").(*schema.Set))
+	notificationEmails, ok := d.Get("notification_emails").(*schema.Set)
+	if !ok {
+		return diag.FromErr(fmt.Errorf("Activation Read failed"))
+	}
+	createActivations.NotificationRecipients = tools.SetToStringSlice(notificationEmails)
 
-	postresp, err := client.CreateActivations(ctx, createActivations)
+	postResp, err := client.CreateActivations(ctx, createActivations)
 	if err != nil {
 		logger.Debugf("calling 'createActivations': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	logger.Debugf("calling 'createActivations': RESPONSE %v", postresp)
-	d.SetId(strconv.Itoa(postresp.ActivationID))
-	d.Set("status", string(postresp.ActivationStatus))
+	logger.Debugf("calling 'createActivations': RESPONSE %v", postResp)
+	d.SetId(strconv.Itoa(postResp.ActivationID))
+	d.Set("status", string(postResp.ActivationStatus))
 
-	lookupActivationreq.ActivationID = postresp.ActivationID
+	lookupActivationreq.ActivationID = postResp.ActivationID
 
-	logger.Debugf("calling 'createActivations': SET ID %d", postresp.ActivationID)
+	logger.Debugf("calling 'createActivations': SET ID %d", postResp.ActivationID)
 	activation, err := lookupActivation(ctx, client, lookupActivationreq)
 	logger.Debugf("calling 'createActivations': GET STATUS ID %v", activation)
 
@@ -178,7 +182,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func lookupActivation(ctx context.Context, client networklists.NETWORKLISTS, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
+func lookupActivation(ctx context.Context, client networklists.NTWRKLISTS, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
 	activation, err := client.GetActivation(ctx, query)
 	if err != nil {
 		return nil, err

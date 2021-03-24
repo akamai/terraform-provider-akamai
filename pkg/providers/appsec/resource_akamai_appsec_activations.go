@@ -207,6 +207,9 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	getActivationsreq.ActivationID = activations.ActivationID
 	activation, err := lookupActivation(ctx, client, getActivationsreq)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	for activation.Status != appsec.StatusActive {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):

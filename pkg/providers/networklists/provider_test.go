@@ -43,7 +43,7 @@ func getTestProvider() *schema.Provider {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client networklists.NETWORKLISTS, f func()) {
+func useClient(client networklists.NTWRKLISTS, f func()) {
 	clientLock.Lock()
 	orig := inst.client
 	inst.client = client
