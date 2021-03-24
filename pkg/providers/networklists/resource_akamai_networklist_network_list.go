@@ -337,6 +337,10 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if mode == "" {
+		mode = "REPLACE"
+	}
+
 	if err := d.Set("mode", mode); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
