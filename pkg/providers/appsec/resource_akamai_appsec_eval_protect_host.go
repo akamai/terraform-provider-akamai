@@ -41,11 +41,6 @@ func resourceEvalProtectHost() *schema.Resource {
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -71,6 +66,14 @@ func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m 
 		}
 		getEvalProtectHost.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getEvalProtectHost.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -84,18 +87,10 @@ func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m 
 		}
 		getEvalProtectHost.Version = version
 	}
-	evalprotecthost, err := client.GetEvalProtectHost(ctx, getEvalProtectHost)
-	if err != nil {
-		logger.Errorf("calling 'getEvalProtectHost': %s", err.Error())
+
+	if _, err := client.GetEvalProtectHost(ctx, getEvalProtectHost); err != nil {
+		logger.Errorf("calling 'updateEvalProtectHost': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "evalProtectHostDS", evalprotecthost)
-	if err == nil {
-		d.Set("output_text", outputtext)
 	}
 
 	if err := d.Set("config_id", getEvalProtectHost.ConfigID); err != nil {
@@ -136,6 +131,14 @@ func resourceEvalProtectHostUpdate(ctx context.Context, d *schema.ResourceData, 
 			return diag.FromErr(errconv)
 		}
 		updateEvalProtectHost.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateEvalProtectHost.Version = version
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)

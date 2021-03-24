@@ -42,7 +42,7 @@ func resourceCustomDeny() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
+				DiffSuppressFunc: suppressCustomDenyJsonDiffs,
 			},
 			"custom_deny_id": {
 				Type:        schema.TypeString,
@@ -77,6 +77,14 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	createCustomDeny.Version = version
+
+	if d.HasChange("version") {
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		createCustomDeny.Version = version
+	}
 
 	postresp, errc := client.CreateCustomDeny(ctx, createCustomDeny)
 	if errc != nil {
@@ -117,7 +125,17 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 		}
 		updateCustomDeny.Version = version
 
-		updateCustomDeny.ID = s[2]
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateCustomDeny.Version = version
+		}
+
+		if len(s) >= 3 {
+			updateCustomDeny.ID = s[2]
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
@@ -213,7 +231,17 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 		}
 		getCustomDeny.Version = version
 
-		getCustomDeny.ID = s[2]
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getCustomDeny.Version = version
+		}
+
+		if len(s) >= 3 {
+			getCustomDeny.ID = s[2]
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
@@ -244,7 +272,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 		d.Set("output_text", outputtext)
 	}
 
-	if err := d.Set("custom_deny_id", customdeny.ID); err != nil {
+	if err := d.Set("custom_deny_id", getCustomDeny.ID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -265,7 +293,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d:%s", getCustomDeny.ConfigID, getCustomDeny.Version, customdeny.ID))
+	d.SetId(fmt.Sprintf("%d:%d:%s", getCustomDeny.ConfigID, getCustomDeny.Version, getCustomDeny.ID))
 
 	return nil
 }

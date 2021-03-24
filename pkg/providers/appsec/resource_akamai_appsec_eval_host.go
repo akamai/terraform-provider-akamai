@@ -41,11 +41,6 @@ func resourceEvalHost() *schema.Resource {
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -71,6 +66,14 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 		getEvalHost.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getEvalHost.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -84,18 +87,11 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 		getEvalHost.Version = version
 	}
-	evalhost, err := client.GetEvalHost(ctx, getEvalHost)
+
+	_, err := client.GetEvalHost(ctx, getEvalHost)
 	if err != nil {
 		logger.Errorf("calling 'getEvalHost': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "evalHostDS", evalhost)
-	if err == nil {
-		d.Set("output_text", outputtext)
 	}
 
 	if err := d.Set("config_id", getEvalHost.ConfigID); err != nil {
@@ -179,6 +175,14 @@ func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m inter
 			return diag.FromErr(errconv)
 		}
 		updateEvalHost.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateEvalHost.Version = version
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)

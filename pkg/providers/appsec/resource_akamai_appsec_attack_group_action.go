@@ -74,6 +74,14 @@ func resourceAttackGroupActionRead(ctx context.Context, d *schema.ResourceData, 
 		}
 		getAttackGroupAction.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getAttackGroupAction.Version = version
+		}
+
 		policyid := s[2]
 
 		getAttackGroupAction.PolicyID = policyid
@@ -225,6 +233,14 @@ func resourceAttackGroupActionUpdate(ctx context.Context, d *schema.ResourceData
 			return diag.FromErr(errconv)
 		}
 		updateAttackGroupAction.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateAttackGroupAction.Version = version
+		}
 
 		policyid := s[2]
 

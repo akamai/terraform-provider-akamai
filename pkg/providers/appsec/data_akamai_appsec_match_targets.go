@@ -14,6 +14,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+type MatchTargetOutputText struct {
+	TargetID int
+	PolicyID string
+	Type     string
+}
+
+const (
+	APITarget     = "API"
+	WebsiteTarget = "Website"
+)
+
 func dataSourceMatchTargets() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceMatchTargetsRead,
@@ -87,9 +98,17 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "matchTargetDS", matchtargets)
+	matchtargetCount := len(matchtargets.MatchTargets.WebsiteTargets) + len(matchtargets.MatchTargets.APITargets)
+	matchtargetsOutputText := make([]MatchTargetOutputText, 0, matchtargetCount)
+	for _, value := range matchtargets.MatchTargets.WebsiteTargets {
+		matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, WebsiteTarget})
+	}
+	for _, value := range matchtargets.MatchTargets.APITargets {
+		matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, APITarget})
+	}
+	websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
 	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
+		if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}

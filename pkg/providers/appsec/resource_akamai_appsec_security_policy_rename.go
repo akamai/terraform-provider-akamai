@@ -66,6 +66,14 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 		}
 		updateSecurityPolicy.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateSecurityPolicy.Version = version
+		}
+
 		policyid := s[2]
 
 		updateSecurityPolicy.PolicyID = policyid
@@ -136,6 +144,14 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(errconv)
 		}
 		getSecurityPolicy.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getSecurityPolicy.Version = version
+		}
 
 		policyid := s[2]
 

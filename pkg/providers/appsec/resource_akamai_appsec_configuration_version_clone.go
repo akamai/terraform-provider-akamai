@@ -20,7 +20,7 @@ func resourceConfigurationVersionClone() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceConfigurationVersionCloneCreate,
 		ReadContext:   resourceConfigurationVersionCloneRead,
-		UpdateContext: resourceConfigurationVersionCloneUpdate,
+		UpdateContext: resourceConfigurationVersionCloneCreate,
 		DeleteContext: resourceConfigurationVersionCloneDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -126,8 +126,4 @@ func resourceConfigurationVersionCloneDelete(ctx context.Context, d *schema.Reso
 
 	d.SetId("")
 	return nil
-}
-
-func resourceConfigurationVersionCloneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
 }

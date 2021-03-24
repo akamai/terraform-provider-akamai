@@ -63,11 +63,6 @@ func resourceIPGeo() *schema.Resource {
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
@@ -92,6 +87,14 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 			return diag.FromErr(errconv)
 		}
 		getIPGeo.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getIPGeo.Version = version
+		}
 
 		policyid := s[2]
 		getIPGeo.PolicyID = policyid
@@ -119,16 +122,6 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 	if err != nil {
 		logger.Errorf("calling 'getIPGeo': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "IPGeoDS", ipgeo)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
 	}
 
 	if err := d.Set("config_id", getIPGeo.ConfigID); err != nil {
@@ -248,6 +241,14 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 			return diag.FromErr(errconv)
 		}
 		updateIPGeo.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateIPGeo.Version = version
+		}
 
 		policyid := s[2]
 		updateIPGeo.PolicyID = policyid

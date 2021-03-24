@@ -85,6 +85,15 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 			return diag.FromErr(errconv)
 		}
 		getSiemSettings.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getSiemSettings.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -217,6 +226,15 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 			return diag.FromErr(errconv)
 		}
 		updateSiemSettings.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateSiemSettings.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -254,9 +272,11 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	}
 	updateSiemSettings.SiemDefinitionID = siemID
 
-	security_policy_ids := d.Get("security_policy_ids").(*schema.Set)
+	security_policy_ids, err := tools.GetSetValue("security_policy_ids", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 	spids := make([]string, 0, len(security_policy_ids.List()))
-
 	for _, h := range security_policy_ids.List() {
 		spids = append(spids, h.(string))
 
