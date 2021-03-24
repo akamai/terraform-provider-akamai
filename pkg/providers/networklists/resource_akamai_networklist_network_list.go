@@ -45,7 +45,7 @@ func resourceNetworkList() *schema.Resource {
 				Required: true,
 			},
 			"list": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
 			},
@@ -117,18 +117,18 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	netlist := d.Get("list").([]interface{})
-	nru := make([]string, 0, len(netlist))
+	netlist := d.Get("list").(*schema.Set)
+	nru := make([]string, 0, len(netlist.List()))
 
-	for _, h := range netlist {
+	for _, h := range netlist.List() {
 		nru = append(nru, h.(string))
 	}
 
-	finallist := make([]string, 0, len(d.Get("list").([]interface{})))
+	finallist := make([]string, 0, len(netlist.List()))
 
 	switch mode {
 	case Remove:
-		for _, hl := range netlist {
+		for _, hl := range netlist.List() {
 			for _, h := range networklists.NetworkLists {
 
 				if h.Name == hl.(string) {
@@ -141,7 +141,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 
 		for _, h := range networklists.NetworkLists {
 			finallist = appendIfMissing(finallist, h.Name)
-			for _, hl := range netlist {
+			for _, hl := range netlist.List() {
 				finallist = appendIfMissing(finallist, hl.(string))
 			}
 			oneShot = true
@@ -228,18 +228,18 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	netlist := d.Get("list").([]interface{})
-	nru := make([]string, 0, len(netlist))
+	netlist := d.Get("list").(*schema.Set)
+	nru := make([]string, 0, len(netlist.List()))
 
-	for _, h := range netlist {
+	for _, h := range netlist.List() {
 		nru = append(nru, h.(string))
 	}
 
-	finallist := make([]string, 0, len(d.Get("list").([]interface{})))
+	finallist := make([]string, 0, len(netlist.List()))
 
 	switch mode {
 	case Remove:
-		for _, hl := range netlist {
+		for _, hl := range netlist.List() {
 			for _, h := range networkLists.List {
 
 				if !(h == hl.(string)) {
@@ -251,7 +251,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		for _, h := range networkLists.List {
 			finallist = append(finallist, h)
 		}
-		for _, hl := range netlist {
+		for _, hl := range netlist.List() {
 			finallist = appendIfMissing(finallist, hl.(string))
 		}
 	case Replace:
