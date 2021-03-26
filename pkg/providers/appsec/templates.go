@@ -82,7 +82,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 
 		if temptype == "TABULAR" {
 			tbl := table.NewWriter()
-			tbl.SetOutputMirror(&ostr) //os.Stdout)
+			tbl.SetOutputMirror(&ostr)
 			tbl.SetTitle(key)
 			headers := templ.TableTitle
 
