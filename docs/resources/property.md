@@ -10,7 +10,7 @@ description: |-
 
 ~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details.
 ~> **Note** Hostnames syntax changed to block type since 1.5.0. Existing terraform users with hostnames defined in older syntax(1.4.0 or before) need to manually fix their hostnames configuration and existing state if needed. 
-If the state is corrupted, Users have can either re-import the property from scratch or manually modify the state file. 
+If the state is invalid, users can either re-import the property from scratch or manually modify the state file. 
 
 The `akamai_property` resource represents an Akamai property configuration.
 This resource lets you to create, update, and activate properties on the
