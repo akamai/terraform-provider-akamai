@@ -74,6 +74,14 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 		}
 		getApiRequestConstraints.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getApiRequestConstraints.Version = version
+		}
+
 		policyid := s[2]
 		getApiRequestConstraints.PolicyID = policyid
 
@@ -282,6 +290,14 @@ func resourceApiRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 			return diag.FromErr(errconv)
 		}
 		updateApiRequestConstraints.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateApiRequestConstraints.Version = version
+		}
 
 		policyid := s[2]
 

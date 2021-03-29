@@ -73,6 +73,14 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	getRuleUpgrade.Version = version
 
+	if d.HasChange("version") {
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getRuleUpgrade.Version = version
+	}
+
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -113,6 +121,14 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	updateRuleUpgrade.Version = version
+
+	if d.HasChange("version") {
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateRuleUpgrade.Version = version
+	}
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

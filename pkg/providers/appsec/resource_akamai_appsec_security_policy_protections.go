@@ -97,6 +97,14 @@ func resourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData, 
 		}
 		getPolicyProtections.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getPolicyProtections.Version = version
+		}
+
 		policyid := s[2]
 		getPolicyProtections.PolicyID = policyid
 
@@ -268,6 +276,14 @@ func resourcePolicyProtectionsUpdate(ctx context.Context, d *schema.ResourceData
 			return diag.FromErr(errconv)
 		}
 		updatePolicyProtections.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updatePolicyProtections.Version = version
+		}
 
 		policyid := s[2]
 		updatePolicyProtections.PolicyID = policyid

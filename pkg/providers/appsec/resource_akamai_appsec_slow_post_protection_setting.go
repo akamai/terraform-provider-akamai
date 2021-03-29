@@ -86,6 +86,14 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 		}
 		getSlowPostProtectionSetting.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getSlowPostProtectionSetting.Version = version
+		}
+
 		policyid := s[2]
 		getSlowPostProtectionSetting.PolicyID = policyid
 
@@ -222,6 +230,14 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 			return diag.FromErr(errconv)
 		}
 		updateSlowPostProtectionSetting.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateSlowPostProtectionSetting.Version = version
+		}
 
 		policyid := s[2]
 		updateSlowPostProtectionSetting.PolicyID = policyid

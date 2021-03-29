@@ -94,6 +94,14 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 		getWAFMode.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getWAFMode.Version = version
+		}
+
 		policyid := s[2]
 		getWAFMode.PolicyID = policyid
 
@@ -191,6 +199,14 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			return diag.FromErr(errconv)
 		}
 		updateWAFMode.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateWAFMode.Version = version
+		}
 
 		policyid := s[2]
 		updateWAFMode.PolicyID = policyid

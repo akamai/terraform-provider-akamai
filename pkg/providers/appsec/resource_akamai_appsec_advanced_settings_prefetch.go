@@ -79,6 +79,14 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 		}
 		getAdvancedSettingsPrefetch.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getAdvancedSettingsPrefetch.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -194,6 +202,14 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 			return diag.FromErr(errconv)
 		}
 		updateAdvancedSettingsPrefetch.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateAdvancedSettingsPrefetch.Version = version
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)

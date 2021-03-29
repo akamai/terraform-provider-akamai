@@ -76,6 +76,15 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(errconv)
 		}
 		getSelectedHostname.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getSelectedHostname.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -190,6 +199,15 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 			return diag.FromErr(errconv)
 		}
 		updateSelectedHostname.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateSelectedHostname.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {

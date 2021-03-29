@@ -78,6 +78,14 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	createCustomDeny.Version = version
 
+	if d.HasChange("version") {
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		createCustomDeny.Version = version
+	}
+
 	postresp, errc := client.CreateCustomDeny(ctx, createCustomDeny)
 	if errc != nil {
 		logger.Errorf("calling 'createCustomDeny': %s", errc.Error())
@@ -116,6 +124,14 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 			return diag.FromErr(errconv)
 		}
 		updateCustomDeny.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateCustomDeny.Version = version
+		}
 
 		updateCustomDeny.ID = s[2]
 

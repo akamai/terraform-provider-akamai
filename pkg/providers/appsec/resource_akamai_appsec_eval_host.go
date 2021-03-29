@@ -71,6 +71,14 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 		getEvalHost.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getEvalHost.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -179,6 +187,14 @@ func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m inter
 			return diag.FromErr(errconv)
 		}
 		updateEvalHost.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateEvalHost.Version = version
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
