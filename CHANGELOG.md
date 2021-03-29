@@ -9,6 +9,8 @@
 
 * PAPI 
    * Fixed issue with version attributes not being set properly ([#208](https://github.com/akamai/terraform-provider-akamai/issues/208))
+   * Fixed issue with `data_akamai_property_rules_template` not interpolating `#include` files properly
+   * Fixed issue with `data_akamai_property_rules_template` not merging nested files properly
 
 #### FEATURES/ENHANCEMENTS:
 * PAPI

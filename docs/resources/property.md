@@ -57,7 +57,7 @@ This resource supports these arguments:
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
 * `product_id` - (Required to create, otherwise Optional) A product's unique ID, including the `prd_` prefix.
-* `hostnames` - (Required) A mapping of public hostnames to edge hostnames. See the [`akamai_property_hostnames`](../data-sources/property_hostnames.md) data source for details on the necessary DNS configuration.
+* `hostnames` - (Optional) A mapping of public hostnames to edge hostnames. See the [`akamai_property_hostnames`](../data-sources/property_hostnames.md) data source for details on the necessary DNS configuration.
 
     ~> **Note** `hostnames` argument now supports a new input block. Make sure you replace your previous input for this argument with the new syntax.
 
