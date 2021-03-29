@@ -55,7 +55,7 @@ nexus_push() {
 
   for binary in "${outputs[@]}"
   do
-    $MVN_PATH deploy:deploy-file -DgroupId="$NEXUS_GROUP" -DartifactId="$PACKAGE_NAME" -Dversion="$versionName" -Dpackaging="${binary#"$PACKAGE_NAME"-}-bin" -Dfile=bin/"$binary" -DrepositoryId=nexus -Durl="$repo_url"
+    $MVN_PATH deploy:deploy-file -DgroupId="$NEXUS_GROUP" -DartifactId="$PACKAGE_NAME" -Dversion="$versionName" -Dpackaging="${binary#"$PACKAGE_NAME"-}-bin" -Dfile=bin/"$binary" -DrepositoryId=nexus -Durl="$repo_url" -DgeneratePom=false
   done
 }
 
