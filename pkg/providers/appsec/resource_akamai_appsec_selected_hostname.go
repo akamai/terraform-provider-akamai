@@ -130,6 +130,13 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 				}
 			}
 		}
+
+		if len(finalhdata) == 0 {
+			for _, hl := range hostnamelist.List() {
+				finalhdata = append(finalhdata, hl.(string))
+			}
+		}
+
 	case Append:
 		for _, h := range selectedhostname.HostnameList {
 
