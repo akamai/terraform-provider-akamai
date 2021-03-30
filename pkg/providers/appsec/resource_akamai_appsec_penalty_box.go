@@ -78,6 +78,14 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 		}
 		getPenaltyBox.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getPenaltyBox.Version = version
+		}
+
 		policyid := s[2]
 		getPenaltyBox.PolicyID = policyid
 
@@ -189,6 +197,14 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	updatePenaltyBox.Version = version
+
+	if d.HasChange("version") {
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updatePenaltyBox.Version = version
+	}
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

@@ -190,6 +190,14 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 		}
 		getSecurityPolicy.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getSecurityPolicy.Version = version
+		}
+
 		policyid := s[2]
 
 		getSecurityPolicy.PolicyID = policyid

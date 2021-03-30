@@ -109,6 +109,14 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 		}
 		getMatchTargetSequence.ConfigVersion = configVersion
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getMatchTargetSequence.ConfigVersion = version
+		}
+
 		getMatchTargetSequence.Type = s[2]
 
 	}

@@ -71,6 +71,14 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 		}
 		getBypassNetworkLists.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getBypassNetworkLists.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -179,6 +187,14 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(errconv)
 		}
 		updateBypassNetworkLists.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateBypassNetworkLists.Version = version
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)

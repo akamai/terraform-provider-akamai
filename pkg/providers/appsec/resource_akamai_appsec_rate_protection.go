@@ -73,6 +73,14 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 		}
 		getRateProtection.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getRateProtection.Version = version
+		}
+
 		policyid := s[2]
 		getRateProtection.PolicyID = policyid
 
@@ -206,6 +214,14 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(errconv)
 		}
 		updateRateProtection.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateRateProtection.Version = version
+		}
 
 		policyid := s[2]
 		updateRateProtection.PolicyID = policyid

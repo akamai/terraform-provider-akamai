@@ -130,6 +130,14 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 		}
 		updateMatchTarget.ConfigVersion = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateMatchTarget.ConfigVersion = version
+		}
+
 		targetID, errconv := strconv.Atoi(s[2])
 		if errconv != nil {
 			return diag.FromErr(errconv)
@@ -248,6 +256,14 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 			return diag.FromErr(errconv)
 		}
 		getMatchTarget.ConfigVersion = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getMatchTarget.ConfigVersion = version
+		}
 
 		targetID, errconv := strconv.Atoi(s[2])
 		if errconv != nil {

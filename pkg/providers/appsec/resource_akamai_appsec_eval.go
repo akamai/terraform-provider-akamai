@@ -97,6 +97,14 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		}
 		getEval.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getEval.Version = version
+		}
+
 		policyid := s[2]
 		getEval.PolicyID = policyid
 
@@ -250,6 +258,14 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 			return diag.FromErr(errconv)
 		}
 		updateEval.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateEval.Version = version
+		}
 
 		policyid := s[2]
 		updateEval.PolicyID = policyid
