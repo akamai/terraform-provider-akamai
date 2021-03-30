@@ -58,7 +58,7 @@ func resourceNetworkList() *schema.Resource {
 					Remove,
 				}, false),
 			},
-			"uniqueid": { // deprecated
+			"uniqueid": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "uniqueId",
@@ -170,7 +170,6 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	d.Set("sync_point", strconv.Itoa(spcr.SyncPoint))
 
-	// deprecated
 	if err := d.Set("uniqueid", spcr.UniqueID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -346,6 +345,10 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("uniqueid", networklist.UniqueID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("network_list_id", networklist.UniqueID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
