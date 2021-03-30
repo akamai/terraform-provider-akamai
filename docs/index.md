@@ -14,7 +14,7 @@ Traffic Management configurations.
 
 !> Version 1.0.0 of the Akamai Terraform Provider is a major release that's currently available for the Provisioning module. Before upgrading, you need to make changes to some of your Provisioning resources and data sources. See the [migration guide](guides/1.0_migration.md) for details.
 
-Last updated: February 2021.
+Last updated: March 2021.
 
 ## Migrate to the newest version
 
