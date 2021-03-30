@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
