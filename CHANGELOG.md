@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 1.5.0 (Mar 29, 2021) PAPI - Secure by default integration
+## 1.5.0 (Mar 30, 2021) PAPI - Secure by default integration
 
 #### BREAKING CHANGES:
 * PAPI - `resource_akamai_property:` Changed hostnames field to a block type syntax to support additional user inputs. Refer to [Property Resource](docs/resources/property.md) for new syntax.
