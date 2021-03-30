@@ -20,7 +20,7 @@ func resourceConfigurationVersionClone() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceConfigurationVersionCloneCreate,
 		ReadContext:   resourceConfigurationVersionCloneRead,
-		UpdateContext: resourceConfigurationVersionCloneUpdate,
+		UpdateContext: resourceConfigurationVersionCloneCreate,
 		DeleteContext: resourceConfigurationVersionCloneDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
