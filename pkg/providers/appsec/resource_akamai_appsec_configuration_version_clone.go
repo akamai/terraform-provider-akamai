@@ -129,5 +129,5 @@ func resourceConfigurationVersionCloneDelete(ctx context.Context, d *schema.Reso
 }
 
 func resourceConfigurationVersionCloneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	return resourceConfigurationVersionCloneRead(ctx, d, m)
 }
