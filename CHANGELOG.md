@@ -3,7 +3,10 @@
 ## 1.5.0 (Mar 29, 2021) PAPI - Secure by default integration
 
 #### BREAKING CHANGES:
-* PAPI - `resource_akamai_property:` Changed hostnames field to a block type syntax to support additional user inputs. Refer to [Property Resource](docs/resources/property.md) for new syntax
+* PAPI - `resource_akamai_property:` Changed hostnames field to a block type syntax to support additional user inputs. Refer to [Property Resource](docs/resources/property.md) for new syntax.
+
+**Important Note**  
+Existing terraform users with hostnames defined in older syntax need to manually fix their hostnames configuration and existing state if needed. Additional info in [Property Resource](docs/resources/property.md)
 
 #### BUG FIXES:
 
