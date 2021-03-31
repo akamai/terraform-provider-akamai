@@ -143,11 +143,16 @@ resource "akamai_property" "example" {
 	product_id  = "prd_SPM"                         # Product Identifier (Ion)
 	group_id    = data.akamai_group.default.id      # Group ID variable
 	contract_id = data.akamai_contract.default.id   # Contract ID variable
-	hostnames = {                                   # Hostname configuration
-		# "public hostname" = "edge hostname"
-		"example.com" = "example.com.edgesuite.net"
-		"www.example.com" = "example.com.edgesuite.net"
-	}
+    hostnames {                                     # Hostname configuration
+      cname_from = "example.com"
+      cname_to = "example.com.edgekey.net"
+      cert_provisioning_type = "DEFAULT"
+        }
+     hostnames {
+     cname_from = "www.example.com"
+     cname_to = "example.com.edgesuite.net"
+     cert_provisioning_type = "CPS_MANAGED"
+        }
 	rule_format = "v2018-02-27"                     # Rule Format
 	rules = file("${path.module}/rules.json")       # JSON Rule tree
 }

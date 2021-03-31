@@ -1,5 +1,25 @@
 # RELEASE NOTES
 
+## 1.5.0 (Mar 30, 2021) PAPI - Secure by default integration
+
+#### BREAKING CHANGES:
+* PAPI - `resource_akamai_property:` Changed hostnames field to a block type syntax to support additional user inputs. Refer to [Property Resource](docs/resources/property.md) for new syntax.
+
+**Important Note**  
+Existing terraform users with hostnames defined in older syntax need to manually fix their hostnames configuration and existing state if needed. Additional info in [Property Resource](docs/resources/property.md)
+
+#### BUG FIXES:
+
+* PAPI 
+   * Fixed issue with version attributes not being set properly ([#208](https://github.com/akamai/terraform-provider-akamai/issues/208))
+   * Fixed issue with `data_akamai_property_rules_template` not interpolating `#include` files properly
+   * Fixed issue with `data_akamai_property_rules_template` not merging nested files properly
+
+#### FEATURES/ENHANCEMENTS:
+* PAPI
+   * New [Hostnames Datasource](docs/data-sources/property_hostnames.md) to query hostnames and poll certificate status
+   * Improved error handling and error messages in `property` and `property_activation` resources
+   
 ## 1.4.0 (Mar 17, 2021) Network Lists
 
 These are the operations supported in the Network Lists API v2:
