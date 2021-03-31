@@ -41,20 +41,11 @@ func resourceEvalProtectHost() *schema.Resource {
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
 
 func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalProtectHostRead")
-
 	getEvalProtectHost := appsec.GetEvalProtectHostRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
@@ -91,19 +82,6 @@ func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m 
 			return diag.FromErr(err)
 		}
 		getEvalProtectHost.Version = version
-	}
-	evalprotecthost, err := client.GetEvalProtectHost(ctx, getEvalProtectHost)
-	if err != nil {
-		logger.Errorf("calling 'getEvalProtectHost': %s", err.Error())
-		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "evalProtectHostDS", evalprotecthost)
-	if err == nil {
-		d.Set("output_text", outputtext)
 	}
 
 	if err := d.Set("config_id", getEvalProtectHost.ConfigID); err != nil {
