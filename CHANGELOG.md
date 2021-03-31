@@ -1,5 +1,10 @@
 # RELEASE NOTES
 
+## Latest
+
+* DNS - Fix panic when zone already exists on create
+* GTM - Deprecate and ignore Property field static_ttl. Add warning if present in property resource config
+
 ## 1.5.0 (Mar 30, 2021) PAPI - Secure by default integration
 
 #### BREAKING CHANGES:
