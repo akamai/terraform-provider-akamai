@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -121,7 +122,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	nru := make([]string, 0, len(netlist.List()))
 
 	for _, h := range netlist.List() {
-		nru = append(nru, h.(string))
+		nru = append(nru, strings.ToUpper(h.(string)))
 	}
 
 	finallist := make([]string, 0, len(netlist.List()))
@@ -132,7 +133,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 			for _, h := range networklists.NetworkLists {
 
 				if h.Name == hl.(string) {
-					finallist = append(finallist, h.Name)
+					finallist = append(finallist, strings.ToUpper(h.Name))
 				}
 			}
 		}
@@ -140,9 +141,9 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		var oneShot bool
 
 		for _, h := range networklists.NetworkLists {
-			finallist = appendIfMissing(finallist, h.Name)
+			finallist = appendIfMissing(finallist, strings.ToUpper(h.Name))
 			for _, hl := range netlist.List() {
-				finallist = appendIfMissing(finallist, hl.(string))
+				finallist = appendIfMissing(finallist, strings.ToUpper(hl.(string)))
 			}
 			oneShot = true
 		}
@@ -231,7 +232,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	nru := make([]string, 0, len(netlist.List()))
 
 	for _, h := range netlist.List() {
-		nru = append(nru, h.(string))
+		nru = append(nru, strings.ToUpper(h.(string)))
 	}
 
 	finallist := make([]string, 0, len(netlist.List()))
@@ -240,18 +241,17 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	case Remove:
 		for _, hl := range netlist.List() {
 			for _, h := range networkLists.List {
-
-				if !(h == hl.(string)) {
-					finallist = append(finallist, h)
+				if !(strings.ToUpper(h) == strings.ToUpper(hl.(string))) {
+					finallist = append(finallist, strings.ToUpper(h))
 				}
 			}
 		}
 	case Append:
 		for _, h := range networkLists.List {
-			finallist = append(finallist, h)
+			finallist = append(finallist, strings.ToUpper(h))
 		}
 		for _, hl := range netlist.List() {
-			finallist = appendIfMissing(finallist, hl.(string))
+			finallist = appendIfMissing(finallist, strings.ToUpper(hl.(string)))
 		}
 	case Replace:
 		finallist = nru
@@ -326,6 +326,10 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	if err := d.Set("type", networklist.Type); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	for index, value := range networklist.List {
+		networklist.List[index] = strings.ToUpper(value)
 	}
 
 	if err := d.Set("description", networklist.Description); err != nil {
