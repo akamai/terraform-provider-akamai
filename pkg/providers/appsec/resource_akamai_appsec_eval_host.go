@@ -41,20 +41,11 @@ func resourceEvalHost() *schema.Resource {
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
 }
 
 func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalHostRead")
-
 	getEvalHost := appsec.GetEvalHostRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
@@ -91,19 +82,6 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(err)
 		}
 		getEvalHost.Version = version
-	}
-	evalhost, err := client.GetEvalHost(ctx, getEvalHost)
-	if err != nil {
-		logger.Errorf("calling 'getEvalHost': %s", err.Error())
-		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "evalHostDS", evalhost)
-	if err == nil {
-		d.Set("output_text", outputtext)
 	}
 
 	if err := d.Set("config_id", getEvalHost.ConfigID); err != nil {
