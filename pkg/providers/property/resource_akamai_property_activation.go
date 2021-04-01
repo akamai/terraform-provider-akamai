@@ -182,6 +182,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 	if diags.HasError() {
+		d.Partial(true)
 		return diags
 	}
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
@@ -579,6 +580,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 	if diags.HasError() {
+		d.Partial(true)
 		return diags
 	}
 	propertyActivation, err := lookupActivation(ctx, client, lookupActivationRequest{

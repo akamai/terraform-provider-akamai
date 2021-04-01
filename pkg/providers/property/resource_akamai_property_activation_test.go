@@ -259,7 +259,6 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})
@@ -416,7 +415,6 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})
