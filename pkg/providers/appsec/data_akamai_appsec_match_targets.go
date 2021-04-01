@@ -87,7 +87,10 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "matchTargetDS", matchtargets)
+	websiteMatchTargetsText, err := RenderTemplates(ots, "websiteTargets", matchtargets)
+	APIMatchTargetsText, err := RenderTemplates(ots, "APITargets", matchtargets)
+
+	outputtext := fmt.Sprintf("%s%s", websiteMatchTargetsText, APIMatchTargetsText)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
