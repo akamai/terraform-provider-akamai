@@ -1,5 +1,8 @@
 # RELEASE NOTES
 
+## 1.5.1 (TBD)
+* PAPI - Fixed issue causing inconsistent state when activation has rule errors ([#219](https://github.com/akamai/terraform-provider-akamai/issues/219))
+
 ## 1.5.0 (Mar 30, 2021) PAPI - Secure by default integration
 
 #### BREAKING CHANGES:
