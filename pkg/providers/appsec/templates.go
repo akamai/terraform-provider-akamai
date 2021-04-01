@@ -38,6 +38,14 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 			funcs = template.FuncMap{
 				"join":  strings.Join,
 				"quote": func(in string) string { return fmt.Sprintf("\"%s\"", in) },
+				"json": func(v interface{}) string {
+					buf := &bytes.Buffer{}
+					enc := json.NewEncoder(buf)
+					enc.SetEscapeHTML(false)
+					_ = enc.Encode(v)
+					// Remove the trailing new line added by the encoder
+					return strings.TrimSpace(buf.String())
+				},
 				"marshal": func(v interface{}) string {
 					a, _ := json.Marshal(v)
 					return string(a)
@@ -192,7 +200,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 
 	otm["EvalRuleConditionException.tf"] = &OutputTemplate{TemplateName: "EvalRuleConditionException.tf", TableTitle: "EvalRuleConditionException", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .WebApplicationFirewall}}{{with .Evaluation}}{{with .RuleActions}}{{range $index, $element := .}}{{ if or .Conditions .Exception}}\nresource \"akamai_appsec_eval_rule_condition_exception\" \"akamai_appsec_eval_rule_condition_exception_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  rule_id = {{.ID}} \n  condition_exception = <<-EOF\n {{marshal .}}  \n \n EOF \n \n }\n{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}"}
 
-	otm["CustomDeny.tf"] = &OutputTemplate{TemplateName: "CustomDeny.tf", TableTitle: "CustomDeny", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .CustomDenyList}}\nresource \"akamai_appsec_custom_deny\" \"akamai_appsec_custom_deny{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config }}\n  version = {{ $version }}\n  custom_deny = <<-EOF\n {{marshal .}}  \n EOF \n \n }\n{{end}}"}
+	otm["CustomDeny.tf"] = &OutputTemplate{TemplateName: "CustomDeny.tf", TableTitle: "CustomDeny", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .CustomDenyList}}\nresource \"akamai_appsec_custom_deny\" \"akamai_appsec_custom_deny{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config }}\n  version = {{ $version }}\n  custom_deny = <<-EOF\n {{json .}}  \n EOF \n \n }\n{{end}}"}
 	otm["CustomRule.tf"] = &OutputTemplate{TemplateName: "CustomRule.tf", TableTitle: "CustomRule", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{range $index, $element := .CustomRules}} \nresource \"akamai_appsec_custom_rule\" \"akamai_appsec_custom_rule{{if $index}}_{{$index}}{{end}}\" { \n config_id = {{$config}}\n  custom_rule = <<-EOF\n {{marshal .}}  \n EOF \n }\n {{end}}"}
 	otm["CustomRuleAction.tf"] = &OutputTemplate{TemplateName: "CustomRuleAction.tf", TableTitle: "CustomRuleAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{  range $index, $element := .SecurityPolicies }}{{$prev_secpolicy:=$element.ID}}  {{  range $index, $element := .CustomRuleActions }}  \nresource \"akamai_appsec_custom_rule_action\" \"akamai_appsec_custom_rule_action_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n config_id = {{$config}}\n version = {{$version}}\n security_policy_id = \"{{$prev_secpolicy}}\"  \n custom_rule_id = {{.ID}} \n custom_rule_action = \"{{.Action}}\" \n } \n {{end}}{{end}}"}
 	otm["MatchTarget.tf"] = &OutputTemplate{TemplateName: "MatchTarget.tf", TableTitle: "MatchTarget", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .MatchTargets.WebsiteTargets}}\nresource \"akamai_appsec_match_target\" \"akamai_appsec_match_target_{{.ID}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}}\n  match_target = <<-EOF\n {{marshal .}}  \n EOF  \n }\n {{end}}\n {{range $index, $element := .MatchTargets.APITargets}}\nresource \"akamai_appsec_match_target\" \"akamai_appsec_match_target_{{.ID}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}}\n  match_target = <<-EOF\n {{marshal .}}  \n EOF  \n }\n {{end}}"}
