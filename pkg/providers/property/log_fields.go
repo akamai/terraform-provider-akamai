@@ -90,10 +90,14 @@ func toLogFielder(given interface{}) log.Fielder {
 
 	case papi.UpdateRulesResponse:
 		return updateRulesResFields(v)
+
+	case papi.GetPropertyVersionRequest:
+		return getPropertyVersionFields(v)
 	}
 
 	panic(fmt.Sprintf("no known log.Fielder for %T", given))
 }
+
 
 type updateRulesReqFields papi.UpdateRulesRequest
 
@@ -154,6 +158,18 @@ func (req createPropertyReqFields) Fields() log.Fields {
 		"contract_id":   req.ContractID,
 		"group_id":      req.GroupID,
 		"product_id":    req.Property.ProductID,
+	}
+}
+
+type getPropertyVersionFields papi.GetPropertyVersionRequest
+
+func (req getPropertyVersionFields) Fields() log.Fields {
+	return log.Fields{
+	"property_name": req.PropertyID,
+	"contract_id":   req.ContractID,
+	"group_id":      req.GroupID,
+	"property_version": req.PropertyVersion,
+
 	}
 }
 

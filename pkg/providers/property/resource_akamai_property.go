@@ -517,7 +517,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	Property.ProductID = res.Versions.Items[0].ProductID //Since GetPropertyVersion will return only one object for PropertyVersionGetItem which is a list in edgegrid lib
+	Property.ProductID = res.Version.ProductID
 
 	attrs := map[string]interface{}{
 		"name":               Property.PropertyName,
