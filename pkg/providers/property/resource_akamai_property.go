@@ -512,6 +512,12 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		logger.WithError(err).Error("could not render rules as JSON")
 		return diag.Errorf("received rules that could not be rendered to JSON: %s", err)
 	}
+	PropertyVersion := Property.LatestVersion
+	res, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, PropertyVersion)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	Property.ProductID = res.Version.ProductID
 
 	attrs := map[string]interface{}{
 		"name":               Property.PropertyName,
@@ -603,13 +609,14 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductionVersion: ProductionVersion,
 	}
 
-	// load status for what we currently have as latest version.  GetLatestVersion may also work here.
-	resp, err := client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
-		PropertyID:      d.Id(),
-		PropertyVersion: d.Get("latest_version").(int),
-		ContractID:      d.Get("contract_id").(string),
-		GroupID:         d.Get("group_id").(string),
-	})
+	// Schema guarantees group_id, and contract_id are strings
+	PropertyID := d.Id()
+	ContractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
+	GroupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
+	PropertyVersion := Property.LatestVersion
+
+	resp, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, PropertyVersion)
+
 	if err != nil {
 		d.Partial(true)
 		return diag.FromErr(err)
@@ -820,6 +827,27 @@ func fetchProperty(ctx context.Context, client papi.PAPI, PropertyID, GroupID, C
 
 	logger.Debug("property fetched")
 	return res.Property, nil
+}
+
+// load status for what we currently have as latest version.  GetLatestVersion may also work here.
+func fetchPropertyVersion(ctx context.Context, client papi.PAPI, PropertyID, GroupID, ContractID string, PropertyVersion int) (*papi.GetPropertyVersionsResponse, error) {
+	req := papi.GetPropertyVersionRequest{
+		PropertyID:      PropertyID,
+		ContractID:      ContractID,
+		GroupID:         GroupID,
+		PropertyVersion: PropertyVersion,
+	}
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger.Debug("fetching property version")
+
+	res, err := client.GetPropertyVersion(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not read property version")
+		return nil, err
+	}
+	logger = logger.WithFields(logFields(*res))
+	logger.Debug("property version fetched")
+	return res, err
 }
 
 // Fetch hostnames for latest version of given property
