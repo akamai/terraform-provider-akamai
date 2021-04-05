@@ -229,6 +229,14 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 		}
 		getCustomDeny.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getCustomDeny.Version = version
+		}
+
 		getCustomDeny.ID = s[2]
 
 	} else {
