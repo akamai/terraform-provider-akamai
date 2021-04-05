@@ -179,6 +179,7 @@ func TestResProperty(t *testing.T) {
 			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
+			GetPropertyVersionResources("prp_0", 2, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 2, "to2.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
@@ -209,6 +210,7 @@ func TestResProperty(t *testing.T) {
 			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
+			GetPropertyVersionResources("prp_0", 2, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
 			SetHostnames("prp_0", 2, "to2.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
@@ -239,6 +241,7 @@ func TestResProperty(t *testing.T) {
 			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
+			GetPropertyVersionResources("prp_0", 2, papi.VersionStatusActive, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 2, "to2.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
@@ -269,6 +272,7 @@ func TestResProperty(t *testing.T) {
 			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusActive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
+			GetPropertyVersionResources("prp_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
 			SetHostnames("prp_0", 2, "to2.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
@@ -321,6 +325,7 @@ func TestResProperty(t *testing.T) {
 		Name: "No diff found in update",
 		ClientSetup: ComposeBehaviors(
 			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
@@ -433,6 +438,7 @@ func TestResProperty(t *testing.T) {
 
 			setup := ComposeBehaviors(
 				PropertyLifecycle("test property", "prp_0", "grp_0"),
+				GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 				ImportProperty("prp_0"),
 				SetHostnames("prp_0", 1, "to.test.domain"),
 			)
@@ -554,7 +560,9 @@ func TestResProperty(t *testing.T) {
 
 			setup := ComposeBehaviors(
 				PropertyLifecycle("test property", "prp_0", "grp_0"),
+				GetPropertyVersionResources("prp_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 				PropertyLifecycle("renamed property", "prp_1", "grp_0"),
+				GetPropertyVersionResources("prp_1", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 				SetHostnames("prp_0", 1, "to.test.domain"),
 				SetHostnames("prp_1", 1, "to2.test.domain"),
 			)
@@ -593,7 +601,7 @@ func TestResProperty(t *testing.T) {
 				CreateProperty("test property", "prp_0"),
 				GetProperty("prp_0"),
 				GetVersionResources("prp_0", 1),
-				//GetPropertyVersionResources("prp_0", 1, "ctr_0","grp_0"),
+				GetPropertyVersionResources("prp_0", 1, "ctr_0", "grp_0"),
 				SetHostnames("prp_0", 1, "to.test.domain"),
 			)
 			setup(&TestState{Client: client})

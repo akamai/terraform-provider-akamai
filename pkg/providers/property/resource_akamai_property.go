@@ -512,7 +512,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		logger.WithError(err).Error("could not render rules as JSON")
 		return diag.Errorf("received rules that could not be rendered to JSON: %s", err)
 	}
-	PropertyVersion := d.Get("latest_version").(int)
+	PropertyVersion := Property.LatestVersion
 	res, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, PropertyVersion)
 	if err != nil {
 		return diag.FromErr(err)
@@ -613,7 +613,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	PropertyID := d.Id()
 	ContractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
 	GroupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
-	PropertyVersion := d.Get("latest_version").(int)
+	PropertyVersion := Property.LatestVersion
 
 	resp, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, PropertyVersion)
 
