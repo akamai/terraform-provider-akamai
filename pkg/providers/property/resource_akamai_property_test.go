@@ -566,7 +566,6 @@ func TestResProperty(t *testing.T) {
 				SetHostnames("prp_0", 1, "to.test.domain"),
 				SetHostnames("prp_1", 1, "to2.test.domain"),
 			)
-			//ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
 			setup(&TestState{Client: client})
 
 			useClient(client, func() {
