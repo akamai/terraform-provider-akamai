@@ -278,7 +278,7 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("reputation_profile_id", reputationprofile.ID); err != nil {
+	if err := d.Set("reputation_profile_id", getReputationProfile.ReputationProfileId); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -299,7 +299,7 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d:%d", getReputationProfile.ConfigID, getReputationProfile.ConfigVersion, reputationprofile.ID))
+	d.SetId(fmt.Sprintf("%d:%d:%d", getReputationProfile.ConfigID, getReputationProfile.ConfigVersion, getReputationProfile.ReputationProfileId))
 
 	return nil
 }

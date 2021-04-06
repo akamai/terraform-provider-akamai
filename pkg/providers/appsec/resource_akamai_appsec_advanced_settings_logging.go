@@ -43,9 +43,10 @@ func resourceAdvancedSettingsLogging() *schema.Resource {
 				Optional: true,
 			},
 			"logging": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsJSON,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateFunc:     validation.StringIsJSON,
+				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
 			},
 		},
 	}

@@ -306,7 +306,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("match_target_id", matchtarget.TargetID); err != nil {
+	if err := d.Set("match_target_id", getMatchTarget.TargetID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("config_id", getMatchTarget.ConfigID); err != nil {
@@ -317,7 +317,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d:%d", getMatchTarget.ConfigID, getMatchTarget.ConfigVersion, matchtarget.TargetID))
+	d.SetId(fmt.Sprintf("%d:%d:%d", getMatchTarget.ConfigID, getMatchTarget.ConfigVersion, getMatchTarget.TargetID))
 
 	return nil
 }
