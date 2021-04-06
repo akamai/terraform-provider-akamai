@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -240,12 +241,15 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	switch mode {
 	case Remove:
 		for _, hl := range netlist.List() {
-			for _, h := range networkLists.List {
-				if !(strings.ToUpper(h) == strings.ToUpper(hl.(string))) {
-					finallist = append(finallist, strings.ToUpper(h))
+
+			for idx, h := range networkLists.List {
+				if strings.ToUpper(h) == strings.ToUpper(hl.(string)) {
+					networkLists.List = RemoveIndex(networkLists.List, idx)
 				}
 			}
 		}
+		finallist = networkLists.List
+
 	case Append:
 		for _, h := range networkLists.List {
 			finallist = append(finallist, strings.ToUpper(h))
@@ -308,13 +312,53 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
+	netlist := d.Get("list").(*schema.Set)
+
+	finalldata := make([]string, 0, len(netlist.List()))
+
 	networklist, err := client.GetNetworkList(ctx, getNetworkList)
 	if err != nil {
 		logger.Errorf("calling 'getNetworkList': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	logger.Errorf("calling 'getNetworkList': SYNC POINT %d", networklist.SyncPoint)
+	switch mode {
+	case Remove:
+		for _, hl := range netlist.List() {
+			for _, h := range networklist.List {
+
+				if h == hl.(string) {
+					finalldata = append(finalldata, h)
+				}
+			}
+		}
+
+		if len(finalldata) == 0 {
+			for _, hl := range netlist.List() {
+				finalldata = append(finalldata, hl.(string))
+			}
+		}
+
+	case Append:
+		for _, h := range networklist.List {
+
+			for _, hl := range netlist.List() {
+				if h == hl.(string) {
+					finalldata = append(finalldata, h)
+				}
+			}
+		}
+	case Replace:
+		for _, h := range networklist.List {
+			finalldata = append(finalldata, h)
+		}
+	default:
+		for _, h := range networklist.List {
+			finalldata = append(finalldata, h)
+		}
+	}
+
+	sort.Strings(finalldata)
 
 	if err := d.Set("sync_point", networklist.SyncPoint); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -328,15 +372,15 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	for index, value := range networklist.List {
-		networklist.List[index] = strings.ToUpper(value)
+	for index, value := range finalldata {
+		finalldata[index] = strings.ToUpper(value)
 	}
 
 	if err := d.Set("description", networklist.Description); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("list", networklist.List); err != nil {
+	if err := d.Set("list", finalldata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -368,6 +412,10 @@ func appendIfMissing(slice []string, s string) []string {
 		}
 	}
 	return append(slice, s)
+}
+
+func RemoveIndex(hl []string, index int) []string {
+	return append(hl[:index], hl[index+1:]...)
 }
 
 // Append Replace Remove mode flags
