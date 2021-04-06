@@ -1,7 +1,9 @@
 # RELEASE NOTES
 
 ## 1.5.1 (TBD)
-* PAPI - Fixed issue causing inconsistent state when activation has rule errors ([#219](https://github.com/akamai/terraform-provider-akamai/issues/219))
+* PAPI 
+   * Fixed issue causing inconsistent state when activation has rule errors ([#219](https://github.com/akamai/terraform-provider-akamai/issues/219))
+   * Fixed issue with `resource_akamai_property` not setting product_id during import ([#224](https://github.com/akamai/terraform-provider-akamai/issues/224))
 
 ## 1.5.0 (Mar 30, 2021) PAPI - Secure by default integration
 
