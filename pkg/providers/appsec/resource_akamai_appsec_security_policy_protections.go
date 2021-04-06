@@ -41,36 +41,31 @@ func resourcePolicyProtections() *schema.Resource {
 			},
 			"apply_application_layer_controls": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 			},
 			"apply_network_layer_controls": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 			},
 			"apply_rate_controls": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 			},
 			"apply_reputation_controls": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 			},
 			"apply_botman_controls": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 			},
 			"apply_api_constraints": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 			},
 			"apply_slow_post_controls": {
 				Type:     schema.TypeBool,
-				Required: true,
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
+				Optional: true,
 			},
 		},
 	}
@@ -131,16 +126,6 @@ func resourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "wafProtectionDS", policyprotections)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
 	}
 
 	if err := d.Set("config_id", getPolicyProtections.ConfigID); err != nil {
