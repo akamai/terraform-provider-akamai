@@ -122,7 +122,7 @@ func resourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData, 
 		}
 		getPolicyProtections.PolicyID = policyid
 	}
-	policyprotections, err := client.GetPolicyProtections(ctx, getPolicyProtections)
+	_, err := client.GetPolicyProtections(ctx, getPolicyProtections)
 	if err != nil {
 		logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
 		return diag.FromErr(err)
