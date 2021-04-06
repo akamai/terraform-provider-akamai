@@ -50,6 +50,19 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 					a, _ := json.Marshal(v)
 					return string(a)
 				},
+				"marshalwithoutid": func(v interface{}) string {
+					a, _ := json.Marshal(v)
+
+					var i interface{}
+					if err := json.Unmarshal([]byte(a), &i); err != nil {
+						panic(err)
+					}
+					if m, ok := i.(map[string]interface{}); ok {
+						delete(m, "id")
+					}
+					b, _ := json.Marshal(i)
+					return string(b)
+				},
 				"dash": func(in int) string {
 					if in == 0 {
 						return "-"
@@ -205,7 +218,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["MatchTarget.tf"] = &OutputTemplate{TemplateName: "MatchTarget.tf", TableTitle: "MatchTarget", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .MatchTargets.WebsiteTargets}}\nresource \"akamai_appsec_match_target\" \"akamai_appsec_match_target_{{.ID}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}}\n  match_target = <<-EOF\n {{marshal .}}  \n EOF  \n }\n {{end}}\n {{range $index, $element := .MatchTargets.APITargets}}\nresource \"akamai_appsec_match_target\" \"akamai_appsec_match_target_{{.ID}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}}\n  match_target = <<-EOF\n {{marshal .}}  \n EOF  \n }\n {{end}}"}
 	otm["PenaltyBox.tf"] = &OutputTemplate{TemplateName: "PenaltyBox.tf", TableTitle: "PenaltyBox", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range $index, $element := .SecurityPolicies}}{{$prev_secpolicy := .ID}}{{with .PenaltyBox}} \nresource \"akamai_appsec_penalty_box\" \"akamai_appsec_penalty_box_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config }}\n  version = {{ $version }}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  penalty_box_protection =  \"{{.PenaltyBoxProtection}}\" \n  penalty_box_action = \"{{.Action}}\"   \n}\n{{end}}{{end}}"}
 
-	otm["RatePolicy.tf"] = &OutputTemplate{TemplateName: "RatePolicy.tf", TableTitle: "RatePolicy", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .RatePolicies}}\nresource \"akamai_appsec_rate_policy\" \"akamai_appsec_rate_policy{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config }}\n  version = {{ $version }}\n  rate_policy = <<-EOF\n {{marshal .}}  \n EOF \n \n }\n{{end}}"}
+	otm["RatePolicy.tf"] = &OutputTemplate{TemplateName: "RatePolicy.tf", TableTitle: "RatePolicy", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .RatePolicies}}\n// terraform import akamai_appsec_rate_policy.akamai_appsec_rate_policy{{if $index}}_{{$index}}{{end}} {{$config}}:{{$version}}:{{.ID}} \nresource \"akamai_appsec_rate_policy\" \"akamai_appsec_rate_policy{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config }}\n  version = {{ $version }}\n  rate_policy = <<-EOF\n {{marshalwithoutid .}}  \n EOF \n \n }\n{{end}}"}
 	otm["RatePolicyAction.tf"] = &OutputTemplate{TemplateName: "RatePolicyAction.tf", TableTitle: "RatePolicyAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .RatePolicyActions}} {{  range $index, $element := . }}\nresource \"akamai_appsec_rate_policy_action\" \"akamai_appsec_rate_policy_action_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  version = {{$version}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  rate_policy_id = {{.ID}} \n  ipv4_action = \"{{.Ipv4Action}}\" \n  ipv6_action = \"{{.Ipv6Action}}\" \n }\n {{end}}{{end}} {{end}}"}
 	otm["ReputationProfile.tf"] = &OutputTemplate{TemplateName: "ReputationProfile.tf", TableTitle: "ReputationProfile", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{range $index, $element := .ReputationProfiles}}\nresource \"akamai_appsec_reputation_profile\" \"akamai_appsec_reputation_profile{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config}}\n  version = {{ $version }}\n  reputation_profile = <<-EOF\n {{marshal .}}  \n \n EOF \n }{{end}}"}
 	otm["ReputationProfileAction.tf"] = &OutputTemplate{TemplateName: "ReputationProfileAction.tf", TableTitle: "ReputationProfileAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .ClientReputation.ReputationProfileActions}}{{range $index, $element := .}}\nresource \"akamai_appsec_reputation_profile_action\" \"akamai_appsec_reputation_profile_action_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n config_id = {{ $config }}\n  version = {{ $version }}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  reputation_profile_id = {{.ID}} \n action =  \"{{.Action}}\" \n }\n{{end}}{{end}}{{end}}"}
