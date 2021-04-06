@@ -39,9 +39,10 @@ func resourceRatePolicy() *schema.Resource {
 				Required: true,
 			},
 			"rate_policy": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsJSON,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateFunc:     validation.StringIsJSON,
+				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
 			},
 			"rate_policy_id": {
 				Type:     schema.TypeInt,
@@ -284,10 +285,10 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("rate_policy_id", ratepolicy.ID); err != nil {
+	if err := d.Set("rate_policy_id", getRatePolicy.RatePolicyID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	d.SetId(fmt.Sprintf("%d:%d:%d", getRatePolicy.ConfigID, getRatePolicy.ConfigVersion, ratepolicy.ID))
+	d.SetId(fmt.Sprintf("%d:%d:%d", getRatePolicy.ConfigID, getRatePolicy.ConfigVersion, getRatePolicy.RatePolicyID))
 
 	jsonBody, err := json.Marshal(ratepolicy)
 	if err != nil {
