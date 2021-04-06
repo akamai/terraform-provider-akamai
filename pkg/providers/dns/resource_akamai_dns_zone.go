@@ -164,24 +164,24 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("Searching for zone [%s]", hostname)
 	zone, e := inst.Client(meta).GetZone(ctx, hostname)
 
-	apiError, ok := e.(*dns.Error)
-	if !ok || apiError.StatusCode != http.StatusNotFound {
-		logger.Errorf("Create[ERROR] %w", e)
-		return append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Create API falure",
-			Detail:   e.Error(),
-		})
-	}
-
 	if e == nil {
 		// Not a good idea to overwrite an existing zone. Needs to be imported.
-		logger.Errorf("Zone exists [ERROR] %w", e)
+		logger.Errorf("Zone creation error. Zone %s exists", hostname)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "Zone exists. Please import.",
-			Detail:   e.Error(),
+			Detail:   fmt.Sprintf("Zone create failure. Zone %s exists", hostname),
 		})
+	} else {
+		apiError, ok := e.(*dns.Error)
+		if !ok || apiError.StatusCode != http.StatusNotFound {
+			logger.Errorf("Create[ERROR] %w", e)
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Create API falure",
+				Detail:   e.Error(),
+			})
+		}
 	}
 
 	// no existing zone.

@@ -1,9 +1,14 @@
 # RELEASE NOTES
 
 ## 1.5.1 (TBD)
+
+#### BUG FIXES:
 * PAPI 
    * Fixed issue causing inconsistent state when activation has rule errors ([#219](https://github.com/akamai/terraform-provider-akamai/issues/219))
    * Fixed issue with `resource_akamai_property` not setting product_id during import ([#224](https://github.com/akamai/terraform-provider-akamai/issues/224))
+* DNS - Fix panic when zone already exists on create
+* GTM - Deprecate and ignore Property field static_ttl. Add warning if present in property resource config
+
 
 ## 1.5.0 (Mar 30, 2021) PAPI - Secure by default integration
 
