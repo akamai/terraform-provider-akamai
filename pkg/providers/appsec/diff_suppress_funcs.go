@@ -104,8 +104,6 @@ func compareMatchTargets(old, new *appsec.CreateMatchTargetResponse) bool {
 	sort.Strings(old.Hostnames)
 	sort.Strings(new.Hostnames)
 
-	new.EffectiveSecurityControls = old.EffectiveSecurityControls
-
 	new.TargetID = 0
 	old.TargetID = 0
 
