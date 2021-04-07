@@ -123,7 +123,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	nru := make([]string, 0, len(netlist.List()))
 
 	for _, h := range netlist.List() {
-		nru = append(nru, strings.ToUpper(h.(string)))
+		nru = append(nru, strings.ToLower(h.(string)))
 	}
 
 	finallist := make([]string, 0, len(netlist.List()))
@@ -134,7 +134,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 			for _, h := range networklists.NetworkLists {
 
 				if h.Name == hl.(string) {
-					finallist = append(finallist, strings.ToUpper(h.Name))
+					finallist = append(finallist, strings.ToLower(h.Name))
 				}
 			}
 		}
@@ -142,9 +142,9 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		var oneShot bool
 
 		for _, h := range networklists.NetworkLists {
-			finallist = appendIfMissing(finallist, strings.ToUpper(h.Name))
+			finallist = appendIfMissing(finallist, strings.ToLower(h.Name))
 			for _, hl := range netlist.List() {
-				finallist = appendIfMissing(finallist, strings.ToUpper(hl.(string)))
+				finallist = appendIfMissing(finallist, strings.ToLower(hl.(string)))
 			}
 			oneShot = true
 		}
@@ -233,7 +233,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	nru := make([]string, 0, len(netlist.List()))
 
 	for _, h := range netlist.List() {
-		nru = append(nru, strings.ToUpper(h.(string)))
+		nru = append(nru, strings.ToLower(h.(string)))
 	}
 
 	finallist := make([]string, 0, len(netlist.List()))
@@ -243,7 +243,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		for _, hl := range netlist.List() {
 
 			for idx, h := range networkLists.List {
-				if strings.ToUpper(h) == strings.ToUpper(hl.(string)) {
+				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
 					networkLists.List = RemoveIndex(networkLists.List, idx)
 				}
 			}
@@ -252,10 +252,10 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	case Append:
 		for _, h := range networkLists.List {
-			finallist = append(finallist, strings.ToUpper(h))
+			finallist = append(finallist, strings.ToLower(h))
 		}
 		for _, hl := range netlist.List() {
-			finallist = appendIfMissing(finallist, strings.ToUpper(hl.(string)))
+			finallist = appendIfMissing(finallist, strings.ToLower(hl.(string)))
 		}
 	case Replace:
 		finallist = nru
@@ -311,9 +311,16 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	var detectCase string
 
 	netlist := d.Get("list").(*schema.Set)
-
+	for _, hl := range netlist.List() {
+		if hl.(string) == strings.ToLower(hl.(string)) {
+			detectCase = "LOWER"
+		} else {
+			detectCase = "UPPER"
+		}
+	}
 	finalldata := make([]string, 0, len(netlist.List()))
 
 	networklist, err := client.GetNetworkList(ctx, getNetworkList)
@@ -327,15 +334,15 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		for _, hl := range netlist.List() {
 			for _, h := range networklist.List {
 
-				if h == hl.(string) {
-					finalldata = append(finalldata, h)
+				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+					finalldata = append(finalldata, strings.ToLower(h))
 				}
 			}
 		}
 
 		if len(finalldata) == 0 {
 			for _, hl := range netlist.List() {
-				finalldata = append(finalldata, hl.(string))
+				finalldata = append(finalldata, strings.ToLower(hl.(string)))
 			}
 		}
 
@@ -343,18 +350,18 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		for _, h := range networklist.List {
 
 			for _, hl := range netlist.List() {
-				if h == hl.(string) {
-					finalldata = append(finalldata, h)
+				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+					finalldata = append(finalldata, strings.ToLower(h))
 				}
 			}
 		}
 	case Replace:
 		for _, h := range networklist.List {
-			finalldata = append(finalldata, h)
+			finalldata = append(finalldata, strings.ToLower(h))
 		}
 	default:
 		for _, h := range networklist.List {
-			finalldata = append(finalldata, h)
+			finalldata = append(finalldata, strings.ToLower(h))
 		}
 	}
 
@@ -372,14 +379,22 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	for index, value := range finalldata {
-		finalldata[index] = strings.ToUpper(value)
+	if detectCase == "LOWER" {
+		for index, value := range finalldata {
+			finalldata[index] = strings.ToLower(value)
+		}
+	} else {
+		for index, value := range finalldata {
+			finalldata[index] = strings.ToUpper(value)
+		}
 	}
 
 	if err := d.Set("description", networklist.Description); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	logger.Errorf("calling 'getNetworkList RESULT': %v", finalldata)
+	d.Set("list", nil)
 	if err := d.Set("list", finalldata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
