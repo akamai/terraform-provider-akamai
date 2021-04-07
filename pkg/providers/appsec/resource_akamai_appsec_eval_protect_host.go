@@ -46,6 +46,10 @@ func resourceEvalProtectHost() *schema.Resource {
 }
 
 func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceEvalProtectHostRead")
+
 	getEvalProtectHost := appsec.GetEvalProtectHostRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
@@ -82,6 +86,12 @@ func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m 
 			return diag.FromErr(err)
 		}
 		getEvalProtectHost.Version = version
+	}
+
+	_, errr := client.GetEvalProtectHost(ctx, getEvalProtectHost)
+	if errr != nil {
+		logger.Errorf("calling 'updateEvalProtectHost': %s", errr.Error())
+		return diag.FromErr(errr)
 	}
 
 	if err := d.Set("config_id", getEvalProtectHost.ConfigID); err != nil {
