@@ -8,13 +8,13 @@ description: |-
 
 # akamai_group
 
-Use the `akamai_group` data source to retrieve a group ID by name. 
+Use the `akamai_group` data source to retrieve a group ID by name.
 
-Each account features a hierarchy of groups, which control access to your 
-Akamai configurations and help consolidate reporting functions, typically 
-mapping to an organizational hierarchy. Using either Control Center or the 
-[Identity Management: User Administration API](https://developer.akamai.com/en-us/api/core_features/identity_management_user_admin/v2.html), 
-account administrators can assign properties to specific groups, each with 
+Each account features a hierarchy of groups, which control access to your
+Akamai configurations and help consolidate reporting functions, typically
+mapping to an organizational hierarchy. Using either Control Center or the
+[Identity Management: User Administration API](https://developer.akamai.com/en-us/api/core_features/identity_management_user_admin/v2.html),
+account administrators can assign properties to specific groups, each with
 its own set of users and accompanying roles.
 
 ## Example usage
@@ -23,7 +23,7 @@ Basic usage:
 
 ```hcl
 data "akamai_group" "example" {
-    name = "example group name"
+    group_name = "example group name"
     contract_id = data.akamai_contract.example.id
 }
 
@@ -41,11 +41,12 @@ resource "akamai_property" "example" {
 
 This data source supports these arguments:
 
-* `name` - (Required) The group name.
-* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `group_name` - (Required) The group name.
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
 
-### Deprecated arguments 
+### Deprecated arguments
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
+* `name` -  (Deprecated) Replaced by `group_name`. Maintained for legacy purposes.
 
 ## Attributes reference
 
