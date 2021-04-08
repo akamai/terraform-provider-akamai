@@ -31,7 +31,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:          schema.TypeString,
 		Optional:      true,
 		Computed:      true,
-		Deprecated:    `use "product_id" attribute instead`,
+		Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
 		StateFunc:     addPrefixToState("prd_"),
 		ConflictsWith: []string{"product_id"},
 	},
@@ -46,7 +46,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:       schema.TypeString,
 		Optional:   true,
 		Computed:   true,
-		Deprecated: `use "contract_id" attribute instead`,
+		Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
 		StateFunc:  addPrefixToState("ctr_"),
 	},
 	"contract_id": {
@@ -60,7 +60,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:       schema.TypeString,
 		Optional:   true,
 		Computed:   true,
-		Deprecated: `use "group_id" attribute instead`,
+		Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
 		StateFunc:  addPrefixToState("grp_"),
 	},
 	"group_id": {
@@ -196,7 +196,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 		if newHostname.SecureNetwork == "ENHANCED_TLS" {
-			return diag.FromErr(fmt.Errorf("A certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames"))
+			return diag.FromErr(fmt.Errorf("a certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames"))
 		}
 	}
 
