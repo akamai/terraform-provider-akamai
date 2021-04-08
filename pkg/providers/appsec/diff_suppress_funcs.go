@@ -37,6 +37,45 @@ func jsonBytesEqual(b1, b2 []byte) bool {
 	return reflect.DeepEqual(o1, o2)
 }
 
+func suppressCustomDenyJsonDiffs(k, old, new string, d *schema.ResourceData) bool {
+	var ob, nb bytes.Buffer
+	if err := json.Compact(&ob, []byte(old)); err != nil {
+		return false
+	}
+
+	if err := json.Compact(&nb, []byte(new)); err != nil {
+		return false
+	}
+
+	return jsonBytesEqualIncludingParametersSlice(ob.Bytes(), nb.Bytes())
+}
+
+func jsonBytesEqualIncludingParametersSlice(b1, b2 []byte) bool {
+	var o1 appsec.GetCustomDenyResponse
+	var o2 appsec.GetCustomDenyResponse
+	if err := json.Unmarshal(b1, &o1); err != nil {
+		return false
+	}
+
+	if err := json.Unmarshal(b2, &o2); err != nil {
+		return false
+	}
+
+	sort.Slice(o1.Parameters, func(i, j int) bool {
+		p1 := o1.Parameters[i]
+		p2 := o1.Parameters[j]
+		return p1.Name < p2.Name || ((p1.Name == p2.Name) && p1.Value < p2.Value)
+	})
+
+	sort.Slice(o2.Parameters, func(i, j int) bool {
+		p1 := o2.Parameters[i]
+		p2 := o2.Parameters[j]
+		return p1.Name < p2.Name || ((p1.Name == p2.Name) && p1.Value < p2.Value)
+	})
+
+	return reflect.DeepEqual(o1, o2)
+}
+
 func suppressEquivalentJSONDiffs(k, old, new string, d *schema.ResourceData) bool {
 
 	return compareMatchTargetsJSON(old, new)
