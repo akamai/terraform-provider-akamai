@@ -255,9 +255,11 @@ func resourceProperty() *schema.Resource {
 				Elem:     papiError(),
 			},
 			"rule_warnings": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem:     papiError(),
+				Type:       schema.TypeList,
+				Optional:   true,
+				Computed:   true,
+				Elem:       papiError(),
+				Deprecated: "Rule warnings will not be set in state anymore",
 			},
 
 			// Hard-deprecated attributes: These are effectively removed, but we wanted to refer users to the upgrade guide
@@ -506,6 +508,23 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	if len(RuleErrors) > 0 {
+		if err := d.Set("rule_errors", papiErrorsToList(RuleErrors)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+		msg, err := json.MarshalIndent(papiErrorsToList(RuleErrors), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
+		}
+		logger.Errorf("Property has rule errors %s", msg)
+	}
+	if len(RuleWarnings) > 0 {
+		msg, err := json.MarshalIndent(papiErrorsToList(RuleWarnings), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API warnings: %s", err))
+		}
+		logger.Warnf("Property has rule warnings %s", msg)
+	}
 
 	RulesJSON, err := json.Marshal(Rules)
 	if err != nil {
@@ -532,7 +551,6 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"rules":              string(RulesJSON),
 		"rule_format":        RuleFormat,
 		"rule_errors":        papiErrorsToList(RuleErrors),
-		"rule_warnings":      papiErrorsToList(RuleWarnings),
 	}
 	if Property.ProductID != "" {
 		attrs["product_id"] = Property.ProductID

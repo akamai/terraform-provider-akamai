@@ -12,9 +12,6 @@ description: |-
 ~> **Note** Hostnames syntax changed to block type since 1.5.0. Existing terraform users with hostnames defined in older syntax(1.4.0 or before) need to manually fix their hostnames configuration and existing state if needed. 
 If the state is invalid, users can either re-import the property from scratch or manually modify the state file. 
 
-~> **Note** Hostnames syntax changed to block type since 1.5.0. Existing terraform users with hostnames defined in older syntax(1.4.0 or before) need to manually fix their hostnames configuration and existing state if needed. 
-If the state is invalid, users can either re-import the property from scratch or manually modify the state file. 
-
 The `akamai_property` resource represents an Akamai property configuration.
 This resource lets you to create, update, and activate properties on the
 Akamai platform.
@@ -64,14 +61,15 @@ This resource supports these arguments:
 * `product_id` - (Required to create, otherwise Optional) A product's unique ID, including the `prd_` prefix.
 * `hostnames` - (Optional) A mapping of public hostnames to edge hostnames. See the [`akamai_property_hostnames`](../data-sources/property_hostnames.md) data source for details on the necessary DNS configuration.
 
-    ~> **Note** `hostnames` argument now supports a new input block. Make sure you replace your previous input for this argument with the new syntax.
+    ~> **Note** `hostnames` argument now supports a new input block. Make sure you replace your previous input for this argument with the new syntax. If the state becomes invalid, users should either re-import the property from scratch or manually modify the state file.
+
 
     Requires these additional arguments:
 
       * `cname_from` - (Required) A string containing the original origin's hostname. For example, `"example.org"`.
       * `cname_to` - (Required) A string containing the hostname for edge content. For example,  `"example.org.edgesuite.net"`.
       * `cert_provisioning_type` - (Required) The certificate’s provisioning type, either the default `CPS_MANAGED` type for the custom certificates you provision with the [Certificate Provisioning System (CPS)](https://learn.akamai.com/en-us/products/core_features/certificate_provisioning_system.html), or `DEFAULT` for certificates provisioned automatically.
-* `rules` - (Required) A JSON-encoded rule tree for a given property. For this argument, you need to enter a complete JSON rule tree, unless you set up a series of JSON templates. See the [`akamai_property_rules`](../data-sources/property_rules.md) data source.
+* `rules` - (Optional) A JSON-encoded rule tree for a given property. For this argument, you need to enter a complete JSON rule tree, unless you set up a series of JSON templates. See the [`akamai_property_rules`](../data-sources/property_rules.md) data source.
 * `rule_format` - (Optional) The [rule format](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats) to use. Uses the latest rule format by default.
 
 ### Deprecated arguments
@@ -79,13 +77,13 @@ This resource supports these arguments:
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
 * `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
 * `product` - (Deprecated) Optional argument replaced by the now required `product_id`. Maintained for legacy purposes.
+* `rule_warnings` - (Deprecated) Rule warnings are not maintained in state anymore. Maintained for legacy purposes.
 
 ## Attribute reference
 
 The resource returns these attributes:
 
-* `warnings` - The contents of `warnings` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
-* `errors` - The contents of `errors` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `rule_errors` - The contents of `errors` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
 * `latest_version` - The version of the property you've created or updated rules for. The Akamai Provider always uses the latest version or creates a new version if latest is not editable.
 * `production_version` - The current version of the property active on the Akamai production network.
 * `staging_version` - The current version of the property active on the Akamai staging network.

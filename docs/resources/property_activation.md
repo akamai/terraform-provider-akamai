@@ -70,11 +70,13 @@ The following arguments are supported:
 * `property_id` - (Required) The property’s unique identifier, including the `prp_` prefix. 
 * `contact` - (Required) One or more email addresses to send activation status changes to.
 * `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `akamai_property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. To always use the latest version, enter this value `{resource}.{resource identifier}.{field name}`. Using the example code above, the entry would be `akamai_property.example.latest_version` since we want the value of the `latest_version` attribute in the `akamai_property` resource labeled `example`.
-* `network` - (Optional) Akamai network to activate on, either `STAGING` or `PRODUCTION`. `STAGING` is the default.
+* `network` - (Optional) Akamai network to actvate on, either `STAGING` or `PRODUCTION`. `STAGING` is the default.
+* `auto_acknowledge_rule_warnings` - (Optional) Acknowledge all rule warnings for activation to continue. default is `true`.
 
 ### Deprecated arguments
 
 * `property` - (Deprecated) Replaced by `property_id`. Maintained for legacy purposes.
+* `rule_warnings` - (Deprecated) Rule warnings are not maintained in state anymore
 
 ## Attribute reference
 
