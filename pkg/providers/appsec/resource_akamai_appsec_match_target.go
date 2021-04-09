@@ -41,7 +41,7 @@ func resourceMatchTarget() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJSONDiffs,
+				DiffSuppressFunc: suppressEquivalentMatchTargetDiffs,
 			},
 			"match_target_id": {
 				Type:     schema.TypeInt,

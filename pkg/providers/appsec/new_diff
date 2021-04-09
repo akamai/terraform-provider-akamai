@@ -23,6 +23,47 @@ func suppressEquivalentJsonDiffsGeneric(k, old, new string, d *schema.ResourceDa
 	return jsonBytesEqual(ob.Bytes(), nb.Bytes())
 }
 
+// https://stackoverflow.com/questions/18668652/how-to-produce-json-with-sorted-keys-in-go
+func jsonRemarshal(bytes []byte) ([]byte, error) {
+	var ifce interface{}
+	err := json.Unmarshal(bytes, &ifce)
+	if err != nil {
+		return []byte{}, err
+	}
+	output, err := json.Marshal(ifce)
+	if err != nil {
+		return []byte{}, err
+	}
+	return output, nil
+}
+
+func AreEqualJSON(s1, s2 string) (bool, error) {
+	var o1 interface{}
+	var o2 interface{}
+
+	var err error
+	err = json.Unmarshal([]byte(s1), &o1)
+	if err != nil {
+		return false, err
+	}
+	err = json.Unmarshal([]byte(s2), &o2)
+	if err != nil {
+		return false, err
+	}
+
+	return reflect.DeepEqual(o1, o2), nil
+}
+
+func betterSuppressEquivalentJsonDiffsGeneric(k, old, new string, d *schema.ResourceData) bool {
+	var i1, i2 interface{}
+	json.Unmarshal([]byte(old), &i1)
+	json.Unmarshal([]byte(new), &i2)
+
+	m1, _ := i1.(map[string]interface{})
+	m2, _ := i2.(map[string]interface{})
+	return reflect.DeepEqual(m1, m2)
+}
+
 func jsonBytesEqual(b1, b2 []byte) bool {
 	var o1 interface{}
 	if err := json.Unmarshal(b1, &o1); err != nil {
@@ -37,46 +78,26 @@ func jsonBytesEqual(b1, b2 []byte) bool {
 	return reflect.DeepEqual(o1, o2)
 }
 
-func suppressCustomDenyJsonDiffs(k, old, new string, d *schema.ResourceData) bool {
-	var ob, nb bytes.Buffer
-	if err := json.Compact(&ob, []byte(old)); err != nil {
-		return false
-	}
-
-	if err := json.Compact(&nb, []byte(new)); err != nil {
-		return false
-	}
-
-	return jsonBytesEqualIncludingParametersSlice(ob.Bytes(), nb.Bytes())
+func suppressEquivalentJSONDiffsCustomDeny(k, old, new string, d *schema.ResourceData) bool {
+	return compareCustomDenyJSON(old, new)
 }
 
-func jsonBytesEqualIncludingParametersSlice(b1, b2 []byte) bool {
-	var o1 appsec.GetCustomDenyResponse
-	var o2 appsec.GetCustomDenyResponse
-	if err := json.Unmarshal(b1, &o1); err != nil {
+func compareCustomDenyJSON(old, new string) bool {
+	var oldJSON, newJSON appsec.CreateCustomDenyResponse
+	if old == new {
+		return true
+	}
+	if err := json.Unmarshal([]byte(old), &oldJSON); err != nil {
 		return false
 	}
-
-	if err := json.Unmarshal(b2, &o2); err != nil {
+	if err := json.Unmarshal([]byte(new), &newJSON); err != nil {
 		return false
 	}
-
-	sort.Slice(o1.Parameters, func(i, j int) bool {
-		p1 := o1.Parameters[i]
-		p2 := o1.Parameters[j]
-		return p1.Name < p2.Name || ((p1.Name == p2.Name) && p1.Value < p2.Value)
-	})
-
-	sort.Slice(o2.Parameters, func(i, j int) bool {
-		p1 := o2.Parameters[i]
-		p2 := o2.Parameters[j]
-		return p1.Name < p2.Name || ((p1.Name == p2.Name) && p1.Value < p2.Value)
-	})
-
-	return reflect.DeepEqual(o1, o2)
+	diff := compareCustomDeny(&oldJSON, &newJSON)
+	return diff
 }
 
-func suppressEquivalentMatchTargetDiffs(k, old, new string, d *schema.ResourceData) bool {
+func suppressEquivalentJSONDiffs(k, old, new string, d *schema.ResourceData) bool {
 
 	return compareMatchTargetsJSON(old, new)
 }
@@ -130,8 +151,7 @@ func compareMatchTargets(old, new *appsec.CreateMatchTargetResponse) bool {
 	if len(old.FilePaths) != len(new.FilePaths) ||
 		len(old.FileExtensions) != len(new.FileExtensions) ||
 		len(old.Hostnames) != len(new.Hostnames) ||
-		len(old.BypassNetworkLists) != len(new.BypassNetworkLists) ||
-		len(old.Apis) != len(new.Apis) {
+		len(old.BypassNetworkLists) != len(new.BypassNetworkLists) {
 		return false
 	}
 
@@ -150,16 +170,5 @@ func compareMatchTargets(old, new *appsec.CreateMatchTargetResponse) bool {
 	new.Sequence = 0
 	old.Sequence = 0
 
-	sort.Slice(old.Apis, func(i, j int) bool {
-		p1 := old.Apis[i]
-		p2 := old.Apis[j]
-		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
-	})
-
-	sort.Slice(new.Apis, func(i, j int) bool {
-		p1 := new.Apis[i]
-		p2 := new.Apis[j]
-		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
-	})
 	return reflect.DeepEqual(old, new)
 }
