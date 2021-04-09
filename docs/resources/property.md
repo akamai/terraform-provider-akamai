@@ -61,8 +61,7 @@ This resource supports these arguments:
 * `product_id` - (Required to create, otherwise Optional) A product's unique ID, including the `prd_` prefix.
 * `hostnames` - (Optional) A mapping of public hostnames to edge hostnames. See the [`akamai_property_hostnames`](../data-sources/property_hostnames.md) data source for details on the necessary DNS configuration.
 
-    ~> **Note** `hostnames` argument now supports a new input block. Make sure you replace your previous input for this argument with the new syntax. If the state becomes invalid, users should either re-import the property from scratch or manually modify the state file.
-
+    ~> **Note** `hostnames` argument now supports a new input block. Make sure you replace your previous input for this argument with the new syntax.
 
     Requires these additional arguments:
 
