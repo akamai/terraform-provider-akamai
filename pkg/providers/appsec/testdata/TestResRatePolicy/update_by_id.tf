@@ -11,7 +11,7 @@ resource "akamai_appsec_rate_policy" "test" {
     "matchType": "path",
     "type": "WAF",
     "name": "Test_Paths 3",
-    "description": "AFW Test Extensions U",
+    "description": "AFW Test Extensions",
     "averageThreshold": 5,
     "burstThreshold": 10,
     "clientIdentifier": "ip",
@@ -22,7 +22,8 @@ resource "akamai_appsec_rate_policy" "test" {
         "positiveMatch": true,
         "values": [
             "/login/",
-            "/path/"
+            "/path/",
+            "sec/"
         ]
     },
     "pathMatchType": "Custom",
@@ -38,7 +39,8 @@ resource "akamai_appsec_rate_policy" "test" {
             "avi",
             "bin",
             "bmp",
-            "cab"
+            "cab",
+            "pcx"
         ]
     },
     "hostnames": [
