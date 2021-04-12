@@ -59,7 +59,7 @@ This resource supports these arguments:
 * `product_id` - (Required to create, otherwise Optional) A product's unique ID, including the `prd_` prefix.
 * `hostnames` - (Optional) A mapping of public hostnames to edge hostnames. See the [`akamai_property_hostnames`](../data-sources/property_hostnames.md) data source for details on the necessary DNS configuration.
 
-    ~> **Note** Starting from version 1.5.0, the `hostnames` argument supports a new block type. If you created your code and state in version 1.4 or older, you need to manually update your configuration and replace the previous input for hostnames with the new syntax. This error indicates that the state is outdated: `Error: missing expected [`. To fix it, remove `akamai_property` from the state and import it again. 
+    ~> **Note** Starting from version 1.5.0, the `hostnames` argument supports a new block type. If you created your code and state in version 1.4 or earlier, you need to manually update your configuration and replace the previous input for hostnames with the new syntax. This error indicates that the state is outdated: `Error: missing expected [`. To fix it, remove `akamai_property` from the state and import it again. 
 
     Requires these additional arguments:
 
