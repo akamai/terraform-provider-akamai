@@ -46,10 +46,12 @@ supporting API service names:
 
 | **Module** | **API service name** |
 |-------------|----------------------|
-| Property Manager (Provisioning and Common modules) | Property Manager (PAPI) |
-| Edge DNS (DNS) | DNS Zone Management |
-| Global Traffic Management | Global Traffic Management |
-| Application Security | Application Security |
+| **Application Security** (beta) <br/> Contact Akamai to add this beta to your contract. | Application Security |
+| **Edge DNS** (DNS zones) | DNS Zone Management |
+| **Global Traffic Management** (GTM domains) | Global Traffic Management |
+| **Identity and Access Management** (authentication) | Identity Management: User Administration |
+| **Network Lists** | Network Lists |
+| **Provisioning** (property and common functions) | Property Manager (PAPI) |
 
 Once you create the supporting API clients you can update your local
 `.edgerc` file.

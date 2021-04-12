@@ -131,11 +131,12 @@ At this point in the setup, you should refer to the guides for the Akamai module
 
 | **Module** | **Guide** |
 |------------|------------|
-| Application Security | [Get Started with Application Security](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec) |
-| Edge DNS (DNS) | [Get Started with DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone) | 
-| Global Traffic Management | [Get Started with GTM Domain Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain) | 
-| Identity and Access Management | [Get Started with the Identity and Access Management Module](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam.md) |
-| Property Manager (Provisioning and Common modules) | [Get Started with Property Provisioning](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) |
+| **Application Security** (beta) <br/> Contact Akamai to add this beta to your contract. | [Get Started with Application Security](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec) |
+| **Edge DNS** (DNS zones) | [Get Started with DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone) | 
+| **Global Traffic Management** (GTM domains) | [Get Started with GTM Domain Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain) | 
+| **Identity and Access Management** (authentication) | [Get Started with the Identity and Access Management Module](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam) |
+| **Network Lists** | [Get Started with Network Lists](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_networklists) |
+| **Provisioning** (property and common functions) | [Get Started with Property Provisioning](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) |
 
 -> **Note** Both Terraform and the Akamai Terraform CLI package come
 pre-installed in the Akamai Development Environment. See [Set Up a Development Environment](https://developer.akamai.com/blog/2020/05/26/set-development-environment) for more information.

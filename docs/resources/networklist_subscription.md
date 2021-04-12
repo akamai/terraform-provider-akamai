@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
-page_title: "Akamai: NetworkLists"
-subcategory: "Network List Subscription"
+page_title: "Akamai: NetworkLists Subscription"
+subcategory: "Network Lists"
 description: |-
  NetworkLists
 ---

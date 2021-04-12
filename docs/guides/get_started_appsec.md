@@ -18,9 +18,11 @@ This Guide is for developers who:
 * already have some familiarity with Akamai.
 * understand how to create and edit the 'akamai.tf' file [see](get_started_akamai.md).
  
-For details about Akamai's application security, see the [API documentation](https://developer.akamai.com/api/cloud_security/application_security/v1.html)
+For more information about Application Security, see the [API documentation](https://developer.akamai.com/api/cloud_security/application_security/v1.html)
 
 ## Prerequisites
+
+~> **Note** The Application Security module is currently in beta. Contact your Akamai account representative to add the Application Security OPEN API beta to your contract.
 
 To manage Application Security resources, you need to obtain information regarding your 
 existing security implementation, including the following information:
@@ -219,9 +221,9 @@ The `ID` indicates the unique identifier for this resource within Terraform's st
 $ terraform import akamai_appsec_security_policy.security_policy_create 33673:55:PL5_138221
 ```
 
-## Beta features
+## Features
 
-NOTE: The following data sources and resources are currently in Beta, and their behavior or documentation might change in a future release:
+~> **Note** All Application Security data sources and resources are currently in beta. Contact your Akamai account representative to add the Application Security OPEN API beta to your contract.
 
 ### Data Sources
   * akamai_appsec_advanced_settings_logging
