@@ -76,7 +76,7 @@ The following arguments are supported:
 ### Deprecated arguments
 
 * `property` - (Deprecated) Replaced by `property_id`. Maintained for legacy purposes.
-* `rule_warnings` - (Deprecated) Rule warnings are not maintained in state anymore
+* `rule_warnings` - (Deprecated) Rule warnings are not maintained in state anymore. Users will still be able to see them in logs as warnings.
 
 ## Attribute reference
 

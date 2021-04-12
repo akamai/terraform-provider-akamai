@@ -76,7 +76,7 @@ This resource supports these arguments:
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
 * `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
 * `product` - (Deprecated) Optional argument replaced by the now required `product_id`. Maintained for legacy purposes.
-* `rule_warnings` - (Deprecated) Rule warnings are not maintained in state anymore. Maintained for legacy purposes.
+* `rule_warnings` - (Deprecated) Rule warnings are not maintained in state anymore. Users will still be able to see them in logs as warnings. Maintained for legacy purposes.
 
 ## Attribute reference
 

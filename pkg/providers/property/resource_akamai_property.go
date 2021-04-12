@@ -629,8 +629,8 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Schema guarantees group_id, and contract_id are strings
 	PropertyID := d.Id()
-	ContractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
-	GroupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
+	ContractID := d.Get("contract_id").(string)
+	GroupID := d.Get("group_id").(string)
 	PropertyVersion := Property.LatestVersion
 
 	resp, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, PropertyVersion)

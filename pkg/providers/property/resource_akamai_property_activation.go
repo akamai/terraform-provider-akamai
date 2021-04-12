@@ -193,7 +193,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		}
 		logger.Warnf("Property has rule warnings %s", msg)
 	}
-	if diags.HasError() {
+	if diags != nil && diags.HasError() {
 		d.Partial(true)
 		return diags
 	}
