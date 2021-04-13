@@ -8,7 +8,7 @@ description: |-
 
 # akamai_group
 
-Use the `akamai_group` data source to retrieve a group ID by name.
+Use the `akamai_group` data source to get a group by name.
 
 Each account features a hierarchy of groups, which control access to your
 Akamai configurations and help consolidate reporting functions, typically
