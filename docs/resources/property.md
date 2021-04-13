@@ -9,11 +9,6 @@ description: |-
 # akamai_property
 
 ~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details.
-~> **Note** Hostnames syntax changed to block type since 1.5.0. Existing terraform users with hostnames defined in older syntax(1.4.0 or before) need to manually fix their hostnames configuration and existing state if needed. 
-If the state is invalid, users can either re-import the property from scratch or manually modify the state file. 
-
-~> **Note** Hostnames syntax changed to block type since 1.5.0. Existing terraform users with hostnames defined in older syntax(1.4.0 or before) need to manually fix their hostnames configuration and existing state if needed. 
-If the state is invalid, users can either re-import the property from scratch or manually modify the state file. 
 
 The `akamai_property` resource represents an Akamai property configuration.
 This resource lets you to create, update, and activate properties on the
@@ -64,7 +59,7 @@ This resource supports these arguments:
 * `product_id` - (Required to create, otherwise Optional) A product's unique ID, including the `prd_` prefix.
 * `hostnames` - (Optional) A mapping of public hostnames to edge hostnames. See the [`akamai_property_hostnames`](../data-sources/property_hostnames.md) data source for details on the necessary DNS configuration.
 
-    ~> **Note** `hostnames` argument now supports a new input block. Make sure you replace your previous input for this argument with the new syntax.
+    ~> **Note** Starting from version 1.5.0, the `hostnames` argument supports a new block type. If you created your code and state in version 1.4 or earlier, you need to manually update your configuration and replace the previous input for `hostnames` with the new syntax. This error indicates that the state is outdated: `Error: missing expected [`. To fix it, remove `akamai_property` from the state and import it again. 
 
     Requires these additional arguments:
 
