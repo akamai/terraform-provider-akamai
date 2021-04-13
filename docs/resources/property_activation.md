@@ -8,7 +8,7 @@ description: |-
 
 # akamai_property_activation
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details.
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to this version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details.
 
 The `akamai_property_activation` resource lets you activate a property version. An activation deploys the version to either the Akamai staging or production network. You can activate a specific version multiple times if you need to.  
 
@@ -89,4 +89,4 @@ The following attributes are returned:
 
 ### Deprecated attributes
 
-* `rule_warnings` - (Deprecated) Rule warnings are no longer maintained in the state file. Users will still be able to see them in logs as warnings.
+* `rule_warnings` - (Deprecated) Rule warnings are no longer maintained in the state file. You can still see the warnings in logs.
