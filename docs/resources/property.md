@@ -8,9 +8,9 @@ description: |-
 
 # akamai_property
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details.
-~> **Note** Hostnames syntax changed to block type since 1.5.0. Existing terraform users with hostnames defined in older syntax(1.4.0 or before) need to manually fix their hostnames configuration and existing state if needed. 
-If the state is invalid, users can either re-import the property from scratch or manually modify the state file. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to this version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details.
+~> **Note** Hostnames syntax changed to block type since 1.5.0. Existing terraform users with hostnames defined in older syntax(1.4.0 or before) need to manually fix their hostnames configuration and existing state if needed.
+If the state is invalid, users can either re-import the property from scratch or manually modify the state file.
 
 The `akamai_property` resource represents an Akamai property configuration.
 This resource lets you to create, update, and activate properties on the
@@ -76,7 +76,6 @@ This resource supports these arguments:
 * `contract` - (Deprecated) Replaced by `contract_id`. Maintained for legacy purposes.
 * `group` - (Deprecated) Replaced by `group_id`. Maintained for legacy purposes.
 * `product` - (Deprecated) Optional argument replaced by the now required `product_id`. Maintained for legacy purposes.
-* `rule_warnings` - (Deprecated) Rule warnings are not maintained in state anymore. Users will still be able to see them in logs as warnings. Maintained for legacy purposes.
 
 ## Attribute reference
 
@@ -86,6 +85,10 @@ The resource returns these attributes:
 * `latest_version` - The version of the property you've created or updated rules for. The Akamai Provider always uses the latest version or creates a new version if latest is not editable.
 * `production_version` - The current version of the property active on the Akamai production network.
 * `staging_version` - The current version of the property active on the Akamai staging network.
+
+### Deprecated attributes
+
+* `rule_warnings` - (Deprecated) Rule warnings are no longer maintained in the state file. You can still see the warnings in logs.
 
 ## Import
 
