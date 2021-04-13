@@ -7,8 +7,7 @@ description: |-
 
 # Authenticate the Akamai Terraform Provider
 
-Authentication of the Akamai Terraform Provider relies on the Akamai EdgeGrid
-authentication scheme. The Akamai Provider code acts as a
+The Akamai Terraform Provider relies on Akamai's EdgeGrid authentication scheme. The Akamai Provider code acts as a
 wrapper for our APIs and reuses the same authentication mechanism. We
 recommend storing your API credentials in a local `.edgerc` file.
 
@@ -44,7 +43,7 @@ supporting API service names:
 | Application Security | Application Security |
 
 
-**Note:** If you're using the Edge DNS or GTM module, you may also need the Property Manager API service. Whether you need this additional service depends on your contract and group.
+-> **Note:** If you're using the Edge DNS or GTM module, you may also need the Property Manager API service. Whether you need this additional service depends on your contract and group. See [PAPI concepts](https://developer.akamai.com/api/core_features/property_manager/v1.html#papiconcepts) for more information.
 
 ## Default authentication settings
 
@@ -124,7 +123,7 @@ resource "akamai_dns_record" "example_record" {
 Arguments supported in the `provider` block:
 
 * `edgerc` - (Optional) The location of the `.edgerc` file containing credentials. The default is `$HOME/.edgerc`.
-* `config_section` - (Optional) The credential section to use within the `.edgerc` file for all EdgeGrid calls. If you don't specify the `config_section` argument, the Akamai Provider retrieves the credentials from the `default` section of the `.edgerc` file.
+* `config_section` - (Optional) The credential section to use within the `.edgerc` file for all EdgeGrid calls. If you don't specify the `config_section` argument, the Akamai Provider uses the credentials from the `default` section of the `.edgerc` file.
 
 #### Deprecated arguments
 
@@ -135,11 +134,10 @@ If you don't use `property_section`, the Akamai Provider uses the credentials in
 
 ## Authenticate using inline credentials
 
-Using default settings or referencing a local `.edgerc` file in the `akamai.tf` configuration is the preferred
-authentication method. However, if needed, you can specify inline credentials for each
+You should generally use default settings or reference a local `.edgerc` file in the `akamai.tf` configuration to authenticate the Terraform Provider. However, if needed, you can specify inline credentials for each
 resource or data source.
 
-Under `provider`, add a `config` block that includes authentication details. You don't need the `edgerc` or `config_section` attributes that you'd use if you were adding your local `.edgerc` file to your Akamai Provider configuration.
+Under `provider`, add a `config` block that includes authentication details. You then don't need the `edgerc` or `config_section` attributes that you'd use if you were adding your local `.edgerc` file to your Akamai Provider configuration.
 
 ### Example usage
 
@@ -176,7 +174,7 @@ You can also use environment variables to set credential values.
 Environment variables take precedence over the settings in the `.edgerc`
 file.
 
-Use this template `AKAMAI{_SECTION_NAME}_*` to specify variables based on the sections of your `.edgerc` file they represent.
+Use this template to specify variables based on the sections of your `.edgerc` file they represent: `AKAMAI{_SECTION_NAME}_*` .
 
 ### Example usage
 
@@ -188,7 +186,7 @@ To set up the Provisioning module, you'll need an API client for Property Manage
     provider "akamai" {}
     ```
 
-2. In terminal, specify the variable values for the credentials section you want to use and run `terraform apply`. This example includes variables for the `papi` credentials section:
+2. In your terminal, specify the variable values for the credentials section you want to use and run `terraform apply`. This example includes variables for the `papi` credentials section:
 
     ```
     AKAMAI_PAPI_HOST=akaa-XXXXXXXXXXXXXXXX-XXXXXXXXXXXXXXXX.luna.akamaiapis.net \
@@ -198,7 +196,7 @@ To set up the Provisioning module, you'll need an API client for Property Manage
     terraform apply
     ```
 
-3. In the `akamai.tf` file, under `provider`, specify the `config_section` you set the variables for.
+3. In the `akamai.tf` file, under `provider`, specify the `config_section` you set the variables for:
 
     ```
     provider "akamai" {
