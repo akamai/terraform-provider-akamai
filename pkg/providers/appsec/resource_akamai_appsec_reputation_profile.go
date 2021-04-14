@@ -246,14 +246,6 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 			reputationProfileRequest.ConfigVersion = version
 		}
 
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getReputationProfile.ConfigVersion = version
-		}
-
 		reputationProfileId, errconv := strconv.Atoi(s[2])
 		if errconv != nil {
 			return diag.FromErr(errconv)

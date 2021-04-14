@@ -88,16 +88,9 @@ func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m 
 		getEvalProtectHost.Version = version
 	}
 
-<<<<<<< HEAD
-	_, errr := client.GetEvalProtectHost(ctx, getEvalProtectHost)
-	if errr != nil {
-		logger.Errorf("calling 'updateEvalProtectHost': %s", errr.Error())
-		return diag.FromErr(errr)
-=======
 	if _, err := client.GetEvalProtectHost(ctx, getEvalProtectHost); err != nil {
 		logger.Errorf("calling 'updateEvalProtectHost': %s", err.Error())
 		return diag.FromErr(err)
->>>>>>> 7e8067a71880b03f78b43b3c7d3cb4878dc40649
 	}
 
 	if err := d.Set("config_id", getEvalProtectHost.ConfigID); err != nil {
