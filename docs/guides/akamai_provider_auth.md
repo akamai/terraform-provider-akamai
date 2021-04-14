@@ -8,7 +8,7 @@ description: |-
 # Authenticate the Akamai Terraform Provider
 
 The Akamai Terraform Provider relies on Akamai's EdgeGrid authentication scheme. The Akamai Provider code acts as a
-wrapper for our APIs and reuses the same authentication mechanism. Akamai recommends storing your API credentials in a local `.edgerc` file.
+wrapper for Akamai's APIs and reuses the same authentication mechanism. Akamai recommends storing your API credentials in a local `.edgerc` file.
 
 The permissions you need for the Akamai Provider depend on
 the subset of Akamai resources and data sources you'll use. Without
