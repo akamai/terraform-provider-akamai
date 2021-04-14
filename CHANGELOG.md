@@ -1,5 +1,19 @@
 # RELEASE NOTES
 
+## 1.4.1
+
+#### BUG FIXES:
+
+* APPSEC
+  * Suppress 'null' text on output of empty/false values
+  * Prevent configuration drift when reapplying configuration after importing or creating resources
+  * Update configuration version in local state file when modified in config.tf
+  * Use uppercase when managing GEO network list elements
+  * Display both API & website match targets in text_output
+  * Remove unused output_text from code and documentation
+  * Set network_list_id on network list import
+  * Add comments to simplify importing resources using "terraform import"
+
 ## 1.4.0 (Mar 17, 2021) Network Lists
 
 These are the operations supported in the Network Lists API v2:
