@@ -3,6 +3,7 @@ package property
 import (
 	"context"
 	"fmt"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"

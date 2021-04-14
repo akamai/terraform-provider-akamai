@@ -83,6 +83,7 @@ func Provider() *schema.Provider {
 			"akamai_property_rules_template": dataSourcePropertyRulesTemplate(),
 			"akamai_properties":              dataSourceAkamaiProperties(),
 			"akamai_property_products":       dataSourceAkamaiPropertyProducts(),
+			"akamai_property_hostnames":      dataSourceAkamaiPropertyHostnames(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_cp_code":             resourceCPCode(),

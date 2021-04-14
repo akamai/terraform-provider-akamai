@@ -75,9 +75,10 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 			},
 			"static_ttl": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  600,
+				// Deprecated. Leaving for backward config compatibility.
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validateTTL,
 			},
 			"static_rr_set": {
 				Type:     schema.TypeList,
@@ -113,9 +114,10 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 			},
 			"dynamic_ttl": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  300,
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validateTTL,
+				Default:      300,
 			},
 			"max_unreachable_penalty": {
 				Type:     schema.TypeInt,
@@ -342,6 +344,23 @@ func parseResourceStringId(id string) (string, string, error) {
 
 	return parts[0], parts[1], nil
 
+}
+
+// validateTTL is a SchemaValidateFunc to validate dynamic_tll and static_ttl.
+func validateTTL(v interface{}, key string) (ws []string, es []error) {
+	if key == "static_ttl" {
+		ws = append(ws, fmt.Sprintf("static_ttl is deprecated and will be ignored. Use static_rr_sets to apply static ttls to records"))
+		return
+	}
+	value, ok := v.(int)
+	if !ok {
+		es = append(es, fmt.Errorf("%s validation failed to read field attribute", key))
+		return
+	}
+	if value < 30 || value > 3600 {
+		es = append(es, fmt.Errorf("%s value must be between 30 and 3600", key))
+	}
+	return
 }
 
 // Create a new GTM Property
@@ -666,15 +685,6 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 		prop.BalanceByDownloadScore = bbds
 	}
 
-	vint, err = tools.GetIntValue("static_ttl", d)
-	if err == nil || d.HasChange("static_ttl") {
-		prop.StaticTTL = vint
-	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		logger.Errorf("populateResourceObject() static_ttl failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
-	}
-
 	vfloat, err = tools.GetFloat64Value("unreachable_threshold", d)
 	if err == nil || d.HasChange("unreachable_threshold") {
 		prop.UnreachableThreshold = vfloat
@@ -847,7 +857,6 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 		"use_computed_targets":        prop.UseComputedTargets,
 		"backup_ip":                   prop.BackupIp,
 		"balance_by_download_score":   prop.BalanceByDownloadScore,
-		"static_ttl":                  prop.StaticTTL,
 		"unreachable_threshold":       prop.UnreachableThreshold,
 		"min_live_fraction":           prop.MinLiveFraction,
 		"health_multiplier":           prop.HealthMultiplier,
@@ -868,6 +877,10 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 		"comments":                    prop.Comments,
 	} {
 		// walk thru all state elements
+		if stateKey == "dynamic_ttl" && stateValue == 0 {
+			// ttl value is not set; null -> 0
+			continue
+		}
 		err := d.Set(stateKey, stateValue)
 		if err != nil {
 			logger.Errorf("Invalid configuration: %s", err.Error())

@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+
 	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -71,6 +73,10 @@ func resourceProperty() *schema.Resource {
 		ReadContext:   resourcePropertyRead,
 		UpdateContext: resourcePropertyUpdate,
 		DeleteContext: resourcePropertyDelete,
+		CustomizeDiff: customdiff.All(
+			hostNamesCustomDiff,
+			computedValuesCustomDiff,
+		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyImport,
 		},
@@ -102,7 +108,7 @@ func resourceProperty() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: `use "group_id" attribute instead`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
 				StateFunc:  addPrefixToState("grp_"),
 			},
 
@@ -118,7 +124,7 @@ func resourceProperty() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: `use "contract_id" attribute instead`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
 				StateFunc:  addPrefixToState("ctr_"),
 			},
 
@@ -134,7 +140,7 @@ func resourceProperty() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ConflictsWith: []string{"product_id"},
-				Deprecated:    `use "product_id" attribute instead`,
+				Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
 				StateFunc:     addPrefixToState("prd_"),
 			},
 
@@ -174,10 +180,57 @@ func resourceProperty() *schema.Resource {
 				},
 			},
 			"hostnames": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Mapping of edge hostname CNAMEs to other CNAMEs",
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cname_from": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if len(i.(string)) == 0 {
+									return diag.Errorf("'cname_from' cannot be empty when hostnames block is defined - See new hostnames schema")
+								}
+								return nil
+							},
+						},
+						"cname_to": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if len(i.(string)) == 0 {
+									return diag.Errorf("'cname_to' cannot be empty when hostnames block is defined - See new hostnames schema")
+								}
+								return nil
+							},
+						},
+						"cert_provisioning_type": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if len(i.(string)) == 0 {
+									return diag.Errorf("'cert_provisioning_type' cannot be empty when hostnames block is defined - See new hostnames schema")
+								}
+								return nil
+							},
+						},
+						"cname_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"edge_hostname_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"cert_status": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							Elem:     certStatus,
+						},
+					},
+				},
 			},
 
 			// Computed
@@ -211,13 +264,13 @@ func resourceProperty() *schema.Resource {
 			"cp_code": {
 				Type:       schema.TypeString,
 				Optional:   true,
-				Deprecated: `"cp_code" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("cp_code"),
 			},
 			"contact": {
 				Type:       schema.TypeSet,
 				Optional:   true,
 				Elem:       &schema.Schema{Type: schema.TypeString},
-				Deprecated: `"contact" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("contact"),
 			},
 			"origin": {
 				Type:     schema.TypeSet,
@@ -232,22 +285,64 @@ func resourceProperty() *schema.Resource {
 						"enable_true_client_ip": {Type: schema.TypeBool, Optional: true},
 					},
 				},
-				Deprecated: `"origin" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("origin"),
 			},
 			"is_secure": {
 				Type:       schema.TypeBool,
 				Optional:   true,
-				Deprecated: `"is_secure" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("is_secure"),
 			},
 			"variables": {
 				Type:       schema.TypeString,
 				Optional:   true,
-				Deprecated: `"variables" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("variables"),
 			},
 		},
 	}
 }
 
+func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "hostNamesCustomDiff")
+
+	o, n := d.GetChange("hostnames")
+	oldVal, ok := o.([]interface{})
+	if !ok {
+		logger.Errorf("error parsing local state for old value %s", oldVal)
+		return fmt.Errorf("cannot parse hostnames state properly %v", o)
+	}
+
+	newVal, ok := n.([]interface{})
+	if !ok {
+		logger.Errorf("error parsing local state for new value %s", newVal)
+		return fmt.Errorf("cannot parse hostnames state properly %v", n)
+	}
+	//PAPI doesn't allow hostnames to become empty if they already exist on server
+	//TODO Do we add support for hostnames patch operation to enable this?
+	if len(oldVal) > 0 && len(newVal) == 0 {
+		logger.Errorf("Hostnames exist on server and cannot be updated to empty for %d", d.Id())
+		return fmt.Errorf("atleast one hostname required to update existing list of hostnames associated to a property")
+	}
+	return nil
+}
+
+func computedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "computedValuesCustomDiff")
+
+	//These computed attributes can be changed on server through other clients and the state needs to be synced to local
+	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
+		if d.HasChange(key) || d.NewValueKnown(key) {
+			err := d.SetNewComputed(key)
+			if err != nil {
+				logger.Errorf("%s state failed to update with new value from server", key)
+				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			}
+			logger.Debugf("%s state will be updated with new value from server", key)
+		}
+	}
+	return nil
+}
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
@@ -285,7 +380,6 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	ProductID = tools.AddPrefix(ProductID, "prd_")
 
-	Hostnames := mapToHostnames(d.Get("hostnames").(map[string]interface{}))
 	RuleFormat := d.Get("rule_format").(string)
 
 	RulesJSON := []byte(d.Get("rules").(string))
@@ -337,11 +431,16 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductID:     ProductID,
 		LatestVersion: 1,
 	}
-
-	if len(Hostnames) > 0 {
-		if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
-			return diag.FromErr(err)
+	HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+	if err == nil {
+		Hostnames := mapToHostnames(HostnameVal)
+		if len(Hostnames) > 0 {
+			if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
+				return diag.FromErr(err)
+			}
 		}
+	} else {
+		logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
 	}
 
 	if len(RulesJSON) > 0 {
@@ -421,7 +520,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"latest_version":     Property.LatestVersion,
 		"staging_version":    StagingVersion,
 		"production_version": ProductionVersion,
-		"hostnames":          hostnamesToMap(Hostnames),
+		"hostnames":          flattenHostnames(Hostnames),
 		"rules":              string(RulesJSON),
 		"rule_format":        RuleFormat,
 		"rule_errors":        papiErrorsToList(RuleErrors),
@@ -526,11 +625,17 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Hostnames
 	if d.HasChange("hostnames") {
-		Hostnames := mapToHostnames(d.Get("hostnames").(map[string]interface{}))
-
-		if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
-			d.Partial(true)
-			return diag.FromErr(err)
+		HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+		if err == nil {
+			Hostnames := mapToHostnames(HostnameVal)
+			if len(Hostnames) > 0 {
+				if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
+					d.Partial(true)
+					return diag.FromErr(err)
+				}
+			}
+		} else {
+			logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
 		}
 	}
 
@@ -582,7 +687,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	var PropertyID, GroupID, ContractID string
 	parts := strings.Split(d.Id(), ",")
 	if len(parts) == 2 {
-		return nil, fmt.Errorf("Either PropertyId or comma-separated list of PropertyId, contractID and groupID in that order has to be supplied in import: %s", d.Id())
+		return nil, fmt.Errorf("either PropertyId or comma-separated list of PropertyId, contractID and groupID in that order has to be supplied in import: %s", d.Id())
 	}
 	switch len(parts) {
 	case 1:
@@ -718,10 +823,11 @@ func fetchProperty(ctx context.Context, client papi.PAPI, PropertyID, GroupID, C
 // Fetch hostnames for latest version of given property
 func fetchPropertyHostnames(ctx context.Context, client papi.PAPI, Property papi.Property) ([]papi.Hostname, error) {
 	req := papi.GetPropertyVersionHostnamesRequest{
-		PropertyID:      Property.PropertyID,
-		GroupID:         Property.GroupID,
-		ContractID:      Property.ContractID,
-		PropertyVersion: Property.LatestVersion,
+		PropertyID:        Property.PropertyID,
+		GroupID:           Property.GroupID,
+		ContractID:        Property.ContractID,
+		PropertyVersion:   Property.LatestVersion,
+		IncludeCertStatus: true,
 	}
 
 	logger := log.FromContext(ctx).WithFields(logFields(req))
@@ -776,6 +882,7 @@ func updatePropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pr
 		ContractID:      Property.ContractID,
 		PropertyVersion: Property.LatestVersion,
 		Rules:           Rules,
+		ValidateRules:   true,
 	}
 
 	logger := log.FromContext(ctx).WithFields(logFields(req))
@@ -842,28 +949,24 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 	return nil
 }
 
-// Convert given hostnames to the map form that can be stored in a schema.ResourceData
-func hostnamesToMap(Hostnames []papi.Hostname) map[string]interface{} {
-	m := map[string]interface{}{}
-	for _, hn := range Hostnames {
-		m[hn.CnameFrom] = hn.CnameTo
-	}
-
-	return m
-}
-
-// Convert the given map from a schema.ResourceData to a slice of papi.Hostnames
-func mapToHostnames(given map[string]interface{}) []papi.Hostname {
+// Convert the given map from a schema.ResourceData to a slice of papi.Hostnames /input to papi request
+func mapToHostnames(givenList []interface{}) []papi.Hostname {
 	var Hostnames []papi.Hostname
 
-	for from, to := range given {
-		Hostnames = append(Hostnames, papi.Hostname{
-			CnameType: "EDGE_HOSTNAME",
-			CnameFrom: from,
-			CnameTo:   to.(string), // guaranteed by schema to be a string
-		})
+	for _, givenMap := range givenList {
+		var r = givenMap.(map[string]interface{})
+		cnameFrom := r["cname_from"]
+		cnameTo := r["cname_to"]
+		certProvisioningType := r["cert_provisioning_type"]
+		if len(r) != 0 {
+			Hostnames = append(Hostnames, papi.Hostname{
+				CnameType:            "EDGE_HOSTNAME",
+				CnameFrom:            cnameFrom.(string),
+				CnameTo:              cnameTo.(string), // guaranteed by schema to be a string
+				CertProvisioningType: certProvisioningType.(string),
+			})
+		}
 	}
-
 	return Hostnames
 }
 
@@ -879,38 +982,4 @@ func rdSetAttrs(ctx context.Context, d *schema.ResourceData, AttributeValues map
 	}
 
 	return nil
-}
-
-func papiErrorsToList(Errors []*papi.Error) []interface{} {
-	if len(Errors) == 0 {
-		return nil
-	}
-
-	var RuleErrors []interface{}
-
-	for _, err := range Errors {
-		if err == nil {
-			continue
-		}
-
-		RuleErrors = append(RuleErrors, papiErrorToMap(err))
-	}
-
-	return RuleErrors
-}
-
-func papiErrorToMap(err *papi.Error) map[string]interface{} {
-	if err == nil {
-		return nil
-	}
-
-	return map[string]interface{}{
-		"type":           err.Type,
-		"title":          err.Title,
-		"detail":         err.Detail,
-		"instance":       err.Instance,
-		"behavior_name":  err.BehaviorName,
-		"error_location": err.ErrorLocation,
-		"status_code":    err.StatusCode,
-	}
 }

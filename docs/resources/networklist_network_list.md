@@ -1,9 +1,9 @@
 ---
 layout: "akamai"
-page_title: "Akamai: NetworkLists NetworkList"
+page_title: "Akamai: NetworkList
 subcategory: "Network Lists"
 description: |-
- NetworkLists NetworkList
+ NetworkList
 ---
 
 # akamai_networklist_network_list

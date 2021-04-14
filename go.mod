@@ -1,7 +1,7 @@
 module github.com/akamai/terraform-provider-akamai/v2
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.3.0
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.4.0
 	github.com/allegro/bigcache v1.2.1
 	github.com/apex/log v1.9.0
 	github.com/aws/aws-sdk-go v1.31.9 // indirect
@@ -16,8 +16,9 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/tj/assert v0.0.3
 	github.com/zclconf/go-cty v1.7.1 // indirect
-	golang.org/x/mod v0.4.0 // indirect
-	golang.org/x/tools v0.0.0-20201207191902-7bb39e4ca9ac // indirect
+	golang.org/x/mod v0.4.2 // indirect
+	golang.org/x/sys v0.0.0-20210326220804-49726bf1d181 // indirect
+	golang.org/x/tools v0.1.0 // indirect
 	google.golang.org/api v0.34.0 // indirect
 )
 
