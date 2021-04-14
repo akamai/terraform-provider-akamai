@@ -108,7 +108,7 @@ func resourceProperty() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: `use "group_id" attribute instead`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
 				StateFunc:  addPrefixToState("grp_"),
 			},
 
@@ -124,7 +124,7 @@ func resourceProperty() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: `use "contract_id" attribute instead`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
 				StateFunc:  addPrefixToState("ctr_"),
 			},
 
@@ -140,7 +140,7 @@ func resourceProperty() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ConflictsWith: []string{"product_id"},
-				Deprecated:    `use "product_id" attribute instead`,
+				Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
 				StateFunc:     addPrefixToState("prd_"),
 			},
 
@@ -266,13 +266,13 @@ func resourceProperty() *schema.Resource {
 			"cp_code": {
 				Type:       schema.TypeString,
 				Optional:   true,
-				Deprecated: `"cp_code" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("cp_code"),
 			},
 			"contact": {
 				Type:       schema.TypeSet,
 				Optional:   true,
 				Elem:       &schema.Schema{Type: schema.TypeString},
-				Deprecated: `"contact" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("contact"),
 			},
 			"origin": {
 				Type:     schema.TypeSet,
@@ -287,26 +287,25 @@ func resourceProperty() *schema.Resource {
 						"enable_true_client_ip": {Type: schema.TypeBool, Optional: true},
 					},
 				},
-				Deprecated: `"origin" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("origin"),
 			},
 			"is_secure": {
 				Type:       schema.TypeBool,
 				Optional:   true,
-				Deprecated: `"is_secure" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("is_secure"),
 			},
 			"variables": {
 				Type:       schema.TypeString,
 				Optional:   true,
-				Deprecated: `"variables" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("variables"),
 			},
 		},
 	}
 }
 
-func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "hostNamesCustomDiff")
-	ctx = log.NewContext(ctx, logger)
 
 	o, n := d.GetChange("hostnames")
 	oldVal, ok := o.([]interface{})
@@ -329,10 +328,9 @@ func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interfac
 	return nil
 }
 
-func computedValuesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+func computedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "computedValuesCustomDiff")
-	ctx = log.NewContext(ctx, logger)
 
 	//These computed attributes can be changed on server through other clients and the state needs to be synced to local
 	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
@@ -714,7 +712,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	var PropertyID, GroupID, ContractID string
 	parts := strings.Split(d.Id(), ",")
 	if len(parts) == 2 {
-		return nil, fmt.Errorf("Either PropertyId or comma-separated list of PropertyId, contractID and groupID in that order has to be supplied in import: %s", d.Id())
+		return nil, fmt.Errorf("either PropertyId or comma-separated list of PropertyId, contractID and groupID in that order has to be supplied in import: %s", d.Id())
 	}
 	switch len(parts) {
 	case 1:

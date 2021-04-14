@@ -39,7 +39,7 @@ func resourceCPCode() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: `use "contract_id" attribute instead`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
 				StateFunc:  addPrefixToState("ctr_"),
 			},
 			"contract_id": {
@@ -53,7 +53,7 @@ func resourceCPCode() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: `use "group_id" attribute instead`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
 				StateFunc:  addPrefixToState("grp_"),
 			},
 			"group_id": {
@@ -67,7 +67,7 @@ func resourceCPCode() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
-				Deprecated:    `use "product_id" attribute instead`,
+				Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
 				StateFunc:     addPrefixToState("prd_"),
 				ConflictsWith: []string{"product_id"},
 			},
