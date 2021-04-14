@@ -111,11 +111,6 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	newhdata := make([]string, 0, len(selectedhostname.HostnameList))
-	for _, hosts := range selectedhostname.HostnameList {
-		newhdata = append(newhdata, hosts.Hostname)
-	}
-
 	hostnamelist := d.Get("hostnames").(*schema.Set)
 
 	finalhdata := make([]string, 0, len(hostnamelist.List()))

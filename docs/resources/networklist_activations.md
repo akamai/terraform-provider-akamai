@@ -1,9 +1,9 @@
 ---
 layout: "akamai"
-page_title: "Akamai: NetworkLists Activations"
+page_title: "Akamai: NetworkList Activations"
 subcategory: "Network Lists"
 description: |-
- NetworkLists
+ NetworkList Activations
 ---
 
 # akamai_networklist_activations

@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -71,6 +72,18 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Computed: true,
 	},
+	"rule_errors": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		Elem:     papiError(),
+	},
+	"rule_warnings": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		Elem:     papiError(),
+	},
 	"version": {
 		Type:             schema.TypeInt,
 		Required:         true,
@@ -90,6 +103,18 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Computed: true,
 	},
+}
+
+func papiError() *schema.Resource {
+	return &schema.Resource{Schema: map[string]*schema.Schema{
+		"type":           {Type: schema.TypeString, Optional: true},
+		"title":          {Type: schema.TypeString, Optional: true},
+		"detail":         {Type: schema.TypeString, Optional: true},
+		"instance":       {Type: schema.TypeString, Optional: true},
+		"behavior_name":  {Type: schema.TypeString, Optional: true},
+		"error_location": {Type: schema.TypeString, Optional: true},
+		"status_code":    {Type: schema.TypeInt, Optional: true},
+	}}
 }
 
 func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -139,28 +164,26 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if there are errors return them cleanly
+	var diags diag.Diagnostics
 	if len(rules.Errors) > 0 {
-		diags := make([]diag.Diagnostic, 0)
 
-		for _, e := range rules.Errors {
-			logger.Warnf("property rule error %s", e.Error())
-
-			// handle errors with no title since summary is required field
-			errorSummary := e.Title
-			if len(errorSummary) == 0 {
-				errorSummary = "Papi error message shown below"
-			}
-
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  errorSummary,
-				Detail:   e.Error(),
-			})
+		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-
+		msg, err := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
+		}
+		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
+	}
+	if len(rules.Warnings) > 0 {
+		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+	}
+	if diags.HasError() {
 		return diags
 	}
-
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,
@@ -539,28 +562,25 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if there are errors return them cleanly
+	var diags diag.Diagnostics
 	if len(rules.Errors) > 0 {
-		diags := make([]diag.Diagnostic, 0)
-
-		for _, e := range rules.Errors {
-			logger.Warnf("property rule error %s", e.Error())
-
-			// handle errors with no title since summary is required field
-			errorSummary := e.Title
-			if len(errorSummary) == 0 {
-				errorSummary = "Papi error message shown below"
-			}
-
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  errorSummary,
-				Detail:   e.Error(),
-			})
+		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-
+		msg, err := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
+		}
+		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
+	}
+	if len(rules.Warnings) > 0 {
+		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+	}
+	if diags.HasError() {
 		return diags
 	}
-
 	propertyActivation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,

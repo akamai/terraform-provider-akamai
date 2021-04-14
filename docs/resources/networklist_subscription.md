@@ -3,7 +3,7 @@ layout: "akamai"
 page_title: "Akamai: NetworkLists Subscription"
 subcategory: "Network Lists"
 description: |-
- NetworkLists
+ NetworkList Subscription
 ---
 
 # akamai_networklist_subscription

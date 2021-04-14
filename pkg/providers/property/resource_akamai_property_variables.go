@@ -2,6 +2,8 @@ package property
 
 import (
 	"context"
+
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -20,7 +22,7 @@ func resourcePropertyVariables() *schema.Resource {
 			"variables": {
 				Type:       schema.TypeSet,
 				Optional:   true,
-				Deprecated: `resource "akamai_property_variables" is no longer supported - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("akamai_property_variables"),
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"variable": {

@@ -221,7 +221,7 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileRead")
 
-	getReputationProfile := appsec.GetReputationProfileRequest{}
+	reputationProfileRequest := appsec.GetReputationProfileRequest{}
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		s := strings.Split(d.Id(), ":")
@@ -230,13 +230,21 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		if errconv != nil {
 			return diag.FromErr(errconv)
 		}
-		getReputationProfile.ConfigID = configid
+		reputationProfileRequest.ConfigID = configid
 
 		version, errconv := strconv.Atoi(s[1])
 		if errconv != nil {
 			return diag.FromErr(errconv)
 		}
-		getReputationProfile.ConfigVersion = version
+		reputationProfileRequest.ConfigVersion = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			reputationProfileRequest.ConfigVersion = version
+		}
 
 		if d.HasChange("version") {
 			version, err := tools.GetIntValue("version", d)
@@ -250,47 +258,47 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		if errconv != nil {
 			return diag.FromErr(errconv)
 		}
-		getReputationProfile.ReputationProfileId = reputationProfileId
+		reputationProfileRequest.ReputationProfileId = reputationProfileId
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		getReputationProfile.ConfigID = configid
+		reputationProfileRequest.ConfigID = configid
 
 		configversion, err := tools.GetIntValue("version", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		getReputationProfile.ConfigVersion = configversion
+		reputationProfileRequest.ConfigVersion = configversion
 
 		reputationProfileId, errconv := strconv.Atoi(d.Id())
 
 		if errconv != nil {
 			return diag.FromErr(errconv)
 		}
-		getReputationProfile.ReputationProfileId = reputationProfileId
+		reputationProfileRequest.ReputationProfileId = reputationProfileId
 	}
-	reputationprofile, err := client.GetReputationProfile(ctx, getReputationProfile)
+	reputationProfileResponse, err := client.GetReputationProfile(ctx, reputationProfileRequest)
 	if err != nil {
 		logger.Errorf("calling 'getReputationProfile': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("reputation_profile_id", getReputationProfile.ReputationProfileId); err != nil {
+	if err := d.Set("reputation_profile_id", reputationProfileRequest.ReputationProfileId); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("config_id", getReputationProfile.ConfigID); err != nil {
+	if err := d.Set("config_id", reputationProfileRequest.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("version", getReputationProfile.ConfigVersion); err != nil {
+	if err := d.Set("version", reputationProfileRequest.ConfigVersion); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	jsonBody, err := json.Marshal(reputationprofile)
+	jsonBody, err := json.Marshal(reputationProfileResponse)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -299,7 +307,7 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d:%d", getReputationProfile.ConfigID, getReputationProfile.ConfigVersion, getReputationProfile.ReputationProfileId))
+	d.SetId(fmt.Sprintf("%d:%d:%d", reputationProfileRequest.ConfigID, reputationProfileRequest.ConfigVersion, reputationProfileRequest.ReputationProfileId))
 
 	return nil
 }

@@ -109,10 +109,12 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	createConfigurationClone.GroupID = groupID
 
-	hostnamelist := d.Get("host_names").(*schema.Set)
-	hnl := make([]string, 0, len(hostnamelist.List()))
-
-	for _, h := range hostnamelist.List() {
+	hostnameSet, err := tools.GetSetValue("host_names", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	hnl := make([]string, 0, hostnameSet.Len())
+	for _, h := range hostnameSet.List() {
 		hnl = append(hnl, h.(string))
 
 	}

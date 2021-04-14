@@ -133,7 +133,9 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 			updateCustomDeny.Version = version
 		}
 
-		updateCustomDeny.ID = s[2]
+		if len(s) >= 3 {
+			updateCustomDeny.ID = s[2]
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
@@ -237,7 +239,13 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 			getCustomDeny.Version = version
 		}
 
+<<<<<<< HEAD
 		getCustomDeny.ID = s[2]
+=======
+		if len(s) >= 3 {
+			getCustomDeny.ID = s[2]
+		}
+>>>>>>> 7e8067a71880b03f78b43b3c7d3cb4878dc40649
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)

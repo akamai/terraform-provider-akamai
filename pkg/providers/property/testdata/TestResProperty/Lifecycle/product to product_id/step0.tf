@@ -8,7 +8,10 @@ resource "akamai_property" "test" {
   group_id    = "grp_0"
   product  = "prd_0"
 
-  hostnames = {
-    "from.test.domain" = "to.test.domain"
+  hostnames {
+    cname_to= "to.test.domain"
+    cname_from="from.test.domain"
+    cert_provisioning_type= "DEFAULT"
   }
+
 }

@@ -84,7 +84,6 @@ This resource supports these arguments:
 * `use_computed_targets` - (Optional) For load-feedback domains only, a boolean that indicates whether you want GTM to automatically compute target load.
 * `backup_ip` - Specifies a backup IP. When GTM declares that all of the targets are down, the backupIP is handed out.
 * `balance_by_download_score` - (Optional) A boolean that indicates whether download score based load balancing is enabled.
-* `static_ttl` - (Optional) Specifies the TTL in seconds for static resource records that do not change based on the requesting name server IP.
 * `unreachable_threshold` - (Optional) For performance domains, this specifies a penalty value that’s added to liveness test scores when data centers have an aggregated loss fraction higher than this value.
 * `health_multiplier` - (Optional) Configures a cutoff value that is computed from the median scores.
 * `dynamic_ttl` - (Optional) Indicates the TTL in seconds for records that might change dynamically based on liveness and load balancing such as A and AAAA records, and CNAMEs.

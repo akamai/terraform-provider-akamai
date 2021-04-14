@@ -105,8 +105,10 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 			getEval.Version = version
 		}
 
-		policyid := s[2]
-		getEval.PolicyID = policyid
+		if len(s) >= 3 {
+			policyid := s[2]
+			getEval.PolicyID = policyid
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
@@ -267,8 +269,15 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 			updateEval.Version = version
 		}
 
+<<<<<<< HEAD
 		policyid := s[2]
 		updateEval.PolicyID = policyid
+=======
+		if len(s) >= 3 {
+			policyid := s[2]
+			updateEval.PolicyID = policyid
+		}
+>>>>>>> 7e8067a71880b03f78b43b3c7d3cb4878dc40649
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
