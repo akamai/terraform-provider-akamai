@@ -79,10 +79,17 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Elem:     papiError(),
 	},
 	"rule_warnings": {
-		Type:     schema.TypeList,
-		Optional: true,
-		Computed: true,
-		Elem:     papiError(),
+		Type:       schema.TypeList,
+		Optional:   true,
+		Computed:   true,
+		Elem:       papiError(),
+		Deprecated: "Rule warnings will not be set in state anymore",
+	},
+	"auto_acknowledge_rule_warnings": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     true,
+		Description: "automatically acknowledge all rule warnings for activation to continue. default is true",
 	},
 	"version": {
 		Type:             schema.TypeInt,
@@ -151,6 +158,8 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	// Schema guarantees these types
+	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
 	// check to see if this tree has any issues
 	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
@@ -174,14 +183,18 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
 		}
+		logger.Errorf("Property has rule errors %s", msg)
 		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
 	}
 	if len(rules.Warnings) > 0 {
-		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		msg, err := json.MarshalIndent(papiErrorsToList(rules.Warnings), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API warnings: %s", err))
 		}
+		logger.Warnf("Property has rule warnings %s", msg)
 	}
-	if diags.HasError() {
+	if diags != nil && diags.HasError() {
+		d.Partial(true)
 		return diags
 	}
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
@@ -215,7 +228,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 				Network:                network,
 				PropertyVersion:        version,
 				NotifyEmails:           notify,
-				AcknowledgeAllWarnings: true,
+				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
 			},
 		})
 		if err != nil {
@@ -321,6 +334,9 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
+	// Schema guarantees these types
+	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
+
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,
@@ -351,7 +367,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 				Network:                network,
 				PropertyVersion:        version,
 				NotifyEmails:           notify,
-				AcknowledgeAllWarnings: true,
+				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
 			},
 		})
 		if err != nil {
@@ -549,6 +565,9 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
+	// Schema guarantees these types
+	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
+
 	// check to see if this tree has any issues
 	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
 		PropertyID:      propertyID,
@@ -571,14 +590,18 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
 		}
+		logger.Errorf("Property has rule errors %s", msg)
 		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
 	}
 	if len(rules.Warnings) > 0 {
-		if err := d.Set("rule_warnings", papiErrorsToList(rules.Warnings)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		msg, err := json.MarshalIndent(papiErrorsToList(rules.Warnings), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API warnings: %s", err))
 		}
+		logger.Warnf("Property has rule warnings %s", msg)
 	}
 	if diags.HasError() {
+		d.Partial(true)
 		return diags
 	}
 	propertyActivation, err := lookupActivation(ctx, client, lookupActivationRequest{
@@ -610,7 +633,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 				Network:                network,
 				PropertyVersion:        version,
 				NotifyEmails:           notify,
-				AcknowledgeAllWarnings: true,
+				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
 			},
 		})
 		if err != nil {

@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 1.5.1 (Apr 14, 2021)
+## 1.5.1 (Apr 20, 2021)
 
 #### BUG FIXES:
 
@@ -14,10 +14,16 @@
   * Set network_list_id on network list import
   * Add comments to simplify importing resources using "terraform import"
 
-## Latest
-
+* PAPI 
+   * Fixed issue causing inconsistent state when activation has rule errors ([#219](https://github.com/akamai/terraform-provider-akamai/issues/219))
+   * Fixed issue with `resource_akamai_property` not setting product_id during import ([#224](https://github.com/akamai/terraform-provider-akamai/issues/224))
+   * Rule warnings are not set in state anymore in `resource_akamai_property` and `resource_akamai_property_activation` to address size concerns of state file. Users will still be able to see them in logs as warnings
+   
 * DNS - Fix panic when zone already exists on create
 * GTM - Deprecate and ignore Property field static_ttl. Add warning if present in property resource config
+
+#### FEATURES/ENHANCEMENTS:
+* PAPI - `resource_akamai_property_activation` now allows new optional argument `auto_acknowledge_rule_warnings`. Refer to [Property Activation Resource](docs/resources/property_activation.md)
 
 ## 1.5.0 (Mar 30, 2021) PAPI - Secure by default integration
 
