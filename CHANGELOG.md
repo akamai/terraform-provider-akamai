@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 1.5.1 (Apr 20, 2021)
+## 1.5.1 (Apr 21, 2021)
 
 #### BUG FIXES:
 
