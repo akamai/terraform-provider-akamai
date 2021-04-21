@@ -41,7 +41,7 @@ func resourceMatchTarget() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJSONDiffs,
+				DiffSuppressFunc: suppressEquivalentMatchTargetDiffs,
 			},
 			"match_target_id": {
 				Type:     schema.TypeInt,
@@ -129,6 +129,14 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 			return diag.FromErr(errconv)
 		}
 		updateMatchTarget.ConfigVersion = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateMatchTarget.ConfigVersion = version
+		}
 
 		targetID, errconv := strconv.Atoi(s[2])
 		if errconv != nil {
@@ -249,6 +257,14 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 		}
 		getMatchTarget.ConfigVersion = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getMatchTarget.ConfigVersion = version
+		}
+
 		targetID, errconv := strconv.Atoi(s[2])
 		if errconv != nil {
 			return diag.FromErr(errconv)
@@ -285,12 +301,11 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Warnf("calling 'getMatchTarget': JSON  %s", string(jsonBody))
 	if err := d.Set("match_target", string(jsonBody)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("match_target_id", matchtarget.TargetID); err != nil {
+	if err := d.Set("match_target_id", getMatchTarget.TargetID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("config_id", getMatchTarget.ConfigID); err != nil {
@@ -301,7 +316,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d:%d", getMatchTarget.ConfigID, getMatchTarget.ConfigVersion, matchtarget.TargetID))
+	d.SetId(fmt.Sprintf("%d:%d:%d", getMatchTarget.ConfigID, getMatchTarget.ConfigVersion, getMatchTarget.TargetID))
 
 	return nil
 }

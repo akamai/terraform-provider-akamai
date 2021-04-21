@@ -219,7 +219,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("custom_rule_id", customrule.ID); err != nil {
+	if err := d.Set("custom_rule_id", getCustomRule.ID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -236,7 +236,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d", getCustomRule.ConfigID, customrule.ID))
+	d.SetId(fmt.Sprintf("%d:%d", getCustomRule.ConfigID, getCustomRule.ID))
 
 	return nil
 }

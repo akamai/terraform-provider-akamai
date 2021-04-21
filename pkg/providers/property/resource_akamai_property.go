@@ -108,7 +108,7 @@ func resourceProperty() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: `use "group_id" attribute instead`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
 				StateFunc:  addPrefixToState("grp_"),
 			},
 
@@ -124,7 +124,7 @@ func resourceProperty() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: `use "contract_id" attribute instead`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
 				StateFunc:  addPrefixToState("ctr_"),
 			},
 
@@ -140,7 +140,7 @@ func resourceProperty() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ConflictsWith: []string{"product_id"},
-				Deprecated:    `use "product_id" attribute instead`,
+				Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
 				StateFunc:     addPrefixToState("prd_"),
 			},
 
@@ -255,22 +255,24 @@ func resourceProperty() *schema.Resource {
 				Elem:     papiError(),
 			},
 			"rule_warnings": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem:     papiError(),
+				Type:       schema.TypeList,
+				Optional:   true,
+				Computed:   true,
+				Elem:       papiError(),
+				Deprecated: "Rule warnings will not be set in state anymore",
 			},
 
 			// Hard-deprecated attributes: These are effectively removed, but we wanted to refer users to the upgrade guide
 			"cp_code": {
 				Type:       schema.TypeString,
 				Optional:   true,
-				Deprecated: `"cp_code" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("cp_code"),
 			},
 			"contact": {
 				Type:       schema.TypeSet,
 				Optional:   true,
 				Elem:       &schema.Schema{Type: schema.TypeString},
-				Deprecated: `"contact" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("contact"),
 			},
 			"origin": {
 				Type:     schema.TypeSet,
@@ -285,26 +287,25 @@ func resourceProperty() *schema.Resource {
 						"enable_true_client_ip": {Type: schema.TypeBool, Optional: true},
 					},
 				},
-				Deprecated: `"origin" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("origin"),
 			},
 			"is_secure": {
 				Type:       schema.TypeBool,
 				Optional:   true,
-				Deprecated: `"is_secure" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("is_secure"),
 			},
 			"variables": {
 				Type:       schema.TypeString,
 				Optional:   true,
-				Deprecated: `"variables" is no longer supported by this resource type - See Akamai Terraform Upgrade Guide`,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("variables"),
 			},
 		},
 	}
 }
 
-func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "hostNamesCustomDiff")
-	ctx = log.NewContext(ctx, logger)
 
 	o, n := d.GetChange("hostnames")
 	oldVal, ok := o.([]interface{})
@@ -327,10 +328,9 @@ func hostNamesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interfac
 	return nil
 }
 
-func computedValuesCustomDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+func computedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "computedValuesCustomDiff")
-	ctx = log.NewContext(ctx, logger)
 
 	//These computed attributes can be changed on server through other clients and the state needs to be synced to local
 	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
@@ -506,12 +506,35 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	if len(RuleErrors) > 0 {
+		if err := d.Set("rule_errors", papiErrorsToList(RuleErrors)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+		msg, err := json.MarshalIndent(papiErrorsToList(RuleErrors), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
+		}
+		logger.Errorf("Property has rule errors %s", msg)
+	}
+	if len(RuleWarnings) > 0 {
+		msg, err := json.MarshalIndent(papiErrorsToList(RuleWarnings), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API warnings: %s", err))
+		}
+		logger.Warnf("Property has rule warnings %s", msg)
+	}
 
 	RulesJSON, err := json.Marshal(Rules)
 	if err != nil {
 		logger.WithError(err).Error("could not render rules as JSON")
 		return diag.Errorf("received rules that could not be rendered to JSON: %s", err)
 	}
+	PropertyVersion := Property.LatestVersion
+	res, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, PropertyVersion)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	Property.ProductID = res.Version.ProductID
 
 	attrs := map[string]interface{}{
 		"name":               Property.PropertyName,
@@ -526,7 +549,6 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"rules":              string(RulesJSON),
 		"rule_format":        RuleFormat,
 		"rule_errors":        papiErrorsToList(RuleErrors),
-		"rule_warnings":      papiErrorsToList(RuleWarnings),
 	}
 	if Property.ProductID != "" {
 		attrs["product_id"] = Property.ProductID
@@ -603,13 +625,14 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductionVersion: ProductionVersion,
 	}
 
-	// load status for what we currently have as latest version.  GetLatestVersion may also work here.
-	resp, err := client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
-		PropertyID:      d.Id(),
-		PropertyVersion: d.Get("latest_version").(int),
-		ContractID:      d.Get("contract_id").(string),
-		GroupID:         d.Get("group_id").(string),
-	})
+	// Schema guarantees group_id, and contract_id are strings
+	PropertyID := d.Id()
+	ContractID := d.Get("contract_id").(string)
+	GroupID := d.Get("group_id").(string)
+	PropertyVersion := Property.LatestVersion
+
+	resp, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, PropertyVersion)
+
 	if err != nil {
 		d.Partial(true)
 		return diag.FromErr(err)
@@ -689,7 +712,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	var PropertyID, GroupID, ContractID string
 	parts := strings.Split(d.Id(), ",")
 	if len(parts) == 2 {
-		return nil, fmt.Errorf("Either PropertyId or comma-separated list of PropertyId, contractID and groupID in that order has to be supplied in import: %s", d.Id())
+		return nil, fmt.Errorf("either PropertyId or comma-separated list of PropertyId, contractID and groupID in that order has to be supplied in import: %s", d.Id())
 	}
 	switch len(parts) {
 	case 1:
@@ -820,6 +843,27 @@ func fetchProperty(ctx context.Context, client papi.PAPI, PropertyID, GroupID, C
 
 	logger.Debug("property fetched")
 	return res.Property, nil
+}
+
+// load status for what we currently have as latest version.  GetLatestVersion may also work here.
+func fetchPropertyVersion(ctx context.Context, client papi.PAPI, PropertyID, GroupID, ContractID string, PropertyVersion int) (*papi.GetPropertyVersionsResponse, error) {
+	req := papi.GetPropertyVersionRequest{
+		PropertyID:      PropertyID,
+		ContractID:      ContractID,
+		GroupID:         GroupID,
+		PropertyVersion: PropertyVersion,
+	}
+	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger.Debug("fetching property version")
+
+	res, err := client.GetPropertyVersion(ctx, req)
+	if err != nil {
+		logger.WithError(err).Error("could not read property version")
+		return nil, err
+	}
+	logger = logger.WithFields(logFields(*res))
+	logger.Debug("property version fetched")
+	return res, err
 }
 
 // Fetch hostnames for latest version of given property

@@ -39,9 +39,10 @@ func resourceRatePolicy() *schema.Resource {
 				Required: true,
 			},
 			"rate_policy": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsJSON,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateFunc:     validation.StringIsJSON,
+				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
 			},
 			"rate_policy_id": {
 				Type:     schema.TypeInt,
@@ -113,6 +114,14 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 			return diag.FromErr(errconv)
 		}
 		updateRatePolicy.ConfigVersion = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateRatePolicy.ConfigVersion = version
+		}
 
 		ratePolicyID, errconv := strconv.Atoi(s[2])
 		if errconv != nil {
@@ -228,6 +237,14 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 		}
 		getRatePolicy.ConfigVersion = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getRatePolicy.ConfigVersion = version
+		}
+
 		ratePolicyID, errconv := strconv.Atoi(s[2])
 		if errconv != nil {
 			return diag.FromErr(errconv)
@@ -260,10 +277,6 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(errd)
 	}
 
-	if err := d.Set("rate_policy_id", ratepolicy.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
 	if err := d.Set("config_id", getRatePolicy.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -272,10 +285,17 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("rate_policy_id", ratepolicy.ID); err != nil {
+	if err := d.Set("rate_policy_id", getRatePolicy.RatePolicyID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	d.SetId(fmt.Sprintf("%d:%d:%d", getRatePolicy.ConfigID, getRatePolicy.ConfigVersion, ratepolicy.ID))
+	d.SetId(fmt.Sprintf("%d:%d:%d", getRatePolicy.ConfigID, getRatePolicy.ConfigVersion, getRatePolicy.RatePolicyID))
 
+	jsonBody, err := json.Marshal(ratepolicy)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("rate_policy", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	return nil
 }

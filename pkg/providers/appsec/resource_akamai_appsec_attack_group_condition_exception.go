@@ -76,6 +76,14 @@ func resourceAttackGroupConditionExceptionRead(ctx context.Context, d *schema.Re
 		}
 		getAttackGroupConditionException.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getAttackGroupConditionException.Version = version
+		}
+
 		policyid := s[2]
 
 		getAttackGroupConditionException.PolicyID = policyid
@@ -235,6 +243,14 @@ func resourceAttackGroupConditionExceptionUpdate(ctx context.Context, d *schema.
 			return diag.FromErr(errconv)
 		}
 		updateAttackGroupConditionException.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateAttackGroupConditionException.Version = version
+		}
 
 		policyid := s[2]
 

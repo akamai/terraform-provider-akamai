@@ -69,6 +69,14 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 		}
 		getVersionNotes.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getVersionNotes.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -134,6 +142,14 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 			return diag.FromErr(errconv)
 		}
 		updateVersionNotes.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateVersionNotes.Version = version
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)

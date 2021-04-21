@@ -28,7 +28,7 @@ To set up the Identity and Access Management module, you need to:
 
 * [Retrieve supported countries](#retrieve-supported-countries)
 * [Create a user](#create-a-user)
-* [Initialize the user](#initialize-the user)
+* [Initialize the user](#initialize-the-user)
 
 ## Retrieve supported countries
 

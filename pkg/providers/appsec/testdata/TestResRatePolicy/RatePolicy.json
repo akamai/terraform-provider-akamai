@@ -19,7 +19,6 @@
     "averageThreshold": 5,
     "burstThreshold": 10,
     "clientIdentifier": "ip",
-    "createDate": "2020-10-29T04:00:22Z",
     "description": "AFW Test Extensions",
     "fileExtensions": {
         "positiveMatch": false,
@@ -35,12 +34,13 @@
             "cab"
         ]
     },
+    "hostnames": ["www.ludin.org"],
     "id": 134644,
-    "policyId": 134644,
+    "policyId": "AAAA_81230",
     "configId": 43253,
     "configVersion": 7,
     "matchType": "path",
-    "name": "Test_Paths 2",
+    "name": "Test_Paths 3",
     "path": {
         "positiveMatch": true,
         "values": [
@@ -62,9 +62,7 @@
         }
     ],
     "requestType": "ClientRequest",
-    "sameActionOnIpv6": true,
+    "sameActionOnIpv6": false,
     "type": "WAF",
-    "updateDate": "2020-10-29T04:00:22Z",
-    "useXForwardForHeaders": true,
-    "used": false
+    "useXForwardForHeaders": true
 }

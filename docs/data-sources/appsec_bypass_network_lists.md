@@ -8,7 +8,10 @@ description: |-
 
 # akamai_appsec_bypass_network_lists
 
-Use the `akamai_appsec_bypass_network_lists` data source to retrieve information about which network lists are used in the bypass network lists settings.  The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getbypassnetworklistsforawapconfigversion).
+Use the `akamai_appsec_bypass_network_lists` data source to retrieve information about which network
+lists are used in the bypass network lists settings.  The information available is described
+[here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getbypassnetworklistsforawapconfigversion).
+Note: this data source is only applicable to WAP (Web Application Protector) configurations.
 
 
 ## Example Usage

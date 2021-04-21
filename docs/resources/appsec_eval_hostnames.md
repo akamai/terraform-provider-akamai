@@ -45,5 +45,5 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display of the updated evaluation hostname information.
+* None
 

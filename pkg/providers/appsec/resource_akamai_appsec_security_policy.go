@@ -190,6 +190,14 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 		}
 		getSecurityPolicy.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getSecurityPolicy.Version = version
+		}
+
 		policyid := s[2]
 
 		getSecurityPolicy.PolicyID = policyid
@@ -228,10 +236,6 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("version", getSecurityPolicy.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("default_settings", securitypolicy.DefaultSettings); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 

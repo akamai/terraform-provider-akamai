@@ -73,6 +73,14 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 		}
 		getReputationProtection.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getReputationProtection.Version = version
+		}
+
 		policyid := s[2]
 		getReputationProtection.PolicyID = policyid
 
@@ -207,6 +215,14 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 			return diag.FromErr(errconv)
 		}
 		updateReputationProtection.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateReputationProtection.Version = version
+		}
 
 		policyid := s[2]
 		updateReputationProtection.PolicyID = policyid

@@ -118,7 +118,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 func InitTemplates(otm map[string]*OutputTemplate) {
 
 	// DS templates
-	otm["networkListsDS"] = &OutputTemplate{TemplateName: "networkLists", TableTitle: "ID|Name|Type|ElementCount|SyncPoint|ReadOnly", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .NetworkLists}}{{if $index}},{{end}}{{.Name}}|{{.UniqueID}}|{{.Type}}|{{.ElementCount}}|{{.SyncPoint}}|{{.ReadOnly}}{{end}}"}
+	otm["networkListsDS"] = &OutputTemplate{TemplateName: "networkLists", TableTitle: "Name|ID|Type|ElementCount|SyncPoint|ReadOnly", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .NetworkLists}}{{if $index}},{{end}}{{.Name}}|{{.UniqueID}}|{{.Type}}|{{.ElementCount}}|{{.SyncPoint}}|{{.ReadOnly}}{{end}}"}
 
 	// TF templates
 

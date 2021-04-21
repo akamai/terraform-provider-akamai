@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -37,14 +38,9 @@ func resourceBypassNetworkLists() *schema.Resource {
 				Required: true,
 			},
 			"bypass_network_list": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
 			},
 		},
 	}
@@ -71,6 +67,14 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 		}
 		getBypassNetworkLists.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getBypassNetworkLists.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -90,19 +94,22 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "bypassNetworkListsDS", bypassnetworklists)
-	if err == nil {
-		d.Set("output_text", outputtext)
-	}
-
 	if err := d.Set("config_id", getBypassNetworkLists.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	if err := d.Set("version", getBypassNetworkLists.Version); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	nru := make([]string, 0, len(bypassnetworklists.NetworkLists))
+	for _, h := range bypassnetworklists.NetworkLists {
+		nru = append(nru, h.ID)
+	}
+
+	sort.Strings(nru)
+
+	if err := d.Set("bypass_network_list", nru); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -180,6 +187,14 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 		updateBypassNetworkLists.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateBypassNetworkLists.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -193,12 +208,11 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 		updateBypassNetworkLists.Version = version
 	}
-	netlist := d.Get("bypass_network_list").([]interface{})
-	nru := make([]string, 0, len(netlist))
+	netlist := d.Get("bypass_network_list").(*schema.Set)
+	nru := make([]string, 0, len(netlist.List()))
 
-	for _, h := range netlist {
+	for _, h := range netlist.List() {
 		nru = append(nru, h.(string))
-
 	}
 	updateBypassNetworkLists.NetworkLists = nru
 

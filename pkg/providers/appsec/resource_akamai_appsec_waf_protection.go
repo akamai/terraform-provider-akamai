@@ -73,6 +73,14 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 		}
 		getWAFProtection.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getWAFProtection.Version = version
+		}
+
 		policyid := s[2]
 		getWAFProtection.PolicyID = policyid
 
@@ -183,6 +191,14 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	updateWAFProtection.Version = version
+
+	if d.HasChange("version") {
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateWAFProtection.Version = version
+	}
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

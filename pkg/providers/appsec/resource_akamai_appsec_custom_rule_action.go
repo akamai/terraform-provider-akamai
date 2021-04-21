@@ -73,6 +73,14 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 		}
 		getCustomRuleAction.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getCustomRuleAction.Version = version
+		}
+
 		policyid := s[2]
 		getCustomRuleAction.PolicyID = policyid
 

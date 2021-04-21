@@ -43,7 +43,7 @@ func resourceConfiguration() *schema.Resource {
 				Required: true,
 			},
 			"host_names": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
@@ -90,10 +90,10 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 	createConfiguration.GroupID = groupID
 
-	hostnamelist := d.Get("host_names").([]interface{})
-	hnl := make([]string, 0, len(hostnamelist))
+	hostnamelist := d.Get("host_names").(*schema.Set)
+	hnl := make([]string, 0, len(hostnamelist.List()))
 
-	for _, h := range hostnamelist {
+	for _, h := range hostnamelist.List() {
 		hnl = append(hnl, h.(string))
 
 	}
