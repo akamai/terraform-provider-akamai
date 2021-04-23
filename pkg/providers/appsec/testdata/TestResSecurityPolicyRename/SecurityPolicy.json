@@ -2,7 +2,7 @@
     "configId": 43253,
     "version": 7,
     "policyId": "PLE_114049",
-    "policyName": "PLE Cloned Test for Launchpad 151",
+    "policyName": "Cloned Test for Launchpad 15",
     "policySecurityControls": {
         "applyApiConstraints": true,
         "applyApplicationLayerControls": true,

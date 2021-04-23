@@ -26,14 +26,12 @@ data "akamai_appsec_configuration" "configuration" {
 
 data "akamai_appsec_api_endpoints" "api_endpoint" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
   name = var.api_endpoint_name
 }
 
 resource "akamai_api_request_constraints" "api_request_constraints" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
   api_endpoint_id = data.akamai_appsec_api_endpoints.api_endpoint.id
   action = "alert"
@@ -46,11 +44,9 @@ The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
 
-* `version` - (Required) The version number of the security configuration to use.
-
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `api_endpoint_id` - (Optional) The ID of the API endpoint to use. If not supplied, the request constraint action will be updated for all APIs.
+* `api_endpoint_id` - (Required) The ID of the API endpoint to use.
 
 * `action` - (Required) The action to assign to API request constraints: either `alert`, `deny`, or `none`.
 
@@ -58,5 +54,5 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display of the API request constraint information.
+* None
 

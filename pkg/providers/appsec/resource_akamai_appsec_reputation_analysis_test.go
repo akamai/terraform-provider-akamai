@@ -25,19 +25,28 @@ func TestAccAkamaiReputationAnalysis_res_basic(t *testing.T) {
 		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisDelete.json"))
 		json.Unmarshal([]byte(expectJSD), &cd)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetReputationAnalysis",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetReputationAnalysisRequest{ConfigID: 43253, Version: 12, PolicyID: "AAAA_81230"},
+			appsec.GetReputationAnalysisRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&cr, nil)
 
 		client.On("UpdateReputationAnalysis",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateReputationAnalysisRequest{ConfigID: 43253, Version: 12, PolicyID: "AAAA_81230", ForwardToHTTPHeader: true, ForwardSharedIPToHTTPHeaderAndSIEM: true},
+			appsec.UpdateReputationAnalysisRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ForwardToHTTPHeader: true, ForwardSharedIPToHTTPHeaderAndSIEM: true},
 		).Return(&cu, nil)
 
 		client.On("RemoveReputationAnalysis",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.RemoveReputationAnalysisRequest{ConfigID: 43253, Version: 12, PolicyID: "AAAA_81230", ForwardToHTTPHeader: false, ForwardSharedIPToHTTPHeaderAndSIEM: false},
+			appsec.RemoveReputationAnalysisRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ForwardToHTTPHeader: false, ForwardSharedIPToHTTPHeaderAndSIEM: false},
 		).Return(&cd, nil)
 
 		useClient(client, func() {
@@ -48,13 +57,13 @@ func TestAccAkamaiReputationAnalysis_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResReputationAnalysis/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_analysis.test", "id", "43253:12:AAAA_81230"),
+							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_analysis.test", "id", "43253:AAAA_81230"),
 						),
 					},
 					{
 						Config: loadFixtureString("testdata/TestResReputationAnalysis/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_analysis.test", "id", "43253:12:AAAA_81230"),
+							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_analysis.test", "id", "43253:AAAA_81230"),
 						),
 					},
 				},

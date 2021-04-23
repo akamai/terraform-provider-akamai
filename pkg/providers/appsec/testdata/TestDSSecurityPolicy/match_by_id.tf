@@ -4,15 +4,14 @@ provider "akamai" {
 
 
 data "akamai_appsec_security_policy" "test" {
-  name = "akamaitools" 
+  security_policy_name = "akamaitools" 
   config_id = 43253
-  version =  7
 }
 
 output "securitypolicy" {
-  value = data.akamai_appsec_security_policy.test.policy_id
+  value = data.akamai_appsec_security_policy.test.security_policy_id
 }
 
 output "securitypolicies" {
-  value = data.akamai_appsec_security_policy.test.policy_list
+  value = data.akamai_appsec_security_policy.test.security_policy_id_list
 }

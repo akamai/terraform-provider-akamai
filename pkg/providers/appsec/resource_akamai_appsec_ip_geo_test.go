@@ -21,6 +21,19 @@ func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		cd := appsec.UpdateNetworkLayerProtectionResponse{}
+		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResIPGeo/PolicyProtections.json"))
+		json.Unmarshal([]byte(expectJSD), &cd)
+
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetIPGeo",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
@@ -48,15 +61,20 @@ func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
 			}{NetworkList: []string{"49185_ADTWAFBYPASSLIST", "49181_ADTIPBLACKLIST"}}}},
 		).Return(&cu, nil)
 
+		client.On("UpdateNetworkLayerProtection",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.UpdateNetworkLayerProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApplyNetworkLayerControls: false},
+		).Return(&cd, nil)
+
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: false,
+				IsUnitTest: true,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResIPGeo/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
 						),
 					},
 				},

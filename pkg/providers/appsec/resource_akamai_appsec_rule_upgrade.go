@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -18,10 +19,13 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceRuleUpgrade() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceRuleUpgradeUpdate,
+		CreateContext: resourceRuleUpgradeCreate,
 		ReadContext:   resourceRuleUpgradeRead,
 		UpdateContext: resourceRuleUpgradeUpdate,
 		DeleteContext: resourceRuleUpgradeDelete,
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -30,19 +34,15 @@ func resourceRuleUpgrade() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"current_ruleset": {
+			"mode": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"mode": {
+			"current_ruleset": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -54,109 +54,113 @@ func resourceRuleUpgrade() *schema.Resource {
 	}
 }
 
-func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRuleUpgradeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceRuleUpgradeRead")
-
-	getRuleUpgrade := appsec.GetRuleUpgradeRequest{}
+	logger := meta.Log("APPSEC", "resourceRuleUpgradeCreate")
+	logger.Debugf("!!! in resourceRuleUpgradeCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	getRuleUpgrade.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getRuleUpgrade.Version = version
-
-	if d.HasChange("version") {
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getRuleUpgrade.Version = version
-	}
-
+	version := getModifiableConfigVersion(ctx, configid, "krsRuleUgrade", m)
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getRuleUpgrade.PolicyID = policyid
 
-	_, errr := client.GetRuleUpgrade(ctx, getRuleUpgrade)
-	if errr != nil {
-		logger.Errorf("calling 'getRuleUpgrade': %s", errr.Error())
-		return diag.FromErr(errr)
+	createRuleUpgrade := appsec.UpdateRuleUpgradeRequest{}
+	createRuleUpgrade.ConfigID = configid
+	createRuleUpgrade.Version = version
+	createRuleUpgrade.PolicyID = policyid
+	createRuleUpgrade.Upgrade = true
+
+	_, err = client.UpdateRuleUpgrade(ctx, createRuleUpgrade)
+	if err != nil {
+		logger.Errorf("calling 'createRuleUpgrade': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(getRuleUpgrade.ConfigID))
+	d.SetId(fmt.Sprintf("%d:%s", createRuleUpgrade.ConfigID, createRuleUpgrade.PolicyID))
 
-	return nil
+	return resourceRuleUpgradeRead(ctx, d, m)
 }
 
-func resourceRuleUpgradeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceRuleUpgradeRead")
+	logger.Debugf("!!! in resourceRuleUpgradeRead")
 
-	return schema.NoopContext(nil, d, m)
+	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
+	policyid := idParts[1]
+
+	getWAFMode := appsec.GetWAFModeRequest{}
+	getWAFMode.ConfigID = configid
+	getWAFMode.Version = version
+	getWAFMode.PolicyID = policyid
+
+	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
+	if err != nil {
+		logger.Errorf("calling 'getWAFMode': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("config_id", getWAFMode.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("security_policy_id", getWAFMode.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("mode", wafmode.Mode); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("current_ruleset", wafmode.Current); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("eval_status", wafmode.Eval); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	return nil
 }
 
 func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRuleUpgradeUpdate")
+	logger.Debugf("!!! in resourceRuleUpgradeUpdate")
+
+	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "securityPolicyRename", m)
+	policyid := idParts[1]
 
 	updateRuleUpgrade := appsec.UpdateRuleUpgradeRequest{}
-
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
 	updateRuleUpgrade.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
 	updateRuleUpgrade.Version = version
-
-	if d.HasChange("version") {
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateRuleUpgrade.Version = version
-	}
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
 	updateRuleUpgrade.PolicyID = policyid
-
 	updateRuleUpgrade.Upgrade = true
 
-	ruleupgrade, erru := client.UpdateRuleUpgrade(ctx, updateRuleUpgrade)
-	if erru != nil {
-		logger.Errorf("calling 'updateRuleUpgrade': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateRuleUpgrade(ctx, updateRuleUpgrade)
+	if err != nil {
+		logger.Errorf("calling 'updateRuleUpgrade': %s", err.Error())
+		return diag.FromErr(err)
 	}
-
-	if err := d.Set("current_ruleset", ruleupgrade.Current); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("mode", ruleupgrade.Mode); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("eval_status", ruleupgrade.Eval); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	d.SetId(strconv.Itoa(updateRuleUpgrade.ConfigID))
 
 	return resourceRuleUpgradeRead(ctx, d, m)
+}
+
+func resourceRuleUpgradeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+
+	return schema.NoopContext(nil, d, m)
 }

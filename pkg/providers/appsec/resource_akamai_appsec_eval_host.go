@@ -2,16 +2,15 @@ package appsec
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -20,19 +19,15 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceEvalHost() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceEvalHostUpdate,
+		CreateContext: resourceEvalHostCreate,
 		ReadContext:   resourceEvalHostRead,
 		UpdateContext: resourceEvalHostUpdate,
 		DeleteContext: resourceEvalHostDelete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -45,50 +40,57 @@ func resourceEvalHost() *schema.Resource {
 	}
 }
 
+func resourceEvalHostCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceEvalHostCreate")
+	logger.Debug("!!! in resourceEvalHostCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	hostnameset, err := tools.GetSetValue("hostnames", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	updateEvalHost := appsec.UpdateEvalHostRequest{}
+	updateEvalHost.ConfigID = configid
+	updateEvalHost.Version = getModifiableConfigVersion(ctx, configid, "evalhost", m)
+	hostnamelist := make([]string, 0, len(hostnameset.List()))
+	for _, hostname := range hostnameset.List() {
+		hostnamelist = append(hostnamelist, hostname.(string))
+	}
+	updateEvalHost.Hostnames = hostnamelist
+
+	_, erru := client.UpdateEvalHost(ctx, updateEvalHost)
+	if erru != nil {
+		logger.Errorf("calling 'updateEvalHost': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId(fmt.Sprintf("%d", configid))
+
+	return resourceEvalHostRead(ctx, d, m)
+}
+
 func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalHostRead")
+	logger.Debug("!!! in resourceEvalHostRead")
 
-	getEvalHost := appsec.GetEvalHostRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getEvalHost.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getEvalHost.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getEvalHost.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getEvalHost.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getEvalHost.Version = version
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	_, err := client.GetEvalHost(ctx, getEvalHost)
+	getEvalHost := appsec.GetEvalHostRequest{}
+	getEvalHost.ConfigID = configid
+	getEvalHost.Version = getLatestConfigVersion(ctx, configid, m)
+
+	evalHostResponse, err := client.GetEvalHost(ctx, getEvalHost)
 	if err != nil {
 		logger.Errorf("calling 'getEvalHost': %s", err.Error())
 		return diag.FromErr(err)
@@ -97,61 +99,14 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if err := d.Set("config_id", getEvalHost.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
-	if err := d.Set("version", getEvalHost.Version); err != nil {
+	evalhostnameset := schema.Set{F: schema.HashString}
+	for _, hostname := range evalHostResponse.Hostnames {
+		evalhostnameset.Add(hostname)
+	}
+	if err := d.Set("hostnames", evalhostnameset.List()); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d", getEvalHost.ConfigID, getEvalHost.Version))
-
-	return nil
-}
-
-func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalHostRemove")
-
-	removeEvalHost := appsec.RemoveEvalHostRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeEvalHost.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeEvalHost.Version = version
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeEvalHost.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeEvalHost.Version = version
-	}
-	hn := make([]string, 0, 1)
-
-	removeEvalHost.Hostnames = hn
-
-	_, erru := client.RemoveEvalHost(ctx, removeEvalHost)
-	if erru != nil {
-		logger.Errorf("calling 'updateEvalHost': %s", erru.Error())
-		return diag.FromErr(erru)
-	}
-	d.SetId("")
 	return nil
 }
 
@@ -159,52 +114,25 @@ func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalHostUpdate")
+	logger.Debug("!!! in resourceEvalHostUpdate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	hostnames, err := tools.GetSetValue("hostnames", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	updateEvalHost := appsec.UpdateEvalHostRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateEvalHost.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateEvalHost.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateEvalHost.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateEvalHost.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateEvalHost.Version = version
+	updateEvalHost.ConfigID = configid
+	updateEvalHost.Version = getModifiableConfigVersion(ctx, configid, "evalhost", m)
+	hostnamelist := make([]string, 0, len(hostnames.List()))
+	for _, hostname := range hostnames.List() {
+		hostnamelist = append(hostnamelist, hostname.(string))
 	}
-	hostnames := d.Get("hostnames").(*schema.Set)
-	hn := make([]string, 0, len(hostnames.List()))
-
-	for _, h := range hostnames.List() {
-		hn = append(hn, h.(string))
-
-	}
-	updateEvalHost.Hostnames = hn
+	updateEvalHost.Hostnames = hostnamelist
 
 	_, erru := client.UpdateEvalHost(ctx, updateEvalHost)
 	if erru != nil {
@@ -213,4 +141,32 @@ func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	return resourceEvalHostRead(ctx, d, m)
+}
+
+func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceEvalHostRemove")
+	logger.Debug("!!! in resourceEvalHostDelete")
+
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	removeEvalHost := appsec.RemoveEvalHostRequest{}
+	removeEvalHost.ConfigID = configid
+	removeEvalHost.Version = getModifiableConfigVersion(ctx, configid, "evalhost", m)
+	hostnamelist := make([]string, 0)
+	removeEvalHost.Hostnames = hostnamelist
+
+	_, erru := client.RemoveEvalHost(ctx, removeEvalHost)
+	if erru != nil {
+		logger.Errorf("calling 'updateEvalHost': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId("")
+	return nil
 }

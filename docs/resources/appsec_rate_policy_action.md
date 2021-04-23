@@ -19,18 +19,16 @@ Basic usage:
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
-// USE CASE: user wants to create a rate policy and rate policy actions for a given security configuration and version
+// USE CASE: user wants to create a rate policy and rate policy actions for a given security configuration
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
 resource "akamai_appsec_rate_policy" "appsec_rate_policy" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   rate_policy =  file("${path.module}/rate_policy.json")
 }
 resource  "akamai_appsec_rate_policy_action" "appsec_rate_policy_action" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
   rate_policy_id = akamai_appsec_rate_policy.appsec_rate_policy.rate_policy_id
   ipv4_action = "deny"
@@ -43,8 +41,6 @@ resource  "akamai_appsec_rate_policy_action" "appsec_rate_policy_action" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `rate_policy_id` - (Required) The ID of the rate policy to use.
 

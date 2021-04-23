@@ -17,6 +17,15 @@ func TestAccAkamaiApiHostnameCoverageOverlapping_data_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSApiHostnameCoverageOverlapping/ApiHostnameCoverageOverlapping.json"))
 		json.Unmarshal([]byte(expectJS), &cv)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetApiHostnameCoverageOverlapping",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetApiHostnameCoverageOverlappingRequest{ConfigID: 43253, Version: 7, Hostname: "example.com"},

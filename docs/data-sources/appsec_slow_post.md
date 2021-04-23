@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_slow_post
 
-Use the `akamai_appsec_slow_post` data source to retrieve the slow post protection settings for a given security configuration version and policy.
+Use the `akamai_appsec_slow_post` data source to retrieve the slow post protection settings for a given security configuration and policy.
 
 ## Example Usage
 
@@ -26,7 +26,6 @@ data "akamai_appsec_configuration" "configuration" {
 }
 data "akamai_appsec_slow_post" "slow_post" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
 output "slow_post_output_text" {
@@ -40,8 +39,6 @@ output "slow_post_output_text" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `security_policy_id` - (Required) The ID of the security policy to use
 

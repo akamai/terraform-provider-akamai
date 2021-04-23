@@ -1,6 +1,7 @@
-{
+{    
+    "mode": "KRS",
     "current": "KRS 1.0 (Oct 26, 2020)",
     "eval": "enabled",
     "evaluating": "KRS 1.0 (Oct 26, 2020)",
-    "mode": "KRS"
+    "expires": "2020-08-08T00:00:00Z"
 }

@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -20,19 +19,18 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceReputationProfileAction() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceReputationProfileActionUpdate,
+		CreateContext: resourceReputationProfileActionCreate,
 		ReadContext:   resourceReputationProfileActionRead,
 		UpdateContext: resourceReputationProfileActionUpdate,
 		DeleteContext: resourceReputationProfileActionDelete,
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -53,151 +51,155 @@ func resourceReputationProfileAction() *schema.Resource {
 	}
 }
 
+func resourceReputationProfileActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceReputationProfileActionCreate")
+	logger.Debugf("!!! in resourceReputationProfileActionCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAction", m)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	reputationprofileid, err := tools.GetIntValue("reputation_profile_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	action, err := tools.GetStringValue("action", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	createReputationProfileAction := appsec.UpdateReputationProfileActionRequest{}
+	createReputationProfileAction.ConfigID = configid
+	createReputationProfileAction.Version = version
+	createReputationProfileAction.PolicyID = policyid
+	createReputationProfileAction.ReputationProfileID = reputationprofileid
+	createReputationProfileAction.Action = action
+
+	_, erru := client.UpdateReputationProfileAction(ctx, createReputationProfileAction)
+	if erru != nil {
+		logger.Errorf("calling 'createReputationProfileAction': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId(fmt.Sprintf("%d:%s:%d", createReputationProfileAction.ConfigID, createReputationProfileAction.PolicyID, createReputationProfileAction.ReputationProfileID))
+
+	return resourceReputationProfileActionRead(ctx, d, m)
+}
+
 func resourceReputationProfileActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionRead")
+	logger.Debugf("!!! in resourceReputationProfileActionRead")
+
+	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationprofileid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
+	policyid := idParts[1]
+	reputationprofileid, err := strconv.Atoi(idParts[2])
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	getReputationProfileAction := appsec.GetReputationProfileActionRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
+	getReputationProfileAction.ConfigID = configid
+	getReputationProfileAction.Version = version
+	getReputationProfileAction.PolicyID = policyid
+	getReputationProfileAction.ReputationProfileID = reputationprofileid
 
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getReputationProfileAction.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getReputationProfileAction.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getReputationProfileAction.Version = version
-		}
-
-		policyid := s[2]
-		getReputationProfileAction.PolicyID = policyid
-
-		reputationprofileid, errconv := strconv.Atoi(s[3])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getReputationProfileAction.ReputationProfileID = reputationprofileid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationProfileAction.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationProfileAction.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationProfileAction.PolicyID = policyid
-
-		reputationprofileid, err := tools.GetIntValue("reputation_profile_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationProfileAction.ReputationProfileID = reputationprofileid
-	}
 	resp, errr := client.GetReputationProfileAction(ctx, getReputationProfileAction)
 	if errr != nil {
 		logger.Errorf("calling 'getReputationProfileAction': %s", errr.Error())
 		return diag.FromErr(errr)
 	}
 
+	if err := d.Set("config_id", getReputationProfileAction.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("security_policy_id", getReputationProfileAction.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("reputation_profile_id", getReputationProfileAction.ReputationProfileID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	if err := d.Set("action", resp.Action); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("config_id", getReputationProfileAction.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("version", getReputationProfileAction.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("security_policy_id", getReputationProfileAction.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	d.SetId(fmt.Sprintf("%d:%d:%s:%d", getReputationProfileAction.ConfigID, getReputationProfileAction.Version, getReputationProfileAction.PolicyID, getReputationProfileAction.ReputationProfileID))
-
 	return nil
+}
+
+func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceReputationProfileActionUpdate")
+	logger.Debugf("!!! in resourceCustomRuleActionUpdate")
+
+	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationrofileid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAction", m)
+	policyid := idParts[1]
+	reputationprofileid, err := strconv.Atoi(idParts[2])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	action, err := tools.GetStringValue("action", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	updateReputationProfileAction := appsec.UpdateReputationProfileActionRequest{}
+	updateReputationProfileAction.ConfigID = configid
+	updateReputationProfileAction.Version = version
+	updateReputationProfileAction.PolicyID = policyid
+	updateReputationProfileAction.ReputationProfileID = reputationprofileid
+	updateReputationProfileAction.Action = action
+
+	_, erru := client.UpdateReputationProfileAction(ctx, updateReputationProfileAction)
+	if erru != nil {
+		logger.Errorf("calling 'updateReputationProfileAction': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	return resourceReputationProfileActionRead(ctx, d, m)
 }
 
 func resourceReputationProfileActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceReputationProfileActionRemove")
+	logger := meta.Log("APPSEC", "resourceReputationProfileActionDelete")
+	logger.Debugf("!!! in resourceReputationProfileActionDelete")
+
+	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationprofileid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAction", m)
+	policyid := idParts[1]
+	reputationprofileid, err := strconv.Atoi(idParts[2])
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	removeReputationProfileAction := appsec.UpdateReputationProfileActionRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeReputationProfileAction.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeReputationProfileAction.Version = version
-
-		policyid := s[2]
-		removeReputationProfileAction.PolicyID = policyid
-
-		reputationprofileid, errconv := strconv.Atoi(s[3])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeReputationProfileAction.ReputationProfileID = reputationprofileid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeReputationProfileAction.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeReputationProfileAction.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeReputationProfileAction.PolicyID = policyid
-
-		reputationprofileid, err := tools.GetIntValue("reputation_profile_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeReputationProfileAction.ReputationProfileID = reputationprofileid
-	}
+	removeReputationProfileAction.ConfigID = configid
+	removeReputationProfileAction.Version = version
+	removeReputationProfileAction.PolicyID = policyid
+	removeReputationProfileAction.ReputationProfileID = reputationprofileid
 	removeReputationProfileAction.Action = "none"
 
 	_, errd := client.UpdateReputationProfileAction(ctx, removeReputationProfileAction)
@@ -209,83 +211,4 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 	d.SetId("")
 
 	return nil
-}
-
-func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceReputationProfileActionUpdate")
-
-	updateReputationProfileAction := appsec.UpdateReputationProfileActionRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateReputationProfileAction.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateReputationProfileAction.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateReputationProfileAction.Version = version
-		}
-
-		policyid := s[2]
-		updateReputationProfileAction.PolicyID = policyid
-
-		reputationprofileid, errconv := strconv.Atoi(s[3])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateReputationProfileAction.ReputationProfileID = reputationprofileid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationProfileAction.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationProfileAction.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationProfileAction.PolicyID = policyid
-
-		reputationprofileid, err := tools.GetIntValue("reputation_profile_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationProfileAction.ReputationProfileID = reputationprofileid
-	}
-	action, err := tools.GetStringValue("action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateReputationProfileAction.Action = action
-
-	_, erru := client.UpdateReputationProfileAction(ctx, updateReputationProfileAction)
-	if erru != nil {
-		logger.Errorf("calling 'updateReputationProfileAction': %s", erru.Error())
-		return diag.FromErr(erru)
-	}
-	d.SetId(fmt.Sprintf("%d:%d:%s:%d", updateReputationProfileAction.ConfigID, updateReputationProfileAction.Version, updateReputationProfileAction.PolicyID, updateReputationProfileAction.ReputationProfileID))
-
-	return resourceReputationProfileActionRead(ctx, d, m)
 }

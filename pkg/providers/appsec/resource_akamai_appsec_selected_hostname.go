@@ -2,16 +2,14 @@ package appsec
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -21,19 +19,18 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceSelectedHostname() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceSelectedHostnameUpdate,
+		CreateContext: resourceSelectedHostnameCreate,
 		ReadContext:   resourceSelectedHostnameRead,
 		UpdateContext: resourceSelectedHostnameUpdate,
 		DeleteContext: resourceSelectedHostnameDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -55,233 +52,213 @@ func resourceSelectedHostname() *schema.Resource {
 	}
 }
 
+func resourceSelectedHostnameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSelectedHostnameCreate")
+	logger.Debugf("!!! resourceSelectedHostnameCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	hostnames, err := tools.GetSetValue("hostnames", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	mode, err := tools.GetStringValue("mode", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// determine the actual hostname list to send to the API by combining the given hostnames & mode with the current hostnames
+
+	getSelectedHostnameRequest := appsec.GetSelectedHostnameRequest{}
+	getSelectedHostnameRequest.ConfigID = configid
+	getSelectedHostnameRequest.Version = getLatestConfigVersion(ctx, configid, m)
+
+	currentselectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostnameRequest)
+	if err != nil {
+		logger.Errorf("calling 'GetSelectedHostname': %s", err.Error())
+		return diag.FromErr(err)
+	}
+	currenthostnameset := schema.Set{F: schema.HashString}
+	for _, h := range currentselectedhostnames.HostnameList {
+		currenthostnameset.Add(h.Hostname)
+	}
+
+	var desiredhostnameset *schema.Set
+	switch mode {
+	case Remove:
+		desiredhostnameset = currenthostnameset.Difference(hostnames)
+	case Append:
+		desiredhostnameset = currenthostnameset.Union(hostnames)
+	case Replace:
+		desiredhostnameset = hostnames
+	default:
+		desiredhostnameset = hostnames
+	}
+
+	// convert to list of Hostname structs
+	desiredhostnamelist := desiredhostnameset.List()
+	newhostnames := make([]appsec.Hostname, 0, len(desiredhostnamelist))
+	for _, h := range desiredhostnamelist {
+		hostname := appsec.Hostname{}
+		hostname.Hostname = h.(string)
+		newhostnames = append(newhostnames, hostname)
+	}
+
+	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
+	updateSelectedHostname.ConfigID = configid
+	updateSelectedHostname.Version = getModifiableConfigVersion(ctx, configid, "selectedHostname", m)
+	updateSelectedHostname.HostnameList = newhostnames
+
+	_, err = client.UpdateSelectedHostname(ctx, updateSelectedHostname)
+	if err != nil {
+		logger.Errorf("calling 'UpdateSelectedHostname': %s", err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	// normally we don't set any attributes of the resource in Create, but for this resource we're not using the
+	// supplied hostnames as is, rather we're combining them with the existing hostnames according to the value of mode
+	if err := d.Set("hostnames", desiredhostnameset.List()); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	d.SetId(fmt.Sprintf("%d", updateSelectedHostname.ConfigID))
+
+	return resourceSelectedHostnameRead(ctx, d, m)
+}
+
 func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameRead")
+	logger.Debugf("!!! resourceSelectedHostnameRead")
 
-	getSelectedHostname := appsec.GetSelectedHostnameRequest{}
-
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getSelectedHostname.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getSelectedHostname.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getSelectedHostname.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getSelectedHostname.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getSelectedHostname.Version = version
-
-	}
-
-	mode, err := tools.GetStringValue("mode", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	selectedhostname, err := client.GetSelectedHostname(ctx, getSelectedHostname)
+	getSelectedHostname := appsec.GetSelectedHostnameRequest{}
+	getSelectedHostname.ConfigID = configid
+	getSelectedHostname.Version = getLatestConfigVersion(ctx, configid, m)
+
+	selectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostname)
 	if err != nil {
 		logger.Errorf("calling 'getSelectedHostname': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	hostnamelist := d.Get("hostnames").(*schema.Set)
-
-	finalhdata := make([]string, 0, len(hostnamelist.List()))
-
-	switch mode {
-	case Remove:
-		for _, hl := range hostnamelist.List() {
-			for _, h := range selectedhostname.HostnameList {
-
-				if h.Hostname == hl.(string) {
-					finalhdata = append(finalhdata, h.Hostname)
-				}
-			}
-		}
-
-		if len(finalhdata) == 0 {
-			for _, hl := range hostnamelist.List() {
-				finalhdata = append(finalhdata, hl.(string))
-			}
-		}
-
-	case Append:
-		for _, h := range selectedhostname.HostnameList {
-
-			for _, hl := range hostnamelist.List() {
-				if h.Hostname == hl.(string) {
-					finalhdata = append(finalhdata, h.Hostname)
-				}
-			}
-		}
-	case Replace:
-		for _, h := range selectedhostname.HostnameList {
-			finalhdata = append(finalhdata, h.Hostname)
-		}
-	default:
-		for _, h := range selectedhostname.HostnameList {
-			finalhdata = append(finalhdata, h.Hostname)
-		}
-	}
-	sort.Strings(finalhdata)
-	if err := d.Set("hostnames", finalhdata); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
 	if err := d.Set("config_id", getSelectedHostname.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
-	if err := d.Set("version", getSelectedHostname.Version); err != nil {
+	selectedhostnameset := schema.Set{F: schema.HashString}
+	for _, hostname := range selectedhostnames.HostnameList {
+		selectedhostnameset.Add(hostname.Hostname)
+	}
+	if err := d.Set("hostnames", selectedhostnameset.List()); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
-	if mode == "" {
-		mode = "REPLACE"
+	// mode is not returned by API, so synthesize an appropriate value if we have none
+	if _, ok := d.GetOk("mode"); !ok {
+		if err := d.Set("mode", "REPLACE"); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
-
-	if err := d.Set("mode", mode); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	d.SetId(fmt.Sprintf("%d:%d", getSelectedHostname.ConfigID, getSelectedHostname.Version))
 
 	return nil
-}
-
-func resourceSelectedHostnameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
-	return schema.NoopContext(nil, d, m)
 }
 
 func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameUpdate")
+	logger.Debugf("!!! resourceSelectedHostnameUpdate")
 
-	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateSelectedHostname.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateSelectedHostname.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateSelectedHostname.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateSelectedHostname.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateSelectedHostname.Version = version
-	}
-	mode := d.Get("mode").(string)
-
-	hn := appsec.GetSelectedHostnamesRequest{}
-
-	hostnamelist := d.Get("hostnames").(*schema.Set)
-
-	for _, h := range hostnamelist.List() {
-		h1 := appsec.Hostname{}
-		h1.Hostname = h.(string)
-		hn.HostnameList = append(hn.HostnameList, h1)
-	}
-
-	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
-	getSelectedHostnames.ConfigID = updateSelectedHostname.ConfigID
-	getSelectedHostnames.Version = updateSelectedHostname.Version
-
-	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
+	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
-		logger.Errorf("calling 'getSelectedHostnames': %s", err.Error())
+		return diag.FromErr(err)
+	}
+	mode, err := tools.GetStringValue("mode", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	hostnames, err := tools.GetSetValue("hostnames", d)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	// determine the actual hostname list to send to the API by combining the given hostnames & mode with the current hostnames
+
+	getSelectedHostnameRequest := appsec.GetSelectedHostnameRequest{}
+	getSelectedHostnameRequest.ConfigID = configid
+	getSelectedHostnameRequest.Version = getLatestConfigVersion(ctx, configid, m)
+
+	selectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostnameRequest)
+	if err != nil {
+		logger.Errorf("calling 'GetSelectedHostname': %s", err.Error())
+		return diag.FromErr(err)
+	}
+	currenthostnameset := schema.Set{F: schema.HashString}
+	for _, h := range selectedhostnames.HostnameList {
+		currenthostnameset.Add(h.Hostname)
+	}
+
+	var desiredhostnameset *schema.Set
 	switch mode {
 	case Remove:
-		for _, hl := range hostnamelist.List() {
-
-			for idx, h := range selectedhostnames.HostnameList {
-				if h.Hostname == hl.(string) {
-					selectedhostnames.HostnameList = RemoveIndex(selectedhostnames.HostnameList, idx)
+		// implementing set difference manually here, as SDK's Set.Difference() doesn't seem to
+		// give the correct result (elements of right-hand set not removed from left-hand set?)
+		// desiredhostnameset = currenthostnameset.Difference(hostnames)
+		desiredhostnameset = &schema.Set{F: currenthostnameset.F}
+		hostnamelist := hostnames.List()
+		for _, h := range currenthostnameset.List() {
+			found := false
+			for _, h2 := range hostnamelist {
+				if h == h2 {
+					found = true
+					break
 				}
+			}
+			if !found {
+				desiredhostnameset.Add(h)
 			}
 		}
 	case Append:
-		for _, h := range selectedhostnames.HostnameList {
-			m := appsec.Hostname{}
-			m.Hostname = h.Hostname
-			hn.HostnameList = append(hn.HostnameList, m)
-		}
-		selectedhostnames.HostnameList = hn.HostnameList
+		desiredhostnameset = currenthostnameset.Union(hostnames)
 	case Replace:
-		selectedhostnames.HostnameList = hn.HostnameList
+		desiredhostnameset = hostnames
 	default:
-		selectedhostnames.HostnameList = hn.HostnameList
+		desiredhostnameset = hostnames
 	}
 
-	updateSelectedHostname.HostnameList = selectedhostnames.HostnameList
+	// convert to list of Hostname structs
+	desiredhostnamelist := desiredhostnameset.List()
+	newhostnames := make([]appsec.Hostname, 0, len(desiredhostnamelist))
+	for _, h := range desiredhostnamelist {
+		hostname := appsec.Hostname{}
+		hostname.Hostname = h.(string)
+		newhostnames = append(newhostnames, hostname)
+	}
 
-	_, erru := client.UpdateSelectedHostname(ctx, updateSelectedHostname)
-	if erru != nil {
-		logger.Errorf("calling 'updateSelectedHostname': %s", erru.Error())
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, erru.Error()))
+	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
+	updateSelectedHostname.ConfigID = configid
+	updateSelectedHostname.Version = getModifiableConfigVersion(ctx, configid, "selectedHostname", m)
+	updateSelectedHostname.HostnameList = newhostnames
+
+	_, err = client.UpdateSelectedHostname(ctx, updateSelectedHostname)
+	if err != nil {
+		logger.Errorf("calling 'UpdateSelectedHostname': %s", err.Error())
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	return resourceSelectedHostnameRead(ctx, d, m)
 }
 
-//RemoveIndex reemove host from list
-func RemoveIndex(hl []appsec.Hostname, index int) []appsec.Hostname {
-	return append(hl[:index], hl[index+1:]...)
+func resourceSelectedHostnameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return schema.NoopContext(nil, d, m)
 }
 
 // Append Replace Remove mode flags

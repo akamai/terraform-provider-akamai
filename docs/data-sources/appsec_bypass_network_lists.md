@@ -31,7 +31,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 data "akamai_appsec_bypass_network_lists" "bypass_network_lists" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
 //Tabular display of ID and Name of the network lists 
@@ -53,8 +52,6 @@ output "bypass_network_lists_id_list" {
 The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID to use.
-
-* `version` - (Required) The version number of the configuration to use.
 
 ## Attributes Reference
 

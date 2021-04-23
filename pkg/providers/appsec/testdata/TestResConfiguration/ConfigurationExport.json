@@ -1,0 +1,139 @@
+{
+    "advancedOptions": {
+        "logging": {
+            "allowSampling": true,
+            "cookies": {
+                "type": "all"
+            },
+            "customHeaders": {
+                "type": "all"
+            },
+            "standardHeaders": {
+                "type": "all"
+            }
+        },
+        "pragmaHeader": {
+            "action": "REMOVE"
+        },
+        "prefetch": {
+            "allExtensions": false,
+            "enableAppLayer": true,
+            "enableRateControls": false,
+            "extensions": [
+                "cgi",
+                "jsp",
+                "aspx",
+                "EMPTY_STRING",
+                "php",
+                "py",
+                "asp"
+            ]
+        },
+        "requestBody": {
+            "requestBodyInspectionLimitInKB": "default"
+        }
+    },
+    "configId": 432531,
+    "configName": "Akamai Tools",
+    "createDate": "2021-05-10T20:26:50Z",
+    "createdBy": "mkxjuyfuwz4f2ads",
+    "customDenyList": [],
+    "customRules": [],
+    "matchTargets": {},
+    "production": {
+        "status": "Inactive"
+    },
+    "ratePolicies": [],
+    "reputationProfiles": [
+        {
+            "context": "WEBATCK",
+            "contextReadable": "Web Attackers",
+            "enabled": false,
+            "id": 1754808,
+            "name": "Web Attackers (High Threat)",
+            "sharedIpHandling": "NON_SHARED",
+            "threshold": 9
+        },
+        {
+            "context": "DOSATCK",
+            "contextReadable": "DoS Attackers",
+            "enabled": false,
+            "id": 1754809,
+            "name": "DoS Attackers (High Threat)",
+            "sharedIpHandling": "NON_SHARED",
+            "threshold": 9
+        },
+        {
+            "context": "SCANTL",
+            "contextReadable": "Scanning Tools",
+            "enabled": false,
+            "id": 1754810,
+            "name": "Scanning Tools (High Threat)",
+            "sharedIpHandling": "NON_SHARED",
+            "threshold": 9
+        },
+        {
+            "context": "WEBATCK",
+            "contextReadable": "Web Attackers",
+            "enabled": false,
+            "id": 1754811,
+            "name": "Web Attackers (Low Threat)",
+            "sharedIpHandling": "NON_SHARED",
+            "threshold": 5
+        },
+        {
+            "context": "DOSATCK",
+            "contextReadable": "DoS Attackers",
+            "enabled": false,
+            "id": 1754812,
+            "name": "DoS Attackers (Low Threat)",
+            "sharedIpHandling": "NON_SHARED",
+            "threshold": 5
+        },
+        {
+            "context": "SCANTL",
+            "contextReadable": "Scanning Tools",
+            "enabled": false,
+            "id": 1754813,
+            "name": "Scanning Tools (Low Threat)",
+            "sharedIpHandling": "NON_SHARED",
+            "threshold": 5
+        },
+        {
+            "context": "WEBSCRP",
+            "contextReadable": "Web Scrapers",
+            "enabled": false,
+            "id": 1754814,
+            "name": "Web Scrapers (Low Threat)",
+            "sharedIpHandling": "NON_SHARED",
+            "threshold": 5
+        },
+        {
+            "context": "WEBSCRP",
+            "contextReadable": "Web Scrapers",
+            "enabled": false,
+            "id": 1754815,
+            "name": "Web Scrapers (High Threat)",
+            "sharedIpHandling": "NON_SHARED",
+            "threshold": 9
+        }
+    ],
+    "rulesets": [],
+    "securityPolicies": [],
+    "selectableHosts": [
+		"rinaldi.sandbox.akamaideveloper.com",
+        "sujala.sandbox.akamaideveloper.com"
+    ],
+    "selectedHosts": [
+		"rinaldi.sandbox.akamaideveloper.com",
+        "sujala.sandbox.akamaideveloper.com"
+    ],
+    "siem": {
+        "enableSiem": false
+    },
+    "staging": {
+        "status": "Inactive"
+    },
+    "version": 1
+}
+

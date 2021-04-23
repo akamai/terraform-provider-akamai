@@ -22,10 +22,6 @@ func dataSourceVersionNotes() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"json": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -53,11 +49,7 @@ func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getVersionNotes.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getVersionNotes.Version = version
+	getVersionNotes.Version = getLatestConfigVersion(ctx, configid, m)
 
 	versionnotes, errr := client.GetVersionNotes(ctx, getVersionNotes)
 	if errr != nil {

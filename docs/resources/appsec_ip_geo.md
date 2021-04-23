@@ -30,7 +30,6 @@ data "akamai_appsec_configuration" "configuration" {
 // USE CASE: user wants to update the IP/GEO firewall mode to "block specific IPs/Subnets and Geos" and update the IP list, GEO list & Exception list
 resource  "akamai_appsec_ip_geo" "ip_geo_block" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id1
   mode = var.block
   geo_network_lists= var.geo_network_lists
@@ -41,7 +40,6 @@ resource  "akamai_appsec_ip_geo" "ip_geo_block" {
 // USE CASE: user wants to update the IP/GEO firewall mode to "block all traffic except IPs/Subnets in block exceptions" and update the Exception list
 resource  "akamai_appsec_ip_geo" "ip_geo_allow" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id2
   mode = var.allow
   exception_ip_network_lists= var.exception_ip_network_lists
@@ -76,8 +74,6 @@ output "allow_exception_ip_network_lists" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 

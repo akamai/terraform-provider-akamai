@@ -13,6 +13,15 @@ func TestAccAkamaiEvalHostnames_data_basic(t *testing.T) {
 	t.Run("match by EvalHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		cv := appsec.GetEvalHostsResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSEvalHostnames/EvalHostnames.json"))
 		json.Unmarshal([]byte(expectJS), &cv)

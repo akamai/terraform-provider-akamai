@@ -22,10 +22,6 @@ func dataSourceRatePolicies() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"rate_policy_id": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -56,11 +52,7 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getRatePolicies.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getRatePolicies.ConfigVersion = version
+	getRatePolicies.ConfigVersion = getLatestConfigVersion(ctx, configid, m)
 
 	ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

@@ -23,12 +23,12 @@ func TestAccAkamaiRatePolicyAction_res_basic(t *testing.T) {
 
 		client.On("GetRatePolicyAction",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetRatePolicyActionRequest{ConfigID: 43253, Version: 15, PolicyID: "AAAA_81230", ID: 135355}, //, Ipv4Action: "none", Ipv6Action: "none"},
+			appsec.GetRatePolicyActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ID: 135355},
 		).Return(&cr, nil)
 
 		client.On("UpdateRatePolicyAction",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateRatePolicyActionRequest{ConfigID: 43253, Version: 15, PolicyID: "AAAA_81230", RatePolicyID: 135355, Ipv4Action: "none", Ipv6Action: "none"},
+			appsec.UpdateRatePolicyActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RatePolicyID: 135355, Ipv4Action: "none", Ipv6Action: "none"},
 		).Return(&cu, nil)
 
 		useClient(client, func() {

@@ -23,15 +23,11 @@ func dataSourceApiRequestConstraints() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"api_id": &schema.Schema{
+			"api_id": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
@@ -61,11 +57,7 @@ func dataSourceApiRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	}
 	getApiRequestConstraints.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getApiRequestConstraints.Version = version
+	getApiRequestConstraints.Version = getLatestConfigVersion(ctx, configid, m)
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

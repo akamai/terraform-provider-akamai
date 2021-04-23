@@ -1,9 +1,10 @@
-[
-    {
-        "action": "alert",
-        "slowRateThreshold": {
-            "period": 60,
-            "rate": 10
-        }
+{
+    "action": "alert",
+    "slowRateThreshold": {
+        "period": 30,
+        "rate": 10
+    },
+    "durationThreshold": {
+        "timeout": 20
     }
-]
+}

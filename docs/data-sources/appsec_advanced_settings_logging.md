@@ -28,7 +28,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 data "akamai_appsec_advanced_settings_logging" "logging" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
 output "advanced_settings_logging_output" {
@@ -41,7 +40,6 @@ output "advanced_settings_logging_json" {
 
 data "akamai_appsec_advanced_settings_logging" "policy_override" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
 
@@ -59,8 +57,6 @@ output "advanced_settings_policy_logging_json" {
 The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID.
-
-* `version` - (Required) The version number of the configuration.
 
 * `security_policy_id` - (Optional) The ID of the security policy to use.
 

@@ -23,10 +23,6 @@ func dataSourceApiHostnameCoverageMatchTargets() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"hostname": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -57,11 +53,7 @@ func dataSourceApiHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 	}
 	getApiHostnameCoverageMatchTargets.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getApiHostnameCoverageMatchTargets.Version = version
+	getApiHostnameCoverageMatchTargets.Version = getLatestConfigVersion(ctx, configid, m)
 
 	hostname, err := tools.GetStringValue("hostname", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

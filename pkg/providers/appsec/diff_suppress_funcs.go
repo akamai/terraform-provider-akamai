@@ -3,8 +3,10 @@ package appsec
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -35,6 +37,141 @@ func jsonBytesEqual(b1, b2 []byte) bool {
 	}
 
 	return reflect.DeepEqual(o1, o2)
+}
+
+func suppressEquivalentReputationProfileDiffs(k, old, new string, d *schema.ResourceData) bool {
+	var rpOld, rpNew appsec.CreateReputationProfileResponse
+
+	if err := json.Unmarshal([]byte(old), &rpOld); err != nil {
+		log.Printf("unable to unmarshal old reputation profile: %s", err)
+	}
+	if err := json.Unmarshal([]byte(new), &rpNew); err != nil {
+		log.Printf("unable to unmarshal new reputation profile: %s", err)
+	}
+
+	if rpOld.Context != rpNew.Context ||
+		rpOld.Name != rpNew.Name ||
+		rpOld.SharedIPHandling != rpNew.SharedIPHandling ||
+		rpOld.Threshold != rpNew.Threshold {
+		return false
+	}
+
+	return compareReputationProfileCondition(rpOld, rpNew)
+}
+
+func compareReputationProfileCondition(rpOld, rpNew appsec.CreateReputationProfileResponse) bool {
+	cOld := rpOld.Condition
+	cNew := rpNew.Condition
+
+	var pmOld = true
+	var pmNew = true
+	if cOld.PositiveMatch != nil {
+		if err := json.Unmarshal(*cOld.PositiveMatch, &pmOld); err != nil {
+			return false
+		}
+	}
+	if cNew.PositiveMatch != nil {
+		if err := json.Unmarshal(*cNew.PositiveMatch, &pmNew); err != nil {
+			return false
+		}
+	}
+	if pmOld != pmNew {
+		return false
+	}
+	if len(cOld.AtomicConditions) != len(cNew.AtomicConditions) {
+		return false
+	}
+	for _, acOld := range cOld.AtomicConditions {
+		found := false
+		for _, acNew := range cNew.AtomicConditions {
+			if acOld.ClassName == acNew.ClassName {
+				found = true
+				if acOld.CheckIps != acNew.CheckIps && acNew.CheckIps != "" {
+					return false
+				}
+				if acOld.NameCase != acNew.NameCase && !(acOld.NameCase == true && acNew.NameCase == false) {
+					return false
+				}
+				if acOld.NameWildcard != acNew.NameWildcard && !(acOld.NameWildcard == true && acNew.NameWildcard == false) {
+					return false
+				}
+				if acOld.ValueCase != acNew.ValueCase && !(acOld.ValueCase == true && acNew.ValueCase == false) {
+					return false
+				}
+				if acOld.ValueWildcard != acNew.ValueWildcard && !(acOld.ValueWildcard == true && acNew.ValueWildcard == false) {
+					return false
+				}
+				if acOld.PositiveMatch != acNew.PositiveMatch && !(acOld.PositiveMatch == true && acNew.PositiveMatch == false) {
+					// only 'true' is supported for this case
+					if acOld.ClassName != "HostCondition" {
+						return false
+					}
+				}
+				if !suppressAtomicConditionSliceDiffs(acOld.Value, acNew.Value) {
+					return false
+				}
+				if !suppressAtomicConditionSliceDiffs(acOld.Host, acNew.Host) {
+					return false
+				}
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+func suppressAtomicConditionSliceDiffs(old, new []string) bool {
+	if len(old) != len(new) {
+		return false
+	}
+	for _, ov := range old {
+		found := false
+		for _, nv := range new {
+			if strings.ToLower(ov) == strings.ToLower(nv) {
+				found = true
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+func suppressEquivalentLoggingSettingsDiffs(k, old, new string, d *schema.ResourceData) bool {
+	var oldJSON, newJSON appsec.UpdateAdvancedSettingsLoggingResponse
+	if old == new {
+		return true
+	}
+	if err := json.Unmarshal([]byte(old), &oldJSON); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(new), &newJSON); err != nil {
+		return false
+	}
+	diff := compareLoggingSettings(&oldJSON, &newJSON)
+	return diff
+}
+
+func compareLoggingSettings(old, new *appsec.UpdateAdvancedSettingsLoggingResponse) bool {
+	if old.Override != new.Override ||
+		old.AllowSampling != new.AllowSampling ||
+		old.Cookies.Type != new.Cookies.Type ||
+		old.CustomHeaders.Type != new.CustomHeaders.Type ||
+		old.StandardHeaders.Type != new.StandardHeaders.Type {
+		return false
+	}
+
+	sort.Strings(old.Cookies.Values)
+	sort.Strings(new.Cookies.Values)
+	sort.Strings(old.CustomHeaders.Values)
+	sort.Strings(new.CustomHeaders.Values)
+	sort.Strings(old.StandardHeaders.Values)
+	sort.Strings(new.StandardHeaders.Values)
+
+	return reflect.DeepEqual(old, new)
 }
 
 func suppressCustomDenyJsonDiffs(k, old, new string, d *schema.ResourceData) bool {
@@ -87,7 +224,7 @@ func suppressEquivalentJSONDiffsConditionException(k, old, new string, d *schema
 }
 
 func compareConditionExceptionJSON(old, new string) bool {
-	var oldJSON, newJSON appsec.UpdateRuleConditionExceptionResponse
+	var oldJSON, newJSON appsec.RuleConditionException
 	if old == new {
 		return true
 	}
@@ -97,16 +234,11 @@ func compareConditionExceptionJSON(old, new string) bool {
 	if err := json.Unmarshal([]byte(new), &newJSON); err != nil {
 		return false
 	}
-	diff := compareConditionException(&oldJSON, &newJSON)
+	diff := compareConditionException(oldJSON, newJSON)
 	return diff
 }
 
-func compareConditionException(old, new *appsec.UpdateRuleConditionExceptionResponse) bool {
-	if len(old.Conditions) != len(new.Conditions) ||
-
-		len(old.Exception.HeaderCookieOrParamValues) != len(new.Exception.HeaderCookieOrParamValues) {
-		return false
-	}
+func compareConditionException(old, new appsec.RuleConditionException) bool {
 
 	return reflect.DeepEqual(old, new)
 }

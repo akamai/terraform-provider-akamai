@@ -29,6 +29,15 @@ func TestAccAkamaiCustomRule_res_basic(t *testing.T) {
 		expectJSR := compactJSON(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json"))
 		json.Unmarshal([]byte(expectJSR), &crr)
 
+		cv := appsec.GetCustomRulesResponse{}
+		expectJR := compactJSON(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json"))
+		json.Unmarshal([]byte(expectJR), &cv)
+
+		client.On("GetCustomRules",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.GetCustomRulesRequest{ConfigID: 43253, ID: 661699},
+		).Return(&cv, nil)
+
 		client.On("GetCustomRule",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},

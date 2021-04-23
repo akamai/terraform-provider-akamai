@@ -1,7 +1,5 @@
 {
     "hostnames": [
-        "*.example.net",
-        "example.com",
-        "m.example.com"
+        "example.com"
     ]
 }

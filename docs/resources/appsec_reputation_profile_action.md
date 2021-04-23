@@ -25,7 +25,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 resource  "akamai_appsec_reputation_profile_action" "appsec_reputation_profile_action" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
   reputation_profile_id = akamai_appsec_reputation_profile.reputation_profile.id
   action = "alert"
@@ -45,8 +44,6 @@ output "reputation_profile_action" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 

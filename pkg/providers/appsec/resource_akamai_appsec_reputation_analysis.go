@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -20,19 +19,18 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceReputationAnalysis() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceReputationAnalysisUpdate,
+		CreateContext: resourceReputationAnalysisCreate,
 		ReadContext:   resourceReputationAnalysisRead,
 		UpdateContext: resourceReputationAnalysisUpdate,
 		DeleteContext: resourceReputationAnalysisDelete,
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -52,67 +50,116 @@ func resourceReputationAnalysis() *schema.Resource {
 	}
 }
 
-func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceReputationAnalysisUpdate")
+	logger := meta.Log("APPSEC", "resourceReputationAnalysisCreate")
+	logger.Debugf("!!! in resourceReputationAnalysisCreate")
 
-	updateReputationAnalysis := appsec.UpdateReputationAnalysisRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateReputationAnalysis.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateReputationAnalysis.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateReputationAnalysis.Version = version
-		}
-
-		policyid := s[2]
-		updateReputationAnalysis.PolicyID = policyid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationAnalysis.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationAnalysis.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationAnalysis.PolicyID = policyid
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAnalysis", m)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
 	}
 	forwardToHttpHeader, err := tools.GetBoolValue("forward_to_http_header", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateReputationAnalysis.ForwardToHTTPHeader = forwardToHttpHeader
-
 	forwardSharedIpToHttpHeaderSiem, err := tools.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
+	createReputationAnalysis := appsec.UpdateReputationAnalysisRequest{}
+	createReputationAnalysis.ConfigID = configid
+	createReputationAnalysis.Version = version
+	createReputationAnalysis.PolicyID = policyid
+	createReputationAnalysis.ForwardToHTTPHeader = forwardToHttpHeader
+	createReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = forwardSharedIpToHttpHeaderSiem
+
+	_, erru := client.UpdateReputationAnalysis(ctx, createReputationAnalysis)
+	if erru != nil {
+		logger.Errorf("calling 'createReputationAnalysis': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId(fmt.Sprintf("%d:%s", createReputationAnalysis.ConfigID, createReputationAnalysis.PolicyID))
+
+	return resourceReputationAnalysisRead(ctx, d, m)
+}
+
+func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceReputationAnalysisRead")
+	logger.Debugf("!!! in resourceReputationAnalysisRead")
+
+	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
+	policyid := idParts[1]
+
+	getReputationAnalysis := appsec.GetReputationAnalysisRequest{}
+	getReputationAnalysis.ConfigID = configid
+	getReputationAnalysis.Version = version
+	getReputationAnalysis.PolicyID = policyid
+
+	resp, errg := client.GetReputationAnalysis(ctx, getReputationAnalysis)
+	if errg != nil {
+		logger.Errorf("calling 'getReputationAnalysis': %s", errg.Error())
+		return diag.FromErr(errg)
+	}
+
+	if err := d.Set("config_id", getReputationAnalysis.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("security_policy_id", getReputationAnalysis.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("forward_to_http_header", resp.ForwardToHTTPHeader); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("forward_shared_ip_to_http_header_siem", resp.ForwardSharedIPToHTTPHeaderAndSIEM); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	return nil
+}
+
+func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceReputationAnalysisUpdate")
+	logger.Debugf("!!! in resourceReputationAnalysisUpdate")
+
+	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAnalysis", m)
+	policyid := idParts[1]
+	forwardToHttpHeader, err := tools.GetBoolValue("forward_to_http_header", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	forwardSharedIpToHttpHeaderSiem, err := tools.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	updateReputationAnalysis := appsec.UpdateReputationAnalysisRequest{}
+	updateReputationAnalysis.ConfigID = configid
+	updateReputationAnalysis.Version = version
+	updateReputationAnalysis.PolicyID = policyid
+	updateReputationAnalysis.ForwardToHTTPHeader = forwardToHttpHeader
 	updateReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = forwardSharedIpToHttpHeaderSiem
 
 	_, erru := client.UpdateReputationAnalysis(ctx, updateReputationAnalysis)
@@ -121,56 +168,28 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(erru)
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d:%s", updateReputationAnalysis.ConfigID, updateReputationAnalysis.Version, updateReputationAnalysis.PolicyID))
-
 	return resourceReputationAnalysisRead(ctx, d, m)
 }
 
 func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceReputationAnalysisRemove")
+	logger := meta.Log("APPSEC", "resourceReputationAnalysisDelete")
+	logger.Debugf("!!! in resourceReputationAnalysisDelete")
+
+	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAnalysis", m)
+	policyid := idParts[1]
 
 	RemoveReputationAnalysis := appsec.RemoveReputationAnalysisRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		RemoveReputationAnalysis.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		RemoveReputationAnalysis.Version = version
-
-		policyid := s[2]
-		RemoveReputationAnalysis.PolicyID = policyid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		RemoveReputationAnalysis.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		RemoveReputationAnalysis.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		RemoveReputationAnalysis.PolicyID = policyid
-	}
+	RemoveReputationAnalysis.ConfigID = configid
+	RemoveReputationAnalysis.Version = version
+	RemoveReputationAnalysis.PolicyID = policyid
 	RemoveReputationAnalysis.ForwardToHTTPHeader = false
-
 	RemoveReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = false
 
 	_, erru := client.RemoveReputationAnalysis(ctx, RemoveReputationAnalysis)
@@ -180,79 +199,6 @@ func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId("")
-
-	return nil
-}
-
-func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceReputationAnalysisRead")
-
-	getReputationAnalysis := appsec.GetReputationAnalysisRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getReputationAnalysis.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getReputationAnalysis.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getReputationAnalysis.Version = version
-		}
-
-		policyid := s[2]
-		getReputationAnalysis.PolicyID = policyid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationAnalysis.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationAnalysis.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationAnalysis.PolicyID = policyid
-	}
-	_, errg := client.GetReputationAnalysis(ctx, getReputationAnalysis)
-	if errg != nil {
-		logger.Errorf("calling 'getReputationAnalysis': %s", errg.Error())
-		return diag.FromErr(errg)
-	}
-
-	if err := d.Set("config_id", getReputationAnalysis.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("version", getReputationAnalysis.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("security_policy_id", getReputationAnalysis.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-	d.SetId(fmt.Sprintf("%d:%d:%s", getReputationAnalysis.ConfigID, getReputationAnalysis.Version, getReputationAnalysis.PolicyID))
 
 	return nil
 }

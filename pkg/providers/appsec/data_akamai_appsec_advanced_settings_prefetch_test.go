@@ -22,6 +22,15 @@ func TestAccAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
 			appsec.GetAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7},
 		).Return(&cv, nil)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest: true,

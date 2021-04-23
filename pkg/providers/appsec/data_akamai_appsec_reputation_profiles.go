@@ -22,10 +22,6 @@ func dataSourceReputationProfiles() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"reputation_profile_id": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -56,11 +52,7 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 	}
 	getReputationProfiles.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getReputationProfiles.ConfigVersion = version
+	getReputationProfiles.ConfigVersion = getLatestConfigVersion(ctx, configid, m)
 
 	reputationprofileid, err := tools.GetIntValue("reputation_profile_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

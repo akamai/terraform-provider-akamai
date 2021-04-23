@@ -25,9 +25,18 @@ func TestAccAkamaiEval_res_basic(t *testing.T) {
 		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResEval/EvalStop.json"))
 		json.Unmarshal([]byte(expectJSD), &crd)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetEval",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetEvalRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Current: "", Eval: "START"},
+			appsec.GetEvalRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Current: "", Eval: ""},
 		).Return(&cr, nil)
 
 		client.On("UpdateEval",
@@ -42,19 +51,19 @@ func TestAccAkamaiEval_res_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: false,
+				IsUnitTest: true,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResEval/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_eval.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_eval.test", "id", "43253:AAAA_81230"),
 						),
 					},
 					{
 						Config: loadFixtureString("testdata/TestResEval/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_eval.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_eval.test", "id", "43253:AAAA_81230"),
 						),
 					},
 				},

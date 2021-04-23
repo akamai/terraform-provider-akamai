@@ -2,12 +2,8 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-
-
-
 resource "akamai_appsec_siem_settings" "test" {
   config_id = 43253
-  version = 7
   enable_siem = true
   enable_for_all_policies = false
   enable_botman_siem = true

@@ -17,14 +17,23 @@ func TestAccAkamaiRuleUpgrade_res_basic(t *testing.T) {
 		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResRuleUpgrade/RuleUpgrade.json"))
 		json.Unmarshal([]byte(expectJSU), &cu)
 
-		cr := appsec.GetRuleUpgradeResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResRuleUpgrade/RuleUpgrade.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		wafModeRead := appsec.GetWAFModeResponse{}
+		expectWafMode := compactJSON(loadFixtureBytes("testdata/TestResRuleUpgrade/WAFMode.json"))
+		json.Unmarshal([]byte(expectWafMode), &wafModeRead)
 
-		client.On("GetRuleUpgrade",
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
+		client.On("GetWAFMode",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetRuleUpgradeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cr, nil)
+			appsec.GetWAFModeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&wafModeRead, nil)
 
 		client.On("UpdateRuleUpgrade",
 			mock.Anything, // ctx is irrelevant for this test
@@ -39,7 +48,7 @@ func TestAccAkamaiRuleUpgrade_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResRuleUpgrade/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_rule_upgrade.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_rule_upgrade.test", "id", "43253:AAAA_81230"),
 						),
 					},
 				},

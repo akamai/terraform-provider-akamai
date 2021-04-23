@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -19,25 +19,23 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceSecurityPolicyRename() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceSecurityPolicyRenameUpdate,
+		CreateContext: resourceSecurityPolicyRenameCreate,
 		ReadContext:   resourceSecurityPolicyRenameRead,
 		UpdateContext: resourceSecurityPolicyRenameUpdate,
 		DeleteContext: resourceSecurityPolicyRenameDelete,
-
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"security_policy_name": {
+			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"security_policy_id": {
+			"security_policy_name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -45,72 +43,104 @@ func resourceSecurityPolicyRename() *schema.Resource {
 	}
 }
 
+func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameCreate")
+	logger.Debugf("!!! in resourceSecurityPolicyRenameCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "securityPolicyRename", m)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	policyname, err := tools.GetStringValue("security_policy_name", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	createSecurityPolicy := appsec.UpdateSecurityPolicyRequest{}
+	createSecurityPolicy.ConfigID = configid
+	createSecurityPolicy.Version = version
+	createSecurityPolicy.PolicyID = policyid
+	createSecurityPolicy.PolicyName = policyname
+
+	_, erru := client.UpdateSecurityPolicy(ctx, createSecurityPolicy)
+	if erru != nil {
+		logger.Errorf("calling 'createSecurityPolicy': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId(fmt.Sprintf("%d:%s", createSecurityPolicy.ConfigID, createSecurityPolicy.PolicyID))
+
+	return resourceSecurityPolicyRenameRead(ctx, d, m)
+}
+
+func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
+	logger.Debugf("!!! in resourceSecurityPolicyRenameRead")
+
+	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
+	policyid := idParts[1]
+
+	getSecurityPolicy := appsec.GetSecurityPolicyRequest{}
+	getSecurityPolicy.ConfigID = configid
+	getSecurityPolicy.Version = version
+	getSecurityPolicy.PolicyID = policyid
+
+	securitypolicy, err := client.GetSecurityPolicy(ctx, getSecurityPolicy)
+	if err != nil {
+		logger.Errorf("calling 'getSecurityPolicy': %s", err.Error())
+		return diag.FromErr(err)
+	}
+	if err := d.Set("config_id", getSecurityPolicy.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("security_policy_id", getSecurityPolicy.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("security_policy_name", securitypolicy.PolicyName); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	return nil
+}
+
 func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyUpdate")
+	logger.Debugf("!!! in resourceSecurityPolicyRenameRead")
+
+	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "securityPolicyRename", m)
+	policyid := idParts[1]
+	policyname, err := tools.GetStringValue("security_policy_name", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 
 	updateSecurityPolicy := appsec.UpdateSecurityPolicyRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
+	updateSecurityPolicy.ConfigID = configid
+	updateSecurityPolicy.Version = version
+	updateSecurityPolicy.PolicyID = policyid
+	updateSecurityPolicy.PolicyName = policyname
 
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateSecurityPolicy.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateSecurityPolicy.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateSecurityPolicy.Version = version
-		}
-
-		policyid := s[2]
-
-		updateSecurityPolicy.PolicyID = policyid
-
-		policyname, err := tools.GetStringValue("security_policy_name", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateSecurityPolicy.PolicyName = policyname
-
-	} else {
-
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateSecurityPolicy.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateSecurityPolicy.Version = version
-
-		securitypolicyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-
-		updateSecurityPolicy.PolicyID = securitypolicyid
-
-		policyname, err := tools.GetStringValue("security_policy_name", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateSecurityPolicy.PolicyName = policyname
-	}
 	_, erru := client.UpdateSecurityPolicy(ctx, updateSecurityPolicy)
 	if erru != nil {
 		logger.Errorf("calling 'updateSecurityPolicy': %s", erru.Error())
@@ -122,73 +152,4 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 
 func resourceSecurityPolicyRenameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(nil, d, m)
-}
-
-func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
-
-	getSecurityPolicy := appsec.GetSecurityPolicyRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getSecurityPolicy.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getSecurityPolicy.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getSecurityPolicy.Version = version
-		}
-
-		policyid := s[2]
-
-		getSecurityPolicy.PolicyID = policyid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getSecurityPolicy.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getSecurityPolicy.Version = version
-
-		securitypolicyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-
-		getSecurityPolicy.PolicyID = securitypolicyid
-
-	}
-	securitypolicy, err := client.GetSecurityPolicy(ctx, getSecurityPolicy)
-	if err != nil {
-		logger.Errorf("calling 'getSecurityPolicy': %s", err.Error())
-		return diag.FromErr(err)
-	}
-
-	/*if err := d.Set("security_policy_name", securitypolicy.PolicyName); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}*/
-
-	d.SetId(fmt.Sprintf("%d:%d:%s", getSecurityPolicy.ConfigID, getSecurityPolicy.Version, securitypolicy.PolicyID))
-
-	return nil
 }
