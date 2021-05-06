@@ -31,7 +31,7 @@ output "my_property_ID" {
 This data source supports these arguments:
 
 * `name` - (Required) The property name.
-* `version` - (Optional) The property version whose ID you want to list.
+* `version` - (Optional) The version of the property whose ID you want to list.
 
 ## Attributes reference
 
