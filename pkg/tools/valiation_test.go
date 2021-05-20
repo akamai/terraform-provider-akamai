@@ -1,11 +1,12 @@
 package tools
 
 import (
+	"testing"
+
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tj/assert"
-	"testing"
 )
 
 func TestIsBlank(t *testing.T) {
@@ -21,7 +22,7 @@ func TestIsBlank(t *testing.T) {
 			}(),
 			withError: true,
 		},
-		"empty map":        {make(map[string]string, 0), true},
+		"empty map":        {make(map[string]string), true},
 		"nil":              {nil, true},
 		"non empty string": {"abc", false},
 	}

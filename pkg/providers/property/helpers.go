@@ -1,8 +1,10 @@
 package property
 
 import (
+	"errors"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"strings"
 )
 
 var certStatus = &schema.Resource{
@@ -86,4 +88,24 @@ func papiErrorToMap(err *papi.Error) map[string]interface{} {
 		"error_location": err.ErrorLocation,
 		"status_code":    err.StatusCode,
 	}
+}
+
+// NetworkAlias parses the given network name or alias and returns its full name and any error
+func NetworkAlias(network string) (string, error) {
+
+	networks := map[string]papi.ActivationNetwork{
+		"STAGING":    papi.ActivationNetworkStaging,
+		"STAGE":      papi.ActivationNetworkStaging,
+		"STAG":       papi.ActivationNetworkStaging,
+		"S":          papi.ActivationNetworkStaging,
+		"PRODUCTION": papi.ActivationNetworkProduction,
+		"PROD":       papi.ActivationNetworkProduction,
+		"P":          papi.ActivationNetworkProduction,
+	}
+
+	networkValue, ok := networks[strings.ToUpper(network)]
+	if !ok {
+		return "", errors.New("network not recognized")
+	}
+	return string(networkValue), nil
 }
