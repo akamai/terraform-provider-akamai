@@ -46,7 +46,10 @@ func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema:         map[string]*schema.Schema{},
 		DataSourcesMap: map[string]*schema.Resource{},
-		ResourcesMap:   map[string]*schema.Resource{},
+		ResourcesMap: map[string]*schema.Resource{
+			"akamai_cps_dv_enrollment": resourceCPSDVEnrollment(),
+			"akamai_cps_dv_validation": resourceCPSDVValidation(),
+		},
 	}
 	return provider
 }

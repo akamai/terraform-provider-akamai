@@ -1,94 +1,101 @@
 package cps
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
-	"strings"
-	"sync"
-	"testing"
-
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-
+	"context"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/stretchr/testify/mock"
 )
 
-var testAccProviders map[string]*schema.Provider
+type mockcps struct {
+	mock.Mock
+}
 
-var testProvider *schema.Provider
+func (m *mockcps) GetEnrollment(ctx context.Context, r cps.GetEnrollmentRequest) (*cps.Enrollment, error) {
+	args := m.Called(ctx, r)
 
-func init() {
-	testProvider = akamai.Provider(Subprovider())()
-	testAccProviders = map[string]*schema.Provider{
-		"akamai": testProvider,
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
+
+	return args.Get(0).(*cps.Enrollment), args.Error(1)
 }
 
-func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
-		t.Fatalf("err: %s", err)
+func (m *mockcps) CreateEnrollment(ctx context.Context, r cps.CreateEnrollmentRequest) (*cps.CreateEnrollmentResponse, error) {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
+
+	return args.Get(0).(*cps.CreateEnrollmentResponse), args.Error(1)
 }
 
-// Only allow one test at a time to patch the client via useClient()
-var clientLock sync.Mutex
+func (m *mockcps) UpdateEnrollment(ctx context.Context, r cps.UpdateEnrollmentRequest) (*cps.UpdateEnrollmentResponse, error) {
+	args := m.Called(ctx, r)
 
-// useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client cps.CPS, f func()) {
-	clientLock.Lock()
-	orig := inst.client
-	inst.client = client
-
-	defer func() {
-		inst.client = orig
-		clientLock.Unlock()
-	}()
-
-	f()
-}
-
-// TODO marks a test as being in a "pending" state and logs a message telling the user why. Such tests are expected to
-// fail for the time being and may exist for the sake of unfinished/future features or to document known buggy cases
-// that won't be fixed right away. The failure of a pending test is not considered an error and the test will therefore
-// be skipped unless the TEST_TODO environment variable is set to a non-empty value.
-func TODO(t *testing.T, message string) {
-	t.Helper()
-	t.Log(fmt.Sprintf("TODO: %s", message))
-
-	if os.Getenv("TEST_TODO") == "" {
-		t.Skip("TODO: Set TEST_TODO=1 in env to run this test")
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
+
+	return args.Get(0).(*cps.UpdateEnrollmentResponse), args.Error(1)
 }
 
-func setEnv(home string, env map[string]string) {
-	os.Clearenv()
-	os.Setenv("HOME", home)
-	if len(env) > 0 {
-		for key, val := range env {
-			os.Setenv(key, val)
-		}
+func (m *mockcps) RemoveEnrollment(ctx context.Context, r cps.RemoveEnrollmentRequest) (*cps.RemoveEnrollmentResponse, error) {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
+
+	return args.Get(0).(*cps.RemoveEnrollmentResponse), args.Error(1)
 }
 
-func restoreEnv(env []string) {
-	os.Clearenv()
-	for _, value := range env {
-		envVar := strings.Split(value, "=")
-		os.Setenv(envVar[0], envVar[1])
+func (m *mockcps) GetChangeStatus(ctx context.Context, r cps.GetChangeStatusRequest) (*cps.Change, error) {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
+
+	return args.Get(0).(*cps.Change), args.Error(1)
 }
 
-// loadFixtureBytes returns the entire contents of the given file as a byte slice
-func loadFixtureBytes(path string) []byte {
-	contents, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
+func (m *mockcps) CancelChange(ctx context.Context, r cps.CancelChangeRequest) (*cps.CancelChangeResponse, error) {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
-	return contents
+
+	return args.Get(0).(*cps.CancelChangeResponse), args.Error(1)
 }
 
-// loadFixtureString returns the entire contents of the given file as a string
-func loadFixtureString(format string, args ...interface{}) string {
-	return string(loadFixtureBytes(fmt.Sprintf(format, args...)))
+func (m *mockcps) UpdateChange(ctx context.Context, r cps.UpdateChangeRequest) (*cps.UpdateChangeResponse, error) {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*cps.UpdateChangeResponse), args.Error(1)
+}
+
+func (m *mockcps) GetChangeLetsEncryptChallenges(ctx context.Context, r cps.GetChangeRequest) (*cps.DvChallenges, error) {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*cps.DvChallenges), args.Error(1)
+}
+
+func (m *mockcps) AcknowledgeDVChallenges(ctx context.Context, r cps.AcknowledgementRequest) error {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return args.Error(0)
+	}
+
+	return args.Error(0)
 }

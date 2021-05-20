@@ -11,6 +11,7 @@ require (
 	github.com/hashicorp/go-hclog v0.9.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
 	github.com/jedib0t/go-pretty/v6 v6.0.4
+	github.com/jinzhu/copier v0.3.0
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.6.1
