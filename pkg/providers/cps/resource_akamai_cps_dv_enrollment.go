@@ -19,6 +19,15 @@ import (
 	"time"
 )
 
+var (
+	PollForChangeStatusInterval = 10 * time.Second
+)
+
+const (
+	statusCoordinateDomainValidation = "coodinate-domain-validation"
+	statusVerificationWarnings       = "wait-review-pre-verification-safety-checks"
+)
+
 func resourceCPSDVEnrollment() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceCPSDVEnrollmentCreate,
@@ -48,6 +57,10 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Type:     schema.TypeBool,
 				Required: true,
 				ForceNew: true,
+			},
+			"acknowledge_pre_verification_warnings": {
+				Type:     schema.TypeBool,
+				Optional: true,
 			},
 			"admin_contact": {
 				Type:     schema.TypeSet,
@@ -443,8 +456,13 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(strconv.Itoa(res.ID))
 
-	err = waitForVerification(ctx, client, res.ID)
+	acknowledgeWarnings, err := tools.GetBoolValue("acknowledge_pre_verification_warnings", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	err = waitForVerification(ctx, log, client, res.ID, acknowledgeWarnings)
 	if err != nil {
+		d.Partial(true)
 		return diag.FromErr(err)
 	}
 	return resourceCPSDVEnrollmentRead(ctx, d, m)
@@ -498,13 +516,24 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	attrs["certificate_type"] = enrollment.CertificateType
 	attrs["validation_type"] = enrollment.ValidationType
 
-	err = rdSetAttrs(ctx, d, attrs)
+	err = cpstools.SetBatch(ctx, d, attrs)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	changeID, err := getChangeIDFromPendingChanges(enrollment.PendingChanges)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	changeStatusReq := cps.GetChangeStatusRequest{
+		EnrollmentID: enrollmentID,
+		ChangeID:     changeID,
+	}
+	status, err := client.GetChangeStatus(ctx, changeStatusReq)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if len(status.AllowedInput) < 1 || status.AllowedInput[0].Type != "lets-encrypt-challenges" {
+		return nil
 	}
 	getChallengesReq := cps.GetChangeRequest{
 		EnrollmentID: enrollmentID,
@@ -648,14 +677,19 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(strconv.Itoa(res.ID))
 
-	err = waitForVerification(ctx, client, res.ID)
+	acknowledgeWarnings, err := tools.GetBoolValue("acknowledge_pre_verification_warnings", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	err = waitForVerification(ctx, log, client, res.ID, acknowledgeWarnings)
 	if err != nil {
+		d.Partial(true)
 		return diag.FromErr(err)
 	}
 	return resourceCPSDVEnrollmentRead(ctx, d, m)
 }
 
-func waitForVerification(ctx context.Context, client cps.CPS, enrollmentID int) error {
+func waitForVerification(ctx context.Context, logger log.Interface, client cps.CPS, enrollmentID int, acknowledgeWarnings bool) error {
 	getEnrollmentReq := cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}
 	enrollmentGet, err := client.GetEnrollment(ctx, getEnrollmentReq)
 	if err != nil {
@@ -674,12 +708,35 @@ func waitForVerification(ctx context.Context, client cps.CPS, enrollmentID int) 
 	if err != nil {
 		return err
 	}
-	for status.StatusInfo.Status != "coodinate-domain-validation" {
+	for status.StatusInfo.Status != statusCoordinateDomainValidation {
 		select {
-		case <-time.After(10 * time.Second):
+		case <-time.After(PollForChangeStatusInterval):
 			status, err = client.GetChangeStatus(ctx, changeStatusReq)
 			if err != nil {
 				return err
+			}
+			if status.StatusInfo != nil && status.StatusInfo.Status == statusVerificationWarnings {
+				warnings, err := client.GetChangePreVerificationWarnings(ctx, cps.GetChangeRequest{
+					EnrollmentID: enrollmentID,
+					ChangeID:     changeID,
+				})
+				if err != nil {
+					return err
+				}
+				logger.Debugf("Pre-verification warnings: %s", warnings.Warnings)
+				if acknowledgeWarnings {
+					err = client.AcknowledgePreVerificationWarnings(ctx, cps.AcknowledgementRequest{
+						Acknowledgement: cps.Acknowledgement{Acknowledgement: cps.AcknowledgementAcknowledge},
+						EnrollmentID:    enrollmentID,
+						ChangeID:        changeID,
+					})
+					if err != nil {
+						return err
+					}
+					continue
+				}
+				return fmt.Errorf("enrollment pre-verification returned warnings and the enrollment cannot be validated. Please fix the issues or set acknowledge_pre_validation_warnings flag to true then run 'terraform apply' again: %s",
+					warnings.Warnings)
 			}
 			log.Debugf("Change status: %s", status.StatusInfo.Status)
 			if status.StatusInfo != nil && status.StatusInfo.Error != nil && status.StatusInfo.Error.Description != "" {
@@ -986,18 +1043,4 @@ func getChangeIDFromPendingChanges(pendingChanges []string) (int, error) {
 		return 0, err
 	}
 	return changeID, nil
-}
-
-// Set many attributes of a schema.ResourceData in one call
-func rdSetAttrs(ctx context.Context, d *schema.ResourceData, AttributeValues map[string]interface{}) error {
-	logger := log.FromContext(ctx)
-
-	for attr, value := range AttributeValues {
-		if err := d.Set(attr, value); err != nil {
-			logger.WithError(err).Errorf("could not set %q", attr)
-			return err
-		}
-	}
-
-	return nil
 }

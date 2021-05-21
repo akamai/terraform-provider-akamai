@@ -5,13 +5,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"testing"
+	"time"
 )
 
 func TestDVValidation(t *testing.T) {
 	t.Run("basic test", func(t *testing.T) {
 		client := &mockcps{}
+		PollForChangeStatusInterval = 1 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Once()
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
+			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
+				State: "running",
+			}}, nil).Once()
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
 			Return(&cps.Change{StatusInfo: &cps.StatusInfo{

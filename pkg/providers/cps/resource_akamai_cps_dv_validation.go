@@ -75,7 +75,7 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	for status.StatusInfo.State == "running" {
 		select {
-		case <-time.After(10 * time.Second):
+		case <-time.After(PollForChangeStatusInterval):
 			status, err = client.GetChangeStatus(ctx, changeStatusReq)
 			if err != nil {
 				return diag.FromErr(err)
@@ -84,7 +84,7 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 			if status.StatusInfo != nil && status.StatusInfo.Error != nil && status.StatusInfo.Error.Description != "" {
 				return diag.Errorf(status.StatusInfo.Error.Description)
 			}
-			if status.StatusInfo.Status != "coodinate-domain-validation" {
+			if status.StatusInfo.Status != statusCoordinateDomainValidation {
 				return diag.Errorf("invalid validation status received: %s", status.StatusInfo.Status)
 			}
 		case <-ctx.Done():
@@ -142,7 +142,7 @@ func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	if status != nil {
+	if status.StatusInfo != nil {
 		if err := d.Set("status", status.StatusInfo.Status); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}

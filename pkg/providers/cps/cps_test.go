@@ -80,17 +80,37 @@ func (m *mockcps) UpdateChange(ctx context.Context, r cps.UpdateChangeRequest) (
 	return args.Get(0).(*cps.UpdateChangeResponse), args.Error(1)
 }
 
-func (m *mockcps) GetChangeLetsEncryptChallenges(ctx context.Context, r cps.GetChangeRequest) (*cps.DvChallenges, error) {
+func (m *mockcps) GetChangeLetsEncryptChallenges(ctx context.Context, r cps.GetChangeRequest) (*cps.DVArray, error) {
 	args := m.Called(ctx, r)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(*cps.DvChallenges), args.Error(1)
+	return args.Get(0).(*cps.DVArray), args.Error(1)
+}
+
+func (m *mockcps) GetChangePreVerificationWarnings(ctx context.Context, r cps.GetChangeRequest) (*cps.PreVerificationWarnings, error) {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*cps.PreVerificationWarnings), args.Error(1)
 }
 
 func (m *mockcps) AcknowledgeDVChallenges(ctx context.Context, r cps.AcknowledgementRequest) error {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return args.Error(0)
+	}
+
+	return args.Error(0)
+}
+
+func (m *mockcps) AcknowledgePreVerificationWarnings(ctx context.Context, r cps.AcknowledgementRequest) error {
 	args := m.Called(ctx, r)
 
 	if args.Get(0) == nil {
