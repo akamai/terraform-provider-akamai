@@ -51,11 +51,6 @@ func GetContactInfo(set *schema.Set) (*cps.Contact, error) {
 }
 
 func GetCSR(d *schema.ResourceData) (*cps.CSR, error) {
-	num := 1
-	switch num {
-	case 0, 1:
-
-	}
 	csrSet, err := tools.GetSetValue("csr", d)
 	if err != nil {
 		return nil, err
@@ -147,9 +142,9 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 		DNSNames:      dnsNames,
 	}
 	networkConfig.OCSPStapling = cps.OCSPStapling(networkConfigMap["ocsp_stapling"].(string))
-	disallowedTLSVersionsArray := networkConfigMap["disallowed_tls_versions"].(*schema.Set)
+	disallowedTLSVersionsSet := networkConfigMap["disallowed_tls_versions"].(*schema.Set)
 	var disallowedTLSVersions []string
-	for _, val := range disallowedTLSVersionsArray.List() {
+	for _, val := range disallowedTLSVersionsSet.List() {
 		disallowedTLSVersions = append(disallowedTLSVersions, val.(string))
 	}
 	networkConfig.DisallowedTLSVersions = disallowedTLSVersions

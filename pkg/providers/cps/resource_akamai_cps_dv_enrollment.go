@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
@@ -34,7 +35,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 		UpdateContext: resourceCPSDVEnrollmentUpdate,
 		DeleteContext: resourceCPSDVEnrollmentDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceCPSDVEnrollmentImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"common_name": {
@@ -285,8 +286,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				if !diff.HasChange("sans") {
 					return nil
 				}
-				domainsToValidate := make([]interface{}, 0)
-				domainsToValidate = append(domainsToValidate, map[string]interface{}{"domain": diff.Get("common_name").(string)})
+				domainsToValidate := []interface{}{map[string]interface{}{"domain": diff.Get("common_name").(string)}}
 				if sans, ok := diff.Get("sans").(*schema.Set); ok {
 					for _, san := range sans.List() {
 						domain := map[string]interface{}{"domain": san.(string)}
@@ -587,9 +587,31 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	client := inst.Client(meta)
 	logger.Debug("Updating enrollment")
 
+	acknowledgeWarnings, err := tools.GetBoolValue("acknowledge_pre_verification_warnings", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 	enrollmentID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	if !d.HasChanges(
+		"sans",
+		"admin_contact",
+		"tech_contact",
+		"certificate_chain_type",
+		"csr",
+		"enable_multi_stacked_certificates",
+		"network_configuration",
+		"signature_algorithm",
+		"organization",
+	) {
+		logger.Debug("Enrollment does not have to be updated. Verifying status.")
+		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings); err != nil {
+			d.Partial(true)
+			return diag.FromErr(err)
+		}
+		return resourceCPSDVEnrollmentRead(ctx, d, m)
 	}
 	enrollment := cps.Enrollment{
 		CertificateType: "san",
@@ -669,18 +691,13 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		EnrollmentID:              enrollmentID,
 		AllowCancelPendingChanges: &allowCancel,
 	}
-	res, err := client.UpdateEnrollment(ctx, req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId(strconv.Itoa(res.ID))
 
-	acknowledgeWarnings, err := tools.GetBoolValue("acknowledge_pre_verification_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if _, err := client.UpdateEnrollment(ctx, req); err != nil {
 		return diag.FromErr(err)
 	}
-	err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings)
-	if err != nil {
+	d.SetId(strconv.Itoa(enrollmentID))
+
+	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings); err != nil {
 		d.Partial(true)
 		return diag.FromErr(err)
 	}
@@ -771,4 +788,19 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 		}
 	}
 	return nil
+}
+
+func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	ctx = log.NewContext(ctx, akamai.Meta(m).Log("CPS", "resource"))
+	parts := strings.Split(d.Id(), ",")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("import id has to be a comma separated list of enrollment id and contract id")
+	}
+	enrollmentID := parts[0]
+	contractID := parts[1]
+	if err := d.Set("contract_id", contractID); err != nil {
+		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	d.SetId(enrollmentID)
+	return []*schema.ResourceData{d}, nil
 }
