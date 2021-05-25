@@ -3,17 +3,18 @@ package cps
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
-	"net/url"
-	"strconv"
-	"strings"
-	"time"
 )
 
 func resourceCPSDVValidation() *schema.Resource {

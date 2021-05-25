@@ -1,11 +1,12 @@
 package cps
 
 import (
+	"testing"
+	"time"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
-	"testing"
-	"time"
 )
 
 func TestDVValidation(t *testing.T) {

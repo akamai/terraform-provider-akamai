@@ -2,6 +2,7 @@ package cps
 
 import (
 	"context"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
 	"github.com/stretchr/testify/mock"
 )

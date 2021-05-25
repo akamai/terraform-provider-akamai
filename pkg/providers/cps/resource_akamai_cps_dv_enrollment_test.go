@@ -1,13 +1,14 @@
 package cps
 
 import (
+	"regexp"
+	"testing"
+	"time"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/mock"
-	"regexp"
-	"testing"
-	"time"
 )
 
 func TestResourceDVEnrollment(t *testing.T) {
