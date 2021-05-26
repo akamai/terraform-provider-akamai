@@ -54,8 +54,8 @@ You need to prove that you have control over each of the domains listed in the c
 
 Complete one of the challenges returned by [akamai_cps_dv_enrollment](../resources/cps_dv_enrollment.md) resource.
 
-    * For `http_challenges`, create a file with a token and put it in the designated folder on your site. Once Akamai detects the file is in place, it asks Let's Encrypt to validate the domain.
-    * For `dns_challenges`, add a `TXT` record to the DNS configuration of your domain. If you're using [Akamai DNS Provider](../guides/get_started_dns_zone.md), you can create DNS records for the provided SANs from the same `config` file.
+* For `http_challenges`, create a file with a token and put it in the designated folder on your site. Once Akamai detects the file is in place, it asks Let's Encrypt to validate the domain.
+* For `dns_challenges`, add a `TXT` record to the DNS configuration of your domain. If you're using [Akamai DNS Provider](../guides/get_started_dns_zone.md), you can create DNS records for the provided SANs from the same `config` file.
 
 ~> **Note** If the challenge token expires, run `terraform-apply` again to pull the latest token. Terraform doesn't notify you of any changes to tokens.
 
