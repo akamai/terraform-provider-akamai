@@ -238,6 +238,10 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"registration_authority": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"dns_challenges": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -373,13 +377,15 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 		ValidationType:  "dv",
 		RA:              "lets-encrypt",
 	}
-	if err := d.Set("certificate_type", "san"); err != nil {
+	if err := d.Set("certificate_type", enrollment.CertificateType); err != nil {
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("validation_type", "dv"); err != nil {
+	if err := d.Set("validation_type", enrollment.ValidationType); err != nil {
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
-
+	if err := d.Set("registration_authority", enrollment.RA); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
 	adminContactSet, err := tools.GetSetValue("admin_contact", d)
 	if err != nil {
 		return diag.FromErr(err)
