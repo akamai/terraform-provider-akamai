@@ -804,6 +804,12 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollmentID := parts[0]
 	contractID := parts[1]
+	if enrollmentID == "" || contractID == "" {
+		return nil, fmt.Errorf("enrollment and contract IDs must have non empty values")
+	}
+	if _, err := strconv.Atoi(enrollmentID); err != nil {
+		return nil, fmt.Errorf("enrollment ID must be a number: %s", err)
+	}
 	if err := d.Set("contract_id", contractID); err != nil {
 		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
