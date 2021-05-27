@@ -174,7 +174,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 			},
 			"signature_algorithm": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 			},
 			"tech_contact": {
 				Type:     schema.TypeSet,
@@ -797,7 +797,14 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 }
 
 func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("CPS", "resource"))
+	meta := akamai.Meta(m)
+	logger := meta.Log("CPS", "resourceDVEnrollment")
+	// create a context with logging for api calls
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+	logger.Debug("Importing enrollment")
 	parts := strings.Split(d.Id(), ",")
 	if len(parts) != 2 {
 		return nil, fmt.Errorf("import id has to be a comma separated list of enrollment id and contract id")
