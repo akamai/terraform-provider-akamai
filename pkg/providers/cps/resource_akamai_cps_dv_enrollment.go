@@ -521,7 +521,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	attrs["certificate_type"] = enrollment.CertificateType
 	attrs["validation_type"] = enrollment.ValidationType
 
-	err = cpstools.SetBatch(ctx, d, attrs)
+	err = tools.SetAttrs(d, attrs)
 	if err != nil {
 		return diag.FromErr(err)
 	}
