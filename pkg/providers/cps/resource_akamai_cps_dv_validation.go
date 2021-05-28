@@ -2,6 +2,7 @@ package cps
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -15,6 +16,11 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+var (
+	changeAckDeadline      = 1 * time.Minute
+	changeAckRetryInterval = 10 * time.Second
 )
 
 func resourceCPSDVValidation() *schema.Resource {
@@ -40,13 +46,13 @@ func resourceCPSDVValidation() *schema.Resource {
 func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Print("DEBUG: enter resourceCPSDVValidationCreate")
 	meta := akamai.Meta(m)
-	log := meta.Log("CPS", "resourceDVEnrollment")
+	logger := meta.Log("CPS", "resourceDVEnrollment")
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 	client := inst.Client(meta)
-	log.Debug("Creating dv validation")
+	logger.Debug("Creating dv validation")
 	enrollmentID, err := tools.GetIntValue("enrollment_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -74,19 +80,20 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	for status.StatusInfo.State == "running" {
+	for status.StatusInfo.Status != statusCoordinateDomainValidation {
 		select {
 		case <-time.After(PollForChangeStatusInterval):
 			status, err = client.GetChangeStatus(ctx, changeStatusReq)
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			log.Debugf("Change status: %s", status.StatusInfo.Status)
+			changeStatusJSON, err := json.MarshalIndent(status, "", "\t")
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			logger.Debugf("Change status: %s", changeStatusJSON)
 			if status.StatusInfo != nil && status.StatusInfo.Error != nil && status.StatusInfo.Error.Description != "" {
 				return diag.Errorf(status.StatusInfo.Error.Description)
-			}
-			if status.StatusInfo.Status != statusCoordinateDomainValidation {
-				return diag.Errorf("invalid validation status received: %s", status.StatusInfo.Status)
 			}
 		case <-ctx.Done():
 			return diag.Errorf("change status context terminated: %s", ctx.Err())
@@ -97,24 +104,43 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 		EnrollmentID:    enrollmentID,
 		ChangeID:        changeID,
 	})
-	if err != nil {
-		return diag.FromErr(err)
+	if err == nil {
+		d.SetId(strconv.Itoa(enrollmentID))
+		return resourceCPSDVValidationRead(ctx, d, m)
 	}
-	d.SetId(strconv.Itoa(enrollmentID))
 
-	return resourceCPSDVValidationRead(ctx, d, m)
+	// in case of error, attempt retry
+	logger.Debugf("error sending acknowledgement request: %s", err)
+	ackCtx, cancel := context.WithTimeout(ctx, changeAckDeadline)
+	defer cancel()
+	for {
+		select {
+		case <-time.After(changeAckRetryInterval):
+			err = client.AcknowledgeDVChallenges(ctx, cps.AcknowledgementRequest{
+				Acknowledgement: cps.Acknowledgement{Acknowledgement: cps.AcknowledgementAcknowledge},
+				EnrollmentID:    enrollmentID,
+				ChangeID:        changeID,
+			})
+			if err == nil {
+				d.SetId(strconv.Itoa(enrollmentID))
+				return resourceCPSDVValidationRead(ctx, d, m)
+			}
+		case <-ackCtx.Done():
+			return diag.Errorf("retry timeout reached - error sending acknowledgement request: %s", err)
+		}
+	}
 }
 
 func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Print("DEBUG: enter resourceCPSDVValidationCreate")
 	meta := akamai.Meta(m)
-	log := meta.Log("CPS", "resourceDVEnrollment")
+	logger := meta.Log("CPS", "resourceDVEnrollment")
 	ctx = session.ContextWithOptions(
 		ctx,
-		session.WithContextLog(log),
+		session.WithContextLog(logger),
 	)
 	client := inst.Client(meta)
-	log.Debug("Reading dv validation")
+	logger.Debug("Reading dv validation")
 	enrollmentID, err := tools.GetIntValue("enrollment_id", d)
 	if err != nil {
 		return diag.FromErr(err)
