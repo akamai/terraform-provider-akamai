@@ -5,7 +5,7 @@ description: |-
   Get Started with Akamai Certificate Provisioning using Terraform
 ---
 
-# Get Started with Certificate Provisioning
+# Get started with Certificate Provisioning
 
 When setting a secure website, you need to ensure that the delivery of content to and from that site is secure. Certificate Provisioning System (CPS) provides the SSL/TLS certificates that authenticate the secure connection the browsers make during a secure delivery.
 
@@ -17,13 +17,16 @@ guide.
 1. Get familiar with:
 
     * SSL/TLS certificates
+
     * Certificate authorities (CAs)
+
     * How Akamai obtains certificates on the requester’s behalf, which includes the generation of public/private key pairs and certificate signing requests (CSRs)
+
     * DNS
 
     If you have questions about these concepts, contact your Akamai account representative.
 
-## CPS Workflow
+## CPS workflow
 
 With the Certificate Provisioning module, you can [create](#validate-your-domain) new Domain Validation (DV) certificate enrollments or [make changes](#modify-subject-alternate-names-sans) to the existing ones.
 
@@ -57,7 +60,7 @@ Complete one of the challenges returned by [akamai_cps_dv_enrollment](../resourc
 * For `http_challenges`, create a file with a token and put it in the designated folder on your site. Once Akamai detects the file is in place, it asks Let's Encrypt to validate the domain.
 * For `dns_challenges`, add a `TXT` record to the DNS configuration of your domain. If you're using [Akamai DNS Provider](../guides/get_started_dns_zone.md), you can create DNS records for the provided SANs from the same `config` file.
 
-~> **Note** If the challenge token expires, run `terraform-apply` again to pull the latest token. Terraform doesn't notify you of any changes to tokens.
+~> **Note** If the challenge token expires, run `terraform-apply` again to pull the latest token. Even though Terraform doesn't automatically notify you of any updates to tokens, you can set [outputs](https://www.terraform.io/docs/language/values/outputs.html) for `dns_challenges` and `http_challenges`. If applicable, `terraform-apply` returns new values for those arrays.
 
 ## Send the validation acknowledgement
 

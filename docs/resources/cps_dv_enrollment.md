@@ -96,7 +96,7 @@ output "enrollment_id" {
 
 The following arguments are supported:
 
-* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
+* `contract_id` - (Required) A contract's unique ID, without the `ctr_` prefix.
 * `common_name` - (Required) The fully qualified domain name (FQDN) for which you plan to use your certificate. The domain name you specify here must be owned or have legal rights to use the domain by the company you specify as `organization`. The company that owns the domain name must be a legally incorporated entity and be active and in good standing.
 * `sans` - (Optional) Additional common names to create a Subject Alternative Names (SAN) list.
 * `secure_network` - (Required) The type of deployment network you want to use. `Standard TLS` deploys your certificate to Akamai’s standard secure network, but it isn't PCI compliant. `Enhanced TLS` deploys your certificate to Akamai’s more secure network with PCI compliance capability.
@@ -148,7 +148,7 @@ The following arguments are supported:
       * `ocsp_stapling` - (Optional) Whether to use OCSP stapling for the enrollment, either `on`, `off` or `not-set`. OCSP Stapling improves performance by including a valid OCSP response in every TLS handshake. This option allows the visitors on your site to query the Online Certificate Status Protocol (OCSP) server at regular intervals to obtain a signed time-stamped OCSP response. This response must be signed by the CA, not the server, therefore ensuring security. Disable OSCP Stapling if you want visitors to your site to contact the CA directly for an OSCP response. OCSP allows you to obtain the revocation status of a certificate.
       * `preferred_ciphers` - (Optional) Ciphers that you preferably want to include for the enrollment while deploying it on the network. Defaults to `ak-akamai-default` when it is not set. For more information on cipher profiles, see [Akamai community](https://community.akamai.com/customers/s/article/SSL-TLS-Cipher-Profiles-for-Akamai-Secure-CDNrxdxm).
       * `quic_enabled` - (Optional) Whether to use the QUIC transport layer network protocol.
-* `signature_algorithm` - (Optional) The Secure Hash Algorithm (SHA) function, either `SHA-1` or `SHA-256`.
+* `signature_algorithm` - (Required) The Secure Hash Algorithm (SHA) function, either `SHA-1` or `SHA-256`.
 * `tech_contact` - (Required) The technical contact within Akamai. This is the person you work closest with at Akamai and who can verify the certificate request. The CA calls this contact if there are any issues with the certificate and they can't reach the `admin_contact`.
 
     Requires these additional arguments:
@@ -172,16 +172,19 @@ The following arguments are supported:
       * `name` - (Required) The name of your organization.
       * `phone` - (Required) The phone number of the administrator who you want to use as a contact at your company.
       * `address_line_one` - (Required) The address of your organization.
-      * `address_line_two` - (Required) The address of your organization.
+      * `address_line_two` - (Optional) The address of your organization.
       * `city` - (Required) The city where your organization resides.
       * `region` - (Required) The region of your organization, typically a state or province.
       * `postal_code` - (Required) The postal code of your organization.
       * `country_code` - (Required) The code for the country where your organization resides.
-* `certificate_type` - (Required) This value populates automatically with the `san` certificate type.
-* `validation_type` - (Required) This value populates automatically with the `dv` validation type.
 
 ## Attributes reference
 
+The resource returns these attributes:
+
+* `registration_authority` - (Required) This value populates automatically with the `lets-encrypt` certificate type and is preserved in the `state` file.
+* `certificate_type` - (Required) This value populates automatically with the `san` certificate type and is preserved in the `state` file.
+* `validation_type` - (Required) This value populates automatically with the `dv` validation type and is preserved in the `state` file.
 * `id` - The unique identifier for this enrollment.
 * `dns_challenges` - The validation challenge for the domains listed in the certificate. To successfully perform the validation, only one challenge for each domain must be complete, either `dns_challenges` or `http_challenges`.
 
