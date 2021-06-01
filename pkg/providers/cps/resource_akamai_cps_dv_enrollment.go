@@ -75,6 +75,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 			},
 			"certificate_chain_type": {
 				Type:     schema.TypeString,
+				Default:  "default",
 				Optional: true,
 			},
 			"csr": {
@@ -467,7 +468,6 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings)
 	if err != nil {
-		d.Partial(true)
 		return diag.FromErr(err)
 	}
 	return resourceCPSDVEnrollmentRead(ctx, d, m)
@@ -614,7 +614,6 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	) {
 		logger.Debug("Enrollment does not have to be updated. Verifying status.")
 		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings); err != nil {
-			d.Partial(true)
 			return diag.FromErr(err)
 		}
 		return resourceCPSDVEnrollmentRead(ctx, d, m)
@@ -704,7 +703,6 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	d.SetId(strconv.Itoa(enrollmentID))
 
 	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings); err != nil {
-		d.Partial(true)
 		return diag.FromErr(err)
 	}
 	return resourceCPSDVEnrollmentRead(ctx, d, m)

@@ -169,15 +169,12 @@ func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
+	d.SetId(strconv.Itoa(enrollmentID))
 	if status.StatusInfo != nil {
 		if err := d.Set("status", status.StatusInfo.Status); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-		d.SetId(strconv.Itoa(enrollmentID))
-		return nil
 	}
-
-	d.SetId("")
 	return nil
 }
 
