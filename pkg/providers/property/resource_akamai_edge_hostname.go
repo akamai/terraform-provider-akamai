@@ -182,10 +182,10 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	// ip_behavior is required value in schema.
 	newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
-	var ehnId string
+	var ehnID string
 	for _, h := range edgeHostnames.EdgeHostnames.Items {
 		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
-			ehnId = h.ID
+			ehnID = h.ID
 		}
 	}
 	certEnrollmentID, err := tools.GetIntValue("certificate", d)
@@ -194,13 +194,13 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 		if newHostname.SecureNetwork == papi.EHSecureNetworkEnhancedTLS {
-			return diag.FromErr(fmt.Errorf("a certificate enrollment ID is required for Enhanced TLS edgekey.net edge hostnames"))
+			return diag.FromErr(fmt.Errorf("a certificate enrollment ID is required for Enhanced TLS edge hostnames with 'edgekey.net' suffix"))
 		}
 	}
 
 	newHostname.CertEnrollmentID = certEnrollmentID
 	newHostname.SlotNumber = certEnrollmentID
-	if ehnId == "" {
+	if ehnID == "" {
 		logger.Debugf("Creating new edge hostname: %#v", newHostname)
 		hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
 			EdgeHostname: newHostname,
@@ -211,10 +211,11 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 		d.SetId(hostname.EdgeHostnameID)
+		ehnID = hostname.EdgeHostnameID
 	} else {
-		d.SetId(ehnId)
+		d.SetId(ehnID)
 	}
-	logger.Debugf("Resulting EHN Id: %s ", ehnId)
+	logger.Debugf("Resulting EHN Id: %s ", ehnID)
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
 }
 
