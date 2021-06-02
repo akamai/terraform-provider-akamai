@@ -125,7 +125,7 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 				sendCaBool := sendCa.(bool)
 				mutualAuth.AuthenticationOptions.SendCAListToClient = &sendCaBool
 			}
-			mutualAuth.SetID = networkConfigMap["mutual_authentication_set_id"].(string)
+			mutualAuth.SetID = mutualAuthMap["set_id"].(string)
 			networkConfig.ClientMutualAuthentication = mutualAuth
 		}
 	}
@@ -224,13 +224,15 @@ func CSRToMap(csr cps.CSR) map[string]interface{} {
 func NetworkConfigToMap(networkConfig cps.NetworkConfiguration) map[string]interface{} {
 	networkConfigMap := make(map[string]interface{})
 	if networkConfig.ClientMutualAuthentication != nil {
-		networkConfigMap["set_id"] = networkConfig.ClientMutualAuthentication.SetID
+		mutualAuthMap := make(map[string]interface{})
+		mutualAuthMap["set_id"] = networkConfig.ClientMutualAuthentication.SetID
 		if networkConfig.ClientMutualAuthentication.AuthenticationOptions != nil {
-			networkConfigMap["mutual_authentication_send_ca_list_to_client"] = networkConfig.ClientMutualAuthentication.AuthenticationOptions.SendCAListToClient
+			mutualAuthMap["send_ca_list_to_client"] = *networkConfig.ClientMutualAuthentication.AuthenticationOptions.SendCAListToClient
 			if networkConfig.ClientMutualAuthentication.AuthenticationOptions.OCSP != nil {
-				networkConfigMap["mutual_authentication_oscp_enabled"] = *networkConfig.ClientMutualAuthentication.AuthenticationOptions.OCSP.Enabled
+				mutualAuthMap["ocsp_enabled"] = *networkConfig.ClientMutualAuthentication.AuthenticationOptions.OCSP.Enabled
 			}
 		}
+		networkConfigMap["client_mutual_authentication"] = mutualAuthMap
 	}
 	networkConfigMap["disallowed_tls_versions"] = networkConfig.DisallowedTLSVersions
 	if networkConfig.DNSNameSettings != nil {
@@ -238,7 +240,7 @@ func NetworkConfigToMap(networkConfig cps.NetworkConfiguration) map[string]inter
 	}
 	networkConfigMap["geography"] = networkConfig.Geography
 	networkConfigMap["must_have_ciphers"] = networkConfig.MustHaveCiphers
-	networkConfigMap["ocsp_stapling"] = networkConfig.OCSPStapling
+	networkConfigMap["ocsp_stapling"] = string(networkConfig.OCSPStapling)
 	networkConfigMap["preferred_ciphers"] = networkConfig.PreferredCiphers
 	networkConfigMap["quic_enabled"] = networkConfig.QuicEnabled
 	return networkConfigMap
