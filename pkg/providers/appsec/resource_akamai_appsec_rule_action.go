@@ -73,6 +73,14 @@ func resourceRuleActionRead(ctx context.Context, d *schema.ResourceData, m inter
 		}
 		getRuleAction.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getRuleAction.Version = version
+		}
+
 		policyid := s[2]
 		getRuleAction.PolicyID = policyid
 
@@ -224,6 +232,13 @@ func resourceRuleActionUpdate(ctx context.Context, d *schema.ResourceData, m int
 		}
 		updateRuleAction.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateRuleAction.Version = version
+		}
 		policyid := s[2]
 		updateRuleAction.PolicyID = policyid
 

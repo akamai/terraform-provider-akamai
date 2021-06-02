@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -45,7 +47,7 @@ func resourceNetworkList() *schema.Resource {
 				Required: true,
 			},
 			"list": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
 			},
@@ -62,6 +64,11 @@ func resourceNetworkList() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "uniqueId",
+			},
+			"network_list_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "network_list_id",
 			},
 			"sync_point": {
 				Type:        schema.TypeInt,
@@ -112,22 +119,22 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	netlist := d.Get("list").([]interface{})
-	nru := make([]string, 0, len(netlist))
+	netlist := d.Get("list").(*schema.Set)
+	nru := make([]string, 0, len(netlist.List()))
 
-	for _, h := range netlist {
-		nru = append(nru, h.(string))
+	for _, h := range netlist.List() {
+		nru = append(nru, strings.ToLower(h.(string)))
 	}
 
-	finallist := make([]string, 0, len(d.Get("list").([]interface{})))
+	finallist := make([]string, 0, len(netlist.List()))
 
 	switch mode {
 	case Remove:
-		for _, hl := range netlist {
+		for _, hl := range netlist.List() {
 			for _, h := range networklists.NetworkLists {
 
 				if h.Name == hl.(string) {
-					finallist = append(finallist, h.Name)
+					finallist = append(finallist, strings.ToLower(h.Name))
 				}
 			}
 		}
@@ -135,9 +142,9 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		var oneShot bool
 
 		for _, h := range networklists.NetworkLists {
-			finallist = appendIfMissing(finallist, h.Name)
-			for _, hl := range netlist {
-				finallist = appendIfMissing(finallist, hl.(string))
+			finallist = appendIfMissing(finallist, strings.ToLower(h.Name))
+			for _, hl := range netlist.List() {
+				finallist = appendIfMissing(finallist, strings.ToLower(hl.(string)))
 			}
 			oneShot = true
 		}
@@ -166,6 +173,10 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	d.Set("sync_point", strconv.Itoa(spcr.SyncPoint))
 
 	if err := d.Set("uniqueid", spcr.UniqueID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("network_list_id", spcr.UniqueID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -218,31 +229,33 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	netlist := d.Get("list").([]interface{})
-	nru := make([]string, 0, len(netlist))
+	netlist := d.Get("list").(*schema.Set)
+	nru := make([]string, 0, len(netlist.List()))
 
-	for _, h := range netlist {
-		nru = append(nru, h.(string))
+	for _, h := range netlist.List() {
+		nru = append(nru, strings.ToLower(h.(string)))
 	}
 
-	finallist := make([]string, 0, len(d.Get("list").([]interface{})))
+	finallist := make([]string, 0, len(netlist.List()))
 
 	switch mode {
 	case Remove:
-		for _, hl := range netlist {
-			for _, h := range networkLists.List {
+		for _, hl := range netlist.List() {
 
-				if !(h == hl.(string)) {
-					finallist = append(finallist, h)
+			for idx, h := range networkLists.List {
+				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+					networkLists.List = RemoveIndex(networkLists.List, idx)
 				}
 			}
 		}
+		finallist = networkLists.List
+
 	case Append:
 		for _, h := range networkLists.List {
-			finallist = append(finallist, h)
+			finallist = append(finallist, strings.ToLower(h))
 		}
-		for _, hl := range netlist {
-			finallist = appendIfMissing(finallist, hl.(string))
+		for _, hl := range netlist.List() {
+			finallist = appendIfMissing(finallist, strings.ToLower(hl.(string)))
 		}
 	case Replace:
 		finallist = nru
@@ -298,6 +311,17 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	var detectCase string
+
+	netlist := d.Get("list").(*schema.Set)
+	for _, hl := range netlist.List() {
+		if hl.(string) == strings.ToLower(hl.(string)) {
+			detectCase = "LOWER"
+		} else {
+			detectCase = "UPPER"
+		}
+	}
+	finalldata := make([]string, 0, len(netlist.List()))
 
 	networklist, err := client.GetNetworkList(ctx, getNetworkList)
 	if err != nil {
@@ -305,7 +329,43 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	logger.Errorf("calling 'getNetworkList': SYNC POINT %d", networklist.SyncPoint)
+	switch mode {
+	case Remove:
+		for _, hl := range netlist.List() {
+			for _, h := range networklist.List {
+
+				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+					finalldata = append(finalldata, strings.ToLower(h))
+				}
+			}
+		}
+
+		if len(finalldata) == 0 {
+			for _, hl := range netlist.List() {
+				finalldata = append(finalldata, strings.ToLower(hl.(string)))
+			}
+		}
+
+	case Append:
+		for _, h := range networklist.List {
+
+			for _, hl := range netlist.List() {
+				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+					finalldata = append(finalldata, strings.ToLower(h))
+				}
+			}
+		}
+	case Replace:
+		for _, h := range networklist.List {
+			finalldata = append(finalldata, strings.ToLower(h))
+		}
+	default:
+		for _, h := range networklist.List {
+			finalldata = append(finalldata, strings.ToLower(h))
+		}
+	}
+
+	sort.Strings(finalldata)
 
 	if err := d.Set("sync_point", networklist.SyncPoint); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -319,12 +379,28 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	if detectCase == "LOWER" {
+		for index, value := range finalldata {
+			finalldata[index] = strings.ToLower(value)
+		}
+	} else {
+		for index, value := range finalldata {
+			finalldata[index] = strings.ToUpper(value)
+		}
+	}
+
 	if err := d.Set("description", networklist.Description); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("list", networklist.List); err != nil {
+	logger.Errorf("calling 'getNetworkList RESULT': %v", finalldata)
+	d.Set("list", nil)
+	if err := d.Set("list", finalldata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if mode == "" {
+		mode = "REPLACE"
 	}
 
 	if err := d.Set("mode", mode); err != nil {
@@ -332,6 +408,10 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("uniqueid", networklist.UniqueID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("network_list_id", networklist.UniqueID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -347,6 +427,10 @@ func appendIfMissing(slice []string, s string) []string {
 		}
 	}
 	return append(slice, s)
+}
+
+func RemoveIndex(hl []string, index int) []string {
+	return append(hl[:index], hl[index+1:]...)
 }
 
 // Append Replace Remove mode flags

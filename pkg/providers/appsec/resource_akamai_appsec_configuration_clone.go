@@ -40,7 +40,7 @@ func resourceConfigurationClone() *schema.Resource {
 				Required: true,
 			},
 			"host_names": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
@@ -109,10 +109,12 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	createConfigurationClone.GroupID = groupID
 
-	hostnamelist := d.Get("host_names").([]interface{})
-	hnl := make([]string, 0, len(hostnamelist))
-
-	for _, h := range hostnamelist {
+	hostnameSet, err := tools.GetSetValue("host_names", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	hnl := make([]string, 0, hostnameSet.Len())
+	for _, h := range hostnameSet.List() {
 		hnl = append(hnl, h.(string))
 
 	}
@@ -123,7 +125,6 @@ func resourceConfigurationCloneCreate(ctx context.Context, d *schema.ResourceDat
 		logger.Errorf("calling 'createConfigurationClone': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	//logger.Errorf("calling 'createConfigurationClone CCR ': %v", ccr)
 
 	if err := d.Set("version", ccr.Version); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -194,6 +195,5 @@ func resourceConfigurationCloneDelete(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceConfigurationCloneUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	//return schema.NoopContext(nil, d, m)
 	return resourceConfigurationCloneRead(ctx, d, m)
 }

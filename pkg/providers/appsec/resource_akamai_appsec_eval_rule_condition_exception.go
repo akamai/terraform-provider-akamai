@@ -76,6 +76,14 @@ func resourceEvalRuleConditionExceptionRead(ctx context.Context, d *schema.Resou
 		}
 		getEvalRuleConditionException.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getEvalRuleConditionException.Version = version
+		}
+
 		policyid := s[2]
 		getEvalRuleConditionException.PolicyID = policyid
 
@@ -238,6 +246,14 @@ func resourceEvalRuleConditionExceptionUpdate(ctx context.Context, d *schema.Res
 			return diag.FromErr(errconv)
 		}
 		updateEvalRuleConditionException.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateEvalRuleConditionException.Version = version
+		}
 
 		policyid := s[2]
 		updateEvalRuleConditionException.PolicyID = policyid

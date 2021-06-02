@@ -49,7 +49,7 @@ func resourceAdvancedSettingsPrefetch() *schema.Resource {
 				Required: true,
 			},
 			"extensions": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of extensions",
@@ -78,6 +78,14 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 			return diag.FromErr(errconv)
 		}
 		getAdvancedSettingsPrefetch.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getAdvancedSettingsPrefetch.Version = version
+		}
 
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
@@ -195,6 +203,14 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 		}
 		updateAdvancedSettingsPrefetch.Version = version
 
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateAdvancedSettingsPrefetch.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -226,10 +242,10 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	}
 	updateAdvancedSettingsPrefetch.EnableRateControls = enableRateControls
 
-	extensions := d.Get("extensions").([]interface{})
-	exts := make([]string, 0, len(extensions))
+	extensions := d.Get("extensions").(*schema.Set)
+	exts := make([]string, 0, len(extensions.List()))
 
-	for _, h := range extensions {
+	for _, h := range extensions.List() {
 		exts = append(exts, h.(string))
 
 	}

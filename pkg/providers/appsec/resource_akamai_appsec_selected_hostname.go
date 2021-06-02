@@ -38,7 +38,7 @@ func resourceSelectedHostname() *schema.Resource {
 				Required: true,
 			},
 			"hostnames": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
@@ -76,6 +76,15 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(errconv)
 		}
 		getSelectedHostname.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			getSelectedHostname.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -102,18 +111,13 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	newhdata := make([]string, 0, len(selectedhostname.HostnameList))
-	for _, hosts := range selectedhostname.HostnameList {
-		newhdata = append(newhdata, hosts.Hostname)
-	}
+	hostnamelist := d.Get("hostnames").(*schema.Set)
 
-	hostnamelist := d.Get("hostnames").([]interface{})
-
-	finalhdata := make([]string, 0, len(d.Get("hostnames").([]interface{})))
+	finalhdata := make([]string, 0, len(hostnamelist.List()))
 
 	switch mode {
 	case Remove:
-		for _, hl := range hostnamelist {
+		for _, hl := range hostnamelist.List() {
 			for _, h := range selectedhostname.HostnameList {
 
 				if h.Hostname == hl.(string) {
@@ -121,10 +125,17 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 				}
 			}
 		}
+
+		if len(finalhdata) == 0 {
+			for _, hl := range hostnamelist.List() {
+				finalhdata = append(finalhdata, hl.(string))
+			}
+		}
+
 	case Append:
 		for _, h := range selectedhostname.HostnameList {
 
-			for _, hl := range hostnamelist {
+			for _, hl := range hostnamelist.List() {
 				if h.Hostname == hl.(string) {
 					finalhdata = append(finalhdata, h.Hostname)
 				}
@@ -150,6 +161,10 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 
 	if err := d.Set("version", getSelectedHostname.Version); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if mode == "" {
+		mode = "REPLACE"
 	}
 
 	if err := d.Set("mode", mode); err != nil {
@@ -186,6 +201,15 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 			return diag.FromErr(errconv)
 		}
 		updateSelectedHostname.Version = version
+
+		if d.HasChange("version") {
+			version, err := tools.GetIntValue("version", d)
+			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			updateSelectedHostname.Version = version
+		}
+
 	} else {
 		configid, err := tools.GetIntValue("config_id", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -203,9 +227,9 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 
 	hn := appsec.GetSelectedHostnamesRequest{}
 
-	hostnamelist := d.Get("hostnames").([]interface{})
+	hostnamelist := d.Get("hostnames").(*schema.Set)
 
-	for _, h := range hostnamelist {
+	for _, h := range hostnamelist.List() {
 		h1 := appsec.Hostname{}
 		h1.Hostname = h.(string)
 		hn.HostnameList = append(hn.HostnameList, h1)
@@ -223,7 +247,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 
 	switch mode {
 	case Remove:
-		for _, hl := range hostnamelist {
+		for _, hl := range hostnamelist.List() {
 
 			for idx, h := range selectedhostnames.HostnameList {
 				if h.Hostname == hl.(string) {

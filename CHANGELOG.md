@@ -1,12 +1,24 @@
 # RELEASE NOTES
 
-## 1.5.1 (TBD)
+## 1.5.1 (Apr 21, 2021)
 
 #### BUG FIXES:
+
+* APPSEC
+  * Suppress 'null' text on output of empty/false values
+  * Prevent configuration drift when reapplying configuration after importing or creating resources
+  * Update configuration version in local state file when modified in config.tf
+  * Use uppercase when managing GEO network list elements
+  * Display both API & website match targets in text_output
+  * Remove unused output_text from code and documentation
+  * Set network_list_id on network list import
+  * Add comments to simplify importing resources using "terraform import"
+
 * PAPI 
    * Fixed issue causing inconsistent state when activation has rule errors ([#219](https://github.com/akamai/terraform-provider-akamai/issues/219))
    * Fixed issue with `resource_akamai_property` not setting product_id during import ([#224](https://github.com/akamai/terraform-provider-akamai/issues/224))
    * Rule warnings are not set in state anymore in `resource_akamai_property` and `resource_akamai_property_activation` to address size concerns of state file. Users will still be able to see them in logs as warnings
+   
 * DNS - Fix panic when zone already exists on create
 * GTM - Deprecate and ignore Property field static_ttl. Add warning if present in property resource config
 

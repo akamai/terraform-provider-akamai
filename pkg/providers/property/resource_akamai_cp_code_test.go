@@ -323,4 +323,28 @@ func TestResCPCode(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+
+	t.Run("empty CP code ID passed", func(t *testing.T) {
+		client := &mockpapi{}
+		id := ",ctr_1-1NC95D,grp_194665"
+
+		TODO(t, "error assertion in import is impossible using provider testing framework as it only checks for errors in `apply`")
+		cpCodes := []papi.CPCode{{ID: "cpc_123", Name: "test cpcode", ProductIDs: []string{"prd_2"}}}
+		expectGet(client, "ctr_1", "grp_2", &cpCodes)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:        loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
+						ImportState:   true,
+						ImportStateId: id,
+						ResourceName:  "akamai_cp_code.test",
+						ExpectError:   regexp.MustCompile("CP Code is a mandatory parameter"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 }

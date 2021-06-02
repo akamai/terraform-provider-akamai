@@ -131,6 +131,14 @@ func resourceSecurityPolicyCloneRead(ctx context.Context, d *schema.ResourceData
 	}
 	getSecurityPolicyClone.Version = version
 
+	if d.HasChange("version") {
+		version, err := tools.GetIntValue("version", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		getSecurityPolicyClone.Version = version
+	}
+
 	getSecurityPolicyClone.PolicyID = d.Id()
 
 	securitypolicyclone, err := client.GetSecurityPolicyClone(ctx, getSecurityPolicyClone)
