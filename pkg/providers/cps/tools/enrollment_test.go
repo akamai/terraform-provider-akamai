@@ -572,11 +572,11 @@ func TestNetworkConfigToMap(t *testing.T) {
 				SNIOnly:          true,
 			},
 			expected: map[string]interface{}{
-				"client_mutual_authentication": map[string]interface{}{
+				"client_mutual_authentication": []interface{}{map[string]interface{}{
 					"send_ca_list_to_client": true,
 					"ocsp_enabled":           true,
 					"set_id":                 "123",
-				},
+				}},
 				"disallowed_tls_versions": []string{"TLSv1"},
 				"clone_dns_names":         true,
 				"geography":               "core",

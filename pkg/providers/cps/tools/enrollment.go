@@ -232,7 +232,7 @@ func NetworkConfigToMap(networkConfig cps.NetworkConfiguration) map[string]inter
 				mutualAuthMap["ocsp_enabled"] = *networkConfig.ClientMutualAuthentication.AuthenticationOptions.OCSP.Enabled
 			}
 		}
-		networkConfigMap["client_mutual_authentication"] = mutualAuthMap
+		networkConfigMap["client_mutual_authentication"] = []interface{}{mutualAuthMap}
 	}
 	networkConfigMap["disallowed_tls_versions"] = networkConfig.DisallowedTLSVersions
 	if networkConfig.DNSNameSettings != nil {
