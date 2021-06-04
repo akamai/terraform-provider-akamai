@@ -3,16 +3,16 @@ package cps
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
-	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	cpstools "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -62,13 +62,15 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	changeURL, err := url.Parse(res.PendingChanges[0])
+	changeID, err := cpstools.GetChangeIDFromPendingChanges(res.PendingChanges)
 	if err != nil {
+		if errors.Is(err, cpstools.ErrNoPendingChanges) {
+			logger.Debug("No pending changes found on the enrollment")
+			d.SetId(strconv.Itoa(enrollmentID))
+			return nil
+		}
 		return diag.FromErr(err)
 	}
-	pathSplit := strings.Split(changeURL.Path, "/")
-	changeIDStr := pathSplit[len(pathSplit)-1]
-	changeID, err := strconv.Atoi(changeIDStr)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -150,14 +152,12 @@ func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	changeURL, err := url.Parse(res.PendingChanges[0])
+	changeID, err := cpstools.GetChangeIDFromPendingChanges(res.PendingChanges)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-	pathSplit := strings.Split(changeURL.Path, "/")
-	changeIDStr := pathSplit[len(pathSplit)-1]
-	changeID, err := strconv.Atoi(changeIDStr)
-	if err != nil {
+		if errors.Is(err, cpstools.ErrNoPendingChanges) {
+			logger.Debug("No pending changes found on the enrollment")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 	changeStatusReq := cps.GetChangeStatusRequest{
