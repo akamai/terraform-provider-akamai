@@ -131,7 +131,7 @@ At this point in the setup, you should refer to the guides for the Akamai module
 
 | **Module** | **Guide** |
 |------------|------------|
-| **Application Security** | [Get Started with Application Security](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec) |
+| **Application Security** (beta) | [Get Started with Application Security](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec) |
 | **Edge DNS** (DNS zones) | [Get Started with DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone) | 
 | **Global Traffic Management** (GTM domains) | [Get Started with GTM Domain Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain) | 
 | **Identity and Access Management** (authentication) | [Get Started with the Identity and Access Management Module](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam) |
