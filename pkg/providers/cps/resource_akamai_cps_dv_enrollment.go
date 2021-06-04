@@ -69,10 +69,6 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				MaxItems: 1,
 				Elem:     contact,
 			},
-			"auto_renewal_start_time": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"certificate_chain_type": {
 				Type:     schema.TypeString,
 				Default:  "default",
@@ -406,12 +402,6 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.TechContact = techContact
 
-	autoRenewal, err := tools.GetStringValue("auto_renewal_start_time", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	enrollment.AutoRenewalStartTime = autoRenewal
-
 	certificateChainType, err := tools.GetStringValue("certificate_chain_type", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -492,7 +482,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	attrs := make(map[string]interface{}, 0)
+	attrs := make(map[string]interface{})
 	adminContact := cpstools.ContactInfoToMap(*enrollment.AdminContact)
 	attrs["common_name"] = enrollment.CSR.CN
 	sans := make([]string, 0)
@@ -508,7 +498,6 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	attrs["admin_contact"] = []interface{}{adminContact}
 	techContact := cpstools.ContactInfoToMap(*enrollment.TechContact)
 	attrs["tech_contact"] = []interface{}{techContact}
-	attrs["auto_renewal_start_time"] = enrollment.AutoRenewalStartTime
 	attrs["certificate_chain_type"] = enrollment.CertificateChainType
 	csr := cpstools.CSRToMap(*enrollment.CSR)
 	attrs["csr"] = []interface{}{csr}
@@ -527,6 +516,10 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
 	if err != nil {
+		if errors.Is(err, cpstools.ErrNoPendingChanges) {
+			logger.Debugf("No pending changes found on the enrollment")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 	changeStatusReq := cps.GetChangeStatusRequest{
@@ -648,12 +641,6 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("'tech_contact' - %s", err))
 	}
 	enrollment.TechContact = techContact
-
-	autoRenewal, err := tools.GetStringValue("auto_renewal_start_time", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	enrollment.AutoRenewalStartTime = autoRenewal
 
 	certificateChainType, err := tools.GetStringValue("certificate_chain_type", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

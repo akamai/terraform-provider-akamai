@@ -12,6 +12,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResourceDVEnrollment(t *testing.T) {
@@ -148,7 +149,8 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}}, nil).Times(3)
 
 		var enrollmentUpdate cps.Enrollment
-		copier.CopyWithOption(&enrollmentUpdate, enrollment, copier.Option{DeepCopy: true})
+		err := copier.CopyWithOption(&enrollmentUpdate, enrollment, copier.Option{DeepCopy: true})
+		require.NoError(t, err)
 		enrollmentUpdate.AdminContact.FirstName = "R5"
 		enrollmentUpdate.AdminContact.LastName = "D5"
 		enrollmentUpdate.CSR.SANS = []string{"san2.test.akamai.com", "san.test.akamai.com"}

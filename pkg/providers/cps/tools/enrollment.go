@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+var ErrNoPendingChanges = errors.New("no pending changes were found on enrollment")
+
 func GetContactInfo(set *schema.Set) (*cps.Contact, error) {
 	contactList := set.List()
 	contactMap, ok := contactList[0].(map[string]interface{})
@@ -263,7 +265,7 @@ func OrgToMap(org cps.Org) map[string]interface{} {
 
 func GetChangeIDFromPendingChanges(pendingChanges []string) (int, error) {
 	if len(pendingChanges) < 1 {
-		return 0, fmt.Errorf("no pending changes were found on enrollment")
+		return 0, ErrNoPendingChanges
 	}
 	changeURL, err := url.Parse(pendingChanges[0])
 	if err != nil {
