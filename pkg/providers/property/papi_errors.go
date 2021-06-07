@@ -50,6 +50,8 @@ var (
 	ErrLookingUpCPCode = errors.New("looking up CP Code by name")
 	// ErrCPCodeModify is returned while attempting to modify existing CP code
 	ErrCPCodeModify = errors.New("CP Code with provided name already exists for provided group and contract IDs and it cannot be managed through this API - please contact Customer Support")
+	// ErrCpCodeNotFound is returned when cp code with provided ID does not exist
+	ErrCpCodeNotFound = errors.New("cp code not found")
 
 	// PAPI Property errors
 
@@ -62,6 +64,8 @@ var (
 
 	// ErrVersionCreate represents an error while creating new property version
 	ErrVersionCreate = errors.New("creating property version")
+	// ErrVersionNotFound is returned when no property versions were found
+	ErrVersionNotFound = errors.New("property version not found")
 
 	// PAPI rule format errors
 

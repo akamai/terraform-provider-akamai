@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -122,7 +123,7 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
 	cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
-	if err != nil {
+	if err != nil && !errors.As(err, &ErrCpCodeNotFound) {
 		return diag.FromErr(fmt.Errorf("%s: %w", ErrLookingUpCPCode, err))
 	}
 
@@ -226,6 +227,9 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 
 	if len(parts) < 3 {
 		return nil, fmt.Errorf("comma-separated list of CP code ID, contract ID and group ID has to be supplied in import: %s", d.Id())
+	}
+	if parts[0] == "" {
+		return nil, errors.New("CP Code is a mandatory parameter")
 	}
 	cpCodeID := tools.AddPrefix(parts[0], "cpc_")
 	contractID := tools.AddPrefix(parts[1], "ctr_")

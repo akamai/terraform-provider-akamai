@@ -67,6 +67,11 @@
     * akamai_appsec_security_policy_clone
     * akamai_appsec_security_policy_protections
 
+## 1.5.2 (TBD)
+* Tried to fix issue causing edgehostnames not being set properly in state intermittently
+
+#### BUG FIXES:
+
 ## 1.5.1 (Apr 21, 2021)
 
 #### BUG FIXES:
