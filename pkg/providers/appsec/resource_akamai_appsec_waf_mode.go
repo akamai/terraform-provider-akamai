@@ -116,6 +116,9 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	logger.Debugf("!!! in resourceWAFModeRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -174,6 +177,9 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	logger.Debugf("!!! in resourceWAFModeUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

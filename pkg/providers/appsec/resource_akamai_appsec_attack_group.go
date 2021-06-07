@@ -119,6 +119,9 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("!!! in resourceAttackGroupRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -151,7 +154,7 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if attackgroup.IsEmptyConditionException() == false {
+	if !attackgroup.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(attackgroup.ConditionException)
 		if err != nil {
 			diag.FromErr(fmt.Errorf("%s", "Error Marshalling condition exception"))
@@ -171,6 +174,9 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("!!! in resourceAttackGroupUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -218,6 +224,9 @@ func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("!!! in resourceAttackgroupDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

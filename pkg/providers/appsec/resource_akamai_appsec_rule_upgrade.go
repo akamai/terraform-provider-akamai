@@ -94,6 +94,9 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("!!! in resourceRuleUpgradeRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -138,6 +141,9 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("!!! in resourceRuleUpgradeUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

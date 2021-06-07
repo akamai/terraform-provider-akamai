@@ -119,6 +119,9 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 	logger.Debugf("!!! in resourceEvalRuleRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -154,7 +157,7 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if evalrule.IsEmptyConditionException() == false {
+	if !evalrule.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(evalrule.ConditionException)
 		if err != nil {
 			diag.FromErr(fmt.Errorf("%s", "Error Marshalling condition exception"))
@@ -174,6 +177,9 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	logger.Debugf("!!! in resourceEvalRuleUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -223,6 +229,9 @@ func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m inter
 	logger.Debugf("!!! in resourceEvalRuleDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

@@ -98,6 +98,9 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		idParts, err := splitID(d.Id(), 2, "configid:policyid")
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		configid, err := strconv.Atoi(idParts[0])
 		if err != nil {
 			return diag.FromErr(err)
@@ -157,6 +160,9 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		idParts, err := splitID(d.Id(), 2, "configid:policyid")
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		configid, err := strconv.Atoi(idParts[0])
 		if err != nil {
 			return diag.FromErr(err)
@@ -197,6 +203,9 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 	updateAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		idParts, err := splitID(d.Id(), 2, "configid:policyid")
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		configid, err := strconv.Atoi(idParts[0])
 		if err != nil {
 			return diag.FromErr(err)

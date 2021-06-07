@@ -100,6 +100,9 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger.Debugf("!!! in resourceCustomRuleActionRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:customruleid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -144,6 +147,9 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger.Debugf("!!! in resourceCustomRuleActionUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:customruleid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -182,6 +188,9 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger.Debugf("!!! in resourceCustomRuleActionDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:customruleid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

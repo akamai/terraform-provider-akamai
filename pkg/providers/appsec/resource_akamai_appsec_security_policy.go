@@ -139,6 +139,9 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("!!! in resourceSecurityPolicyRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
@@ -185,6 +188,9 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	logger.Debugf("!!! in resourceSecurityPolicyUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
@@ -225,6 +231,9 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	logger.Debugf("!!! in resourceSecurityPolicyDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {

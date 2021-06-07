@@ -100,6 +100,9 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 	getAdvancedSettingsLogging := appsec.GetAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		idParts, err := splitID(d.Id(), 2, "configid:policyid")
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		configid, err := strconv.Atoi(idParts[0])
 		if err != nil {
 			return diag.FromErr(err)
@@ -153,6 +156,9 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 	updateAdvancedSettingsLogging := appsec.UpdateAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		idParts, err := splitID(d.Id(), 2, "configid:policyid")
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		configid, err := strconv.Atoi(idParts[0])
 		if err != nil {
 			return diag.FromErr(err)
@@ -197,6 +203,9 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 	removeAdvancedSettingsLogging := appsec.RemoveAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		idParts, err := splitID(d.Id(), 2, "configid:policyid")
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		configid, err := strconv.Atoi(idParts[0])
 		if err != nil {
 			return diag.FromErr(err)

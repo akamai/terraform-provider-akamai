@@ -114,6 +114,9 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	logger.Debugf("!!! in resourceEvalRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -161,6 +164,9 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	logger.Debugf("!!! in resourceEvalUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -194,6 +200,9 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 	logger.Debugf("!!! in resourceEvalDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

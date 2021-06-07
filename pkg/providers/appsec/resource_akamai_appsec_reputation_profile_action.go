@@ -100,6 +100,9 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	logger.Debugf("!!! in resourceReputationProfileActionRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationprofileid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -146,6 +149,9 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	logger.Debugf("!!! in resourceCustomRuleActionUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationrofileid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -184,6 +190,9 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 	logger.Debugf("!!! in resourceReputationProfileActionDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationprofileid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

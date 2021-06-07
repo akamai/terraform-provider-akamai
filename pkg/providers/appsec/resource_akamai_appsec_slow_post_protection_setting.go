@@ -125,6 +125,9 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	logger.Debugf("!!! in resourceSlowPostProtectionSettingRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -175,6 +178,9 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 	logger.Debugf("!!! in resourceSlowPostProtectionSettingUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -223,6 +229,9 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	logger.Debugf("!!! in resourceSlowPostProtectionSettingDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

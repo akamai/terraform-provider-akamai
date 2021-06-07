@@ -95,6 +95,9 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("!!! in resourceReputationProtectionRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -141,6 +144,9 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 	logger.Debugf("!!! in resourceRateProtectionUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -175,6 +181,9 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 	logger.Debugf("!!! in resourceRateProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

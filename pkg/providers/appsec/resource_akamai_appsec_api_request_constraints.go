@@ -244,7 +244,7 @@ func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 			logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
 			return diag.FromErr(err)
 		}
-		if policyprotections.ApplyAPIConstraints == true {
+		if policyprotections.ApplyAPIConstraints {
 			removePolicyProtections := appsec.RemovePolicyProtectionsRequest{}
 			removePolicyProtections.ConfigID = configid
 			removePolicyProtections.Version = version

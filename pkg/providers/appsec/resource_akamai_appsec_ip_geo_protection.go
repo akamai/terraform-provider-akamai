@@ -95,6 +95,9 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	logger.Debugf("!!! in resourceIPGeoProtectionRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -141,6 +144,9 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 	logger.Debugf("!!! in resourceIPGeoProtectionUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -175,6 +181,9 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	logger.Debugf("!!! in resourceIPGeoProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

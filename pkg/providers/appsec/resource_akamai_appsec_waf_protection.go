@@ -95,6 +95,9 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("!!! in resourceSlowPostProtectionSettingRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -141,6 +144,9 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 	logger.Debugf("!!! in resourceSlowPostProtectionSettingUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -174,6 +180,9 @@ func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m 
 	logger.Debugf("!!! in resourceWAFProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

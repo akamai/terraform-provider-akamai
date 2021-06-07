@@ -122,6 +122,9 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	logger.Debugf("!!! in resourceRuleRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -157,7 +160,7 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err := d.Set("rule_action", rule.Action); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if rule.IsEmptyConditionException() == false {
+	if !rule.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(rule.ConditionException)
 		if err != nil {
 			return diag.FromErr(err)
@@ -177,6 +180,9 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	logger.Debugf("!!! in resourceRuleUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -226,6 +232,9 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	logger.Debugf("!!! in resourceEvalRuleDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

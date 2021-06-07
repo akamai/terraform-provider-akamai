@@ -99,6 +99,9 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 	logger.Debugf("!!! in resourceReputationAnalysisRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -140,6 +143,9 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 	logger.Debugf("!!! in resourceReputationAnalysisUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -178,6 +184,9 @@ func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceDat
 	logger.Debugf("!!! in resourceReputationAnalysisDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

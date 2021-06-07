@@ -105,6 +105,9 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger.Debugf("!!! in resourcePenaltyBoxRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -146,6 +149,9 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger.Debugf("!!! in resourcePenaltyBoxUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -184,6 +190,9 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger.Debugf("!!! in resourcePenaltyBoxDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

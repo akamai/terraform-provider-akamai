@@ -166,6 +166,9 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger.Debugf("!!! in resourceRatePolicyActionUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ratepolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -209,6 +212,9 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger.Debugf("!!! in resourceRatePolicyActionDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ratepolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)

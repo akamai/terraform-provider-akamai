@@ -95,6 +95,9 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 	logger.Debugf("!!! in resourceReputationProtectionRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
