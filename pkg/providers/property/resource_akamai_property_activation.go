@@ -138,7 +138,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	)
 
 	if dead, ok := ctx.Deadline(); ok {
-		logger.Debugf("activation create with deadline in %s", dead.Sub(time.Now()).String())
+		logger.Debugf("activation create with deadline in %s", time.Until(dead).String())
 	}
 
 	propertyID, err := resolvePropertyID(d)
@@ -794,17 +794,10 @@ func networkAlias(d *schema.ResourceData) (papi.ActivationNetwork, error) {
 		}
 	}
 
-	networks := map[string]papi.ActivationNetwork{
-		"STAGING":    papi.ActivationNetworkStaging,
-		"STAG":       papi.ActivationNetworkStaging,
-		"S":          papi.ActivationNetworkStaging,
-		"PRODUCTION": papi.ActivationNetworkProduction,
-		"PROD":       papi.ActivationNetworkProduction,
-		"P":          papi.ActivationNetworkProduction,
+	alias, err := NetworkAlias(network)
+	if err != nil {
+		return "", err
 	}
-	networkValue, ok := networks[strings.ToUpper(network)]
-	if !ok {
-		return "", fmt.Errorf("network not recognized")
-	}
-	return networkValue, nil
+
+	return papi.ActivationNetwork(alias), nil
 }

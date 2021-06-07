@@ -64,6 +64,8 @@ var (
 
 	// ErrVersionCreate represents an error while creating new property version
 	ErrVersionCreate = errors.New("creating property version")
+	// ErrVersionNotFound is returned when no property versions were found
+	ErrVersionNotFound = errors.New("property version not found")
 
 	// PAPI rule format errors
 

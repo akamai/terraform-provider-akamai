@@ -1,8 +1,8 @@
 package property
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -97,61 +97,6 @@ func TestResolveVersion(t *testing.T) {
 				require.NoError(t, err)
 			}
 			assert.Equal(t, test.versionData, version)
-		})
-	}
-}
-
-func TestNetworkAlias(t *testing.T) {
-	tests := map[string]struct {
-		hasNetwork  bool
-		addNetwork  papi.ActivationNetwork
-		networkTest papi.ActivationNetwork
-		withError   error
-	}{
-		"ok production": {
-			hasNetwork:  true,
-			addNetwork:  papi.ActivationNetworkProduction,
-			networkTest: papi.ActivationNetworkProduction,
-		},
-		"ok p": {
-			hasNetwork:  true,
-			networkTest: papi.ActivationNetworkProduction,
-			addNetwork:  "P",
-		},
-		"ok default staging": {
-			hasNetwork:  false,
-			addNetwork:  papi.ActivationNetworkStaging,
-			networkTest: papi.ActivationNetworkStaging,
-		},
-		"nok malformed input": {
-			hasNetwork: true,
-			addNetwork: "other",
-			withError:  fmt.Errorf("network not recognized"),
-		},
-	}
-	for name, test := range tests {
-		resource := schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"network": {
-					Type:     schema.TypeString,
-					Optional: true,
-					Default:  papi.ActivationNetworkStaging,
-				},
-			},
-		}
-		d := resource.TestResourceData()
-		if test.hasNetwork {
-			_ = d.Set("network", string(test.addNetwork))
-		}
-		t.Run(name, func(t *testing.T) {
-			net, err := networkAlias(d)
-
-			if test.withError != nil {
-				assert.Error(t, test.withError, err)
-			} else {
-				assert.NotNil(t, net)
-				assert.Equal(t, test.networkTest, net)
-			}
 		})
 	}
 }
@@ -333,7 +278,7 @@ func TestLookupActivation(t *testing.T) {
 				network:        "STAGING",
 				activationType: map[papi.ActivationType]struct{}{"ACTIVATE": {}},
 			}
-			activation, err := lookupActivation(nil, client, query)
+			activation, err := lookupActivation(context.TODO(), client, query)
 			assert.True(t, errors.Is(err, test.expectedError))
 			if err == nil {
 				if test.expectedActivation != nil {
