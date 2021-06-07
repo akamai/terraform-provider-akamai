@@ -22,6 +22,8 @@ For more information about Application Security, see the
 
 ## Prerequisites
 
+~> **Note** The Application Security subprovider is currently in beta.
+
 To manage Application Security resources, you need to obtain information regarding your 
 existing security implementation, including the following information:
 
