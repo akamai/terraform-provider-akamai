@@ -395,7 +395,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
 			},
-			withError: regexp.MustCompile("A certificate enrollment ID is required for Enhanced TLS \\(edgekey.net\\) edge hostnames"),
+			withError: regexp.MustCompile("a certificate enrollment ID is required for Enhanced TLS edge hostnames with 'edgekey.net' suffix"),
 		},
 		"error creating edge hostname": {
 			givenTF: "new_akamaized_net.tf",
