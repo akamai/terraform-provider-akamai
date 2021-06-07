@@ -118,7 +118,6 @@ The following arguments are supported:
       * `region` - (Required) The region of your organization, typically a state or province.
       * `postal_code` - (Required) The postal code of your organization.
       * `country_code` - (Required) The code for the counrty where your organization resides.
-* `auto_renewal_start_time` - (Optional) The specific date on which the renewal automatically starts for the enrollment.
 * `certificate_chain_type` - (Optional) Certificate trust chain type.
 * `csr` - (Required) 	When you create an enrollment, you also generate a certificate signing request (CSR) using CPS. CPS signs the CSR with the private key. The CSR contains all the information the CA needs to issue your certificate.
 
