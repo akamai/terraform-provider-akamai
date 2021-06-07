@@ -36,7 +36,7 @@ supporting API service names:
 
 | **Module** | **API service name** |
 |-------------|----------------------|
-| **Application Security** (beta) <br/> | Application Security |
+| **Application Security** | Application Security |
 | **Edge DNS** (DNS zones) | DNS Zone Management |
 | **Global Traffic Management** (GTM domains) | Global Traffic Management |
 | **Identity and Access Management** (authentication) | Identity Management: User Administration |
