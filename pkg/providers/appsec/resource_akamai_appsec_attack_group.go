@@ -151,7 +151,7 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if attackgroup.IsEmptyCodnitionException() == false {
+	if attackgroup.IsEmptyConditionException() == false {
 		jsonBody, err := json.Marshal(attackgroup.ConditionException)
 		if err != nil {
 			diag.FromErr(fmt.Errorf("%s", "Error Marshalling condition exception"))

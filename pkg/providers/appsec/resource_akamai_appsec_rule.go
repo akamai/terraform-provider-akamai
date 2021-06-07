@@ -157,7 +157,7 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err := d.Set("rule_action", rule.Action); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if rule.IsEmptyCodnitionException() == false {
+	if rule.IsEmptyConditionException() == false {
 		jsonBody, err := json.Marshal(rule.ConditionException)
 		if err != nil {
 			return diag.FromErr(err)
