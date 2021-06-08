@@ -110,7 +110,7 @@ To import a specific property version, pass additional parameters, either:
 * `LATEST` to import the latest version of the property, regardless of whether it's active or not. This works the same as providing just the `property_id` or a string of the property, contract, and group IDs, which is the default behavior.
 * `PRODUCTION`, `PROD`, or `P` to import the latest version activated on the production environment.
 * `STAGING`, `STAGE`, `STAG`, or `S` to import the latest version activated on the staging environment.
-* Version number or version number with the "ver_" prefix to import a specific property version. For example `3` and `ver_3` correspond to the same version number.
+* Version number or version number with the `ver_` prefix to import a specific property version. For example `3` and `ver_3` correspond to the same version number.
 
 
 Here are some examples for the latest property version:
@@ -135,4 +135,16 @@ Or
 
 ```shell
 $ terraform import akamai_property.example prp_123,ctr_1-AB123,grp_123,PROD
+```
+
+Here are some examples for the specific property version:
+
+```shell
+$ terraform import akamai_property.example prp_123,3
+```
+
+Or
+
+```shell
+$ terraform import akamai_property.example prp_123,ctr_1-AB123,grp_123,ver_3
 ```
