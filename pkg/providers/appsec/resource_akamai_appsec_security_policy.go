@@ -47,6 +47,10 @@ func resourceSecurityPolicy() *schema.Resource {
 			"default_settings": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return true // suppress any diff on this field since not returned by API
+				},
 			},
 			"create_from_security_policy_id": {
 				Type:     schema.TypeString,
