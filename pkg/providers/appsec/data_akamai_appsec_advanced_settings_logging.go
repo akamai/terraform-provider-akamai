@@ -23,10 +23,6 @@ func dataSourceAdvancedSettingsLogging() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"security_policy_id": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -57,23 +53,13 @@ func dataSourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resour
 	}
 	getAdvancedSettingsLogging.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getAdvancedSettingsLogging.Version = version
+	getAdvancedSettingsLogging.Version = getLatestConfigVersion(ctx, configid, m)
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getAdvancedSettingsLogging.PolicyID = policyid
-
-	if policyid != "" {
-
-	} else {
-
-	}
 
 	advancedsettingslogging, err := client.GetAdvancedSettingsLogging(ctx, getAdvancedSettingsLogging)
 	if err != nil {

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_slow_post
 
-Use the `akamai_appsec_slow_post` data source to update the slow post protection settings for a given security configuration version and policy.
+Use the `akamai_appsec_slow_post` data source to update the slow post protection settings for a given security configuration and policy.
 
 ## Example Usage
 
@@ -19,13 +19,12 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user would like to set the slow post protection settings for a given security configuration and version
+// USE CASE: user would like to set the slow post protection settings for a given security configuration and policy
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
 resource "akamai_appsec_slow_post" "slow_post" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
   slow_rate_action = "alert"
   slow_rate_threshold_rate = 10
@@ -39,8 +38,6 @@ resource "akamai_appsec_slow_post" "slow_post" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 

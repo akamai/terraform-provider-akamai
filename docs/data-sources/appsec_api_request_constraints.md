@@ -25,7 +25,6 @@ data "akamai_appsec_configuration" "configuration" {
 }
 data "akamai_appsec_api_request_constraints" "apis_request_constraints" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
 
@@ -41,7 +40,6 @@ output "apis_constraints_json" {
 // USE CASE: user wants to view action on a single api request constraint associated with a given security policy
 data "akamai_appsec_api_request_constraints" "api_request_constraints" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
   api_id = var.api_id
 }
@@ -60,8 +58,6 @@ output "api_constraints_json" {
 The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID to use.
-
-* `version` - (Required) The version number of the configuration to use.
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 

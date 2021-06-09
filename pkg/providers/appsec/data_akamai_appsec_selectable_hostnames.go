@@ -23,20 +23,15 @@ func dataSourceSelectableHostnames() *schema.Resource {
 				Optional:      true,
 				ConflictsWith: []string{"contractid", "groupid"},
 			},
-			"version": {
-				Type:          schema.TypeInt,
-				Optional:      true,
-				ConflictsWith: []string{"contractid", "groupid"},
-			},
 			"contractid": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				ConflictsWith: []string{"config_id", "version"},
+				ConflictsWith: []string{"config_id"},
 			},
 			"groupid": {
 				Type:          schema.TypeInt,
 				Optional:      true,
-				ConflictsWith: []string{"config_id", "version"},
+				ConflictsWith: []string{"config_id"},
 			},
 			"active_in_staging": {
 				Type:     schema.TypeBool,
@@ -79,11 +74,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	}
 	getSelectableHostnames.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getSelectableHostnames.Version = version
+	getSelectableHostnames.Version = getLatestConfigVersion(ctx, configid, m)
 
 	contract, err := tools.GetStringValue("contractid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

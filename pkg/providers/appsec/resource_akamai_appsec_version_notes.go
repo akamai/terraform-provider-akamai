@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -19,19 +19,18 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceVersionNotes() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVersionNotesUpdate,
+		CreateContext: resourceVersionNotesCreate,
 		ReadContext:   resourceVersionNotesRead,
 		UpdateContext: resourceVersionNotesUpdate,
 		DeleteContext: resourceVersionNotesDelete,
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -48,126 +47,95 @@ func resourceVersionNotes() *schema.Resource {
 	}
 }
 
+func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceVersionNotesCreate")
+	logger.Debugf("!!! in resourceVersionNotesCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "editVersionNotes", m)
+	notes, err := tools.GetStringValue("version_notes", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	createVersionNotes := appsec.UpdateVersionNotesRequest{}
+	createVersionNotes.ConfigID = configid
+	createVersionNotes.Version = version
+	createVersionNotes.Notes = notes
+
+	_, erru := client.UpdateVersionNotes(ctx, createVersionNotes)
+	if erru != nil {
+		logger.Errorf("calling 'createVersionNotes': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId(fmt.Sprintf("%d", createVersionNotes.ConfigID))
+
+	return resourceVersionNotesRead(ctx, d, m)
+}
+
 func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceVersionNotesRead")
+	logger.Debugf("!!! resourceVersionNotesRead")
+
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
 
 	getVersionNotes := appsec.GetVersionNotesRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
+	getVersionNotes.ConfigID = configid
+	getVersionNotes.Version = version
 
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getVersionNotes.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getVersionNotes.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getVersionNotes.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getVersionNotes.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getVersionNotes.Version = version
-	}
 	versionnotes, err := client.GetVersionNotes(ctx, getVersionNotes)
 	if err != nil {
 		logger.Errorf("calling 'getVersionNotes': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("config_id", getVersionNotes.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("version_notes", versionnotes.Notes); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-
 	outputtext, err := RenderTemplates(ots, "versionNotesDS", versionnotes)
 	if err == nil {
 		d.Set("output_text", outputtext)
 	}
 
-	if err := d.Set("config_id", getVersionNotes.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("version", getVersionNotes.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	d.SetId(fmt.Sprintf("%d:%d", getVersionNotes.ConfigID, getVersionNotes.Version))
-
 	return nil
-}
-
-func resourceVersionNotesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
-	return schema.NoopContext(nil, d, m)
 }
 
 func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceVersionNotesUpdate")
+	logger.Debugf("!!! resourceVersionNotesUpdate")
 
-	updateVersionNotes := appsec.UpdateVersionNotesRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateVersionNotes.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateVersionNotes.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateVersionNotes.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateVersionNotes.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateVersionNotes.Version = version
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
 	}
+	version := getModifiableConfigVersion(ctx, configid, "editVersionNotes", m)
 	notes, err := tools.GetStringValue("version_notes", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
+	updateVersionNotes := appsec.UpdateVersionNotesRequest{}
+	updateVersionNotes.ConfigID = configid
+	updateVersionNotes.Version = version
 	updateVersionNotes.Notes = notes
 
 	_, erru := client.UpdateVersionNotes(ctx, updateVersionNotes)
@@ -175,6 +143,9 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 		logger.Errorf("calling 'updateVersionNotes': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
-
 	return resourceVersionNotesRead(ctx, d, m)
+}
+
+func resourceVersionNotesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return schema.NoopContext(nil, d, m)
 }

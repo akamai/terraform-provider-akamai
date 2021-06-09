@@ -9,7 +9,7 @@ description: |-
 # akamai_appsec_selected_hostnames
 
 
-The `akamai_appsec_selected_hostnames` resource allows you to set the list of hostnames protected under a given security configuration version.
+The `akamai_appsec_selected_hostnames` resource allows you to set the list of hostnames protected under a given security configuration.
 
 
 ## Example Usage
@@ -27,7 +27,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 resource "akamai_appsec_selected_hostnames" "appsecselectedhostnames" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   hostnames = [ "example.com" ]
   mode = "APPEND"
 }
@@ -39,8 +38,6 @@ resource "akamai_appsec_selected_hostnames" "appsecselectedhostnames" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `hostnames` - (Required) The list of hostnames to be applied, added or removed.
 

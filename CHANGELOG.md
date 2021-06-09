@@ -1,5 +1,72 @@
 # RELEASE NOTES
 
+## 2.0.0 (June 3, 2021)
+
+#### FEATURES/ENHANCEMENTS:
+
+* APPSEC
+
+  * The provider now determines automatically the version number to use for data source and resource operations.
+    The most recent version of the specified configuration will be used if it is not currently active in either
+    staging or production. If the most recent version is currently active, that version will be cloned and the
+    newly cloned version will be used. The version attribute has been removed from all resource and data definitions,
+    with the exception of the following data sources:
+    * akamai_appsec_configuration_version
+    * akamai_appsec_export_configuration
+  * The export output templates supported by the akamai_appsec_export_configuration data source have been updated
+    to remove version attributes.
+  * The functionality for cloning and renaming configurations and security policies has been integrated into
+    the respective resources. The separate resources for cloning and renaming have been removed. The affected
+    elements are listed in the `BREAKING CHANGES` section below.
+  * The action and condition_exception functionality for rule, eval-rule and attack-group resources have been
+    consolidated into the respective data sources. The individual data sources and resources have been removed,
+    and the remaining ones have been renamed. The affected elements are listed in the `BREAKING CHANGES` section below.
+  * The akamai_appsec_activation resource's ForceNew attribute is no longer supported.
+  * Resource updates that include modifications to the config_id or security_policy_id attributes are forbidden.
+  * The akamai_appsec_siem_setting resource's output_text attribute is no longer supported.
+  * The tabular output from the export_configuration data source has been improved.
+  * The sample configuration file in the source repository has been updated to standardize names and remove
+    version attributes.
+  * Policy protections are now set individually. The separate resources for setting individual policy_protections
+    resources has been removed.
+  * The Getting Started guide for Appsec has been updated to include more information on importing resources, including
+    a list of the supported output templates.
+  * The following data sources have been added:
+    * akamai_appsec_advanced_settings_pragma_header
+    * akamai_appsec_attack_groups
+    * akamai_appsec_eval_rules
+    * akamai_appsec_rules
+  * The following resources have been added:
+    * akamai_appsec_advanced_settings_pragma_header
+    * akamai_appsec_api_constraints_protection
+    * akamai_appsec_attack_group
+    * akamai_appsec_eval_rule
+    * akamai_appsec_ip_geo_protection
+    * akamai_appsec_rule
+
+#### BREAKING CHANGES:
+
+* APPSEC
+  * Configuration version numbers are no longer supported for most data sources and resources, as described above.
+  * The following data sources are no longer supported:
+    * akamai_appsec_attack_group_actions
+    * akamai_appsec_attack_group_condition_exception
+    * akamai_appsec_eval_rule_actions
+    * akamai_appsec_eval_rule_condition_exception
+    * akamai_appsec_rule_actions
+    * akamai_appsec_rule_condition_exception
+  * The following resources are no longer supported:
+    * akamai_appsec_attack_group_action
+    * akamai_appsec_attack_group_condition_exception
+    * akamai_appsec_configuration_clone
+    * akamai_appsec_configuration_version_clone
+    * akamai_appsec_eval_rule_action
+    * akamai_appsec_eval_rule_condition_exception
+    * akamai_appsec_rule_action
+    * akamai_appsec_rule_condition_exception
+    * akamai_appsec_security_policy_clone
+    * akamai_appsec_security_policy_protections
+
 ## 1.5.2 (TBD)
 * Tried to fix issue causing edgehostnames not being set properly in state intermittently
 

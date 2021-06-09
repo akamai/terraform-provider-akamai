@@ -22,10 +22,6 @@ func dataSourceSiemSettings() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -52,11 +48,7 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getSiemSettings.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getSiemSettings.Version = version
+	getSiemSettings.Version = getLatestConfigVersion(ctx, configid, m)
 
 	siemsettings, err := client.GetSiemSettings(ctx, getSiemSettings)
 	if err != nil {

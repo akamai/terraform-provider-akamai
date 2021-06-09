@@ -21,6 +21,15 @@ func TestAccAkamaiEvalProtectHost_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResEvalProtectHost/EvalProtectHost.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetEvalProtectHost",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetEvalProtectHostRequest{ConfigID: 43253, Version: 7},
@@ -39,7 +48,7 @@ func TestAccAkamaiEvalProtectHost_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResEvalProtectHost/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_eval_protect_host.test", "id", "43253:7"),
+							resource.TestCheckResourceAttr("akamai_appsec_eval_protect_host.test", "id", "43253"),
 						),
 					},
 				},

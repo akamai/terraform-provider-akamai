@@ -27,7 +27,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 data "akamai_appsec_siem_settings" "siem_settings" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
 output "siem_settings_json" {
@@ -44,8 +43,6 @@ output "siem_settings_output" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 ## Attributes Reference
 

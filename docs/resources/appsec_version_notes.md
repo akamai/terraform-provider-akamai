@@ -26,7 +26,6 @@ data "akamai_appsec_configuration" "configuration" {
 // USE CASE: user wants to update the version notes of the latest version
 resource "akamai_appsec_version_notes" "version_notes" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   version_notes = var.version_notes
 }
 output "version_notes" {
@@ -39,8 +38,6 @@ output "version_notes" {
 The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID to use.
-
-* `version` - (Required) The version number of the configuration to use.
 
 * `version_notes` - (Required) A string containing the version notes to be used.
 

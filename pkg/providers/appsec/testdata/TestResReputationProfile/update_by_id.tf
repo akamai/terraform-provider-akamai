@@ -4,7 +4,6 @@ provider "akamai" {
 
 resource "akamai_appsec_reputation_profile" "test" {
   config_id = 43253
-  version = 7
   reputation_profile = <<-EOF
 {
     "name": "Web Attack Rep Profile",

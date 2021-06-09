@@ -21,6 +21,15 @@ func TestAccAkamaiRateProtection_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResRateProtection/RateProtection.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetRateProtection",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
@@ -28,19 +37,19 @@ func TestAccAkamaiRateProtection_res_basic(t *testing.T) {
 
 		client.On("UpdateRateProtection",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApplyRateControls: true},
+			appsec.UpdateRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApplyRateControls: false},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				PreCheck:   func() { testAccPreCheck(t) },
-				IsUnitTest: false,
+				IsUnitTest: true,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResRateProtection/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_rate_protection.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_rate_protection.test", "id", "43253:AAAA_81230"),
 							resource.TestCheckResourceAttr("akamai_appsec_rate_protection.test", "enabled", "false"),
 						),
 						ExpectNonEmptyPlan: true,
@@ -48,7 +57,7 @@ func TestAccAkamaiRateProtection_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResRateProtection/update_by_id.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_rate_protection.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_rate_protection.test", "id", "43253:AAAA_81230"),
 							resource.TestCheckResourceAttr("akamai_appsec_rate_protection.test", "enabled", "false"),
 						),
 					},

@@ -23,10 +23,6 @@ func dataSourceAdvancedSettingsPrefetch() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -53,11 +49,7 @@ func dataSourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resou
 	}
 	getAdvancedSettingsPrefetch.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getAdvancedSettingsPrefetch.Version = version
+	getAdvancedSettingsPrefetch.Version = getLatestConfigVersion(ctx, configid, m)
 
 	advancedsettingsprefetch, err := client.GetAdvancedSettingsPrefetch(ctx, getAdvancedSettingsPrefetch)
 	if err != nil {

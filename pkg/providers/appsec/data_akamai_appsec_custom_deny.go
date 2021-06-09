@@ -22,10 +22,6 @@ func dataSourceCustomDeny() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"custom_deny_id": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -56,11 +52,7 @@ func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 	getCustomDeny.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getCustomDeny.Version = version
+	getCustomDeny.Version = getLatestConfigVersion(ctx, configid, m)
 
 	customDenyID, err := tools.GetStringValue("custom_deny_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

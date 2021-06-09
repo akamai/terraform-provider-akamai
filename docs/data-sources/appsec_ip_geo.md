@@ -26,7 +26,6 @@ data "akamai_appsec_configuration" "configuration" {
 // USE CASE: user wants to see IP/GEO firewall settings
 data "akamai_appsec_ip_geo" "ip_geo" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
 
@@ -52,8 +51,6 @@ output "exception_ip_network_lists" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `security_policy_id` - (Optional) The ID of the security policy to use.
 

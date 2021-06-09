@@ -3,7 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_appsec_selected_hostnames" "test" {
-    config_id = 43253
-    version = 7  
+  config_id = 43253
 }
-

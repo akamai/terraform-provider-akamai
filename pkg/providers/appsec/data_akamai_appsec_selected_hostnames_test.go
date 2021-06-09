@@ -13,6 +13,15 @@ func TestAccAkamaiSelectedHostnames_data_basic(t *testing.T) {
 	t.Run("match by SelectedHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		cv := appsec.GetSelectedHostnamesResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSSelectedHostnames/SelectedHostnames.json"))
 		json.Unmarshal([]byte(expectJS), &cv)
@@ -30,7 +39,7 @@ func TestAccAkamaiSelectedHostnames_data_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSSelectedHostnames/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_selected_hostnames.test", "id", "43253:7"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_selected_hostnames.test", "id", "43253"),
 						),
 					},
 				},

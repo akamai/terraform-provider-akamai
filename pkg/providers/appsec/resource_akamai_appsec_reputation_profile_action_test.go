@@ -25,6 +25,16 @@ func TestAccAkamaiReputationProfileAction_res_basic(t *testing.T) {
 			expectJSD := compactJSON(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileActionDelete.json"))
 			json.Unmarshal([]byte(expectJSD), &crd)
 		*/
+
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetReputationProfileAction",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetReputationProfileActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ReputationProfileID: 1685099},
@@ -48,7 +58,7 @@ func TestAccAkamaiReputationProfileAction_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResReputationProfileAction/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_action.test", "id", "43253:7:AAAA_81230:1685099"),
+							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_action.test", "id", "43253:AAAA_81230:1685099"),
 						),
 						ExpectNonEmptyPlan: true,
 					},

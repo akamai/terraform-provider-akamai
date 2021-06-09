@@ -23,10 +23,6 @@ func dataSourceEvalHostnames() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"hostnames": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -58,11 +54,7 @@ func dataSourceEvalHostnamesRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 	getEvalHostnames.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getEvalHostnames.Version = version
+	getEvalHostnames.Version = getLatestConfigVersion(ctx, configid, m)
 
 	evalhostnames, err := client.GetEvalHosts(ctx, getEvalHostnames)
 	if err != nil {

@@ -47,11 +47,15 @@ func resourceConfiguration() *schema.Resource {
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"config_id": {
+			"create_from_config_id": {
 				Type:     schema.TypeInt,
-				Computed: true,
+				Optional: true,
 			},
-			"version": {
+			"create_from_version": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"config_id": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
@@ -63,91 +67,181 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationCreate")
-
-	createConfiguration := appsec.CreateConfigurationRequest{}
+	logger.Debug("!!! in resourceConfigurationCreate")
 
 	name, err := tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	createConfiguration.Name = name
-
 	description, err := tools.GetStringValue("description", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	createConfiguration.Description = description
-
 	contractID, err := tools.GetStringValue("contract_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	createConfiguration.ContractID = contractID
-
 	groupID, err := tools.GetIntValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	hostnameset, err := tools.GetSetValue("host_names", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	hostnames := make([]string, 0, len(hostnameset.List()))
+	for _, h := range hostnameset.List() {
+		hostnames = append(hostnames, h.(string))
+	}
+	createFromConfigID, err := tools.GetIntValue("create_from_config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createConfiguration.GroupID = groupID
-
-	hostnamelist := d.Get("host_names").(*schema.Set)
-	hnl := make([]string, 0, len(hostnamelist.List()))
-
-	for _, h := range hostnamelist.List() {
-		hnl = append(hnl, h.(string))
-
-	}
-	createConfiguration.Hostnames = hnl
-
-	postresp, errc := client.CreateConfiguration(ctx, createConfiguration)
-	if errc != nil {
-		logger.Errorf("calling 'createConfiguration': %s", errc.Error())
-		return diag.FromErr(errc)
+	createFromVersion, err := tools.GetIntValue("create_from_version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", postresp.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
+	if createFromVersion > 0 && createFromConfigID > 0 {
+		createConfigurationClone := appsec.CreateConfigurationCloneRequest{}
+		createConfigurationClone.CreateFrom.ConfigID = createFromConfigID
+		createConfigurationClone.CreateFrom.Version = createFromVersion
+		createConfigurationClone.Name = name
+		createConfigurationClone.Description = description
+		createConfigurationClone.ContractID = contractID
+		createConfigurationClone.GroupID = groupID
+		createConfigurationClone.Hostnames = hostnames
 
-	if err := d.Set("version", postresp.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
+		response, err := client.CreateConfigurationClone(ctx, createConfigurationClone)
+		if err != nil {
+			logger.Errorf("calling 'createConfigurationClone': %s", err.Error())
+			return diag.FromErr(err)
+		}
+		if err := d.Set("config_id", response.ConfigID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 
-	d.SetId(strconv.Itoa(postresp.ConfigID))
+		d.SetId(fmt.Sprintf("%d", response.ConfigID))
+
+	} else {
+		createConfiguration := appsec.CreateConfigurationRequest{}
+		createConfiguration.Name = name
+		createConfiguration.Description = description
+		createConfiguration.ContractID = contractID
+		createConfiguration.GroupID = groupID
+		createConfiguration.Hostnames = hostnames
+
+		response, err := client.CreateConfiguration(ctx, createConfiguration)
+		if err != nil {
+			logger.Errorf("calling 'createConfiguration': %s", err.Error())
+			return diag.FromErr(err)
+		}
+		if err := d.Set("config_id", response.ConfigID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+		d.SetId(fmt.Sprintf("%d", response.ConfigID))
+	}
 
 	return resourceConfigurationRead(ctx, d, m)
+}
+
+func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceConfigurationRead")
+	logger.Debug("!!! in resourceConfigurationRead")
+
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	getConfiguration := appsec.GetConfigurationRequest{}
+	getConfiguration.ConfigID = configid
+
+	configuration, err := client.GetConfiguration(ctx, getConfiguration)
+	if err != nil {
+		logger.Errorf("calling 'getConfiguration': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	d.Set("name", configuration.Name)
+	d.Set("description", configuration.Description)
+	d.Set("config_id", configuration.ID)
+
+	getSelectedHostname := appsec.GetSelectedHostnameRequest{}
+	getSelectedHostname.ConfigID = configid
+	getSelectedHostname.Version = getLatestConfigVersion(ctx, configid, m)
+
+	selectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostname)
+	if err != nil {
+		logger.Errorf("calling 'getSelectedHostname': %s", err.Error())
+		return diag.FromErr(err)
+	}
+	selectedhostnameset := schema.Set{F: schema.HashString}
+	for _, hostname := range selectedhostnames.HostnameList {
+		selectedhostnameset.Add(hostname.Hostname)
+	}
+
+	d.Set("host_names", selectedhostnameset.List())
+
+	return nil
 }
 
 func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationUpdate")
+	logger.Debug("!!! in resourceConfigurationUpdate")
 
-	updateConfiguration := appsec.UpdateConfigurationRequest{}
-
-	ID, errconv := strconv.Atoi(d.Id())
-
-	if errconv != nil {
-		return diag.FromErr(errconv)
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	updateConfiguration.ConfigID = ID
 
 	name, err := tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	updateConfiguration.Name = name
-
 	description, err := tools.GetStringValue("description", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	updateConfiguration := appsec.UpdateConfigurationRequest{}
+	updateConfiguration.ConfigID = configid
+	updateConfiguration.Name = name
 	updateConfiguration.Description = description
 
-	_, erru := client.UpdateConfiguration(ctx, updateConfiguration)
+	resp, erru := client.UpdateConfiguration(ctx, updateConfiguration)
 	if erru != nil {
 		logger.Errorf("calling 'updateConfiguration': %s", erru.Error())
+		logger.Debugf("response is %v", resp)
 		return diag.FromErr(erru)
+	}
+
+	if d.HasChange("host_names") {
+		hostnameset, err := tools.GetSetValue("host_names", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		hostnamelist := tools.SetToStringSlice(hostnameset)
+		hostnames := make([]appsec.Hostname, 0, len(hostnamelist))
+		for _, name := range hostnamelist {
+			hostname := appsec.Hostname{Hostname: name}
+			hostnames = append(hostnames, hostname)
+		}
+
+		updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
+		updateSelectedHostname.ConfigID = configid
+		updateSelectedHostname.Version = getModifiableConfigVersion(ctx, configid, "configuration", m)
+		updateSelectedHostname.HostnameList = hostnames
+
+		_, err = client.UpdateSelectedHostname(ctx, updateSelectedHostname)
+		if err != nil {
+			logger.Errorf("calling 'UpdateSelectedHostname': %s", err.Error())
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
 	}
 
 	return resourceConfigurationRead(ctx, d, m)
@@ -157,13 +251,28 @@ func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationRemove")
+	logger.Debug("!!! in resourceConfigurationDelete")
 
-	removeConfiguration := appsec.RemoveConfigurationRequest{}
-
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Check whether any versions of this config have ever been activated
+	getConfigVersionsRequest := appsec.GetConfigurationVersionsRequest{}
+	getConfigVersionsRequest.ConfigID = configid
+	configurationVersions, err := client.GetConfigurationVersions(ctx, getConfigVersionsRequest)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	for _, configVersion := range configurationVersions.VersionList {
+		if configVersion.Production.Status != "Inactive" || configVersion.Staging.Status != "Inactive" {
+			return diag.FromErr(fmt.Errorf("cannot delete configuration '%s' as version %d has been active in staging or production",
+				configurationVersions.ConfigName, configVersion.Version))
+		}
+	}
+
+	removeConfiguration := appsec.RemoveConfigurationRequest{}
 	removeConfiguration.ConfigID = configid
 
 	_, errd := client.RemoveConfiguration(ctx, removeConfiguration)
@@ -173,60 +282,5 @@ func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	d.SetId("")
-
-	return nil
-}
-
-func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceConfigurationRead")
-
-	getConfiguration := appsec.GetConfigurationsRequest{}
-
-	ID, errconv := strconv.Atoi(d.Id())
-
-	if errconv != nil {
-		return diag.FromErr(errconv)
-	}
-	getConfiguration.ConfigID = ID
-
-	configName, err := tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getConfiguration.Name = configName
-
-	configuration, err := client.GetConfigurations(ctx, getConfiguration)
-	if err != nil {
-		logger.Errorf("calling 'getConfiguration': %s", err.Error())
-		return diag.FromErr(err)
-	}
-
-	var configlist string
-	var configidfound int
-	configlist = configlist + " ConfigID Name  VersionList" + "\n"
-
-	for _, configval := range configuration.Configurations {
-
-		if configval.Name == configName {
-			d.Set("config_id", configval.ID)
-			d.Set("latest_version", configval.LatestVersion)
-			d.Set("staging_version", configval.StagingVersion)
-			d.Set("production_version", configval.ProductionVersion)
-			configidfound = configval.ID
-		}
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "configuration", configuration)
-	if err == nil {
-		d.Set("output_text", outputtext)
-	}
-
-	d.SetId(strconv.Itoa(configidfound))
-
 	return nil
 }

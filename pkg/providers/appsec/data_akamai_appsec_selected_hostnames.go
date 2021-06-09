@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -20,10 +19,6 @@ func dataSourceSelectedHostnames() *schema.Resource {
 		ReadContext: dataSourceSelectedHostnamesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -54,33 +49,13 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 
 	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
 
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getSelectedHostnames.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getSelectedHostnames.Version = version
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getSelectedHostnames.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getSelectedHostnames.Version = version
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
 	}
+	getSelectedHostnames.ConfigID = configid
+
+	getSelectedHostnames.Version = getLatestConfigVersion(ctx, configid, m)
 
 	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
 	if err != nil {
@@ -111,10 +86,6 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("version", getSelectedHostnames.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
@@ -125,7 +96,7 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 		}
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d", getSelectedHostnames.ConfigID, getSelectedHostnames.Version))
+	d.SetId(strconv.Itoa(getSelectedHostnames.ConfigID))
 
 	return nil
 }

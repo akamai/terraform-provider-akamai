@@ -21,6 +21,15 @@ func TestAccAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicy.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetSecurityPolicy",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049"},
@@ -28,7 +37,7 @@ func TestAccAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 
 		client.On("UpdateSecurityPolicy",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049", PolicyName: "Cloned Test for Launchpad 15", DefaultSettings: false, PolicyPrefix: ""},
+			appsec.UpdateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049", PolicyName: "Cloned Test for Launchpad 15"},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
@@ -39,14 +48,14 @@ func TestAccAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResSecurityPolicyRename/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_security_policy_rename.test", "id", "43253:7:PLE_114049"),
+							resource.TestCheckResourceAttr("akamai_appsec_security_policy_rename.test", "id", "43253:PLE_114049"),
 						),
 						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResSecurityPolicyRename/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_security_policy_rename.test", "id", "43253:7:PLE_114049"),
+							resource.TestCheckResourceAttr("akamai_appsec_security_policy_rename.test", "id", "43253:PLE_114049"),
 						),
 						//ExpectNonEmptyPlan: true,
 					},

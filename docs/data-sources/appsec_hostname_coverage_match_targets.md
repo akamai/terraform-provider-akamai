@@ -21,7 +21,6 @@ provider "akamai" {
 
 data "akamai_appsec_hostname_coverage_match_targets" "match_targets" {
   config_id = 43253
-  version = 7
   hostname = "example.com"
 }
 ```
@@ -31,8 +30,6 @@ data "akamai_appsec_hostname_coverage_match_targets" "match_targets" {
 The following arguments are supported:
 
 * `config_id`- (Required) The configuration ID.
-
-* `version` - (Required) The version number of the configuration.
 
 * `hostname` - (Required) The hostname for which to retrieve information.
 

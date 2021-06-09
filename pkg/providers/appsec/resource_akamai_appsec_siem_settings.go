@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -19,19 +19,18 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceSiemSettings() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceSiemSettingsUpdate,
+		CreateContext: resourceSiemSettingsCreate,
 		ReadContext:   resourceSiemSettingsRead,
 		UpdateContext: resourceSiemSettingsUpdate,
 		DeleteContext: resourceSiemSettingsDelete,
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -43,157 +42,199 @@ func resourceSiemSettings() *schema.Resource {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
+			"security_policy_ids": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
 			"enable_botman_siem": {
 				Type:     schema.TypeBool,
-				Optional: true,
+				Required: true,
 			},
 			"siem_id": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"security_policy_ids": {
-				Type:     schema.TypeSet,
-				Required: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 		},
 	}
+}
+
+func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSiemSettingsCreate")
+	logger.Debugf("!!! in resourceSiemSettingsCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "siemSetting", m)
+	enableSiem, err := tools.GetBoolValue("enable_siem", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	enableForAllPolicies, err := tools.GetBoolValue("enable_for_all_policies", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	security_policy_ids, err := tools.GetSetValue("security_policy_ids", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	spids := make([]string, 0, len(security_policy_ids.List()))
+	for _, h := range security_policy_ids.List() {
+		spids = append(spids, h.(string))
+
+	}
+	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	siemID, err := tools.GetIntValue("siem_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	createSiemSettings := appsec.UpdateSiemSettingsRequest{}
+	createSiemSettings.ConfigID = configid
+	createSiemSettings.Version = version
+	createSiemSettings.EnableSiem = enableSiem
+	createSiemSettings.EnableForAllPolicies = enableForAllPolicies
+	createSiemSettings.FirewallPolicyIds = spids
+	createSiemSettings.EnabledBotmanSiemEvents = enableBotmanSiem
+	createSiemSettings.SiemDefinitionID = siemID
+
+	_, erru := client.UpdateSiemSettings(ctx, createSiemSettings)
+	if erru != nil {
+		logger.Errorf("calling 'createSiemSettings': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId(fmt.Sprintf("%d", createSiemSettings.ConfigID))
+
+	return resourceSiemSettingsRead(ctx, d, m)
 }
 
 func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsRead")
+	logger.Debugf("!!! resourceSiemSettingsRead")
+
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
 
 	getSiemSettings := appsec.GetSiemSettingsRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
+	getSiemSettings.ConfigID = configid
+	getSiemSettings.Version = version
 
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getSiemSettings.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getSiemSettings.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getSiemSettings.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getSiemSettings.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getSiemSettings.Version = version
-	}
 	siemsettings, err := client.GetSiemSettings(ctx, getSiemSettings)
 	if err != nil {
 		logger.Errorf("calling 'getSiemSettings': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "siemsettingsDS", siemsettings)
-	if err == nil {
-		d.Set("output_text", outputtext)
-	}
-
 	if err := d.Set("config_id", getSiemSettings.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
-	if err := d.Set("version", getSiemSettings.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
 	if err := d.Set("enable_siem", siemsettings.EnableSiem); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
 	if err := d.Set("enable_for_all_policies", siemsettings.EnableForAllPolicies); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
+	if err := d.Set("security_policy_ids", siemsettings.FirewallPolicyIds); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	if err := d.Set("enable_botman_siem", siemsettings.EnabledBotmanSiemEvents); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
 	if err := d.Set("siem_id", siemsettings.SiemDefinitionID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("security_policy_ids", siemsettings.FirewallPolicyIds); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	d.SetId(fmt.Sprintf("%d:%d", getSiemSettings.ConfigID, getSiemSettings.Version))
-
 	return nil
 }
 
-func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
+func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
+	logger.Debugf("!!! resourceSiemSettingsUpdate")
 
-	removeSiemSettings := appsec.RemoveSiemSettingsRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeSiemSettings.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeSiemSettings.Version = version
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeSiemSettings.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeSiemSettings.Version = version
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	removeSiemSettings.EnableSiem = false
+	version := getModifiableConfigVersion(ctx, configid, "siemSetting", m)
+	enableSiem, err := tools.GetBoolValue("enable_siem", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	enableForAllPolicies, err := tools.GetBoolValue("enable_for_all_policies", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	security_policy_ids, err := tools.GetSetValue("security_policy_ids", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	spids := make([]string, 0, len(security_policy_ids.List()))
+	for _, h := range security_policy_ids.List() {
+		spids = append(spids, h.(string))
 
+	}
+	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 	siemID, err := tools.GetIntValue("siem_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
+	updateSiemSettings := appsec.UpdateSiemSettingsRequest{}
+	updateSiemSettings.ConfigID = configid
+	updateSiemSettings.Version = version
+	updateSiemSettings.EnableSiem = enableSiem
+	updateSiemSettings.EnableForAllPolicies = enableForAllPolicies
+	updateSiemSettings.FirewallPolicyIds = spids
+	updateSiemSettings.EnabledBotmanSiemEvents = enableBotmanSiem
+	updateSiemSettings.SiemDefinitionID = siemID
+
+	_, erru := client.UpdateSiemSettings(ctx, updateSiemSettings)
+	if erru != nil {
+		logger.Errorf("calling 'updateSiemSettings': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	return resourceSiemSettingsRead(ctx, d, m)
+}
+
+func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
+	logger.Debugf("!!! resourceSiemSettingsUpdate")
+
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "siemSetting", m)
+	siemID, err := tools.GetIntValue("siem_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	removeSiemSettings := appsec.RemoveSiemSettingsRequest{}
+	removeSiemSettings.ConfigID = configid
+	removeSiemSettings.Version = version
+	removeSiemSettings.EnableSiem = false
 	removeSiemSettings.SiemDefinitionID = siemID
 
 	_, erru := client.RemoveSiemSettings(ctx, removeSiemSettings)
@@ -204,91 +245,4 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 
 	d.SetId("")
 	return nil
-}
-
-func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
-
-	updateSiemSettings := appsec.UpdateSiemSettingsRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateSiemSettings.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateSiemSettings.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateSiemSettings.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateSiemSettings.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateSiemSettings.Version = version
-	}
-	enableSiem, err := tools.GetBoolValue("enable_siem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateSiemSettings.EnableSiem = enableSiem
-
-	enableForAllPolicies, err := tools.GetBoolValue("enable_for_all_policies", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateSiemSettings.EnableForAllPolicies = enableForAllPolicies
-
-	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateSiemSettings.EnabledBotmanSiemEvents = enableBotmanSiem
-
-	siemID, err := tools.GetIntValue("siem_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateSiemSettings.SiemDefinitionID = siemID
-
-	security_policy_ids, err := tools.GetSetValue("security_policy_ids", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	spids := make([]string, 0, len(security_policy_ids.List()))
-	for _, h := range security_policy_ids.List() {
-		spids = append(spids, h.(string))
-
-	}
-
-	updateSiemSettings.FirewallPolicyIds = spids
-
-	_, erru := client.UpdateSiemSettings(ctx, updateSiemSettings)
-	if erru != nil {
-		logger.Errorf("calling 'updateSiemSettings': %s", erru.Error())
-		return diag.FromErr(erru)
-	}
-
-	return resourceSiemSettingsRead(ctx, d, m)
 }

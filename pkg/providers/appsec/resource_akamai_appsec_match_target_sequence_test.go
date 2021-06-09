@@ -15,16 +15,20 @@ func TestAccAkamaiMatchTargetSequence_res_basic(t *testing.T) {
 
 		cu := appsec.UpdateMatchTargetSequenceResponse{}
 		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequenceResp.json"))
-
 		json.Unmarshal([]byte(expectJSU), &cu)
 
 		cr := appsec.GetMatchTargetSequenceResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequence.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
-		mts := appsec.GetMatchTargetSequencesResponse{}
-		expectJSMTS := compactJSON(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequences.json"))
-		json.Unmarshal([]byte(expectJSMTS), &mts)
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
 
 		client.On("GetMatchTargetSequence",
 			mock.Anything, // ctx is irrelevant for this test
@@ -33,16 +37,7 @@ func TestAccAkamaiMatchTargetSequence_res_basic(t *testing.T) {
 
 		client.On("UpdateMatchTargetSequence",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateMatchTargetSequenceRequest{ConfigID: 43253, ConfigVersion: 7, Type: "website", TargetSequence: []struct {
-				TargetID int "json:\"targetId\""
-				Sequence int "json:\"sequence\""
-			}{struct {
-				TargetID int "json:\"targetId\""
-				Sequence int "json:\"sequence\""
-			}{TargetID: 2052813, Sequence: 1}, struct {
-				TargetID int "json:\"targetId\""
-				Sequence int "json:\"sequence\""
-			}{TargetID: 2971336, Sequence: 2}}},
+			appsec.UpdateMatchTargetSequenceRequest{ConfigID: 43253, ConfigVersion: 7, Type: "website", TargetSequence: []appsec.MatchTargetItem{{Sequence: 1, TargetID: 2052813}, {Sequence: 2, TargetID: 2971336}}},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
@@ -53,16 +48,16 @@ func TestAccAkamaiMatchTargetSequence_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResMatchTargetSequence/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_match_target_sequence.test", "id", "43253:7:website"),
+							resource.TestCheckResourceAttr("akamai_appsec_match_target_sequence.test", "id", "43253:website"),
 						),
-						//ExpectNonEmptyPlan: true,
+						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResMatchTargetSequence/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_match_target_sequence.test", "id", "43253:7:website"),
+							resource.TestCheckResourceAttr("akamai_appsec_match_target_sequence.test", "id", "43253:website"),
 						),
-						//ExpectNonEmptyPlan: true,
+						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

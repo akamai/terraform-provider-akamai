@@ -8,7 +8,7 @@ description: |-
 
 # resource_akamai_appsec_custom_deny
 
-The `resource_akamai_appsec_custom_deny` resource allows you to create a new custom deny action for a specific configuration version.
+The `resource_akamai_appsec_custom_deny` resource allows you to create a new custom deny action for a specific configuration.
 
 ## Example Usage
 
@@ -25,7 +25,6 @@ data "akamai_appsec_configuration" "configuration" {
 }
 resource "akamai_appsec_custom_deny" "custom_deny" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   custom_deny = file("${path.module}/custom_deny.json")
 }
 
@@ -39,8 +38,6 @@ output "custom_deny_id" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `custom_deny` - (Required) The JSON-formatted definition of the custom deny action ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#63df3de3)).
 

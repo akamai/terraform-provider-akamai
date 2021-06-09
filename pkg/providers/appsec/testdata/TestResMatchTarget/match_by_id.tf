@@ -2,11 +2,8 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-
-
 resource "akamai_appsec_match_target" "test" {
     config_id = 43253
-    version = 15
     match_target = <<-EOF
    {
     "type": "website",

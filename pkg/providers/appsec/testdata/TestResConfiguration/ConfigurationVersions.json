@@ -1,0 +1,18 @@
+{
+    "configId": 43253,
+    "configName": "Akamai Tools",
+    "lastCreatedVersion": 1,
+    "totalSize": 1,
+    "versionList": [
+        {
+            "configId": 43253,
+            "production": {
+                "status": "Inactive"
+            },
+            "staging": {
+                "status": "Inactive"
+            },
+            "version": 1
+        }
+    ]
+}

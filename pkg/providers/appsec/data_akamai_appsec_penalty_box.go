@@ -21,10 +21,6 @@ func dataSourcePenaltyBox() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -61,11 +57,7 @@ func dataSourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 	getPenaltyBox.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getPenaltyBox.Version = version
+	getPenaltyBox.Version = getLatestConfigVersion(ctx, configid, m)
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

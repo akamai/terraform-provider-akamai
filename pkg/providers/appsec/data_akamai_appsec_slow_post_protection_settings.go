@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -21,13 +22,13 @@ func dataSourceSlowPostProtectionSettings() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"json": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"output_text": {
 				Type:        schema.TypeString,
@@ -51,11 +52,7 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 	}
 	getSlowPostProtectionSettings.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getSlowPostProtectionSettings.Version = version
+	getSlowPostProtectionSettings.Version = getLatestConfigVersion(ctx, configid, m)
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -77,6 +74,15 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
+	}
+
+	jsonBody, err := json.Marshal(slowpostprotectionsettings)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	d.SetId(strconv.Itoa(getSlowPostProtectionSettings.ConfigID))

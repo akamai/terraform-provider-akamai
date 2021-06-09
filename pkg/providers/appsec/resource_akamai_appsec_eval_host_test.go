@@ -13,17 +13,26 @@ func TestAccAkamaiEvalHost_res_basic(t *testing.T) {
 	t.Run("match by EvalHost ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateEvalHostResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResEvalHost/EvalHost.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
-
 		cr := appsec.GetEvalHostResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResEvalHost/EvalHost.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		cu := appsec.UpdateEvalHostResponse{}
+		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResEvalHost/EvalHost.json"))
+		json.Unmarshal([]byte(expectJSU), &cu)
+
 		crd := appsec.RemoveEvalHostResponse{}
 		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResEvalHost/EvalHost.json"))
 		json.Unmarshal([]byte(expectJSD), &crd)
+
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
 
 		client.On("GetEvalHost",
 			mock.Anything, // ctx is irrelevant for this test
@@ -48,7 +57,7 @@ func TestAccAkamaiEvalHost_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResEvalHost/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_eval_hostnames.test", "id", "43253:7"),
+							resource.TestCheckResourceAttr("akamai_appsec_eval_hostnames.test", "id", "43253"),
 						),
 					},
 				},

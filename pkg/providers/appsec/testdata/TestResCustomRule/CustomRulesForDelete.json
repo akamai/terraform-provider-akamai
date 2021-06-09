@@ -1,0 +1,11 @@
+{
+    "customRules": [
+        {
+            "id": 60039625,
+            "link": "/appsec/v1/configs/43253/custom-rules/60039625",
+            "name": "Fat Rule 1",
+            "status": "unused",
+            "version": 1
+        }
+    ]
+}
