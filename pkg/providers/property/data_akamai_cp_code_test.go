@@ -157,7 +157,7 @@ func TestDSCPCode(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
-					ExpectError: regexp.MustCompile(`invalid CP Code`),
+					ExpectError: regexp.MustCompile(`cp code not found`),
 				}},
 			})
 		})
