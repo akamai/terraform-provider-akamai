@@ -47,6 +47,13 @@ func resourceSecurityPolicy() *schema.Resource {
 			"default_settings": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if old == "" {
+						return false // on policy creation, read this setting and use it
+					}
+					return true // afterwards, ignore it
+				},
 			},
 			"create_from_security_policy_id": {
 				Type:     schema.TypeString,
