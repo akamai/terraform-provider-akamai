@@ -101,6 +101,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_attack_groups":                   dataSourceAttackGroups(),
 			"akamai_appsec_version_notes":                   dataSourceVersionNotes(),
 			"akamai_appsec_waf_mode":                        dataSourceWAFMode(),
+			"akamai_appsec_wap_selected_hostnames":          dataSourceWAPSelectedHostnames(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_appsec_advanced_settings_logging":       resourceAdvancedSettingsLogging(),
@@ -143,6 +144,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_waf_mode":                        resourceWAFMode(),
 			"akamai_appsec_waf_protection":                  resourceWAFProtection(),
 			"akamai_appsec_attack_group":                    resourceAttackGroup(),
+			"akamai_appsec_wap_selected_hostnames":          resourceWAPSelectedHostnames(),
 		},
 	}
 	return provider

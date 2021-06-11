@@ -23,17 +23,15 @@ type OutputTemplate struct {
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
 		return f, nil
-	} else {
-		return nil, fmt.Errorf("Error not found")
 	}
+	return nil, fmt.Errorf("template %s not found", key)
 }
 
 func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}) (string, error) {
 	var ostr, tstr bytes.Buffer
-	templ, ok := GetTemplate(ots, key)
+	templ, err := GetTemplate(ots, key)
 
-	if ok == nil {
-
+	if err == nil {
 		var (
 			funcs = template.FuncMap{
 				"join":  strings.Join,
@@ -242,6 +240,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["networkProtectionDS"] = &OutputTemplate{TemplateName: "networkProtection", TableTitle: "APIConstraints|ApplicationLayerControls|BotmanControls|NetworkLayerControls|RateControls|ReputationControls|SlowPostControls", TemplateType: "TABULAR", TemplateString: "{{.ApplyAPIConstraints}}|{{.ApplyApplicationLayerControls}}|{{.ApplyBotmanControls}}|{{.ApplyNetworkLayerControls}}|{{.ApplyRateControls}}|{{.ApplyReputationControls}}|{{.ApplySlowPostControls}}"}
 	otm["RuleConditionException"] = &OutputTemplate{TemplateName: "RuleConditionException", TableTitle: "Conditions|Exceptions", TemplateType: "TABULAR", TemplateString: "{{if .Conditions}}True{{else}}False{{end}}|{{if .Exception}}True{{else}}False{{end}}"}
 	otm["RuleUpgradeDetails"] = &OutputTemplate{TemplateName: "RuleUpgradeDetails", TableTitle: "KRSToEvalUpdates|EvalToEvalUpdates|KRSToLatestUpdates", TemplateType: "TABULAR", TemplateString: "{{marshalruleupgradedetails .}}"}
+	otm["WAPSelectedHostsDS"] = &OutputTemplate{TemplateName: "WAPSelectedHostsDS", TableTitle: "SecurityPolicyID|Hostname|Status", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .HostnameList}}{{if $index}},{{end}}{{.SecurityPolicyID}}|{{.Hostname}}|{{.Status}}{{end}}"}
 
 	// TABULAR templates output used in data_akamai_appsec_export_configuration
 	otm["attackGroups"] = &OutputTemplate{TemplateName: "attackGroups", TableTitle: "ID|Name|Type|Ruleset Version ID", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Rulesets}}{{$type := .Type}}{{$rulesetVersionID := .RulesetVersionID}}{{with .AttackGroups}}{{if $index}},{{end}}{{range $index, $element := .}}{{if $index}},{{end}}{{.Group}}|{{.GroupName}}|{{$type}}|{{$rulesetVersionID}}{{end}}{{end}}{{end}}"}
@@ -282,5 +281,4 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["SiemSettings.tf"] = &OutputTemplate{TemplateName: "SiemSettings.tf", TableTitle: "SiemSettings", TemplateType: "TERRAFORM", TemplateString: "\n// terraform import akamai_appsec_siem_settings.siem_settings {{.ConfigID}}\nresource \"akamai_appsec_siem_settings\" \"siem_settings\" { \n config_id = {{.ConfigID}}\n enable_siem = {{.Siem.EnableSiem}} \n enable_for_all_policies = {{.Siem.EnableForAllPolicies}}\n enable_botman_siem = {{.Siem.EnabledBotmanSiemEvents}}\n siem_id = {{.Siem.SiemDefinitionID}}\n security_policy_ids = [{{  range $index, $element := .Siem.FirewallPolicyIds}}{{if $index}},{{end}}{{quote .}}{{end}}] \n \n } \n"}
 	otm["SlowPost.tf"] = &OutputTemplate{TemplateName: "SlowPost.tf", TableTitle: "SlowPost", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}}{{if .SlowPost}}\n// terraform import akamai_appsec_slow_post.akamai_appsec_slow_post_{{$prev_secpolicy}} {{$config}}:{{$prev_secpolicy}}\nresource \"akamai_appsec_slow_post\" \"akamai_appsec_slow_post_{{$prev_secpolicy}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  slow_rate_action = \"{{.SlowPost.Action}}\" {{if .SlowPost.SlowRateThreshold}}\n  slow_rate_threshold_rate = {{.SlowPost.SlowRateThreshold.Rate}}\n  slow_rate_threshold_period = {{.SlowPost.SlowRateThreshold.Period}}{{end}}{{if .SlowPost.DurationThreshold}}\n  duration_threshold_timeout = {{.SlowPost.DurationThreshold.Timeout}}{{end}}\n} \n{{end}}{{end}}"}
 	otm["IPGeoFirewall.tf"] = &OutputTemplate{TemplateName: "IPGeoFirewall.tf", TableTitle: "IPGeoFirewall", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}}\n// terraform import akamai_appsec_ip_geo.akamai_appsec_ip_geo_{{$prev_secpolicy}} {{$config}}:{{$prev_secpolicy}}\nresource \"akamai_appsec_ip_geo\" \"akamai_appsec_ip_geo_{{$prev_secpolicy}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n mode = {{if eq .IPGeoFirewall.Block \"blockSpecificIPGeo\"}}\"block\"{{else}}\"allow\"{{end}} \n geo_network_lists = [{{  range $index, $element := .IPGeoFirewall.GeoControls.BlockedIPNetworkLists.NetworkList }}{{if $index}},{{end}}{{quote .}}{{end}}]\n ip_network_lists = [{{  range $index, $element := .IPGeoFirewall.IPControls.BlockedIPNetworkLists.NetworkList }}{{if $index}},{{end}}{{quote .}}{{end}}]\n exception_ip_network_lists = [{{  range $index, $element := .IPGeoFirewall.IPControls.AllowedIPNetworkLists.NetworkList }}{{if $index}},{{end}}{{quote .}}{{end}}] \n  \n } \n{{end}}"}
-
 }

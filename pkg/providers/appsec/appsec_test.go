@@ -880,6 +880,26 @@ func (p *mockappsec) GetSelectedHostnames(ctx context.Context, params appsec.Get
 	return args.Get(0).(*appsec.GetSelectedHostnamesResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetWAPSelectedHostnames(ctx context.Context, params appsec.GetWAPSelectedHostnamesRequest) (*appsec.GetWAPSelectedHostnamesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetWAPSelectedHostnamesResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateWAPSelectedHostnames(ctx context.Context, params appsec.UpdateWAPSelectedHostnamesRequest) (*appsec.UpdateWAPSelectedHostnamesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateWAPSelectedHostnamesResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetSlowPostProtectionSetting(ctx context.Context, params appsec.GetSlowPostProtectionSettingRequest) (*appsec.GetSlowPostProtectionSettingResponse, error) {
 	args := p.Called(ctx, params)
 
