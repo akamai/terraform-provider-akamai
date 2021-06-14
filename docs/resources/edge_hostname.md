@@ -8,7 +8,7 @@ description: |-
 
 # akamai_edge_hostname
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Property Provisioning module. To upgrade to the new version, you have to update this resource. See the [upgrade guide](../guides/1.0_migration.md) for details. 
 
 The `akamai_edge_hostname` resource lets you configure a secure edge hostname. Your 
 edge hostname determines how requests for your site, app, or content are mapped to 

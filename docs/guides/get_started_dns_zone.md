@@ -1,11 +1,11 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Get Started with DNS Zone Administration"
+page_title: "Module: DNS Zone Administration"
 description: |-
-  Get Started with Akamai DNS Zone Administration using Terraform
+  DNS Zone Administration module for the Akamai Terraform Provider
 ---
 
-# Get Started with DNS Zone Administration
+# DNS Zone Administration Guide
 
 The Akamai Provider for Terraform provides you the ability to automate the creation, deployment, and management of DNS zone configuration and administration; as well as 
 importing existing zones and recordsets.  
@@ -20,7 +20,7 @@ To get more information about Edge DNS, see:
 
 Before starting with the DNS module, you need to:
 
-1. Complete the tasks in [Akamai: Get Started with the Akamai Terraform Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). 
+1. Complete the tasks in [Get Started with the Akamai Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). 
 2. Determine whether you want to import an existing DNS zone and records or create new ones.
 3. If you're importing an existing DNS configuration, continue with [Import a DNS zone and records](#import-a-dns-zone-and-records).
 3. If you're creating a new DNS configuration, continue with [Create a DNS zone

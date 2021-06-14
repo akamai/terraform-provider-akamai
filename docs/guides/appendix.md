@@ -1,11 +1,13 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Appendix"
+page_title: "Shared Resources"
 description: |-
-  Appendix
+  Shared Resources
 ---
 
-# Appendix
+# Shared Resources
+
+Find information that applies to multiple Akamai Provider modules.
 
 ## Domain Suffixes for Different Edge Hostname Types
 

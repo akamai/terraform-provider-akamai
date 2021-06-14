@@ -1,11 +1,11 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Get Started with GTM Domain Administration"
+page_title: "Module: GTM Domain Administration"
 description: |-
-  Get Started with Akamai GTM Domain Administration using Terraform
+  GTM Domain Administration module for the Akamai Terraform Provider
 ---
 
-# Get Started with GTM Domain Administration
+# GTM Domain Administration Module Guide
 
 The Akamai Provider for Terraform provides you the ability to automate the creation, deployment, and management of Global Traffic Management (GTM) domain configuration and administration; as well as importing existing domains and contained objects.  
 
@@ -18,7 +18,7 @@ To get more information about Global Traffic Management, see:
 
 Before starting with the DNS module, you need to:
 
-1. Complete the tasks in [Akamai: Get Started with the Akamai Terraform Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have an API client and a valid `akamai.tf` Terraform configuration at this point before adding the GTM module configuration.
+1. Complete the tasks in [Get Started with the Akamai Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have an API client and a valid `akamai.tf` Terraform configuration at this point before adding the GTM module configuration.
 2. Determine whether you want to import an existing DNS zone and records or create new ones.
 3. If you're importing an existing GTM domain, continue with [Import a GTM  domain](#import-a-gtm-domain).
 3. If you're creating a new GTM domain, continue with [Create a GTM domain

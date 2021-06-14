@@ -8,7 +8,7 @@ description: |-
 
 # akamai_property
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to this version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details.
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Property Provisioning module. To upgrade to this version, you have to update this resource. See the [Upgrade to Version 1.0.0](../guides/1.0_migration.md) for details.
 
 The `akamai_property` resource represents an Akamai property configuration.
 This resource lets you to create, update, and activate properties on the
