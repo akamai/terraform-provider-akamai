@@ -29,8 +29,11 @@
    * Fixed issue causing edgehostnames not being set properly in state intermittently
 
 #### FEATURES/ENHANCEMENTS:
-* CPS
-  * !!! TO BE ADDED !!!
+* [IMPORTANT] CPS - Added Certificate Provisioning API support
+  * Added resources allowing management of DV enrollments:
+    * akamai_cps_dv_enrollment - create, read, update and delete DV enrollments
+    * akamai_cps_dv_validation - inform CPS of finished validation, track change status
+    
 * APPSEC
   * The provider now determines automatically the version number to use for data source and resource operations.
     The most recent version of the specified configuration will be used if it is not currently active in either
