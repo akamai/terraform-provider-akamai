@@ -496,6 +496,11 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	if err != nil {
 		return diag.FromErr(err)
+	} else {
+		if v == 0 {
+			// use latest version unless "read_version" != 0
+			v = Property.LatestVersion
+		}
 	}
 
 	var StagingVersion int
@@ -509,13 +514,13 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	// TODO: Load hostnames asynchronously
-	Hostnames, err := fetchPropertyHostnames(ctx, client, *Property)
+	Hostnames, err := fetchPropertyVersionHostnames(ctx, client, *Property, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// TODO: Load rules asynchronously
-	Rules, RuleFormat, RuleErrors, RuleWarnings, err := fetchPropertyRules(ctx, client, *Property)
+	Rules, RuleFormat, RuleErrors, RuleWarnings, err := fetchPropertyVersionRules(ctx, client, *Property, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -542,8 +547,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		logger.WithError(err).Error("could not render rules as JSON")
 		return diag.Errorf("received rules that could not be rendered to JSON: %s", err)
 	}
-	PropertyVersion := Property.LatestVersion
-	res, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, PropertyVersion)
+	res, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -717,8 +721,8 @@ func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m inter
 	client := inst.Client(akamai.Meta(m))
 
 	PropertyID := d.Id()
-	ContractID := d.Get("contract_id").(string)
-	GroupID := d.Get("group_id").(string)
+	ContractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
+	GroupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
 
 	if err := removeProperty(ctx, client, PropertyID, GroupID, ContractID); err != nil {
 		return diag.FromErr(err)
@@ -765,7 +769,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 			if v, err := parseVersionNumber(Version); err != nil {
 				// acceptable values for Version at this point: "PRODUCTION" or "STAGING" (or synonyms). Let's validate
 				if _, err := NetworkAlias(Version); err != nil {
-					return nil, err
+					return nil, ErrPropertyVersionNotFound
 				}
 				// if we ran validation and we actually have a network name, we still need to fetch the desired version number
 				_, attrs["read_version"], err = fetchProperty(ctx, inst.Client(akamai.Meta(m)), PropertyID, GroupID, ContractID, Version)
@@ -931,7 +935,7 @@ func fetchProperty(ctx context.Context, client papi.PAPI, PropertyID, GroupID, C
 		// if it is a valid version number there is nothing else to do
 		n, err := parseVersionNumber(version)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, ErrPropertyVersionNotFound
 		}
 		versionNumber = n
 	} else {
@@ -988,7 +992,7 @@ func filterStaging(items []papi.PropertyVersionGetItem) ([]papi.PropertyVersionG
 		}
 	}
 	if len(output) == 0 {
-		return nil, ErrVersionNotFound
+		return nil, ErrPropertyVersionNotFound
 	}
 	return output, nil
 }
@@ -1003,7 +1007,7 @@ func filterProduction(items []papi.PropertyVersionGetItem) ([]papi.PropertyVersi
 		}
 	}
 	if len(output) == 0 {
-		return nil, ErrVersionNotFound
+		return nil, ErrPropertyVersionNotFound
 	}
 	return output, nil
 }
@@ -1044,7 +1048,7 @@ func getVersionItem(items []papi.PropertyVersionGetItem, versionNumber int) (*pa
 			return &it, nil
 		}
 	}
-	return nil, ErrVersionNotFound
+	return nil, ErrPropertyVersionNotFound
 }
 
 // load status for what we currently have as a given property version.  GetLatestVersion may also work here.
@@ -1069,12 +1073,12 @@ func fetchPropertyVersion(ctx context.Context, client papi.PAPI, PropertyID, Gro
 }
 
 // Fetch hostnames for latest version of given property
-func fetchPropertyHostnames(ctx context.Context, client papi.PAPI, Property papi.Property) ([]papi.Hostname, error) {
+func fetchPropertyVersionHostnames(ctx context.Context, client papi.PAPI, Property papi.Property, version int) ([]papi.Hostname, error) {
 	req := papi.GetPropertyVersionHostnamesRequest{
 		PropertyID:        Property.PropertyID,
 		GroupID:           Property.GroupID,
 		ContractID:        Property.ContractID,
-		PropertyVersion:   Property.LatestVersion,
+		PropertyVersion:   version,
 		IncludeCertStatus: true,
 	}
 
@@ -1092,12 +1096,12 @@ func fetchPropertyHostnames(ctx context.Context, client papi.PAPI, Property papi
 }
 
 // Fetch rules for latest version of given property
-func fetchPropertyRules(ctx context.Context, client papi.PAPI, Property papi.Property) (Rules papi.RulesUpdate, Format string, Errors, Warnings []*papi.Error, err error) {
+func fetchPropertyVersionRules(ctx context.Context, client papi.PAPI, Property papi.Property, version int) (Rules papi.RulesUpdate, Format string, Errors, Warnings []*papi.Error, err error) {
 	req := papi.GetRuleTreeRequest{
 		PropertyID:      Property.PropertyID,
 		GroupID:         Property.GroupID,
 		ContractID:      Property.ContractID,
-		PropertyVersion: Property.LatestVersion,
+		PropertyVersion: version,
 		ValidateRules:   true,
 		ValidateMode:    papi.RuleValidateModeFull,
 	}

@@ -17,12 +17,11 @@ This Guide is for developers who:
 * are interested in implementing or updating an integration of Akamai functionality with Terraform.
 * already have some familiarity with Akamai.
  
-For more information about Application Security, see the
-[API documentation](https://developer.akamai.com/api/cloud_security/application_security/v1.html)
-
 ## Prerequisites
 
-~> **Note** The Application Security subprovider is currently in beta.
+~> **Note** The Application Security subprovider is currently in beta. If you’re currently using the Application Security module,
+the latest Akamai Terraform Provider release, v1.6.0, includes breaking changes that require you to update your existing Terraform
+configuration.
 
 To manage Application Security resources, you need to obtain information regarding your 
 existing security implementation, including the following information:
