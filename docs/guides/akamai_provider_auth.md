@@ -39,10 +39,10 @@ supporting API service names:
 | **Application Security** | Application Security |
 | **Certificate Provisioning** | Certificate Provisioning System |
 | **DNS Zone Administration Module** | DNS Zone Management |
-| **Global Traffic Management Domain Administration** (GTM domains) | Global Traffic Management |
+| **Global Traffic Management Domain Administration** | Global Traffic Management |
 | **Identity and Access Management** | Identity Management: User Administration |
 | **Network Lists** | Network Lists |
-| **Property Provisioning** (Includes common functions) | Property Manager (PAPI) |
+| **Property Provisioning** (Includes Common functions) | Property Manager (PAPI) |
 
 
 -> **Note:** If you're using the Edge DNS or GTM module, you may also need the Property Manager API service. Whether you need this additional service depends on your contract and group. See [PAPI concepts](https://developer.akamai.com/api/core_features/property_manager/v1.html#papiconcepts) for more information.

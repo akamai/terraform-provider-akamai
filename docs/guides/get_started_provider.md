@@ -66,11 +66,11 @@ Create an Akamai API client with the right permissions and valid credentials to 
 
 Once you set up the API clients, you add credential information from those clients to your `akamai.tf` file.
 
-See the [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md)
-guide for details. Once you're done authenticating, come back here to complete 
+See [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md)
+for details. Once you're done authenticating, come back here to complete 
 the Akamai Provider setup.
 
-**Note:** Depending on the select contract and group, the Edge DNS and GTM modules may depend on both Property Manager APIs as well. If so, be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
+**Note:** Depending on the select contract and group, the Edge DNS and Global Traffic Management (GTM) modules may depend on both Property Manager APIs as well. If so, be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
 
 ## Retrieve contract and group IDs
 
@@ -134,7 +134,7 @@ At this point in the setup, you should refer to the guides for the Akamai module
 | **Application Security** (beta) | [Application Security Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec) |
 | **Certificate Provisioning** | [Certificate Provisioning Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_cps) |
 | **DNS Zone Administration** | [DNS Zone Administration Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone) | 
-| **Global Traffic Management Domain Administration** | [GTM Domain Administration Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain) | 
+| **Global Traffic Management Domain Administration** | [Global Traffic Management Domain Administration Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain) | 
 | **Identity and Access Management** | [Identity and Access Management Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam) |
 | **Network Lists** | [Network Lists Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_networklists) |
 | **Property Provisioning** | [Property Provisioning Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) |
