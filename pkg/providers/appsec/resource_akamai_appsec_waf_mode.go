@@ -28,7 +28,7 @@ func resourceWAFMode() *schema.Resource {
 			VerifyIdUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -207,7 +207,7 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceWAFModeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	return schema.NoopContext(context.TODO(), d, m)
 }
 
 const (

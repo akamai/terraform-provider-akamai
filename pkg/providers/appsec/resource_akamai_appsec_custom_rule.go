@@ -30,7 +30,7 @@ func resourceCustomRule() *schema.Resource {
 			VerifyIdUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -217,7 +217,7 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 		}
 		d.SetId("")
 	} else {
-		return diag.FromErr(fmt.Errorf("Custom Rule %d can not be deleted, it is either active or in use", customruleid))
+		return diag.FromErr(fmt.Errorf("custom rule %d cannot be deleted, it is either active or in use", customruleid))
 	}
 	return nil
 }

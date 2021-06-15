@@ -24,7 +24,7 @@ func resourceRatePolicyAction() *schema.Resource {
 		UpdateContext: resourceRatePolicyActionUpdate,
 		DeleteContext: resourceRatePolicyActionDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
 			VerifyIdUnchanged,

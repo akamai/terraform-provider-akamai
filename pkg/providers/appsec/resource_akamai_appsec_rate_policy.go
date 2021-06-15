@@ -26,7 +26,7 @@ func resourceRatePolicy() *schema.Resource {
 		UpdateContext: resourceRatePolicyUpdate,
 		DeleteContext: resourceRatePolicyDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
 			VerifyIdUnchanged,
@@ -146,6 +146,9 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	ratePolicyID, err := strconv.Atoi(idParts[1])
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	jsonpostpayload := d.Get("rate_policy")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
@@ -183,6 +186,9 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 	version := getModifiableConfigVersion(ctx, configid, "ratePolicy", m)
 	ratePolicyID, err := strconv.Atoi(idParts[1])
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	deleteRatePolicy := appsec.RemoveRatePolicyRequest{}
 	deleteRatePolicy.ConfigID = configid

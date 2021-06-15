@@ -24,7 +24,7 @@ func resourceEvalProtectHost() *schema.Resource {
 		UpdateContext: resourceEvalProtectHostUpdate,
 		DeleteContext: resourceEvalProtectHostDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
 			VerifyIdUnchanged,
@@ -151,5 +151,5 @@ func resourceEvalProtectHostDelete(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceEvalProtectHostUpdate")
 	logger.Debug("!!! in resourceEvalProtectHostDelete")
 
-	return schema.NoopContext(nil, d, m)
+	return schema.NoopContext(context.TODO(), d, m)
 }

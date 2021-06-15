@@ -28,7 +28,7 @@ func resourceMatchTarget() *schema.Resource {
 			VerifyIdUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -97,6 +97,9 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	version := getLatestConfigVersion(ctx, configid, m)
 	targetid, err := strconv.Atoi(idParts[1])
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	getMatchTarget := appsec.GetMatchTargetRequest{}
 	getMatchTarget.ConfigID = configid
@@ -143,6 +146,9 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	version := getModifiableConfigVersion(ctx, configid, "matchTarget", m)
 	targetid, err := strconv.Atoi(idParts[1])
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	jsonpostpayload := d.Get("match_target")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
@@ -179,6 +185,9 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 	version := getModifiableConfigVersion(ctx, configid, "matchTarget", m)
 	targetid, err := strconv.Atoi(idParts[1])
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	removeMatchTarget := appsec.RemoveMatchTargetRequest{}
 	removeMatchTarget.ConfigID = configid

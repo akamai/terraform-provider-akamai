@@ -24,7 +24,7 @@ func resourceSelectedHostname() *schema.Resource {
 		UpdateContext: resourceSelectedHostnameUpdate,
 		DeleteContext: resourceSelectedHostnameDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
 			VerifyIdUnchanged,
@@ -258,7 +258,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceSelectedHostnameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	return schema.NoopContext(context.TODO(), d, m)
 }
 
 // Append Replace Remove mode flags

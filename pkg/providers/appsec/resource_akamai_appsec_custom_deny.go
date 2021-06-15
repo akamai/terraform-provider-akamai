@@ -26,7 +26,7 @@ func resourceCustomDeny() *schema.Resource {
 		UpdateContext: resourceCustomDenyUpdate,
 		DeleteContext: resourceCustomDenyDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
 			VerifyIdUnchanged,

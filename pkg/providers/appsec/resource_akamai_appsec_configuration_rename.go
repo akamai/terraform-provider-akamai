@@ -27,7 +27,7 @@ func resourceConfigurationRename() *schema.Resource {
 			VerifyIdUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -88,6 +88,9 @@ func resourceConfigurationRenameRead(ctx context.Context, d *schema.ResourceData
 	logger.Debugf("!!! in resourceConfigurationRenameRead")
 
 	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	getConfiguration := appsec.GetConfigurationRequest{}
 	getConfiguration.ConfigID = configid
@@ -118,6 +121,9 @@ func resourceConfigurationRenameUpdate(ctx context.Context, d *schema.ResourceDa
 	logger.Debugf("!!! in resourceConfigurationRenameRead")
 
 	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	name, err := tools.GetStringValue("name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -142,5 +148,5 @@ func resourceConfigurationRenameUpdate(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceConfigurationRenameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	return schema.NoopContext(context.TODO(), d, m)
 }

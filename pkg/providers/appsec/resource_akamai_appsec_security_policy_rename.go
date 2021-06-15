@@ -157,5 +157,5 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceSecurityPolicyRenameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	return schema.NoopContext(context.TODO(), d, m)
 }

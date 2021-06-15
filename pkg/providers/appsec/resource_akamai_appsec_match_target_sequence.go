@@ -145,7 +145,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	updateMatchTargetSequence.ConfigVersion = version
 
 	if matchTargetType != updateMatchTargetSequence.Type {
-		err = fmt.Errorf("Match Target Type %s cannot be changed to %s", matchTargetType, updateMatchTargetSequence.Type)
+		err = fmt.Errorf("match target type %s cannot be changed to %s", matchTargetType, updateMatchTargetSequence.Type)
 		return diag.FromErr(err)
 	}
 
@@ -159,5 +159,5 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceMatchTargetSequenceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	return schema.NoopContext(context.TODO(), d, m)
 }

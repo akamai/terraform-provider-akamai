@@ -26,7 +26,7 @@ func resourceSecurityPolicy() *schema.Resource {
 		UpdateContext: resourceSecurityPolicyUpdate,
 		DeleteContext: resourceSecurityPolicyDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
 			VerifyIdUnchanged,
@@ -49,10 +49,7 @@ func resourceSecurityPolicy() *schema.Resource {
 				Optional: true,
 				Default:  true,
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					if old == "" {
-						return false // on policy creation, read this setting and use it
-					}
-					return true // afterwards, ignore it
+					return old != "" // read & use this setting on policy creation, otherwise ignore it
 				},
 			},
 			"create_from_security_policy_id": {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 	"sync"
 	"testing"
 
@@ -33,10 +32,6 @@ func TestProvider(t *testing.T) {
 
 func testAccPreCheck(t *testing.T) {
 
-}
-
-func getTestProvider() *schema.Provider {
-	return testProvider
 }
 
 // Only allow one test at a time to patch the client via useClient()
@@ -66,24 +61,6 @@ func TODO(t *testing.T, message string) {
 
 	if os.Getenv("TEST_TODO") == "" {
 		t.Skip("TODO: Set TEST_TODO=1 in env to run this test")
-	}
-}
-
-func setEnv(home string, env map[string]string) {
-	os.Clearenv()
-	os.Setenv("HOME", home)
-	if len(env) > 0 {
-		for key, val := range env {
-			os.Setenv(key, val)
-		}
-	}
-}
-
-func restoreEnv(env []string) {
-	os.Clearenv()
-	for _, value := range env {
-		envVar := strings.Split(value, "=")
-		os.Setenv(envVar[0], envVar[1])
 	}
 }
 

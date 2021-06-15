@@ -30,7 +30,7 @@ func resourceAdvancedSettingsLogging() *schema.Resource {
 			VerifyIdUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {

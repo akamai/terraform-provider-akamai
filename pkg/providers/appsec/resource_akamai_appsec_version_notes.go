@@ -27,7 +27,7 @@ func resourceVersionNotes() *schema.Resource {
 			VerifyIdUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -147,5 +147,5 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceVersionNotesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	return schema.NoopContext(context.TODO(), d, m)
 }

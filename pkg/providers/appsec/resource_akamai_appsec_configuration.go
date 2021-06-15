@@ -23,7 +23,7 @@ func resourceConfiguration() *schema.Resource {
 		UpdateContext: resourceConfigurationUpdate,
 		DeleteContext: resourceConfigurationDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {

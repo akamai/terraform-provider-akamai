@@ -27,7 +27,7 @@ func resourceAPIConstraintsProtection() *schema.Resource {
 			VerifyIdUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -144,6 +144,9 @@ func resourceAPIConstraintsProtectionUpdate(ctx context.Context, d *schema.Resou
 	logger.Debugf("!!! in resourceAPIConstraintsProtectionUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
@@ -178,6 +181,9 @@ func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.Resou
 	logger.Debugf("!!! in resourceAPIConstraintsProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	configid, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
