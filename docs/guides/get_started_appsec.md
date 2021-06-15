@@ -275,10 +275,6 @@ Resource definitions can be exported for import using any of the following `sear
   * AdvancedSettingsLogging.tf
   * AdvancedSettingsPrefetch.tf
   * ApiRequestConstraints.tf
-  * AttackGroupAction.tf
-  * AttackGroupConditionException.tf
-  * EvalAction.tf
-  * EvalRuleConditionException.tf
   * CustomDeny.tf
   * CustomRule.tf
   * CustomRuleAction.tf
@@ -288,8 +284,6 @@ Resource definitions can be exported for import using any of the following `sear
   * RatePolicyAction.tf
   * ReputationProfile.tf
   * ReputationProfileAction.tf
-  * RuleAction.tf
-  * RuleConditionException.tf
   * Rule.tf
   * EvalRule.tf
   * AttackGroup.tf
