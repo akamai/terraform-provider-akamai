@@ -89,51 +89,7 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 	}
 	target := configuration.TargetProduct
 
-	if target == "WAP" {
-		getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{}
-		getWAPSelectedHostnamesRequest.ConfigID = configid
-		getWAPSelectedHostnamesRequest.Version = version
-		getWAPSelectedHostnamesRequest.SecurityPolicyID = securityPolicyID
-
-		WAPSelectedHostnames, err := client.GetWAPSelectedHostnames(ctx, getWAPSelectedHostnamesRequest)
-		if err != nil {
-			logger.Errorf("calling 'getWAPSelectedHostnames': %s", err.Error())
-			return diag.FromErr(err)
-		}
-
-		if err := d.Set("protected_hosts", WAPSelectedHostnames.ProtectedHosts); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-		if err := d.Set("evaluated_hosts", WAPSelectedHostnames.EvaluatedHosts); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-
-		jsonBody, err := json.Marshal(WAPSelectedHostnames)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("json", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-
-		ots := OutputTemplates{}
-		InitTemplates(ots)
-
-		textOutputCount := len(WAPSelectedHostnames.ProtectedHosts) + len(WAPSelectedHostnames.EvaluatedHosts)
-		textOutputEntries := make([]wapSelectedHostnamesOutputText, 0, textOutputCount)
-		for _, h := range WAPSelectedHostnames.ProtectedHosts {
-			textOutputEntries = append(textOutputEntries, wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "protected"})
-		}
-		for _, h := range WAPSelectedHostnames.EvaluatedHosts {
-			textOutputEntries = append(textOutputEntries, wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "evaluated"})
-		}
-		outputtext, err := RenderTemplates(ots, "WAPSelectedHostsDS", textOutputEntries)
-		if err == nil {
-			if err := d.Set("output_text", outputtext); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
-		}
-	} else {
+	if target == "KSD" {
 		getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
 		getSelectedHostnames.ConfigID = configid
 		getSelectedHostnames.Version = version
@@ -184,6 +140,50 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 		websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
 		if err == nil {
 			if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+		}
+	} else { // WAP_AAG and WAP_PLUS accounts
+		getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{}
+		getWAPSelectedHostnamesRequest.ConfigID = configid
+		getWAPSelectedHostnamesRequest.Version = version
+		getWAPSelectedHostnamesRequest.SecurityPolicyID = securityPolicyID
+
+		WAPSelectedHostnames, err := client.GetWAPSelectedHostnames(ctx, getWAPSelectedHostnamesRequest)
+		if err != nil {
+			logger.Errorf("calling 'getWAPSelectedHostnames': %s", err.Error())
+			return diag.FromErr(err)
+		}
+
+		if err := d.Set("protected_hosts", WAPSelectedHostnames.ProtectedHosts); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+		if err := d.Set("evaluated_hosts", WAPSelectedHostnames.EvaluatedHosts); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+
+		jsonBody, err := json.Marshal(WAPSelectedHostnames)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("json", string(jsonBody)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+
+		ots := OutputTemplates{}
+		InitTemplates(ots)
+
+		textOutputCount := len(WAPSelectedHostnames.ProtectedHosts) + len(WAPSelectedHostnames.EvaluatedHosts)
+		textOutputEntries := make([]wapSelectedHostnamesOutputText, 0, textOutputCount)
+		for _, h := range WAPSelectedHostnames.ProtectedHosts {
+			textOutputEntries = append(textOutputEntries, wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "protected"})
+		}
+		for _, h := range WAPSelectedHostnames.EvaluatedHosts {
+			textOutputEntries = append(textOutputEntries, wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "evaluated"})
+		}
+		outputtext, err := RenderTemplates(ots, "WAPSelectedHostsDS", textOutputEntries)
+		if err == nil {
+			if err := d.Set("output_text", outputtext); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
 		}
