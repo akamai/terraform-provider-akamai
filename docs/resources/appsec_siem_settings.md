@@ -38,7 +38,7 @@ resource "akamai_appsec_siem_settings" "siem" {
   enable_for_all_policies = false
   enable_botman_siem = true
   siem_id = data.akamai_appsec_siem_definitions.siem_definition.id
-  security_policy_ids = data.akamai_appsec_security_policy.security_policies.policy_list
+  security_policy_ids = data.akamai_appsec_security_policy.security_policies.security_policy_id_list
 }
 ```
 
