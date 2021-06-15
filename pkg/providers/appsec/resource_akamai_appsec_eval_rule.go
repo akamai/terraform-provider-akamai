@@ -70,7 +70,7 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "evalRuleConditionException", m)
+	version := getModifiableConfigVersion(ctx, configid, "evalRule", m)
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -184,7 +184,7 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "evalRuleConditionException", m)
+	version := getModifiableConfigVersion(ctx, configid, "evalRule", m)
 	policyid := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
@@ -236,7 +236,7 @@ func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "evalRuleConditionException", m)
+	version := getModifiableConfigVersion(ctx, configid, "evalRule", m)
 	policyid := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
