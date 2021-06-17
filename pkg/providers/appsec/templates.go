@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"text/template"
@@ -157,31 +156,37 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 				"replace": func(old, new, src string) string { return strings.Replace(src, old, new, -1) },
 
 				"collectWAPHostnameInfo": func(exportconfiguration *appsec.GetExportConfigurationsResponse) []wapHostnames {
+					hostnameListsByPolicy := make([]wapHostnames, 0)
 					matchTargets := exportconfiguration.MatchTargets
 					websiteTargets := matchTargets.WebsiteTargets
-					hostnamesByPolicy := make(map[string]wapHostnames)
+					protectedHostLists := make(map[string][]string)
 					for _, target := range websiteTargets {
-						log.Printf("target: '%v'", target)
 						policyID := target.SecurityPolicy.PolicyID
-						hostnamesByPolicy[policyID] = wapHostnames{ID: policyID, ProtectedHosts: target.Hostnames}
+						protectedHostLists[policyID] = target.Hostnames
 					}
 					evaluating := exportconfiguration.Evaluating
+					evalHostLists := make(map[string][]string)
 					for _, policy := range evaluating.SecurityPolicies {
 						policyID := policy.SecurityPolicyID
-						mapElement, ok := hostnamesByPolicy[policyID]
-						if ok {
-							mapElement.EvalHosts = policy.Hostnames
-						} else {
-							mapElement := wapHostnames{ID: policyID, EvalHosts: policy.Hostnames}
-							hostnamesByPolicy[policy.SecurityPolicyID] = mapElement
-						}
-					}
-					hostnameInfo := make([]wapHostnames, 0, len(hostnamesByPolicy))
-					for _, mapElement := range hostnamesByPolicy {
-						hostnameInfo = append(hostnameInfo, mapElement)
+						evalHostLists[policyID] = policy.Hostnames
 					}
 
-					return hostnameInfo
+					for policyID, hostlist := range protectedHostLists {
+						element := wapHostnames{ID: policyID, ProtectedHosts: hostlist}
+						evalHostList, ok := evalHostLists[policyID]
+						if ok {
+							element.EvalHosts = evalHostList
+							delete(evalHostLists, policyID)
+						}
+						hostnameListsByPolicy = append(hostnameListsByPolicy, element)
+					}
+					// add elements for any policies with just evalHostnames lists
+					for policyID, hostlist := range evalHostLists {
+						element := wapHostnames{ID: policyID, EvalHosts: hostlist}
+						hostnameListsByPolicy = append(hostnameListsByPolicy, element)
+					}
+
+					return hostnameListsByPolicy
 				},
 			}
 		)
@@ -308,5 +313,5 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["SiemSettings.tf"] = &OutputTemplate{TemplateName: "SiemSettings.tf", TableTitle: "SiemSettings", TemplateType: "TERRAFORM", TemplateString: "\n// terraform import akamai_appsec_siem_settings.siem_settings {{.ConfigID}}\nresource \"akamai_appsec_siem_settings\" \"siem_settings\" { \n config_id = {{.ConfigID}}\n enable_siem = {{.Siem.EnableSiem}} \n enable_for_all_policies = {{.Siem.EnableForAllPolicies}}\n enable_botman_siem = {{.Siem.EnabledBotmanSiemEvents}}\n siem_id = {{.Siem.SiemDefinitionID}}\n security_policy_ids = [{{  range $index, $element := .Siem.FirewallPolicyIds}}{{if $index}},{{end}}{{quote .}}{{end}}] \n \n } \n"}
 	otm["SlowPost.tf"] = &OutputTemplate{TemplateName: "SlowPost.tf", TableTitle: "SlowPost", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}}{{if .SlowPost}}\n// terraform import akamai_appsec_slow_post.akamai_appsec_slow_post_{{$prev_secpolicy}} {{$config}}:{{$prev_secpolicy}}\nresource \"akamai_appsec_slow_post\" \"akamai_appsec_slow_post_{{$prev_secpolicy}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  slow_rate_action = \"{{.SlowPost.Action}}\" {{if .SlowPost.SlowRateThreshold}}\n  slow_rate_threshold_rate = {{.SlowPost.SlowRateThreshold.Rate}}\n  slow_rate_threshold_period = {{.SlowPost.SlowRateThreshold.Period}}{{end}}{{if .SlowPost.DurationThreshold}}\n  duration_threshold_timeout = {{.SlowPost.DurationThreshold.Timeout}}{{end}}\n} \n{{end}}{{end}}"}
 	otm["IPGeoFirewall.tf"] = &OutputTemplate{TemplateName: "IPGeoFirewall.tf", TableTitle: "IPGeoFirewall", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}}\n// terraform import akamai_appsec_ip_geo.akamai_appsec_ip_geo_{{$prev_secpolicy}} {{$config}}:{{$prev_secpolicy}}\nresource \"akamai_appsec_ip_geo\" \"akamai_appsec_ip_geo_{{$prev_secpolicy}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n mode = {{if eq .IPGeoFirewall.Block \"blockSpecificIPGeo\"}}\"block\"{{else}}\"allow\"{{end}} \n geo_network_lists = [{{  range $index, $element := .IPGeoFirewall.GeoControls.BlockedIPNetworkLists.NetworkList }}{{if $index}},{{end}}{{quote .}}{{end}}]\n ip_network_lists = [{{  range $index, $element := .IPGeoFirewall.IPControls.BlockedIPNetworkLists.NetworkList }}{{if $index}},{{end}}{{quote .}}{{end}}]\n exception_ip_network_lists = [{{  range $index, $element := .IPGeoFirewall.IPControls.AllowedIPNetworkLists.NetworkList }}{{if $index}},{{end}}{{quote .}}{{end}}] \n  \n } \n{{end}}"}
-	otm["WAPSelectedHostnames.tf"] = &OutputTemplate{TemplateName: "WAPSelectedHostnames.tf", TableTitle: "WAPSelectedHostnames", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $elements := collectWAPHostnameInfo .}}{{ range $index, $element := $elements }}{{$secpolicy := .ID}}\n// terraform import akamai_appsec_wap_selected_hostnames_{{$secpolicy}} {{$config}}:{{$secpolicy}}\nresource \"akamai_appsec_wap_selected_hostnames\" \"wap_selected_hostnames\"{{if $index}}_{{$index}}{{end}} {\n  config_id = {{$config}}\n  security_policy_id = {{$secpolicy}}\n  protected_hosts = [{{ range $i, $el := .ProtectedHosts }}{{if $i}},{{end}}{{quote .}}{{end}}]\n  evaluated_hosts = [{{ range $i, $el := .EvalHosts }}{{if $i}},{{end}}{{quote .}}{{end}}]\n}\n\n{{end}}"}
+	otm["WAPSelectedHostnames.tf"] = &OutputTemplate{TemplateName: "WAPSelectedHostnames.tf", TableTitle: "WAPSelectedHostnames", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $elements := collectWAPHostnameInfo .}}{{ range $elements }}{{$secpolicy := .ID}}\n// terraform import akamai_appsec_wap_selected_hostnames.wap_selected_hostnames_{{$secpolicy}} {{$config}}:{{$secpolicy}}\nresource \"akamai_appsec_wap_selected_hostnames\" \"wap_selected_hostnames_{{$secpolicy}}\" {\n  config_id = {{$config}}\n  security_policy_id = {{$secpolicy}}\n  protected_hosts = [{{ range $i, $el := .ProtectedHosts }}{{if $i}},{{end}}{{quote .}}{{end}}]\n  evaluated_hosts = [{{ range $i, $el := .EvalHosts }}{{if $i}},{{end}}{{quote .}}{{end}}]\n}\n\n{{end}}"}
 }
