@@ -336,18 +336,24 @@ func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{
 func computedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "computedValuesCustomDiff")
-
-	//These computed attributes can be changed on server through other clients and the state needs to be synced to local
-	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
-		if d.HasChange(key) || d.NewValueKnown(key) {
-			err := d.SetNewComputed(key)
-			if err != nil {
-				logger.Errorf("%s state failed to update with new value from server", key)
-				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	updatableAttrs := []string{"rules", "hostnames"}
+	for _, attr := range updatableAttrs {
+		if d.HasChange(attr) {
+			//These computed attributes can be changed on server through other clients and the state needs to be synced to local
+			for _, key := range []string{"latest_version", "staging_version", "production_version"} {
+				old, new := d.GetChange(key)
+				logger.Debugf("%v, %v", old, new)
+				err := d.SetNewComputed(key)
+				if err != nil {
+					logger.Errorf("%s state failed to update with new value from server", key)
+					return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+				}
+				logger.Debugf("%s state will be updated with new value from server", key)
 			}
-			logger.Debugf("%s state will be updated with new value from server", key)
+			break
 		}
 	}
+
 	return nil
 }
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
