@@ -15,11 +15,12 @@ import (
 func TestResProperty(t *testing.T) {
 	// These more or less track the state of a Property in PAPI for the lifecycle tests
 	type TestState struct {
-		Client     *mockpapi
-		Property   papi.Property
-		Hostnames  []papi.Hostname
-		Rules      papi.RulesUpdate
-		RuleFormat string
+		Client       *mockpapi
+		Property     papi.Property
+		Hostnames    []papi.Hostname
+		VersionItems papi.PropertyVersionItems
+		Rules        papi.RulesUpdate
+		RuleFormat   string
 	}
 
 	// BehaviorFuncs can be composed to define common patterns of mock PAPI behavior (for Lifecycle tests)
@@ -34,7 +35,7 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	UpdatePropertyVersionHostnames := func(PropertyID string, Version int, CnameTo string) BehaviorFunc {
+	SetHostnames := func(PropertyID string, Version int, CnameTo string) BehaviorFunc {
 		return func(State *TestState) {
 			NewHostnames := []papi.Hostname{{
 				CnameType:            "EDGE_HOSTNAME",
@@ -67,9 +68,13 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	GetPropertyVersions := func(PropertyID, ContractID, GroupID string, versionItems papi.PropertyVersionItems, err error) BehaviorFunc {
+	GetPropertyVersions := func(PropertyID, PropertyName, ContractID, GroupID string, err error, items ...papi.PropertyVersionItems) BehaviorFunc {
 		return func(State *TestState) {
-			ExpectGetPropertyVersions(State.Client, PropertyID, ContractID, GroupID, versionItems, err)
+			versionItems := &State.VersionItems
+			if len(items) > 0 {
+				versionItems = &items[0]
+			}
+			ExpectGetPropertyVersions(State.Client, PropertyID, PropertyName, ContractID, GroupID, versionItems, err)
 		}
 	}
 
@@ -93,6 +98,7 @@ func TestResProperty(t *testing.T) {
 				State.Rules = papi.RulesUpdate{}
 				State.Hostnames = nil
 				State.RuleFormat = ""
+				State.VersionItems = papi.PropertyVersionItems{}
 			})
 		}
 	}
@@ -103,26 +109,17 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	UpdateRuleTree := func() BehaviorFunc {
-		return func(State *TestState) {
-			ExpectUpdateRuleTree(State.Client, "prp_0", "grp_0", "ctr_0", 1,
-				&papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}, "", nil)
-		}
-	}
-
-	CreateProperty := func(PropertyName, PropertyID string, latestVersion int, stagingVersion, productionVersion *int) BehaviorFunc {
+	CreateProperty := func(PropertyName, PropertyID string) BehaviorFunc {
 		return func(State *TestState) {
 			ExpectCreateProperty(State.Client, PropertyName, "grp_0", "ctr_0", "prd_0", PropertyID).Run(func(mock.Arguments) {
 
 				State.Property = papi.Property{
-					PropertyName:      PropertyName,
-					PropertyID:        PropertyID,
-					GroupID:           "grp_0",
-					ContractID:        "ctr_0",
-					ProductID:         "prd_0",
-					LatestVersion:     latestVersion,
-					StagingVersion:    stagingVersion,
-					ProductionVersion: productionVersion,
+					PropertyName:  PropertyName,
+					PropertyID:    PropertyID,
+					GroupID:       "grp_0",
+					ContractID:    "ctr_0",
+					ProductID:     "prd_0",
+					LatestVersion: 1,
 				}
 
 				State.Rules = papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}
@@ -133,9 +130,9 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	PropertyLifecycle := func(PropertyName, PropertyID, GroupID string, latestVersion, stagingVersion, productionVersion int) BehaviorFunc {
+	PropertyLifecycle := func(PropertyName, PropertyID, GroupID string) BehaviorFunc {
 		return func(State *TestState) {
-			CreateProperty(PropertyName, PropertyID, latestVersion, &stagingVersion, &productionVersion)(State)
+			CreateProperty(PropertyName, PropertyID)(State)
 			GetVersionResources(PropertyID, "ctr_0", "grp_0", 1)(State)
 			DeleteProperty(PropertyID)(State)
 		}
@@ -146,6 +143,23 @@ func TestResProperty(t *testing.T) {
 			// Depending on how much of the import ID is given, the initial property lookup may not have group/contract
 			ExpectGetProperty(State.Client, "prp_0", "grp_0", "", &State.Property).Maybe()
 			ExpectGetProperty(State.Client, "prp_0", "", "", &State.Property).Maybe()
+		}
+	}
+
+	AdvanceVersion := func(PropertyID string, FromVersion, ToVersion int) BehaviorFunc {
+		return func(State *TestState) {
+			ExpectCreatePropertyVersion(State.Client, PropertyID, "grp_0", "ctr_0", FromVersion, ToVersion).Once().Run(func(mock.Arguments) {
+				State.Property.LatestVersion = ToVersion
+			}).Run(func(args mock.Arguments) {
+				State.Property.LatestVersion = ToVersion
+				State.VersionItems.Items = append(State.VersionItems.Items,
+					papi.PropertyVersionGetItem{
+						ProductionStatus: papi.VersionStatusInactive,
+						PropertyVersion:  ToVersion,
+						StagingStatus:    papi.VersionStatusInactive,
+					})
+			})
+			GetVersionResources(PropertyID, "ctr_0", "grp_0", ToVersion)(State)
 		}
 	}
 
@@ -180,248 +194,212 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// Standard test behavior for cases where the property's latest version is deactivated in staging network
-	GetLatestVersionDeactivatedInStaging := func() LifecycleTestCase {
-		var stagingVersion, productionVersion *int
-		stagingVersion = new(int)
-		productionVersion = new(int)
-		*stagingVersion = 1
-		*productionVersion = 0
-		LatestVersionDeactivatedInStaging := LifecycleTestCase{
-			Name: "Latest version deactivated in staging",
-			ClientSetup: ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0", 1, 0, 0),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
-					{PropertyVersion: 1, StagingStatus: papi.VersionStatusActive, ProductionStatus: papi.VersionStatusInactive},
-					{PropertyVersion: 2, StagingStatus: papi.VersionStatusInactive, ProductionStatus: papi.VersionStatusActive}}}, nil),
-				CreateProperty("test property", "prp_0", 2, stagingVersion, productionVersion),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to2.test.domain"),
-				UpdateRuleTree(),
-				DeleteProperty("prp_0"),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
-				GetVersionResources("prp_0", "ctr_0", "grp_0", 2),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
-			),
-			Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-				return []resource.TestStep{
-					{
-						Config:             loadFixtureString("%s/step0.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+	LatestVersionDeactivatedInStaging := LifecycleTestCase{
+		Name: "Latest version is active in staging",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			AdvanceVersion("prp_0", 1, 2),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
+			SetHostnames("prp_0", 2, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{
+							Items: []papi.PropertyVersionGetItem{{
+								ProductionStatus: papi.VersionStatusInactive,
+								PropertyVersion:  1,
+								StagingStatus:    papi.VersionStatusDeactivated,
+							}},
+						}
 					},
-					{
-						PreConfig: func() {
-							StagingVersion := 1
-							State.Property.StagingVersion = &StagingVersion
-						},
-						Config:             loadFixtureString("%s/step1.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
+				},
+				{
+					PreConfig: func() {
+						StagingVersion := 1
+						State.Property.StagingVersion = &StagingVersion
 					},
-				}
-			},
-		}
-		return LatestVersionDeactivatedInStaging
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123"),
+				},
+			}
+		},
 	}
 
 	// Standard test behavior for cases where the property's latest version is deactivated in production network
-	GetLatestVersionDeactivatedInProd := func() LifecycleTestCase {
-		var stagingVersion, productionVersion *int
-		stagingVersion = new(int)
-		productionVersion = new(int)
-		*productionVersion = 1
-		LatestVersionDeactivatedInProd := LifecycleTestCase{
-			Name: "Latest version is not active in production",
-			ClientSetup: ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0", 1, 0, 0),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1}, {PropertyVersion: 2, ProductionStatus: papi.VersionStatusInactive}}}, nil),
-				CreateProperty("test property", "prp_0", 2, stagingVersion, productionVersion),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to2.test.domain"),
-				UpdateRuleTree(),
-				DeleteProperty("prp_0"),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
-				GetVersionResources("prp_0", "ctr_0", "grp_0", 2),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
-			),
-			Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-				return []resource.TestStep{
-					{
-						Config:             loadFixtureString("%s/step0.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+	LatestVersionDeactivatedInProd := LifecycleTestCase{
+		Name: "Latest version is active in production",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			AdvanceVersion("prp_0", 1, 2),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
+			SetHostnames("prp_0", 2, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{
+							Items: []papi.PropertyVersionGetItem{{
+								ProductionStatus: papi.VersionStatusInactive,
+								PropertyVersion:  1,
+								StagingStatus:    papi.VersionStatusActive,
+							}},
+						}
 					},
-					{
-						PreConfig: func() {
-							ProductionVersion := 1
-							State.Property.ProductionVersion = &ProductionVersion
-						},
-						Config:             loadFixtureString("%s/step1.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
+				},
+				{
+					PreConfig: func() {
+						ProductionVersion := 1
+						State.Property.ProductionVersion = &ProductionVersion
 					},
-				}
-			},
-		}
-		return LatestVersionDeactivatedInProd
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123"),
+				},
+			}
+		},
 	}
 
 	// Standard test behavior for cases where the property's latest version is active in staging network
-	GetLatestVersionActiveInStaging := func(updateruletree bool) LifecycleTestCase {
-		var staging = new(int)
-		*staging = 1
-		LatestVersionActiveInStaging := LifecycleTestCase{
-			Name: "Latest version is active in staging",
-			ClientSetup: ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0", 1, 0, 0),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, StagingStatus: papi.VersionStatusInactive}, {PropertyVersion: 2, StagingStatus: papi.VersionStatusInactive}}}, nil),
-				CreateProperty("test property", "prp_0", 2, staging, nil),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to2.test.domain"),
-				GetVersionResources("prp_0", "ctr_0", "grp_0", 2),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusActive, papi.VersionStatusInactive),
-				DeleteProperty("prp_0"),
-			),
-			Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-				return []resource.TestStep{
-					{
-						Config:             loadFixtureString("%s/step0.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+	LatestVersionActiveInStaging := LifecycleTestCase{
+		Name: "Latest version is active in staging",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			AdvanceVersion("prp_0", 1, 2),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
+			SetHostnames("prp_0", 2, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{
+							Items: []papi.PropertyVersionGetItem{{
+								ProductionStatus: papi.VersionStatusInactive,
+								PropertyVersion:  1,
+								StagingStatus:    papi.VersionStatusActive,
+							}},
+						}
 					},
-					{
-						PreConfig: func() {
-							StagingVersion := 1
-							State.Property.StagingVersion = &StagingVersion
-						},
-						Config:             loadFixtureString("%s/step1.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
+				},
+				{
+					PreConfig: func() {
+						StagingVersion := 1
+						State.Property.StagingVersion = &StagingVersion
 					},
-				}
-			},
-		}
-		if updateruletree {
-			LatestVersionActiveInStaging.ClientSetup = ComposeBehaviors(LatestVersionActiveInStaging.ClientSetup, UpdateRuleTree())
-		}
-		return LatestVersionActiveInStaging
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123"),
+				},
+			}
+		},
 	}
 
 	// Standard test behavior for cases where the property's latest version is active in production network
-	GetLatestVersionActiveInProd := func(updateRuleTree bool) LifecycleTestCase {
-		var prodVersion = new(int)
-		*prodVersion = 1
-		LatestVersionActiveInProd := LifecycleTestCase{
-			Name: "Latest version is active in production",
-			ClientSetup: ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0", 1, 0, 0),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1}, {PropertyVersion: 2, ProductionStatus: papi.VersionStatusActive}}}, nil),
-				CreateProperty("test property", "prp_0", 2, nil, prodVersion),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusActive),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to2.test.domain"),
-				GetVersionResources("prp_0", "ctr_0", "grp_0", 2),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
-				DeleteProperty("prp_0"),
-			),
-			Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-				return []resource.TestStep{
-					{
-						Config:             loadFixtureString("%s/step0.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+	LatestVersionActiveInProd := LifecycleTestCase{
+		Name: "Latest version is active in production",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusActive),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			AdvanceVersion("prp_0", 1, 2),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
+			SetHostnames("prp_0", 2, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{
+							Items: []papi.PropertyVersionGetItem{{
+								ProductionStatus: papi.VersionStatusActive,
+								PropertyVersion:  1,
+								StagingStatus:    papi.VersionStatusInactive,
+							}},
+						}
 					},
-					{
-						PreConfig: func() {
-							ProductionVersion := 1
-							State.Property.ProductionVersion = &ProductionVersion
-						},
-						Config:             loadFixtureString("%s/step1.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
+				},
+				{
+					PreConfig: func() {
+						ProductionVersion := 1
+						State.Property.ProductionVersion = &ProductionVersion
 					},
-				}
-			},
-		}
-
-		if updateRuleTree {
-			LatestVersionActiveInProd.ClientSetup = ComposeBehaviors(LatestVersionActiveInProd.ClientSetup, UpdateRuleTree())
-		}
-
-		return LatestVersionActiveInProd
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123"),
+				},
+			}
+		},
 	}
 
 	// Standard test behavior for cases where the property's latest version is not active
-	GetLatestVersionNotActive := func(updateruletree bool, hostnames []string) LifecycleTestCase {
-		LatestVersionNotActive := LifecycleTestCase{
-			Name: "Latest version not active",
-			ClientSetup: ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0", 1, 0, 0),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1}}}, nil),
-				CreateProperty("test property", "prp_0", 1, nil, nil),
-				DeleteProperty("prp_0"),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			),
-			Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-				return []resource.TestStep{
-					{
-						Config:             loadFixtureString("%s/step0.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+	LatestVersionNotActive := LifecycleTestCase{
+		Name: "Latest version not active",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			SetHostnames("prp_0", 1, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
-					{
-						Config:             loadFixtureString("%s/step1.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
-					},
-				}
-			},
-		}
-
-		for _, host := range hostnames {
-			LatestVersionNotActive.ClientSetup = ComposeBehaviors(LatestVersionNotActive.ClientSetup, UpdatePropertyVersionHostnames("prp_0", 1, host))
-		}
-
-		if updateruletree {
-			LatestVersionNotActive.ClientSetup = ComposeBehaviors(LatestVersionNotActive.ClientSetup, UpdateRuleTree())
-		}
-
-		return LatestVersionNotActive
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
+				},
+				{
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123"),
+				},
+			}
+		},
 	}
 
-	// Standard test behavior for cases where there is no diff in update
-	GetNoDiff := func() LifecycleTestCase {
-		var stagingVersion, productionVersion *int
-		stagingVersion = new(int)
-		productionVersion = new(int)
-		NoDiff := LifecycleTestCase{
-			Name: "No diff found in update",
-			ClientSetup: ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0", 1, 0, 0),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1}}}, nil),
-				CreateProperty("test property", "prp_0", 1, stagingVersion, productionVersion),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
-				DeleteProperty("prp_0"),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
-			),
-			Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-				return []resource.TestStep{
-					{
-						Config:             loadFixtureString("%s/step0.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
+	// Standard test behavior for cases where the property's latest version is active in staging network
+	NoDiff := LifecycleTestCase{
+		Name: "No diff found in update",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0"),
+			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
-					{
-						Config:             loadFixtureString("%s/step1.tf", FixturePath),
-						Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-						ExpectNonEmptyPlan: true,
-					},
-				}
-			},
-		}
-		return NoDiff
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
+				},
+				{
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
+				},
+			}
+		},
 	}
 
 	// Run a test case to verify schema validations
@@ -517,15 +495,12 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0", 1, 0, 0),
+				PropertyLifecycle("test property", "prp_0", "grp_0"),
 				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusActive, StagingStatus: papi.VersionStatusActive}}}, nil),
-				CreateProperty("test property", "prp_0", 1, new(int), new(int)),
+				GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
 				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
-				DeleteProperty("prp_0"),
+				SetHostnames("prp_0", 1, "to.test.domain"),
 				ImportProperty("prp_0"),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
 			)
 
 			parameters := strings.Split(ImportID, ",")
@@ -549,27 +524,27 @@ func TestResProperty(t *testing.T) {
 				setup = ComposeBehaviors(
 					setup,
 					GetVersionResources("prp_0", ContractID, GroupID, 1),
-					GetPropertyVersions("prp_0", ContractID, GroupID,
-						papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
-							{
-								PropertyVersion:  1,
-								StagingStatus:    papi.VersionStatusActive,
-								ProductionStatus: papi.VersionStatusActive,
-							},
-						}}, nil),
+					GetPropertyVersions("prp_0", "test property", ContractID, GroupID, nil),
 				)
 			}
 
-			setup(&TestState{Client: client})
-
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps: []resource.TestStep{
+			kase := LifecycleTestCase{
+				Name:        "Importable",
+				ClientSetup: setup,
+				Steps: func(State *TestState, _ string) []resource.TestStep {
+					return []resource.TestStep{
 						{
-							Config:             loadFixtureString(fixturePath),
-							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-							ExpectNonEmptyPlan: true,
+							PreConfig: func() {
+								State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+									{
+										PropertyVersion:  1,
+										StagingStatus:    papi.VersionStatusActive,
+										ProductionStatus: papi.VersionStatusActive,
+									},
+								}}
+							},
+							Config: loadFixtureString(fixturePath),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 						},
 						{
 							ImportState:       true,
@@ -579,11 +554,18 @@ func TestResProperty(t *testing.T) {
 							Config:            loadFixtureString(fixturePath),
 						},
 						{
-							Config:             loadFixtureString(fixturePath),
-							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-							ExpectNonEmptyPlan: true,
+							Config: loadFixtureString(fixturePath),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "1", "1", "ehn_123"),
 						},
-					},
+					}
+				},
+			}
+			State := &TestState{Client: client}
+			kase.ClientSetup(State)
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps:     kase.Steps(State, ""),
 				})
 			})
 
@@ -640,32 +622,32 @@ func TestResProperty(t *testing.T) {
 		AssertForbiddenAttr(t, "is_secure")
 		AssertForbiddenAttr(t, "variables")
 
-		AssertLifecycle(t, "normal", GetLatestVersionNotActive(true, []string{"to2.test.domain", "to.test.domain"}))
-		AssertLifecycle(t, "normal", GetLatestVersionActiveInStaging(true))
-		AssertLifecycle(t, "normal", GetLatestVersionActiveInProd(true))
-		AssertLifecycle(t, "normal", GetLatestVersionDeactivatedInStaging())
-		AssertLifecycle(t, "normal", GetLatestVersionDeactivatedInProd())
-		AssertLifecycle(t, "contract_id without prefix", GetLatestVersionNotActive(false, []string{"to2.test.domain", "to.test.domain"}))
-		AssertLifecycle(t, "contract_id without prefix", GetLatestVersionActiveInStaging(false))
-		AssertLifecycle(t, "contract_id without prefix", GetLatestVersionActiveInProd(false))
-		AssertLifecycle(t, "contract without prefix", GetLatestVersionNotActive(false, []string{"to2.test.domain", "to.test.domain"}))
-		AssertLifecycle(t, "contract without prefix", GetLatestVersionActiveInStaging(false))
-		AssertLifecycle(t, "contract without prefix", GetLatestVersionActiveInProd(false))
-		AssertLifecycle(t, "group_id without prefix", GetLatestVersionNotActive(false, []string{"to2.test.domain", "to.test.domain"}))
-		AssertLifecycle(t, "group_id without prefix", GetLatestVersionActiveInStaging(false))
-		AssertLifecycle(t, "group_id without prefix", GetLatestVersionActiveInProd(false))
-		AssertLifecycle(t, "group without prefix", GetLatestVersionNotActive(false, []string{"to2.test.domain", "to.test.domain"}))
-		AssertLifecycle(t, "group without prefix", GetLatestVersionActiveInStaging(false))
-		AssertLifecycle(t, "group without prefix", GetLatestVersionActiveInProd(false))
-		AssertLifecycle(t, "product_id without prefix", GetLatestVersionNotActive(false, []string{"to2.test.domain", "to.test.domain"}))
-		AssertLifecycle(t, "product_id without prefix", GetLatestVersionActiveInStaging(false))
-		AssertLifecycle(t, "product_id without prefix", GetLatestVersionActiveInProd(false))
-		AssertLifecycle(t, "product without prefix", GetLatestVersionNotActive(false, []string{"to2.test.domain", "to.test.domain"}))
-		AssertLifecycle(t, "product without prefix", GetLatestVersionActiveInStaging(false))
-		AssertLifecycle(t, "product without prefix", GetLatestVersionActiveInProd(false))
-		AssertLifecycle(t, "no diff", GetNoDiff())
-		AssertLifecycle(t, "product to product_id", GetNoDiff())
-		AssertLifecycle(t, "product_id to product", GetNoDiff())
+		AssertLifecycle(t, "normal", LatestVersionNotActive)
+		AssertLifecycle(t, "normal", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "normal", LatestVersionActiveInProd)
+		AssertLifecycle(t, "normal", LatestVersionDeactivatedInStaging)
+		AssertLifecycle(t, "normal", LatestVersionDeactivatedInProd)
+		AssertLifecycle(t, "contract_id without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "contract_id without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "contract_id without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "contract without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "contract without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "contract without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "group_id without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "group_id without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "group_id without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "group without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "group without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "group without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "product_id without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "product_id without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "product_id without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "product without prefix", LatestVersionNotActive)
+		AssertLifecycle(t, "product without prefix", LatestVersionActiveInStaging)
+		AssertLifecycle(t, "product without prefix", LatestVersionActiveInProd)
+		AssertLifecycle(t, "no diff", NoDiff)
+		AssertLifecycle(t, "product to product_id", NoDiff)
+		AssertLifecycle(t, "product_id to product", NoDiff)
 
 		AssertImportable(t, "property_id", "prp_0")
 		AssertImportable(t, "property_id and ver_# version", "prp_0,ver_1")
@@ -692,23 +674,27 @@ func TestResProperty(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
 
-			var ver1, ver2 *int
-			ver1 = new(int)
-			ver2 = new(int)
-			*ver1 = 1
-			*ver2 = 2
-
 			setup := ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0", 1, 0, 0),
+				PropertyLifecycle("test property", "prp_0", "grp_0"),
+				GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil, papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+					{
+						PropertyVersion:  1,
+						StagingStatus:    papi.VersionStatusInactive,
+						ProductionStatus: papi.VersionStatusInactive,
+					},
+				}}),
 				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1}}}, nil),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
-				PropertyLifecycle("renamed property", "prp_1", "grp_0", 1, 1, 1),
+				PropertyLifecycle("renamed property", "prp_1", "grp_0"),
+				GetPropertyVersions("prp_1", "renamed property", "ctr_0", "grp_0", nil, papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+					{
+						PropertyVersion:  1,
+						StagingStatus:    papi.VersionStatusInactive,
+						ProductionStatus: papi.VersionStatusInactive,
+					},
+				}}),
 				GetPropertyVersionResources("prp_1", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				GetPropertyVersions("prp_1", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1}}}, nil),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1}}}, nil),
-				UpdatePropertyVersionHostnames("prp_1", 1, "to2.test.domain"),
+				SetHostnames("prp_0", 1, "to.test.domain"),
+				SetHostnames("prp_1", 1, "to2.test.domain"),
 			)
 			setup(&TestState{Client: client})
 
@@ -717,9 +703,8 @@ func TestResProperty(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:             loadFixtureString("testdata/%s-step0.tf", t.Name()),
-							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-							ExpectNonEmptyPlan: true,
+							Config: loadFixtureString("testdata/%s-step0.tf", t.Name()),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 						},
 						{
 							Config: loadFixtureString("testdata/%s-step1.tf", t.Name()),
@@ -727,7 +712,6 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_1"),
 								resource.TestCheckResourceAttr("akamai_property.test", "name", "renamed property"),
 							),
-							ExpectNonEmptyPlan: true,
 						},
 					},
 				})
@@ -741,12 +725,18 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
-				CreateProperty("test property", "prp_0", 1, new(int), new(int)),
+				CreateProperty("test property", "prp_0"),
 				GetProperty("prp_0"),
+				GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil, papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+					{
+						PropertyVersion:  1,
+						StagingStatus:    papi.VersionStatusInactive,
+						ProductionStatus: papi.VersionStatusInactive,
+					},
+				}}),
 				GetVersionResources("prp_0", "ctr_0", "grp_0", 1),
 				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, "ctr_0", "grp_0"),
-				UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain"),
-				GetPropertyVersions("prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusActive}}}, nil),
+				SetHostnames("prp_0", 1, "to.test.domain"),
 			)
 			setup(&TestState{Client: client})
 
@@ -768,14 +758,12 @@ func TestResProperty(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:             loadFixtureString("testdata/%s/step0.tf", t.Name()),
-							Check:              CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
-							ExpectNonEmptyPlan: true,
+							Config: loadFixtureString("testdata/%s/step0.tf", t.Name()),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123"),
 						},
 						{
-							Config:             loadFixtureString("testdata/%s/step1.tf", t.Name()),
-							ExpectError:        regexp.MustCompile(`cannot remove active property`),
-							ExpectNonEmptyPlan: true,
+							Config:      loadFixtureString("testdata/%s/step1.tf", t.Name()),
+							ExpectError: regexp.MustCompile(`cannot remove active property`),
 						},
 					},
 				})
@@ -909,6 +897,14 @@ func TestResProperty(t *testing.T) {
 				"ctr_0", "prd_0", "prp_0",
 			)
 
+			ExpectGetPropertyVersions(client, "prp_0", "test property", "ctr_0", "grp_0", &papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+				{
+					PropertyVersion:  1,
+					StagingStatus:    papi.VersionStatusInactive,
+					ProductionStatus: papi.VersionStatusInactive,
+				},
+			}}, nil)
+
 			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
 
 			ExpectUpdatePropertyVersionHostnames(
@@ -920,30 +916,6 @@ func TestResProperty(t *testing.T) {
 					CertProvisioningType: "DEFAULT",
 				}},
 			).Once()
-
-			ExpectGetPropertyVersions(client, "prp_0", "ctr_0", "grp_0", papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1}}}, nil)
-
-			ExpectCreateProperty(client, "test property", "grp_0", "ctr_0", "prd_0", "prp_0").Run(func(mock.Arguments) {
-
-				Property := papi.Property{
-					PropertyName:  "test property",
-					PropertyID:    "prp_0",
-					GroupID:       "grp_0",
-					ContractID:    "ctr_0",
-					ProductID:     "prd_0",
-					LatestVersion: 1,
-				}
-
-				Rules := papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}
-				RuleFormat := "v2020-01-01"
-				ExpectGetProperty(client, "prp_0", "grp_0", "ctr_0", &Property)
-				ExpectGetPropertyVersionHostnames(client, "prp_0", "grp_0", "ctr_0", 1, &[]papi.Hostname{})
-				ExpectGetRuleTree(client, "prp_0", "grp_0", "ctr_0", 1, &Rules, &RuleFormat)
-			}).Once()
-
-			UpdatePropertyVersionHostnames("prp_0", 1, "to.test.domain")
-			UpdateRuleTree()
-			DeleteProperty("prp_0")
 
 			ExpectGetProperty(
 				client, "prp_0", "grp_0", "ctr_0",
@@ -985,9 +957,8 @@ func TestResProperty(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:             loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
-							Check:              resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
-							ExpectNonEmptyPlan: true,
+							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+							Check:  resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 						},
 						{
 							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/update/property_update.tf"),
@@ -995,8 +966,7 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.test", "hostnames.#", "0"),
 							),
-							ExpectError:        regexp.MustCompile("atleast one hostname required to update existing list of hostnames associated to a property"),
-							ExpectNonEmptyPlan: true,
+							ExpectError: regexp.MustCompile("atleast one hostname required to update existing list of hostnames associated to a property"),
 						},
 					},
 				})
