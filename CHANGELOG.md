@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 1.6.0 (June 17, 2021)
+## 1.6.0 (June 21, 2021)
 
 #### BREAKING CHANGES:
 * APPSEC
