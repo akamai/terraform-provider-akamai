@@ -182,37 +182,40 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	// ip_behavior is required value in schema.
 	newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
-
+	var ehnID string
 	for _, h := range edgeHostnames.EdgeHostnames.Items {
 		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
-			d.SetId(h.ID)
-			return nil
+			ehnID = h.ID
 		}
 	}
-
 	certEnrollmentID, err := tools.GetIntValue("certificate", d)
 	if err != nil {
 		if !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		if newHostname.SecureNetwork == "ENHANCED_TLS" {
-			return diag.FromErr(fmt.Errorf("a certificate enrollment ID is required for Enhanced TLS (edgekey.net) edge hostnames"))
+		if newHostname.SecureNetwork == papi.EHSecureNetworkEnhancedTLS {
+			return diag.FromErr(fmt.Errorf("a certificate enrollment ID is required for Enhanced TLS edge hostnames with 'edgekey.net' suffix"))
 		}
 	}
 
 	newHostname.CertEnrollmentID = certEnrollmentID
 	newHostname.SlotNumber = certEnrollmentID
-
-	logger.Debugf("Creating new edge hostname: %#v", newHostname)
-	hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
-		EdgeHostname: newHostname,
-		ContractID:   contractID,
-		GroupID:      groupID,
-	})
-	if err != nil {
-		return diag.FromErr(err)
+	if ehnID == "" {
+		logger.Debugf("Creating new edge hostname: %#v", newHostname)
+		hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
+			EdgeHostname: newHostname,
+			ContractID:   contractID,
+			GroupID:      groupID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(hostname.EdgeHostnameID)
+		ehnID = hostname.EdgeHostnameID
+	} else {
+		d.SetId(ehnID)
 	}
-	d.SetId(hostname.EdgeHostnameID)
+	logger.Debugf("Resulting EHN Id: %s ", ehnID)
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
 }
 
@@ -277,7 +280,7 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 
 func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameRead")
 
 	client := inst.Client(meta)
 

@@ -1,11 +1,11 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Get Started with the Akamai Terraform Provider"
+page_title: "Akamai Provider: Get Started"
 description: |-
   Learn how to set up the Akamai Terraform Provider for the first time.
 ---
 
-# Get Started with the Akamai Terraform Provider
+# Get Started with the Akamai Provider
 
 If you've set up Akamai APIs before, some of the Akamai Provider 
 setup tasks will look familiar. You'll need to create Akamai API clients 
@@ -44,7 +44,7 @@ answer these questions:
   
   * **Environment variables.** Use environment variables to set credentials. Any variables you set take precedence over the contents of the `.edgerc` configuration file.
 
-  For details, see [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md).
+  For details, see [Authenticate the Akamai Provider](../guides/akamai_provider_auth.md).
 
 * **Modules.** Which modules are you using? The API clients you set up depend on the modules you choose. For example, if you want to use the Common data sources and resources, you'll need read access to the Property Manager API. 
 
@@ -62,15 +62,15 @@ Now that you made some decisions, you need to set up a Terraform configuration f
 
 ## Create Akamai API clients
 
-Create an Akamai API client with the right permissions and valid credentials to authenticate your Akamai Provider files. Your Akamai API client needs read-write permission to the APIs associated with the Akamai Provider modules you're using, like DNS or Provisioning.
+Create an Akamai API client with the right permissions and valid credentials to authenticate your Akamai Provider files. Your Akamai API client needs read-write permission to the APIs associated with the Akamai Provider modules you're using, like DNS Zone Administration or Property Provisioning.
 
 Once you set up the API clients, you add credential information from those clients to your `akamai.tf` file.
 
-See the [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md)
-guide for details. Once you're done authenticating, come back here to complete 
+See [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md)
+for details. Once you're done authenticating, come back here to complete 
 the Akamai Provider setup.
 
-**Note:** Depending on the select contract and group, the Edge DNS and GTM modules may depend on both Property Manager APIs as well. If so, be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
+**Note:** Depending on the select contract and group, the Edge DNS and Global Traffic Management (GTM) modules may depend on both Property Manager APIs as well. If so, be sure to include a PAPI authorization to the Edge DNS and GTM API Clients.
 
 ## Retrieve contract and group IDs
 
@@ -131,12 +131,13 @@ At this point in the setup, you should refer to the guides for the Akamai module
 
 | **Module** | **Guide** |
 |------------|------------|
-| **Application Security** (beta) <br/> Contact Akamai to add this beta to your contract. | [Get Started with Application Security](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec) |
-| **Edge DNS** (DNS zones) | [Get Started with DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone) | 
-| **Global Traffic Management** (GTM domains) | [Get Started with GTM Domain Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain) | 
-| **Identity and Access Management** (authentication) | [Get Started with the Identity and Access Management Module](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam) |
-| **Network Lists** | [Get Started with Network Lists](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_networklists) |
-| **Provisioning** (property and common functions) | [Get Started with Property Provisioning](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) |
+| **Application Security** (beta) | [Application Security Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec) |
+| **Certificate Provisioning** | [Certificate Provisioning Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_cps) |
+| **DNS Zone Administration** | [DNS Zone Administration Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone) | 
+| **Global Traffic Management Domain Administration** | [Global Traffic Management Domain Administration Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain) | 
+| **Identity and Access Management** | [Identity and Access Management Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam) |
+| **Network Lists** | [Network Lists Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_networklists) |
+| **Property Provisioning** | [Property Provisioning Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) |
 
 -> **Note** Both Terraform and the Akamai Terraform CLI package come
 pre-installed in the Akamai Development Environment. See [Set Up a Development Environment](https://developer.akamai.com/blog/2020/05/26/set-development-environment) for more information.

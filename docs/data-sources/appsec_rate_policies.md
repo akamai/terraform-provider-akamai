@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_rate_policies
 
-Use the `akamai_appsec_rate_policies` data source to retrieve the rate policies for a specific security configuration version, or a single rate policy.
+Use the `akamai_appsec_rate_policies` data source to retrieve the rate policies for a specific security configuration, or a single rate policy.
 
 ## Example Usage
 
@@ -25,7 +25,6 @@ data "akamai_appsec_configuration" "configuration" {
 }
 data "akamai_appsec_rate_policies" "rate_policies" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 output "rate_policies_output" {
   value = data.akamai_appsec_rate_policies.rate_policies.output_text
@@ -37,7 +36,6 @@ output "rate_policies_json" {
 // USE CASE: user wants to see a single rate policy associated with a given Configuration Version
 data "akamai_appsec_rate_policies" "rate_policy" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   rate_policy_id = var.rate_policy_id
 }
 output "rate_policy_json" {
@@ -62,7 +60,7 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `output_text` - A tabular display showing the ID and name of all rate policies associated with the specified security configuration version.
+* `output_text` - A tabular display showing the ID and name of all rate policies associated with the specified security configuration.
 
 * `json` - A JSON-formatted list of the rate policy information.
 

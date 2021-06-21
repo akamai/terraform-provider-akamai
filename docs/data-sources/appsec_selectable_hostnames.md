@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_selectable_hostnames
 
-Use the `akamai_appsec_selectable_hostnames` data source to retrieve the list of hostnames that may be protected under a given security configuration version. You can specify the list to be retrieved either by supplying the name and version of a security configuration, or by supplying a group ID and contract ID.
+Use the `akamai_appsec_selectable_hostnames` data source to retrieve the list of hostnames that may be protected under a given security configuration. You can specify the list to be retrieved either by supplying the name of a security configuration, or by supplying a group ID and contract ID.
 
 ## Example Usage
 
@@ -20,13 +20,12 @@ provider "akamai" {
 }
 
 // USE CASE: user wants to view the list of hosts available to be added to the list of those protected
-//           under a given security configuration and version
+//           under a given security configuration
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
 data "akamai_appsec_selectable_hostnames" "selectable_hostnames" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
 output "selectable_hostnames" {
@@ -69,8 +68,6 @@ output "selectable_hostnames_for_create_configuration_output_text" {
 The following arguments are supported:
 
 * `config_id` - (Optional) The ID of the security configuration to use.
-
-* `version` - (Optional) The version number of the security configuration to use.
 
 * `contractid` - (Optional) The ID of the contract to use.
 

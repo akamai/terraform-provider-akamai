@@ -133,5 +133,5 @@ func findCPCode(ctx context.Context, nameOrID, contractID, groupID string, meta 
 		}
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("%v: CP code: %s", ErrCpCodeNotFound, nameOrID)
 }

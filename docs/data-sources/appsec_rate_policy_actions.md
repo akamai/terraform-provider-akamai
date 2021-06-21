@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_rate_policy_actions
 
-Use the `akamai_appsec_rate_policy_actions` data source to retrieve a list of all rate policies associated with a given configuration version and security policy, or the actions associated with a specific rate policy.
+Use the `akamai_appsec_rate_policy_actions` data source to retrieve a list of all rate policies associated with a given configuration and security policy, or the actions associated with a specific rate policy.
 
 ## Example Usage
 
@@ -25,7 +25,6 @@ data "akamai_appsec_configuration" "configuration" {
 }
 data "akamai_appsec_rate_policy_actions" "rate_policy_actions" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
 output "rate_policy_actions" {
@@ -39,8 +38,6 @@ output "rate_policy_actions" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 

@@ -2,17 +2,15 @@ package appsec
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -21,19 +19,15 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceBypassNetworkLists() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceBypassNetworkListsUpdate,
+		CreateContext: resourceBypassNetworkListsCreate,
 		ReadContext:   resourceBypassNetworkListsRead,
 		UpdateContext: resourceBypassNetworkListsUpdate,
 		DeleteContext: resourceBypassNetworkListsDelete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -46,181 +40,139 @@ func resourceBypassNetworkLists() *schema.Resource {
 	}
 }
 
+func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceBypassNetworkListsUpdate")
+	logger.Debug("!!! in resourceBypassNetworkListsCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	networklistidset, err := tools.GetSetValue("bypass_network_list", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	updateBypassNetworkLists := appsec.UpdateBypassNetworkListsRequest{}
+	updateBypassNetworkLists.ConfigID = configid
+	updateBypassNetworkLists.Version = getModifiableConfigVersion(ctx, configid, "bypassnetworklists", m)
+	networklistidlist := make([]string, 0, len(networklistidset.List()))
+	for _, networklistid := range networklistidset.List() {
+		networklistidlist = append(networklistidlist, networklistid.(string))
+	}
+	updateBypassNetworkLists.NetworkLists = networklistidlist
+
+	_, err = client.UpdateBypassNetworkLists(ctx, updateBypassNetworkLists)
+	if err != nil {
+		logger.Errorf("calling 'UpdateBypassNetworkLists': %s", err.Error())
+		return diag.FromErr(err)
+	}
+	d.SetId(fmt.Sprintf("%d", configid))
+
+	return resourceBypassNetworkListsRead(ctx, d, m)
+}
+
 func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsRead")
+	logger.Debug("!!! in resourceBypassNetworkListsRead")
 
-	getBypassNetworkLists := appsec.GetBypassNetworkListsRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getBypassNetworkLists.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getBypassNetworkLists.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getBypassNetworkLists.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getBypassNetworkLists.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getBypassNetworkLists.Version = version
-	}
-	bypassnetworklists, err := client.GetBypassNetworkLists(ctx, getBypassNetworkLists)
+	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
-		logger.Errorf("calling 'getBypassNetworkLists': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", getBypassNetworkLists.ConfigID); err != nil {
+	getBypassNetworkLists := appsec.GetBypassNetworkListsRequest{}
+	getBypassNetworkLists.ConfigID = configid
+	getBypassNetworkLists.Version = getLatestConfigVersion(ctx, configid, m)
+
+	bypassnetworklistsresponse, err := client.GetBypassNetworkLists(ctx, getBypassNetworkLists)
+	if err != nil {
+		logger.Errorf("calling 'GetBypassNetworkLists': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("config_id", configid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
-	if err := d.Set("version", getBypassNetworkLists.Version); err != nil {
+	networklistidset := schema.Set{F: schema.HashString}
+	for _, networklist := range bypassnetworklistsresponse.NetworkLists {
+		networklistidset.Add(networklist.ID)
+	}
+	if err := d.Set("bypass_network_list", networklistidset.List()); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
-	nru := make([]string, 0, len(bypassnetworklists.NetworkLists))
-	for _, h := range bypassnetworklists.NetworkLists {
-		nru = append(nru, h.ID)
-	}
-
-	sort.Strings(nru)
-
-	if err := d.Set("bypass_network_list", nru); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	d.SetId(fmt.Sprintf("%d:%d", getBypassNetworkLists.ConfigID, getBypassNetworkLists.Version))
 
 	return nil
-}
-
-func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceBypassNetworkListsRemove")
-
-	removeBypassNetworkLists := appsec.RemoveBypassNetworkListsRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeBypassNetworkLists.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeBypassNetworkLists.Version = version
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeBypassNetworkLists.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeBypassNetworkLists.Version = version
-	}
-	hn := make([]string, 0, 1)
-
-	removeBypassNetworkLists.NetworkLists = hn
-
-	_, erru := client.RemoveBypassNetworkLists(ctx, removeBypassNetworkLists)
-	if erru != nil {
-		logger.Errorf("calling 'removeBypassNetworkLists': %s", erru.Error())
-		return diag.FromErr(erru)
-	}
-
-	return resourceBypassNetworkListsRead(ctx, d, m)
 }
 
 func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsUpdate")
+	logger.Debug("!!! in resourceBypassNetworkListsUpdate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	networklistidset, err := tools.GetSetValue("bypass_network_list", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	updateBypassNetworkLists := appsec.UpdateBypassNetworkListsRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateBypassNetworkLists.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateBypassNetworkLists.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateBypassNetworkLists.Version = version
-		}
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateBypassNetworkLists.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateBypassNetworkLists.Version = version
+	updateBypassNetworkLists.ConfigID = configid
+	updateBypassNetworkLists.Version = getModifiableConfigVersion(ctx, configid, "bypassnetworklists", m)
+	networklistidlist := make([]string, 0, len(networklistidset.List()))
+	for _, networklistid := range networklistidset.List() {
+		networklistidlist = append(networklistidlist, networklistid.(string))
 	}
-	netlist := d.Get("bypass_network_list").(*schema.Set)
-	nru := make([]string, 0, len(netlist.List()))
-
-	for _, h := range netlist.List() {
-		nru = append(nru, h.(string))
-	}
-	updateBypassNetworkLists.NetworkLists = nru
+	updateBypassNetworkLists.NetworkLists = networklistidlist
 
 	_, erru := client.UpdateBypassNetworkLists(ctx, updateBypassNetworkLists)
 	if erru != nil {
-		logger.Errorf("calling 'updateBypassNetworkLists': %s", erru.Error())
+		logger.Errorf("calling 'UpdateBypassNetworkLists': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
 
 	return resourceBypassNetworkListsRead(ctx, d, m)
+
+}
+
+func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceBypassNetworkListsDelete")
+
+	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	bypassnetworkidset, err := tools.GetSetValue("bypass_network_list", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	removeBypassNetworkLists := appsec.RemoveBypassNetworkListsRequest{}
+	removeBypassNetworkLists.ConfigID = configid
+	removeBypassNetworkLists.Version = getModifiableConfigVersion(ctx, configid, "bypassnetworklists", m)
+	networklistidlist := make([]string, 0, len(bypassnetworkidset.List()))
+	for _, networklistid := range bypassnetworkidset.List() {
+		networklistidlist = append(networklistidlist, networklistid.(string))
+	}
+	removeBypassNetworkLists.NetworkLists = networklistidlist
+
+	_, erru := client.RemoveBypassNetworkLists(ctx, removeBypassNetworkLists)
+	if erru != nil {
+		logger.Errorf("calling 'RemoveBypassNetworkLists': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId("")
+	return nil
 }

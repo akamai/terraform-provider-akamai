@@ -26,7 +26,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 resource "akamai_appsec_security_policy" "security_policy_create" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   default_settings = var.default_settings
   security_policy_name = var.policy_name
   security_policy_prefix = var.policy_prefix
@@ -43,13 +42,13 @@ The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID to use.
 
-* `version` - (Required) The version number of the configuration to use.
-
 * `security_policy_name` - (Required) The name of the new security policy.
 
-* `security_policy_prefix' - (Required) The four-character alphanumeric string prefix for the policy ID.
+* `security_policy_prefix` - (Required) The four-character alphanumeric string prefix for the policy ID.
 
 * `default_settings` - (Optional) Whether the new policy should use the default settings. If not supplied, defaults to true.
+
+* `create_from_security_policy_id` - (Optional) The ID of the security policy to clone from.
 
 ## Attributes Reference
 

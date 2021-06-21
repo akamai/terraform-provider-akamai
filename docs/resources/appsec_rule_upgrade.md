@@ -26,7 +26,6 @@ data "akamai_appsec_configuration" "configuration" {
 }
 resource "akamai_appsec_rule_upgrade" "rule_upgrade" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
 output "rule_upgrade_current_ruleset" {
@@ -45,8 +44,6 @@ output "rule_upgrade_eval_status" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 

@@ -3,8 +3,7 @@ provider "akamai" {
 }
 
 resource "akamai_appsec_eval_hostnames" "test" {
- config_id = 43253
-    version = 7
+  config_id = 43253
   hostnames = ["example.com"]
 }
 

@@ -33,10 +33,6 @@ func dataSourceMatchTargets() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"match_target_id": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -68,11 +64,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getMatchTargets.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getMatchTargets.ConfigVersion = version
+	getMatchTargets.ConfigVersion = getLatestConfigVersion(ctx, configid, m)
 
 	matchtargetid, err := tools.GetIntValue("match_target_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

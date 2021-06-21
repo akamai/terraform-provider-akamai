@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -20,10 +21,13 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceApiRequestConstraints() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceApiRequestConstraintsUpdate,
+		CreateContext: resourceApiRequestConstraintsCreate,
 		ReadContext:   resourceApiRequestConstraintsRead,
 		UpdateContext: resourceApiRequestConstraintsUpdate,
 		DeleteContext: resourceApiRequestConstraintsDelete,
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -32,91 +36,98 @@ func resourceApiRequestConstraints() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"api_endpoint_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
 			},
 			"action": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: ValidateActions,
 			},
-			"api_endpoint_id": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
 		},
 	}
+}
+
+func resourceApiRequestConstraintsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsCreate")
+	logger.Debugf("!!! in resourceApiRequestConstraintsCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "apirequestconstraints", m)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	apiEndpointID, err := tools.GetIntValue("api_endpoint_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	action, err := tools.GetStringValue("action", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	createApiRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
+	createApiRequestConstraints.ConfigID = configid
+	createApiRequestConstraints.Version = version
+	createApiRequestConstraints.PolicyID = policyid
+	createApiRequestConstraints.ApiID = apiEndpointID
+	createApiRequestConstraints.Action = action
+
+	_, erru := client.UpdateApiRequestConstraints(ctx, createApiRequestConstraints)
+	if erru != nil {
+		logger.Errorf("calling 'createApiRequestConstraints': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	if apiEndpointID != 0 {
+		d.SetId(fmt.Sprintf("%d:%s:%d", createApiRequestConstraints.ConfigID, createApiRequestConstraints.PolicyID, createApiRequestConstraints.ApiID))
+	} else {
+		d.SetId(fmt.Sprintf("%d:%s", createApiRequestConstraints.ConfigID, createApiRequestConstraints.PolicyID))
+	}
+
+	return resourceApiRequestConstraintsRead(ctx, d, m)
 }
 
 func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsRead")
+	logger.Debugf("!!! in resourceCustomRuleActionRead")
+
+	s := strings.Split(d.Id(), ":")
+
+	configid, errconv := strconv.Atoi(s[0])
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
+	policyid := s[1]
+
+	apiID := 0
+	if len(s) > 2 {
+		apiID, errconv = strconv.Atoi(s[2])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+	}
 
 	getApiRequestConstraints := appsec.GetApiRequestConstraintsRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
+	getApiRequestConstraints.ConfigID = configid
+	getApiRequestConstraints.Version = version
+	getApiRequestConstraints.PolicyID = policyid
+	getApiRequestConstraints.ApiID = apiID
 
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getApiRequestConstraints.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getApiRequestConstraints.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getApiRequestConstraints.Version = version
-		}
-
-		policyid := s[2]
-		getApiRequestConstraints.PolicyID = policyid
-
-		if len(s) >= 4 {
-			apiID, errconv := strconv.Atoi(s[3])
-			if errconv != nil {
-				return diag.FromErr(errconv)
-			}
-			getApiRequestConstraints.ApiID = apiID
-		}
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getApiRequestConstraints.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getApiRequestConstraints.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getApiRequestConstraints.PolicyID = policyid
-
-		ApiID, err := tools.GetIntValue("api_endpoint_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getApiRequestConstraints.ApiID = ApiID
-	}
 	response, err := client.GetApiRequestConstraints(ctx, getApiRequestConstraints)
 	if err != nil {
 		logger.Errorf("calling 'getApiRequestConstraints': %s", err.Error())
@@ -124,10 +135,6 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if err := d.Set("config_id", getApiRequestConstraints.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("version", getApiRequestConstraints.Version); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -150,99 +157,99 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 			}
 		}
 	}
-	if getApiRequestConstraints.ApiID != 0 {
-		d.SetId(fmt.Sprintf("%d:%d:%s:%d", getApiRequestConstraints.ConfigID, getApiRequestConstraints.Version, getApiRequestConstraints.PolicyID, getApiRequestConstraints.ApiID))
-	} else {
-		d.SetId(fmt.Sprintf("%d:%d:%s", getApiRequestConstraints.ConfigID, getApiRequestConstraints.Version, getApiRequestConstraints.PolicyID))
-	}
 	return nil
 }
 
-func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
+func resourceApiRequestConstraintsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsRemove")
+	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsUpdate")
+	logger.Debugf("!!! in resourceCustomRuleActionUpdate")
 
-	getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
-	removeApiRequestConstraints := appsec.RemoveApiRequestConstraintsRequest{}
-	removePolicyProtections := appsec.RemovePolicyProtectionsRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
+	s := strings.Split(d.Id(), ":")
 
-		configid, errconv := strconv.Atoi(s[0])
+	configid, errconv := strconv.Atoi(s[0])
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "apirequestconstraints", m)
+	policyid := s[1]
+
+	apiID := 0
+	if len(s) > 2 {
+		apiID, errconv = strconv.Atoi(s[2])
 		if errconv != nil {
 			return diag.FromErr(errconv)
 		}
-		getPolicyProtections.ConfigID = configid
-		removeApiRequestConstraints.ConfigID = configid
-		removePolicyProtections.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getPolicyProtections.Version = version
-		removeApiRequestConstraints.Version = version
-		removePolicyProtections.Version = version
-
-		policyid := s[2]
-
-		getPolicyProtections.PolicyID = policyid
-		removeApiRequestConstraints.PolicyID = policyid
-		removePolicyProtections.PolicyID = policyid
-
-		if len(s) >= 4 {
-			apiID, errconv := strconv.Atoi(s[3])
-			if errconv != nil {
-				return diag.FromErr(errconv)
-			}
-
-			removeApiRequestConstraints.ApiID = apiID
-
-		}
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-
-		getPolicyProtections.ConfigID = configid
-		removeApiRequestConstraints.ConfigID = configid
-		removePolicyProtections.ConfigID = configid
-
-		getPolicyProtections.Version = version
-		removeApiRequestConstraints.Version = version
-		removePolicyProtections.Version = version
-
-		getPolicyProtections.PolicyID = policyid
-		removeApiRequestConstraints.PolicyID = policyid
-		removePolicyProtections.PolicyID = policyid
 	}
-	policyprotections, err := client.GetPolicyProtections(ctx, getPolicyProtections)
-	if err != nil {
-		logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
-		return diag.FromErr(err)
-	}
-
-	apiEndpointID, err := tools.GetIntValue("api_endpoint_id", d)
+	action, err := tools.GetStringValue("action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	removeApiRequestConstraints.ApiID = apiEndpointID
+
+	updateApiRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
+	updateApiRequestConstraints.ConfigID = configid
+	updateApiRequestConstraints.Version = version
+	updateApiRequestConstraints.PolicyID = policyid
+	updateApiRequestConstraints.ApiID = apiID
+	updateApiRequestConstraints.Action = action
+
+	_, erru := client.UpdateApiRequestConstraints(ctx, updateApiRequestConstraints)
+	if erru != nil {
+		logger.Errorf("calling 'updateApiRequestConstraints': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	return resourceApiRequestConstraintsRead(ctx, d, m)
+}
+
+func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsDelete")
+	logger.Debugf("!!! in resourceApiRequestConstraintsDelete")
+
+	s := strings.Split(d.Id(), ":")
+
+	configid, errconv := strconv.Atoi(s[0])
+	if errconv != nil {
+		return diag.FromErr(errconv)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "apirequestconstraints", m)
+	policyid := s[1]
+
+	apiID := 0
+	if len(s) > 2 {
+		apiID, errconv = strconv.Atoi(s[2])
+		if errconv != nil {
+			return diag.FromErr(errconv)
+		}
+	}
+
+	removeApiRequestConstraints := appsec.RemoveApiRequestConstraintsRequest{}
+	removeApiRequestConstraints.ConfigID = configid
+	removeApiRequestConstraints.Version = version
+	removeApiRequestConstraints.PolicyID = policyid
+	removeApiRequestConstraints.ApiID = apiID
 
 	if removeApiRequestConstraints.ApiID == 0 {
-		if policyprotections.ApplyAPIConstraints == true {
+
+		getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
+		getPolicyProtections.ConfigID = configid
+		getPolicyProtections.Version = version
+		getPolicyProtections.PolicyID = policyid
+
+		policyprotections, err := client.GetPolicyProtections(ctx, getPolicyProtections)
+		if err != nil {
+			logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
+			return diag.FromErr(err)
+		}
+		if policyprotections.ApplyAPIConstraints {
+			removePolicyProtections := appsec.RemovePolicyProtectionsRequest{}
+			removePolicyProtections.ConfigID = configid
+			removePolicyProtections.Version = version
+			removePolicyProtections.PolicyID = policyid
+
 			removePolicyProtections.ApplyAPIConstraints = false
 			removePolicyProtections.ApplyApplicationLayerControls = policyprotections.ApplyApplicationLayerControls
 			removePolicyProtections.ApplyBotmanControls = policyprotections.ApplyBotmanControls
@@ -268,85 +275,4 @@ func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 
 	d.SetId("")
 	return nil
-}
-
-func resourceApiRequestConstraintsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsUpdate")
-
-	updateApiRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateApiRequestConstraints.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateApiRequestConstraints.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateApiRequestConstraints.Version = version
-		}
-
-		policyid := s[2]
-
-		updateApiRequestConstraints.PolicyID = policyid
-
-		if len(s) >= 4 {
-			apiID, errconv := strconv.Atoi(s[3])
-			if errconv != nil {
-				return diag.FromErr(errconv)
-			}
-
-			updateApiRequestConstraints.ApiID = apiID
-		}
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateApiRequestConstraints.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateApiRequestConstraints.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateApiRequestConstraints.PolicyID = policyid
-
-		apiEndpointID, err := tools.GetIntValue("api_endpoint_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateApiRequestConstraints.ApiID = apiEndpointID
-	}
-	action, err := tools.GetStringValue("action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateApiRequestConstraints.Action = action
-
-	_, erru := client.UpdateApiRequestConstraints(ctx, updateApiRequestConstraints)
-	if erru != nil {
-		logger.Errorf("calling 'updateApiRequestConstraints': %s", erru.Error())
-		return diag.FromErr(erru)
-	}
-
-	return resourceApiRequestConstraintsRead(ctx, d, m)
 }

@@ -40,8 +40,19 @@ output "create_config_id" {
   value = akamai_appsec_configuration.create_config.config_id
 }
 
-output "create_config_version" {
-  value = akamai_appsec_configuration.create_config.version
+// USE CASE: user wants to clone a new config from an existing config and version
+resource "akamai_appsec_configuration" "clone_config" {
+  name = var.name
+  description = var.description
+  create_from_config_id = data.akamai_appsec_configuration.configuration.config_id
+  create_from_version = data.akamai_appsec_configuration.configuration.latest_version
+  contract_id= data.akamai_appsec_contract_groups.contract_groups.default_contractid
+  group_id  = data.akamai_appsec_contract_groups.contract_groups.default_groupid
+  host_names = data.akamai_appsec_selectable_hostnames.selectable_hostnames.hostnames
+}
+
+output "clone_config_id" {
+  value = akamai_appsec_configuration.clone_config.config_id
 }
 ```
 
@@ -53,9 +64,13 @@ The following arguments are supported:
 
 * `description` - (Required) A description of the configuration.
 
+* `create_from_config_id` - (Optional) The config ID of the security configuration to clone from.
+
+* `create_from_version` - (Optional) The version number of the security configuration to clone from.
+
 * `contract_id` - (Required) The contract ID of the configuration.
 
-* `group_id` - (Required) The group ID of the configuration>
+* `group_id` - (Required) The group ID of the configuration.
 
 * `host_names` - (Required) The list of hostnames protected by this security configuration.
 
@@ -64,6 +79,4 @@ The following arguments are supported:
 In addition to the arguments above, the following attributes are exported:
 
 * `config_id` - (Required) The ID of the security configuration.
-
-* `version` - (Required) The latest version of the security configuration.
 

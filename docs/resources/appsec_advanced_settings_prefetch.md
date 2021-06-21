@@ -26,7 +26,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 resource "akamai_appsec_advanced_settings_prefetch" "prefetch" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   enable_app_layer = false
   all_extensions = true
   enable_rate_controls = false
@@ -39,8 +38,6 @@ resource "akamai_appsec_advanced_settings_prefetch" "prefetch" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `enable_app_layer` - (Required) Whether to enable prefetch requests.
 

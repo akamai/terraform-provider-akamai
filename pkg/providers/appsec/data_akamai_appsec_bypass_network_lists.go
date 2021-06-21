@@ -23,10 +23,6 @@ func dataSourceBypassNetworkLists() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"bypass_network_list": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -58,11 +54,7 @@ func dataSourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceDat
 	}
 	getBypassNetworkLists.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getBypassNetworkLists.Version = version
+	getBypassNetworkLists.Version = getLatestConfigVersion(ctx, configid, m)
 
 	bypassnetworklists, err := client.GetBypassNetworkLists(ctx, getBypassNetworkLists)
 	if err != nil {

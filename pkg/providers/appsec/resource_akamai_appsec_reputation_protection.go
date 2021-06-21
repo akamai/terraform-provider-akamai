@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -19,19 +19,18 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourceReputationProtection() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceReputationProtectionUpdate,
+		CreateContext: resourceReputationProtectionCreate,
 		ReadContext:   resourceReputationProtectionRead,
 		UpdateContext: resourceReputationProtectionUpdate,
 		DeleteContext: resourceReputationProtectionDelete,
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -52,146 +51,88 @@ func resourceReputationProtection() *schema.Resource {
 	}
 }
 
+func resourceReputationProtectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceReputationProtectionCreate")
+	logger.Debugf("!!! in resourceReputationProtectionCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "reputationProtection", m)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	applyreputationcontrols, err := tools.GetBoolValue("enabled", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	createReputationProtection := appsec.UpdateReputationProtectionRequest{}
+	createReputationProtection.ConfigID = configid
+	createReputationProtection.Version = version
+	createReputationProtection.PolicyID = policyid
+	createReputationProtection.ApplyReputationControls = applyreputationcontrols
+
+	_, erru := client.UpdateReputationProtection(ctx, createReputationProtection)
+	if erru != nil {
+		logger.Errorf("calling 'updateReputationProtection': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId(fmt.Sprintf("%d:%s", createReputationProtection.ConfigID, createReputationProtection.PolicyID))
+
+	return resourceReputationProtectionRead(ctx, d, m)
+}
+
 func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProtectionRead")
+	logger.Debugf("!!! in resourceReputationProtectionRead")
+
+	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
+	policyid := idParts[1]
 
 	getReputationProtection := appsec.GetReputationProtectionRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
+	getReputationProtection.ConfigID = configid
+	getReputationProtection.Version = version
+	getReputationProtection.PolicyID = policyid
 
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getReputationProtection.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getReputationProtection.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getReputationProtection.Version = version
-		}
-
-		policyid := s[2]
-		getReputationProtection.PolicyID = policyid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationProtection.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationProtection.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getReputationProtection.PolicyID = policyid
-	}
 	reputationprotection, err := client.GetReputationProtection(ctx, getReputationProtection)
 	if err != nil {
 		logger.Errorf("calling 'getReputationProtection': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("config_id", getReputationProtection.ConfigID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("security_policy_id", getReputationProtection.PolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("enabled", reputationprotection.ApplyReputationControls); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-
 	outputtext, err := RenderTemplates(ots, "reputationProtectionDS", reputationprotection)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-
-	if err := d.Set("enabled", reputationprotection.ApplyReputationControls); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("config_id", getReputationProtection.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("version", getReputationProtection.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("security_policy_id", getReputationProtection.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-	d.SetId(fmt.Sprintf("%d:%d:%s", getReputationProtection.ConfigID, getReputationProtection.Version, getReputationProtection.PolicyID))
-
-	return nil
-}
-
-func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceReputationProtectionRemove")
-
-	removeReputationProtection := appsec.UpdateReputationProtectionRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeReputationProtection.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		removeReputationProtection.Version = version
-
-		policyid := s[2]
-		removeReputationProtection.PolicyID = policyid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeReputationProtection.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeReputationProtection.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		removeReputationProtection.PolicyID = policyid
-	}
-	removeReputationProtection.ApplyReputationControls = false
-
-	_, errd := client.UpdateReputationProtection(ctx, removeReputationProtection)
-	if errd != nil {
-		logger.Errorf("calling 'removeReputationProtection': %s", errd.Error())
-		return diag.FromErr(errd)
-	}
-
-	d.SetId("")
 	return nil
 }
 
@@ -199,57 +140,27 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProtectionUpdate")
+	logger.Debugf("!!! in resourceSlowPostProtectionUpdate")
 
-	updateReputationProtection := appsec.UpdateReputationProtectionRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
-
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateReputationProtection.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		updateReputationProtection.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			updateReputationProtection.Version = version
-		}
-
-		policyid := s[2]
-		updateReputationProtection.PolicyID = policyid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationProtection.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationProtection.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updateReputationProtection.PolicyID = policyid
+	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
 	}
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "reputationProtection", m)
+	policyid := idParts[1]
 	applyreputationcontrols, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
+	updateReputationProtection := appsec.UpdateReputationProtectionRequest{}
+	updateReputationProtection.ConfigID = configid
+	updateReputationProtection.Version = version
+	updateReputationProtection.PolicyID = policyid
 	updateReputationProtection.ApplyReputationControls = applyreputationcontrols
 
 	_, erru := client.UpdateReputationProtection(ctx, updateReputationProtection)
@@ -259,4 +170,37 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 	}
 
 	return resourceReputationProtectionRead(ctx, d, m)
+}
+
+func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceReputationProtectionDelete")
+	logger.Debugf("!!! in resourceReputationProtectionDelete")
+
+	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "reputationProtection", m)
+	policyid := idParts[1]
+
+	removeReputationProtection := appsec.RemoveReputationProtectionRequest{}
+	removeReputationProtection.ConfigID = configid
+	removeReputationProtection.Version = version
+	removeReputationProtection.PolicyID = policyid
+	removeReputationProtection.ApplyReputationControls = false
+
+	_, errd := client.RemoveReputationProtection(ctx, removeReputationProtection)
+	if errd != nil {
+		logger.Errorf("calling 'removeReputationProtection': %s", errd.Error())
+		return diag.FromErr(errd)
+	}
+
+	d.SetId("")
+	return nil
 }

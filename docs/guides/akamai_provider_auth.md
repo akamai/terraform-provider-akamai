@@ -1,11 +1,11 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Authenticate the Akamai Terraform Provider"
+page_title: "Akamai Provider: Set Up Authentication"
 description: |-
   Learn how to set up authentication for the Akamai Terraform Provider.
 ---
 
-# Authenticate the Akamai Terraform Provider
+# Authenticate the Akamai Provider
 
 The Akamai Terraform Provider relies on Akamai's EdgeGrid authentication scheme. The Akamai Provider code acts as a
 wrapper for Akamai's APIs and reuses the same authentication mechanism. Akamai recommends storing your API credentials in a local `.edgerc` file.
@@ -27,7 +27,7 @@ To prepare the `.edgerc` file, you need to:
 3.  If you already have the API clients you need, you can add the credentials to your local `.edgerc` file.
 
 For example, if you want to add Akamai properties to your existing
-Terraform configuration, you'll be using the Provisioning module. For this module,
+Terraform configuration, you'll be using the Property Provisioning module. For this module,
  you need to create an API client for the **Property Manager (PAPI)** service,
  then add it to your `.edgerc` file.
 
@@ -36,12 +36,13 @@ supporting API service names:
 
 | **Module** | **API service name** |
 |-------------|----------------------|
-| **Application Security** (beta) <br/> Contact Akamai to add this beta to your contract. | Application Security |
-| **Edge DNS** (DNS zones) | DNS Zone Management |
-| **Global Traffic Management** (GTM domains) | Global Traffic Management |
-| **Identity and Access Management** (authentication) | Identity Management: User Administration |
+| **Application Security** | Application Security |
+| **Certificate Provisioning** | Certificate Provisioning System |
+| **DNS Zone Administration Module** | DNS Zone Management |
+| **Global Traffic Management Domain Administration** | Global Traffic Management |
+| **Identity and Access Management** | Identity Management: User Administration |
 | **Network Lists** | Network Lists |
-| **Provisioning** (property and common functions) | Property Manager (PAPI) |
+| **Property Provisioning** (Includes Common functions) | Property Manager (PAPI) |
 
 
 -> **Note:** If you're using the Edge DNS or GTM module, you may also need the Property Manager API service. Whether you need this additional service depends on your contract and group. See [PAPI concepts](https://developer.akamai.com/api/core_features/property_manager/v1.html#papiconcepts) for more information.
@@ -179,7 +180,7 @@ Use this template to specify variables based on the sections of your `.edgerc` f
 
 ### Example usage
 
-To set up the Provisioning module, you'll need an API client for Property Manager.
+To set up the Property Provisioning module, you'll need an API client for Property Manager.
 
 1. Set up the basic `provider` block so that it's empty:
 

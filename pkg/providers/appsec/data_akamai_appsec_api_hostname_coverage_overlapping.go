@@ -23,10 +23,6 @@ func dataSourceApiHostnameCoverageOverlapping() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"hostname": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -57,11 +53,7 @@ func dataSourceApiHostnameCoverageOverlappingRead(ctx context.Context, d *schema
 	}
 	getApiHostnameCoverageOverlapping.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getApiHostnameCoverageOverlapping.Version = version
+	getApiHostnameCoverageOverlapping.Version = getLatestConfigVersion(ctx, configid, m)
 
 	hostname, err := tools.GetStringValue("hostname", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

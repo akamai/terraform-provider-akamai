@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_custom_deny
 
-Use the `akamai_appsec_custom_deny` data source to retrieve information about custom deny actions for a specific security configuration version, or about a particular custom deny action. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcustomdeny).
+Use the `akamai_appsec_custom_deny` data source to retrieve information about custom deny actions for a specific security configuration, or about a particular custom deny action. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcustomdeny).
 
 ## Example Usage
 
@@ -26,7 +26,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 data "akamai_appsec_custom_deny" "custom_deny_list" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
 //tabular data with id and name
@@ -41,7 +40,6 @@ output "custom_deny_list_json" {
 // USE CASE: user wants to see a single custom deny associated with a given security configuration version
 data "akamai_appsec_custom_deny" "custom_deny" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   custom_deny_id = var.custom_deny_id
 }
 
@@ -59,8 +57,6 @@ output "custom_deny_output" {
 The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID to use.
-
-* `version` - (Required) The version number of the configuration to use.
 
 * `custom_deny_id` - (Optional) The ID of a specific custom deny action.
 

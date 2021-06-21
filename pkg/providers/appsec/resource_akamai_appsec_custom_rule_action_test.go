@@ -21,6 +21,15 @@ func TestAccAkamaiCustomRuleAction_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleAction.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetCustomRuleAction",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362},
@@ -39,7 +48,7 @@ func TestAccAkamaiCustomRuleAction_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCustomRuleAction/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_custom_rule_action.test", "id", "43253:7:AAAA_81230:60036362"),
+							resource.TestCheckResourceAttr("akamai_appsec_custom_rule_action.test", "id", "43253:AAAA_81230:60036362"),
 						),
 						ExpectNonEmptyPlan: true,
 					},

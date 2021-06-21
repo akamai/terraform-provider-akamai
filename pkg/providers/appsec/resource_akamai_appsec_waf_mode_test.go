@@ -21,6 +21,15 @@ func TestAccAkamaiWAFMode_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetWAFMode",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetWAFModeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
@@ -39,7 +48,7 @@ func TestAccAkamaiWAFMode_res_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResWAFMode/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_waf_mode.test", "id", "43253:7:AAAA_81230"),
+							resource.TestCheckResourceAttr("akamai_appsec_waf_mode.test", "id", "43253:AAAA_81230"),
 						),
 					},
 				},

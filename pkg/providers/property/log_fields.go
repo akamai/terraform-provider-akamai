@@ -94,6 +94,9 @@ func toLogFielder(given interface{}) log.Fielder {
 	case papi.GetPropertyVersionRequest:
 		return getPropertyVersionReqFields(v)
 
+	case papi.GetPropertyVersionsRequest:
+		return getPropertyVersionsReqFields(v)
+
 	case papi.GetPropertyVersionsResponse:
 		return getPropertyVersionResFields(v)
 	}
@@ -171,6 +174,18 @@ func (req getPropertyVersionReqFields) Fields() log.Fields {
 		"contract_id":      req.ContractID,
 		"group_id":         req.GroupID,
 		"property_version": req.PropertyVersion,
+	}
+}
+
+type getPropertyVersionsReqFields papi.GetPropertyVersionsRequest
+
+func (req getPropertyVersionsReqFields) Fields() log.Fields {
+	return log.Fields{
+		"property_name": req.PropertyID,
+		"contract_id":   req.ContractID,
+		"group_id":      req.GroupID,
+		"limit":         req.Limit,
+		"offset":        req.Offset,
 	}
 }
 

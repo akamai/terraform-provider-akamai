@@ -20,14 +20,13 @@ provider "akamai" {
 }
 
 // USE CASE: user wants to view the prefetch request settings for a given security configuration
-// with out policy - /appsec/v1/configs/{configId}/versions/{versionNum}/advanced-settings/logging
+// /appsec/v1/configs/{configId}/versions/{versionNum}/advanced-settings/prefetch
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
 
 data "akamai_appsec_advanced_settings_prefetch" "prefetch" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
 //tabular data of all fields - 3 boolean fields and one extensions text
@@ -45,8 +44,6 @@ output "advanced_settings_prefetch_json" {
 The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID.
-
-* `version` - (Required) The version number of the configuration.
 
 ## Attributes Reference
 

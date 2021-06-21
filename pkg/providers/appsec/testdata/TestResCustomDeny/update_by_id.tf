@@ -4,7 +4,6 @@ provider "akamai" {
 
 resource "akamai_appsec_custom_deny" "test" {
  config_id = 43253
-    version = 7
   custom_deny = <<-EOF
 {
     "name": "new_custom_deny",

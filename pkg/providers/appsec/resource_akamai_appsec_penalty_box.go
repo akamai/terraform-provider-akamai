@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -20,19 +20,18 @@ import (
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
 func resourcePenaltyBox() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourcePenaltyBoxUpdate,
+		CreateContext: resourcePenaltyBoxCreate,
 		ReadContext:   resourcePenaltyBoxRead,
 		UpdateContext: resourcePenaltyBoxUpdate,
 		DeleteContext: resourcePenaltyBoxDelete,
+		CustomizeDiff: customdiff.All(
+			VerifyIdUnchanged,
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"version": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -57,57 +56,70 @@ func resourcePenaltyBox() *schema.Resource {
 	}
 }
 
+func resourcePenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourcePenaltyBoxCreate")
+	logger.Debugf("!!! in resourcePenaltyBoxCreate")
+
+	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "penaltyBoxAction", m)
+	policyid, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	penaltyboxaction, err := tools.GetStringValue("penalty_box_action", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	createPenaltyBox := appsec.UpdatePenaltyBoxRequest{}
+	createPenaltyBox.ConfigID = configid
+	createPenaltyBox.Version = version
+	createPenaltyBox.PolicyID = policyid
+	createPenaltyBox.PenaltyBoxProtection = penaltyboxprotection
+	createPenaltyBox.Action = penaltyboxaction
+
+	_, erru := client.UpdatePenaltyBox(ctx, createPenaltyBox)
+	if erru != nil {
+		logger.Errorf("calling 'createPenaltyBox': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	d.SetId(fmt.Sprintf("%d:%s", createPenaltyBox.ConfigID, createPenaltyBox.PolicyID))
+
+	return resourcePenaltyBoxRead(ctx, d, m)
+}
+
 func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxRead")
+	logger.Debugf("!!! in resourcePenaltyBoxRead")
+
+	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
+	policyid := idParts[1]
 
 	getPenaltyBox := appsec.GetPenaltyBoxRequest{}
-	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		s := strings.Split(d.Id(), ":")
+	getPenaltyBox.ConfigID = configid
+	getPenaltyBox.Version = version
+	getPenaltyBox.PolicyID = policyid
 
-		configid, errconv := strconv.Atoi(s[0])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getPenaltyBox.ConfigID = configid
-
-		version, errconv := strconv.Atoi(s[1])
-		if errconv != nil {
-			return diag.FromErr(errconv)
-		}
-		getPenaltyBox.Version = version
-
-		if d.HasChange("version") {
-			version, err := tools.GetIntValue("version", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			getPenaltyBox.Version = version
-		}
-
-		policyid := s[2]
-		getPenaltyBox.PolicyID = policyid
-
-	} else {
-		configid, err := tools.GetIntValue("config_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getPenaltyBox.ConfigID = configid
-
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getPenaltyBox.Version = version
-
-		policyid, err := tools.GetStringValue("security_policy_id", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		getPenaltyBox.PolicyID = policyid
-	}
 	penaltybox, err := client.GetPenaltyBox(ctx, getPenaltyBox)
 	if err != nil {
 		logger.Errorf("calling 'getPenaltyBox': %s", err.Error())
@@ -117,57 +129,83 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err := d.Set("config_id", getPenaltyBox.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
-	if err := d.Set("version", getPenaltyBox.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
 	if err := d.Set("security_policy_id", getPenaltyBox.PolicyID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
 	if err := d.Set("penalty_box_protection", penaltybox.PenaltyBoxProtection); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-
 	if err := d.Set("penalty_box_action", penaltybox.Action); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d:%s", getPenaltyBox.ConfigID, getPenaltyBox.Version, getPenaltyBox.PolicyID))
-
 	return nil
 }
 
-func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
+func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourcePenaltyBoxRemove")
+	logger := meta.Log("APPSEC", "resourcePenaltyBoxUpdate")
+	logger.Debugf("!!! in resourcePenaltyBoxUpdate")
+
+	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "penaltyBoxAction", m)
+	policyid := idParts[1]
+	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	penaltyboxaction, err := tools.GetStringValue("penalty_box_action", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	updatePenaltyBox := appsec.UpdatePenaltyBoxRequest{}
+	updatePenaltyBox.ConfigID = configid
+	updatePenaltyBox.Version = version
+	updatePenaltyBox.PolicyID = policyid
+	updatePenaltyBox.PenaltyBoxProtection = penaltyboxprotection
+	updatePenaltyBox.Action = penaltyboxaction
+
+	_, erru := client.UpdatePenaltyBox(ctx, updatePenaltyBox)
+	if erru != nil {
+		logger.Errorf("calling 'updatePenaltyBox': %s", erru.Error())
+		return diag.FromErr(erru)
+	}
+
+	return resourcePenaltyBoxRead(ctx, d, m)
+}
+
+func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourcePenaltyBoxDelete")
+	logger.Debugf("!!! in resourcePenaltyBoxDelete")
+
+	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	configid, err := strconv.Atoi(idParts[0])
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getModifiableConfigVersion(ctx, configid, "penaltyBoxAction", m)
+	policyid := idParts[1]
 
 	removePenaltyBox := appsec.UpdatePenaltyBoxRequest{}
-
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
 	removePenaltyBox.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
 	removePenaltyBox.Version = version
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
 	removePenaltyBox.PolicyID = policyid
-
-	removePenaltyBox.Action = "none"
-
 	removePenaltyBox.PenaltyBoxProtection = false
+	removePenaltyBox.Action = "none"
 
 	_, errd := client.UpdatePenaltyBox(ctx, removePenaltyBox)
 	if errd != nil {
@@ -177,58 +215,4 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 	d.SetId("")
 
 	return nil
-}
-
-func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourcePenaltyBoxUpdate")
-
-	updatePenaltyBox := appsec.UpdatePenaltyBoxRequest{}
-
-	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updatePenaltyBox.ConfigID = configid
-
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updatePenaltyBox.Version = version
-
-	if d.HasChange("version") {
-		version, err := tools.GetIntValue("version", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		updatePenaltyBox.Version = version
-	}
-
-	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updatePenaltyBox.PolicyID = policyid
-
-	penaltyboxaction, err := tools.GetStringValue("penalty_box_action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updatePenaltyBox.Action = penaltyboxaction
-
-	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updatePenaltyBox.PenaltyBoxProtection = penaltyboxprotection
-
-	_, erru := client.UpdatePenaltyBox(ctx, updatePenaltyBox)
-	if erru != nil {
-		logger.Errorf("calling 'updatePenaltyBox': %s", erru.Error())
-		return diag.FromErr(erru)
-	}
-
-	return resourcePenaltyBoxRead(ctx, d, m)
 }

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_property_rules
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to the new version, you have to update this data source. See the [migration guide](../guides/1.0_migration.md) for details. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Property Provisioning module. To upgrade to the new version, you have to update this data source. See [Upgrade to Version 1.0.0](../guides/1.0_migration.md) for details. 
 
 Use the `akamai_property_rules` data source to query and retrieve the rule tree of 
 an existing property version. This data source lets you search across the contracts 

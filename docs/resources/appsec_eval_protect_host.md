@@ -26,12 +26,10 @@ data "akamai_appsec_configuration" "configuration" {
 
 data "akamai_appsec_eval_hostnames" "eval_hostnames" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
 resource "akamai_appsec_eval_protect_host" "protect_host" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   hostnames = data.akamai_appsec_eval_hostnames.eval_hostnames.hostnames
 }
 ```
@@ -41,8 +39,6 @@ resource "akamai_appsec_eval_protect_host" "protect_host" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `hostnames` - (Required) The evaluation hostnames to be moved to active protection.
 

@@ -8,7 +8,7 @@ description: |-
 
 # akamai_property
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Provisioning module. To upgrade to this version, you have to update this resource. See the [migration guide](../guides/1.0_migration.md) for details.
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Property Provisioning module. To upgrade to this version, you have to update this resource. See [Upgrade to Version 1.0.0](../guides/1.0_migration.md) for details.
 
 The `akamai_property` resource represents an Akamai property configuration.
 This resource lets you to create, update, and activate properties on the
@@ -98,14 +98,22 @@ resource "akamai_property" "example" {
   }
 ```
 
-You can import Akamai properties by using either the `property_id` or a comma-delimited
+You can import the latest Akamai property version by using either the `property_id` or a comma-delimited
 string of the property, contract, and group IDs. You'll need to enter the string of IDs if the property belongs to multiple groups or contracts.
 
 If using the string of IDs, you need to enter them in this order:
 
 `property_id,contract_id,group_id`
 
-Here are some examples:
+To import a specific property version, pass additional parameters, either:
+
+* `LATEST` to import the latest version of the property, regardless of whether it's active or not. This works the same as providing just the `property_id` or a string of the property, contract, and group IDs, which is the default behavior.
+* `PRODUCTION`, `PROD`, or `P` to import the latest version activated on the production environment.
+* `STAGING`, `STAGE`, `STAG`, or `S` to import the latest version activated on the staging environment.
+* Version number or version number with the `ver_` prefix to import a specific property version. For example `3` and `ver_3` correspond to the same version number.
+
+
+Here are some examples for the latest property version:
 
 ```shell
 $ terraform import akamai_property.example prp_123
@@ -115,4 +123,28 @@ Or
 
 ```shell
 $ terraform import akamai_property.example prp_123,ctr_1-AB123,grp_123
+```
+
+Here are some examples for the latest active property version on the production network:
+
+```shell
+$ terraform import akamai_property.example prp_123,P
+```
+
+Or
+
+```shell
+$ terraform import akamai_property.example prp_123,ctr_1-AB123,grp_123,PROD
+```
+
+Here are some examples for the specific property version:
+
+```shell
+$ terraform import akamai_property.example prp_123,3
+```
+
+Or
+
+```shell
+$ terraform import akamai_property.example prp_123,ctr_1-AB123,grp_123,ver_3
 ```

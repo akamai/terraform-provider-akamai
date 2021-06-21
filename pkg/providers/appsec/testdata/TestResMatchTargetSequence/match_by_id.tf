@@ -2,12 +2,9 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-
-
 resource "akamai_appsec_match_target_sequence" "test" {
-    config_id = 43253
-    version = 7
-    match_target_sequence = <<-EOF
+  config_id             = 43253
+  match_target_sequence = <<-EOF
     {
     "type": "website",
     "targetSequence": [

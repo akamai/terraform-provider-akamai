@@ -8,7 +8,7 @@ description: |-
 
 # akamai_appsec_selected_hostnames
 
-Use the `akamai_appsec_selected_hostnames` data source to retrieve a list of the hostnames that are currently protected under a given security configuration version.
+Use the `akamai_appsec_selected_hostnames` data source to retrieve a list of the hostnames that are currently protected under a given security configuration.
 
 ## Example Usage
 
@@ -25,7 +25,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 data "akamai_appsec_selected_hostnames" "selected_hostnames" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
 output "selected_hostnames" {
@@ -46,8 +45,6 @@ output "selected_hostnames_output_text" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 ## Attributes Reference
 

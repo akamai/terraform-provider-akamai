@@ -21,6 +21,15 @@ func TestAccAkamaiPenaltyBox_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResPenaltyBox/PenaltyBox.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
 		client.On("GetPenaltyBox",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetPenaltyBoxRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
@@ -28,18 +37,18 @@ func TestAccAkamaiPenaltyBox_res_basic(t *testing.T) {
 
 		client.On("UpdatePenaltyBox",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdatePenaltyBoxRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Action: "alert", PenaltyBoxProtection: true},
+			appsec.UpdatePenaltyBoxRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Action: "none", PenaltyBoxProtection: false},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: false,
+				IsUnitTest: true,
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResPenaltyBox/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_penalty_box.test", "id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_penalty_box.test", "id", "43253:AAAA_81230"),
 						),
 					},
 				},

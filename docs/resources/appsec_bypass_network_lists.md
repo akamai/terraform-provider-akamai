@@ -21,13 +21,12 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to update bypass network lists used in a Security Configuration version
+// USE CASE: user wants to update bypass network lists used in a Security Configuration
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
 resource "akamai_appsec_bypass_network_lists" "bypass_network_lists" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   bypass_network_list = ["id1","id2"]
 }
 ```
@@ -37,8 +36,6 @@ resource "akamai_appsec_bypass_network_lists" "bypass_network_lists" {
 The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID to use.
-
-* `version` - (Required) The version number of the configuration to use.
 
 * `bypass_network_list` - (Required) A list containing the IDs of the network lists to use.
 

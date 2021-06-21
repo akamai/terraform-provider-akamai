@@ -21,10 +21,6 @@ func dataSourceEval() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
 			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -51,11 +47,7 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	getEval.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getEval.Version = version
+	getEval.Version = getLatestConfigVersion(ctx, configid, m)
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

@@ -3,8 +3,8 @@ provider "akamai" {
 }
 
 resource "akamai_appsec_configuration" "test" {
-  name = "Akamai Tools New"
-  description = "TF Tools"
+  name = "Akamai Tools"
+  description = "Akamai Tools"
   contract_id= "C-1FRYVV3"
   group_id  = 64867
   host_names = ["rinaldi.sandbox.akamaideveloper.com",

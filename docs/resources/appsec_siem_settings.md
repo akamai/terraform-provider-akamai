@@ -30,12 +30,10 @@ data "akamai_appsec_siem_definitions" "siem_definition" {
 
 data "akamai_appsec_security_policy" "security_policies" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
 }
 
 resource "akamai_appsec_siem_settings" "siem" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   enable_siem = true
   enable_for_all_policies = false
   enable_botman_siem = true
@@ -50,11 +48,9 @@ The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID to use.
 
-* `version` - (Required) The version number of the configuration to use.
-
 * `enable_siem` - (Required) Whether you enabled SIEM in a security configuration version.
 
-* `enable_for_all_policies` - (Required) Whether you enabled SIEM for all the security policies in the configuration version.
+* `enable_for_all_policies` - (Required) Whether you enabled SIEM for all the security policies in the configuration.
 
 * `enable_botman_siem` - (Required) Whether you enabled SIEM for the Bot Manager events.
 

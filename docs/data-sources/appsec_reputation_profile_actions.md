@@ -25,7 +25,6 @@ data "akamai_appsec_configuration" "configuration" {
 }
 data "akamai_appsec_reputation_profile_actions" "reputation_profile_actions" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
 output "reputation_profile_actions_text" {
@@ -38,7 +37,6 @@ output "reputation_profile_actions_json" {
 // USE CASE: user wants to view the action for a single reputation profile associated with a given security policy
 data "akamai_appsec_reputation_profile_actions" "reputation_profile_actions" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
   reputation_profile_id = var.reputation_profile_id
 }
@@ -53,8 +51,6 @@ output "reputation_profile_action" {
 The following arguments are supported:
 
 * `config_id` - (Required) The ID of the security configuration to use.
-
-* `version` - (Required) The version number of the security configuration to use.
 
 * `security_policy_id` - (Required) THe ID of the security policy to use.
 

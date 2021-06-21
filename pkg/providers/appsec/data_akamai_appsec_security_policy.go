@@ -16,7 +16,7 @@ func dataSourceSecurityPolicy() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceSecurityPolicyRead,
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"security_policy_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -24,16 +24,12 @@ func dataSourceSecurityPolicy() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"version": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"policy_id": {
+			"security_policy_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Policy ID",
 			},
-			"policy_list": {
+			"security_policy_id_list": {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -55,7 +51,7 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 
 	getSecurityPolicy := appsec.GetSecurityPoliciesRequest{}
 
-	configName := d.Get("name").(string)
+	policyName := d.Get("security_policy_name").(string)
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -63,11 +59,7 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	getSecurityPolicy.ConfigID = configid
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	getSecurityPolicy.Version = version
+	getSecurityPolicy.Version = getLatestConfigVersion(ctx, configid, m)
 
 	securitypolicy, err := client.GetSecurityPolicies(ctx, getSecurityPolicy)
 	if err != nil {
@@ -79,14 +71,14 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 
 	for _, configval := range securitypolicy.Policies {
 		secpolicylist = append(secpolicylist, configval.PolicyID)
-		if configval.PolicyName == configName {
-			if err := d.Set("policy_id", configval.PolicyID); err != nil {
+		if configval.PolicyName == policyName {
+			if err := d.Set("security_policy_id", configval.PolicyID); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
 		}
 	}
 
-	if err := d.Set("policy_list", secpolicylist); err != nil {
+	if err := d.Set("security_policy_id_list", secpolicylist); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -101,7 +93,7 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 		}
 	}
 	if len(securitypolicy.Policies) > 0 {
-		if err := d.Set("policy_id", securitypolicy.Policies[0].PolicyID); err != nil {
+		if err := d.Set("security_policy_id", securitypolicy.Policies[0].PolicyID); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}

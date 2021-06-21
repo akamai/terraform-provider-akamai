@@ -26,7 +26,6 @@ data "akamai_appsec_configuration" "configuration" {
 
 data "akamai_appsec_reputation_profile_analysis" "reputation_analysis" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
   security_policy_id = var.security_policy_id
 }
 
@@ -44,8 +43,6 @@ output "reputation_analysis_json" {
 The following arguments are supported:
 
 * `config_id` - (Required) The configuration ID to use.
-
-* `version` - (Required) The version number of the configuration to use.
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
