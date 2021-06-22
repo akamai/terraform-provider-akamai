@@ -84,7 +84,7 @@ func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 		protectedHostnames = make([]string, 0)
 	}
 	if (*evaluatedHosts).Len() > 0 {
-		evalHostnames = tools.SetToString`Slice`(evaluatedHosts)
+		evalHostnames = tools.SetToStringSlice(evaluatedHosts)
 	} else {
 		evalHostnames = make([]string, 0)
 	}
@@ -236,14 +236,16 @@ func resourceWAPSelectedHostnamesDelete(ctx context.Context, d *schema.ResourceD
 
 func verifyHostNotInBothLists(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	var protectedHostsSet, evaluatedHostsSet schema.Set
-	if d.HasChange("protected_hosts") {
-		_, protectedHosts := d.GetChange("protected_hosts")
+	_, ok := d.GetOkExists("protected_hosts")
+	if ok {
+		protectedHosts := d.Get("protected_hosts")
 		protectedHostsSet = *(protectedHosts.(*schema.Set))
 	} else {
 		protectedHostsSet = schema.Set{F: schema.HashString}
 	}
-	if d.HasChange("evaluated_hosts") {
-		_, evaluatedHosts := d.GetChange("evaluated_hosts")
+	_, ok = d.GetOkExists("evaluated_hosts")
+	if ok {
+		evaluatedHosts := d.Get("evaluated_hosts")
 		evaluatedHostsSet = *(evaluatedHosts.(*schema.Set))
 	} else {
 		evaluatedHostsSet = schema.Set{F: schema.HashString}
