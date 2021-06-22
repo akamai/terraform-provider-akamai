@@ -75,7 +75,7 @@ func resourceProperty() *schema.Resource {
 		DeleteContext: resourcePropertyDelete,
 		CustomizeDiff: customdiff.All(
 			hostNamesCustomDiff,
-			computedValuesCustomDiff,
+			versionsComputedValuesCustomDiff,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyImport,
@@ -333,21 +333,27 @@ func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{
 	return nil
 }
 
-func computedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+// versionsComputedValuesCustomDiff sets `latest_version`, `staging_version` and `production_version` fields as computed
+// if a new version of property is expected to be created
+func versionsComputedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "computedValuesCustomDiff")
-
-	//These computed attributes can be changed on server through other clients and the state needs to be synced to local
-	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
-		if d.HasChange(key) || d.NewValueKnown(key) {
-			err := d.SetNewComputed(key)
-			if err != nil {
-				logger.Errorf("%s state failed to update with new value from server", key)
-				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	logger := meta.Log("PAPI", "versionsComputedValuesCustomDiff")
+	updatableAttrs := []string{"rules", "hostnames"}
+	for _, attr := range updatableAttrs {
+		if d.HasChange(attr) {
+			//These computed attributes can be changed on server through other clients and the state needs to be synced to local
+			for _, key := range []string{"latest_version", "staging_version", "production_version"} {
+				err := d.SetNewComputed(key)
+				if err != nil {
+					logger.Errorf("%s state failed to update with new value from server", key)
+					return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+				}
+				logger.Debugf("%s state will be updated with new value from server", key)
 			}
-			logger.Debugf("%s state will be updated with new value from server", key)
+			break
 		}
 	}
+
 	return nil
 }
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
