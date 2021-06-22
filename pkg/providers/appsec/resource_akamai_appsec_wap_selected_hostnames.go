@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -27,6 +28,7 @@ func resourceWAPSelectedHostnames() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.All(
 			VerifyIdUnchanged,
+			verifyHostNotInBothLists,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -39,12 +41,12 @@ func resourceWAPSelectedHostnames() *schema.Resource {
 			},
 			"protected_hosts": {
 				Type:     schema.TypeSet,
-				Required: true,
+				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"evaluated_hosts": {
 				Type:     schema.TypeSet,
-				Required: true,
+				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 		},
@@ -66,29 +68,26 @@ func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 	protectedHosts, err := tools.GetSetValue("protected_hosts", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	evaluatedHosts, err := tools.GetSetValue("evaluated_hosts", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	// verify that none of the hostnames in either list is also in the other list
-	for _, h := range protectedHosts.List() {
-		if evaluatedHosts.Contains(h) {
-			return diag.FromErr(fmt.Errorf("host %s cannot be in both protected and evaluated hosts", h))
-		}
-	}
-	for _, h := range evaluatedHosts.List() {
-		if protectedHosts.Contains(h) {
-			return diag.FromErr(fmt.Errorf("host %s cannot be in both protected and evaluated hosts", h))
-		}
-	}
-
 	// convert to lists of strings
-	protectedHostnames := tools.SetToStringSlice(protectedHosts)
-	evalHostnames := tools.SetToStringSlice(evaluatedHosts)
+	var protectedHostnames, evalHostnames []string
+	if (*protectedHosts).Len() > 0 {
+		protectedHostnames = tools.SetToStringSlice(protectedHosts)
+	} else {
+		protectedHostnames = make([]string, 0)
+	}
+	if (*evaluatedHosts).Len() > 0 {
+		evalHostnames = tools.SetToString`Slice`(evaluatedHosts)
+	} else {
+		evalHostnames = make([]string, 0)
+	}
 
 	updateWAPSelectedHostnames := appsec.UpdateWAPSelectedHostnamesRequest{}
 	updateWAPSelectedHostnames.ConfigID = configID
@@ -155,18 +154,10 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	wapProtectedHostSet := schema.Set{F: schema.HashString}
-	for _, h := range wapSelectedHostnames.ProtectedHosts {
-		wapProtectedHostSet.Add(h)
-	}
-	if err := d.Set("protected_hosts", wapProtectedHostSet.List()); err != nil {
+	if err := d.Set("protected_hosts", wapSelectedHostnames.ProtectedHosts); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	wapEvaluatedHostSet := schema.Set{F: schema.HashString}
-	for _, h := range wapSelectedHostnames.EvaluatedHosts {
-		wapEvaluatedHostSet.Add(h)
-	}
-	if err := d.Set("evaluated_hosts", wapEvaluatedHostSet.List()); err != nil {
+	if err := d.Set("evaluated_hosts", wapSelectedHostnames.EvaluatedHosts); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -241,4 +232,39 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 
 func resourceWAPSelectedHostnamesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(context.TODO(), d, m)
+}
+
+func verifyHostNotInBothLists(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	var protectedHostsSet, evaluatedHostsSet schema.Set
+	if d.HasChange("protected_hosts") {
+		_, protectedHosts := d.GetChange("protected_hosts")
+		protectedHostsSet = *(protectedHosts.(*schema.Set))
+	} else {
+		protectedHostsSet = schema.Set{F: schema.HashString}
+	}
+	if d.HasChange("evaluated_hosts") {
+		_, evaluatedHosts := d.GetChange("evaluated_hosts")
+		evaluatedHostsSet = *(evaluatedHosts.(*schema.Set))
+	} else {
+		evaluatedHostsSet = schema.Set{F: schema.HashString}
+	}
+
+	if protectedHostsSet.Len() == 0 && evaluatedHostsSet.Len() == 0 {
+		return fmt.Errorf("protected_hostnames and evaluated_hostnames cannot both be empty")
+	}
+
+	if protectedHostsSet.Len() > 0 && evaluatedHostsSet.Len() > 0 {
+		for _, h := range protectedHostsSet.List() {
+			if evaluatedHostsSet.Contains(h) {
+				return fmt.Errorf("host %s cannot be in both protected_hosts and evaluated_hosts lists", h)
+			}
+		}
+		for _, h := range evaluatedHostsSet.List() {
+			if protectedHostsSet.Contains(h) {
+				return fmt.Errorf("host %s cannot be in both protected_hosts and evaluated_hosts lists", h)
+			}
+		}
+	}
+
+	return nil
 }
