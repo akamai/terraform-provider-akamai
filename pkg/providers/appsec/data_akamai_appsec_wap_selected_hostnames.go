@@ -176,16 +176,20 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 		textOutputCount := len(WAPSelectedHostnames.ProtectedHosts) + len(WAPSelectedHostnames.EvaluatedHosts)
 		textOutputEntries := make([]wapSelectedHostnamesOutputText, 0, textOutputCount)
 		for _, h := range WAPSelectedHostnames.ProtectedHosts {
-			textOutputEntries = append(textOutputEntries, wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "protected"})
+			entry := wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "protected"}
+			textOutputEntries = append(textOutputEntries, entry)
 		}
 		for _, h := range WAPSelectedHostnames.EvaluatedHosts {
-			textOutputEntries = append(textOutputEntries, wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "evaluated"})
+			entry := wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "evaluated"}
+			textOutputEntries = append(textOutputEntries, entry)
 		}
 		outputtext, err := RenderTemplates(ots, "WAPSelectedHostsDS", textOutputEntries)
 		if err == nil {
 			if err := d.Set("output_text", outputtext); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
+		} else {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
 
