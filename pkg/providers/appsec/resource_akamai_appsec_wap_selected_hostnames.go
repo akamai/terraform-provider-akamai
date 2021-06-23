@@ -179,29 +179,26 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 	protectedHosts, err := tools.GetSetValue("protected_hosts", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	evaluatedHosts, err := tools.GetSetValue("evaluated_hosts", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	// verify that none of the hostnames in either list is also in the other list
-	for _, h := range protectedHosts.List() {
-		if evaluatedHosts.Contains(h) {
-			return diag.FromErr(fmt.Errorf("host %s cannot be in both protected and evaluated hosts", h))
-		}
+	// convert to lists of strings
+	var protectedHostnames, evalHostnames []string
+	if (*protectedHosts).Len() > 0 {
+		protectedHostnames = tools.SetToStringSlice(protectedHosts)
+	} else {
+		protectedHostnames = make([]string, 0)
 	}
-	for _, h := range evaluatedHosts.List() {
-		if protectedHosts.Contains(h) {
-			return diag.FromErr(fmt.Errorf("host %s cannot be in both protected and evaluated hosts", h))
-		}
+	if (*evaluatedHosts).Len() > 0 {
+		evalHostnames = tools.SetToStringSlice(evaluatedHosts)
+	} else {
+		evalHostnames = make([]string, 0)
 	}
-
-	// convert to lists of Hostname structs
-	protectedHostnames := tools.SetToStringSlice(protectedHosts)
-	evalHostnames := tools.SetToStringSlice(evaluatedHosts)
 
 	updateWAPSelectedHostnames := appsec.UpdateWAPSelectedHostnamesRequest{}
 	updateWAPSelectedHostnames.ConfigID = configID
@@ -216,15 +213,17 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if d.HasChange("protected_hosts") {
-		if err := d.Set("protected_hosts", protectedHosts); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if d.HasChange("evaluated_hosts") {
-		if err := d.Set("evaluated_hosts", evaluatedHosts); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
+	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("protected_hosts", protectedHosts); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	if err := d.Set("evaluated_hosts", evaluatedHosts); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	return resourceWAPSelectedHostnamesRead(ctx, d, m)
