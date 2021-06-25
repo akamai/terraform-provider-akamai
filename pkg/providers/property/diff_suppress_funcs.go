@@ -8,6 +8,9 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 )
 
+// compareRulesJSON handles comparison between two papi.Rules JSON representations
+// true: deeply equals
+// false: not deeply equals
 func compareRulesJSON(old, new string) bool {
 	var oldRules, newRules papi.GetRuleTreeResponse
 	if old == new {
@@ -33,6 +36,8 @@ func compareRuleTree(old, new *papi.RulesUpdate) bool {
 
 // compareRules handles comparison between two papi.Rules objects
 // due to an issue in PAPI we need to compare collections of behaviors, criteria and variables discarding the order from JSON
+// true: deeply equals
+// false: not deeply equals
 func compareRules(old, new *papi.Rules) bool {
 	if len(old.Behaviors) != len(new.Behaviors) ||
 		len(old.Criteria) != len(new.Criteria) ||

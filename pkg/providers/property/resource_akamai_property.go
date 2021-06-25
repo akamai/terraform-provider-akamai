@@ -324,8 +324,8 @@ func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{
 		logger.Errorf("error parsing local state for new value %s", newVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", n)
 	}
-	//PAPI doesn't allow hostnames to become empty if they already exist on server
-	//TODO Do we add support for hostnames patch operation to enable this?
+	// PAPI doesn't allow hostnames to become empty if they already exist on server
+	// TODO Do we add support for hostnames patch operation to enable this?
 	if len(oldVal) > 0 && len(newVal) == 0 {
 		logger.Errorf("Hostnames exist on server and cannot be updated to empty for %d", d.Id())
 		return fmt.Errorf("atleast one hostname required to update existing list of hostnames associated to a property")
@@ -338,19 +338,16 @@ func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{
 func versionsComputedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "versionsComputedValuesCustomDiff")
-	updatableAttrs := []string{"rules", "hostnames"}
-	for _, attr := range updatableAttrs {
-		if d.HasChange(attr) {
-			//These computed attributes can be changed on server through other clients and the state needs to be synced to local
-			for _, key := range []string{"latest_version", "staging_version", "production_version"} {
-				err := d.SetNewComputed(key)
-				if err != nil {
-					logger.Errorf("%s state failed to update with new value from server", key)
-					return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-				}
-				logger.Debugf("%s state will be updated with new value from server", key)
+	oldRules, newRules := d.GetChange("rules")
+	if d.HasChange("hostnames") || !compareRulesJSON(oldRules.(string), newRules.(string)) {
+		// These computed attributes can be changed on server through other clients and the state needs to be synced to local
+		for _, key := range []string{"latest_version", "staging_version", "production_version"} {
+			err := d.SetNewComputed(key)
+			if err != nil {
+				logger.Errorf("%s state failed to update with new value from server", key)
+				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 			}
-			break
+			logger.Debugf("%s state will be updated with new value from server", key)
 		}
 	}
 
@@ -820,8 +817,8 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	return []*schema.ResourceData{d}, nil
 }
 
-func isDefaultVersion(Version string) bool {
-	return Version == "" || strings.ToLower(Version) == "latest"
+func isDefaultVersion(version string) bool {
+	return version == "" || strings.ToLower(version) == "latest"
 }
 
 var versionRegexp = regexp.MustCompile(`^ver_(\d+)$`)
