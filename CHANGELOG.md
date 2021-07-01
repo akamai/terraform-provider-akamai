@@ -74,7 +74,8 @@
     * akamai_appsec_rule
 
 * PAPI
-  * New optional parameter, which allows to import a specific property version. Additional information in [Property resource](docs/resources/property.md#import) 
+  * New optional parameter, which allows to import a specific property version. 
+    Additional information in [Property resource](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/property#import) 
 
 ## 1.5.1 (Apr 21, 2021)
 
