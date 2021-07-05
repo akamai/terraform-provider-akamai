@@ -64,8 +64,8 @@ resource "akamai_cps_dv_enrollment" "example" {
     clone_dns_names = false
     geography = "core"
     ocsp_stapling = "on"
-    preferred_ciphers = "ak-akamai-default"
-    must_have_ciphers = "ak-akamai-default"
+    preferred_ciphers = "ak-akamai-2020q1"
+    must_have_ciphers = "ak-akamai-2020q1"
     quic_enabled = false
   }
   signature_algorithm = "SHA-256"
@@ -81,15 +81,15 @@ resource "akamai_cps_dv_enrollment" "example" {
 }
 
 output "dns_challenges" {
-  value = akamai_cps_dv_enrollment.dv.dns_challenges
+  value = akamai_cps_dv_enrollment.example.dns_challenges
 }
 
 output "http_challenges" {
-  value = akamai_cps_dv_enrollment.dv.http_challenges
+  value = akamai_cps_dv_enrollment.example.http_challenges
 }
 
 output "enrollment_id" {
-  value = akamai_cps_dv_enrollment.dv.id
+  value = akamai_cps_dv_enrollment.example.id
 }
 ```
 ## Argument reference
@@ -99,7 +99,7 @@ The following arguments are supported:
 * `contract_id` - (Required) A contract's unique ID, without the `ctr_` prefix.
 * `common_name` - (Required) The fully qualified domain name (FQDN) for which you plan to use your certificate. The domain name you specify here must be owned or have legal rights to use the domain by the company you specify as `organization`. The company that owns the domain name must be a legally incorporated entity and be active and in good standing.
 * `sans` - (Optional) Additional common names to create a Subject Alternative Names (SAN) list.
-* `secure_network` - (Required) The type of deployment network you want to use. `Standard TLS` deploys your certificate to Akamai’s standard secure network, but it isn't PCI compliant. `Enhanced TLS` deploys your certificate to Akamai’s more secure network with PCI compliance capability.
+* `secure_network` - (Required) The type of deployment network you want to use. `standard-tls` deploys your certificate to Akamai’s standard secure network, but it isn't PCI compliant. `enhanced-tls` deploys your certificate to Akamai’s more secure network with PCI compliance capability.
 * `sni_only` - (Required) Whether you want to enable SNI-only extension for the enrollment. Server Name Indication (SNI) is an extension of the Transport Layer Security (TLS) networking protocol. It allows a server to present multiple certificates on the same IP address. All modern web browsers support the SNI extension. If you have the same SAN on two or more certificates with the SNI-only option set, Akamai may serve traffic using any certificate which matches the requested SNI hostname. You should avoid multiple certificates with overlapping SAN names when using SNI-only. You can't change this setting once an enrollment is created.
 * `acknowledge_pre_verification_warnings` - (Optional) Whether you want to automatically acknowledge the validation warnings of the current job state and proceed with the execution of a change.
 * `admin_contact` - (Required) Contact information for the certificate administrator at your company.
@@ -156,7 +156,7 @@ The following arguments are supported:
       * `last_name` - (Required) The last name of the technical contact at Akamai.
       * `title` - (Optional) The title of the technical contact at Akamai.
       * `organization` - (Required) The name of the organization in Akamai where your technical contact works.
-      * `email` - (Required) The email address of the technical contact at Akamai.
+      * `email` - (Required) The email address of the technical contact at Akamai. This must include the `@akamai.com` domain.
       * `phone` - (Required) The phone number of the technical contact at Akamai.
       * `address_line_one` - (Required) The address for the technical contact at Akamai.
       * `address_line_two` - (Optional) The address for the technical contact at Akamai.
