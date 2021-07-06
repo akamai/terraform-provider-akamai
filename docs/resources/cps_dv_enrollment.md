@@ -156,7 +156,7 @@ The following arguments are supported:
       * `last_name` - (Required) The last name of the technical contact at Akamai.
       * `title` - (Optional) The title of the technical contact at Akamai.
       * `organization` - (Required) The name of the organization in Akamai where your technical contact works.
-      * `email` - (Required) The email address of the technical contact at Akamai. This must include the `@akamai.com` domain.
+      * `email` - (Required) The email address of the technical contact at Akamai, accessible at the `akamai.com` domain.
       * `phone` - (Required) The phone number of the technical contact at Akamai.
       * `address_line_one` - (Required) The address for the technical contact at Akamai.
       * `address_line_two` - (Optional) The address for the technical contact at Akamai.
