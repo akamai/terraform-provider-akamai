@@ -1007,9 +1007,9 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 	})
 }
 
-func TestDiffSuppressContractId(t *testing.T) {
+func TestDiffSuppressContractID(t *testing.T) {
 	tests := map[string]struct {
-		oldContractId, newContractId string
+		oldContractID, newContractID string
 		expected                     bool
 	}{
 		"1": {"", "", true},
@@ -1022,7 +1022,7 @@ func TestDiffSuppressContractId(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, test.expected, diffSuppressContractId("", test.oldContractId, test.newContractId, nil))
+			assert.Equal(t, test.expected, diffSuppressContractID("", test.oldContractID, test.newContractID, nil))
 		})
 	}
 }

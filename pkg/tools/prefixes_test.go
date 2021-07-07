@@ -22,21 +22,6 @@ func TestAddPrefix(t *testing.T) {
 	}
 }
 
-func TestTrimPrefix(t *testing.T) {
-	tests := map[string]struct {
-		givenStr, givenPrefix, expected string
-	}{
-		"blank string":   {"", "pre_", ""},
-		"blank prefix":   {"test", "", "test"},
-		"extract prefix": {"pre_test", "pre_", "test"},
-	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, test.expected, TrimPrefix(test.givenStr, test.givenPrefix))
-		})
-	}
-}
-
 func TestGetIntID(t *testing.T) {
 	tests := map[string]struct {
 		givenStr, givenPrefix string

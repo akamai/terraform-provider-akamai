@@ -226,7 +226,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Type:             schema.TypeString,
 				ForceNew:         true,
 				Required:         true,
-				DiffSuppressFunc: diffSuppressContractId,
+				DiffSuppressFunc: diffSuppressContractID,
 			},
 			"certificate_type": {
 				Type:     schema.TypeString,
@@ -445,7 +445,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 
 	req := cps.CreateEnrollmentRequest{
 		Enrollment: enrollment,
-		ContractID: tools.TrimPrefix(contractID, "ctr_"),
+		ContractID: strings.TrimPrefix(contractID, "ctr_"),
 	}
 	res, err := client.CreateEnrollment(ctx, req)
 	if err != nil {
@@ -820,11 +820,11 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-func diffSuppressContractId(k string, old string, new string, d *schema.ResourceData) bool {
-	trimPrefixFromOld := tools.TrimPrefix(old, "ctr_")
-	trimPrefixFromNew := tools.TrimPrefix(new, "ctr_")
+func diffSuppressContractID(k, old, new string, d *schema.ResourceData) bool {
+	trimPrefixFromOld := strings.TrimPrefix(old, "ctr_")
+	trimPrefixFromNew := strings.TrimPrefix(new, "ctr_")
 
-	if old == new || trimPrefixFromOld == trimPrefixFromNew {
+	if trimPrefixFromOld == trimPrefixFromNew {
 		return true
 	}
 	return false
