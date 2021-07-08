@@ -180,8 +180,27 @@ func resourceProperty() *schema.Resource {
 				},
 			},
 			"hostnames": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
+				Set: func(v interface{}) int {
+					m, ok := v.(map[string]interface{})
+					if !ok {
+						return 0
+					}
+					cnameFrom, ok := m["cname_from"]
+					if !ok {
+						return 0
+					}
+					cnameTo, ok := m["cname_to"]
+					if !ok {
+						return 0
+					}
+					certProvisioningType, ok := m["cert_provisioning_type"]
+					if !ok {
+						return 0
+					}
+					return schema.HashString(fmt.Sprintf("%s.%s.%s", cnameFrom, cnameTo, certProvisioningType))
+				},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cname_from": {
@@ -313,22 +332,22 @@ func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{
 	logger := meta.Log("PAPI", "hostNamesCustomDiff")
 
 	o, n := d.GetChange("hostnames")
-	oldVal, ok := o.([]interface{})
+	oldVal, ok := o.(*schema.Set)
 	if !ok {
 		logger.Errorf("error parsing local state for old value %s", oldVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", o)
 	}
 
-	newVal, ok := n.([]interface{})
+	newVal, ok := n.(*schema.Set)
 	if !ok {
 		logger.Errorf("error parsing local state for new value %s", newVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", n)
 	}
 	// PAPI doesn't allow hostnames to become empty if they already exist on server
 	// TODO Do we add support for hostnames patch operation to enable this?
-	if len(oldVal) > 0 && len(newVal) == 0 {
+	if len(oldVal.List()) > 0 && len(newVal.List()) == 0 {
 		logger.Errorf("Hostnames exist on server and cannot be updated to empty for %d", d.Id())
-		return fmt.Errorf("atleast one hostname required to update existing list of hostnames associated to a property")
+		return fmt.Errorf("at least one hostname required to update existing list of hostnames associated to a property")
 	}
 	return nil
 }
@@ -339,7 +358,10 @@ func versionsComputedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff,
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "versionsComputedValuesCustomDiff")
 	oldRules, newRules := d.GetChange("rules")
-	if d.HasChange("hostnames") || !compareRulesJSON(oldRules.(string), newRules.(string)) {
+	o, n := d.GetChange("hostnames")
+	oldSet := o.(*schema.Set)
+	equal := oldSet.HashEqual(n.(*schema.Set))
+	if !equal || !compareRulesJSON(oldRules.(string), newRules.(string)) {
 		// These computed attributes can be changed on server through other clients and the state needs to be synced to local
 		for _, key := range []string{"latest_version", "staging_version", "production_version"} {
 			err := d.SetNewComputed(key)
@@ -441,9 +463,9 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductID:     ProductID,
 		LatestVersion: 1,
 	}
-	HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+	HostnameVal, err := tools.GetSetValue("hostnames", d)
 	if err == nil {
-		Hostnames := mapToHostnames(HostnameVal)
+		Hostnames := mapToHostnames(HostnameVal.List())
 		if len(Hostnames) > 0 {
 			if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
 				return diag.FromErr(err)
@@ -680,9 +702,9 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Hostnames
 	if d.HasChange("hostnames") {
-		HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+		HostnameVal, err := tools.GetSetValue("hostnames", d)
 		if err == nil {
-			Hostnames := mapToHostnames(HostnameVal)
+			Hostnames := mapToHostnames(HostnameVal.List())
 			if len(Hostnames) > 0 {
 				if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
 					d.Partial(true)
