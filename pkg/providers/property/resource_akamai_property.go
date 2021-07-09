@@ -35,6 +35,26 @@ func resourceProperty() *schema.Resource {
 		}}
 	}
 
+	hashHostname := func(v interface{}) int {
+		m, ok := v.(map[string]interface{})
+		if !ok {
+			return 0
+		}
+		cnameFrom, ok := m["cname_from"]
+		if !ok {
+			return 0
+		}
+		cnameTo, ok := m["cname_to"]
+		if !ok {
+			return 0
+		}
+		certProvisioningType, ok := m["cert_provisioning_type"]
+		if !ok {
+			return 0
+		}
+		return schema.HashString(fmt.Sprintf("%s.%s.%s", cnameFrom, cnameTo, certProvisioningType))
+	}
+
 	validateRules := func(val interface{}, _ cty.Path) diag.Diagnostics {
 		if len(val.(string)) == 0 {
 			return nil
@@ -182,25 +202,7 @@ func resourceProperty() *schema.Resource {
 			"hostnames": {
 				Type:     schema.TypeSet,
 				Optional: true,
-				Set: func(v interface{}) int {
-					m, ok := v.(map[string]interface{})
-					if !ok {
-						return 0
-					}
-					cnameFrom, ok := m["cname_from"]
-					if !ok {
-						return 0
-					}
-					cnameTo, ok := m["cname_to"]
-					if !ok {
-						return 0
-					}
-					certProvisioningType, ok := m["cert_provisioning_type"]
-					if !ok {
-						return 0
-					}
-					return schema.HashString(fmt.Sprintf("%s.%s.%s", cnameFrom, cnameTo, certProvisioningType))
-				},
+				Set:      hashHostname,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cname_from": {
