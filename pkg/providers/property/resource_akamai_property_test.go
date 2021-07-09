@@ -77,7 +77,7 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	SetHostnames2 := func(PropertyID string, Version int, CnameFrom1, CnameTo1, CnameFrom2, CnameTo2 string) BehaviorFunc {
+	SetTwoHostnames := func(PropertyID string, Version int, CnameFrom1, CnameTo1, CnameFrom2, CnameTo2 string) BehaviorFunc {
 		return func(State *TestState) {
 			NewHostnames := []papi.Hostname{{
 				CnameType:            "EDGE_HOSTNAME",
@@ -491,7 +491,7 @@ func TestResProperty(t *testing.T) {
 				papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{Name: "Default CORS Policy", CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll}}}}),
 			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
 			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			SetHostnames2("prp_0", 1, "from1.test.domain", "to1.test.domain", "from2.test.domain", "to2.test.domain"),
+			SetTwoHostnames("prp_0", 1, "from1.test.domain", "to1.test.domain", "from2.test.domain", "to2.test.domain"),
 			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
 				&papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll, Name: "Default CORS Policy"}}}}),
 		),
