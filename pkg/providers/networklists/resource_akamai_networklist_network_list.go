@@ -60,6 +60,16 @@ func resourceNetworkList() *schema.Resource {
 					Remove,
 				}, false),
 			},
+			"group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "groupId",
+			},
+			"contract": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "contractId",
+			},
 			"uniqueid": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -108,6 +118,18 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
+	group, err := tools.GetStringValue("group", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createNetworkList.Group = group
+
+	contract, err := tools.GetStringValue("contract", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createNetworkList.Contract = contract
 
 	getNetworkLists := networklists.GetNetworkListsRequest{}
 	getNetworkLists.Name = name
@@ -219,6 +241,18 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
+	group, err := tools.GetStringValue("group", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateNetworkList.Group = group
+
+	contract, err := tools.GetStringValue("contract", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateNetworkList.Contract = contract
 
 	listRequest := networklists.GetNetworkListRequest{}
 	listRequest.UniqueID = d.Id()

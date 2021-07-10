@@ -41,6 +41,10 @@ The following arguments are supported:
 * `list` : (Optional) A list of IP addresses or locations to be included in the list, added to an existing list, or
   removed from an existing list.
 
+* `group` - (Optional) The Access Control Group ID to be assigned to the network list. If either a contract or group is provided, they must both be provided.
+
+* `contract` - (Optional) The Contract ID to be assigned to the network list. If either a contract or group is provided, they must both be provided.
+
 * `mode` - (Required) A string specifying the interpretation of the `list` parameter. Must be one of the following:
 
   * APPEND - the addresses or locations listed in `list` will be added to the network list
