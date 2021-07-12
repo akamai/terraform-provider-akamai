@@ -16,7 +16,8 @@ Basic usage:
 
 ```hcl
 resource "akamai_cps_dv_validation" "example" {
-  enrollment_id = akamai_cps_dv_enrollment.dv.id
+  enrollment_id = akamai_cps_dv_enrollment.example.id
+}
 ```
 ## Argument reference
 
