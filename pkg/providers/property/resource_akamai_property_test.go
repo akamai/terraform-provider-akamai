@@ -77,6 +77,61 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
+	SetTwoHostnames := func(PropertyID string, Version int, CnameFrom1, CnameTo1, CnameFrom2, CnameTo2 string) BehaviorFunc {
+		return func(State *TestState) {
+			NewHostnames := []papi.Hostname{{
+				CnameType:            "EDGE_HOSTNAME",
+				CnameFrom:            CnameFrom1,
+				CnameTo:              CnameTo1,
+				CertProvisioningType: "DEFAULT",
+			}, {
+				CnameType:            "EDGE_HOSTNAME",
+				CnameFrom:            CnameFrom2,
+				CnameTo:              CnameTo2,
+				CertProvisioningType: "DEFAULT",
+			}}
+
+			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames).Once().Run(func(mock.Arguments) {
+				NewResponseHostnames := []papi.Hostname{{
+					CnameType:            "EDGE_HOSTNAME",
+					CnameFrom:            CnameFrom1,
+					CnameTo:              CnameTo1,
+					CertProvisioningType: "DEFAULT",
+					EdgeHostnameID:       "ehn_123",
+					CertStatus: papi.CertStatusItem{
+						ValidationCname: papi.ValidationCname{
+							Hostname: "_acme-challenge.www.example.com",
+							Target:   "{token}.www.example.com.akamai-domain.com",
+						},
+						Staging: []papi.StatusItem{{Status: "PENDING"}},
+						Production: []papi.StatusItem{{
+							Status: "PENDING",
+						},
+						},
+					},
+				}, {
+					CnameType:            "EDGE_HOSTNAME",
+					CnameFrom:            CnameFrom2,
+					CnameTo:              CnameTo2,
+					CertProvisioningType: "DEFAULT",
+					EdgeHostnameID:       "ehn_123",
+					CertStatus: papi.CertStatusItem{
+						ValidationCname: papi.ValidationCname{
+							Hostname: "_acme-challenge.www.example.com",
+							Target:   "{token}.www.example.com.akamai-domain.com",
+						},
+						Staging: []papi.StatusItem{{Status: "PENDING"}},
+						Production: []papi.StatusItem{{
+							Status: "PENDING",
+						},
+						},
+					},
+				}}
+				State.Hostnames = append([]papi.Hostname{}, NewResponseHostnames...)
+			})
+		}
+	}
+
 	GetPropertyVersions := func(PropertyID, PropertyName, ContractID, GroupID string, err error, items ...papi.PropertyVersionItems) BehaviorFunc {
 		return func(State *TestState) {
 			versionItems := &State.VersionItems
@@ -429,7 +484,35 @@ func TestResProperty(t *testing.T) {
 			}
 		},
 	}
-
+	NoDiffForHostnames := LifecycleTestCase{
+		Name: "No diff found in update",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0",
+				papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{Name: "Default CORS Policy", CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll}}}}),
+			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			SetTwoHostnames("prp_0", 1, "from1.test.domain", "to1.test.domain", "from2.test.domain", "to2.test.domain"),
+			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+				&papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll, Name: "Default CORS Policy"}}}}),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
+					},
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check: CheckAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
+						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
+				},
+				{
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check: CheckAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
+						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
+				},
+			}
+		},
+	}
 	// Run a test case to verify schema validations
 	AssertConfigError := func(t *testing.T, flaw, rx string) {
 		t.Helper()
@@ -681,6 +764,7 @@ func TestResProperty(t *testing.T) {
 		AssertLifecycle(t, "no diff", NoDiff)
 		AssertLifecycle(t, "product to product_id", NoDiff)
 		AssertLifecycle(t, "product_id to product", NoDiff)
+		AssertLifecycle(t, "hostnames", NoDiffForHostnames)
 
 		AssertImportable(t, "property_id", "prp_0")
 		AssertImportable(t, "property_id and ver_# version", "prp_0,ver_1")
@@ -925,7 +1009,7 @@ func TestResProperty(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 
-		t.Run("validation - empty plan, when updating a property hostnames to empty", func(t *testing.T) {
+		t.Run("validation - when updating a property hostnames to empty it should return error", func(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
 
@@ -1003,7 +1087,7 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.test", "hostnames.#", "0"),
 							),
-							ExpectError: regexp.MustCompile("atleast one hostname required to update existing list of hostnames associated to a property"),
+							ExpectError: regexp.MustCompile("at least one hostname required to update existing list of hostnames associated to a property"),
 						},
 					},
 				})
