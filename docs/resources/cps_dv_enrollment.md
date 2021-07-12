@@ -96,7 +96,7 @@ output "enrollment_id" {
 
 The following arguments are supported:
 
-* `contract_id` - (Required) A contract's unique ID, without the `ctr_` prefix.
+* `contract_id` - (Required) A contract's unique ID, optionally with the `ctr_` prefix.
 * `common_name` - (Required) The fully qualified domain name (FQDN) for which you plan to use your certificate. The domain name you specify here must be owned or have legal rights to use the domain by the company you specify as `organization`. The company that owns the domain name must be a legally incorporated entity and be active and in good standing.
 * `sans` - (Optional) Additional common names to create a Subject Alternative Names (SAN) list.
 * `secure_network` - (Required) The type of deployment network you want to use. `standard-tls` deploys your certificate to Akamai’s standard secure network, but it isn't PCI compliant. `enhanced-tls` deploys your certificate to Akamai’s more secure network with PCI compliance capability.
@@ -211,7 +211,7 @@ resource "akamai_cps_dv_enrollment" "example" {
 ```
 
 You can import your Akamai DV enrollment using a comma-delimited string of the enrollment ID and  
-contract ID, without the `ctr_` prefix. You have to enter the IDs in this order:
+contract ID, optionally with the `ctr_` prefix. You have to enter the IDs in this order:
 
 `enrollment_id,contract_id`
 
