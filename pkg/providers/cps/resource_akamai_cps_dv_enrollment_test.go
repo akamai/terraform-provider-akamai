@@ -88,7 +88,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -333,7 +333,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -549,7 +549,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -715,7 +715,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -831,7 +831,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(nil, fmt.Errorf("error creating enrollment")).Once()
 
@@ -915,7 +915,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		mock.Anything,
 		cps.CreateEnrollmentRequest{
 			Enrollment: enrollment,
-			ContractID: "ctr_1",
+			ContractID: "1",
 		},
 	).Return(&cps.CreateEnrollmentResponse{
 		ID:         1,
