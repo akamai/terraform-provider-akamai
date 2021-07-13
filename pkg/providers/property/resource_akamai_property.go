@@ -94,6 +94,7 @@ func resourceProperty() *schema.Resource {
 		UpdateContext: resourcePropertyUpdate,
 		DeleteContext: resourcePropertyDelete,
 		CustomizeDiff: customdiff.All(
+			rulesCustomDiff,
 			hostNamesCustomDiff,
 			versionsComputedValuesCustomDiff,
 		),
@@ -327,6 +328,56 @@ func resourceProperty() *schema.Resource {
 			},
 		},
 	}
+}
+
+// rulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state and from a new configuration.
+// If some of these fields are empty lists in the new configuration and are nil in the terraform state, then this function
+// returns no difference for these fields
+func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interface{}) error {
+	if !diff.HasChange("rules") {
+		return nil
+	}
+	o, n := diff.GetChange("rules")
+
+	oldValue := o.(string)
+	newValue := n.(string)
+
+	var oldRulesUpdate, newRulesUpdate papi.RulesUpdate
+
+	if oldValue == "" || newValue == "" {
+		return nil
+	}
+
+	err := json.Unmarshal([]byte(oldValue), &oldRulesUpdate)
+	if err != nil {
+		return fmt.Errorf("cannot parse rules JSON from state: %s", err)
+	}
+
+	err = json.Unmarshal([]byte(newValue), &newRulesUpdate)
+	if err != nil {
+		return fmt.Errorf("cannot parse rules JSON from config: %s", err)
+	}
+
+	rules, err := compareFields(&oldRulesUpdate, &newRulesUpdate)
+	if err != nil {
+		return fmt.Errorf("cannot encode rules JSON %s", err)
+	}
+
+	if err = diff.SetNew("rules", rules); err != nil {
+		return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)
+	}
+	return nil
+}
+
+func compareFields(old, new *papi.RulesUpdate) (string, error) {
+	if old.Rules.Children == nil && len(new.Rules.Children) == 0 {
+		new.Rules.Children = old.Rules.Children
+	}
+	if old.Rules.Criteria == nil && len(new.Rules.Criteria) == 0 {
+		new.Rules.Criteria = old.Rules.Criteria
+	}
+	rules, err := json.Marshal(new)
+	return string(rules), err
 }
 
 func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {

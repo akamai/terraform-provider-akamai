@@ -40,7 +40,9 @@ func TestResProperty(t *testing.T) {
 			ExpectUpdateRuleTree(
 				state.Client, propertyID, groupID, contractID, version,
 				rulesUpdate, "", []papi.RuleError{},
-			).Once()
+			).Once().Run(func(args mock.Arguments) {
+				state.Rules = *rulesUpdate
+			})
 		}
 	}
 
@@ -484,6 +486,50 @@ func TestResProperty(t *testing.T) {
 			}
 		},
 	}
+
+	/*
+		RulesCustomDiff tests rulesCustomDiff function which is in resource_akamai_property.go file.
+		There is an additional field "options":{} in expected attributes, because with UpdateRuleTree(ctx, req) function
+		this field added automatically into response, even if it does not exist in rules.
+	*/
+	RulesCustomDiff := LifecycleTestCase{
+		Name: "Diff is only in behaviours.options.ttl",
+		ClientSetup: ComposeBehaviors(
+			PropertyLifecycle("test property", "prp_0", "grp_0",
+				papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
+					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "12d"}}},
+					Name: "default", Children: []papi.Rules{}, Criteria: []papi.RuleBehavior{}}}),
+			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			SetHostnames("prp_0", 1, "to.test.domain"),
+			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+				&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
+					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "12d"}}},
+					Name: "default", Children: []papi.Rules{}, Criteria: []papi.RuleBehavior{}}}),
+			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+				&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
+					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "13d"}}},
+					Name: "default"}}),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
+					},
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+						`{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"12d"}}],"name":"default","options":{}}}`),
+				},
+				{
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+						`{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"13d"}}],"name":"default","options":{}}}`),
+				},
+			}
+		},
+	}
+
 	NoDiffForHostnames := LifecycleTestCase{
 		Name: "No diff found in update",
 		ClientSetup: ComposeBehaviors(
@@ -513,6 +559,7 @@ func TestResProperty(t *testing.T) {
 			}
 		},
 	}
+
 	// Run a test case to verify schema validations
 	AssertConfigError := func(t *testing.T, flaw, rx string) {
 		t.Helper()
@@ -764,6 +811,7 @@ func TestResProperty(t *testing.T) {
 		AssertLifecycle(t, "no diff", NoDiff)
 		AssertLifecycle(t, "product to product_id", NoDiff)
 		AssertLifecycle(t, "product_id to product", NoDiff)
+		AssertLifecycle(t, "rules custom diff", RulesCustomDiff)
 		AssertLifecycle(t, "hostnames", NoDiffForHostnames)
 
 		AssertImportable(t, "property_id", "prp_0")

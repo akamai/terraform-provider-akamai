@@ -1,0 +1,17 @@
+{
+  "rules":{
+    "behaviors":[
+      {
+        "name":"caching",
+        "options":{
+          "behavior":"MAX_AGE",
+          "mustRevalidate":false,
+          "ttl":"13d"
+        }
+      }
+    ],
+    "name":"default",
+    "children": [],
+    "criteria": []
+  }
+}
