@@ -7,4 +7,5 @@ resource "akamai_property_activation" "test" {
   contact = ["user@example.com"]
   version = 1
   auto_acknowledge_rule_warnings = true
+  note = "note create"
 }
