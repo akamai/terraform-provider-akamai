@@ -60,7 +60,7 @@ func resourceDNSv2Zone() *schema.Resource {
 			},
 			"group": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"sign_and_serve": {
 				Type:     schema.TypeBool,
@@ -473,6 +473,9 @@ func validateZoneType(v interface{}, _ string) (ws []string, es []error) {
 // populate zone state based on API response.
 func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.ZoneResponse) error {
 
+	if err := d.Set("contract", zoneresp.ContractID); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	if err := d.Set("masters", zoneresp.Masters); err != nil {
 		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}

@@ -35,7 +35,7 @@ This resource supports these arguments:
 
 * `comment` - (Required) A descriptive comment.
 * `contract` - (Required) The contract ID.
-* `group` - (Required) The currently selected group ID.
+* `group` - (Optional) The currently selected group ID.
 * `zone` - (Required) The domain zone, encapsulating any nested subdomains.
 * `type` - (Required) Whether the zone is `primary`, `secondary`, or `alias`.
 * `masters` - (Required for `secondary` zones) The names or IP addresses of the nameservers that the zone data should be retrieved from.
