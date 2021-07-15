@@ -540,6 +540,12 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	if len(status.AllowedInput) < 1 || status.AllowedInput[0].Type != "lets-encrypt-challenges" {
+		if err := d.Set("http_challenges", httpChallenges); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
+		if err := d.Set("dns_challenges", schema.NewSet(cpstools.HashFromChallengesMap, dnsChallenges)); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
 		return nil
 	}
 	getChallengesReq := cps.GetChangeRequest{
@@ -737,7 +743,7 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollmentGet.PendingChanges)
 	if err != nil {
 		if errors.Is(err, cpstools.ErrNoPendingChanges) {
-			logger.Debug("No pending changes found on the enrollmentl")
+			logger.Debug("No pending changes found on the enrollment")
 			return nil
 		}
 		return err
