@@ -47,3 +47,7 @@ This resource supports these arguments:
     * `algorithm` - The hashing algorithm.
     * `secret` - String known between transfer endpoints.
 * `end_customer_id` - (Optional) A free form identifier for the zone.
+
+## Zone Import Note
+
+The provider zone resource import does not have access to the resource configuration during import processing. As such, the contract argument will be populated in the terraform zone resource state after the import but the group attribute will not. Executing a `terraform apply` will reconcile the configuration and the terraform zone resource state.
