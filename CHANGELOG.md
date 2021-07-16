@@ -1,5 +1,23 @@
 # RELEASE NOTES
 
+## 1.6.1 (Jul 25, 2021)
+
+#### BUG FIXES:
+* DNS
+  * Fixed contract id not being set in zone import and made group optional ([#242](https://github.com/akamai/terraform-provider-akamai/issues/242))
+* GTM
+  * Fixed documentation mismatch with optional/required fields on nested objects for `akamai_gmt_property` resource ([#240](https://github.com/akamai/terraform-provider-akamai/issues/240))
+* PAPI
+  * Fixed issue with property hostnames list changing order in diff ([#230](https://github.com/akamai/terraform-provider-akamai/issues/230))
+  * Fixed idempotency issue on `akamai_property` resource ([#226](https://github.com/akamai/terraform-provider-akamai/issues/226))
+  * Fixed issue with terraform showing misleading diff on `rules` field in `akamai_property` ([#234](https://github.com/akamai/terraform-provider-akamai/issues/234))
+* CPS
+  * Added `sans` field on `akamai_cps_dv_validation` to enable resending acknowledgement on after SANS are updated 
+
+#### FEATURES/ENHANCEMENTS:
+* CPS
+  * `akamai_cps_dv_enrollment` now accepts `contract_id` with `ctr_` prefix
+
 ## 1.6.0 (June 21, 2021)
 
 #### BREAKING CHANGES:
