@@ -7,7 +7,7 @@ description: |-
 
 # Property Provisioning Module Guide
 
-You can use Property Provisioning module resources and data sources to create,
+You can use the Property Provisioning module resources and data sources to create,
 deploy, activate, and manage properties, edge hostnames, and content
 provider (CP) codes.
 
@@ -15,18 +15,18 @@ For more information about properties, see the [Property Manager documentation](
 
 ## Prerequisites
 
-Before you can create a property, you need to complete the tasks in the 
-[Get Started with the Akamai Provider](../guides/get_started_provider.md) 
-guide. Be sure you have the contract and group IDs you retrieved available. You'll 
+Before you can create a property, you need to complete the tasks in the
+[Get Started with the Akamai Provider](../guides/get_started_provider.md)
+guide. Be sure you have the contract and group IDs you retrieved available. You'll
 need them to set up the Property Provisioning module.
 
-## Property Provisioning Workflow 
+## Property Provisioning Workflow
 
-To set up the Property Provisioning module, you need to: 
+To set up the Property Provisioning module, you need to:
 
 * [Retrieve the product ID](#retrieve-the-product-id). This is the ID for the product you are using, like Ion or Adaptive Media Delivery.
 * [Add or create an edge hostname](#add-an-edge-hostname).
-* [Set up rules for your property](#set-up-property-rules). A separate `rules.json` file contains the base rules for the property. 
+* [Set up rules for your property](#set-up-property-rules). A separate `rules.json` file contains the base rules for the property.
 * [Import or create a property](#import-or-create-a-property).
 * [Apply your property changes](#apply-your-property-changes). This step adds the property to your Terraform configuration.
 * [Activate your property](#activate-your-property). Once you apply your property changes, you have to activate the property configuration for it to be live.
@@ -40,8 +40,8 @@ Akamai product you are using. See the [Akamai Product ID](../guides/appendix.md#
 
 ## Add an edge hostname
 
-You use the [akamai_edge_hostname](../resources/property_edge_hostname.md) resource to 
-reuse an existing edge hostname or create a new one. 
+You use the [akamai_edge_hostname](../resources/property_edge_hostname.md) resource to
+reuse an existing edge hostname or create a new one.
 
 To create different hostname types, you need to change the domain suffix
 for the `edge_hostname` attribute. See [Domain Suffixes for Different Edge Hostname Types](../guides/appendix.md#domain-suffixes-for-different-edge-hostname-types)
@@ -69,7 +69,7 @@ resource "akamai_edge_hostname" "example" {
 
 ### Secure hostnames
 
-To create a secure hostname, you also need the `certificate` attribute, which is 
+To create a secure hostname, you also need the `certificate` attribute, which is
 the certificate enrollment ID you can retrieve from the [Certificate Provisioning System CLI](https://github.com/akamai/cli-cps). Here's an example:
 
 ```hcl
@@ -92,11 +92,11 @@ As a best practice, you should store the rule tree as a JSON file on disk and in
 
 ```hcl
 locals {
-	json = file("${path.module}/rules.json") 
+	json = file("${path.module}/rules.json")
 }
 ```
 
-You can now use `local.json` to reference the file contents in the `akamai_property.rules` argument. Or you can embed the file reference directly in the `akamai_property` resource using the `rules` attribute: 
+You can now use `local.json` to reference the file contents in the `akamai_property.rules` argument. Or you can embed the file reference directly in the `akamai_property` resource using the `rules` attribute:
 
 ```
 rules = file("${path.module}/rules.json")
@@ -105,7 +105,7 @@ rules = file("${path.module}/rules.json")
 Before continuing with the next step, run `terraform plan` and resolve any errors or warnings. See [Command: plan](https://www.terraform.io/docs/commands/plan.html) for more information about this Terraform command.
 
 ## Import or create a property
-You can either import an existing property or create a new one with Terraform: 
+You can either import an existing property or create a new one with Terraform:
 
 ### Import a property
 
@@ -115,9 +115,9 @@ To import an existing property into Terraform you have to export the `rules.json
 
 You'll then need to create an `akamai_property` resource that pulls in the `rules.json`.
 
-You can use the `akamai_property_rules` data source to retrieve an existing rule 
-template. It reads the server's copy of the rules then generates output in a format 
-that you can save in a JSON file. If your rule template includes variables, you'll 
+You can use the `akamai_property_rules` data source to retrieve an existing rule
+template. It reads the server's copy of the rules then generates output in a format
+that you can save in a JSON file. If your rule template includes variables, you'll
 have to set them up again.
 
 ### Create a property
@@ -127,13 +127,12 @@ to represent your property. Add this new block to your `akamai.tf` file
 after the `provider` block.
 
 To define the entire configuration, start by opening the resource block
-and give it a name, like `example`. Within the new block, you set the name 
-of the property, contact email, product ID, group ID, CP code, property hostname,
- and edge hostnames.
+and give it a name, like `example`. Within the new block, you set the name
+of the property, product ID, group ID, property hostname, and edge hostnames.
 
-Finally, you set up the property rules. You first specify the 
+Finally, you set up the property rules. You first specify the
 [rule format argument](../resources/property.md),
-then add the path to the `rules.json` file. You can set a variable for the path, like `${path.module}`. 
+then add the path to the `rules.json` file. You can set a variable for the path, like `${path.module}`.
 
 Once you're done, your property should look like this:
 
@@ -159,24 +158,24 @@ resource "akamai_property" "example" {
 ```
 
 Before continuing with the next step, run `terraform plan` and resolve any errors or warnings. See [Command: plan](https://www.terraform.io/docs/commands/plan.html) for more information about this Terraform command.
- 
+
 
 ## Apply your property changes
 
-To actually add the property to your Terraform configuration, you need to 
+To actually add the property to your Terraform configuration, you need to
 tell Terraform to apply the changes outlined in the plan. To do this, run
  `terraform apply` in the terminal.
 
 Once the command completes, your new property is available. You can verify
 this in [Akamai Control Center](https://control.akamai.com/) or by using the
-[Property Manager CLI](https://github.com/akamai/cli-property-manager). 
+[Property Manager CLI](https://github.com/akamai/cli-property-manager).
 
 However, you still have to activate the property configuration for it to be live.
 
 ## Activate your property
 
-Once you’re satisfied with a property version, an activation deploys it to 
-either the Akamai staging or production network. You activate a specific version, 
+Once you’re satisfied with a property version, an activation deploys it to
+either the Akamai staging or production network. You activate a specific version,
 but the same version can be activated separately more than once.
 
 ### Create your property activation resource
@@ -190,7 +189,7 @@ You need following to set up this resource:
 
 * property ID and version, which you can set from the `akamai_property` resource.
 
-* network, which is either `STAGING` or `PRODUCTION`. You should activate the property on staging first to verify that everything works as expected before activating on production. 
+* network, which is either `STAGING` or `PRODUCTION`. You should activate the property on staging first to verify that everything works as expected before activating on production.
 
 * The email addresses to send activation updates to.
 
@@ -224,11 +223,11 @@ Property Provisioning resources.
 
 You can use rule templates to insert values from Akamai Provider resources and data sources into your `rules.json` file.
 
-The `akamai_property_rules_template` data source supports variable 
+The `akamai_property_rules_template` data source supports variable
 replacement and the use of snippet templates from the Property Manager CLI.
 
-You may need to use different rule sets with different properties. To do this you 
-need to maintain a base rule set and then import individual rule sets. You'll first 
+You may need to use different rule sets with different properties. To do this you
+need to maintain a base rule set and then import individual rule sets. You'll first
 need to create a directory structure, like this:
 
 ```dir
@@ -238,8 +237,8 @@ rules/snippets/performance.json
 …
 ```
 
-The `rules` directory contains a single file, `main.json` and a `snippets` 
-subdirectory that contains all of the smaller JSON rule files, or snippets. In the 
+The `rules` directory contains a single file, `main.json` and a `snippets`
+subdirectory that contains all of the smaller JSON rule files, or snippets. In the
 `main.json` file, you set up a basic template for your JSON, like this:
 
 ```json
@@ -258,8 +257,8 @@ subdirectory that contains all of the smaller JSON rule files, or snippets. In t
 }
 ```
 
-This enables the rules template to process the `rules.json` and pull each 
-fragment that's referenced, like `routing.json`. The rendered output can be added 
+This enables the rules template to process the `rules.json` and pull each
+fragment that's referenced, like `routing.json`. The rendered output can be added
 to `akamai_property` resources.
 
 ```hcl
