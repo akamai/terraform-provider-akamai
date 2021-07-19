@@ -227,6 +227,9 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		}
 
 		note, err := tools.GetStringValue("note", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
 
 		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
 			PropertyID: propertyID,
@@ -578,6 +581,9 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 
 	// Assigns a log message to the activation request
 	note, err := tools.GetStringValue("note", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 
 	// check to see if this tree has any issues
 	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
