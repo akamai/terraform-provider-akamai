@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: akamai_property_hostnames"
-subcategory: "Provisioning"
+subcategory: "Property Provisioning"
 description: |-
  Property hostnames
 ---

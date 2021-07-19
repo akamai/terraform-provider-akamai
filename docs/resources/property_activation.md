@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: property activation"
-subcategory: "Provisioning"
+subcategory: "Property Provisioning"
 description: |-
   Property Activation
 ---
