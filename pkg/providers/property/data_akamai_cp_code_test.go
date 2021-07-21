@@ -232,9 +232,8 @@ func TestDSCPCode(t *testing.T) {
 			Providers:  testAccProviders,
 			IsUnitTest: true,
 			Steps: []resource.TestStep{{
-				Config:             loadFixtureString("testdata/TestDSCPCode/contract_collides_with_id.tf"),
-				ExpectNonEmptyPlan: true,
-				ExpectError:        regexp.MustCompile("only one of `contract,contract_id` can be specified"),
+				Config:      loadFixtureString("testdata/TestDSCPCode/contract_collides_with_id.tf"),
+				ExpectError: regexp.MustCompile("only one of `contract,contract_id` can be specified"),
 			}},
 		})
 	})
@@ -246,9 +245,8 @@ func TestDSCPCode(t *testing.T) {
 				Providers:  testAccProviders,
 				IsUnitTest: true,
 				Steps: []resource.TestStep{{
-					Config:             loadFixtureString("testdata/TestDSCPCode/group_collides_with_id.tf"),
-					ExpectNonEmptyPlan: true,
-					ExpectError:        regexp.MustCompile("only one of `group,group_id` can be specified"),
+					Config:      loadFixtureString("testdata/TestDSCPCode/group_collides_with_id.tf"),
+					ExpectError: regexp.MustCompile("only one of `group,group_id` can be specified"),
 				}},
 			})
 		})
@@ -267,8 +265,7 @@ func TestDSCPCode(t *testing.T) {
 				Providers:  testAccProviders,
 				IsUnitTest: true,
 				Steps: []resource.TestStep{{
-					Config:             loadFixtureString("testdata/TestDSGroupNotFound/cp_code.tf"),
-					ExpectNonEmptyPlan: true,
+					Config: loadFixtureString("testdata/TestDSGroupNotFound/cp_code.tf"),
 				}},
 			})
 		})

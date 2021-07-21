@@ -309,7 +309,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestPropertyActivation/no_propertyId/resource_property_activation.tf"),
-						ExpectError: regexp.MustCompile("ExactlyOne"),
+						ExpectError: regexp.MustCompile("one of `property,property_id` must be specified"),
 					},
 				},
 			})

@@ -255,6 +255,9 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
+	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	d.SetId(cpCode.ID)
 	logger.Debugf("Import CP Code: %+v", cpCode)
 	return []*schema.ResourceData{d}, nil

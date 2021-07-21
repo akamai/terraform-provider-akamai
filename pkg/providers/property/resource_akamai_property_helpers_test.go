@@ -119,23 +119,18 @@ func ExpectUpdatePropertyVersionHostnames(client *mockpapi, PropertyID, GroupID,
 }
 
 // Sets up an expected call to papi.GetPropertyVersions()
-func ExpectGetPropertyVersions(client *mockpapi, PropertyID, PropertyName, ContractID, GroupID string, versionItems *papi.PropertyVersionItems, err error) *mock.Call {
+func ExpectGetPropertyVersions(client *mockpapi, PropertyID, PropertyName, ContractID, GroupID string, property *papi.Property, versionItems *papi.PropertyVersionItems) *mock.Call {
 	req := papi.GetPropertyVersionsRequest{
 		PropertyID: PropertyID,
 		ContractID: ContractID,
 		GroupID:    GroupID,
 	}
 	var res *papi.GetPropertyVersionsResponse
-	if err == nil {
-		res = &papi.GetPropertyVersionsResponse{
-			PropertyID:   PropertyID,
-			PropertyName: PropertyName,
-			ContractID:   ContractID,
-			GroupID:      GroupID,
-			Versions:     *versionItems,
-		}
-	}
 	fn := func(context.Context, papi.GetPropertyVersionsRequest) (*papi.GetPropertyVersionsResponse, error) {
+		if property != nil {
+			ContractID = property.ContractID
+			GroupID = property.GroupID
+		}
 		res = &papi.GetPropertyVersionsResponse{
 			PropertyID:   PropertyID,
 			PropertyName: PropertyName,

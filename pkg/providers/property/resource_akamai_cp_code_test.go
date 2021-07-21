@@ -268,15 +268,14 @@ func TestResCPCode(t *testing.T) {
 		client := &mockpapi{}
 		id := "123,1,2"
 
-		cpCodes := []papi.CPCode{{ID: "cpc_123", Name: "test cpcode", ProductIDs: []string{"prd_2"}}}
+		cpCodes := []papi.CPCode{{ID: "cpc_123", Name: "test cpcode", ProductIDs: []string{"prd_Web_Accel"}}}
 		expectGet(client, "ctr_1", "grp_2", &cpCodes)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:             loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
-						ExpectNonEmptyPlan: true,
+						Config: loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
 					},
 					{
 						ImportState:   true,
@@ -287,7 +286,7 @@ func TestResCPCode(t *testing.T) {
 							rs := s[0]
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
 							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
-							assert.Equal(t, "prd_2", rs.Attributes["product_id"])
+							assert.Equal(t, "prd_Web_Accel", rs.Attributes["product_id"])
 							assert.Equal(t, "cpc_123", rs.Attributes["id"])
 							assert.Equal(t, "test cpcode", rs.Attributes["name"])
 							return nil
