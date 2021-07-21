@@ -263,6 +263,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "errors"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
 						),
 					},
 				},
@@ -509,6 +510,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 						PropertyVersion:        2,
 						Network:                "STAGING",
 						NotifyEmails:           []string{"user@example.com"},
+						Note:                   "property activation note for updating",
 					},
 				},
 				papiResponse: &papi.CreateActivationResponse{
@@ -553,6 +555,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "rule_warnings"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
 						),
 					},
 					{
@@ -564,6 +567,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "2"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for updating"),
 						),
 					},
 				},
