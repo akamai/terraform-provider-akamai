@@ -52,7 +52,6 @@ func TestAccAkamaiAPICoProtection_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_api_constraints_protection.test", "id", "43253:AAAA_81230"),
 							resource.TestCheckResourceAttr("akamai_appsec_api_constraints_protection.test", "enabled", "false"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResAPIConstraintsProtection/update_by_id.tf"),
