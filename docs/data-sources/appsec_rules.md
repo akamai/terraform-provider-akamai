@@ -1,6 +1,6 @@
 ---
 layout: "akamai"
-page_title: "Akamai: KRS Rules
+page_title: "Akamai: KRS Rules"
 subcategory: "Application Security"
 description: |-
  KRS Rules

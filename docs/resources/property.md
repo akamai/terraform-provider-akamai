@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: property"
-subcategory: "Provisioning"
+subcategory: "Property Provisioning"
 description: |-
   Create and update Akamai properties.
 ---

@@ -35,6 +35,26 @@ func resourceProperty() *schema.Resource {
 		}}
 	}
 
+	hashHostname := func(v interface{}) int {
+		m, ok := v.(map[string]interface{})
+		if !ok {
+			return 0
+		}
+		cnameFrom, ok := m["cname_from"]
+		if !ok {
+			return 0
+		}
+		cnameTo, ok := m["cname_to"]
+		if !ok {
+			return 0
+		}
+		certProvisioningType, ok := m["cert_provisioning_type"]
+		if !ok {
+			return 0
+		}
+		return schema.HashString(fmt.Sprintf("%s.%s.%s", cnameFrom, cnameTo, certProvisioningType))
+	}
+
 	validateRules := func(val interface{}, _ cty.Path) diag.Diagnostics {
 		if len(val.(string)) == 0 {
 			return nil
@@ -74,8 +94,9 @@ func resourceProperty() *schema.Resource {
 		UpdateContext: resourcePropertyUpdate,
 		DeleteContext: resourcePropertyDelete,
 		CustomizeDiff: customdiff.All(
+			rulesCustomDiff,
 			hostNamesCustomDiff,
-			computedValuesCustomDiff,
+			versionsComputedValuesCustomDiff,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyImport,
@@ -180,8 +201,9 @@ func resourceProperty() *schema.Resource {
 				},
 			},
 			"hostnames": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
+				Set:      hashHostname,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cname_from": {
@@ -308,38 +330,93 @@ func resourceProperty() *schema.Resource {
 	}
 }
 
+// rulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state and from a new configuration.
+// If some of these fields are empty lists in the new configuration and are nil in the terraform state, then this function
+// returns no difference for these fields
+func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interface{}) error {
+	if !diff.HasChange("rules") {
+		return nil
+	}
+	o, n := diff.GetChange("rules")
+
+	oldValue := o.(string)
+	newValue := n.(string)
+
+	var oldRulesUpdate, newRulesUpdate papi.RulesUpdate
+
+	if oldValue == "" || newValue == "" {
+		return nil
+	}
+
+	err := json.Unmarshal([]byte(oldValue), &oldRulesUpdate)
+	if err != nil {
+		return fmt.Errorf("cannot parse rules JSON from state: %s", err)
+	}
+
+	err = json.Unmarshal([]byte(newValue), &newRulesUpdate)
+	if err != nil {
+		return fmt.Errorf("cannot parse rules JSON from config: %s", err)
+	}
+
+	rules, err := compareFields(&oldRulesUpdate, &newRulesUpdate)
+	if err != nil {
+		return fmt.Errorf("cannot encode rules JSON %s", err)
+	}
+
+	if err = diff.SetNew("rules", rules); err != nil {
+		return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)
+	}
+	return nil
+}
+
+func compareFields(old, new *papi.RulesUpdate) (string, error) {
+	if old.Rules.Children == nil && len(new.Rules.Children) == 0 {
+		new.Rules.Children = old.Rules.Children
+	}
+	if old.Rules.Criteria == nil && len(new.Rules.Criteria) == 0 {
+		new.Rules.Criteria = old.Rules.Criteria
+	}
+	rules, err := json.Marshal(new)
+	return string(rules), err
+}
+
 func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "hostNamesCustomDiff")
 
 	o, n := d.GetChange("hostnames")
-	oldVal, ok := o.([]interface{})
+	oldVal, ok := o.(*schema.Set)
 	if !ok {
 		logger.Errorf("error parsing local state for old value %s", oldVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", o)
 	}
 
-	newVal, ok := n.([]interface{})
+	newVal, ok := n.(*schema.Set)
 	if !ok {
 		logger.Errorf("error parsing local state for new value %s", newVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", n)
 	}
-	//PAPI doesn't allow hostnames to become empty if they already exist on server
-	//TODO Do we add support for hostnames patch operation to enable this?
-	if len(oldVal) > 0 && len(newVal) == 0 {
+	// PAPI doesn't allow hostnames to become empty if they already exist on server
+	// TODO Do we add support for hostnames patch operation to enable this?
+	if len(oldVal.List()) > 0 && len(newVal.List()) == 0 {
 		logger.Errorf("Hostnames exist on server and cannot be updated to empty for %d", d.Id())
-		return fmt.Errorf("atleast one hostname required to update existing list of hostnames associated to a property")
+		return fmt.Errorf("at least one hostname required to update existing list of hostnames associated to a property")
 	}
 	return nil
 }
 
-func computedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+// versionsComputedValuesCustomDiff sets `latest_version`, `staging_version` and `production_version` fields as computed
+// if a new version of property is expected to be created
+func versionsComputedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "computedValuesCustomDiff")
-
-	//These computed attributes can be changed on server through other clients and the state needs to be synced to local
-	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
-		if d.HasChange(key) || d.NewValueKnown(key) {
+	logger := meta.Log("PAPI", "versionsComputedValuesCustomDiff")
+	oldRules, newRules := d.GetChange("rules")
+	o, n := d.GetChange("hostnames")
+	oldSet := o.(*schema.Set)
+	equal := oldSet.HashEqual(n.(*schema.Set))
+	if !equal || !compareRulesJSON(oldRules.(string), newRules.(string)) {
+		// These computed attributes can be changed on server through other clients and the state needs to be synced to local
+		for _, key := range []string{"latest_version", "staging_version", "production_version"} {
 			err := d.SetNewComputed(key)
 			if err != nil {
 				logger.Errorf("%s state failed to update with new value from server", key)
@@ -348,6 +425,7 @@ func computedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m inter
 			logger.Debugf("%s state will be updated with new value from server", key)
 		}
 	}
+
 	return nil
 }
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -438,9 +516,9 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductID:     ProductID,
 		LatestVersion: 1,
 	}
-	HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+	HostnameVal, err := tools.GetSetValue("hostnames", d)
 	if err == nil {
-		Hostnames := mapToHostnames(HostnameVal)
+		Hostnames := mapToHostnames(HostnameVal.List())
 		if len(Hostnames) > 0 {
 			if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
 				return diag.FromErr(err)
@@ -677,9 +755,9 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Hostnames
 	if d.HasChange("hostnames") {
-		HostnameVal, err := tools.GetInterfaceArrayValue("hostnames", d)
+		HostnameVal, err := tools.GetSetValue("hostnames", d)
 		if err == nil {
-			Hostnames := mapToHostnames(HostnameVal)
+			Hostnames := mapToHostnames(HostnameVal.List())
 			if len(Hostnames) > 0 {
 				if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
 					d.Partial(true)
@@ -814,8 +892,8 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	return []*schema.ResourceData{d}, nil
 }
 
-func isDefaultVersion(Version string) bool {
-	return Version == "" || strings.ToLower(Version) == "latest"
+func isDefaultVersion(version string) bool {
+	return version == "" || strings.ToLower(version) == "latest"
 }
 
 var versionRegexp = regexp.MustCompile(`^ver_(\d+)$`)
