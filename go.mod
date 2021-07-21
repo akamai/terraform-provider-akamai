@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-hclog v0.9.2
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.7.0
 	github.com/jedib0t/go-pretty/v6 v6.0.4
 	github.com/jinzhu/copier v0.3.0
 	github.com/mgechev/revive v1.0.9 // indirect
