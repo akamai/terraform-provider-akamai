@@ -110,6 +110,11 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Computed: true,
 	},
+	"note": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		Description: "assigns a log message to the activation request",
+	},
 }
 
 func papiError() *schema.Resource {
@@ -221,6 +226,11 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			notify = append(notify, cast.ToString(contact))
 		}
 
+		note, err := tools.GetStringValue("note", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+
 		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
 			PropertyID: propertyID,
 			Activation: papi.Activation{
@@ -229,6 +239,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 				PropertyVersion:        version,
 				NotifyEmails:           notify,
 				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
+				Note:                   note,
 			},
 		})
 		if err != nil {
@@ -568,6 +579,12 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	// Schema guarantees these types
 	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
+	// Assigns a log message to the activation request
+	note, err := tools.GetStringValue("note", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	// check to see if this tree has any issues
 	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
 		PropertyID:      propertyID,
@@ -634,6 +651,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 				PropertyVersion:        version,
 				NotifyEmails:           notify,
 				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
+				Note:                   note,
 			},
 		})
 		if err != nil {
