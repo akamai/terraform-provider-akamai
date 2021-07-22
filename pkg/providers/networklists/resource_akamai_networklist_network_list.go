@@ -75,6 +75,16 @@ func resourceNetworkList() *schema.Resource {
 				Computed:    true,
 				Description: "sync point",
 			},
+			"contract_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Contract ID",
+			},
+			"group_id": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Group ID",
+			},
 		},
 	}
 }
@@ -103,6 +113,18 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	createNetworkList.Description = description
+
+	contractid, err := tools.GetStringValue("contract_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createNetworkList.ContractID = contractid
+
+	groupid, err := tools.GetIntValue("group_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createNetworkList.GroupID = groupid
 
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -160,7 +182,6 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	createNetworkList.List = finallist
-	logger.Errorf("calling 'createNetworkList FINAL ': %v", finallist)
 
 	spcr, err := client.CreateNetworkList(ctx, createNetworkList)
 	if err != nil {
@@ -181,6 +202,14 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("mode", mode); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("contract_id", contractid); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("group_id", groupid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -214,6 +243,18 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	updateNetworkList.Description = description
+
+	contractid, err := tools.GetStringValue("contract_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateNetworkList.ContractID = contractid
+
+	groupid, err := tools.GetIntValue("group_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateNetworkList.GroupID = groupid
 
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -264,7 +305,6 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	updateNetworkList.List = finallist
-	logger.Errorf("calling 'updateNetworkList FINAL ': %v", finallist)
 
 	syncPoint, err := tools.GetIntValue("sync_point", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -277,6 +317,14 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		logger.Errorf("calling 'updateNetworkList': %s", err.Error())
 		return diag.FromErr(err)
+	}
+
+	if err := d.Set("contract_id", contractid); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("group_id", groupid); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	return resourceNetworkListRead(ctx, d, m)
@@ -393,7 +441,6 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	logger.Errorf("calling 'getNetworkList RESULT': %v", finalldata)
 	d.Set("list", nil)
 	if err := d.Set("list", finalldata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))

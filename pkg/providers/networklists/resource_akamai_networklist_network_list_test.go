@@ -35,7 +35,7 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 
 		client.On("CreateNetworkList",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.CreateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "Notes about this network list", List: []string{"10.1.8.23", "10.3.5.67"}},
+			networklists.CreateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "Notes about this network list", List: []string{"10.1.8.23", "10.3.5.67"}, ContractID: "C-1FRYVV3", GroupID: 64867},
 		).Return(&crnl, nil)
 
 		client.On("GetNetworkList",
