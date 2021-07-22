@@ -304,9 +304,6 @@ func TestResCPCode(t *testing.T) {
 		client := &mockpapi{}
 		id := "123"
 
-		TODO(t, "error assertion in import is impossible using provider testing framework as it only checks for errors in `apply`")
-		cpCodes := []papi.CPCode{{ID: "cpc_123", Name: "test cpcode", ProductIDs: []string{"prd_2"}}}
-		expectGet(client, "ctr_1", "grp_2", &cpCodes)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
@@ -328,9 +325,6 @@ func TestResCPCode(t *testing.T) {
 		client := &mockpapi{}
 		id := ",ctr_1-1NC95D,grp_194665"
 
-		TODO(t, "error assertion in import is impossible using provider testing framework as it only checks for errors in `apply`")
-		cpCodes := []papi.CPCode{{ID: "cpc_123", Name: "test cpcode", ProductIDs: []string{"prd_2"}}}
-		expectGet(client, "ctr_1", "grp_2", &cpCodes)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
