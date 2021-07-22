@@ -511,6 +511,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	attrs["organization"] = []interface{}{org}
 	attrs["certificate_type"] = enrollment.CertificateType
 	attrs["validation_type"] = enrollment.ValidationType
+	attrs["registration_authority"] = enrollment.RA
 
 	err = tools.SetAttrs(d, attrs)
 	if err != nil {
@@ -634,6 +635,9 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("validation_type", "dv"); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("registration_authority", "lets-encrypt"); err != nil {
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 
