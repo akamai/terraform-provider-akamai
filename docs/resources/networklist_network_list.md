@@ -45,6 +45,8 @@ The following arguments are supported:
 
 * `contract` - (Optional) The Contract ID to be assigned to the network list. If either a contract or group is provided, they must both be provided.
 
+* `access_control_group` - (Optional) The Access Control Group name (pretty `{group_name} - {contract_name}.G{group_id}`) to be assigned to the network list. Either `access_control_group` or both `group` with `contract` must be specified when in use. They are mutually exclusive.
+
 * `mode` - (Required) A string specifying the interpretation of the `list` parameter. Must be one of the following:
 
   * APPEND - the addresses or locations listed in `list` will be added to the network list

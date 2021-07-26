@@ -61,7 +61,7 @@ func resourceNetworkList() *schema.Resource {
 				}, false),
 			},
 			"group": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "groupId",
 			},
@@ -69,6 +69,11 @@ func resourceNetworkList() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "contractId",
+			},
+			"access_control_group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "accessControlGroup",
 			},
 			"uniqueid": {
 				Type:        schema.TypeString,
@@ -119,17 +124,25 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	group, err := tools.GetStringValue("group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	createNetworkList.Group = group
+	accessControlGroup, err := tools.GetStringValue("access_control_group", d)
+	if accessControlGroup != "" {
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		createNetworkList.AccessControlGroup = accessControlGroup
+	} else {
+		group, err := tools.GetIntValue("group", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		createNetworkList.Group = group
 
-	contract, err := tools.GetStringValue("contract", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		contract, err := tools.GetStringValue("contract", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		createNetworkList.Contract = contract
 	}
-	createNetworkList.Contract = contract
 
 	getNetworkLists := networklists.GetNetworkListsRequest{}
 	getNetworkLists.Name = name
@@ -242,17 +255,25 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	group, err := tools.GetStringValue("group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	updateNetworkList.Group = group
+	accessControlGroup, err := tools.GetStringValue("access_control_group", d)
+	if accessControlGroup != "" {
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateNetworkList.AccessControlGroup = accessControlGroup
+	} else {
+		group, err := tools.GetIntValue("group", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateNetworkList.Group = group
 
-	contract, err := tools.GetStringValue("contract", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+		contract, err := tools.GetStringValue("contract", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		updateNetworkList.Contract = contract
 	}
-	updateNetworkList.Contract = contract
 
 	listRequest := networklists.GetNetworkListRequest{}
 	listRequest.UniqueID = d.Id()
