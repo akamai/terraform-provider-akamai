@@ -24,7 +24,7 @@ func resourceRateProtection() *schema.Resource {
 		UpdateContext: resourceRateProtectionUpdate,
 		DeleteContext: resourceRateProtectionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

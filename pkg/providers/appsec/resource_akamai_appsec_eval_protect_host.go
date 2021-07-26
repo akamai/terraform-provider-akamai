@@ -27,7 +27,7 @@ func resourceEvalProtectHost() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -146,7 +146,7 @@ func resourceEvalProtectHostUpdate(ctx context.Context, d *schema.ResourceData, 
 	return resourceEvalProtectHostRead(ctx, d, m)
 }
 
-func resourceEvalProtectHostDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceEvalProtectHostDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("APPSEC", "resourceEvalProtectHostUpdate")
 	logger.Debug("!!! in resourceEvalProtectHostDelete")

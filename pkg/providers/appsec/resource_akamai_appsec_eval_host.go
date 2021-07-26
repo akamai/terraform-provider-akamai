@@ -24,7 +24,7 @@ func resourceEvalHost() *schema.Resource {
 		UpdateContext: resourceEvalHostUpdate,
 		DeleteContext: resourceEvalHostDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {

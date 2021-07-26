@@ -27,7 +27,7 @@ func AggregateValidations(funcs ...schema.SchemaValidateDiagFunc) schema.SchemaV
 // - nil value
 // - a collection with len == 0 in case the value is a map, array or slice
 // - value equal to zero-value for given type (e.g. empty string)
-func IsNotBlank(i interface{}, path cty.Path) diag.Diagnostics {
+func IsNotBlank(i interface{}, _ cty.Path) diag.Diagnostics {
 	val := reflect.ValueOf(i)
 	switch val.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice:
@@ -43,7 +43,7 @@ func IsNotBlank(i interface{}, path cty.Path) diag.Diagnostics {
 }
 
 // ValidateJSON checks whether given value is a valid JSON object
-func ValidateJSON(val interface{}, path cty.Path) diag.Diagnostics {
+func ValidateJSON(val interface{}, _ cty.Path) diag.Diagnostics {
 	if str, ok := val.(string); ok {
 		var target map[string]interface{}
 		if err := json.Unmarshal([]byte(str), &target); err != nil {

@@ -26,7 +26,7 @@ func resourceMatchTargetSequence() *schema.Resource {
 		UpdateContext: resourceMatchTargetSequenceUpdate,
 		DeleteContext: resourceMatchTargetSequenceDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -37,7 +37,7 @@ func resourceMatchTargetSequence() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
+				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},
 	}
@@ -158,6 +158,6 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	return resourceMatchTargetSequenceRead(ctx, d, m)
 }
 
-func resourceMatchTargetSequenceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMatchTargetSequenceDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(nil, d, m)
 }

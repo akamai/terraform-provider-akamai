@@ -172,16 +172,15 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 			Summary:  "Zone exists. Please import.",
 			Detail:   fmt.Sprintf("Zone create failure. Zone %s exists", hostname),
 		})
-	} else {
-		apiError, ok := e.(*dns.Error)
-		if !ok || apiError.StatusCode != http.StatusNotFound {
-			logger.Errorf("Create[ERROR] %w", e)
-			return append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Create API falure",
-				Detail:   e.Error(),
-			})
-		}
+	}
+	apiError, ok := e.(*dns.Error)
+	if !ok || apiError.StatusCode != http.StatusNotFound {
+		logger.Errorf("Create[ERROR] %w", e)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Create API falure",
+			Detail:   e.Error(),
+		})
 	}
 
 	// no existing zone.
@@ -442,7 +441,7 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSv2ZoneDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	hostname, err := tools.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -676,7 +675,7 @@ func checkZoneSOAandNSRecords(ctx context.Context, meta akamai.OperationMeta, zo
 	return err
 }
 
-func createSOARecord(zone string, nameservers []string, logger log.Interface) dns.Recordset {
+func createSOARecord(zone string, nameservers []string, _ log.Interface) dns.Recordset {
 	rec := dns.Recordset{Name: zone, Type: "SOA"}
 	rec.TTL = 86400
 	pemail := fmt.Sprintf("hostmaster.%s.", zone)
@@ -686,7 +685,7 @@ func createSOARecord(zone string, nameservers []string, logger log.Interface) dn
 	return rec
 }
 
-func createNSRecord(zone string, nameservers []string, logger log.Interface) dns.Recordset {
+func createNSRecord(zone string, nameservers []string, _ log.Interface) dns.Recordset {
 	rec := dns.Recordset{Name: zone, Type: "NS"}
 	rec.TTL = 86400
 	rec.Rdata = nameservers

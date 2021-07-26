@@ -31,7 +31,7 @@ func TestProvider(t *testing.T) {
 	}
 }
 
-func testAccPreCheck(t *testing.T) {
+func testAccPreCheck(_ *testing.T) {
 
 }
 

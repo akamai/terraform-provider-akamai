@@ -148,7 +148,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceActivationsRead(ctx, d, m)
 }
 
-func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceActivationsDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("NETWORKLIST", "resourceActivationsRemove")
 	logger.Warnf("calling 'Remove Activations' NOOP ")

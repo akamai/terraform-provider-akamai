@@ -24,7 +24,7 @@ func resourceVersionNotes() *schema.Resource {
 		UpdateContext: resourceVersionNotesUpdate,
 		DeleteContext: resourceVersionNotesDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -146,6 +146,6 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	return resourceVersionNotesRead(ctx, d, m)
 }
 
-func resourceVersionNotesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVersionNotesDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(nil, d, m)
 }

@@ -24,7 +24,7 @@ func resourceReputationAnalysis() *schema.Resource {
 		UpdateContext: resourceReputationAnalysisUpdate,
 		DeleteContext: resourceReputationAnalysisDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -65,11 +65,11 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	forwardToHttpHeader, err := tools.GetBoolValue("forward_to_http_header", d)
+	forwardToHTTPHeader, err := tools.GetBoolValue("forward_to_http_header", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	forwardSharedIpToHttpHeaderSiem, err := tools.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
+	forwardSharedIPToHTTPHeaderSiem, err := tools.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -78,8 +78,8 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 	createReputationAnalysis.ConfigID = configid
 	createReputationAnalysis.Version = version
 	createReputationAnalysis.PolicyID = policyid
-	createReputationAnalysis.ForwardToHTTPHeader = forwardToHttpHeader
-	createReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = forwardSharedIpToHttpHeaderSiem
+	createReputationAnalysis.ForwardToHTTPHeader = forwardToHTTPHeader
+	createReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = forwardSharedIPToHTTPHeaderSiem
 
 	_, erru := client.UpdateReputationAnalysis(ctx, createReputationAnalysis)
 	if erru != nil {
@@ -152,11 +152,11 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAnalysis", m)
 	policyid := idParts[1]
-	forwardToHttpHeader, err := tools.GetBoolValue("forward_to_http_header", d)
+	forwardToHTTPHeader, err := tools.GetBoolValue("forward_to_http_header", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	forwardSharedIpToHttpHeaderSiem, err := tools.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
+	forwardSharedIPToHTTPHeaderSiem, err := tools.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -165,8 +165,8 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 	updateReputationAnalysis.ConfigID = configid
 	updateReputationAnalysis.Version = version
 	updateReputationAnalysis.PolicyID = policyid
-	updateReputationAnalysis.ForwardToHTTPHeader = forwardToHttpHeader
-	updateReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = forwardSharedIpToHttpHeaderSiem
+	updateReputationAnalysis.ForwardToHTTPHeader = forwardToHTTPHeader
+	updateReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = forwardSharedIPToHTTPHeaderSiem
 
 	_, erru := client.UpdateReputationAnalysis(ctx, updateReputationAnalysis)
 	if erru != nil {

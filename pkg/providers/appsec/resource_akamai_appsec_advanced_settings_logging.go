@@ -27,7 +27,7 @@ func resourceAdvancedSettingsLogging() *schema.Resource {
 		UpdateContext: resourceAdvancedSettingsLoggingUpdate,
 		DeleteContext: resourceAdvancedSettingsLoggingDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

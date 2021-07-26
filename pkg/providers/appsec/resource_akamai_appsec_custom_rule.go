@@ -27,7 +27,7 @@ func resourceCustomRule() *schema.Resource {
 		UpdateContext: resourceCustomRuleUpdate,
 		DeleteContext: resourceCustomRuleDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -45,7 +45,7 @@ func resourceCustomRule() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
+				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},
 	}

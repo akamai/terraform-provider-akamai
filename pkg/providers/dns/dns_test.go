@@ -58,7 +58,7 @@ func (d *mockdns) NewChangeListResponse(ctx context.Context, param string) *dns.
 	return args.Get(0).(*dns.ChangeListResponse)
 }
 
-func (d *mockdns) NewZoneQueryString(ctx context.Context, param1 string, param2 string) *dns.ZoneQueryString {
+func (d *mockdns) NewZoneQueryString(ctx context.Context, param1 string, _ string) *dns.ZoneQueryString {
 	args := d.Called(ctx, param1, param1)
 
 	if args.Get(0) == nil {
@@ -415,24 +415,24 @@ func (d *mockdns) UpdateRecordsets(ctx context.Context, param *dns.Recordsets, p
 }
 
 // Mocked out following endpoints to make tests compile due to PR in edgegrid that added these resources.
-func (d *mockdns) PostMasterZoneFile(ctx context.Context, param string, param2 string) error {
+func (d *mockdns) PostMasterZoneFile(_ context.Context, _ string, _ string) error {
 	return nil
 }
-func (d *mockdns) CreateBulkZones(ctx context.Context, param *dns.BulkZonesCreate, param2 dns.ZoneQueryString) (*dns.BulkZonesResponse, error) {
+func (d *mockdns) CreateBulkZones(_ context.Context, _ *dns.BulkZonesCreate, _ dns.ZoneQueryString) (*dns.BulkZonesResponse, error) {
 	return nil, nil
 }
-func (d *mockdns) DeleteBulkZones(ctx context.Context, param *dns.ZoneNameListResponse, param2 ...bool) (*dns.BulkZonesResponse, error) {
+func (d *mockdns) DeleteBulkZones(_ context.Context, _ *dns.ZoneNameListResponse, _ ...bool) (*dns.BulkZonesResponse, error) {
 	return nil, nil
 }
-func (d *mockdns) GetBulkZoneCreateStatus(ctx context.Context, param string) (*dns.BulkStatusResponse, error) {
+func (d *mockdns) GetBulkZoneCreateStatus(_ context.Context, _ string) (*dns.BulkStatusResponse, error) {
 	return nil, nil
 }
-func (d *mockdns) GetBulkZoneDeleteStatus(ctx context.Context, param string) (*dns.BulkStatusResponse, error) {
+func (d *mockdns) GetBulkZoneDeleteStatus(_ context.Context, _ string) (*dns.BulkStatusResponse, error) {
 	return nil, nil
 }
-func (d *mockdns) GetBulkZoneCreateResult(ctx context.Context, requestid string) (*dns.BulkCreateResultResponse, error) {
+func (d *mockdns) GetBulkZoneCreateResult(_ context.Context, _ string) (*dns.BulkCreateResultResponse, error) {
 	return nil, nil
 }
-func (d *mockdns) GetBulkZoneDeleteResult(ctx context.Context, param string) (*dns.BulkDeleteResultResponse, error) {
+func (d *mockdns) GetBulkZoneDeleteResult(_ context.Context, _ string) (*dns.BulkDeleteResultResponse, error) {
 	return nil, nil
 }

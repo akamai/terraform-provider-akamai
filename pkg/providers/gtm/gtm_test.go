@@ -11,7 +11,7 @@ type mockgtm struct {
 	mock.Mock
 }
 
-func (p *mockgtm) NullFieldMap(ctx context.Context, dom *gtm.Domain) (*gtm.NullFieldMapStruct, error) {
+func (p *mockgtm) NullFieldMap(ctx context.Context, _ *gtm.Domain) (*gtm.NullFieldMapStruct, error) {
 	args := p.Called(ctx)
 
 	if args.Get(0) == nil {
@@ -21,7 +21,7 @@ func (p *mockgtm) NullFieldMap(ctx context.Context, dom *gtm.Domain) (*gtm.NullF
 	return args.Get(0).(*gtm.NullFieldMapStruct), args.Error(1)
 }
 
-func (p *mockgtm) NewDomain(ctx context.Context, domain string, dtype string) *gtm.Domain {
+func (p *mockgtm) NewDomain(ctx context.Context, _ string, _ string) *gtm.Domain {
 	args := p.Called(ctx)
 
 	if args.Get(0) == nil {

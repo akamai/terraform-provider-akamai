@@ -24,7 +24,7 @@ func resourceReputationProfileAction() *schema.Resource {
 		UpdateContext: resourceReputationProfileActionUpdate,
 		DeleteContext: resourceReputationProfileActionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

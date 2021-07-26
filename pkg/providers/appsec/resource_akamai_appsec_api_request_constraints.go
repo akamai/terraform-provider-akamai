@@ -19,14 +19,14 @@ import (
 // appsec v1
 //
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
-func resourceApiRequestConstraints() *schema.Resource {
+func resourceAPIRequestConstraints() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceApiRequestConstraintsCreate,
-		ReadContext:   resourceApiRequestConstraintsRead,
-		UpdateContext: resourceApiRequestConstraintsUpdate,
-		DeleteContext: resourceApiRequestConstraintsDelete,
+		CreateContext: resourceAPIRequestConstraintsCreate,
+		ReadContext:   resourceAPIRequestConstraintsRead,
+		UpdateContext: resourceAPIRequestConstraintsUpdate,
+		DeleteContext: resourceAPIRequestConstraintsDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -53,11 +53,11 @@ func resourceApiRequestConstraints() *schema.Resource {
 	}
 }
 
-func resourceApiRequestConstraintsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsCreate")
-	logger.Debugf("!!! in resourceApiRequestConstraintsCreate")
+	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsCreate")
+	logger.Debugf("!!! in resourceAPIRequestConstraintsCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -77,32 +77,32 @@ func resourceApiRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	createApiRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
-	createApiRequestConstraints.ConfigID = configid
-	createApiRequestConstraints.Version = version
-	createApiRequestConstraints.PolicyID = policyid
-	createApiRequestConstraints.ApiID = apiEndpointID
-	createApiRequestConstraints.Action = action
+	createAPIRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
+	createAPIRequestConstraints.ConfigID = configid
+	createAPIRequestConstraints.Version = version
+	createAPIRequestConstraints.PolicyID = policyid
+	createAPIRequestConstraints.ApiID = apiEndpointID
+	createAPIRequestConstraints.Action = action
 
-	_, erru := client.UpdateApiRequestConstraints(ctx, createApiRequestConstraints)
+	_, erru := client.UpdateApiRequestConstraints(ctx, createAPIRequestConstraints)
 	if erru != nil {
-		logger.Errorf("calling 'createApiRequestConstraints': %s", erru.Error())
+		logger.Errorf("calling 'createAPIRequestConstraints': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
 
 	if apiEndpointID != 0 {
-		d.SetId(fmt.Sprintf("%d:%s:%d", createApiRequestConstraints.ConfigID, createApiRequestConstraints.PolicyID, createApiRequestConstraints.ApiID))
+		d.SetId(fmt.Sprintf("%d:%s:%d", createAPIRequestConstraints.ConfigID, createAPIRequestConstraints.PolicyID, createAPIRequestConstraints.ApiID))
 	} else {
-		d.SetId(fmt.Sprintf("%d:%s", createApiRequestConstraints.ConfigID, createApiRequestConstraints.PolicyID))
+		d.SetId(fmt.Sprintf("%d:%s", createAPIRequestConstraints.ConfigID, createAPIRequestConstraints.PolicyID))
 	}
 
-	return resourceApiRequestConstraintsRead(ctx, d, m)
+	return resourceAPIRequestConstraintsRead(ctx, d, m)
 }
 
-func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsRead")
+	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsRead")
 	logger.Debugf("!!! in resourceCustomRuleActionRead")
 
 	s := strings.Split(d.Id(), ":")
@@ -122,34 +122,34 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 		}
 	}
 
-	getApiRequestConstraints := appsec.GetApiRequestConstraintsRequest{}
-	getApiRequestConstraints.ConfigID = configid
-	getApiRequestConstraints.Version = version
-	getApiRequestConstraints.PolicyID = policyid
-	getApiRequestConstraints.ApiID = apiID
+	getAPIRequestConstraints := appsec.GetApiRequestConstraintsRequest{}
+	getAPIRequestConstraints.ConfigID = configid
+	getAPIRequestConstraints.Version = version
+	getAPIRequestConstraints.PolicyID = policyid
+	getAPIRequestConstraints.ApiID = apiID
 
-	response, err := client.GetApiRequestConstraints(ctx, getApiRequestConstraints)
+	response, err := client.GetApiRequestConstraints(ctx, getAPIRequestConstraints)
 	if err != nil {
-		logger.Errorf("calling 'getApiRequestConstraints': %s", err.Error())
+		logger.Errorf("calling 'getAPIRequestConstraints': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", getApiRequestConstraints.ConfigID); err != nil {
+	if err := d.Set("config_id", getAPIRequestConstraints.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("security_policy_id", getApiRequestConstraints.PolicyID); err != nil {
+	if err := d.Set("security_policy_id", getAPIRequestConstraints.PolicyID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if err := d.Set("api_endpoint_id", getApiRequestConstraints.ApiID); err != nil {
+	if err := d.Set("api_endpoint_id", getAPIRequestConstraints.ApiID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	if getApiRequestConstraints.ApiID != 0 {
+	if getAPIRequestConstraints.ApiID != 0 {
 		if len(response.APIEndpoints) > 0 {
 			for _, val := range response.APIEndpoints {
-				if val.ID == getApiRequestConstraints.ApiID {
+				if val.ID == getAPIRequestConstraints.ApiID {
 					if err := d.Set("action", val.Action); err != nil {
 						return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 					}
@@ -160,10 +160,10 @@ func resourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceApiRequestConstraintsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsUpdate")
+	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsUpdate")
 	logger.Debugf("!!! in resourceCustomRuleActionUpdate")
 
 	s := strings.Split(d.Id(), ":")
@@ -187,27 +187,27 @@ func resourceApiRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	updateApiRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
-	updateApiRequestConstraints.ConfigID = configid
-	updateApiRequestConstraints.Version = version
-	updateApiRequestConstraints.PolicyID = policyid
-	updateApiRequestConstraints.ApiID = apiID
-	updateApiRequestConstraints.Action = action
+	updateAPIRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
+	updateAPIRequestConstraints.ConfigID = configid
+	updateAPIRequestConstraints.Version = version
+	updateAPIRequestConstraints.PolicyID = policyid
+	updateAPIRequestConstraints.ApiID = apiID
+	updateAPIRequestConstraints.Action = action
 
-	_, erru := client.UpdateApiRequestConstraints(ctx, updateApiRequestConstraints)
+	_, erru := client.UpdateApiRequestConstraints(ctx, updateAPIRequestConstraints)
 	if erru != nil {
-		logger.Errorf("calling 'updateApiRequestConstraints': %s", erru.Error())
+		logger.Errorf("calling 'updateAPIRequestConstraints': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
 
-	return resourceApiRequestConstraintsRead(ctx, d, m)
+	return resourceAPIRequestConstraintsRead(ctx, d, m)
 }
 
-func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceApiRequestConstraintsDelete")
-	logger.Debugf("!!! in resourceApiRequestConstraintsDelete")
+	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsDelete")
+	logger.Debugf("!!! in resourceAPIRequestConstraintsDelete")
 
 	s := strings.Split(d.Id(), ":")
 
@@ -226,13 +226,13 @@ func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 		}
 	}
 
-	removeApiRequestConstraints := appsec.RemoveApiRequestConstraintsRequest{}
-	removeApiRequestConstraints.ConfigID = configid
-	removeApiRequestConstraints.Version = version
-	removeApiRequestConstraints.PolicyID = policyid
-	removeApiRequestConstraints.ApiID = apiID
+	removeAPIRequestConstraints := appsec.RemoveApiRequestConstraintsRequest{}
+	removeAPIRequestConstraints.ConfigID = configid
+	removeAPIRequestConstraints.Version = version
+	removeAPIRequestConstraints.PolicyID = policyid
+	removeAPIRequestConstraints.ApiID = apiID
 
-	if removeApiRequestConstraints.ApiID == 0 {
+	if removeAPIRequestConstraints.ApiID == 0 {
 
 		getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
 		getPolicyProtections.ConfigID = configid
@@ -265,8 +265,8 @@ func resourceApiRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 			}
 		}
 	} else {
-		removeApiRequestConstraints.Action = "none"
-		_, erru := client.RemoveApiRequestConstraints(ctx, removeApiRequestConstraints)
+		removeAPIRequestConstraints.Action = "none"
+		_, erru := client.RemoveApiRequestConstraints(ctx, removeAPIRequestConstraints)
 		if erru != nil {
 			logger.Errorf("calling 'removeApiRequestConstraints': %s", erru.Error())
 			return diag.FromErr(erru)

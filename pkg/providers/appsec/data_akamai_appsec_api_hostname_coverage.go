@@ -14,9 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceApiHostnameCoverage() *schema.Resource {
+func dataSourceAPIHostnameCoverage() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceApiHostnameCoverageRead,
+		ReadContext: dataSourceAPIHostnameCoverageRead,
 		Schema: map[string]*schema.Schema{
 			"json": {
 				Type:     schema.TypeString,
@@ -31,14 +31,14 @@ func dataSourceApiHostnameCoverage() *schema.Resource {
 	}
 }
 
-func dataSourceApiHostnameCoverageRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceAPIHostnameCoverageRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "dataSourceApiHostnameCoverageRead")
+	logger := meta.Log("APPSEC", "dataSourceAPIHostnameCoverageRead")
 
-	getApiHostnameCoverage := appsec.GetApiHostnameCoverageRequest{}
+	getAPIHostnameCoverage := appsec.GetApiHostnameCoverageRequest{}
 
-	apihostnamecoverage, err := client.GetApiHostnameCoverage(ctx, getApiHostnameCoverage)
+	apihostnamecoverage, err := client.GetApiHostnameCoverage(ctx, getAPIHostnameCoverage)
 	if err != nil {
 		logger.Errorf("calling 'getApiHostnameCoverage': %s", err.Error())
 		return diag.FromErr(err)

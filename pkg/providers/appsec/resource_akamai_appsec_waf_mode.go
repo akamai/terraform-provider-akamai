@@ -25,7 +25,7 @@ func resourceWAFMode() *schema.Resource {
 		UpdateContext: resourceWAFModeUpdate,
 		DeleteContext: resourceWAFModeDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -206,10 +206,11 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourceWAFModeRead(ctx, d, m)
 }
 
-func resourceWAFModeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceWAFModeDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(nil, d, m)
 }
 
+// Definition of constant variables
 const (
 	AAG = "AAG"
 	KRS = "KRS"

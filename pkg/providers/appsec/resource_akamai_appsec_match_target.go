@@ -25,7 +25,7 @@ func resourceMatchTarget() *schema.Resource {
 		UpdateContext: resourceMatchTargetUpdate,
 		DeleteContext: resourceMatchTargetDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

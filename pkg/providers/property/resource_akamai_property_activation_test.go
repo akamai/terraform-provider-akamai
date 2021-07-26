@@ -789,12 +789,12 @@ func testAccCheckAkamaiPropertyActivationDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckAkamaiPropertyActivationExists(s *terraform.State) error {
+func testAccCheckAkamaiPropertyActivationExists(_ *terraform.State) error {
 	// TODO: rewrite for v2???
 	return nil
 }
 
-func testAccCheckAkamaiPropertyActivationLatest(s *terraform.State) error {
+func testAccCheckAkamaiPropertyActivationLatest(_ *terraform.State) error {
 	// TODO: rewrite for v2???
 	return nil
 }

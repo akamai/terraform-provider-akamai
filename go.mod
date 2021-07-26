@@ -12,13 +12,14 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.0.1
 	github.com/jedib0t/go-pretty/v6 v6.0.4
 	github.com/jinzhu/copier v0.3.0
+	github.com/mgechev/revive v1.0.9 // indirect
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/objx v0.1.1 // indirect
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tj/assert v0.0.3
 	github.com/zclconf/go-cty v1.7.1 // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
-	golang.org/x/tools v0.1.3 // indirect
+	golang.org/x/tools v0.1.4 // indirect
 	google.golang.org/api v0.34.0 // indirect
 )
 

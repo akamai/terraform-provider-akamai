@@ -55,7 +55,7 @@ func testAccCheckAkamaiSecureEdgeHostNameDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckAkamaiSecureEdgeHostNameExists(s *terraform.State) error {
+func testAccCheckAkamaiSecureEdgeHostNameExists(_ *terraform.State) error {
 	// TODO: rewrite for v2 client??
 	return nil
 }

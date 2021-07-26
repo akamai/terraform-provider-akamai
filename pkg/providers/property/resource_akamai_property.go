@@ -333,7 +333,7 @@ func resourceProperty() *schema.Resource {
 // rulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state and from a new configuration.
 // If some of these fields are empty lists in the new configuration and are nil in the terraform state, then this function
 // returns no difference for these fields
-func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interface{}) error {
+func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 	if !diff.HasChange("rules") {
 		return nil
 	}
@@ -574,11 +574,10 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	if err != nil {
 		return diag.FromErr(err)
-	} else {
-		if v == 0 {
-			// use latest version unless "read_version" != 0
-			v = Property.LatestVersion
-		}
+	}
+	if v == 0 {
+		// use latest version unless "read_version" != 0
+		v = Property.LatestVersion
 	}
 
 	var StagingVersion int

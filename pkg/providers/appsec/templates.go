@@ -11,8 +11,10 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
+// OutputTemplates is a map of templates
 type OutputTemplates map[string]*OutputTemplate
 
+// OutputTemplate contains template data
 type OutputTemplate struct {
 	TemplateName   string
 	TemplateType   string
@@ -20,14 +22,15 @@ type OutputTemplate struct {
 	TemplateString string
 }
 
+// GetTemplate given map of templates and a key, returns template stored under this key
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
 		return f, nil
-	} else {
-		return nil, fmt.Errorf("Error not found")
 	}
+	return nil, fmt.Errorf("Error not found")
 }
 
+// RenderTemplates renders template and returns it as a string
 func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}) (string, error) {
 	var ostr, tstr bytes.Buffer
 	templ, ok := GetTemplate(ots, key)
@@ -122,9 +125,8 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 				"dash": func(in int) string {
 					if in == 0 {
 						return "-"
-					} else {
-						return strconv.Itoa(in)
 					}
+					return strconv.Itoa(in)
 				},
 
 				"substring": func(start, end int, s string) string {
@@ -192,6 +194,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 	return "", nil
 }
 
+// InitTemplates populates map of templates given as argument with output templates
 func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["advancedSettingsLoggingDS"] = &OutputTemplate{TemplateName: "advancedSettingsLoggingDS", TableTitle: "Allow Sampling|Cookies|Custom Headers|Standard Headers", TemplateType: "TABULAR", TemplateString: "{{.AllowSampling}}|{{.Cookies.Type}} {{.Cookies.Values}}|{{.CustomHeaders.Type}} {{.CustomHeaders.Values}}|{{.StandardHeaders.Type}} {{.StandardHeaders.Values}}"}
 	otm["advancedSettingsPrefetchDS"] = &OutputTemplate{TemplateName: "advancedSettingsPrefetchDS", TableTitle: "Enable App Layer|All Extension|Enable Rate Controls|Extensions", TemplateType: "TABULAR", TemplateString: "{{.EnableAppLayer}}|{{.AllExtensions}}|{{.EnableRateControls}}|{{range $index, $element := .Extensions}}{{.}} {{end}}"}

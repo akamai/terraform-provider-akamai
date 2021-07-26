@@ -15,9 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceApiRequestConstraints() *schema.Resource {
+func dataSourceAPIRequestConstraints() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceApiRequestConstraintsRead,
+		ReadContext: dataSourceAPIRequestConstraintsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -44,34 +44,34 @@ func dataSourceApiRequestConstraints() *schema.Resource {
 	}
 }
 
-func dataSourceApiRequestConstraintsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "dataSourceApiRequestConstraintsRead")
+	logger := meta.Log("APPSEC", "dataSourceAPIRequestConstraintsRead")
 
-	getApiRequestConstraints := v2.GetApiRequestConstraintsRequest{}
+	getAPIiRequestConstraints := v2.GetApiRequestConstraintsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiRequestConstraints.ConfigID = configid
+	getAPIiRequestConstraints.ConfigID = configid
 
-	getApiRequestConstraints.Version = getLatestConfigVersion(ctx, configid, m)
+	getAPIiRequestConstraints.Version = getLatestConfigVersion(ctx, configid, m)
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiRequestConstraints.PolicyID = policyid
+	getAPIiRequestConstraints.PolicyID = policyid
 
 	apiID, err := tools.GetIntValue("api_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiRequestConstraints.ApiID = apiID
+	getAPIiRequestConstraints.ApiID = apiID
 
-	apirequestconstraints, err := client.GetApiRequestConstraints(ctx, getApiRequestConstraints)
+	apirequestconstraints, err := client.GetApiRequestConstraints(ctx, getAPIiRequestConstraints)
 	if err != nil {
 		logger.Errorf("calling 'getApiRequestConstraints': %s", err.Error())
 		return diag.FromErr(err)
@@ -94,7 +94,7 @@ func dataSourceApiRequestConstraintsRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(strconv.Itoa(getApiRequestConstraints.ConfigID))
+	d.SetId(strconv.Itoa(getAPIiRequestConstraints.ConfigID))
 
 	return nil
 }

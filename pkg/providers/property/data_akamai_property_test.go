@@ -292,7 +292,7 @@ data "akamai_property" "test" {
 `
 }
 
-func testAccCheckDataSourcePropertyDestroy(s *terraform.State) error {
+func testAccCheckDataSourcePropertyDestroy(_ *terraform.State) error {
 	log.Printf("[DEBUG] [Group] Searching for Property Delete skipped ")
 
 	return nil

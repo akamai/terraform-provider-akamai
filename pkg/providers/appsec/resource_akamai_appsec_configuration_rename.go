@@ -24,7 +24,7 @@ func resourceConfigurationRename() *schema.Resource {
 		UpdateContext: resourceConfigurationRenameUpdate,
 		DeleteContext: resourceConfigurationRenameDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -141,6 +141,6 @@ func resourceConfigurationRenameUpdate(ctx context.Context, d *schema.ResourceDa
 	return resourceConfigurationRenameRead(ctx, d, m)
 }
 
-func resourceConfigurationRenameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceConfigurationRenameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(nil, d, m)
 }

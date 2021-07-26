@@ -29,7 +29,7 @@ func resourceRatePolicy() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -44,7 +44,7 @@ func resourceRatePolicy() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
+				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},
 	}

@@ -29,7 +29,7 @@ func resourceActivations() *schema.Resource {
 		UpdateContext: resourceActivationsUpdate,
 		DeleteContext: resourceActivationsDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {

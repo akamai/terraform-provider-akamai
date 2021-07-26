@@ -27,7 +27,7 @@ func resourceSelectedHostname() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -257,7 +257,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	return resourceSelectedHostnameRead(ctx, d, m)
 }
 
-func resourceSelectedHostnameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSelectedHostnameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(nil, d, m)
 }
 

@@ -20,7 +20,7 @@ func GetSHAString(rdata string) string {
 	return sha1hashtest
 }
 
-//Convert schema.Set to a slice of strings
+// SetToStringSlice converts schema.Set to a slice of strings
 func SetToStringSlice(s *schema.Set) []string {
 	list := make([]string, s.Len())
 	for i, v := range s.List() {
