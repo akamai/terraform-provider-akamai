@@ -20,7 +20,7 @@ var AnyCTX = mock.Anything
 
 func TestResCPCode(t *testing.T) {
 	// Helper to set up an expected call to mock papi.GetCPCodes with mock impl backed by the given slice
-	expectGet := func(m *mockpapi, ContractID, GroupID string, CPCodes *[]papi.CPCode) *mock.Call {
+	expectGetCPCode := func(m *mockpapi, ContractID, GroupID string, CPCodes *[]papi.CPCode) *mock.Call {
 		mockImpl := func(_ context.Context, req papi.GetCPCodesRequest) (*papi.GetCPCodesResponse, error) {
 			res := &papi.GetCPCodesResponse{
 				ContractID: req.ContractID,
@@ -36,7 +36,7 @@ func TestResCPCode(t *testing.T) {
 	}
 
 	// Helper to set up an expected call to mock papi.CreateCPCode with mock impl backed by the given slice
-	expectCreate := func(m *mockpapi, CPCName, Product, Contract, Group string, CPCodes *[]papi.CPCode) *mock.Call {
+	expectCreateCPCode := func(m *mockpapi, CPCName, Product, Contract, Group string, CPCodes *[]papi.CPCode) *mock.Call {
 		mockImpl := func(_ context.Context, req papi.CreateCPCodeRequest) (*papi.CreateCPCodeResponse, error) {
 			cpc := papi.CPCode{
 				ID:         fmt.Sprintf("cpc_%d", len(*CPCodes)),
@@ -70,8 +70,8 @@ func TestResCPCode(t *testing.T) {
 		CPCodes := []papi.CPCode{}
 
 		// Values are from fixture:
-		expectGet(client, "ctr_1", "grp_1", &CPCodes)
-		expectCreate(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes)
+		expectGetCPCode(client, "ctr_1", "grp_1", &CPCodes)
+		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes)
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -102,7 +102,7 @@ func TestResCPCode(t *testing.T) {
 		}
 
 		// Values are from fixture:
-		expectGet(client, "ctr_test", "grp_test", &CPCodes)
+		expectGetCPCode(client, "ctr_test", "grp_test", &CPCodes)
 		// No mock behavior for create because we're using an existing CP code
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
@@ -135,7 +135,7 @@ func TestResCPCode(t *testing.T) {
 		}
 
 		// Values are from fixture:
-		expectGet(client, "ctr_test", "grp_test", &CPCodes)
+		expectGetCPCode(client, "ctr_test", "grp_test", &CPCodes)
 		// No mock behavior for create because we're using an existing CP code
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
@@ -168,7 +168,7 @@ func TestResCPCode(t *testing.T) {
 		}
 
 		// Values are from fixture:
-		expectGet(client, "ctr_test", "grp_test", &CPCodes)
+		expectGetCPCode(client, "ctr_test", "grp_test", &CPCodes)
 		// No mock behavior for create because we're using an existing CP code
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
@@ -192,9 +192,9 @@ func TestResCPCode(t *testing.T) {
 		CPCodes := []papi.CPCode{}
 
 		// Values are from fixture:
-		expectGet(client, "ctr_1", "grp_1", &CPCodes)
-		expectCreate(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
-		expectCreate(client, "renamed cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
+		expectGetCPCode(client, "ctr_1", "grp_1", &CPCodes)
+		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
+		expectCreateCPCode(client, "renamed cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -215,61 +215,12 @@ func TestResCPCode(t *testing.T) {
 		})
 	})
 
-	t.Run("change product", func(t *testing.T) {
-		t.Log("eelmore: My expectation is that we create a new CP code with a new CP Code ID and new Product ID when")
-		t.Log("         only the Product ID changesInstead of that, the provider is attempting to re-use the old CP Code")
-		t.Log("         which has the old Product ID.")
-
-		TODO(t, "Is this case fundamentally broken by current logic?")
-
-		client := &mockpapi{}
-		defer client.AssertExpectations(t)
-
-		// Contains CP Codes known to mock API for first group
-		CPCodes := []papi.CPCode{}
-
-		// Values are from fixture:
-		expectGet(client, "ctr_1", "grp_1", &CPCodes)
-		expectCreate(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
-		expectCreate(client, "test cpcode", "prd_2", "ctr_1", "grp_1", &CPCodes).Once()
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString("testdata/TestResCPCode/change_product_step0.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
-						),
-					},
-					{
-						Config: loadFixtureString("testdata/TestResCPCode/change_product_step1.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_2"),
-						),
-					},
-				},
-			})
-		})
-	})
-
 	t.Run("import existing cp code", func(t *testing.T) {
 		client := &mockpapi{}
 		id := "123,1,2"
 
 		cpCodes := []papi.CPCode{{ID: "cpc_123", Name: "test cpcode", ProductIDs: []string{"prd_Web_Accel"}}}
-		expectGet(client, "ctr_1", "grp_2", &cpCodes)
+		expectGetCPCode(client, "ctr_1", "grp_2", &cpCodes)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
