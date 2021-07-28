@@ -43,8 +43,7 @@ func resourceActivations() *schema.Resource {
 			},
 			"notes": {
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "Activation Notes",
+				Required: true,
 			},
 			"activate": {
 				Type:     schema.TypeBool,
