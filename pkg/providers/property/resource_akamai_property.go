@@ -160,7 +160,7 @@ func resourceProperty() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
-				ConflictsWith: []string{"product_id"},
+				ExactlyOneOf: []string{"product_id"},
 				Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
 				StateFunc:     addPrefixToState("prd_"),
 			},
@@ -459,9 +459,6 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	ProductID := d.Get("product_id").(string)
 	if ProductID == "" {
 		ProductID = d.Get("product").(string)
-		if ProductID == "" {
-			return diag.Errorf("one of product,product_id must be specified")
-		}
 	}
 	ProductID = tools.AddPrefix(ProductID, "prd_")
 

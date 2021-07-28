@@ -766,8 +766,8 @@ func TestResProperty(t *testing.T) {
 		AssertConfigError(t, "both contract and contract_id given", `only one of .contract,contract_id. can be specified`)
 		AssertConfigError(t, "neither group nor group_id given", `one of .group,group_id. must be specified`)
 		AssertConfigError(t, "both group and group_id given", `only one of .group,group_id. can be specified`)
-		AssertConfigError(t, "neither product nor product_id given", `one of product,product_id must be specified`)
-		AssertConfigError(t, "both product and product_id given", `"product": conflicts with product_id`)
+		AssertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`)
+		AssertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`)
 		AssertConfigError(t, "invalid json rules", `rules are not valid JSON`)
 
 		AssertDeprecated(t, "contract")
