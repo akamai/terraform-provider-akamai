@@ -35,10 +35,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 			appsec.CreateActivationsRequest{Action: "ACTIVATE", Network: "STAGING", Note: "", NotificationEmails: []string{"martin@email.io"}, ActivationConfigs: []struct {
 				ConfigID      int "json:\"configId\""
 				ConfigVersion int "json:\"configVersion\""
-			}{struct {
-				ConfigID      int "json:\"configId\""
-				ConfigVersion int "json:\"configVersion\""
-			}{ConfigID: 43253, ConfigVersion: 7}}},
+			}{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&cr, nil)
 
 		client.On("RemoveActivations",
@@ -46,10 +43,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 			appsec.RemoveActivationsRequest{ActivationID: 547694, Action: "DEACTIVATE", Network: "STAGING", Note: "", NotificationEmails: []string{"martin@email.io"}, ActivationConfigs: []struct {
 				ConfigID      int "json:\"configId\""
 				ConfigVersion int "json:\"configVersion\""
-			}{struct {
-				ConfigID      int "json:\"configId\""
-				ConfigVersion int "json:\"configVersion\""
-			}{ConfigID: 43253, ConfigVersion: 7}}},
+			}{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
