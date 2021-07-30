@@ -238,7 +238,7 @@ func TestResProperty(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_property.test", "latest_version", LatestVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "staging_version", StagingVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "production_version", ProductionVersion),
-			resource.TestCheckResourceAttr("akamai_property.test", "name", "test property"),
+			resource.TestCheckResourceAttr("akamai_property.test", "name", "test_property"),
 			resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "contract", "ctr_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_0"),
@@ -263,9 +263,9 @@ func TestResProperty(t *testing.T) {
 	LatestVersionDeactivatedInStaging := LifecycleTestCase{
 		Name: "Latest version is active in staging",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0", "grp_0",
+			PropertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
 			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
@@ -305,9 +305,9 @@ func TestResProperty(t *testing.T) {
 	LatestVersionDeactivatedInProd := LifecycleTestCase{
 		Name: "Latest version is active in production",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0", "grp_0",
+			PropertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
 			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
@@ -347,9 +347,9 @@ func TestResProperty(t *testing.T) {
 	LatestVersionActiveInStaging := LifecycleTestCase{
 		Name: "Latest version is active in staging",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0", "grp_0",
+			PropertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
 			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
@@ -389,9 +389,9 @@ func TestResProperty(t *testing.T) {
 	LatestVersionActiveInProd := LifecycleTestCase{
 		Name: "Latest version is active in production",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0", "grp_0",
+			PropertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
 			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusActive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			AdvanceVersion("prp_0", 1, 2),
@@ -431,9 +431,9 @@ func TestResProperty(t *testing.T) {
 	LatestVersionNotActive := LifecycleTestCase{
 		Name: "Latest version not active",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0", "grp_0",
+			PropertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
 			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			SetHostnames("prp_0", 1, "to2.test.domain"),
@@ -461,9 +461,9 @@ func TestResProperty(t *testing.T) {
 	NoDiff := LifecycleTestCase{
 		Name: "No diff found in update",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0", "grp_0",
+			PropertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{Name: "Default CORS Policy", CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll}}}}),
-			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
 			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
@@ -496,11 +496,11 @@ func TestResProperty(t *testing.T) {
 	RulesCustomDiff := LifecycleTestCase{
 		Name: "Diff is only in behaviours.options.ttl",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0", "grp_0",
+			PropertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
 					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "12d"}}},
 					Name: "default", Children: []papi.Rules{}, Criteria: []papi.RuleBehavior{}}}),
-			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
 			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			SetHostnames("prp_0", 1, "to.test.domain"),
 			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
@@ -534,9 +534,9 @@ func TestResProperty(t *testing.T) {
 	NoDiffForHostnames := LifecycleTestCase{
 		Name: "No diff found in update",
 		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test property", "prp_0", "grp_0",
+			PropertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{Name: "Default CORS Policy", CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll}}}}),
-			GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+			GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
 			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			SetTwoHostnames("prp_0", 1, "from1.test.domain", "to1.test.domain", "from2.test.domain", "to2.test.domain"),
 			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
@@ -654,10 +654,10 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0",
+				PropertyLifecycle("test_property", "prp_0", "grp_0",
 					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
 				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil),
+				GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
 				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
 				SetHostnames("prp_0", 1, "to.test.domain"),
 				ImportProperty("prp_0"),
@@ -684,7 +684,7 @@ func TestResProperty(t *testing.T) {
 				setup = ComposeBehaviors(
 					setup,
 					GetVersionResources("prp_0", ContractID, GroupID, 1),
-					GetPropertyVersions("prp_0", "test property", ContractID, GroupID, nil),
+					GetPropertyVersions("prp_0", "test_property", ContractID, GroupID, nil),
 				)
 			}
 
@@ -843,9 +843,9 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
-				PropertyLifecycle("test property", "prp_0", "grp_0",
+				PropertyLifecycle("test_property", "prp_0", "grp_0",
 					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil, papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+				GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil, papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
 					{
 						PropertyVersion:  1,
 						StagingStatus:    papi.VersionStatusInactive,
@@ -853,9 +853,9 @@ func TestResProperty(t *testing.T) {
 					},
 				}}),
 				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				PropertyLifecycle("renamed property", "prp_1", "grp_0",
+				PropertyLifecycle("renamed_property", "prp_1", "grp_0",
 					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				GetPropertyVersions("prp_1", "renamed property", "ctr_0", "grp_0", nil, papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+				GetPropertyVersions("prp_1", "renamed_property", "ctr_0", "grp_0", nil, papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
 					{
 						PropertyVersion:  1,
 						StagingStatus:    papi.VersionStatusInactive,
@@ -881,7 +881,7 @@ func TestResProperty(t *testing.T) {
 							Config: loadFixtureString("testdata/%s-step1.tf", t.Name()),
 							Check: resource.ComposeAggregateTestCheckFunc(
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_1"),
-								resource.TestCheckResourceAttr("akamai_property.test", "name", "renamed property"),
+								resource.TestCheckResourceAttr("akamai_property.test", "name", "renamed_property"),
 							),
 						},
 					},
@@ -896,9 +896,9 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
-				CreateProperty("test property", "prp_0", papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
+				CreateProperty("test_property", "prp_0", papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
 				GetProperty("prp_0"),
-				GetPropertyVersions("prp_0", "test property", "ctr_0", "grp_0", nil, papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+				GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil, papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
 					{
 						PropertyVersion:  1,
 						StagingStatus:    papi.VersionStatusInactive,
@@ -992,7 +992,7 @@ func TestResProperty(t *testing.T) {
 				ContractID: "ctr_0",
 				GroupID:    "grp_0",
 				Property: papi.PropertyCreate{
-					PropertyName: "test property",
+					PropertyName: "test_property",
 					ProductID:    "prd_0",
 				},
 			}
@@ -1018,7 +1018,7 @@ func TestResProperty(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
 			ExpectCreateProperty(
-				client, "test property", "grp_0",
+				client, "test_property", "grp_0",
 				"ctr_0", "prd_0", "prp_1",
 			)
 
@@ -1065,11 +1065,11 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			ExpectCreateProperty(
-				client, "test property", "grp_0",
+				client, "test_property", "grp_0",
 				"ctr_0", "prd_0", "prp_0",
 			)
 
-			ExpectGetPropertyVersions(client, "prp_0", "test property", "ctr_0", "grp_0", &papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+			ExpectGetPropertyVersions(client, "prp_0", "test_property", "ctr_0", "grp_0", &papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
 				{
 					PropertyVersion:  1,
 					StagingStatus:    papi.VersionStatusInactive,
@@ -1093,7 +1093,7 @@ func TestResProperty(t *testing.T) {
 				client, "prp_0", "grp_0", "ctr_0",
 				&papi.Property{
 					PropertyID: "prp_0", GroupID: "grp_0", ContractID: "ctr_0", LatestVersion: 1,
-					PropertyName: "test property",
+					PropertyName: "test_property",
 				},
 			)
 
