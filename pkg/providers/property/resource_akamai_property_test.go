@@ -6,10 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestResProperty(t *testing.T) {
@@ -769,6 +770,8 @@ func TestResProperty(t *testing.T) {
 		AssertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`)
 		AssertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`)
 		AssertConfigError(t, "invalid json rules", `rules are not valid JSON`)
+		AssertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`)
+		AssertConfigError(t, "name given too long", `a name must be shorter than 86 characters`)
 
 		AssertDeprecated(t, "contract")
 		AssertDeprecated(t, "group")
@@ -1142,4 +1145,65 @@ func TestResProperty(t *testing.T) {
 			})
 		})
 	})
+}
+
+
+func TestValidatePropertyName(t *testing.T) {
+	invalidNameCharacters := diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
+	invalidNameLength := diag.Errorf("a name must be shorter than 86 characters")
+
+	tests := map[string]struct {
+		propertyName   string
+		expectedReturn diag.Diagnostics
+	}{
+		"name contains only valid characters": {
+			propertyName:   "Test_Name.With_Valid-Chars.123",
+			expectedReturn: nil,
+		},
+		"name contains only numbers": {
+			propertyName:   "123",
+			expectedReturn: nil,
+		},
+		"name contains only letters": {
+			propertyName:   "TestName",
+			expectedReturn: nil,
+		},
+		"name contains invalid char !": {
+			propertyName:   "Invalid_Char_!",
+			expectedReturn: invalidNameCharacters,
+		},
+		"name contains invalid char @": {
+			propertyName:   "@_Invalid_Char",
+			expectedReturn: invalidNameCharacters,
+		},
+		"name contains invalid spaces": {
+			propertyName:   "test name",
+			expectedReturn: invalidNameCharacters,
+		},
+		"name too long (86 chars)": {
+			propertyName:   strings.Repeat("a", 86),
+			expectedReturn: invalidNameLength,
+		},
+		"name of max length (85 chars)": {
+			propertyName:   strings.Repeat("a", 85),
+			expectedReturn: nil,
+		},
+		"name of min length (1 char)": {
+			propertyName:   strings.Repeat("a", 1),
+			expectedReturn: nil,
+		},
+		"name empty": {
+			propertyName:   "",
+			expectedReturn: invalidNameCharacters,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			ret := validatePropertyName(test.propertyName, nil)
+
+			assert.Equal(t, test.expectedReturn, ret)
+
+		})
+	}
 }

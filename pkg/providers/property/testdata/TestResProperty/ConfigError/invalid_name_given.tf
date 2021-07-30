@@ -3,7 +3,7 @@ provider "akamai" {
 }
 
 resource "akamai_property" "test" {
-  name        = "test_property"
+  name        = "invalid_name_@"
   contract_id = "ctr_0"
   group_id    = "grp_0"
 }

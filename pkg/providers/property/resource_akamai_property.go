@@ -113,7 +113,7 @@ func resourceProperty() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: validatePropertyName,
 				Description:      "Name to give to the Property (must be unique)",
 			},
 
@@ -328,6 +328,23 @@ func resourceProperty() *schema.Resource {
 			},
 		},
 	}
+}
+
+// isValidPropertyName is a function that validates if given string contains only letters, numbers, and these characters: . _ -
+var isValidPropertyName = regexp.MustCompile(`^[A-Za-z0-9.\-_]+$`).MatchString
+
+// validatePropertyName validates if name property contains valid characters
+func validatePropertyName(v interface{}, _ cty.Path) diag.Diagnostics {
+	name := v.(string)
+	maxPropertyNameLength := 85
+
+	if len(name) > maxPropertyNameLength {
+		return diag.Errorf("a name must be shorter than %d characters", maxPropertyNameLength + 1)
+	}
+	if !isValidPropertyName(name) {
+		return diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
+	}
+	return nil
 }
 
 // rulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state and from a new configuration.
