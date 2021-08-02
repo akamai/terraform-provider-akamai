@@ -472,3 +472,160 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 }
+
+func TestNoteFieldCannotBeAddedAfterActivationIsCompleted(t *testing.T) {
+	t.Run("Note field cannot be added after activation is completed", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{
+			{
+				methodName: "GetRuleTree",
+				papiResponse: &papi.GetRuleTreeResponse{
+					Response: papi.Response{
+						Errors:   make([]*papi.Error, 0),
+						Warnings: []*papi.Error{{Title: "some warning"}},
+					},
+				},
+				error:    nil,
+				stubOnce: false,
+			},
+			{
+				methodName:   "GetActivations",
+				papiResponse: getActivations(),
+				error:        nil,
+				stubOnce:     false,
+			},
+			{
+				methodName:  "CreateActivation",
+				papiRequest: createActivation(),
+				papiResponse: &papi.CreateActivationResponse{
+					ActivationID: "atv_activation1",
+				},
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivation",
+				papiRequest: papi.GetActivationRequest{
+					PropertyID:   "prp_test",
+					ActivationID: "atv_activation1",
+				},
+				papiResponse: getActivation(),
+			},
+		})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_doesnt_exist/resource_property_activation.tf"),
+					},
+					{
+						Config:      loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_doesnt_exist/resource_property_activation_update.tf"),
+						ExpectError: regexp.MustCompile("cannot update activation attribute note after creation"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+}
+
+func TestNoteFieldCannotBeUpdatedAfterActivationIsCompleted(t *testing.T) {
+	t.Run("Note field cannot be updated after activation is completed", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{
+			{
+				methodName: "GetRuleTree",
+				papiResponse: &papi.GetRuleTreeResponse{
+					Response: papi.Response{
+						Errors:   make([]*papi.Error, 0),
+						Warnings: []*papi.Error{{Title: "some warning"}},
+					},
+				},
+				error:    nil,
+				stubOnce: false,
+			},
+			{
+				methodName:   "GetActivations",
+				papiResponse: getActivations(),
+				error:        nil,
+				stubOnce:     false,
+			},
+			{
+				methodName:  "CreateActivation",
+				papiRequest: createActivation(),
+				papiResponse: &papi.CreateActivationResponse{
+					ActivationID: "atv_activation1",
+				},
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivation",
+				papiRequest: papi.GetActivationRequest{
+					PropertyID:   "prp_test",
+					ActivationID: "atv_activation1",
+				},
+				papiResponse: getActivation(),
+			},
+		})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_exists/resource_property_activation.tf"),
+					},
+					{
+						Config:      loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_exists/resource_property_activation_update.tf"),
+						ExpectError: regexp.MustCompile("cannot update activation attribute note after creation"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+}
+
+func getActivation() *papi.GetActivationResponse {
+	return &papi.GetActivationResponse{
+		GetActivationsResponse: papi.GetActivationsResponse{},
+		Activation: &papi.Activation{
+			ActivationID:    "atv_activation1",
+			PropertyID:      "prp_test",
+			PropertyVersion: 1,
+			Network:         "STAGING",
+			Status:          papi.ActivationStatusActive,
+		},
+	}
+}
+
+func createActivation() papi.CreateActivationRequest {
+	return papi.CreateActivationRequest{
+		PropertyID: "prp_test",
+		Activation: papi.Activation{
+			ActivationType:         papi.ActivationTypeDeactivate,
+			AcknowledgeAllWarnings: true,
+			PropertyVersion:        1,
+			Network:                "STAGING",
+			NotifyEmails:           []string{"user@example.com"},
+		},
+	}
+}
+
+func getActivations() *papi.GetActivationsResponse {
+	return &papi.GetActivationsResponse{
+		Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+			AccountID:       "act_1-6JHGX",
+			ActivationID:    "atv_activation1",
+			ActivationType:  "ACTIVATE",
+			GroupID:         "grp_91533",
+			PropertyName:    "test",
+			PropertyID:      "prp_test",
+			PropertyVersion: 1,
+			Network:         "STAGING",
+			Status:          "ACTIVE",
+			SubmitDate:      "2020-10-28T15:04:05Z",
+		}}}}
+}

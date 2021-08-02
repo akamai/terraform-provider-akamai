@@ -675,6 +675,12 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		if err := d.Set("warnings", flattenErrorArray(act.Warnings)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
+	} else if d.HasChange("note") {
+		oldValue, _ := d.GetChange("note")
+		if err = d.Set("note", oldValue); err != nil {
+			return diag.FromErr(err)
+		}
+		return diag.Errorf("cannot update activation attribute note after creation")
 	}
 
 	if err := d.Set("activation_id", propertyActivation.ActivationID); err != nil {
