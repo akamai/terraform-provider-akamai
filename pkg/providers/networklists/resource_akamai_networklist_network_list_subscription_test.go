@@ -27,17 +27,17 @@ func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 
 		client.On("GetNetworkListSubscription",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.GetNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}}, //Recipients: "79536_MARTINNETWORKLIST", UniqueIds: "test@email.com"},
+			networklists.GetNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cr, nil)
 
 		client.On("UpdateNetworkListSubscription",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.UpdateNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}}, //Recipients: ,
+			networklists.UpdateNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cu, nil)
 
 		client.On("RemoveNetworkListSubscription",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.RemoveNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}}, //Recipients: ,
+			networklists.RemoveNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cd, nil)
 
 		useClient(client, func() {

@@ -50,7 +50,7 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 
 		client.On("UpdateNetworkList",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.UpdateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "Notes about this network list", SyncPoint: 0, List: []string{"10.1.8.23", "10.3.5.67"}, UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
+			networklists.UpdateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "Notes about this network list", SyncPoint: 0, List: []string{"10.1.8.23", "10.3.5.67"}, UniqueID: "2275_VOYAGERCALLCENTERWHITELI", ContractID: "C-1FRYVV3", GroupID: 64867},
 		).Return(&cu, nil)
 
 		client.On("RemoveNetworkList",
