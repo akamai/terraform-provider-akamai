@@ -561,69 +561,75 @@ func TestResProperty(t *testing.T) {
 		},
 	}
 
+	// Test Schema Configuration
+
 	// Run a test case to verify schema validations
-	AssertConfigError := func(t *testing.T, flaw, rx string) {
-		t.Helper()
-		caseName := fmt.Sprintf("ConfigError/%s", flaw)
+	AssertConfigError := func(t *testing.T, flaw, rx string) func(t *testing.T) {
 
-		t.Run(caseName, func(t *testing.T) {
-			t.Helper()
+		fixtureName := strings.ReplaceAll(flaw, " ", "_")
 
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{{
-					Config:      loadFixtureString("testdata/%s.tf", t.Name()),
-					ExpectError: regexp.MustCompile(rx),
-				}},
-			})
-		})
-	}
-
-	// Run a test case to verify schema attribute deprecation
-	AssertDeprecated := func(t *testing.T, attribute string) {
-		t.Helper()
-
-		t.Run(fmt.Sprintf("%s attribute is deprecated", attribute), func(t *testing.T) {
-			t.Helper()
-			if resourceProperty().Schema[attribute].Deprecated == "" {
-				t.Fatalf(`%q attribute is not marked deprecated`, attribute)
-			}
-		})
-	}
-
-	// Run a test case to confirm that the user is prompted to read the upgrade guide
-	AssertForbiddenAttr := func(t *testing.T, fixtureName string) {
-		t.Helper()
-
-		t.Run(fmt.Sprintf("ForbiddenAttr/%s", fixtureName), func(t *testing.T) {
-			t.Helper()
-			client := &mockpapi{}
-			client.Test(T{t})
-
-			useClient(client, func() {
+		return func(t *testing.T) {
+			t.Run(flaw, func(t *testing.T) {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{{
-						Config:      loadFixtureString("testdata/%s.tf", t.Name()),
-						ExpectError: regexp.MustCompile("See the Akamai Terraform Upgrade Guide"),
+						Config:      loadFixtureString("testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
+						ExpectError: regexp.MustCompile(rx),
 					}},
 				})
 			})
-
-			client.AssertExpectations(t)
-		})
+		}
 	}
 
+	// Test Deprecated Schema Option
+
+	// Run a test case to verify schema attribute deprecation
+	AssertDeprecated := func(t *testing.T, attribute string) func(t *testing.T) {
+
+		return func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s attribute is deprecated", attribute), func(t *testing.T) {
+				if resourceProperty().Schema[attribute].Deprecated == "" {
+					t.Fatalf(`%q attribute is not marked deprecated`, attribute)
+				}
+			})
+		}
+	}
+
+	// Test Forbidden Schema Option
+
+	// Run a test case to confirm that the user is prompted to read the upgrade guide
+	AssertForbiddenAttr := func(t *testing.T, fixtureName string) func(t *testing.T) {
+
+		fixtureName = strings.ReplaceAll(fixtureName, " ", "_")
+
+		return func(t *testing.T) {
+			t.Run(fmt.Sprintf("ForbiddenAttr/%s", fixtureName), func(t *testing.T) {
+				client := &mockpapi{}
+				client.Test(T{t})
+
+				useClient(client, func() {
+					resource.UnitTest(t, resource.TestCase{
+						Providers: testAccProviders,
+						Steps: []resource.TestStep{{
+							Config:      loadFixtureString("testdata/TestResProperty/ForbiddenAttr/%s.tf", fixtureName),
+							ExpectError: regexp.MustCompile("See the Akamai Terraform Upgrade Guide"),
+						}},
+					})
+				})
+
+				client.AssertExpectations(t)
+			})
+		}
+	}
+
+	// Test Lifecycle
+
 	// Run a happy-path test case that goes through a complete create-update-destroy cycle
-	AssertLifecycle := func(t *testing.T, variant string, kase LifecycleTestCase) {
-		t.Helper()
+	AssertLifecycle := func(t *testing.T, name, variant string, kase LifecycleTestCase) func(t *testing.T) {
 
 		fixturePrefix := fmt.Sprintf("testdata/%s/Lifecycle/%s", t.Name(), variant)
-		testName := fmt.Sprintf("Lifecycle/%s/%s", variant, kase.Name)
 
-		t.Run(testName, func(t *testing.T) {
-			t.Helper()
-
+		return func(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
 			State := &TestState{Client: client}
@@ -631,212 +637,202 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps:     kase.Steps(State, fixturePrefix),
+					Providers:  testAccProviders,
+					IsUnitTest: true,
+					Steps:      kase.Steps(State, fixturePrefix),
 				})
 			})
 
 			client.AssertExpectations(t)
-		})
+		}
 	}
 
+	// Test Import
+
 	// Run a test case that verifies the resource can be imported by the given ID
-	AssertImportable := func(t *testing.T, TestName, ImportID string) {
-		t.Helper()
+	AssertImportable := func(t *testing.T, TestName, ImportID string) func(t *testing.T) {
 
 		fixturePath := fmt.Sprintf("testdata/%s/Importable/importable.tf", t.Name())
 		testName := fmt.Sprintf("Importable/%s", TestName)
 
-		t.Run(testName, func(t *testing.T) {
-			t.Helper()
+		return func(t *testing.T) {
+			t.Run(testName, func(t *testing.T) {
 
-			client := &mockpapi{}
-			client.Test(T{t})
+				client := &mockpapi{}
+				client.Test(T{t})
 
-			setup := ComposeBehaviors(
-				PropertyLifecycle("test_property", "prp_0", "grp_0",
-					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
-				SetHostnames("prp_0", 1, "to.test.domain"),
-				ImportProperty("prp_0"),
-			)
+				setup := ComposeBehaviors(
+					PropertyLifecycle("test_property", "prp_0", "grp_0",
+						papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
+					GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+					GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0", nil),
+					GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
+					SetHostnames("prp_0", 1, "to.test.domain"),
+					ImportProperty("prp_0"),
+				)
 
-			parameters := strings.Split(ImportID, ",")
-			numberParameters := len(parameters)
-			lastParameter := parameters[len(parameters)-1]
-			if (numberParameters == 2 || numberParameters == 4) && !isDefaultVersion(lastParameter) {
-				var ContractID, GroupID string
-				if numberParameters == 4 {
-					ContractID = "ctr_0"
-					GroupID = "grp_0"
-				}
+				parameters := strings.Split(ImportID, ",")
+				numberParameters := len(parameters)
+				lastParameter := parameters[len(parameters)-1]
+				if (numberParameters == 2 || numberParameters == 4) && !isDefaultVersion(lastParameter) {
+					var ContractID, GroupID string
+					if numberParameters == 4 {
+						ContractID = "ctr_0"
+						GroupID = "grp_0"
+					}
 
-				if numberParameters == 2 {
+					if numberParameters == 2 {
+						setup = ComposeBehaviors(
+							setup,
+							GetPropertyVersionResources("prp_0", GroupID, ContractID, 1,
+								papi.VersionStatusActive, papi.VersionStatusInactive),
+						)
+					}
+
 					setup = ComposeBehaviors(
 						setup,
-						GetPropertyVersionResources("prp_0", GroupID, ContractID, 1,
-							papi.VersionStatusActive, papi.VersionStatusInactive),
+						GetVersionResources("prp_0", ContractID, GroupID, 1),
+						GetPropertyVersions("prp_0", "test_property", ContractID, GroupID, nil),
 					)
 				}
 
-				setup = ComposeBehaviors(
-					setup,
-					GetVersionResources("prp_0", ContractID, GroupID, 1),
-					GetPropertyVersions("prp_0", "test_property", ContractID, GroupID, nil),
-				)
-			}
-
-			kase := LifecycleTestCase{
-				Name:        "Importable",
-				ClientSetup: setup,
-				Steps: func(State *TestState, _ string) []resource.TestStep {
-					return []resource.TestStep{
-						{
-							PreConfig: func() {
-								State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
-									{
-										PropertyVersion:  1,
-										StagingStatus:    papi.VersionStatusActive,
-										ProductionStatus: papi.VersionStatusActive,
-									},
-								}}
+				kase := LifecycleTestCase{
+					Name:        "Importable",
+					ClientSetup: setup,
+					Steps: func(State *TestState, _ string) []resource.TestStep {
+						return []resource.TestStep{
+							{
+								PreConfig: func() {
+									State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+										{
+											PropertyVersion:  1,
+											StagingStatus:    papi.VersionStatusActive,
+											ProductionStatus: papi.VersionStatusActive,
+										},
+									}}
+								},
+								Config: loadFixtureString(fixturePath),
+								Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+									"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 							},
-							Config: loadFixtureString(fixturePath),
-							Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-						},
-						{
-							ImportState:       true,
-							ImportStateVerify: true,
-							ImportStateId:     ImportID,
-							ResourceName:      "akamai_property.test",
-							Config:            loadFixtureString(fixturePath),
-						},
-						{
-							Config: loadFixtureString(fixturePath),
-							Check: CheckAttrs("prp_0", "to.test.domain", "1", "1", "1", "ehn_123",
-								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-						},
-					}
-				},
-			}
-			State := &TestState{Client: client}
-			kase.ClientSetup(State)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps:     kase.Steps(State, ""),
+							{
+								ImportState:       true,
+								ImportStateVerify: true,
+								ImportStateId:     ImportID,
+								ResourceName:      "akamai_property.test",
+								Config:            loadFixtureString(fixturePath),
+							},
+							{
+								Config: loadFixtureString(fixturePath),
+								Check: CheckAttrs("prp_0", "to.test.domain", "1", "1", "1", "ehn_123",
+									"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+							},
+						}
+					},
+				}
+				State := &TestState{Client: client}
+				kase.ClientSetup(State)
+				useClient(client, func() {
+					resource.UnitTest(t, resource.TestCase{
+						Providers: testAccProviders,
+						Steps:     kase.Steps(State, ""),
+					})
 				})
-			})
 
-			client.AssertExpectations(t)
-		})
+				client.AssertExpectations(t)
+			})
+		}
 	}
 
-	t.Run("invalid import ID passed", func(t *testing.T) {
-		t.Helper()
-		client := &mockpapi{}
-		client.Test(T{t})
-		ImportID := "prp_0,grp_0"
-		TODO(t, "error assertion in import is impossible using provider testing framework as it only checks for errors in `apply`")
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config:        loadFixtureString("testdata/TestResProperty/Importable/importable.tf"),
-						ImportState:   true,
-						ImportStateId: ImportID,
-						ResourceName:  "akamai_property.test",
-						ExpectError:   regexp.MustCompile("Either PropertyId or comma-separated list of PropertyId, contractID and groupID in that order has to be supplied in import: prp_0,grp_0"),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
 	suppressLogging(t, func() {
-		AssertLifecycle(t, "normal", LatestVersionNotActive)
 
-		AssertConfigError(t, "name not given", `"name" is required`)
-		AssertConfigError(t, "neither contract nor contract_id given", `one of .contract,contract_id. must be specified`)
-		AssertConfigError(t, "both contract and contract_id given", `only one of .contract,contract_id. can be specified`)
-		AssertConfigError(t, "neither group nor group_id given", `one of .group,group_id. must be specified`)
-		AssertConfigError(t, "both group and group_id given", `only one of .group,group_id. can be specified`)
-		AssertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`)
-		AssertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`)
-		AssertConfigError(t, "invalid json rules", `rules are not valid JSON`)
-		AssertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`)
-		AssertConfigError(t, "name given too long", `a name must be shorter than 86 characters`)
+		// Test Schema Configuration
 
-		AssertDeprecated(t, "contract")
-		AssertDeprecated(t, "group")
-		AssertDeprecated(t, "product")
-		AssertDeprecated(t, "cp_code")
-		AssertDeprecated(t, "contact")
-		AssertDeprecated(t, "origin")
-		AssertDeprecated(t, "is_secure")
-		AssertDeprecated(t, "variables")
+		t.Run("Schema Configuration Error: name not given", AssertConfigError(t, "name not given", `"name" is required`))
+		t.Run("Schema Configuration Error: neither contract nor contract_id given", AssertConfigError(t, "neither contract nor contract_id given", `one of .contract,contract_id. must be specified`))
+		t.Run("Schema Configuration Error: both contract and contract_id given", AssertConfigError(t, "both contract and contract_id given", `only one of .contract,contract_id. can be specified`))
+		t.Run("Schema Configuration Error: neither group nor group_id given", AssertConfigError(t, "neither group nor group_id given", `one of .group,group_id. must be specified`))
+		t.Run("Schema Configuration Error: both group and group_id given", AssertConfigError(t, "both group and group_id given", `only one of .group,group_id. can be specified`))
+		t.Run("Schema Configuration Error: neither product nor product_id given", AssertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`))
+		t.Run("Schema Configuration Error: both product and product_id given", AssertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`))
+		t.Run("Schema Configuration Error: invalid json rules", AssertConfigError(t, "invalid json rules", `rules are not valid JSON`))
+		t.Run("Schema Configuration Error: invalid name given", AssertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
+		t.Run("Schema Configuration Error: name given too long", AssertConfigError(t, "name given too long", `a name must be shorter than 86 characters`))
 
-		AssertForbiddenAttr(t, "cp_code")
-		AssertForbiddenAttr(t, "contact")
-		AssertForbiddenAttr(t, "origin")
-		AssertForbiddenAttr(t, "is_secure")
-		AssertForbiddenAttr(t, "variables")
+		// Test Deprecated Schema Option
 
-		AssertLifecycle(t, "normal", LatestVersionNotActive)
-		AssertLifecycle(t, "normal", LatestVersionActiveInStaging)
-		AssertLifecycle(t, "normal", LatestVersionActiveInProd)
-		AssertLifecycle(t, "normal", LatestVersionDeactivatedInStaging)
-		AssertLifecycle(t, "normal", LatestVersionDeactivatedInProd)
-		AssertLifecycle(t, "contract_id without prefix", LatestVersionNotActive)
-		AssertLifecycle(t, "contract_id without prefix", LatestVersionActiveInStaging)
-		AssertLifecycle(t, "contract_id without prefix", LatestVersionActiveInProd)
-		AssertLifecycle(t, "contract without prefix", LatestVersionNotActive)
-		AssertLifecycle(t, "contract without prefix", LatestVersionActiveInStaging)
-		AssertLifecycle(t, "contract without prefix", LatestVersionActiveInProd)
-		AssertLifecycle(t, "group_id without prefix", LatestVersionNotActive)
-		AssertLifecycle(t, "group_id without prefix", LatestVersionActiveInStaging)
-		AssertLifecycle(t, "group_id without prefix", LatestVersionActiveInProd)
-		AssertLifecycle(t, "group without prefix", LatestVersionNotActive)
-		AssertLifecycle(t, "group without prefix", LatestVersionActiveInStaging)
-		AssertLifecycle(t, "group without prefix", LatestVersionActiveInProd)
-		AssertLifecycle(t, "product_id without prefix", LatestVersionNotActive)
-		AssertLifecycle(t, "product_id without prefix", LatestVersionActiveInStaging)
-		AssertLifecycle(t, "product_id without prefix", LatestVersionActiveInProd)
-		AssertLifecycle(t, "product without prefix", LatestVersionNotActive)
-		AssertLifecycle(t, "product without prefix", LatestVersionActiveInStaging)
-		AssertLifecycle(t, "product without prefix", LatestVersionActiveInProd)
-		AssertLifecycle(t, "no diff", NoDiff)
-		AssertLifecycle(t, "product to product_id", NoDiff)
-		AssertLifecycle(t, "product_id to product", NoDiff)
-		AssertLifecycle(t, "rules custom diff", RulesCustomDiff)
-		AssertLifecycle(t, "hostnames", NoDiffForHostnames)
+		t.Run("Schema deprecation: contract", AssertDeprecated(t, "contract"))
+		t.Run("Schema deprecation: group", AssertDeprecated(t, "group"))
+		t.Run("Schema deprecation: product", AssertDeprecated(t, "product"))
+		t.Run("Schema deprecation: cp_code", AssertDeprecated(t, "cp_code"))
+		t.Run("Schema deprecation: contact", AssertDeprecated(t, "contact"))
+		t.Run("Schema deprecation: origin", AssertDeprecated(t, "origin"))
+		t.Run("Schema deprecation: is_secure", AssertDeprecated(t, "is_secure"))
+		t.Run("Schema deprecation: variables", AssertDeprecated(t, "variables"))
 
-		AssertImportable(t, "property_id", "prp_0")
-		AssertImportable(t, "property_id and ver_# version", "prp_0,ver_1")
-		AssertImportable(t, "property_id and # version", "prp_0,1")
-		AssertImportable(t, "property_id and latest", "prp_0,latest")
-		AssertImportable(t, "property_id and network", "prp_0,staging")
-		AssertImportable(t, "unprefixed property_id", "0")
-		AssertImportable(t, "unprefixed property_id and # version", "0,1")
-		AssertImportable(t, "unprefixed property_id and ver_# version", "0,ver_1")
-		AssertImportable(t, "unprefixed property_id and network", "0,p")
-		AssertImportable(t, "property_id and contract_id and group_id", "prp_0,ctr_0,grp_0")
-		AssertImportable(t, "property_id, contract_id, group_id and empty version", "prp_0,ctr_0,grp_0,")
-		AssertImportable(t, "property_id, contract_id, group_id and latest", "prp_0,ctr_0,grp_0,latest")
-		AssertImportable(t, "property_id, contract_id, group_id and ver_# version", "prp_0,ctr_0,grp_0,ver_1")
-		AssertImportable(t, "property_id, contract_id, group_id and # version", "prp_0,ctr_0,grp_0,1")
-		AssertImportable(t, "property_id, contract_id, group_id and network", "prp_0,ctr_0,grp_0,staging")
-		AssertImportable(t, "unprefixed property_id and contract_id and group_id", "0,0,0")
-		AssertImportable(t, "unprefixed property_id and contract_id, group_id and # version", "0,0,0,1")
-		AssertImportable(t, "unprefixed property_id and contract_id, group_id and ver_# version", "0,0,0,ver_1")
-		AssertImportable(t, "unprefixed property_id and contract_id, group_id and latest", "0,0,0,latest")
-		AssertImportable(t, "unprefixed property_id and contract_id, group_id and network", "0,0,0,production")
+		// Test Forbidden Schema Option
+
+		t.Run("Schema forbidden attribute: cp_code", AssertForbiddenAttr(t, "cp_code"))
+		t.Run("Schema forbidden attribute: contact", AssertForbiddenAttr(t, "contact"))
+		t.Run("Schema forbidden attribute: origin", AssertForbiddenAttr(t, "origin"))
+		t.Run("Schema forbidden attribute: is_secure", AssertForbiddenAttr(t, "is_secure"))
+		t.Run("Schema forbidden attribute: variables", AssertForbiddenAttr(t, "variables"))
+
+		// Test Lifecycle
+
+		t.Run("Lifecycle: latest version is not active (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is deactivated in staging (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionDeactivatedInStaging))
+		t.Run("Lifecycle: latest version is deactivated in production (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionDeactivatedInProd))
+		t.Run("Lifecycle: latest version is not active (contract_id without prefix)", AssertLifecycle(t, t.Name(), "contract_id without prefix", LatestVersionNotActive))
+		t.Run("Lifecycle: latest version active in staging (contract_id without prefix)", AssertLifecycle(t, t.Name(), "contract_id without prefix", LatestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version active in production (contract_id without prefix)", AssertLifecycle(t, t.Name(), "contract_id without prefix", LatestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (contract without prefix)", AssertLifecycle(t, t.Name(), "contract without prefix", LatestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (contract without prefix)", AssertLifecycle(t, t.Name(), "contract without prefix", LatestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (contract without prefix)", AssertLifecycle(t, t.Name(), "contract without prefix", LatestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (group_id without prefix)", AssertLifecycle(t, t.Name(), "group_id without prefix", LatestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (group_id without prefix)", AssertLifecycle(t, t.Name(), "group_id without prefix", LatestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (group_id without prefix)", AssertLifecycle(t, t.Name(), "group_id without prefix", LatestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (group without prefix)", AssertLifecycle(t, t.Name(), "group without prefix", LatestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (group without prefix)", AssertLifecycle(t, t.Name(), "group without prefix", LatestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (group without prefix)", AssertLifecycle(t, t.Name(), "group without prefix", LatestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (product_id without prefix)", AssertLifecycle(t, t.Name(), "product_id without prefix", LatestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (product_id without prefix)", AssertLifecycle(t, t.Name(), "product_id without prefix", LatestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (product_id without prefix)", AssertLifecycle(t, t.Name(), "product_id without prefix", LatestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (product without prefix)", AssertLifecycle(t, t.Name(), "product without prefix", LatestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (product without prefix)", AssertLifecycle(t, t.Name(), "product without prefix", LatestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (product without prefix)", AssertLifecycle(t, t.Name(), "product without prefix", LatestVersionActiveInProd))
+		t.Run("Lifecycle: no diff", AssertLifecycle(t, t.Name(), "no diff", NoDiff))
+		t.Run("Lifecycle: no diff (product to product_id)", AssertLifecycle(t, t.Name(), "product to product_id", NoDiff))
+		t.Run("Lifecycle: no diff (product_id to product)", AssertLifecycle(t, t.Name(), "product_id to product", NoDiff))
+		t.Run("Lifecycle: rules custom diff", AssertLifecycle(t, t.Name(), "rules custom diff", RulesCustomDiff))
+		t.Run("Lifecycle: no diff for hostnames (hostnames)", AssertLifecycle(t, t.Name(), "hostnames", NoDiffForHostnames))
+
+		// Test Import
+
+		t.Run("Importable: property_id", AssertImportable(t, "property_id", "prp_0"))
+		t.Run("Importable: property_id and ver_# version", AssertImportable(t, "property_id and ver_# version", "prp_0,ver_1"))
+		t.Run("Importable: property_id and # version", AssertImportable(t, "property_id and # version", "prp_0,1"))
+		t.Run("Importable: property_id and latest", AssertImportable(t, "property_id and latest", "prp_0,latest"))
+		t.Run("Importable: property_id and network", AssertImportable(t, "property_id and network", "prp_0,staging"))
+		t.Run("Importable: unprefixed property_id", AssertImportable(t, "unprefixed property_id", "0"))
+		t.Run("Importable: unprefixed property_id and # version", AssertImportable(t, "unprefixed property_id and # version", "0,1"))
+		t.Run("Importable: unprefixed property_id and ver_# version", AssertImportable(t, "unprefixed property_id and ver_# version", "0,ver_1"))
+		t.Run("Importable: unprefixed property_id and network", AssertImportable(t, "unprefixed property_id and network", "0,p"))
+		t.Run("Importable: property_id and contract_id and group_id", AssertImportable(t, "property_id and contract_id and group_id", "prp_0,ctr_0,grp_0"))
+		t.Run("Importable: property_id, contract_id, group_id and empty version", AssertImportable(t, "property_id, contract_id, group_id and empty version", "prp_0,ctr_0,grp_0,"))
+		t.Run("Importable: property_id, contract_id, group_id and latest", AssertImportable(t, "property_id, contract_id, group_id and latest", "prp_0,ctr_0,grp_0,latest"))
+		t.Run("Importable: property_id, contract_id, group_id and ver_# version", AssertImportable(t, "property_id, contract_id, group_id and ver_# version", "prp_0,ctr_0,grp_0,ver_1"))
+		t.Run("Importable: property_id, contract_id, group_id and # version", AssertImportable(t, "property_id, contract_id, group_id and # version", "prp_0,ctr_0,grp_0,1"))
+		t.Run("Importable: property_id, contract_id, group_id and network", AssertImportable(t, "property_id, contract_id, group_id and network", "prp_0,ctr_0,grp_0,staging"))
+		t.Run("Importable: unprefixed property_id and contract_id and group_id", AssertImportable(t, "unprefixed property_id and contract_id and group_id", "0,0,0"))
+		t.Run("Importable: unprefixed property_id and contract_id, group_id and # version", AssertImportable(t, "unprefixed property_id and contract_id, group_id and # version", "0,0,0,1"))
+		t.Run("Importable: unprefixed property_id and contract_id, group_id and ver_# version", AssertImportable(t, "unprefixed property_id and contract_id, group_id and ver_# version", "0,0,0,ver_1"))
+		t.Run("Importable: unprefixed property_id and contract_id, group_id and latest", AssertImportable(t, "unprefixed property_id and contract_id, group_id and latest", "0,0,0,latest"))
+		t.Run("Importable: unprefixed property_id and contract_id, group_id and network", AssertImportable(t, "unprefixed property_id and contract_id, group_id and network", "0,0,0,production"))
+
+		// Test Delete
 
 		t.Run("property is destroyed and recreated when name is changed", func(t *testing.T) {
 			client := &mockpapi{}
@@ -944,75 +940,7 @@ func TestResProperty(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 
-		t.Run("error when the given group is not found", func(t *testing.T) {
-			client := &mockpapi{}
-			client.Test(T{t})
-
-			req := papi.CreatePropertyRequest{
-				ContractID: "ctr_0",
-				GroupID:    "grp_0",
-				Property: papi.PropertyCreate{
-					ProductID:    "prd_0",
-					PropertyName: "property_name",
-				},
-			}
-
-			var err error = &papi.Error{
-				StatusCode: 404,
-				Title:      "Not Found",
-				Detail:     "The system was unable to locate the requested resource",
-				Type:       "https://problems.luna.akamaiapis.net/papi/v0/http/not-found",
-				Instance:   "https://akaa-hqgqowhpmkw32kmt-t3owzo37wb5dkern.luna-dev.akamaiapis.net/papi/v1/properties?contractId=ctr_0\\u0026groupId=grp_0#c3fe5f9b0c4a14d1",
-			}
-
-			client.On("CreateProperty", AnyCTX, req).Return(nil, err).Once()
-
-			// the papi GetGroups call should not return any matching group
-			var Groups []*papi.Group
-			ExpectGetGroups(client, &Groups).Once()
-
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps: []resource.TestStep{{
-						Config:      loadFixtureString("testdata/TestResProperty/Creation/property.tf"),
-						ExpectError: regexp.MustCompile("group not found: grp_0"),
-					}},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-
-		t.Run("error when creating property with non-unique name", func(t *testing.T) {
-			client := &mockpapi{}
-			client.Test(T{t})
-
-			req := papi.CreatePropertyRequest{
-				ContractID: "ctr_0",
-				GroupID:    "grp_0",
-				Property: papi.PropertyCreate{
-					PropertyName: "test_property",
-					ProductID:    "prd_0",
-				},
-			}
-
-			client.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf("given property name is not unique"))
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps: []resource.TestStep{
-						{
-							Config:      loadFixtureString("testdata/%s.tf", t.Name()),
-							Check:       resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
-							ExpectError: regexp.MustCompile(`property name is not unique`),
-						},
-					},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
+		// Test validation
 
 		t.Run("error validations when updating property with rules tree", func(t *testing.T) {
 			client := &mockpapi{}
@@ -1144,9 +1072,81 @@ func TestResProperty(t *testing.T) {
 				})
 			})
 		})
+
+		// Other tests
+
+		t.Run("error when the given group is not found", func(t *testing.T) {
+			client := &mockpapi{}
+			client.Test(T{t})
+
+			req := papi.CreatePropertyRequest{
+				ContractID: "ctr_0",
+				GroupID:    "grp_0",
+				Property: papi.PropertyCreate{
+					ProductID:    "prd_0",
+					PropertyName: "property_name",
+				},
+			}
+
+			var err error = &papi.Error{
+				StatusCode: 404,
+				Title:      "Not Found",
+				Detail:     "The system was unable to locate the requested resource",
+				Type:       "https://problems.luna.akamaiapis.net/papi/v0/http/not-found",
+				Instance:   "https://akaa-hqgqowhpmkw32kmt-t3owzo37wb5dkern.luna-dev.akamaiapis.net/papi/v1/properties?contractId=ctr_0\\u0026groupId=grp_0#c3fe5f9b0c4a14d1",
+			}
+
+			client.On("CreateProperty", AnyCTX, req).Return(nil, err).Once()
+
+			// the papi GetGroups call should not return any matching group
+			var Groups []*papi.Group
+			ExpectGetGroups(client, &Groups).Once()
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{{
+						Config:      loadFixtureString("testdata/TestResProperty/Creation/property.tf"),
+						ExpectError: regexp.MustCompile("group not found: grp_0"),
+					}},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
+
+		t.Run("error when creating property with non-unique name", func(t *testing.T) {
+			client := &mockpapi{}
+			client.Test(T{t})
+
+			req := papi.CreatePropertyRequest{
+				ContractID: "ctr_0",
+				GroupID:    "grp_0",
+				Property: papi.PropertyCreate{
+					PropertyName: "test_property",
+					ProductID:    "prd_0",
+				},
+			}
+
+			client.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf("given property name is not unique"))
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config:      loadFixtureString("testdata/%s.tf", t.Name()),
+							Check:       resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
+							ExpectError: regexp.MustCompile(`property name is not unique`),
+						},
+					},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
+
 	})
 }
-
 
 func TestValidatePropertyName(t *testing.T) {
 	invalidNameCharacters := diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
