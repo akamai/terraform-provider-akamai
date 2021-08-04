@@ -358,9 +358,6 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	if err := d.Set("ip_behavior", defaultEdgeHostname.IPVersionBehavior); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
 	if err := d.Set("edge_hostname", defaultEdgeHostname.Domain); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}

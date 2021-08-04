@@ -584,9 +584,10 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 							assert.Equal(t, "eh_1", rs.Attributes["id"])
 							return nil
 						},
-						ImportStateId:     id,
-						ResourceName:      "akamai_edge_hostname.importedgehostname",
-						ImportStateVerify: true,
+						ImportStateId:           id,
+						ResourceName:            "akamai_edge_hostname.importedgehostname",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"ip_behavior"},
 					},
 				},
 			})
