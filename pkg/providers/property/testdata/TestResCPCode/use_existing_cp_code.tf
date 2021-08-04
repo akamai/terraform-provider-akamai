@@ -3,8 +3,8 @@ provider "akamai" {
 }
 
 resource "akamai_cp_code" "test" {
-  name     = "test cpcode"
-  contract = "ctr_test"
-  group    = "grp_test"
-  product  = "prd_test"
+  name        = "test cpcode"
+  contract_id = "ctr_test"
+  group_id    = "grp_test"
+  product_id  = "prd_test"
 }

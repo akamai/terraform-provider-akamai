@@ -84,8 +84,44 @@ func TestResCPCode(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
+					),
+				}},
+			})
+		})
+	})
+
+	t.Run("create new CP Code with deprecated attributes", func(t *testing.T) {
+		client := &mockpapi{}
+		defer client.AssertExpectations(t)
+
+		// Contains CP Codes known to mock PAPI
+		CPCodes := []papi.CPCode{}
+
+		// Values are from fixture:
+		expectGetCPCode(client, "ctr_1", "grp_1", &CPCodes)
+		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes)
+
+		// No mock behavior for delete because there is no delete operation for CP Codes
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{{
+					Config: loadFixtureString("testdata/TestResCPCode/create_new_cp_code_deprecated_attrs.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
 					),
 				}},
 			})
@@ -116,8 +152,11 @@ func TestResCPCode(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_test2"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_test"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_test"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_test"),
 					),
 				}},
 			})
@@ -149,8 +188,11 @@ func TestResCPCode(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_test2"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_test"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_test"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_test"),
 					),
 				}},
 			})
@@ -236,8 +278,11 @@ func TestResCPCode(t *testing.T) {
 							assert.Len(t, s, 1)
 							rs := s[0]
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
+							assert.Equal(t, "grp_2", rs.Attributes["group"])
 							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+							assert.Equal(t, "ctr_1", rs.Attributes["contract"])
 							assert.Equal(t, "prd_Web_Accel", rs.Attributes["product_id"])
+							assert.Equal(t, "prd_Web_Accel", rs.Attributes["product"])
 							assert.Equal(t, "cpc_123", rs.Attributes["id"])
 							assert.Equal(t, "test cpcode", rs.Attributes["name"])
 							return nil
