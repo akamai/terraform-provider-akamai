@@ -19,12 +19,12 @@ import (
 // appsec v1
 //
 // https://developer.akamai.com/api/cloud_security/application_security/v1.html
-func resourceAttackGroup() *schema.Resource {
+func resourceEvalGroup() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceAttackGroupCreate,
-		ReadContext:   resourceAttackGroupRead,
-		UpdateContext: resourceAttackGroupUpdate,
-		DeleteContext: resourceAttackGroupDelete,
+		CreateContext: resourceEvalGroupCreate,
+		ReadContext:   resourceEvalGroupRead,
+		UpdateContext: resourceEvalGroupUpdate,
+		DeleteContext: resourceEvalGroupDelete,
 		CustomizeDiff: customdiff.All(
 			VerifyIdUnchanged,
 		),
@@ -60,23 +60,23 @@ func resourceAttackGroup() *schema.Resource {
 	}
 }
 
-func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAttackGroupCreate")
-	logger.Debugf(" in resourceAttackGroupCreate")
+	logger := meta.Log("APPSEC", "resourceEvalGroupCreate")
+	logger.Debugf("in resourceEvalGroupCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configid, "atackGroup", m)
 	policyid, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	attackgroup, err := tools.GetStringValue("attack_group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	action, err := tools.GetStringValue("attack_group_action", d)
@@ -87,8 +87,8 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	jsonPayloadRaw := []byte(conditionexception)
-	rawJSON := (json.RawMessage)(jsonPayloadRaw)
+
+	rawJSON := json.RawMessage(conditionexception)
 
 	if err := validateActionAndConditionException(action, conditionexception); err != nil {
 		return diag.FromErr(err)
@@ -102,21 +102,22 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	createAttackGroup.Action = action
 	createAttackGroup.JsonPayloadRaw = rawJSON
 
-	_, err = client.UpdateAttackGroup(ctx, createAttackGroup)
+	_, err = client.UpdateEvalGroup(ctx, createAttackGroup)
 	if err != nil {
+		logger.Errorf("calling 'createEvalGroup': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s:%s", createAttackGroup.ConfigID, createAttackGroup.PolicyID, createAttackGroup.Group))
 
-	return resourceAttackGroupRead(ctx, d, m)
+	return resourceEvalGroupRead(ctx, d, m)
 }
 
-func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAttackGroupRead")
-	logger.Debugf(" in resourceAttackGroupRead")
+	logger := meta.Log("APPSEC", "resourceEvalGroupRead")
+	logger.Debugf("in resourceEvalGroupRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
 	if err != nil {
@@ -136,9 +137,9 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	getAttackGroup.PolicyID = policyid
 	getAttackGroup.Group = group
 
-	attackgroup, err := client.GetAttackGroup(ctx, getAttackGroup)
+	attackgroup, err := client.GetEvalGroup(ctx, getAttackGroup)
 	if err != nil {
-		logger.Warnf("calling 'getAttackGroup': %s", err.Error())
+		logger.Warnf("calling 'getEvalGroup': %s", err.Error())
 	}
 
 	if err := d.Set("config_id", getAttackGroup.ConfigID); err != nil {
@@ -167,11 +168,11 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAttackGroupUpdate")
-	logger.Debugf(" in resourceAttackGroupUpdate")
+	logger := meta.Log("APPSEC", "resourceEvalGroupUpdate")
+	logger.Debugf("in resourceEvalGroupUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
 	if err != nil {
@@ -181,7 +182,7 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "attackGroup", m)
+	version := getModifiableConfigVersion(ctx, configid, "evalGroup", m)
 	policyid := idParts[1]
 	group := idParts[2]
 
@@ -198,8 +199,7 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadRaw := []byte(conditionexception)
-	rawJSON := (json.RawMessage)(jsonPayloadRaw)
+	rawJSON := json.RawMessage(conditionexception)
 
 	updateAttackGroup := appsec.UpdateAttackGroupRequest{}
 	updateAttackGroup.ConfigID = configid
@@ -209,19 +209,20 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	updateAttackGroup.Action = action
 	updateAttackGroup.JsonPayloadRaw = rawJSON
 
-	_, err = client.UpdateAttackGroup(ctx, updateAttackGroup)
+	_, err = client.UpdateEvalGroup(ctx, updateAttackGroup)
 	if err != nil {
+		logger.Errorf("calling 'updateEvalGroup': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	return resourceAttackGroupRead(ctx, d, m)
+	return resourceEvalGroupRead(ctx, d, m)
 }
 
-func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAttackgroupDelete")
-	logger.Debugf(" in resourceAttackgroupDelete")
+	logger := meta.Log("APPSEC", "resourceEvalgroupDelete")
+	logger.Debugf("in resourceEvalgroupDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
 	if err != nil {
@@ -231,7 +232,7 @@ func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "attackGroup", m)
+	version := getModifiableConfigVersion(ctx, configid, "evalGroup", m)
 	policyid := idParts[1]
 	group := idParts[2]
 
@@ -242,10 +243,10 @@ func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 	removeAttackGroup.Group = group
 	removeAttackGroup.Action = "none"
 
-	_, errd := client.UpdateAttackGroup(ctx, removeAttackGroup)
-	if errd != nil {
-		logger.Errorf("calling 'RemoveAttackGroup': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.UpdateEvalGroup(ctx, removeAttackGroup)
+	if err != nil {
+		logger.Errorf("calling 'RemoveEvalGroup': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

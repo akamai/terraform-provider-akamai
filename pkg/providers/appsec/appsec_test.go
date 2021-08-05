@@ -1278,6 +1278,16 @@ func (p *mockappsec) UpdateRule(ctx context.Context, params appsec.UpdateRuleReq
 	return args.Get(0).(*appsec.UpdateRuleResponse), args.Error(1)
 }
 
+func (p *mockappsec) UpdateRuleConditionException(ctx context.Context, params appsec.UpdateConditionExceptionRequest) (*appsec.UpdateConditionExceptionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateConditionExceptionResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetAttackGroups(ctx context.Context, params appsec.GetAttackGroupsRequest) (*appsec.GetAttackGroupsResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -1299,6 +1309,36 @@ func (p *mockappsec) GetAttackGroup(ctx context.Context, params appsec.GetAttack
 }
 
 func (p *mockappsec) UpdateAttackGroup(ctx context.Context, params appsec.UpdateAttackGroupRequest) (*appsec.UpdateAttackGroupResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateAttackGroupResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalGroups(ctx context.Context, params appsec.GetAttackGroupsRequest) (*appsec.GetAttackGroupsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAttackGroupsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetEvalGroup(ctx context.Context, params appsec.GetAttackGroupRequest) (*appsec.GetAttackGroupResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAttackGroupResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateEvalGroup(ctx context.Context, params appsec.UpdateAttackGroupRequest) (*appsec.UpdateAttackGroupResponse, error) {
 	args := p.Called(ctx, params)
 
 	if args.Get(0) == nil {
@@ -1528,4 +1568,24 @@ func (p *mockappsec) UpdateAPIConstraintsProtection(ctx context.Context, params 
 	}
 
 	return args.Get(0).(*appsec.UpdateAPIConstraintsProtectionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetThreatIntel(ctx context.Context, params appsec.GetThreatIntelRequest) (*appsec.GetThreatIntelResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetThreatIntelResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateThreatIntel(ctx context.Context, params appsec.UpdateThreatIntelRequest) (*appsec.UpdateThreatIntelResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateThreatIntelResponse), args.Error(1)
 }

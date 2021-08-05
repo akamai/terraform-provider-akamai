@@ -78,6 +78,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_custom_rule_actions":             dataSourceCustomRuleActions(),
 			"akamai_appsec_export_configuration":            dataSourceExportConfiguration(),
 			"akamai_appsec_eval":                            dataSourceEval(),
+			"akamai_appsec_eval_groups":                     dataSourceEvalGroups(),
 			"akamai_appsec_eval_rules":                      dataSourceEvalRules(),
 			"akamai_appsec_eval_hostnames":                  dataSourceEvalHostnames(),
 			"akamai_appsec_failover_hostnames":              dataSourceFailoverHostnames(),
@@ -102,6 +103,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_version_notes":                   dataSourceVersionNotes(),
 			"akamai_appsec_waf_mode":                        dataSourceWAFMode(),
 			"akamai_appsec_wap_selected_hostnames":          dataSourceWAPSelectedHostnames(),
+			"akamai_appsec_threat_intel":                    dataSourceThreatIntel(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_appsec_advanced_settings_logging":       resourceAdvancedSettingsLogging(),
@@ -114,6 +116,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_configuration_rename":            resourceConfigurationRename(),
 			"akamai_appsec_selected_hostnames":              resourceSelectedHostname(),
 			"akamai_appsec_eval":                            resourceEval(),
+			"akamai_appsec_eval_group":                      resourceEvalGroup(),
 			"akamai_appsec_eval_hostnames":                  resourceEvalHost(),
 			"akamai_appsec_eval_protect_host":               resourceEvalProtectHost(),
 			"akamai_appsec_eval_rule":                       resourceEvalRule(),
@@ -145,6 +148,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_waf_protection":                  resourceWAFProtection(),
 			"akamai_appsec_attack_group":                    resourceAttackGroup(),
 			"akamai_appsec_wap_selected_hostnames":          resourceWAPSelectedHostnames(),
+			"akamai_appsec_threat_intel":                    resourceThreatIntel(),
 		},
 	}
 	return provider
