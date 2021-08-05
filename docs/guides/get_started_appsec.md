@@ -1,11 +1,11 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Get Started with Application Security"
+page_title: "Module: Application Security"
 description: |-
-   Application Security in Akamai provider for Terraform
+   Application Security module for the Akamai Terraform Provider
 ---
 
-# Application Security in Akamai provider for Terraform 
+# Application Security Guide 
 
 Application Security (appsec) in the Akamai Terraform provider (provider) enables application 
 security configurations including the following: 

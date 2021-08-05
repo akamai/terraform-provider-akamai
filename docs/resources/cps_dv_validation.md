@@ -16,13 +16,16 @@ Basic usage:
 
 ```hcl
 resource "akamai_cps_dv_validation" "example" {
-  enrollment_id = akamai_cps_dv_enrollment.dv.id
+  enrollment_id = akamai_cps_dv_enrollment.example.id
+  sans = akamai_cps_dv_enrollment.example.sans
+}
 ```
 ## Argument reference
 
 The following arguments are supported:
 
 * `enrollment_id` (Required) - Unique identifier for the DV certificate enrollment.
+* `sans` - (Optional) The Subject Alternative Names (SAN) list for tracking changes on related enrollments. Whenever any SAN changes, the Akamai provider recreates this resource and sends another acknowledgement request to CPS.
 
 ## Attributes reference
 

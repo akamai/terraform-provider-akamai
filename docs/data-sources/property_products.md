@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: akamai_property_products"
-subcategory: "Provisioning"
+subcategory: "Property Provisioning"
 description: |-
  Property products
 ---
@@ -9,7 +9,7 @@ description: |-
 # akamai_property_products
 
 
-Use the `akamai_property_products` data source to list the products included on a contract. 
+Use the `akamai_property_products` data source to list the products included on a contract.
 
 ## Example usage
 
@@ -29,7 +29,7 @@ output "property_match" {
 
 This data source supports this argument:
 
-* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
 
 ## Attributes reference
 

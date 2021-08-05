@@ -88,7 +88,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -270,6 +270,146 @@ func TestResourceDVEnrollment(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("set challenges arrays to empty if no allowedInput found", func(t *testing.T) {
+		client := &mockcps{}
+		enrollment := cps.Enrollment{
+			AdminContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r1d1@akamai.com",
+				FirstName:        "R1",
+				LastName:         "D1",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			CertificateChainType: "default",
+			CertificateType:      "san",
+			ChangeManagement:     false,
+			CSR: &cps.CSR{
+				C:    "US",
+				CN:   "test.akamai.com",
+				L:    "Cambridge",
+				O:    "Akamai",
+				OU:   "WebEx",
+				SANS: []string{"san.test.akamai.com"},
+				ST:   "MA",
+			},
+			EnableMultiStackedCertificates: false,
+			NetworkConfiguration: &cps.NetworkConfiguration{
+				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
+				DNSNameSettings: &cps.DNSNameSettings{
+					CloneDNSNames: false,
+					DNSNames:      []string{"san.test.akamai.com"},
+				},
+				Geography:        "core",
+				MustHaveCiphers:  "ak-akamai-default",
+				OCSPStapling:     "on",
+				PreferredCiphers: "ak-akamai-default",
+				QuicEnabled:      false,
+				SecureNetwork:    "enhanced-tls",
+				SNIOnly:          true,
+			},
+			Org: &cps.Org{
+				AddressLineOne: "150 Broadway",
+				City:           "Cambridge",
+				Country:        "US",
+				Name:           "Akamai",
+				Phone:          "321321321",
+				PostalCode:     "12345",
+				Region:         "MA",
+			},
+			RA:                 "lets-encrypt",
+			SignatureAlgorithm: "SHA-256",
+			TechContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r2d2@akamai.com",
+				FirstName:        "R2",
+				LastName:         "D2",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			ValidationType: "dv",
+		}
+
+		client.On("CreateEnrollment",
+			mock.Anything,
+			cps.CreateEnrollmentRequest{
+				Enrollment: enrollment,
+				ContractID: "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Once()
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Once()
+
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(2)
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Times(2)
+
+		allowCancel := true
+		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "0"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "0"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("update with acknowledge warnings change, no enrollment update", func(t *testing.T) {
 		client := &mockcps{}
 		enrollment := cps.Enrollment{
@@ -333,7 +473,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -549,7 +689,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -715,7 +855,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -831,7 +971,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
 				Enrollment: enrollment,
-				ContractID: "ctr_1",
+				ContractID: "1",
 			},
 		).Return(nil, fmt.Errorf("error creating enrollment")).Once()
 
@@ -915,7 +1055,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		mock.Anything,
 		cps.CreateEnrollmentRequest{
 			Enrollment: enrollment,
-			ContractID: "ctr_1",
+			ContractID: "1",
 		},
 	).Return(&cps.CreateEnrollmentResponse{
 		ID:         1,
@@ -1005,4 +1145,24 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			},
 		})
 	})
+}
+
+func TestDiffSuppressContractID(t *testing.T) {
+	tests := map[string]struct {
+		oldContractID, newContractID string
+		expected                     bool
+	}{
+		"1": {"", "", true},
+		"2": {"test", "test", true},
+		"3": {"ctr_test", "test", true},
+		"4": {"test", "ctr_test", true},
+		"5": {"test", "", false},
+		"6": {"", "test", false},
+		"7": {"ctr_test", "_test", false},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expected, diffSuppressContractID("", test.oldContractID, test.newContractID, nil))
+		})
+	}
 }
