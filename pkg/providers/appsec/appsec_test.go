@@ -81,7 +81,7 @@ func (p *mockappsec) RemoveReputationAnalysis(ctx context.Context, params appsec
 	return args.Get(0).(*appsec.RemoveReputationAnalysisResponse), args.Error(1)
 }
 
-func (p *mockappsec) CreateActivations(ctx context.Context, params appsec.CreateActivationsRequest, acknowledgeWarnings bool) (*appsec.CreateActivationsResponse, error) {
+func (p *mockappsec) CreateActivations(ctx context.Context, params appsec.CreateActivationsRequest, _ bool) (*appsec.CreateActivationsResponse, error) {
 	args := p.Called(ctx, params)
 
 	if args.Get(0) == nil {
@@ -171,6 +171,7 @@ func (p *mockappsec) UpdateAdvancedSettingsLogging(ctx context.Context, params a
 	return args.Get(0).(*appsec.UpdateAdvancedSettingsLoggingResponse), args.Error(1)
 }
 
+//revive:disable:var-naming Below methods implement interface from other library; thus method names cannot be changed
 func (p *mockappsec) GetApiEndpoints(ctx context.Context, params appsec.GetApiEndpointsRequest) (*appsec.GetApiEndpointsResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -240,6 +241,8 @@ func (p *mockappsec) RemoveApiRequestConstraints(ctx context.Context, params app
 
 	return args.Get(0).(*appsec.RemoveApiRequestConstraintsResponse), args.Error(1)
 }
+
+//revive:enable:var-naming
 
 func (p *mockappsec) GetContractsGroups(ctx context.Context, params appsec.GetContractsGroupsRequest) (*appsec.GetContractsGroupsResponse, error) {
 	args := p.Called(ctx, params)

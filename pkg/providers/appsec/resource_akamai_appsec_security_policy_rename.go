@@ -24,7 +24,7 @@ func resourceSecurityPolicyRename() *schema.Resource {
 		UpdateContext: resourceSecurityPolicyRenameUpdate,
 		DeleteContext: resourceSecurityPolicyRenameDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {

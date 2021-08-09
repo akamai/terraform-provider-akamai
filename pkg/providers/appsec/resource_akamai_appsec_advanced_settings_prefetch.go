@@ -24,7 +24,7 @@ func resourceAdvancedSettingsPrefetch() *schema.Resource {
 		UpdateContext: resourceAdvancedSettingsPrefetchUpdate,
 		DeleteContext: resourceAdvancedSettingsPrefetchDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

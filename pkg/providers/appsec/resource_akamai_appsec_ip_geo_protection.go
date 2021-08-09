@@ -24,7 +24,7 @@ func resourceIPGeoProtection() *schema.Resource {
 		UpdateContext: resourceIPGeoProtectionUpdate,
 		DeleteContext: resourceIPGeoProtectionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

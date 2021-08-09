@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// Hack for Hashicorp Acceptance Tests
+// HashiAcc is Hack for Hashicorp Acceptance Tests
 var HashiAcc = false
 
 func resourceGTMv1Domain() *schema.Resource {
@@ -179,7 +179,7 @@ func resourceGTMv1Domain() *schema.Resource {
 	}
 }
 
-// Retrieve optional query args. contractId, groupId [and accountSwitchKey] supported.
+// GetQueryArgs retrieves optional query args. contractId, groupId [and accountSwitchKey] supported.
 func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
 
 	qArgs := make(map[string]string)
@@ -195,9 +195,9 @@ func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("group not present in resource data: %v", err.Error())
 	}
-	groupId := strings.TrimPrefix(groupName, "grp_")
-	if groupId != "" && len(groupId) > 0 {
-		qArgs["gid"] = groupId
+	groupID := strings.TrimPrefix(groupName, "grp_")
+	if groupID != "" && len(groupID) > 0 {
+		qArgs["gid"] = groupID
 	}
 
 	return qArgs, nil

@@ -160,9 +160,9 @@ func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	// Give terraform the ID. Format domain:geoMap
-	geoMapId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	logger.Debugf("Generated geoMap resource Id: %s", geoMapId)
-	d.SetId(geoMapId)
+	geoMapID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
+	logger.Debugf("Generated geoMap resource ID: %s", geoMapID)
+	d.SetId(geoMapID)
 	return resourceGTMv1GeomapRead(ctx, d, m)
 
 }
@@ -180,7 +180,7 @@ func resourceGTMv1GeomapRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("Reading geoMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the property and domain
-	domain, geoMap, err := parseResourceStringId(d.Id())
+	domain, geoMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid geoMap ID")
 		return diag.FromErr(err)
@@ -212,7 +212,7 @@ func resourceGTMv1GeomapUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Updating geoMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// pull domain and geoMap out of id
-	domain, geoMap, err := parseResourceStringId(d.Id())
+	domain, geoMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid geoMap ID")
 		return diag.FromErr(err)
@@ -288,7 +288,7 @@ func resourceGTMv1GeomapImport(d *schema.ResourceData, m interface{}) ([]*schema
 
 	logger.Infof("[Akamai GTM] geoMap [%s] Import", d.Id())
 	// pull domain and geoMap out of geoMap id
-	domain, geoMap, err := parseResourceStringId(d.Id())
+	domain, geoMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
@@ -323,7 +323,7 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Deleting geoMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing geoMap
-	domain, geoMap, err := parseResourceStringId(d.Id())
+	domain, geoMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid geoMap ID: %s", d.Id())
 		return diag.FromErr(err)

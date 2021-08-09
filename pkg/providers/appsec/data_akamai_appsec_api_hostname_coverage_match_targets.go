@@ -15,9 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceApiHostnameCoverageMatchTargets() *schema.Resource {
+func dataSourceAPIHostnameCoverageMatchTargets() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceApiHostnameCoverageMatchTargetsRead,
+		ReadContext: dataSourceAPIHostnameCoverageMatchTargetsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -40,30 +40,30 @@ func dataSourceApiHostnameCoverageMatchTargets() *schema.Resource {
 	}
 }
 
-func dataSourceApiHostnameCoverageMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "dataSourceApiHostnameCoverageMatchTargetsRead")
+	logger := meta.Log("APPSEC", "dataSourceAPIHostnameCoverageMatchTargetsRead")
 
-	getApiHostnameCoverageMatchTargets := appsec.GetApiHostnameCoverageMatchTargetsRequest{}
+	getAPIHostnameCoverageMatchTargets := appsec.GetApiHostnameCoverageMatchTargetsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiHostnameCoverageMatchTargets.ConfigID = configid
+	getAPIHostnameCoverageMatchTargets.ConfigID = configid
 
-	getApiHostnameCoverageMatchTargets.Version = getLatestConfigVersion(ctx, configid, m)
+	getAPIHostnameCoverageMatchTargets.Version = getLatestConfigVersion(ctx, configid, m)
 
 	hostname, err := tools.GetStringValue("hostname", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiHostnameCoverageMatchTargets.Hostname = hostname
+	getAPIHostnameCoverageMatchTargets.Hostname = hostname
 
-	apihostnamecoveragematchtargets, err := client.GetApiHostnameCoverageMatchTargets(ctx, getApiHostnameCoverageMatchTargets)
+	apihostnamecoveragematchtargets, err := client.GetApiHostnameCoverageMatchTargets(ctx, getAPIHostnameCoverageMatchTargets)
 	if err != nil {
-		logger.Errorf("calling 'getApiHostnameCoverageMatchTargets': %s", err.Error())
+		logger.Errorf("calling 'getAPIHostnameCoverageMatchTargets': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -84,7 +84,7 @@ func dataSourceApiHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(strconv.Itoa(getApiHostnameCoverageMatchTargets.ConfigID))
+	d.SetId(strconv.Itoa(getAPIHostnameCoverageMatchTargets.ConfigID))
 
 	return nil
 }

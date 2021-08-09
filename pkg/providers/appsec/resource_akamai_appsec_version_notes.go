@@ -24,7 +24,7 @@ func resourceVersionNotes() *schema.Resource {
 		UpdateContext: resourceVersionNotesUpdate,
 		DeleteContext: resourceVersionNotesDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

@@ -492,6 +492,7 @@ func appendIfMissing(slice []string, s string) []string {
 	return append(slice, s)
 }
 
+// RemoveIndex removes an element from the slice and returns it
 func RemoveIndex(hl []string, index int) []string {
 	return append(hl[:index], hl[index+1:]...)
 }

@@ -26,7 +26,7 @@ func resourceRule() *schema.Resource {
 		UpdateContext: resourceRuleUpdate,
 		DeleteContext: resourceRuleDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

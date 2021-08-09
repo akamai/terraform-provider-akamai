@@ -20,6 +20,7 @@ import (
 )
 
 var (
+	// PollForChangeStatusInterval defines retry interval for getting status of a pending change
 	PollForChangeStatusInterval = 10 * time.Second
 )
 
@@ -510,6 +511,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	attrs["organization"] = []interface{}{org}
 	attrs["certificate_type"] = enrollment.CertificateType
 	attrs["validation_type"] = enrollment.ValidationType
+	attrs["registration_authority"] = enrollment.RA
 
 	err = tools.SetAttrs(d, attrs)
 	if err != nil {
@@ -633,6 +635,9 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("validation_type", "dv"); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("registration_authority", "lets-encrypt"); err != nil {
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 
@@ -826,7 +831,7 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-func diffSuppressContractID(k, old, new string, d *schema.ResourceData) bool {
+func diffSuppressContractID(_, old, new string, _ *schema.ResourceData) bool {
 	trimPrefixFromOld := strings.TrimPrefix(old, "ctr_")
 	trimPrefixFromNew := strings.TrimPrefix(new, "ctr_")
 

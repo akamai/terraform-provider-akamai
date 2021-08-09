@@ -25,7 +25,7 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 		UpdateContext: resourceSlowPostProtectionSettingUpdate,
 		DeleteContext: resourceSlowPostProtectionSettingDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -254,6 +254,7 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	return nil
 }
 
+// Definition of constant variables
 const (
 	Abort = "abort"
 )

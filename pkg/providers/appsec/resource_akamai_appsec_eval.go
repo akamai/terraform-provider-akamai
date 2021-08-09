@@ -25,7 +25,7 @@ func resourceEval() *schema.Resource {
 		UpdateContext: resourceEvalUpdate,
 		DeleteContext: resourceEvalDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -245,6 +245,7 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
+// Definition of constant variables
 const (
 	Start    = "START"
 	Stop     = "STOP"

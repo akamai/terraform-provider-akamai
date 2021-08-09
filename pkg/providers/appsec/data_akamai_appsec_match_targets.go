@@ -14,12 +14,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// MatchTargetOutputText holds data for templates
 type MatchTargetOutputText struct {
 	TargetID int
 	PolicyID string
 	Type     string
 }
 
+// Definition of constant variables
 const (
 	APITarget     = "API"
 	WebsiteTarget = "Website"

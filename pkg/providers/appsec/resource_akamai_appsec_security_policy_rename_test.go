@@ -50,7 +50,6 @@ func TestAccAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_security_policy_rename.test", "id", "43253:PLE_114049"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResSecurityPolicyRename/update_by_id.tf"),

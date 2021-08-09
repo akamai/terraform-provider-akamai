@@ -24,7 +24,7 @@ func resourceSlowPostProtection() *schema.Resource {
 		UpdateContext: resourceSlowPostProtectionUpdate,
 		DeleteContext: resourceSlowPostProtectionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

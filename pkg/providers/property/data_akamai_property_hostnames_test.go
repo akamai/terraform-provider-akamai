@@ -227,12 +227,12 @@ func buildPropertyHostnames() []papi.Hostname {
 	return hostnames
 }
 
-func buildAggregatedHostnamesTest(hostnames []map[string]interface{}, id, groupID, contractID, propertyId string) resource.TestCheckFunc {
+func buildAggregatedHostnamesTest(hostnames []map[string]interface{}, id, groupID, contractID, propertyID string) resource.TestCheckFunc {
 	testVar := make([]resource.TestCheckFunc, 0)
 	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", "id", id))
 	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", "group_id", groupID))
 	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", "contract_id", contractID))
-	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", "property_id", propertyId))
+	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", "property_id", propertyID))
 	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", "hostnames.#", fmt.Sprintf("%v", len(hostnames))))
 	for ind, hostname := range hostnames {
 		for mapKey, mapVal := range hostname {

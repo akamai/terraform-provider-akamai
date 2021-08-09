@@ -52,7 +52,7 @@ func (p *provider) ProviderSchema() *schema.Provider {
 }
 
 // Configure receives the core provider's config data
-func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+func (p *provider) Configure(_ log.Interface, _ *schema.ResourceData) diag.Diagnostics {
 	return nil
 }
 

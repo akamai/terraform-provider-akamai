@@ -24,7 +24,7 @@ func resourceCustomRuleAction() *schema.Resource {
 		UpdateContext: resourceCustomRuleActionUpdate,
 		DeleteContext: resourceCustomRuleActionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -220,6 +220,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
+// Constant values
 const (
 	Alert = "alert"
 	Deny  = "deny"

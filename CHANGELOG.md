@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 1.6.1 (Jul 25, 2021)
+## 1.6.1 (Jul 21, 2021)
 
 #### BUG FIXES:
 * DNS

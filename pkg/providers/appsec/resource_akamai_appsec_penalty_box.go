@@ -25,7 +25,7 @@ func resourcePenaltyBox() *schema.Resource {
 		UpdateContext: resourcePenaltyBoxUpdate,
 		DeleteContext: resourcePenaltyBoxDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

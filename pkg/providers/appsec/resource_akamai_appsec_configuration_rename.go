@@ -24,7 +24,7 @@ func resourceConfigurationRename() *schema.Resource {
 		UpdateContext: resourceConfigurationRenameUpdate,
 		DeleteContext: resourceConfigurationRenameDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

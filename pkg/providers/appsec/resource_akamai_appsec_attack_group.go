@@ -26,7 +26,7 @@ func resourceAttackGroup() *schema.Resource {
 		UpdateContext: resourceAttackGroupUpdate,
 		DeleteContext: resourceAttackGroupDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -54,7 +54,7 @@ func resourceAttackGroup() *schema.Resource {
 				Optional:         true,
 				Default:          "",
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
+				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},
 	}

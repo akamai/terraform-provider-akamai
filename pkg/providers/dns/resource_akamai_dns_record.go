@@ -82,7 +82,7 @@ func resourceDNSv2Record() *schema.Resource {
 					RRTypeCert,
 					RRTypeTlsa,
 					RRTypeSvcb,
-					RRTypeHttps,
+					RRTypeHTTPS,
 				}, false),
 			},
 			"ttl": {
@@ -359,7 +359,7 @@ var certTypes = map[string]int{
 }
 
 // Suppress check for fields that have dot suffix in tfstate
-func dnsRecordFieldDotSuffixSuppress(_, old, new string, d *schema.ResourceData) bool {
+func dnsRecordFieldDotSuffixSuppress(_, old, new string, _ *schema.ResourceData) bool {
 	oldValStr := strings.TrimRight(old, ".")
 	newValStr := strings.TrimRight(new, ".")
 	if oldValStr == newValStr {
@@ -369,7 +369,7 @@ func dnsRecordFieldDotSuffixSuppress(_, old, new string, d *schema.ResourceData)
 }
 
 // Suppress check for fields that are quoted in tfstate
-func dnsRecordFieldTrimQuoteSuppress(_, old, new string, d *schema.ResourceData) bool {
+func dnsRecordFieldTrimQuoteSuppress(_, old, new string, _ *schema.ResourceData) bool {
 	oldValStr := strings.Trim(old, "\\\"")
 	newValStr := strings.Trim(new, "\"")
 	if oldValStr == newValStr {
@@ -1949,7 +1949,7 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		records := []string{strconv.Itoa(usage) + " " + strconv.Itoa(selector) + " " + strconv.Itoa(matchtype) + " " + certificate}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
-	case RRTypeSvcb, RRTypeHttps:
+	case RRTypeSvcb, RRTypeHTTPS:
 		pri, err := tools.GetIntValue("svc_priority", d)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return dns.RecordBody{}, err
@@ -2079,8 +2079,8 @@ func validateRecord(d *schema.ResourceData) error {
 		return checkTlsaRecord(d)
 	case RRTypeSvcb:
 		return checkSvcbRecord(d)
-	case RRTypeHttps:
-		return checkHttpsRecord(d)
+	case RRTypeHTTPS:
+		return checkHTTPSRecord(d)
 	default:
 		return fmt.Errorf("invalid recordtype %v", recordType)
 	}
@@ -2137,11 +2137,7 @@ func checkAsdfRecord(d *schema.ResourceData) error {
 		return fmt.Errorf("configuration argument subtype must be set for ASDF")
 	}
 
-	if err := checkTargets(d); err != nil {
-		return err
-	}
-
-	return nil
+	return checkTargets(d)
 }
 
 func checkDnskeyRecord(d *schema.ResourceData) error {
@@ -2262,11 +2258,7 @@ func checkMxRecord(d *schema.ResourceData) error {
 		return fmt.Errorf("configuration argument priority must be set for MX")
 	}
 
-	if err := checkTargets(d); err != nil {
-		return err
-	}
-
-	return nil
+	return checkTargets(d)
 }
 
 func checkNaptrRecord(d *schema.ResourceData) error {
@@ -2754,7 +2746,7 @@ func checkSvcbRecord(d *schema.ResourceData) error {
 	return checkServiceRecord(d, "SVCB")
 }
 
-func checkHttpsRecord(d *schema.ResourceData) error {
+func checkHTTPSRecord(d *schema.ResourceData) error {
 
 	return checkServiceRecord(d, "HTTPS")
 }
@@ -2826,6 +2818,6 @@ const (
 	RRTypeNsec3Param = "NSEC3PARAM"
 	RRTypeRrsig      = "RRSIG"
 	RRTypeCert       = "CERT"
-	RRTypeHttps      = "HTTPS"
+	RRTypeHTTPS      = "HTTPS"
 	RRTypeSvcb       = "SVCB"
 )

@@ -201,6 +201,7 @@ func FindStringValues(rd ResourceDataFetcher, keys ...string) []string {
 	return rval
 }
 
+// ResolveKeyStringState fetches value with given key (or fallbackKey) from ResourceData object
 func ResolveKeyStringState(rd ResourceDataFetcher, key, fallbackKey string) (value string, err error) {
 	value, err = GetStringValue(key, rd)
 	if errors.Is(err, ErrNotFound) {

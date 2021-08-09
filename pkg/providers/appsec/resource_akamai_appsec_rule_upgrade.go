@@ -25,7 +25,7 @@ func resourceRuleUpgrade() *schema.Resource {
 		UpdateContext: resourceRuleUpgradeUpdate,
 		DeleteContext: resourceRuleUpgradeDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -187,7 +187,7 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceRuleUpgradeRead(ctx, d, m)
 }
 
-func resourceRuleUpgradeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRuleUpgradeDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	return schema.NoopContext(context.TODO(), d, m)
 }

@@ -210,6 +210,9 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	if len(cpCode.ProductIDs) == 0 {
 		return diag.Errorf("Couldn't find product id on the CP Code")
 	}
+	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
@@ -253,6 +256,9 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 		return nil, fmt.Errorf("could not find product id on the CP Code")
 	}
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	d.SetId(cpCode.ID)

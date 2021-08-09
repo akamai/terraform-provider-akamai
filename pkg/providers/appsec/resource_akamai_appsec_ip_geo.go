@@ -25,7 +25,7 @@ func resourceIPGeo() *schema.Resource {
 		UpdateContext: resourceIPGeoUpdate,
 		DeleteContext: resourceIPGeoDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -251,6 +251,7 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	return nil
 }
 
+// Definition of constant variables
 const (
 	Allow = "allow"
 	Block = "block"

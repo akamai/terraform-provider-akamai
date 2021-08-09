@@ -24,7 +24,7 @@ func resourceAPIConstraintsProtection() *schema.Resource {
 		UpdateContext: resourceAPIConstraintsProtectionUpdate,
 		DeleteContext: resourceAPIConstraintsProtectionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

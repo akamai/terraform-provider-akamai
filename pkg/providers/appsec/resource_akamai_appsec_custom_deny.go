@@ -29,7 +29,7 @@ func resourceCustomDeny() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -46,7 +46,7 @@ func resourceCustomDeny() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressCustomDenyJsonDiffs,
+				DiffSuppressFunc: suppressCustomDenyJSONDiffs,
 			},
 		},
 	}

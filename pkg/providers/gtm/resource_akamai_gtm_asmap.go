@@ -96,11 +96,11 @@ func validateDefaultDC(ctx context.Context, meta akamai.OperationMeta, ddcField 
 		return fmt.Errorf("default Datacenter ID invalid")
 	}
 
-	dcId, ok := intrDcID.(int)
-	if !ok || dcId == 0 {
+	dcID, ok := intrDcID.(int)
+	if !ok || dcID == 0 {
 		return fmt.Errorf("default Datacenter ID invalid")
 	}
-	dc, err := inst.Client(meta).GetDatacenter(ctx, dcId, domain)
+	dc, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
 	if dc == nil {
 		if err != nil {
 			apiError, ok := err.(*gtm.Error)
@@ -137,12 +137,12 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	if name, err := tools.GetStringValue("name", d); err != nil {
+	name, err := tools.GetStringValue("name", d)
+	if err != nil {
 		logger.Errorf("asMap name not initialized: %s", err.Error())
 		return diag.FromErr(err)
-	} else {
-		logger.Infof("Creating asMap [%s] in domain [%s]", name, domain)
 	}
+	logger.Infof("Creating asMap [%s] in domain [%s]", name, domain)
 
 	// Make sure Default Datacenter exists
 	interfaceArray, err := tools.GetInterfaceArrayValue("default_datacenter", d)
@@ -220,7 +220,7 @@ func resourceGTMv1ASmapRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger.Debugf("Reading asMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the property and domain
-	domain, asMap, err := parseResourceStringId(d.Id())
+	domain, asMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -251,7 +251,7 @@ func resourceGTMv1ASmapUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger.Debugf("UPDATE asMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// pull domain and asMap out of id
-	domain, asMap, err := parseResourceStringId(d.Id())
+	domain, asMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid asMap ID: %s", d.Id())
 		return diag.FromErr(err)
@@ -324,7 +324,7 @@ func resourceGTMv1ASmapImport(d *schema.ResourceData, m interface{}) ([]*schema.
 
 	logger.Infof("asMap [%s] Import", d.Id())
 	// pull domain and asMap out of asMap id
-	domain, asMap, err := parseResourceStringId(d.Id())
+	domain, asMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
@@ -358,7 +358,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger.Debugf("Deleting asMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing asMap
-	domain, asMap, err := parseResourceStringId(d.Id())
+	domain, asMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("[ERROR] ASmap Delete: %s", err.Error())
 		return diag.FromErr(err)

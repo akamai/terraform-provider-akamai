@@ -28,19 +28,18 @@ func resourceSecureEdgeHostName() *schema.Resource {
 
 var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	"product": {
-		Type:          schema.TypeString,
-		Optional:      true,
-		Computed:      true,
-		Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
-		StateFunc:     addPrefixToState("prd_"),
-		ConflictsWith: []string{"product_id"},
+		Type:       schema.TypeString,
+		Optional:   true,
+		Computed:   true,
+		Deprecated: akamai.NoticeDeprecatedUseAlias("product"),
+		StateFunc:  addPrefixToState("prd_"),
 	},
 	"product_id": {
-		Type:          schema.TypeString,
-		Optional:      true,
-		Computed:      true,
-		ConflictsWith: []string{"product"},
-		StateFunc:     addPrefixToState("prd_"),
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		ExactlyOneOf: []string{"product", "product_id"},
+		StateFunc:    addPrefixToState("prd_"),
 	},
 	"contract": {
 		Type:       schema.TypeString,
@@ -323,9 +322,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	} else {
 		productID = d.Get("product").(string)
 	}
-	if productID != "" {
-		productID = tools.AddPrefix(productID, "prd_")
-	}
+	productID = tools.AddPrefix(productID, "prd_")
 	// set product/product_id into ResourceData
 	if err := d.Set("product_id", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))

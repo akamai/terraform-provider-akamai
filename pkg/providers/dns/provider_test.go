@@ -2,6 +2,7 @@ package dns
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -17,11 +18,19 @@ import (
 var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
-func init() {
+func TestMain(m *testing.M) {
 	testAccProvider = akamai.Provider(Subprovider())()
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testAccProvider,
 	}
+	if err := akamai.TFTestSetup(); err != nil {
+		log.Fatal(err)
+	}
+	exitCode := m.Run()
+	if err := akamai.TFTestTeardown(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(exitCode)
 }
 
 // Only allow one test at a time to patch the client via useClient()
@@ -47,7 +56,7 @@ func TestProvider(t *testing.T) {
 	}
 }
 
-func testAccPreCheck(t *testing.T) {
+func testAccPreCheck(_ *testing.T) {
 
 }
 
