@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-cty/cty"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -80,12 +82,14 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Required: true,
 		ForceNew: true,
-		ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+		ValidateDiagFunc: func(val interface{}, path cty.Path) diag.Diagnostics {
 			v := val.(string)
+			key := path[len(path)-1].(cty.GetAttrStep).Name
+
 			if !strings.EqualFold(papi.EHIPVersionV4, v) && !strings.EqualFold(papi.EHIPVersionV6Performance, v) && !strings.EqualFold(papi.EHIPVersionV6Compliance, v) {
-				errs = append(errs, fmt.Errorf("%v must be one of %v, %v, %v, got: %v", key, papi.EHIPVersionV4, papi.EHIPVersionV6Performance, papi.EHIPVersionV6Compliance, v))
+				return diag.Errorf("%v must be one of %v, %v, %v, got: %v", key, papi.EHIPVersionV4, papi.EHIPVersionV6Performance, papi.EHIPVersionV6Compliance, v)
 			}
-			return
+			return nil
 		},
 	},
 	"certificate": {
