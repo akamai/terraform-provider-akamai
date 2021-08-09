@@ -75,6 +75,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		ForceNew:         true,
 		DiffSuppressFunc: suppressEdgeHostnameDomain,
 		ValidateDiagFunc: tools.IsNotBlank,
+		StateFunc:        appendDefaultSuffixToEdgeHostname,
 	},
 	"ip_behavior": {
 		Type:     schema.TypeString,
@@ -374,6 +375,16 @@ func suppressEdgeHostnameDomain(_, old, new string, _ *schema.ResourceData) bool
 		return old == fmt.Sprintf("%s.edgesuite.net", new)
 	}
 	return false
+}
+
+// appendDefaultSuffixToEdgeHostname is a StateFunc which appends ".edgesuite.net" to an edge hostname if none of the supported prefixes were provided
+// It is used in order to retain idempotency when "edge_hostname" value is used as output
+func appendDefaultSuffixToEdgeHostname(i interface{}) string {
+	name := i.(string)
+	if !(strings.HasSuffix(name, "edgekey.net") || strings.HasSuffix(name, "edgesuite.net") || strings.HasSuffix(name, "akamaized.net")) {
+		name = fmt.Sprintf("%s.edgesuite.net", name)
+	}
+	return name
 }
 
 func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*papi.EdgeHostnameGetItem, error) {
