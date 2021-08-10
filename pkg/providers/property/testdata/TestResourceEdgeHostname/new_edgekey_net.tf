@@ -10,3 +10,7 @@ resource "akamai_edge_hostname" "edgehostname" {
   certificate = 123
   ip_behavior = "IPV6_PERFORMANCE"
 }
+
+output "edge_hostname" {
+  value = akamai_edge_hostname.edgehostname.edge_hostname
+}

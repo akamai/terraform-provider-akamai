@@ -20,6 +20,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 		givenTF            string
 		init               func(*mockpapi)
 		expectedAttributes map[string]string
+		expectedOutputs    map[string]string
 		withError          *regexp.Regexp
 	}{
 		"edge hostname with .edgesuite.net, create edge hostname": {
@@ -102,6 +103,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 				"group":         "grp_2",
 				"edge_hostname": "test2.edgesuite.net",
 			},
+			expectedOutputs: map[string]string{
+				"edge_hostname": "test2.edgesuite.net",
+			},
 		},
 		"edge hostname with .edgekey.net, create edge hostname": {
 			givenTF: "new_edgekey_net.tf",
@@ -180,6 +184,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 				"ip_behavior":   "IPV6_PERFORMANCE",
 				"contract":      "ctr_2",
 				"group":         "grp_2",
+				"edge_hostname": "test.edgekey.net",
+			},
+			expectedOutputs: map[string]string{
 				"edge_hostname": "test.edgekey.net",
 			},
 		},
@@ -338,6 +345,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 				"group":         "grp_2",
 				"edge_hostname": "test.aka.edgesuite.net",
 			},
+			expectedOutputs: map[string]string{
+				"edge_hostname": "test.aka.edgesuite.net",
+			},
 		},
 		"edge hostname exists": {
 			givenTF: "new_akamaized_net.tf",
@@ -447,6 +457,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 			var checkFuncs []resource.TestCheckFunc
 			for k, v := range test.expectedAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", k, v))
+			}
+			for k, v := range test.expectedOutputs {
+				checkFuncs = append(checkFuncs, resource.TestCheckOutput(k, v))
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
