@@ -43,14 +43,14 @@ func resourceRatePolicyAction() *schema.Resource {
 				Required: true,
 			},
 			"ipv4_action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
 			},
 			"ipv6_action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions},
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions},
 		},
 	}
 }

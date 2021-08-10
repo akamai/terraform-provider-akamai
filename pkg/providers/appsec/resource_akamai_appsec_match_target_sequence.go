@@ -36,7 +36,7 @@ func resourceMatchTargetSequence() *schema.Resource {
 			"match_target_sequence": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateFunc:     validation.StringIsJSON,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},

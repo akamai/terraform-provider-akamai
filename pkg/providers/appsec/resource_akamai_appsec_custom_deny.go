@@ -45,7 +45,7 @@ func resourceCustomDeny() *schema.Resource {
 			"custom_deny": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateFunc:     validation.StringIsJSON,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressCustomDenyJSONDiffs,
 			},
 		},

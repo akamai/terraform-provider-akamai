@@ -42,7 +42,7 @@ func resourceMatchTarget() *schema.Resource {
 			"match_target": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateFunc:     validation.StringIsJSON,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentMatchTargetDiffs,
 			},
 		},

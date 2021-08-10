@@ -25,10 +25,10 @@ func dataSourceNetworkList() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					IP,
 					Geo,
-				}, false),
+				}, false)),
 			},
 			"uniqueid": {
 				Type:        schema.TypeString,

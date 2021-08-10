@@ -45,9 +45,9 @@ func resourceAPIRequestConstraints() *schema.Resource {
 				Optional: true,
 			},
 			"action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
 			},
 		},
 	}

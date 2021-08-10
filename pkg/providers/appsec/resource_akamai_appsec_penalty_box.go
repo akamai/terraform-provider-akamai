@@ -46,11 +46,11 @@ func resourcePenaltyBox() *schema.Resource {
 			"penalty_box_action": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					Deny,
 					Alert,
 					None,
-				}, false),
+				}, false)),
 			},
 		},
 	}

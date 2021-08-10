@@ -42,10 +42,10 @@ func resourceIPGeo() *schema.Resource {
 			"mode": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					Allow,
 					Block,
-				}, false),
+				}, false)),
 			},
 			"geo_network_lists": {
 				Type:     schema.TypeSet,
