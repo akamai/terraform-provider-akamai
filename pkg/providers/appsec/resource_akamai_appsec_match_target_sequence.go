@@ -47,7 +47,7 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceCreate")
-	logger.Debugf("!!! in resourceMatchTargetSequenceCreate")
+	logger.Debugf("in resourceMatchTargetSequenceCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -77,7 +77,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
-	logger.Debugf("!!! in resourceMatchTargetSequenceRead")
+	logger.Debugf("in resourceMatchTargetSequenceRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:matchtargettype")
 	if err != nil {
@@ -121,7 +121,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceUpdate")
-	logger.Debugf("!!! in resourceMatchTargetSequenceUpdate")
+	logger.Debugf("in resourceMatchTargetSequenceUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:matchtargettype")
 	if err != nil {

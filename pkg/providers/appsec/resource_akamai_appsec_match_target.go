@@ -53,7 +53,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetCreate")
-	logger.Debugf("!!! in resourceMatchTargetCreate")
+	logger.Debugf("in resourceMatchTargetCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -84,7 +84,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetRead")
-	logger.Debugf("!!! in resourceMatchTargetRead")
+	logger.Debugf("in resourceMatchTargetRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:matchtargetid")
 	if err != nil {
@@ -133,7 +133,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetUpdate")
-	logger.Debugf("!!! in resourceMatchTargetUpdate")
+	logger.Debugf("in resourceMatchTargetUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:matchtargetid")
 	if err != nil {
@@ -172,7 +172,7 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetDelete")
-	logger.Debugf("!!! in resourceMatchTargetDelete")
+	logger.Debugf("in resourceMatchTargetDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:matchtargetid")
 	if err != nil {

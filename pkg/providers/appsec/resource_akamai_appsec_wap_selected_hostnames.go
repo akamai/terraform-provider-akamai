@@ -57,7 +57,7 @@ func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesCreate")
-	logger.Debugf("!!! resourceWAPSelectedHostnamesCreate")
+	logger.Debugf("resourceWAPSelectedHostnamesCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -124,7 +124,7 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesRead")
-	logger.Debugf("!!! resourceWAPSelectedHostnamesRead")
+	logger.Debugf("resourceWAPSelectedHostnamesRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
@@ -168,7 +168,7 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesUpdate")
-	logger.Debugf("!!! resourceWAPSelectedHostnamesUpdate")
+	logger.Debugf("resourceWAPSelectedHostnamesUpdate")
 
 	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {

@@ -69,7 +69,7 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCreate")
-	logger.Debugf("!!! in resourceSecurityPolicyCreate")
+	logger.Debugf("in resourceSecurityPolicyCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -140,7 +140,7 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
-	logger.Debugf("!!! in resourceSecurityPolicyRead")
+	logger.Debugf("in resourceSecurityPolicyRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
@@ -189,7 +189,7 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyUpdate")
-	logger.Debugf("!!! in resourceSecurityPolicyUpdate")
+	logger.Debugf("in resourceSecurityPolicyUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
@@ -232,7 +232,7 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDelete")
-	logger.Debugf("!!! in resourceSecurityPolicyDelete")
+	logger.Debugf("in resourceSecurityPolicyDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {

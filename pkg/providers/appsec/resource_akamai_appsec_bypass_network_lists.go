@@ -44,7 +44,7 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsUpdate")
-	logger.Debug("!!! in resourceBypassNetworkListsCreate")
+	logger.Debug("in resourceBypassNetworkListsCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -78,7 +78,7 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsRead")
-	logger.Debug("!!! in resourceBypassNetworkListsRead")
+	logger.Debug("in resourceBypassNetworkListsRead")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -113,7 +113,7 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsUpdate")
-	logger.Debug("!!! in resourceBypassNetworkListsUpdate")
+	logger.Debug("in resourceBypassNetworkListsUpdate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {

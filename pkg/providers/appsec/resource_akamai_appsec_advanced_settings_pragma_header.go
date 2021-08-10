@@ -52,7 +52,7 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaCreate")
-	logger.Debug("!!! in resourceAdvancedSettingsPragmaCreate")
+	logger.Debug("in resourceAdvancedSettingsPragmaCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -93,7 +93,7 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaRead")
-	logger.Debug("!!! resourceAdvancedSettingsPragmaRead")
+	logger.Debug("resourceAdvancedSettingsPragmaRead")
 
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -150,7 +150,7 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaDelete")
-	logger.Debug("!!! resourceAdvancedSettingsPragmaDelete")
+	logger.Debug("resourceAdvancedSettingsPragmaDelete")
 
 	jsonPayloadRaw := []byte("{}")
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
@@ -198,7 +198,7 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaUpdate")
-	logger.Debugf("!!! resourceAdvancedSettingsPragmaUpdate33")
+	logger.Debugf("resourceAdvancedSettingsPragmaUpdate33")
 
 	updateAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {

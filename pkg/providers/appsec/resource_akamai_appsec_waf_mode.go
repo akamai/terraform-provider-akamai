@@ -214,8 +214,15 @@ func resourceWAFModeDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 // Definition of constant variables
 const (
-	AAG       = "AAG"
-	KRS       = "KRS"
-	AseAuto   = "ASE_AUTO"
+	// AAG = Automated Attack Groups
+	AAG = "AAG"
+
+	// KRS = Kona Rule Sets
+	KRS = "KRS"
+
+	// AseAuto = Adaptive Security Engine - Auto
+	AseAuto = "ASE_AUTO"
+
+	// AseManual = Adaptive Security Engine - Manual
 	AseManual = "ASE_MANUAL"
 )

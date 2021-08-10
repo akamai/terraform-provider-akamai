@@ -57,7 +57,7 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsCreate")
-	logger.Debugf("!!! in resourceAPIRequestConstraintsCreate")
+	logger.Debugf("in resourceAPIRequestConstraintsCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -103,7 +103,7 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsRead")
-	logger.Debugf("!!! in resourceCustomRuleActionRead")
+	logger.Debugf("in resourceCustomRuleActionRead")
 
 	s := strings.Split(d.Id(), ":")
 
@@ -164,7 +164,7 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsUpdate")
-	logger.Debugf("!!! in resourceCustomRuleActionUpdate")
+	logger.Debugf("in resourceCustomRuleActionUpdate")
 
 	s := strings.Split(d.Id(), ":")
 
@@ -207,7 +207,7 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsDelete")
-	logger.Debugf("!!! in resourceAPIRequestConstraintsDelete")
+	logger.Debugf("in resourceAPIRequestConstraintsDelete")
 
 	s := strings.Split(d.Id(), ":")
 

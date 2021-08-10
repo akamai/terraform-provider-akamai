@@ -54,7 +54,7 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisCreate")
-	logger.Debugf("!!! in resourceReputationAnalysisCreate")
+	logger.Debugf("in resourceReputationAnalysisCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -96,7 +96,7 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisRead")
-	logger.Debugf("!!! in resourceReputationAnalysisRead")
+	logger.Debugf("in resourceReputationAnalysisRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -140,7 +140,7 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisUpdate")
-	logger.Debugf("!!! in resourceReputationAnalysisUpdate")
+	logger.Debugf("in resourceReputationAnalysisUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -181,7 +181,7 @@ func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisDelete")
-	logger.Debugf("!!! in resourceReputationAnalysisDelete")
+	logger.Debugf("in resourceReputationAnalysisDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {

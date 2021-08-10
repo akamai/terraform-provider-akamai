@@ -69,7 +69,7 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoCreate")
-	logger.Debugf("!!! in resourceIPGeoCreate")
+	logger.Debugf("in resourceIPGeoCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -117,7 +117,7 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoRead")
-	logger.Debugf("!!! in resourceIPGeoRead")
+	logger.Debugf("in resourceIPGeoRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -174,7 +174,7 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoUpdate")
-	logger.Debugf("!!! in resourcePenaltyBoxUpdate")
+	logger.Debugf("in resourcePenaltyBoxUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -222,7 +222,7 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoDelete")
-	logger.Debugf("!!! in resourceIPGeoDelete")
+	logger.Debugf("in resourceIPGeoDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {

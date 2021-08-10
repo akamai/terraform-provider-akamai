@@ -51,7 +51,7 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceVersionNotesCreate")
-	logger.Debugf("!!! in resourceVersionNotesCreate")
+	logger.Debugf("in resourceVersionNotesCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -83,7 +83,7 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceVersionNotesRead")
-	logger.Debugf("!!! resourceVersionNotesRead")
+	logger.Debugf("resourceVersionNotesRead")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -121,7 +121,7 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceVersionNotesUpdate")
-	logger.Debugf("!!! resourceVersionNotesUpdate")
+	logger.Debugf("resourceVersionNotesUpdate")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {

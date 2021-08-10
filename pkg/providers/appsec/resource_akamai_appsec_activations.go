@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	// "log"
 	"strconv"
 	"time"
 
@@ -77,7 +76,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsCreate")
-	logger.Debug("!!! in resourceActivationsCreate")
+	logger.Debug("in resourceActivationsCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -89,7 +88,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	note, err := tools.GetStringValue("notes", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	activate, err := tools.GetBoolValue("activate", d)
@@ -157,7 +156,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
-	logger.Debug("!!! in resourceActivationsRead")
+	logger.Debug("in resourceActivationsRead")
 
 	activationID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -184,7 +183,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsUpdate")
-	logger.Debug("!!! in resourceActivationsUpdate")
+	logger.Debug("in resourceActivationsUpdate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -196,7 +195,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	note, err := tools.GetStringValue("notes", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	activate, err := tools.GetBoolValue("activate", d)
@@ -265,7 +264,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRemove")
-	logger.Debug("!!! in resourceActivationsDelete")
+	logger.Debug("in resourceActivationsDelete")
 
 	activationID, err := strconv.Atoi(d.Id())
 	if err != nil {
