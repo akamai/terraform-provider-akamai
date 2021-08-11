@@ -75,12 +75,13 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	createCustomRuleAction := appsec.UpdateCustomRuleActionRequest{}
-	createCustomRuleAction.ConfigID = configid
-	createCustomRuleAction.Version = version
-	createCustomRuleAction.PolicyID = policyid
-	createCustomRuleAction.RuleID = ruleid
-	createCustomRuleAction.Action = customruleaction
+	createCustomRuleAction := appsec.UpdateCustomRuleActionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		RuleID:   ruleid,
+		Action:   customruleaction,
+	}
 
 	_, erru := client.UpdateCustomRuleAction(ctx, createCustomRuleAction)
 	if erru != nil {
@@ -114,11 +115,12 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	getCustomRuleAction := appsec.GetCustomRuleActionRequest{}
-	getCustomRuleAction.ConfigID = configid
-	getCustomRuleAction.Version = version
-	getCustomRuleAction.PolicyID = policyid
-	getCustomRuleAction.RuleID = ruleid
+	getCustomRuleAction := appsec.GetCustomRuleActionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		RuleID:   ruleid,
+	}
 
 	customruleaction, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
 	if err != nil {
@@ -165,12 +167,13 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{}
-	updateCustomRuleAction.ConfigID = configid
-	updateCustomRuleAction.Version = version
-	updateCustomRuleAction.PolicyID = policyid
-	updateCustomRuleAction.RuleID = ruleid
-	updateCustomRuleAction.Action = customruleaction
+	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		RuleID:   ruleid,
+		Action:   customruleaction,
+	}
 
 	_, erru := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if erru != nil {
@@ -202,12 +205,13 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{}
-	updateCustomRuleAction.ConfigID = configid
-	updateCustomRuleAction.Version = version
-	updateCustomRuleAction.PolicyID = policyid
-	updateCustomRuleAction.RuleID = ruleid
-	updateCustomRuleAction.Action = "none"
+	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		RuleID:   ruleid,
+		Action:   "none",
+	}
 
 	_, errd := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
 	if errd != nil {

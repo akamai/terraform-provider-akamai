@@ -71,11 +71,12 @@ func resourceWAFProtectionCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	createWAFProtection := appsec.UpdateWAFProtectionRequest{}
-	createWAFProtection.ConfigID = configid
-	createWAFProtection.Version = version
-	createWAFProtection.PolicyID = policyid
-	createWAFProtection.ApplyApplicationLayerControls = applyapplicationlayercontrols
+	createWAFProtection := appsec.UpdateWAFProtectionRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyApplicationLayerControls: applyapplicationlayercontrols,
+	}
 
 	_, erru := client.UpdateWAFProtection(ctx, createWAFProtection)
 	if erru != nil {
@@ -105,10 +106,11 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getWAFProtection := appsec.GetWAFProtectionRequest{}
-	getWAFProtection.ConfigID = configid
-	getWAFProtection.Version = version
-	getWAFProtection.PolicyID = policyid
+	getWAFProtection := appsec.GetWAFProtectionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	wafprotection, err := client.GetWAFProtection(ctx, getWAFProtection)
 	if err != nil {
@@ -158,11 +160,12 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	updateWAFProtection := appsec.UpdateWAFProtectionRequest{}
-	updateWAFProtection.ConfigID = configid
-	updateWAFProtection.Version = version
-	updateWAFProtection.PolicyID = policyid
-	updateWAFProtection.ApplyApplicationLayerControls = applyapplicationlayercontrols
+	updateWAFProtection := appsec.UpdateWAFProtectionRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyApplicationLayerControls: applyapplicationlayercontrols,
+	}
 
 	_, erru := client.UpdateWAFProtection(ctx, updateWAFProtection)
 	if erru != nil {
@@ -190,11 +193,12 @@ func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m 
 	version := getModifiableConfigVersion(ctx, configid, "wafProtection", m)
 	policyid := idParts[1]
 
-	removeWAFProtection := appsec.UpdateWAFProtectionRequest{}
-	removeWAFProtection.ConfigID = configid
-	removeWAFProtection.Version = version
-	removeWAFProtection.PolicyID = policyid
-	removeWAFProtection.ApplyApplicationLayerControls = false
+	removeWAFProtection := appsec.UpdateWAFProtectionRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyApplicationLayerControls: false,
+	}
 
 	_, errd := client.UpdateWAFProtection(ctx, removeWAFProtection)
 	if errd != nil {

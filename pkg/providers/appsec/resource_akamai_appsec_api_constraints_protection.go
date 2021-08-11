@@ -71,11 +71,12 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	createAPIConstraintsProtection := appsec.UpdateAPIConstraintsProtectionRequest{}
-	createAPIConstraintsProtection.ConfigID = configid
-	createAPIConstraintsProtection.Version = version
-	createAPIConstraintsProtection.PolicyID = policyid
-	createAPIConstraintsProtection.ApplyAPIConstraints = applyapiconstraintscontrols
+	createAPIConstraintsProtection := appsec.UpdateAPIConstraintsProtectionRequest{
+		ConfigID:            configid,
+		Version:             version,
+		PolicyID:            policyid,
+		ApplyAPIConstraints: applyapiconstraintscontrols,
+	}
 
 	_, erru := client.UpdateAPIConstraintsProtection(ctx, createAPIConstraintsProtection)
 	if erru != nil {
@@ -105,10 +106,11 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getAPIConstraintsProtection := appsec.GetAPIConstraintsProtectionRequest{}
-	getAPIConstraintsProtection.ConfigID = configid
-	getAPIConstraintsProtection.Version = version
-	getAPIConstraintsProtection.PolicyID = policyid
+	getAPIConstraintsProtection := appsec.GetAPIConstraintsProtectionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	protection, err := client.GetAPIConstraintsProtection(ctx, getAPIConstraintsProtection)
 	if err != nil {
@@ -158,11 +160,12 @@ func resourceAPIConstraintsProtectionUpdate(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	updateAPIConstraintsProtection := appsec.UpdateAPIConstraintsProtectionRequest{}
-	updateAPIConstraintsProtection.ConfigID = configid
-	updateAPIConstraintsProtection.Version = version
-	updateAPIConstraintsProtection.PolicyID = policyid
-	updateAPIConstraintsProtection.ApplyAPIConstraints = applyapiconstraintscontrols
+	updateAPIConstraintsProtection := appsec.UpdateAPIConstraintsProtectionRequest{
+		ConfigID:            configid,
+		Version:             version,
+		PolicyID:            policyid,
+		ApplyAPIConstraints: applyapiconstraintscontrols,
+	}
 
 	_, erru := client.UpdateAPIConstraintsProtection(ctx, updateAPIConstraintsProtection)
 	if erru != nil {
@@ -190,12 +193,12 @@ func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.Resou
 	version := getModifiableConfigVersion(ctx, configid, "apiConstraintsProtection", m)
 	policyid := idParts[1]
 
-	removeAPIConstraintsProtection := appsec.UpdateAPIConstraintsProtectionRequest{}
-	removeAPIConstraintsProtection.ConfigID = configid
-
-	removeAPIConstraintsProtection.Version = version
-	removeAPIConstraintsProtection.PolicyID = policyid
-	removeAPIConstraintsProtection.ApplyAPIConstraints = false
+	removeAPIConstraintsProtection := appsec.UpdateAPIConstraintsProtectionRequest{
+		ConfigID:            configid,
+		Version:             version,
+		PolicyID:            policyid,
+		ApplyAPIConstraints: false,
+	}
 
 	_, errd := client.UpdateAPIConstraintsProtection(ctx, removeAPIConstraintsProtection)
 	if errd != nil {

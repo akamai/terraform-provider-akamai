@@ -58,14 +58,15 @@ func resourceEvalProtectHostCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	updateEvalProtectHost := appsec.UpdateEvalProtectHostRequest{}
-	updateEvalProtectHost.ConfigID = configid
-	updateEvalProtectHost.Version = getModifiableConfigVersion(ctx, configid, "evalprotecthostnames", m)
 	hostnamelist := make([]string, 0, len(hostnameset.List()))
 	for _, hostname := range hostnameset.List() {
 		hostnamelist = append(hostnamelist, hostname.(string))
 	}
-	updateEvalProtectHost.Hostnames = hostnamelist
+	updateEvalProtectHost := appsec.UpdateEvalProtectHostRequest{
+		ConfigID:  configid,
+		Version:   getModifiableConfigVersion(ctx, configid, "evalprotecthostnames", m),
+		Hostnames: hostnamelist,
+	}
 
 	_, err = client.UpdateEvalProtectHost(ctx, updateEvalProtectHost)
 	if err != nil {
@@ -89,9 +90,10 @@ func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	getEvalProtectHost := appsec.GetEvalProtectHostRequest{}
-	getEvalProtectHost.ConfigID = configid
-	getEvalProtectHost.Version = getLatestConfigVersion(ctx, configid, m)
+	getEvalProtectHost := appsec.GetEvalProtectHostRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
 	evalprotecthostnames, err := client.GetEvalProtectHost(ctx, getEvalProtectHost)
 	if err != nil {
@@ -128,9 +130,11 @@ func resourceEvalProtectHostUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	updateEvalProtectHost := appsec.UpdateEvalProtectHostRequest{}
-	updateEvalProtectHost.ConfigID = configid
-	updateEvalProtectHost.Version = getModifiableConfigVersion(ctx, configid, "evalprotecthostnames", m)
+	updateEvalProtectHost := appsec.UpdateEvalProtectHostRequest{
+		ConfigID: configid,
+		Version:  getModifiableConfigVersion(ctx, configid, "evalprotecthostnames", m),
+	}
+
 	hostnamelist := make([]string, 0, len(hostnames.List()))
 	for _, hostname := range hostnames.List() {
 		hostnamelist = append(hostnamelist, hostname.(string))

@@ -65,10 +65,11 @@ func resourceConfigurationRenameCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	updateConfiguration := appsec.UpdateConfigurationRequest{}
-	updateConfiguration.ConfigID = configid
-	updateConfiguration.Name = name
-	updateConfiguration.Description = description
+	updateConfiguration := appsec.UpdateConfigurationRequest{
+		ConfigID:    configid,
+		Name:        name,
+		Description: description,
+	}
 
 	_, erru := client.UpdateConfiguration(ctx, updateConfiguration)
 	if erru != nil {
@@ -92,8 +93,9 @@ func resourceConfigurationRenameRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	getConfiguration := appsec.GetConfigurationRequest{}
-	getConfiguration.ConfigID = configid
+	getConfiguration := appsec.GetConfigurationRequest{
+		ConfigID: configid,
+	}
 
 	configuration, err := client.GetConfiguration(ctx, getConfiguration)
 	if err != nil {
@@ -133,10 +135,11 @@ func resourceConfigurationRenameUpdate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	updateConfiguration := appsec.UpdateConfigurationRequest{}
-	updateConfiguration.ConfigID = configid
-	updateConfiguration.Name = name
-	updateConfiguration.Description = description
+	updateConfiguration := appsec.UpdateConfigurationRequest{
+		ConfigID:    configid,
+		Name:        name,
+		Description: description,
+	}
 
 	_, erru := client.UpdateConfiguration(ctx, updateConfiguration)
 	if erru != nil {

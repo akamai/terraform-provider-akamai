@@ -103,12 +103,13 @@ func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 
-	createEval := appsec.UpdateEvalRequest{}
-	createEval.ConfigID = configid
-	createEval.Version = version
-	createEval.PolicyID = policyid
-	createEval.Eval = evaloperation
-	createEval.Mode = evalmode
+	createEval := appsec.UpdateEvalRequest{
+		ConfigID: configid,
+		Version: version,
+		PolicyID: policyid,
+		Eval: evaloperation,
+		Mode: evalmode,
+	}
 
 	_, erru := client.UpdateEval(ctx, createEval)
 	if erru != nil {
@@ -138,10 +139,11 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getEval := appsec.GetEvalRequest{}
-	getEval.ConfigID = configid
-	getEval.Version = version
-	getEval.PolicyID = policyid
+	getEval := appsec.GetEvalRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	eval, err := client.GetEval(ctx, getEval)
 	if err != nil {
@@ -196,12 +198,13 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 
-	updateEval := appsec.UpdateEvalRequest{}
-	updateEval.ConfigID = configid
-	updateEval.Version = version
-	updateEval.PolicyID = policyid
-	updateEval.Eval = evaloperation
-	updateEval.Mode = evalmode
+	updateEval := appsec.UpdateEvalRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Eval:     evaloperation,
+		Mode: evalmode,
+	}
 
 	_, erru := client.UpdateEval(ctx, updateEval)
 	if erru != nil {
@@ -229,11 +232,12 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 	version := getModifiableConfigVersion(ctx, configid, "ruleevaluation", m)
 	policyid := idParts[1]
 
-	removeEval := appsec.RemoveEvalRequest{}
-	removeEval.ConfigID = configid
-	removeEval.Version = version
-	removeEval.PolicyID = policyid
-	removeEval.Eval = "STOP"
+	removeEval := appsec.RemoveEvalRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Eval:     "STOP",
+	}
 
 	_, erru := client.RemoveEval(ctx, removeEval)
 	if erru != nil {

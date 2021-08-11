@@ -63,11 +63,12 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	createSecurityPolicy := appsec.UpdateSecurityPolicyRequest{}
-	createSecurityPolicy.ConfigID = configid
-	createSecurityPolicy.Version = version
-	createSecurityPolicy.PolicyID = policyid
-	createSecurityPolicy.PolicyName = policyname
+	createSecurityPolicy := appsec.UpdateSecurityPolicyRequest{
+		ConfigID:   configid,
+		Version:    version,
+		PolicyID:   policyid,
+		PolicyName: policyname,
+	}
 
 	_, erru := client.UpdateSecurityPolicy(ctx, createSecurityPolicy)
 	if erru != nil {
@@ -97,10 +98,11 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getSecurityPolicy := appsec.GetSecurityPolicyRequest{}
-	getSecurityPolicy.ConfigID = configid
-	getSecurityPolicy.Version = version
-	getSecurityPolicy.PolicyID = policyid
+	getSecurityPolicy := appsec.GetSecurityPolicyRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	securitypolicy, err := client.GetSecurityPolicy(ctx, getSecurityPolicy)
 	if err != nil {
@@ -141,11 +143,12 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	updateSecurityPolicy := appsec.UpdateSecurityPolicyRequest{}
-	updateSecurityPolicy.ConfigID = configid
-	updateSecurityPolicy.Version = version
-	updateSecurityPolicy.PolicyID = policyid
-	updateSecurityPolicy.PolicyName = policyname
+	updateSecurityPolicy := appsec.UpdateSecurityPolicyRequest{
+		ConfigID:   configid,
+		Version:    version,
+		PolicyID:   policyid,
+		PolicyName: policyname,
+	}
 
 	_, erru := client.UpdateSecurityPolicy(ctx, updateSecurityPolicy)
 	if erru != nil {

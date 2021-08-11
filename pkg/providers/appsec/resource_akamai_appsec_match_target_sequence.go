@@ -91,10 +91,11 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	version := getLatestConfigVersion(ctx, configid, m)
 	matchTargetType := idParts[1]
 
-	getMatchTargetSequence := appsec.GetMatchTargetSequenceRequest{}
-	getMatchTargetSequence.ConfigID = configid
-	getMatchTargetSequence.ConfigVersion = version
-	getMatchTargetSequence.Type = matchTargetType
+	getMatchTargetSequence := appsec.GetMatchTargetSequenceRequest{
+		ConfigID:      configid,
+		ConfigVersion: version,
+		Type:          matchTargetType,
+	}
 
 	matchTargetSequence, err := client.GetMatchTargetSequence(ctx, getMatchTargetSequence)
 	if err != nil {

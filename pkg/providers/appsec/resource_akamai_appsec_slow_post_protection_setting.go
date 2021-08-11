@@ -98,11 +98,12 @@ func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	createSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{}
-	createSlowPostProtectionSetting.ConfigID = configid
-	createSlowPostProtectionSetting.Version = version
-	createSlowPostProtectionSetting.PolicyID = policyid
-	createSlowPostProtectionSetting.Action = slowrateaction
+	createSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Action:   slowrateaction,
+	}
 	createSlowPostProtectionSetting.SlowRateThreshold.Rate = slowratethresholdrate
 	createSlowPostProtectionSetting.SlowRateThreshold.Period = slowratethresholdperiod
 	createSlowPostProtectionSetting.DurationThreshold.Timeout = durationthresholdtimeout
@@ -135,10 +136,11 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getSlowPostProtectionSetting := appsec.GetSlowPostProtectionSettingRequest{}
-	getSlowPostProtectionSetting.ConfigID = configid
-	getSlowPostProtectionSetting.Version = version
-	getSlowPostProtectionSetting.PolicyID = policyid
+	getSlowPostProtectionSetting := appsec.GetSlowPostProtectionSettingRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	getslowpost, errg := client.GetSlowPostProtectionSetting(ctx, getSlowPostProtectionSetting)
 	if errg != nil {
@@ -204,11 +206,12 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	updateSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{}
-	updateSlowPostProtectionSetting.ConfigID = configid
-	updateSlowPostProtectionSetting.Version = version
-	updateSlowPostProtectionSetting.PolicyID = policyid
-	updateSlowPostProtectionSetting.Action = slowrateaction
+	updateSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Action:   slowrateaction,
+	}
 	updateSlowPostProtectionSetting.SlowRateThreshold.Rate = slowratethresholdrate
 	updateSlowPostProtectionSetting.SlowRateThreshold.Period = slowratethresholdperiod
 	updateSlowPostProtectionSetting.DurationThreshold.Timeout = durationthresholdtimeout
@@ -239,11 +242,12 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	version := getModifiableConfigVersion(ctx, configid, "slowpostSettings", m)
 	policyid := idParts[1]
 
-	updateSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{}
-	updateSlowPostProtection.ConfigID = configid
-	updateSlowPostProtection.Version = version
-	updateSlowPostProtection.PolicyID = policyid
-	updateSlowPostProtection.ApplySlowPostControls = false
+	updateSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{
+		ConfigID:              configid,
+		Version:               version,
+		PolicyID:              policyid,
+		ApplySlowPostControls: false,
+	}
 
 	_, erru := client.UpdateSlowPostProtection(ctx, updateSlowPostProtection)
 	if erru != nil {

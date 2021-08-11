@@ -89,13 +89,14 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	createAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{}
-	createAdvancedSettingsPrefetch.ConfigID = configid
-	createAdvancedSettingsPrefetch.Version = version
-	createAdvancedSettingsPrefetch.EnableAppLayer = enableAppLayer
-	createAdvancedSettingsPrefetch.AllExtensions = allExtensions
-	createAdvancedSettingsPrefetch.Extensions = exts
-	createAdvancedSettingsPrefetch.EnableRateControls = enableRateControls
+	createAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{
+		ConfigID:           configid,
+		Version:            version,
+		EnableAppLayer:     enableAppLayer,
+		AllExtensions:      allExtensions,
+		Extensions:         exts,
+		EnableRateControls: enableRateControls,
+	}
 
 	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, createAdvancedSettingsPrefetch)
 	if erru != nil {
@@ -120,9 +121,10 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	}
 	version := getLatestConfigVersion(ctx, configid, m)
 
-	getAdvancedSettingsPrefetch := appsec.GetAdvancedSettingsPrefetchRequest{}
-	getAdvancedSettingsPrefetch.ConfigID = configid
-	getAdvancedSettingsPrefetch.Version = version
+	getAdvancedSettingsPrefetch := appsec.GetAdvancedSettingsPrefetchRequest{
+		ConfigID: configid,
+		Version:  version,
+	}
 
 	prefetchget, err := client.GetAdvancedSettingsPrefetch(ctx, getAdvancedSettingsPrefetch)
 	if err != nil {
@@ -182,14 +184,14 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	updateAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{}
-	updateAdvancedSettingsPrefetch.ConfigID = configid
-	updateAdvancedSettingsPrefetch.Version = version
-	updateAdvancedSettingsPrefetch.EnableAppLayer = enableAppLayer
-	updateAdvancedSettingsPrefetch.AllExtensions = allExtensions
-	updateAdvancedSettingsPrefetch.Extensions = exts
-	logger.Errorf("calling 'getAdvancedSettingsPrefetch': Extensions %w", updateAdvancedSettingsPrefetch.Extensions)
-	updateAdvancedSettingsPrefetch.EnableRateControls = enableRateControls
+	updateAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{
+		ConfigID:       configid,
+		Version:        version,
+		EnableAppLayer: enableAppLayer,
+		AllExtensions:  allExtensions,
+		Extensions:     exts,
+		EnableRateControls: enableRateControls,
+	}
 
 	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, updateAdvancedSettingsPrefetch)
 	if erru != nil {
@@ -212,11 +214,12 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 	}
 	version := getModifiableConfigVersion(ctx, configid, "prefetchSetting", m)
 
-	removeAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{}
-	removeAdvancedSettingsPrefetch.ConfigID = configid
-	removeAdvancedSettingsPrefetch.Version = version
-	removeAdvancedSettingsPrefetch.EnableAppLayer = false
-	removeAdvancedSettingsPrefetch.EnableRateControls = false
+	removeAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{
+		ConfigID:           configid,
+		Version:            version,
+		EnableAppLayer:     false,
+		EnableRateControls: false,
+	}
 
 	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, removeAdvancedSettingsPrefetch)
 	if erru != nil {

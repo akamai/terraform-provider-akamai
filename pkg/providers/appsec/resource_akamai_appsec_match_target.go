@@ -101,10 +101,11 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	getMatchTarget := appsec.GetMatchTargetRequest{}
-	getMatchTarget.ConfigID = configid
-	getMatchTarget.ConfigVersion = version
-	getMatchTarget.TargetID = targetid
+	getMatchTarget := appsec.GetMatchTargetRequest{
+		ConfigID:      configid,
+		ConfigVersion: version,
+		TargetID:      targetid,
+	}
 
 	matchtarget, err := client.GetMatchTarget(ctx, getMatchTarget)
 	if err != nil {
@@ -153,11 +154,12 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	updateMatchTarget := appsec.UpdateMatchTargetRequest{}
-	updateMatchTarget.ConfigID = configid
-	updateMatchTarget.ConfigVersion = version
-	updateMatchTarget.TargetID = targetid
-	updateMatchTarget.JsonPayloadRaw = rawJSON
+	updateMatchTarget := appsec.UpdateMatchTargetRequest{
+		ConfigID:       configid,
+		ConfigVersion:  version,
+		TargetID:       targetid,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, err = client.UpdateMatchTarget(ctx, updateMatchTarget)
 	if err != nil {
@@ -189,10 +191,11 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	removeMatchTarget := appsec.RemoveMatchTargetRequest{}
-	removeMatchTarget.ConfigID = configid
-	removeMatchTarget.ConfigVersion = version
-	removeMatchTarget.TargetID = targetid
+	removeMatchTarget := appsec.RemoveMatchTargetRequest{
+		ConfigID:      configid,
+		ConfigVersion: version,
+		TargetID:      targetid,
+	}
 
 	_, errd := client.RemoveMatchTarget(ctx, removeMatchTarget)
 	if errd != nil {

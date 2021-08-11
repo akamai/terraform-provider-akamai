@@ -74,12 +74,13 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	createReputationAnalysis := appsec.UpdateReputationAnalysisRequest{}
-	createReputationAnalysis.ConfigID = configid
-	createReputationAnalysis.Version = version
-	createReputationAnalysis.PolicyID = policyid
-	createReputationAnalysis.ForwardToHTTPHeader = forwardToHTTPHeader
-	createReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = forwardSharedIPToHTTPHeaderSiem
+	createReputationAnalysis := appsec.UpdateReputationAnalysisRequest{
+		ConfigID:                           configid,
+		Version:                            version,
+		PolicyID:                           policyid,
+		ForwardToHTTPHeader:                forwardToHTTPHeader,
+		ForwardSharedIPToHTTPHeaderAndSIEM: forwardSharedIPToHTTPHeaderSiem,
+	}
 
 	_, erru := client.UpdateReputationAnalysis(ctx, createReputationAnalysis)
 	if erru != nil {
@@ -109,10 +110,11 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getReputationAnalysis := appsec.GetReputationAnalysisRequest{}
-	getReputationAnalysis.ConfigID = configid
-	getReputationAnalysis.Version = version
-	getReputationAnalysis.PolicyID = policyid
+	getReputationAnalysis := appsec.GetReputationAnalysisRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	resp, errg := client.GetReputationAnalysis(ctx, getReputationAnalysis)
 	if errg != nil {
@@ -161,12 +163,13 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	updateReputationAnalysis := appsec.UpdateReputationAnalysisRequest{}
-	updateReputationAnalysis.ConfigID = configid
-	updateReputationAnalysis.Version = version
-	updateReputationAnalysis.PolicyID = policyid
-	updateReputationAnalysis.ForwardToHTTPHeader = forwardToHTTPHeader
-	updateReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = forwardSharedIPToHTTPHeaderSiem
+	updateReputationAnalysis := appsec.UpdateReputationAnalysisRequest{
+		ConfigID:                           configid,
+		Version:                            version,
+		PolicyID:                           policyid,
+		ForwardToHTTPHeader:                forwardToHTTPHeader,
+		ForwardSharedIPToHTTPHeaderAndSIEM: forwardSharedIPToHTTPHeaderSiem,
+	}
 
 	_, erru := client.UpdateReputationAnalysis(ctx, updateReputationAnalysis)
 	if erru != nil {
@@ -194,12 +197,13 @@ func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceDat
 	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAnalysis", m)
 	policyid := idParts[1]
 
-	RemoveReputationAnalysis := appsec.RemoveReputationAnalysisRequest{}
-	RemoveReputationAnalysis.ConfigID = configid
-	RemoveReputationAnalysis.Version = version
-	RemoveReputationAnalysis.PolicyID = policyid
-	RemoveReputationAnalysis.ForwardToHTTPHeader = false
-	RemoveReputationAnalysis.ForwardSharedIPToHTTPHeaderAndSIEM = false
+	RemoveReputationAnalysis := appsec.RemoveReputationAnalysisRequest{
+		ConfigID:                           configid,
+		Version:                            version,
+		PolicyID:                           policyid,
+		ForwardToHTTPHeader:                false,
+		ForwardSharedIPToHTTPHeaderAndSIEM: false,
+	}
 
 	_, erru := client.RemoveReputationAnalysis(ctx, RemoveReputationAnalysis)
 	if erru != nil {
