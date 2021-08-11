@@ -1,0 +1,18 @@
+{
+    "allowSampling": true,
+    "cookies": {
+        "type": "all"
+    },
+    "customHeaders": {
+        "type": "exclude",
+        "values": [
+            "csdasdad"
+        ]
+    },
+    "standardHeaders": {
+        "type": "only",
+        "values": [
+            "Accept"
+        ]
+    }
+}
