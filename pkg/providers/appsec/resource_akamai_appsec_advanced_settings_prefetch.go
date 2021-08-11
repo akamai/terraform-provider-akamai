@@ -95,7 +95,6 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	createAdvancedSettingsPrefetch.EnableAppLayer = enableAppLayer
 	createAdvancedSettingsPrefetch.AllExtensions = allExtensions
 	createAdvancedSettingsPrefetch.Extensions = exts
-	//logger.Errorf("calling 'getAdvancedSettingsPrefetch': Extensions %w", createAdvancedSettingsPrefetch.Extensions)
 	createAdvancedSettingsPrefetch.EnableRateControls = enableRateControls
 
 	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, createAdvancedSettingsPrefetch)
