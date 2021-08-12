@@ -220,8 +220,8 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAttackgroupDelete")
-	logger.Debugf(" in resourceAttackgroupDelete")
+	logger := meta.Log("APPSEC", "resourceAttackGroupDelete")
+	logger.Debugf(" in resourceAttackGroupDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
 	if err != nil {

@@ -46,7 +46,7 @@ func resourceEvalProtectHost() *schema.Resource {
 func resourceEvalProtectHostCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalProtectHostUpdate")
+	logger := meta.Log("APPSEC", "resourceEvalProtectHostCreate")
 	logger.Debug("in resourceEvalProtectHostCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
@@ -148,7 +148,7 @@ func resourceEvalProtectHostUpdate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceEvalProtectHostDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("APPSEC", "resourceEvalProtectHostUpdate")
+	logger := meta.Log("APPSEC", "resourceEvalProtectHostDelete")
 	logger.Debug("in resourceEvalProtectHostDelete")
 
 	return schema.NoopContext(context.TODO(), d, m)

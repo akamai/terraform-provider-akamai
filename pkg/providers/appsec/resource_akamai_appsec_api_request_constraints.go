@@ -103,7 +103,7 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsRead")
-	logger.Debugf("in resourceCustomRuleActionRead")
+	logger.Debugf("in resourceAPIRequestConstraintsRead")
 
 	s := strings.Split(d.Id(), ":")
 
@@ -164,7 +164,7 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsUpdate")
-	logger.Debugf("in resourceCustomRuleActionUpdate")
+	logger.Debugf("in resourceAPIRequestConstraintsUpdate")
 
 	s := strings.Split(d.Id(), ":")
 

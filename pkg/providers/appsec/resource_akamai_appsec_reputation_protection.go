@@ -140,7 +140,7 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProtectionUpdate")
-	logger.Debugf("in resourceSlowPostProtectionUpdate")
+	logger.Debugf("in resourceReputationProtectionUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {

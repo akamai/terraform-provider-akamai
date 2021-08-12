@@ -92,7 +92,7 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRateProtectionRead")
-	logger.Debugf("in resourceReputationProtectionRead")
+	logger.Debugf("in resourceRateProtectionRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -177,7 +177,6 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRateProtectionDelete")
-
 	logger.Debugf("in resourceRateProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")

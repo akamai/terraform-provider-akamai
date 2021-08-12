@@ -146,7 +146,7 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionUpdate")
-	logger.Debugf("in resourceCustomRuleActionUpdate")
+	logger.Debugf("in resourceReputationProfileActionUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationrofileid")
 	if err != nil {

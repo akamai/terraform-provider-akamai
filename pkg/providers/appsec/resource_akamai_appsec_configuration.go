@@ -250,7 +250,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceConfigurationRemove")
+	logger := meta.Log("APPSEC", "resourceConfigurationDelete")
 	logger.Debug("in resourceConfigurationDelete")
 
 	configid, err := strconv.Atoi(d.Id())

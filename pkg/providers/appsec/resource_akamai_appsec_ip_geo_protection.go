@@ -177,7 +177,6 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionDelete")
-
 	logger.Debugf("in resourceIPGeoProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")

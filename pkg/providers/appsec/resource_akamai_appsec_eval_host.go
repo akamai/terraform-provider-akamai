@@ -147,7 +147,7 @@ func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m inter
 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalHostRemove")
+	logger := meta.Log("APPSEC", "resourceEvalHostDelete")
 	logger.Debug("in resourceEvalHostDelete")
 
 	configid, err := strconv.Atoi(d.Id())

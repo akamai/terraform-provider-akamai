@@ -58,7 +58,7 @@ func resourceRatePolicyAction() *schema.Resource {
 func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceRatePolicyActionUpdate")
+	logger := meta.Log("APPSEC", "resourceRatePolicyActionCreate")
 	logger.Debugf("in resourceRatePolicyActionCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)

@@ -49,7 +49,7 @@ func resourceConfigurationRename() *schema.Resource {
 func resourceConfigurationRenameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceConfigurationRenameUpdate")
+	logger := meta.Log("APPSEC", "resourceConfigurationRenameCreate")
 	logger.Debugf("in resourceConfigurationRenameCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
@@ -118,7 +118,7 @@ func resourceConfigurationRenameUpdate(ctx context.Context, d *schema.ResourceDa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationRenameUpdate")
-	logger.Debugf("in resourceConfigurationRenameRead")
+	logger.Debugf("in resourceConfigurationRenameUpdate")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {

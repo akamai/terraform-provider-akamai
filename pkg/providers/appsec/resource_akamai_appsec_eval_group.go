@@ -222,7 +222,7 @@ func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m inte
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalgroupDelete")
-	logger.Debugf("in resourceEvalgroupDelete")
+	logger.Debugf("in resourceEvalGroupDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
 	if err != nil {

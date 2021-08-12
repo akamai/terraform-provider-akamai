@@ -175,7 +175,7 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceCustomRuleRemove")
+	logger := meta.Log("APPSEC", "resourceCustomRuleDelete")
 	logger.Debugf("in resourceCustomRuleDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:custom_rule_id")

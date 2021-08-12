@@ -167,7 +167,7 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceCustomDenyRemove")
+	logger := meta.Log("APPSEC", "resourceCustomDenyDelete")
 	logger.Debugf("in resourceCustomDenyDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:customdenyid")

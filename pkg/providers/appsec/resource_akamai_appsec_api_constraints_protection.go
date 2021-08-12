@@ -92,7 +92,7 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionRead")
-	logger.Debugf("in resourceReputationProtectionRead")
+	logger.Debugf("in resourceAPIConstraintsProtectionRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -177,7 +177,6 @@ func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.Resou
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionDelete")
-
 	logger.Debugf("in resourceAPIConstraintsProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")

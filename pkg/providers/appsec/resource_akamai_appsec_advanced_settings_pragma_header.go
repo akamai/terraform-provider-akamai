@@ -51,8 +51,8 @@ func resourceAdvancedSettingsPragmaHeader() *schema.Resource {
 func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaCreate")
-	logger.Debug("in resourceAdvancedSettingsPragmaCreate")
+	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderCreate")
+	logger.Debug("in resourceAdvancedSettingsPragmaHeaderCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -92,8 +92,8 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaRead")
-	logger.Debug("resourceAdvancedSettingsPragmaRead")
+	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderRead")
+	logger.Debug("resourceAdvancedSettingsPragmaHeaderRead")
 
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -149,8 +149,8 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaDelete")
-	logger.Debug("resourceAdvancedSettingsPragmaDelete")
+	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderDelete")
+	logger.Debug("resourceAdvancedSettingsPragmaHeaderDelete")
 
 	jsonPayloadRaw := []byte("{}")
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
@@ -197,8 +197,8 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaUpdate")
-	logger.Debugf("resourceAdvancedSettingsPragmaUpdate33")
+	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderUpdate")
+	logger.Debugf("resourceAdvancedSettingsPragmaHeaderUpdate")
 
 	updateAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {

@@ -55,7 +55,7 @@ func resourceSlowPostProtectionCreate(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionCreate")
-	logger.Debugf("in resourceCustomRuleActionCreate")
+	logger.Debugf("in resourceSlowPostProtectionCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -177,7 +177,7 @@ func resourceSlowPostProtectionUpdate(ctx context.Context, d *schema.ResourceDat
 func resourceSlowPostProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSlowPostProtectionRemove")
+	logger := meta.Log("APPSEC", "resourceSlowPostProtectionDelete")
 	logger.Debugf("in resourceSlowPostProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")

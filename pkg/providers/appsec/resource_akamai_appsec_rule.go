@@ -298,8 +298,8 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceRuleRemove")
-	logger.Debugf("in resourceEvalRuleDelete")
+	logger := meta.Log("APPSEC", "resourceRuleDelete")
+	logger.Debugf("in resourceRuleDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
 	if err != nil {

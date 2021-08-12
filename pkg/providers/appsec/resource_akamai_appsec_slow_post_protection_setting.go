@@ -69,7 +69,7 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
+	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingCreate")
 	logger.Debugf("in resourceSlowPostProtectionSettingCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)

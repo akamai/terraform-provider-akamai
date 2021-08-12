@@ -225,7 +225,7 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalRuleRemove")
+	logger := meta.Log("APPSEC", "resourceEvalRuleDelete")
 	logger.Debugf("in resourceEvalRuleDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")

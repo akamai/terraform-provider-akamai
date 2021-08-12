@@ -174,7 +174,7 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoUpdate")
-	logger.Debugf("in resourcePenaltyBoxUpdate")
+	logger.Debugf("in resourceIPGeoUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {

@@ -168,7 +168,7 @@ func resourceThreatIntelUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceThreatIntelDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("APPSEC", "resourceThreatIntelRemove")
+	logger := meta.Log("APPSEC", "resourceThreatIntelDelete")
 	logger.Debugf("in resourceThreatIntelDelete")
 
 	d.SetId("")

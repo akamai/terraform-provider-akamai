@@ -218,8 +218,8 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
-	logger.Debugf("resourceSiemSettingsUpdate")
+	logger := meta.Log("APPSEC", "resourceSiemSettingsDelete")
+	logger.Debugf("resourceSiemSettingsDelete")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {

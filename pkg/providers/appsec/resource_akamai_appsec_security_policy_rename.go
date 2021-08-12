@@ -83,7 +83,7 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
+	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameRead")
 	logger.Debugf("in resourceSecurityPolicyRenameRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
@@ -123,8 +123,8 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSecurityPolicyUpdate")
-	logger.Debugf("in resourceSecurityPolicyRenameRead")
+	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameUpdate")
+	logger.Debugf("in resourceSecurityPolicyRenameUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
