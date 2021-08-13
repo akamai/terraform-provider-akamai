@@ -1,19 +1,19 @@
 ---
 layout: "akamai"
 page_title: "Akamai: akamai_property_rule_formats"
-subcategory: "Provisioning"
+subcategory: "Property Provisioning"
 description: |-
  Properties rule formats
 ---
 
 # akamai_property_rule_formats
 
-Use the `akamai_property_rule_formats` data source to query the list of 
-known rule formats. 
-You use rule formats to [freeze](https://developer.akamai.com/api/core_features/property_manager/v1.html#freezerf) or 
+Use the `akamai_property_rule_formats` data source to query the list of
+known rule formats.
+You use rule formats to [freeze](https://developer.akamai.com/api/core_features/property_manager/v1.html#freezerf) or
 [update](https://developer.akamai.com/api/core_features/property_manager/v1.html#updaterf) the versioned set of behaviors
-and criteria a rule tree invokes. Without this mechanism, behaviors and criteria 
-would update automatically and generate unexpected errors. 
+and criteria a rule tree invokes. Without this mechanism, behaviors and criteria
+would update automatically and generate unexpected errors.
 
 ## Example usage
 
@@ -36,7 +36,7 @@ There are no arguments available for this data source.
 
 This data source returns this attribute:
 
-* `formats` - A list of supported rule format identifiers. For example: 
+* `formats` - A list of supported rule format identifiers. For example:
 
 ```json
         [

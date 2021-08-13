@@ -64,7 +64,7 @@ The following arguments are supported:
 
 In addition to the arguments above, the following attributes are exported:
 
-* `mode` - The security policy mode, either `KRS` (update manually) or `AAG` (update automatically),
+* `mode` - The security policy mode, either `KRS` (update manually) or `AAG` (update automatically), For Adaptive Security Engine (ASE) __BETA__, use `ASE_AUTO` for automatic updates or `ASE_MANUAL` to manually get current rules. Please contact your Akamai representative to learn more about ASE. 
 
 * `current_ruleset` - The current rule set version and the ISO 8601 date the rule set version was introduced; this date acts like a version number. 
 

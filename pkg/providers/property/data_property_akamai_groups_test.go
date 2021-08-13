@@ -72,8 +72,7 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 				Providers:  testAccProviders,
 				IsUnitTest: true,
 				Steps: []resource.TestStep{{
-					Config:             loadFixtureString("testdata/TestDSContractRequired/groups.tf"),
-					ExpectNonEmptyPlan: false,
+					Config: loadFixtureString("testdata/TestDSContractRequired/groups.tf"),
 				}},
 			})
 		})

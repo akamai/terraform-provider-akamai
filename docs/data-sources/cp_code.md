@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: cp_code"
-subcategory: "Provisioning"
+subcategory: "Property Provisioning"
 description: |-
  CP Code
 ---

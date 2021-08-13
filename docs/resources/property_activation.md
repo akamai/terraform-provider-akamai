@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: property activation"
-subcategory: "Provisioning"
+subcategory: "Property Provisioning"
 description: |-
   Property Activation
 ---
@@ -46,6 +46,7 @@ resource "akamai_property_activation" "example_staging" {
      # NOTE: Specifying a version as shown here will target the latest version created. This latest version will always be activated in staging.
      version  = akamai_property.example.latest_version
      # not specifying network will target STAGING
+     note = "Sample activation"
 }
 
 resource "akamai_property_activation" "example_prod" {
@@ -71,6 +72,7 @@ The following arguments are supported:
 * `contact` - (Required) One or more email addresses to send activation status changes to.
 * `version` - (Required) The property version to activate. Previously this field was optional. It now depends on the `akamai_property` resource to identify latest instead of calculating it locally.  This association helps keep the dependency tree properly aligned. To always use the latest version, enter this value `{resource}.{resource identifier}.{field name}`. Using the example code above, the entry would be `akamai_property.example.latest_version` since we want the value of the `latest_version` attribute in the `akamai_property` resource labeled `example`.
 * `network` - (Optional) Akamai network to activate on, either `STAGING` or `PRODUCTION`. `STAGING` is the default.
+* `note` - (Optional) A log message you can assign to the activation request.
 * `auto_acknowledge_rule_warnings` - (Optional) Whether the activation should proceed despite any warnings. By default set to `true`.
 
 ### Deprecated arguments

@@ -1,0 +1,12 @@
+{
+    "evaluatedHosts": [
+        {
+            "hostname": "sujala.sandbox.akamaideveloper.com"
+        }
+    ],
+    "protectedHosts": [
+        {
+            "hostname": "rinaldi.sandbox.akamaideveloper.com"
+        }
+    ]
+}

@@ -24,10 +24,10 @@ func resourceWAFProtection() *schema.Resource {
 		UpdateContext: resourceWAFProtectionUpdate,
 		DeleteContext: resourceWAFProtectionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -55,7 +55,7 @@ func resourceWAFProtectionCreate(ctx context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFProtectionCreate")
-	logger.Debugf("!!! in resourceWAFProtectionCreate")
+	logger.Debugf("in resourceWAFProtectionCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -92,7 +92,7 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFProtectionRead")
-	logger.Debugf("!!! in resourceSlowPostProtectionSettingRead")
+	logger.Debugf("in resourceWAFProtectionRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -141,7 +141,7 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFProtectionUpdate")
-	logger.Debugf("!!! in resourceSlowPostProtectionSettingUpdate")
+	logger.Debugf("in resourceWAFProtectionUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
 	if err != nil {
@@ -177,7 +177,7 @@ func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFProtectionDelete")
-	logger.Debugf("!!! in resourceWAFProtectionDelete")
+	logger.Debugf("in resourceWAFProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
 	if err != nil {

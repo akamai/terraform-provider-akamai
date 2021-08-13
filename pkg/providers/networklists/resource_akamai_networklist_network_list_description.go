@@ -60,7 +60,7 @@ func resourceNetworkListDescriptionRead(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceNetworkListDescriptionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNetworkListDescriptionDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	return schema.NoopContext(nil, d, m)
 }

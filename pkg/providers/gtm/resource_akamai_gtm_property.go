@@ -335,11 +335,11 @@ func resourceGTMv1Property() *schema.Resource {
 }
 
 // utility func to parse Terraform resource string id
-func parseResourceStringId(id string) (string, string, error) {
+func parseResourceStringID(id string) (string, string, error) {
 
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return "", "", fmt.Errorf("Invalid resource id: %s", id)
+		return "", "", fmt.Errorf("Invalid resource ID: %s", id)
 	}
 
 	return parts[0], parts[1], nil
@@ -436,9 +436,9 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	// Give terraform the ID. Format domain::property
-	propertyId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	logger.Debugf("Generated Property resource Id: %s", propertyId)
-	d.SetId(propertyId)
+	propertyID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
+	logger.Debugf("Generated Property resource ID: %s", propertyID)
+	d.SetId(propertyID)
 	return resourceGTMv1PropertyRead(ctx, d, m)
 
 }
@@ -456,7 +456,7 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 
 	logger.Debugf("Reading Property: %s", d.Id())
 	// retrieve the property and domain
-	domain, property, err := parseResourceStringId(d.Id())
+	domain, property, err := parseResourceStringID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -482,7 +482,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 
 	logger.Debugf("Updating Property: %s", d.Id())
 	// pull domain and property out of resource id
-	domain, property, err := parseResourceStringId(d.Id())
+	domain, property, err := parseResourceStringID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -543,7 +543,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 	)
 	logger.Infof("Property [%s] Import", d.Id())
 	// pull domain and property out of resource id
-	domain, property, err := parseResourceStringId(d.Id())
+	domain, property, err := parseResourceStringID(d.Id())
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
@@ -576,7 +576,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 
 	logger.Debugf("Deleting Property: %s", d.Id())
 	// Get existing property
-	domain, property, err := parseResourceStringId(d.Id())
+	domain, property, err := parseResourceStringID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

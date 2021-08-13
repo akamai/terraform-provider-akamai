@@ -24,10 +24,10 @@ func resourceConfigurationRename() *schema.Resource {
 		UpdateContext: resourceConfigurationRenameUpdate,
 		DeleteContext: resourceConfigurationRenameDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -49,8 +49,8 @@ func resourceConfigurationRename() *schema.Resource {
 func resourceConfigurationRenameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceConfigurationRenameUpdate")
-	logger.Debugf("!!! in resourceConfigurationRenameCreate")
+	logger := meta.Log("APPSEC", "resourceConfigurationRenameCreate")
+	logger.Debugf("in resourceConfigurationRenameCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -85,9 +85,12 @@ func resourceConfigurationRenameRead(ctx context.Context, d *schema.ResourceData
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationRenameRead")
-	logger.Debugf("!!! in resourceConfigurationRenameRead")
+	logger.Debugf("in resourceConfigurationRenameRead")
 
 	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	getConfiguration := appsec.GetConfigurationRequest{}
 	getConfiguration.ConfigID = configid
@@ -115,9 +118,12 @@ func resourceConfigurationRenameUpdate(ctx context.Context, d *schema.ResourceDa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationRenameUpdate")
-	logger.Debugf("!!! in resourceConfigurationRenameRead")
+	logger.Debugf("in resourceConfigurationRenameUpdate")
 
 	configid, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	name, err := tools.GetStringValue("name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -141,6 +147,6 @@ func resourceConfigurationRenameUpdate(ctx context.Context, d *schema.ResourceDa
 	return resourceConfigurationRenameRead(ctx, d, m)
 }
 
-func resourceConfigurationRenameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+func resourceConfigurationRenameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return schema.NoopContext(context.TODO(), d, m)
 }

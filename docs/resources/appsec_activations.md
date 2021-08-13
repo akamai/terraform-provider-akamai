@@ -43,7 +43,9 @@ The following arguments are supported:
 
 * `network` - The network in which the security configuration should be activated. If supplied, must be either STAGING or PRODUCTION. If not supplied, STAGING will be assumed.
 
-* `notes` - An optional text note describing this operation.
+* `notes` - (Required) A text note describing this operation. If no attributes were changed since the last time a security
+configuration was updated using the akamai_appsec_activations resource, an activation will not occur. To ensure an activation
+is called, please update one of the attributes, e.g. the notes attribute.
 
 * `activate` - (Optional) A boolean indicating whether to activate the specified configuration version. If not supplied, True is assumed.
 

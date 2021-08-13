@@ -24,10 +24,10 @@ func resourceIPGeoProtection() *schema.Resource {
 		UpdateContext: resourceIPGeoProtectionUpdate,
 		DeleteContext: resourceIPGeoProtectionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -55,7 +55,7 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionCreate")
-	logger.Debugf("!!! in resourceIPGeoProtectionCreate")
+	logger.Debugf("in resourceIPGeoProtectionCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -92,7 +92,7 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionRead")
-	logger.Debugf("!!! in resourceIPGeoProtectionRead")
+	logger.Debugf("in resourceIPGeoProtectionRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -141,7 +141,7 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionUpdate")
-	logger.Debugf("!!! in resourceIPGeoProtectionUpdate")
+	logger.Debugf("in resourceIPGeoProtectionUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -177,8 +177,7 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionDelete")
-
-	logger.Debugf("!!! in resourceIPGeoProtectionDelete")
+	logger.Debugf("in resourceIPGeoProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {

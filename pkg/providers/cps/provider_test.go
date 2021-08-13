@@ -3,6 +3,8 @@ package cps
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
 	"sync"
 	"testing"
 
@@ -16,11 +18,19 @@ var testAccProviders map[string]*schema.Provider
 
 var testProvider *schema.Provider
 
-func init() {
+func TestMain(m *testing.M) {
 	testProvider = akamai.Provider(Subprovider())()
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testProvider,
 	}
+	if err := akamai.TFTestSetup(); err != nil {
+		log.Fatal(err)
+	}
+	exitCode := m.Run()
+	if err := akamai.TFTestTeardown(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(exitCode)
 }
 
 func TestProvider(t *testing.T) {

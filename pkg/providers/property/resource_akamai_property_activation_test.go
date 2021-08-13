@@ -2,7 +2,6 @@ package property
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"testing"
 
@@ -10,145 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
-
-var testAccAkamaiPropertyActivationConfig = fmt.Sprintf(`
-provider "akamai" {
-  papi_section = "papi"
-}
-
-resource "akamai_property_activation" "property_activation" {
-	property_id = "${akamai_property.property.id}"
-	version = "${akamai_property.property.version}"
-	network = "STAGING"
-	activate = true
-	contact = ["dshafik@akamai.com"]
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-resource "akamai_cp_code" "cp_code" {
-	name = "terraform-testing3"
-	contract = "${data.akamai_contract.contract.id}"
-	group = "${data.akamai_group.group.id}"
-	product = "prd_SPM"
-}
-
-resource "akamai_edge_hostname" "test" {
-    product = "prd_SPM"
-    contract = "${data.akamai_contract.contract.id}"
-    group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test3.exampleterraform.io.edgesuite.net"
-    ipv6 = true
-}
-
-resource "akamai_property" "property" {
-  name = "terraform-test3"
-  id = "prp_1234"
-
-  contact = ["user@exampleterraform.io"]
-
-  product = "prd_SPM"
-  cp_code = "${akamai_cp_code.cp_code.id}"
-  contract = "${data.akamai_contract.contract.id}"
-  group = "${data.akamai_group.group.id}"
-
-  hostnames = {
-		"example.org" = "${akamai_edge_hostname.test.edge_hostname}"
-  }
-  
-  rule_format = "v2016-11-15"
-  
-  rules = "${data.akamai_property_rules.rules.json}"
-}
-
-data "akamai_property_rules" "rules" {
- 	rules {
-		behavior {
-			name =  "origin"
-        	option { 
-       			key =  "cacheKeyHostname"
-            	value = "ORIGIN_HOSTNAME"
-        	}
-			option { 
-    			key =  "compress"
-     			value = "true"
-     		}
-    		option { 
-    			key =  "enableTrueClientIp"
-     			value = "false"
-     		}
-    		option { 
-    			key =  "forwardHostHeader"
-     			value = "REQUEST_HOST_HEADER"
-     		}
-    		option { 
-    			key =  "hostname"
-     			value = "exampleterraform.io"
-     		}
-    		option { 
-    			key =  "httpPort"
-     			value = "80"
-     		}
-    		option { 
-    			key =  "httpsPort"
-     			value = "443"
-     		}
-    		option { 
-    			key =  "originSni"
-     			value = "true"
-     		}
-    		option { 
-    			key =  "originType"
-     			value = "CUSTOMER"
-     		}
-    		option { 
-    			key =  "verificationMode"
-     			value = "PLATFORM_SETTINGS"
-     		}
-    		option { 
-    			key =  "originCertificate"
-     			value = ""
-     		}
-    		option { 
-    			key =  "ports"
-     			value = ""
-     		}
-      	}
-		behavior {
-			name =  "cpCode"
-			option {
-				key =  "id"
-				value = "${akamai_cp_code.cp_code.id}"
-			}
-			option {
-				key =  "name"
-				value = "${akamai_cp_code.cp_code.name}"
-			}
-		}
-		behavior {
-			name =  "caching"
-			option {
-				key =  "behavior"
-				value = "MAX_AGE"
-			}
-			option {
-                key =  "mustRevalidate"
-                value = "false"
-			}
-            option {
-                key =  "ttl"
-                value = "1d"
-            }
-		}
-    }
-}
-`)
 
 type papiCall struct {
 	methodName   string
@@ -263,6 +124,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "errors"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
 						),
 					},
 				},
@@ -308,7 +170,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestPropertyActivation/no_propertyId/resource_property_activation.tf"),
-						ExpectError: regexp.MustCompile("ExactlyOne"),
+						ExpectError: regexp.MustCompile("one of `property,property_id` must be specified"),
 					},
 				},
 			})
@@ -509,6 +371,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 						PropertyVersion:        2,
 						Network:                "STAGING",
 						NotifyEmails:           []string{"user@example.com"},
+						Note:                   "property activation note for updating",
 					},
 				},
 				papiResponse: &papi.CreateActivationResponse{
@@ -553,6 +416,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckNoResourceAttr("akamai_property_activation.test", "rule_warnings"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
 						),
 					},
 					{
@@ -564,6 +428,7 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "2"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
 							resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+							resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for updating"),
 						),
 					},
 				},
@@ -608,189 +473,159 @@ func TestResourcePropertyActivationCreate(t *testing.T) {
 	})
 }
 
-func TestAccAkamaiPropertyActivation_basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiPropertyActivationDestroy,
-		Steps: []resource.TestStep{
+func TestNoteFieldCannotBeAddedAfterActivationIsCompleted(t *testing.T) {
+	t.Run("Note field cannot be added after activation is completed", func(t *testing.T) {
+
+		client := mockPAPIClient([]papiCall{
 			{
-				Config: testAccAkamaiPropertyActivationConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiPropertyActivationExists,
-				),
+				methodName: "GetRuleTree",
+				papiResponse: &papi.GetRuleTreeResponse{
+					Response: papi.Response{
+						Errors:   make([]*papi.Error, 0),
+						Warnings: []*papi.Error{{Title: "some warning"}},
+					},
+				},
+				error:    nil,
+				stubOnce: false,
 			},
-		},
+			{
+				methodName:   "GetActivations",
+				papiResponse: getActivations(),
+				error:        nil,
+				stubOnce:     false,
+			},
+			{
+				methodName:  "CreateActivation",
+				papiRequest: createActivation(),
+				papiResponse: &papi.CreateActivationResponse{
+					ActivationID: "atv_activation1",
+				},
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivation",
+				papiRequest: papi.GetActivationRequest{
+					PropertyID:   "prp_test",
+					ActivationID: "atv_activation1",
+				},
+				papiResponse: getActivation(),
+			},
+		})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_doesnt_exist/resource_property_activation.tf"),
+					},
+					{
+						Config:      loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_doesnt_exist/resource_property_activation_update.tf"),
+						ExpectError: regexp.MustCompile("cannot update activation attribute note after creation"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
 	})
 }
 
-var testAccAkamaiPropertyActivationConfigLatest = fmt.Sprintf(`
-provider "akamai" {
-  papi_section = "papi"
-}
+func TestNoteFieldCannotBeUpdatedAfterActivationIsCompleted(t *testing.T) {
+	t.Run("Note field cannot be updated after activation is completed", func(t *testing.T) {
 
-resource "akamai_property_activation" "property_activation" {
-	property = "${akamai_property.property.id}"
-	network = "STAGING"
-	activate = true
-	contact = ["dshafik@akamai.com"]
-}
-
-data "akamai_contract" "contract" {
-}
-
-data "akamai_group" "group" {
-}
-
-resource "akamai_cp_code" "cp_code" {
-	name = "terraform-testing3"
-	contract = "${data.akamai_contract.contract.id}"
-	group = "${data.akamai_group.group.id}"
-	product = "prd_SPM"
-}
-
-resource "akamai_edge_hostname" "test" {
-    product = "prd_SPM"
-    contract = "${data.akamai_contract.contract.id}"
-    group = "${data.akamai_group.group.id}"
-    edge_hostname =  "terraform-test3.exampleterraform.io.edgesuite.net"
-    ipv6 = true
-}
-
-resource "akamai_property" "property" {
-  name = "terraform-test3"
-
-  product = "prd_SPM"
-  cp_code = "${akamai_cp_code.cp_code.id}"
-  contract = "${data.akamai_contract.contract.id}"
-  group = "${data.akamai_group.group.id}"
-
-  hostnames = {
-		"example.org" = ${akamai_edge_hostname.test.edge_hostname}"
-  }
-  
-  rule_format = "v2016-11-15"
-  
-  rules = "${data.akamai_property_rules.rules.json}"
-}
-
-data "akamai_property_rules" "rules" {
- 	rules {
-		behavior {
-			name =  "origin"
-        	option { 
-       			key =  "cacheKeyHostname"
-            	value = "ORIGIN_HOSTNAME"
-        	}
-			option { 
-    			key =  "compress"
-     			value = "true"
-     		}
-    		option { 
-    			key =  "enableTrueClientIp"
-     			value = "false"
-     		}
-    		option { 
-    			key =  "forwardHostHeader"
-     			value = "REQUEST_HOST_HEADER"
-     		}
-    		option { 
-    			key =  "hostname"
-     			value = "exampleterraform.io"
-     		}
-    		option { 
-    			key =  "httpPort"
-     			value = "80"
-     		}
-    		option { 
-    			key =  "httpsPort"
-     			value = "443"
-     		}
-    		option { 
-    			key =  "originSni"
-     			value = "true"
-     		}
-    		option { 
-    			key =  "originType"
-     			value = "CUSTOMER"
-     		}
-    		option { 
-    			key =  "verificationMode"
-     			value = "PLATFORM_SETTINGS"
-     		}
-    		option { 
-    			key =  "originCertificate"
-     			value = ""
-     		}
-    		option { 
-    			key =  "ports"
-     			value = ""
-     		}
-      	}
-		behavior {
-			name =  "cpCode"
-			option {
-				key =  "id"
-				value = "${akamai_cp_code.cp_code.id}"
-			}
-			option {
-				key =  "name"
-				value = "${akamai_cp_code.cp_code.name}"
-			}
-		}
-		behavior {
-			name =  "caching"
-			option {
-				key =  "behavior"
-				value = "MAX_AGE"
-			}
-			option {
-                key =  "mustRevalidate"
-                value = "false"
-			}
-            option {
-                key =  "ttl"
-                value = "1d"
-            }
-		}
-    }
-}
-`)
-
-func TestAccAkamaiPropertyActivation_latest(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAkamaiPropertyActivationDestroy,
-		Steps: []resource.TestStep{
+		client := mockPAPIClient([]papiCall{
 			{
-				Config: testAccAkamaiPropertyActivationConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAkamaiPropertyActivationExists,
-				),
+				methodName: "GetRuleTree",
+				papiResponse: &papi.GetRuleTreeResponse{
+					Response: papi.Response{
+						Errors:   make([]*papi.Error, 0),
+						Warnings: []*papi.Error{{Title: "some warning"}},
+					},
+				},
+				error:    nil,
+				stubOnce: false,
 			},
-		},
+			{
+				methodName:   "GetActivations",
+				papiResponse: getActivations(),
+				error:        nil,
+				stubOnce:     false,
+			},
+			{
+				methodName:  "CreateActivation",
+				papiRequest: createActivation(),
+				papiResponse: &papi.CreateActivationResponse{
+					ActivationID: "atv_activation1",
+				},
+				stubOnce: true,
+			},
+			{
+				methodName: "GetActivation",
+				papiRequest: papi.GetActivationRequest{
+					PropertyID:   "prp_test",
+					ActivationID: "atv_activation1",
+				},
+				papiResponse: getActivation(),
+			},
+		})
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_exists/resource_property_activation.tf"),
+					},
+					{
+						Config:      loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_exists/resource_property_activation_update.tf"),
+						ExpectError: regexp.MustCompile("cannot update activation attribute note after creation"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
 	})
 }
 
-func testAccCheckAkamaiPropertyActivationDestroy(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "akamai_property_activation" {
-			continue
-		}
-
-		log.Printf("[DEBUG] [Akamai PropertyActivation] Activation Delete")
-
+func getActivation() *papi.GetActivationResponse {
+	return &papi.GetActivationResponse{
+		GetActivationsResponse: papi.GetActivationsResponse{},
+		Activation: &papi.Activation{
+			ActivationID:    "atv_activation1",
+			PropertyID:      "prp_test",
+			PropertyVersion: 1,
+			Network:         "STAGING",
+			Status:          papi.ActivationStatusActive,
+		},
 	}
-	return nil
 }
 
-func testAccCheckAkamaiPropertyActivationExists(s *terraform.State) error {
-	// TODO: rewrite for v2???
-	return nil
+func createActivation() papi.CreateActivationRequest {
+	return papi.CreateActivationRequest{
+		PropertyID: "prp_test",
+		Activation: papi.Activation{
+			ActivationType:         papi.ActivationTypeDeactivate,
+			AcknowledgeAllWarnings: true,
+			PropertyVersion:        1,
+			Network:                "STAGING",
+			NotifyEmails:           []string{"user@example.com"},
+		},
+	}
 }
 
-func testAccCheckAkamaiPropertyActivationLatest(s *terraform.State) error {
-	// TODO: rewrite for v2???
-	return nil
+func getActivations() *papi.GetActivationsResponse {
+	return &papi.GetActivationsResponse{
+		Activations: papi.ActivationsItems{Items: []*papi.Activation{{
+			AccountID:       "act_1-6JHGX",
+			ActivationID:    "atv_activation1",
+			ActivationType:  "ACTIVATE",
+			GroupID:         "grp_91533",
+			PropertyName:    "test",
+			PropertyID:      "prp_test",
+			PropertyVersion: 1,
+			Network:         "STAGING",
+			Status:          "ACTIVE",
+			SubmitDate:      "2020-10-28T15:04:05Z",
+		}}}}
 }

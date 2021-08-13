@@ -24,7 +24,7 @@ func resourceEvalHost() *schema.Resource {
 		UpdateContext: resourceEvalHostUpdate,
 		DeleteContext: resourceEvalHostDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -44,7 +44,7 @@ func resourceEvalHostCreate(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalHostCreate")
-	logger.Debug("!!! in resourceEvalHostCreate")
+	logger.Debug("in resourceEvalHostCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -79,7 +79,7 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalHostRead")
-	logger.Debug("!!! in resourceEvalHostRead")
+	logger.Debug("in resourceEvalHostRead")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -114,7 +114,7 @@ func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalHostUpdate")
-	logger.Debug("!!! in resourceEvalHostUpdate")
+	logger.Debug("in resourceEvalHostUpdate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -147,8 +147,8 @@ func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m inter
 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalHostRemove")
-	logger.Debug("!!! in resourceEvalHostDelete")
+	logger := meta.Log("APPSEC", "resourceEvalHostDelete")
+	logger.Debug("in resourceEvalHostDelete")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {

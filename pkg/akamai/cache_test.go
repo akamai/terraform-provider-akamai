@@ -204,7 +204,7 @@ func testResource() *schema.Resource {
 	}
 }
 
-func testCacheSet(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func testCacheSet(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	meta := Meta(m)
@@ -229,7 +229,7 @@ func testCacheSet(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	return nil
 }
 
-func testCacheGet(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func testCacheGet(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	meta := Meta(m)
@@ -280,7 +280,7 @@ func (d *cacheSubprovider) DataSources() map[string]*schema.Resource {
 	}
 }
 
-func (d *cacheSubprovider) Configure(log log.Interface, dig *schema.ResourceData) diag.Diagnostics {
+func (d *cacheSubprovider) Configure(log log.Interface, _ *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
 
 	return nil

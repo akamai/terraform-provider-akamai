@@ -62,7 +62,6 @@ func TestAccAkamaiSelectedHostname_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_selected_hostnames.test", "id", "43253"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

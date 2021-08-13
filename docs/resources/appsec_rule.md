@@ -42,9 +42,9 @@ The following arguments are supported:
 
 * `rule_id` - (Required) The ID of the rule to use.
 
-* `rule_action` - (Required) The action to be taken: `alert` to record the trigger of the event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
+* `rule_action` - (Optional) The action to be taken: `alert` to record the trigger of the event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action. __ASE Beta__. if policy is in ASE_AUTO mode, only condition_exception can be modified, "ASE (Adaptive Security Engine) is currently in beta. Please contact your Akamai representative to learn more.
 
-* `condition_exception` - (Required) The name of a file containing a JSON-formatted description of the conditions and exceptions to use ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putconditionexception))
+* `condition_exception` - (Optional) The name of a file containing a JSON-formatted description of the conditions and exceptions to use ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putconditionexception))
 
 ## Attributes Reference
 

@@ -20,6 +20,7 @@ import (
 )
 
 var (
+	// PollForChangeStatusInterval defines retry interval for getting status of a pending change
 	PollForChangeStatusInterval = 10 * time.Second
 )
 
@@ -223,9 +224,10 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				},
 			},
 			"contract_id": {
-				Type:     schema.TypeString,
-				ForceNew: true,
-				Required: true,
+				Type:             schema.TypeString,
+				ForceNew:         true,
+				Required:         true,
+				DiffSuppressFunc: diffSuppressContractID,
 			},
 			"certificate_type": {
 				Type:     schema.TypeString,
@@ -444,7 +446,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 
 	req := cps.CreateEnrollmentRequest{
 		Enrollment: enrollment,
-		ContractID: contractID,
+		ContractID: strings.TrimPrefix(contractID, "ctr_"),
 	}
 	res, err := client.CreateEnrollment(ctx, req)
 	if err != nil {
@@ -509,6 +511,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	attrs["organization"] = []interface{}{org}
 	attrs["certificate_type"] = enrollment.CertificateType
 	attrs["validation_type"] = enrollment.ValidationType
+	attrs["registration_authority"] = enrollment.RA
 
 	err = tools.SetAttrs(d, attrs)
 	if err != nil {
@@ -539,6 +542,12 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	if len(status.AllowedInput) < 1 || status.AllowedInput[0].Type != "lets-encrypt-challenges" {
+		if err := d.Set("http_challenges", httpChallenges); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
+		if err := d.Set("dns_challenges", schema.NewSet(cpstools.HashFromChallengesMap, dnsChallenges)); err != nil {
+			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		}
 		return nil
 	}
 	getChallengesReq := cps.GetChangeRequest{
@@ -626,6 +635,9 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("validation_type", "dv"); err != nil {
+		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("registration_authority", "lets-encrypt"); err != nil {
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 
@@ -736,7 +748,7 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollmentGet.PendingChanges)
 	if err != nil {
 		if errors.Is(err, cpstools.ErrNoPendingChanges) {
-			logger.Debug("No pending changes found on the enrollmentl")
+			logger.Debug("No pending changes found on the enrollment")
 			return nil
 		}
 		return err
@@ -817,4 +829,14 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(enrollmentID)
 	return []*schema.ResourceData{d}, nil
+}
+
+func diffSuppressContractID(_, old, new string, _ *schema.ResourceData) bool {
+	trimPrefixFromOld := strings.TrimPrefix(old, "ctr_")
+	trimPrefixFromNew := strings.TrimPrefix(new, "ctr_")
+
+	if trimPrefixFromOld == trimPrefixFromNew {
+		return true
+	}
+	return false
 }

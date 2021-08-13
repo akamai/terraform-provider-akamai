@@ -41,7 +41,7 @@ variable "contractid" {
 variable "product" {
   description = "Name of the product associated with this CP code"
   type = string
-  default="prd_Web_App_Accel"
+  default="prd_prod1"
 }
 
 variable "cp_code" {

@@ -1,26 +1,26 @@
 ---
 layout: "akamai"
 page_title: "Akamai: edge hostname"
-subcategory: "Provisioning"
+subcategory: "Property Provisioning"
 description: |-
   Edge Hostname
 ---
 
 # akamai_edge_hostname
 
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Property Provisioning module. To upgrade to the new version, you have to update this resource. See the [upgrade guide](../guides/1.0_migration.md) for details. 
+~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Property Provisioning module. To upgrade to the new version, you have to update this resource. See the [upgrade guide](../guides/1.0_migration.md) for details.
 
-The `akamai_edge_hostname` resource lets you configure a secure edge hostname. Your 
-edge hostname determines how requests for your site, app, or content are mapped to 
-Akamai edge servers. 
+The `akamai_edge_hostname` resource lets you configure a secure edge hostname. Your
+edge hostname determines how requests for your site, app, or content are mapped to
+Akamai edge servers.
 
-An edge hostname is the CNAME target you use when directing your end user traffic to 
-Akamai. Each hostname assigned to a property has a corresponding edge hostname. 
- 
-Akamai supports three types of edge hostnames, depending on the level of security 
-you need for your traffic: Standard TLS, Enhanced TLS, and Shared Certificate. When 
-entering the `edge_hostname` attribute, you need to include a specific domain suffix 
-for your edge hostname type: 
+An edge hostname is the CNAME target you use when directing your end user traffic to
+Akamai. Each hostname assigned to a property has a corresponding edge hostname.
+
+Akamai supports three types of edge hostnames, depending on the level of security
+you need for your traffic: Standard TLS, Enhanced TLS, and Shared Certificate. When
+entering the `edge_hostname` attribute, you need to include a specific domain suffix
+for your edge hostname type:
 
 | Edge hostname type | Domain suffix |
 |------|-------|
@@ -48,7 +48,7 @@ resource "akamai_edge_hostname" "terraform-demo" {
 This resource supports these arguments:
 
 * `name` - (Required) The name of the edge hostname.
-* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
 * `product_id` - (Required) A product's unique ID, including the `prd_` prefix.
 * `edge_hostname` - (Required) One or more edge hostnames. The number of edge hostnames must be less than or equal to the number of public hostnames.
@@ -77,10 +77,10 @@ resource "akamai_edge_hostname" "example" {
   }
 ```
 
-You can import Akamai edge hostnames using a comma-delimited string of edge 
-hostname, contract ID, and group ID. You have to enter the values in this order: 
+You can import Akamai edge hostnames using a comma-delimited string of edge
+hostname, contract ID, and group ID. You have to enter the values in this order:
 
- `edge_hostname, contract_id, group_id` 
+ `edge_hostname, contract_id, group_id`
 
 For example:
 

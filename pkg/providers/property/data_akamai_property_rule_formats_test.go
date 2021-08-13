@@ -12,14 +12,14 @@ import (
 func Test_readPropertyRuleFormats(t *testing.T) {
 	t.Run("get datasource property rule formats", func(t *testing.T) {
 		client := &mockpapi{}
-		rule_formats := papi.RuleFormatItems{
+		ruleFormats := papi.RuleFormatItems{
 			Items: []string{
 				"latest",
 				"v2015-08-08"}}
 
 		client.On("GetRuleFormats",
 			mock.Anything,
-		).Return(&papi.GetRuleFormatsResponse{RuleFormats: rule_formats}, nil)
+		).Return(&papi.GetRuleFormatsResponse{RuleFormats: ruleFormats}, nil)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,

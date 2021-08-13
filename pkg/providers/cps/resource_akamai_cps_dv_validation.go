@@ -35,6 +35,12 @@ func resourceCPSDVValidation() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"sans": {
+				Type:     schema.TypeSet,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Optional: true,
+				ForceNew: true,
+			},
 			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -178,7 +184,7 @@ func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m 
 	return nil
 }
 
-func resourceCPSDVValidationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceCPSDVValidationDelete(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	d.SetId("")
 	return nil
 }
