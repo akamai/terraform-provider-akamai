@@ -682,8 +682,8 @@ func TestResProperty(t *testing.T) {
 					}
 
 					setup = ComposeBehaviors(
-					setup,
-					GetPropertyVersions("prp_0", "test_property", ContractID, GroupID),
+						setup,
+						GetPropertyVersions("prp_0", "test_property", ContractID, GroupID),
 					)
 				}
 
@@ -708,15 +708,15 @@ func TestResProperty(t *testing.T) {
 							},
 							{
 								PreConfig: func() {
-								stagingVersion := 1
-								State.Property.StagingVersion = &stagingVersion
-							},
-							ImportState:             true,
-							ImportStateVerify:       true,
-							ImportStateId:           ImportID,
-							ResourceName:            "akamai_property.test",
-							Config:                  loadFixtureString(fixturePath),
-							ImportStateVerifyIgnore: []string{"product"},
+									stagingVersion := 1
+									State.Property.StagingVersion = &stagingVersion
+								},
+								ImportState:             true,
+								ImportStateVerify:       true,
+								ImportStateId:           ImportID,
+								ResourceName:            "akamai_property.test",
+								Config:                  loadFixtureString(fixturePath),
+								ImportStateVerifyIgnore: []string{"product"},
 								Check: CheckAttrs("prp_0", "to.test.domain", "1", "1", "1", "ehn_123",
 									"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 							},

@@ -157,12 +157,12 @@ func resourceProperty() *schema.Resource {
 				StateFunc:   addPrefixToState("prd_"),
 			},
 			"product": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
 				ExactlyOneOf: []string{"product_id"},
-				Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
-				StateFunc:     addPrefixToState("prd_"),
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("product"),
+				StateFunc:    addPrefixToState("prd_"),
 			},
 
 			// Optional
@@ -339,7 +339,7 @@ func validatePropertyName(v interface{}, _ cty.Path) diag.Diagnostics {
 	maxPropertyNameLength := 85
 
 	if len(name) > maxPropertyNameLength {
-		return diag.Errorf("a name must be shorter than %d characters", maxPropertyNameLength + 1)
+		return diag.Errorf("a name must be shorter than %d characters", maxPropertyNameLength+1)
 	}
 	if !isValidPropertyName(name) {
 		return diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")

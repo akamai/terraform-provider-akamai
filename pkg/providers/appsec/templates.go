@@ -13,10 +13,10 @@ import (
 )
 
 type (
-	// OutputTemplates is a map of template names to templates.
+	// OutputTemplates is a map of templates
 	OutputTemplates map[string]*OutputTemplate
 
-	// OutputTemplate contains a description of how a particular data source's or resource's data should be displayed.
+	// OutputTemplate contains template data
 	OutputTemplate struct {
 		TemplateName   string
 		TemplateType   string
@@ -31,7 +31,7 @@ type (
 	}
 )
 
-// GetTemplate returns a template, specified by its key, from a map of templates.
+// GetTemplate given map of templates and a key, returns template stored under this key
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
 		return f, nil

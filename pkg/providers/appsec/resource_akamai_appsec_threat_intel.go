@@ -24,7 +24,7 @@ func resourceThreatIntel() *schema.Resource {
 		UpdateContext: resourceThreatIntelUpdate,
 		DeleteContext: resourceThreatIntelDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

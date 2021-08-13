@@ -27,7 +27,7 @@ func resourceWAPSelectedHostnames() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 			verifyHostNotInBothLists,
 		),
 		Schema: map[string]*schema.Schema{
