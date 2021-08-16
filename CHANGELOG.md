@@ -8,6 +8,12 @@
   * Fix incorrect comments/URL references in inline documentation
   * Data source akamai_appsec_security_policy returning incorrect policy ID
 
+* DNS
+  * Trim contract (ctr_) and group (grp_) prefixes when comparing configuration and TF state values.
+
+* GTM
+  * Trim contract (ctr_) and group (grp_) prefixes when comparing configuration and TF state values.
+
 #### FEATURES/ENHANCEMENTS:
 * APPSEC
   * Add wap_selected_hostnames data source and resource
