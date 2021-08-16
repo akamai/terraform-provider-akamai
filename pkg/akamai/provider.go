@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/allegro/bigcache"
+	"github.com/allegro/bigcache/v2"
 	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
