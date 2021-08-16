@@ -31,8 +31,9 @@ func resourceDNSv2Zone() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"contract": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: FieldPrefixSuppress,
 			},
 			"zone": {
 				Type:     schema.TypeString,
@@ -59,8 +60,9 @@ func resourceDNSv2Zone() *schema.Resource {
 				Default:  "Managed by Terraform",
 			},
 			"group": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: FieldPrefixSuppress,
 			},
 			"sign_and_serve": {
 				Type:     schema.TypeBool,
@@ -113,6 +115,26 @@ func resourceDNSv2Zone() *schema.Resource {
 			},
 		},
 	}
+}
+
+// Suppress check for contract and group fields that have prefix in tfstate
+func FieldPrefixSuppress(_, old, new string, _ *schema.ResourceData) bool {
+
+	var oldValStr, newValStr string
+
+	if strings.HasPrefix(old, "ctr_") || strings.HasPrefix(new, "ctr_") {
+		oldValStr = strings.TrimPrefix(old, "ctr_")
+		newValStr = strings.TrimPrefix(new, "ctr_")
+	} else if strings.HasPrefix(old, "grp_") || strings.HasPrefix(new, "grp_") {
+		oldValStr = strings.TrimPrefix(old, "grp_")
+		newValStr = strings.TrimPrefix(new, "grp_")
+	} else {
+		return false
+	}
+	if oldValStr == newValStr {
+		return true
+	}
+	return false
 }
 
 func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

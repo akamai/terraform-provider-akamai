@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	dns "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/dns"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
@@ -32,14 +33,16 @@ func resourceGTMv1Domain() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"contract": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          "",
+				DiffSuppressFunc: dns.FieldPrefixSuppress,
 			},
 			"group": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          "",
+				DiffSuppressFunc: dns.FieldPrefixSuppress,
 			},
 			"wait_on_complete": {
 				Type:     schema.TypeBool,
