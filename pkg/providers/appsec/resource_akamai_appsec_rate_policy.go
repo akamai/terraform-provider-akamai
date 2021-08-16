@@ -26,7 +26,7 @@ func resourceRatePolicy() *schema.Resource {
 		UpdateContext: resourceRatePolicyUpdate,
 		DeleteContext: resourceRatePolicyDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
 			VerifyIDUnchanged,
@@ -54,7 +54,7 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyCreate")
-	logger.Debugf("!!! in resourceRatePolicyCreate")
+	logger.Debugf("in resourceRatePolicyCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -85,7 +85,7 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyRead")
-	logger.Debugf("!!! in resourceRatePolicyRead")
+	logger.Debugf("in resourceRatePolicyRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:ratepolicyid")
 	if err != nil {
@@ -134,7 +134,7 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyUpdate")
-	logger.Debugf("!!! in resourceRatePolicy`Update")
+	logger.Debugf("in resourceRatePolicy`Update")
 
 	idParts, err := splitID(d.Id(), 2, "configid:ratepolicyid")
 	if err != nil {
@@ -146,6 +146,9 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	ratePolicyID, err := strconv.Atoi(idParts[1])
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	jsonpostpayload := d.Get("rate_policy")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
@@ -170,7 +173,7 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyDelete")
-	logger.Debugf("!!! in resourceRatePolicyDelete")
+	logger.Debugf("in resourceRatePolicyDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:ratepolicyid")
 	if err != nil {
@@ -183,6 +186,9 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 	version := getModifiableConfigVersion(ctx, configid, "ratePolicy", m)
 	ratePolicyID, err := strconv.Atoi(idParts[1])
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	deleteRatePolicy := appsec.RemoveRatePolicyRequest{}
 	deleteRatePolicy.ConfigID = configid

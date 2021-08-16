@@ -28,7 +28,7 @@ func resourcePenaltyBox() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -60,7 +60,7 @@ func resourcePenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxCreate")
-	logger.Debugf("!!! in resourcePenaltyBoxCreate")
+	logger.Debugf("in resourcePenaltyBoxCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -102,7 +102,7 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxRead")
-	logger.Debugf("!!! in resourcePenaltyBoxRead")
+	logger.Debugf("in resourcePenaltyBoxRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -146,7 +146,7 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxUpdate")
-	logger.Debugf("!!! in resourcePenaltyBoxUpdate")
+	logger.Debugf("in resourcePenaltyBoxUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -187,7 +187,7 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxDelete")
-	logger.Debugf("!!! in resourcePenaltyBoxDelete")
+	logger.Debugf("in resourcePenaltyBoxDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {

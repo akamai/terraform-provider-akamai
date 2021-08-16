@@ -27,7 +27,7 @@ func resourceSiemSettings() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -63,7 +63,7 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsCreate")
-	logger.Debugf("!!! in resourceSiemSettingsCreate")
+	logger.Debugf("in resourceSiemSettingsCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -120,7 +120,7 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsRead")
-	logger.Debugf("!!! resourceSiemSettingsRead")
+	logger.Debugf("resourceSiemSettingsRead")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -164,7 +164,7 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
-	logger.Debugf("!!! resourceSiemSettingsUpdate")
+	logger.Debugf("resourceSiemSettingsUpdate")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -218,8 +218,8 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
-	logger.Debugf("!!! resourceSiemSettingsUpdate")
+	logger := meta.Log("APPSEC", "resourceSiemSettingsDelete")
+	logger.Debugf("resourceSiemSettingsDelete")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {

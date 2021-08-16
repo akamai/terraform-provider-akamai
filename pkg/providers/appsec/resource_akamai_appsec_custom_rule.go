@@ -30,7 +30,7 @@ func resourceCustomRule() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -55,7 +55,7 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleCreate")
-	logger.Debugf("!!! in resourceCustomRuleCreate")
+	logger.Debugf("in resourceCustomRuleCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -89,7 +89,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleRead")
-	logger.Debugf("!!! in resourceCustomRuleRead")
+	logger.Debugf("in resourceCustomRuleRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:custom_rule_id")
 	if err != nil {
@@ -137,7 +137,7 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleUpdate")
-	logger.Debugf("!!! in resourceCustomRuleUpdate")
+	logger.Debugf("in resourceCustomRuleUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:custom_rule_id")
 	if err != nil {
@@ -175,8 +175,8 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceCustomRuleRemove")
-	logger.Debugf("!!! in resourceCustomRuleDelete")
+	logger := meta.Log("APPSEC", "resourceCustomRuleDelete")
+	logger.Debugf("in resourceCustomRuleDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:custom_rule_id")
 	if err != nil {
@@ -217,7 +217,7 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 		}
 		d.SetId("")
 	} else {
-		return diag.FromErr(fmt.Errorf("Custom Rule %d can not be deleted, it is either active or in use", customruleid))
+		return diag.Errorf("custom rule %d cannot be deleted, it is either active or in use", customruleid)
 	}
 	return nil
 }

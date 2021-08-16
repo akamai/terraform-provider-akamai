@@ -28,7 +28,7 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -69,8 +69,8 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
-	logger.Debugf("!!! in resourceSlowPostProtectionSettingCreate")
+	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingCreate")
+	logger.Debugf("in resourceSlowPostProtectionSettingCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -122,7 +122,7 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingRead")
-	logger.Debugf("!!! in resourceSlowPostProtectionSettingRead")
+	logger.Debugf("in resourceSlowPostProtectionSettingRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -175,7 +175,7 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
-	logger.Debugf("!!! in resourceSlowPostProtectionSettingUpdate")
+	logger.Debugf("in resourceSlowPostProtectionSettingUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
 	if err != nil {
@@ -226,7 +226,7 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingDelete")
-	logger.Debugf("!!! in resourceSlowPostProtectionSettingDelete")
+	logger.Debugf("in resourceSlowPostProtectionSettingDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
 	if err != nil {

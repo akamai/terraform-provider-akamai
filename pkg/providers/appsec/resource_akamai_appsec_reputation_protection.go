@@ -27,7 +27,7 @@ func resourceReputationProtection() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -55,7 +55,7 @@ func resourceReputationProtectionCreate(ctx context.Context, d *schema.ResourceD
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProtectionCreate")
-	logger.Debugf("!!! in resourceReputationProtectionCreate")
+	logger.Debugf("in resourceReputationProtectionCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -92,7 +92,7 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProtectionRead")
-	logger.Debugf("!!! in resourceReputationProtectionRead")
+	logger.Debugf("in resourceReputationProtectionRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -140,7 +140,7 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProtectionUpdate")
-	logger.Debugf("!!! in resourceSlowPostProtectionUpdate")
+	logger.Debugf("in resourceReputationProtectionUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -176,7 +176,7 @@ func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceD
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProtectionDelete")
-	logger.Debugf("!!! in resourceReputationProtectionDelete")
+	logger.Debugf("in resourceReputationProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {

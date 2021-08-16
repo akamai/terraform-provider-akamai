@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -25,6 +26,9 @@ func resourceNetworkList() *schema.Resource {
 		ReadContext:   resourceNetworkListRead,
 		UpdateContext: resourceNetworkListUpdate,
 		DeleteContext: resourceNetworkListDelete,
+		CustomizeDiff: customdiff.All(
+			VerifyContractGroupUnchanged,
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -75,6 +79,16 @@ func resourceNetworkList() *schema.Resource {
 				Computed:    true,
 				Description: "sync point",
 			},
+			"contract_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Contract ID",
+			},
+			"group_id": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Group ID",
+			},
 		},
 	}
 }
@@ -103,6 +117,24 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	createNetworkList.Description = description
+
+	contractid, err := tools.GetStringValue("contract_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createNetworkList.ContractID = contractid
+
+	groupid, err := tools.GetIntValue("group_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	createNetworkList.GroupID = groupid
+
+	if len(contractid) > 0 || groupid > 0 {
+		if len(contractid) == 0 || groupid == 0 {
+			return diag.FromErr(fmt.Errorf("If either a contract_id or group_id is provided, both must be provided"))
+		}
+	}
 
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -160,7 +192,6 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	createNetworkList.List = finallist
-	logger.Errorf("calling 'createNetworkList FINAL ': %v", finallist)
 
 	spcr, err := client.CreateNetworkList(ctx, createNetworkList)
 	if err != nil {
@@ -181,6 +212,14 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("mode", mode); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("contract_id", contractid); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("group_id", groupid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -214,6 +253,24 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	updateNetworkList.Description = description
+
+	contractid, err := tools.GetStringValue("contract_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateNetworkList.ContractID = contractid
+
+	groupid, err := tools.GetIntValue("group_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	updateNetworkList.GroupID = groupid
+
+	if len(contractid) > 0 || groupid > 0 {
+		if len(contractid) == 0 || groupid == 0 {
+			return diag.FromErr(fmt.Errorf("If either a contract_id or group_id is provided, both must be provided"))
+		}
+	}
 
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -264,7 +321,6 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	updateNetworkList.List = finallist
-	logger.Errorf("calling 'updateNetworkList FINAL ': %v", finallist)
 
 	syncPoint, err := tools.GetIntValue("sync_point", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -277,6 +333,14 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		logger.Errorf("calling 'updateNetworkList': %s", err.Error())
 		return diag.FromErr(err)
+	}
+
+	if err := d.Set("contract_id", contractid); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+
+	if err := d.Set("group_id", groupid); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	return resourceNetworkListRead(ctx, d, m)
@@ -393,7 +457,6 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	logger.Errorf("calling 'getNetworkList RESULT': %v", finalldata)
 	d.Set("list", nil)
 	if err := d.Set("list", finalldata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -432,6 +495,37 @@ func appendIfMissing(slice []string, s string) []string {
 // RemoveIndex removes an element from the slice and returns it
 func RemoveIndex(hl []string, index int) []string {
 	return append(hl[:index], hl[index+1:]...)
+}
+
+// VerifyContractGroupUnchanged compares the configuration's value for the contract_id and group_id with the resource's
+// value specified in the resources's ID, to ensure that the user has not inadvertently modified the configuration's
+// value; any such modifications indicate an incorrect understanding of the Update operation.
+
+func VerifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("NETWORKLISTs", "VerifyContractGroupUnchanged")
+
+	if d.HasChange("contract_id") {
+		old, new := d.GetChange("contract_id")
+		oldvalue := old.(string)
+		newvalue := new.(string)
+		if len(oldvalue) > 0 {
+			logger.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "contract_id", newvalue, oldvalue)
+			return fmt.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "contract_id", newvalue, oldvalue)
+		}
+	}
+
+	if d.HasChange("group_id") {
+		old, new := d.GetChange("group_id")
+		oldvalue := old.(int)
+		newvalue := new.(int)
+		if oldvalue > 0 {
+			logger.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "group_id", newvalue, oldvalue)
+			return fmt.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "group_id", newvalue, oldvalue)
+		}
+	}
+
+	return nil
 }
 
 // Append Replace Remove mode flags

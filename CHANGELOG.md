@@ -1,5 +1,23 @@
 # RELEASE NOTES
 
+## 1.7.0 (Aug 16, 2021)
+
+#### BUG FIXES:
+* APPSEC
+  * Configuration drift on reputation_profile create/apply
+  * Fix incorrect comments/URL references in inline documentation
+  * Data source akamai_appsec_security_policy returning incorrect policy ID
+
+#### FEATURES/ENHANCEMENTS:
+* APPSEC
+  * Add wap_selected_hostnames data source and resource
+  * Remove import templates for deprecated features
+  * Display policy IDs for siem settings in separate table
+  * Get an evaluation attack group's or risk score group's action
+
+* NETWORK LISTS
+  * Support contract_id and group_id for network list create/update
+
 ## 1.6.1 (Jul 21, 2021)
 
 #### BUG FIXES:

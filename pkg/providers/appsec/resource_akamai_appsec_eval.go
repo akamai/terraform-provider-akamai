@@ -28,7 +28,7 @@ func resourceEval() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -48,6 +48,14 @@ func resourceEval() *schema.Resource {
 					Restart,
 					Update,
 					Complete,
+				}, false),
+			},
+			"eval_mode": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"ASE_MANUAL",
+					"ASE_AUTO",
 				}, false),
 			},
 			"current_ruleset": {
@@ -74,7 +82,7 @@ func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalCreate")
-	logger.Debugf("!!! in resourceEvalCreate")
+	logger.Debugf(" in resourceEvalCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -90,11 +98,17 @@ func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 
+	evalmode, err := tools.GetStringValue("eval_mode", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	createEval := appsec.UpdateEvalRequest{}
 	createEval.ConfigID = configid
 	createEval.Version = version
 	createEval.PolicyID = policyid
 	createEval.Eval = evaloperation
+	createEval.Mode = evalmode
 
 	_, erru := client.UpdateEval(ctx, createEval)
 	if erru != nil {
@@ -111,7 +125,7 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRead")
-	logger.Debugf("!!! in resourceEvalRead")
+	logger.Debugf(" in resourceEvalRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -161,7 +175,7 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalUpdate")
-	logger.Debugf("!!! in resourceEvalUpdate")
+	logger.Debugf(" in resourceEvalUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -177,12 +191,17 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	evalmode, err := tools.GetStringValue("eval_mode", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 
 	updateEval := appsec.UpdateEvalRequest{}
 	updateEval.ConfigID = configid
 	updateEval.Version = version
 	updateEval.PolicyID = policyid
 	updateEval.Eval = evaloperation
+	updateEval.Mode = evalmode
 
 	_, erru := client.UpdateEval(ctx, updateEval)
 	if erru != nil {
@@ -197,7 +216,7 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalDelete")
-	logger.Debugf("!!! in resourceEvalDelete")
+	logger.Debugf(" in resourceEvalDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {

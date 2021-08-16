@@ -26,7 +26,7 @@ func resourceCustomDeny() *schema.Resource {
 		UpdateContext: resourceCustomDenyUpdate,
 		DeleteContext: resourceCustomDenyDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
 			VerifyIDUnchanged,
@@ -56,7 +56,7 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomDenyCreate")
-	logger.Debugf("!!! in resourceCustomDenyCreate")
+	logger.Debugf("in resourceCustomDenyCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -87,7 +87,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomDenyRead")
-	logger.Debugf("!!! in resourceCustomDenyRead")
+	logger.Debugf("in resourceCustomDenyRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:customdenyid")
 	if err != nil {
@@ -132,7 +132,7 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomDenyUpdate")
-	logger.Debugf("!!! in resourceCustomDenyUpdate")
+	logger.Debugf("in resourceCustomDenyUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:customdenyid")
 	if err != nil {
@@ -167,8 +167,8 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceCustomDenyRemove")
-	logger.Debugf("!!! in resourceCustomDenyDelete")
+	logger := meta.Log("APPSEC", "resourceCustomDenyDelete")
+	logger.Debugf("in resourceCustomDenyDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:customdenyid")
 	if err != nil {

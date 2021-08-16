@@ -28,7 +28,7 @@ func resourceWAFMode() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -45,6 +45,8 @@ func resourceWAFMode() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{
 					AAG,
 					KRS,
+					AseAuto,
+					AseManual,
 				}, false),
 			},
 			"current_ruleset": {
@@ -76,7 +78,7 @@ func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFModeCreate")
-	logger.Debugf("!!! in resourceWAFModeCreate")
+	logger.Debugf(" in resourceWAFModeCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -113,7 +115,7 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFModeRead")
-	logger.Debugf("!!! in resourceWAFModeRead")
+	logger.Debugf(" in resourceWAFModeRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -174,7 +176,7 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAFModeUpdate")
-	logger.Debugf("!!! in resourceWAFModeUpdate")
+	logger.Debugf(" in resourceWAFModeUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
 	if err != nil {
@@ -207,11 +209,20 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceWAFModeDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(nil, d, m)
+	return schema.NoopContext(context.TODO(), d, m)
 }
 
 // Definition of constant variables
 const (
+	// AAG = Automated Attack Groups
 	AAG = "AAG"
+
+	// KRS = Kona Rule Sets
 	KRS = "KRS"
+
+	// AseAuto = Adaptive Security Engine - Auto
+	AseAuto = "ASE_AUTO"
+
+	// AseManual = Adaptive Security Engine - Manual
+	AseManual = "ASE_MANUAL"
 )

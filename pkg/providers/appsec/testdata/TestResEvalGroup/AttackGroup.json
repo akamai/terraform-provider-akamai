@@ -1,0 +1,1 @@
+{"action":"alert","conditionException":{"exception":{"headerCookieOrParamValues":["abc"],"specificHeaderCookieOrParamPrefix":{"prefix": "a*", "selector": "REQUEST_COOKIES"}}}}

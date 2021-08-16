@@ -49,55 +49,55 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceSecurityPolicyRead")
 
-	getSecurityPolicy := appsec.GetSecurityPoliciesRequest{}
-
-	policyName := d.Get("security_policy_name").(string)
-
 	configid, err := tools.GetIntValue("config_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	version := getLatestConfigVersion(ctx, configid, m)
+	securityPolicyName, err := tools.GetStringValue("security_policy_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSecurityPolicy.ConfigID = configid
 
-	getSecurityPolicy.Version = getLatestConfigVersion(ctx, configid, m)
+	getSecurityPoliciesRequest := appsec.GetSecurityPoliciesRequest{}
+	getSecurityPoliciesRequest.ConfigID = configid
+	getSecurityPoliciesRequest.Version = version
 
-	securitypolicy, err := client.GetSecurityPolicies(ctx, getSecurityPolicy)
+	securitypolicies, err := client.GetSecurityPolicies(ctx, getSecurityPoliciesRequest)
 	if err != nil {
-		logger.Errorf("calling 'getSecurityPolicy': %s", err.Error())
+		logger.Errorf("calling 'getSecurityPolicies': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	secpolicylist := make([]string, 0, len(securitypolicy.Policies))
+	securityPoliciesList := make([]string, 0, len(securitypolicies.Policies))
 
-	for _, configval := range securitypolicy.Policies {
-		secpolicylist = append(secpolicylist, configval.PolicyID)
-		if configval.PolicyName == policyName {
-			if err := d.Set("security_policy_id", configval.PolicyID); err != nil {
+	for _, val := range securitypolicies.Policies {
+		securityPoliciesList = append(securityPoliciesList, val.PolicyID)
+		if val.PolicyName == securityPolicyName {
+			if err := d.Set("security_policy_id", val.PolicyID); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			}
+			if err = d.Set("security_policy_name", val.PolicyName); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
 		}
 	}
 
-	if err := d.Set("security_policy_id_list", secpolicylist); err != nil {
+	if err := d.Set("security_policy_id_list", securityPoliciesList); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "securityPoliciesDS", securitypolicy)
-
+	outputtext, err := RenderTemplates(ots, "securityPoliciesDS", securitypolicies)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-	if len(securitypolicy.Policies) > 0 {
-		if err := d.Set("security_policy_id", securitypolicy.Policies[0].PolicyID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-	}
-	d.SetId(fmt.Sprintf("%d:%d", getSecurityPolicy.ConfigID, getSecurityPolicy.Version))
+
+	d.SetId(fmt.Sprintf("%d:%d", configid, version))
 
 	return nil
 }
