@@ -70,7 +70,7 @@ Create an Akamai API client with the right permissions and valid credentials to 
 When your API clients are ready, add credential information to your `akamai.tf` file. See [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md)
 for details on creating API clients and available authentication methods. Once you're done authenticating, come back here to complete the Akamai Provider setup.
 
-**Note:** Depending on the contract and group you select, the Edge DNS and Global Traffic Management (GTM) modules may interact Property Manager (PAPI) APIs. If so, be sure to include PAPI authorization in the API Clients for Edge DNS and GTM.
+**Note:** Depending on the contract and group you select, the Edge DNS and Global Traffic Management (GTM) modules may interact Property Manager (PAPI) API. If so, be sure to include PAPI authorization in the API Clients for Edge DNS and GTM.
 
 ## Retrieve contract and group IDs
 
@@ -139,7 +139,7 @@ At this point in the setup, you should refer to the guides for the Akamai module
 | **Property Provisioning** | [Property Provisioning Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_property) |
 
 Once you're done with the module-level setup, continue with the next
-sections here to initialize Akamai Provider, test the configuration and apply the actions.
+sections here to initialize Akamai Provider, test the configuration, and apply the actions.
 
 ## Initialize the Akamai Provider
 
@@ -165,8 +165,8 @@ and is safe to run as many times as you like.
 
 ## Apply your configuration
 
-If you're happy with the actions proposed in a Terraform plan, execute them by running:
+You can execute all the actions you set in the configuration by running:
 
 `$terraform apply`
 
-The changes are propagated to the Akamai platform.
+The `apply` command previews all the changes before executing them, similarly to `plan`. Unless you set the `-auto-approve` flag, you need to confirm you want to proceed with the operation and propagate changes to the Akamai platform.
