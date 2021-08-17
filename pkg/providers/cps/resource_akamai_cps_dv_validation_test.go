@@ -12,9 +12,38 @@ import (
 )
 
 func TestDVValidation(t *testing.T) {
-	t.Run("basic test", func(t *testing.T) {
+	t.Run("lifecycle test", func(t *testing.T) {
 		client := &mockcps{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Once()
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
+			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
+				State: "running",
+			}}, nil).Once()
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
+			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			}}, nil).Once()
+
+		client.On("AcknowledgeDVChallenges", mock.Anything, cps.AcknowledgementRequest{
+			Acknowledgement: cps.Acknowledgement{"acknowledge"},
+			EnrollmentID:    1,
+			ChangeID:        2,
+		}).Return(nil)
+
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Times(3)
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
+			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			}}, nil).Times(3)
+
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Once()
 
@@ -53,6 +82,15 @@ func TestDVValidation(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "id", "1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "status", "coodinate-domain-validation"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "sans.#", "1"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResDVValidation/update_validation.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "id", "1"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "status", "coodinate-domain-validation"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "sans.#", "2"),
 						),
 					},
 				},
@@ -102,6 +140,7 @@ func TestDVValidation(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "id", "1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "status", "coodinate-domain-validation"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "sans.#", "1"),
 						),
 					},
 				},

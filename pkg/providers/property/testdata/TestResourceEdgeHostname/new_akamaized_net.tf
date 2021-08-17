@@ -9,3 +9,7 @@ resource "akamai_edge_hostname" "edgehostname" {
   edge_hostname = "test.akamaized.net"
   ip_behavior = "IPV6_COMPLIANCE"
 }
+
+output "edge_hostname" {
+  value = akamai_edge_hostname.edgehostname.edge_hostname
+}

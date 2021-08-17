@@ -24,7 +24,7 @@ func resourceRateProtection() *schema.Resource {
 		UpdateContext: resourceRateProtectionUpdate,
 		DeleteContext: resourceRateProtectionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -55,7 +55,7 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRateProtectionCreate")
-	logger.Debugf("!!! in resourceRateProtectionCreate")
+	logger.Debugf("in resourceRateProtectionCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -92,7 +92,7 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRateProtectionRead")
-	logger.Debugf("!!! in resourceReputationProtectionRead")
+	logger.Debugf("in resourceRateProtectionRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -141,7 +141,7 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRateProtectionUpdate")
-	logger.Debugf("!!! in resourceRateProtectionUpdate")
+	logger.Debugf("in resourceRateProtectionUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {
@@ -177,8 +177,7 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRateProtectionDelete")
-
-	logger.Debugf("!!! in resourceRateProtectionDelete")
+	logger.Debugf("in resourceRateProtectionDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
 	if err != nil {

@@ -59,7 +59,6 @@ func TestAccAkamaiAdvancedSettingsPragma_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_pragma_header.test", "id", "43253"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

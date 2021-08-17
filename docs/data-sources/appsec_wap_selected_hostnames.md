@@ -6,11 +6,12 @@ description: |-
  WAPSelectedHostnames
 ---
 
-# akamai_appsec_wap_selected_hostnames
+# akamai_appsec_wap_selected_hostnames [Beta]
 
 Use the `akamai_appsec_wap_selected_hostnames` data source to retrieve lists of the hostnames that are currently
 protected and currently being evaluated under a given security configuration and policy. This resource is available
-only for WAP accounts.
+only for WAP accounts. (WAP selected hostnames is currently in beta. Please contact your Akamai representative for
+more information about this feature.)
 
 ## Example Usage
 

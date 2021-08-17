@@ -60,7 +60,6 @@ func TestAccAkamaiReputationProfileAction_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_action.test", "id", "43253:AAAA_81230:1685099"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 
 					/*{

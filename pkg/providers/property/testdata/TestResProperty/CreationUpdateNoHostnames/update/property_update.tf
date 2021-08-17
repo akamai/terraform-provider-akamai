@@ -30,7 +30,7 @@ variable "productid" {
 
 variable "propertyname" {
   description = "Name of the property"
-  default = "test property"
+  default = "test_property"
 }
 
 output "aka_property_name" {

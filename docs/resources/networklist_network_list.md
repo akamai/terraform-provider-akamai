@@ -20,11 +20,13 @@ provider "akamai" {
 }
 
 resource "akamai_networklist_network_list" "network_list" {
-  name = "Test-white-list-NL"
+  name = "TestNetworkList"
   type = "IP"
   description = "network list description"
   list = var.list
   mode = "APPEND"
+  contract_id = "ABC-123"
+  group_id = 12345
 }
 ```
 
@@ -46,6 +48,12 @@ The following arguments are supported:
   * APPEND - the addresses or locations listed in `list` will be added to the network list
   * REPLACE - the addresses or locations listed in `list` will overwrite the current contents of the network list
   * REMOVE - the addresses or locations listed in `list` will be removed from the network list
+
+* `contract_id` - (Optional) The contract ID of the network list. If supplied, group_id must also be supplied. The
+ contract_id value of an existing network list may not be modified.
+
+* `group_id` - (Optional) The group ID of the network list. If supplied, contract_id must also be supplied. The
+ group_id value of an existing network list may not be modified.
 
 ## Attributes Reference
 

@@ -26,7 +26,7 @@ func resourceEvalRule() *schema.Resource {
 		UpdateContext: resourceEvalRuleUpdate,
 		DeleteContext: resourceEvalRuleDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -64,7 +64,7 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleCreate")
-	logger.Debugf("!!! in resourceEvalRuleCreate")
+	logger.Debugf("in resourceEvalRuleCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -116,7 +116,7 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleRead")
-	logger.Debugf("!!! in resourceEvalRuleRead")
+	logger.Debugf("in resourceEvalRuleRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
 	if err != nil {
@@ -160,7 +160,7 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if !evalrule.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(evalrule.ConditionException)
 		if err != nil {
-			diag.FromErr(fmt.Errorf("%s", "Error Marshalling condition exception"))
+			diag.Errorf("%s", "Error Marshalling condition exception")
 		}
 		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -174,7 +174,7 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleUpdate")
-	logger.Debugf("!!! in resourceEvalRuleUpdate")
+	logger.Debugf("in resourceEvalRuleUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
 	if err != nil {
@@ -225,8 +225,8 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceEvalRuleRemove")
-	logger.Debugf("!!! in resourceEvalRuleDelete")
+	logger := meta.Log("APPSEC", "resourceEvalRuleDelete")
+	logger.Debugf("in resourceEvalRuleDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
 	if err != nil {

@@ -52,6 +52,8 @@ The following arguments are supported:
 
 * `eval_operation` - (Required) The operation to perform: START, STOP, RESTART, UPDATE, or COMPLETE.
 
+* `eval_mode` - __ASE Beta__. (Optional) Used for ASE Rulesets: ASE_MANUAL or ASE_AUTO - default. "ASE (Adaptive Security Engine) is currently in beta. Please contact your Akamai representative to learn more. Policy Evaluation Rule Actions and Threat Intelligence setting are read only in ASE_AUTO evaluation mode
+
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:

@@ -27,7 +27,7 @@ func resourceRatePolicyAction() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -58,8 +58,8 @@ func resourceRatePolicyAction() *schema.Resource {
 func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceRatePolicyActionUpdate")
-	logger.Debugf("!!! in resourceRatePolicyActionCreate")
+	logger := meta.Log("APPSEC", "resourceRatePolicyActionCreate")
+	logger.Debugf("in resourceRatePolicyActionCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -106,7 +106,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionRead")
-	logger.Debugf("!!! in resourceRatePolicyActionRead")
+	logger.Debugf("in resourceRatePolicyActionRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ratepolicyid")
 	if err != nil {
@@ -163,7 +163,7 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionUpdate")
-	logger.Debugf("!!! in resourceRatePolicyActionUpdate")
+	logger.Debugf("in resourceRatePolicyActionUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ratepolicyid")
 	if err != nil {
@@ -209,7 +209,7 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionDelete")
-	logger.Debugf("!!! in resourceRatePolicyActionDelete")
+	logger.Debugf("in resourceRatePolicyActionDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ratepolicyid")
 	if err != nil {

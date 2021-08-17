@@ -92,6 +92,6 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+func (p *provider) Configure(_ log.Interface, _ *schema.ResourceData) diag.Diagnostics {
 	return nil
 }

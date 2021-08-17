@@ -129,13 +129,13 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	if formattedRulesJson, err := json.MarshalIndent(papi.RulesUpdate{Rules: getRuleTreeResponse.Rules}, "", "  "); err != nil {
+	formattedRulesJSON, err := json.MarshalIndent(papi.RulesUpdate{Rules: getRuleTreeResponse.Rules}, "", "  ")
+	if err != nil {
 		logger.Debugf("Creating rule tree resulted in invalid JSON: %s", err)
 		return diag.FromErr(fmt.Errorf("invalid JSON result: %w", err))
-	} else {
-		if err := d.Set("rules", string(formattedRulesJson)); err != nil {
-			return diag.FromErr(err)
-		}
+	}
+	if err := d.Set("rules", string(formattedRulesJSON)); err != nil {
+		return diag.FromErr(err)
 	}
 
 	if len(getRuleTreeResponse.Errors) != 0 {

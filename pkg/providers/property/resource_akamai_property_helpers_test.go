@@ -119,23 +119,30 @@ func ExpectUpdatePropertyVersionHostnames(client *mockpapi, PropertyID, GroupID,
 }
 
 // Sets up an expected call to papi.GetPropertyVersions()
-func ExpectGetPropertyVersions(client *mockpapi, PropertyID, ContractID, GroupID string, versions papi.PropertyVersionItems, err error) *mock.Call {
+func ExpectGetPropertyVersions(client *mockpapi, PropertyID, PropertyName, ContractID, GroupID string, property *papi.Property, versionItems *papi.PropertyVersionItems) *mock.Call {
 	req := papi.GetPropertyVersionsRequest{
 		PropertyID: PropertyID,
 		ContractID: ContractID,
 		GroupID:    GroupID,
 	}
 	var res *papi.GetPropertyVersionsResponse
-	if err == nil {
-		res = &papi.GetPropertyVersionsResponse{
-			PropertyID: PropertyID,
-			ContractID: ContractID,
-			GroupID:    GroupID,
-			Versions:   versions,
+	fn := func(context.Context, papi.GetPropertyVersionsRequest) (*papi.GetPropertyVersionsResponse, error) {
+		if property != nil {
+			ContractID = property.ContractID
+			GroupID = property.GroupID
 		}
+		res = &papi.GetPropertyVersionsResponse{
+			PropertyID:   PropertyID,
+			PropertyName: PropertyName,
+			ContractID:   ContractID,
+			GroupID:      GroupID,
+			Versions:     *versionItems,
+		}
+
+		return res, nil
 	}
 
-	return client.On("GetPropertyVersions", AnyCTX, req).Return(res, err)
+	return client.OnGetPropertyVersions(AnyCTX, req, fn)
 }
 
 // Sets up an expected call to papi.GetPropertyVersion()

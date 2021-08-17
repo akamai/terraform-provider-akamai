@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: akamai_properties"
-subcategory: "Provisioning"
+subcategory: "Property Provisioning"
 description: |-
  Properties
 ---
@@ -9,8 +9,8 @@ description: |-
 # akamai_properties
 
 
-Use the `akamai_properties` data source to query and retrieve the list of properties for a group and contract 
-based on the [EdgeGrid API client token](https://developer.akamai.com/getting-started/edgegrid) you're using. 
+Use the `akamai_properties` data source to query and retrieve the list of properties for a group and contract
+based on the [EdgeGrid API client token](https://developer.akamai.com/getting-started/edgegrid) you're using.
 
 ## Example usage
 
@@ -32,7 +32,7 @@ output "my_property_list" {
 
 This data source supports these arguments:
 
-* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix. 
+* `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
 
 ## Attributes reference

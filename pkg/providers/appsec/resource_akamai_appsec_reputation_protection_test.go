@@ -60,7 +60,6 @@ func TestAccAkamaiReputationProtection_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_reputation_protection.test", "id", "43253:AAAA_81230"),
 							resource.TestCheckResourceAttr("akamai_appsec_reputation_protection.test", "enabled", "false"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResReputationProtection/update_by_id.tf"),

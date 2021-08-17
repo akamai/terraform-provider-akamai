@@ -52,7 +52,6 @@ func TestAccAkamaiRateProtection_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_rate_protection.test", "id", "43253:AAAA_81230"),
 							resource.TestCheckResourceAttr("akamai_appsec_rate_protection.test", "enabled", "false"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResRateProtection/update_by_id.tf"),

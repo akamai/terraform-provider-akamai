@@ -165,76 +165,13 @@ func TestDSCPCode(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("ambiguous name", func(t *testing.T) {
-		TODO(t, "Should we error out and tell the user to supply an exact CP Code ID to resolve ambiguity?")
-
-		client := &mockpapi{}
-
-		// name provided by fixture is "test cpcode"
-		cpc := papi.CPCodeItems{Items: []papi.CPCode{
-			{ID: "cpc_test1", Name: "wrong CP code"},
-			{ID: "cpc_test2", Name: "test cpcode"},
-			{ID: "cpc_test3", Name: "test cpcode"},
-			{ID: "cpc_test4", Name: "test cpcode"},
-			{ID: "cpc_test5", Name: "Also wrong CP code"},
-		}}
-
-		client.On("GetCPCodes",
-			mock.Anything, // ctx is irrelevant for this test
-			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
-		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{{
-					Config:      loadFixtureString("testdata/TestDSCPCode/ambiguous_name.tf"),
-					ExpectError: regexp.MustCompile(`ambiguous CP Code`),
-				}},
-			})
-		})
-	})
-
-	t.Run("name collides with ID", func(t *testing.T) {
-		TODO(t, "Should we error out and tell the user to supply an exact CP Code ID to resolve ambiguity?")
-
-		client := &mockpapi{}
-
-		// name provided by fixture is "cpc_test2", which is an exact ID match but it matches name of "cpc_test1" first
-		cpc := papi.CPCodeItems{Items: []papi.CPCode{
-			{ID: "cpc_test1", Name: "cpc_test2"},
-			{ID: "cpc_test2", Name: "correct CP Code"},
-			{ID: "cpc_test3", Name: "wrong CP code"},
-		}}
-
-		client.On("GetCPCodes",
-			mock.Anything, // ctx is irrelevant for this test
-			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
-		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSCPCode/name_collides_with_id.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "cpc_test2"),
-					),
-				}},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
 	t.Run("contract collides with contract ID", func(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
 			Providers:  testAccProviders,
 			IsUnitTest: true,
 			Steps: []resource.TestStep{{
-				Config:             loadFixtureString("testdata/TestDSCPCode/contract_collides_with_id.tf"),
-				ExpectNonEmptyPlan: true,
-				ExpectError:        regexp.MustCompile("only one of `contract,contract_id` can be specified"),
+				Config:      loadFixtureString("testdata/TestDSCPCode/contract_collides_with_id.tf"),
+				ExpectError: regexp.MustCompile("only one of `contract,contract_id` can be specified"),
 			}},
 		})
 	})
@@ -246,9 +183,8 @@ func TestDSCPCode(t *testing.T) {
 				Providers:  testAccProviders,
 				IsUnitTest: true,
 				Steps: []resource.TestStep{{
-					Config:             loadFixtureString("testdata/TestDSCPCode/group_collides_with_id.tf"),
-					ExpectNonEmptyPlan: true,
-					ExpectError:        regexp.MustCompile("only one of `group,group_id` can be specified"),
+					Config:      loadFixtureString("testdata/TestDSCPCode/group_collides_with_id.tf"),
+					ExpectError: regexp.MustCompile("only one of `group,group_id` can be specified"),
 				}},
 			})
 		})
@@ -267,8 +203,7 @@ func TestDSCPCode(t *testing.T) {
 				Providers:  testAccProviders,
 				IsUnitTest: true,
 				Steps: []resource.TestStep{{
-					Config:             loadFixtureString("testdata/TestDSGroupNotFound/cp_code.tf"),
-					ExpectNonEmptyPlan: true,
+					Config: loadFixtureString("testdata/TestDSGroupNotFound/cp_code.tf"),
 				}},
 			})
 		})

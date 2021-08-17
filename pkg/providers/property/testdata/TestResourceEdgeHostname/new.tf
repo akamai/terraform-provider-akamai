@@ -9,3 +9,7 @@ resource "akamai_edge_hostname" "edgehostname" {
   edge_hostname = "test.aka"
   ip_behavior = "IPV4"
 }
+
+output "edge_hostname" {
+  value = akamai_edge_hostname.edgehostname.edge_hostname
+}

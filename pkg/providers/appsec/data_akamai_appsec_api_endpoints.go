@@ -15,9 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceApiEndpoints() *schema.Resource {
+func dataSourceAPIEndpoints() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceApiEndpointsRead,
+		ReadContext: dataSourceAPIEndpointsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -50,34 +50,34 @@ func dataSourceApiEndpoints() *schema.Resource {
 	}
 }
 
-func dataSourceApiEndpointsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceAPIEndpointsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "dataSourceApiEndpointsRead")
+	logger := meta.Log("APPSEC", "dataSourceAPIEndpointsRead")
 
-	getApiEndpoints := appsec.GetApiEndpointsRequest{}
+	getAPIEndpoints := appsec.GetApiEndpointsRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiEndpoints.ConfigID = configid
+	getAPIEndpoints.ConfigID = configid
 
-	getApiEndpoints.Version = getLatestConfigVersion(ctx, configid, m)
+	getAPIEndpoints.Version = getLatestConfigVersion(ctx, configid, m)
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiEndpoints.PolicyID = policyid
+	getAPIEndpoints.PolicyID = policyid
 
 	apiName, err := tools.GetStringValue("api_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiEndpoints.Name = apiName
+	getAPIEndpoints.Name = apiName
 
-	apiendpoints, err := client.GetApiEndpoints(ctx, getApiEndpoints)
+	apiendpoints, err := client.GetApiEndpoints(ctx, getAPIEndpoints)
 	if err != nil {
 		logger.Errorf("calling 'getApiEndpoints': %s", err.Error())
 		return diag.FromErr(err)

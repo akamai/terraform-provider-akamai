@@ -11,7 +11,7 @@ import (
 
 func TestResDnsZone(t *testing.T) {
 	zone := &dns.ZoneResponse{
-		ContractID:      "ctr2",
+		ContractID:      "ctr1",
 		Zone:            "primaryexampleterraform.io",
 		Type:            "primary",
 		Comment:         "This is a test primary zone",

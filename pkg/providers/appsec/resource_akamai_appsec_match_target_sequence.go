@@ -26,7 +26,7 @@ func resourceMatchTargetSequence() *schema.Resource {
 		UpdateContext: resourceMatchTargetSequenceUpdate,
 		DeleteContext: resourceMatchTargetSequenceDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -37,7 +37,7 @@ func resourceMatchTargetSequence() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
+				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},
 	}
@@ -47,7 +47,7 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceCreate")
-	logger.Debugf("!!! in resourceMatchTargetSequenceCreate")
+	logger.Debugf("in resourceMatchTargetSequenceCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -77,7 +77,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
-	logger.Debugf("!!! in resourceMatchTargetSequenceRead")
+	logger.Debugf("in resourceMatchTargetSequenceRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:matchtargettype")
 	if err != nil {
@@ -121,7 +121,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceUpdate")
-	logger.Debugf("!!! in resourceMatchTargetSequenceUpdate")
+	logger.Debugf("in resourceMatchTargetSequenceUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:matchtargettype")
 	if err != nil {
@@ -158,6 +158,6 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	return resourceMatchTargetSequenceRead(ctx, d, m)
 }
 
-func resourceMatchTargetSequenceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMatchTargetSequenceDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(context.TODO(), d, m)
 }

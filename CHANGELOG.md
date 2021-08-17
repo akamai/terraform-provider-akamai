@@ -1,6 +1,51 @@
 # RELEASE NOTES
 
-## 1.6.0 (June 17, 2021)
+## 1.7.0 (Aug 19, 2021)
+
+#### FEATURES/ENHANCEMENTS:
+* Terraform Plugin SDK updated to v2.7.0
+* Provider tested and now supports Terraform 1.0.4
+
+* APPSEC
+  * Add wap_selected_hostnames data source and resource
+  * Remove import templates for deprecated features
+  * Display policy IDs for siem settings in separate table
+  * Get an evaluation attack group's or risk score group's action
+* NETWORK LISTS
+  * Support contract_id and group_id for network list create/update
+* PAPI
+  * Possibility to set `note` field in property_activation resource
+  * Additional checks and validations in `terraform plan` ([#245](https://github.com/akamai/terraform-provider-akamai/issues/245))
+
+#### BUG FIXES:
+* APPSEC
+  * Configuration drift on reputation_profile create/apply
+  * Fix incorrect comments/URL references in inline documentation
+  * Data source akamai_appsec_security_policy returning incorrect policy ID
+* DNS
+  * Trim contract (ctr_) and group (grp_) prefixes when comparing configuration and TF state values ([#242](https://github.com/akamai/terraform-provider-akamai/issues/242))
+* GTM
+  * Trim contract (ctr_) and group (grp_) prefixes when comparing configuration and TF state values
+
+## 1.6.1 (Jul 21, 2021)
+
+#### BUG FIXES:
+* DNS
+  * Fixed contract id not being set in zone import and made group optional ([#242](https://github.com/akamai/terraform-provider-akamai/issues/242))
+* GTM
+  * Fixed documentation mismatch with optional/required fields on nested objects for `akamai_gmt_property` resource ([#240](https://github.com/akamai/terraform-provider-akamai/issues/240))
+* PAPI
+  * Fixed issue with property hostnames list changing order in diff ([#230](https://github.com/akamai/terraform-provider-akamai/issues/230))
+  * Fixed idempotency issue on `akamai_property` resource ([#226](https://github.com/akamai/terraform-provider-akamai/issues/226))
+  * Fixed issue with terraform showing misleading diff on `rules` field in `akamai_property` ([#234](https://github.com/akamai/terraform-provider-akamai/issues/234))
+* CPS
+  * Added `sans` field on `akamai_cps_dv_validation` to enable resending acknowledgement on after SANS are updated 
+
+#### FEATURES/ENHANCEMENTS:
+* CPS
+  * `akamai_cps_dv_enrollment` now accepts `contract_id` with `ctr_` prefix
+
+## 1.6.0 (June 21, 2021)
 
 #### BREAKING CHANGES:
 * APPSEC
@@ -72,6 +117,10 @@
     * akamai_appsec_eval_rule
     * akamai_appsec_ip_geo_protection
     * akamai_appsec_rule
+
+* PAPI
+  * New optional parameter, which allows to import a specific property version. 
+    Additional information in [Property resource](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/property#import) 
 
 ## 1.5.1 (Apr 21, 2021)
 

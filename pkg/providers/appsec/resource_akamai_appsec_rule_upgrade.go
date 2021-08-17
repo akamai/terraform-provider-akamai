@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -24,7 +25,7 @@ func resourceRuleUpgrade() *schema.Resource {
 		UpdateContext: resourceRuleUpgradeUpdate,
 		DeleteContext: resourceRuleUpgradeDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -37,6 +38,14 @@ func resourceRuleUpgrade() *schema.Resource {
 			"security_policy_id": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"upgrade_mode": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"ASE_MANUAL",
+					"ASE_AUTO",
+				}, false),
 			},
 			"mode": {
 				Type:     schema.TypeString,
@@ -58,7 +67,7 @@ func resourceRuleUpgradeCreate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRuleUpgradeCreate")
-	logger.Debugf("!!! in resourceRuleUpgradeCreate")
+	logger.Debugf(" in resourceRuleUpgradeCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -70,11 +79,17 @@ func resourceRuleUpgradeCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
+	upgrademode, err := tools.GetStringValue("upgrade_mode", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	createRuleUpgrade := appsec.UpdateRuleUpgradeRequest{}
 	createRuleUpgrade.ConfigID = configid
 	createRuleUpgrade.Version = version
 	createRuleUpgrade.PolicyID = policyid
 	createRuleUpgrade.Upgrade = true
+	createRuleUpgrade.Mode = upgrademode
 
 	_, err = client.UpdateRuleUpgrade(ctx, createRuleUpgrade)
 	if err != nil {
@@ -91,7 +106,7 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRuleUpgradeRead")
-	logger.Debugf("!!! in resourceRuleUpgradeRead")
+	logger.Debugf(" in resourceRuleUpgradeRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
@@ -138,7 +153,7 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRuleUpgradeUpdate")
-	logger.Debugf("!!! in resourceRuleUpgradeUpdate")
+	logger.Debugf(" in resourceRuleUpgradeUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
@@ -151,11 +166,17 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	version := getModifiableConfigVersion(ctx, configid, "securityPolicyRename", m)
 	policyid := idParts[1]
 
+	upgrademode, err := tools.GetStringValue("upgrade_mode", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	updateRuleUpgrade := appsec.UpdateRuleUpgradeRequest{}
 	updateRuleUpgrade.ConfigID = configid
 	updateRuleUpgrade.Version = version
 	updateRuleUpgrade.PolicyID = policyid
 	updateRuleUpgrade.Upgrade = true
+	updateRuleUpgrade.Mode = upgrademode
 
 	_, err = client.UpdateRuleUpgrade(ctx, updateRuleUpgrade)
 	if err != nil {
@@ -166,7 +187,7 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceRuleUpgradeRead(ctx, d, m)
 }
 
-func resourceRuleUpgradeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRuleUpgradeDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	return schema.NoopContext(context.TODO(), d, m)
 }

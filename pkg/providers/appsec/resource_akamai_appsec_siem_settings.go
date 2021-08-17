@@ -24,7 +24,7 @@ func resourceSiemSettings() *schema.Resource {
 		UpdateContext: resourceSiemSettingsUpdate,
 		DeleteContext: resourceSiemSettingsDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -63,7 +63,7 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsCreate")
-	logger.Debugf("!!! in resourceSiemSettingsCreate")
+	logger.Debugf("in resourceSiemSettingsCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -78,12 +78,12 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	security_policy_ids, err := tools.GetSetValue("security_policy_ids", d)
+	securityPolicyIDs, err := tools.GetSetValue("security_policy_ids", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	spids := make([]string, 0, len(security_policy_ids.List()))
-	for _, h := range security_policy_ids.List() {
+	spids := make([]string, 0, len(securityPolicyIDs.List()))
+	for _, h := range securityPolicyIDs.List() {
 		spids = append(spids, h.(string))
 
 	}
@@ -120,7 +120,7 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsRead")
-	logger.Debugf("!!! resourceSiemSettingsRead")
+	logger.Debugf("resourceSiemSettingsRead")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -164,7 +164,7 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
-	logger.Debugf("!!! resourceSiemSettingsUpdate")
+	logger.Debugf("resourceSiemSettingsUpdate")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -179,12 +179,12 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	security_policy_ids, err := tools.GetSetValue("security_policy_ids", d)
+	securityPolicyIDs, err := tools.GetSetValue("security_policy_ids", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	spids := make([]string, 0, len(security_policy_ids.List()))
-	for _, h := range security_policy_ids.List() {
+	spids := make([]string, 0, len(securityPolicyIDs.List()))
+	for _, h := range securityPolicyIDs.List() {
 		spids = append(spids, h.(string))
 
 	}
@@ -218,8 +218,8 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
-	logger.Debugf("!!! resourceSiemSettingsUpdate")
+	logger := meta.Log("APPSEC", "resourceSiemSettingsDelete")
+	logger.Debugf("resourceSiemSettingsDelete")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {

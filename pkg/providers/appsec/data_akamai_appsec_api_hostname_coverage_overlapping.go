@@ -15,9 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceApiHostnameCoverageOverlapping() *schema.Resource {
+func dataSourceAPIHostnameCoverageOverlapping() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceApiHostnameCoverageOverlappingRead,
+		ReadContext: dataSourceAPIHostnameCoverageOverlappingRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:     schema.TypeInt,
@@ -40,28 +40,28 @@ func dataSourceApiHostnameCoverageOverlapping() *schema.Resource {
 	}
 }
 
-func dataSourceApiHostnameCoverageOverlappingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceAPIHostnameCoverageOverlappingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "dataSourceApiHostnameCoverageOverlappingRead")
+	logger := meta.Log("APPSEC", "dataSourceAPIHostnameCoverageOverlappingRead")
 
-	getApiHostnameCoverageOverlapping := appsec.GetApiHostnameCoverageOverlappingRequest{}
+	getAPIHostnameCoverageOverlapping := appsec.GetApiHostnameCoverageOverlappingRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiHostnameCoverageOverlapping.ConfigID = configid
+	getAPIHostnameCoverageOverlapping.ConfigID = configid
 
-	getApiHostnameCoverageOverlapping.Version = getLatestConfigVersion(ctx, configid, m)
+	getAPIHostnameCoverageOverlapping.Version = getLatestConfigVersion(ctx, configid, m)
 
 	hostname, err := tools.GetStringValue("hostname", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getApiHostnameCoverageOverlapping.Hostname = hostname
+	getAPIHostnameCoverageOverlapping.Hostname = hostname
 
-	apihostnamecoverageoverlapping, err := client.GetApiHostnameCoverageOverlapping(ctx, getApiHostnameCoverageOverlapping)
+	apihostnamecoverageoverlapping, err := client.GetApiHostnameCoverageOverlapping(ctx, getAPIHostnameCoverageOverlapping)
 	if err != nil {
 		logger.Errorf("calling 'getApiHostnameCoverageOverlapping': %s", err.Error())
 		return diag.FromErr(err)
@@ -84,7 +84,7 @@ func dataSourceApiHostnameCoverageOverlappingRead(ctx context.Context, d *schema
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(strconv.Itoa(getApiHostnameCoverageOverlapping.ConfigID))
+	d.SetId(strconv.Itoa(getAPIHostnameCoverageOverlapping.ConfigID))
 
 	return nil
 }

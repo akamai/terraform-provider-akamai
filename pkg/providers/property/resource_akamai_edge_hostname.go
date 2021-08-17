@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-cty/cty"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -28,19 +30,18 @@ func resourceSecureEdgeHostName() *schema.Resource {
 
 var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	"product": {
-		Type:          schema.TypeString,
-		Optional:      true,
-		Computed:      true,
-		Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
-		StateFunc:     addPrefixToState("prd_"),
-		ConflictsWith: []string{"product_id"},
+		Type:       schema.TypeString,
+		Optional:   true,
+		Computed:   true,
+		Deprecated: akamai.NoticeDeprecatedUseAlias("product"),
+		StateFunc:  addPrefixToState("prd_"),
 	},
 	"product_id": {
-		Type:          schema.TypeString,
-		Optional:      true,
-		Computed:      true,
-		ConflictsWith: []string{"product"},
-		StateFunc:     addPrefixToState("prd_"),
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		ExactlyOneOf: []string{"product", "product_id"},
+		StateFunc:    addPrefixToState("prd_"),
 	},
 	"contract": {
 		Type:       schema.TypeString,
@@ -76,17 +77,20 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		ForceNew:         true,
 		DiffSuppressFunc: suppressEdgeHostnameDomain,
 		ValidateDiagFunc: tools.IsNotBlank,
+		StateFunc:        appendDefaultSuffixToEdgeHostname,
 	},
 	"ip_behavior": {
 		Type:     schema.TypeString,
 		Required: true,
 		ForceNew: true,
-		ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+		ValidateDiagFunc: func(val interface{}, path cty.Path) diag.Diagnostics {
 			v := val.(string)
+			key := path[len(path)-1].(cty.GetAttrStep).Name
+
 			if !strings.EqualFold(papi.EHIPVersionV4, v) && !strings.EqualFold(papi.EHIPVersionV6Performance, v) && !strings.EqualFold(papi.EHIPVersionV6Compliance, v) {
-				errs = append(errs, fmt.Errorf("%v must be one of %v, %v, %v, got: %v", key, papi.EHIPVersionV4, papi.EHIPVersionV6Performance, papi.EHIPVersionV6Compliance, v))
+				return diag.Errorf("%v must be one of %v, %v, %v, got: %v", key, papi.EHIPVersionV4, papi.EHIPVersionV6Performance, papi.EHIPVersionV6Compliance, v)
 			}
-			return
+			return nil
 		},
 	},
 	"certificate": {
@@ -323,9 +327,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	} else {
 		productID = d.Get("product").(string)
 	}
-	if productID != "" {
-		productID = tools.AddPrefix(productID, "prd_")
-	}
+	productID = tools.AddPrefix(productID, "prd_")
 	// set product/product_id into ResourceData
 	if err := d.Set("product_id", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -377,6 +379,16 @@ func suppressEdgeHostnameDomain(_, old, new string, _ *schema.ResourceData) bool
 		return old == fmt.Sprintf("%s.edgesuite.net", new)
 	}
 	return false
+}
+
+// appendDefaultSuffixToEdgeHostname is a StateFunc which appends ".edgesuite.net" to an edge hostname if none of the supported prefixes were provided
+// It is used in order to retain idempotency when "edge_hostname" value is used as output
+func appendDefaultSuffixToEdgeHostname(i interface{}) string {
+	name := i.(string)
+	if !(strings.HasSuffix(name, "edgekey.net") || strings.HasSuffix(name, "edgesuite.net") || strings.HasSuffix(name, "akamaized.net")) {
+		name = fmt.Sprintf("%s.edgesuite.net", name)
+	}
+	return name
 }
 
 func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*papi.EdgeHostnameGetItem, error) {

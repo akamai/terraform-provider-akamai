@@ -1,11 +1,11 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Get Started with Application Security"
+page_title: "Module: Application Security"
 description: |-
-   Application Security in Akamai provider for Terraform
+   Application Security module for the Akamai Terraform Provider
 ---
 
-# Application Security in Akamai provider for Terraform 
+# Application Security Guide 
 
 Application Security (appsec) in the Akamai Terraform provider (provider) enables application 
 security configurations including the following: 
@@ -273,6 +273,7 @@ would then cause the `hostnames` list to be added to Terraform's local state.
 
 Resource definitions can be exported for import using any of the following `search` entries:
   * AdvancedSettingsLogging.tf
+  * AdvancedSettingsPragmaHeader.tf
   * AdvancedSettingsPrefetch.tf
   * ApiRequestConstraints.tf
   * CustomDeny.tf
@@ -286,12 +287,14 @@ Resource definitions can be exported for import using any of the following `sear
   * ReputationProfileAction.tf
   * Rule.tf
   * EvalRule.tf
+  * EvalGroup.tf
   * AttackGroup.tf
   * SecurityPolicy.tf
   * SelectedHostname.tf
   * SiemSettings.tf
   * SlowPost.tf
   * IPGeoFirewall.tf
+  * ThreatIntel.tf
 
 ## Data Sources & Resources Supported by the Akamai Appsec Provider
 
@@ -310,6 +313,7 @@ Resource definitions can be exported for import using any of the following `sear
   * akamai_appsec_custom_rule_actions
   * akamai_appsec_custom_rules
   * akamai_appsec_eval
+  * akamai_appsec_eval_groups
   * akamai_appsec_eval_hostnames
   * akamai_appsec_eval_rules
   * akamai_appsec_export_configuration
@@ -336,6 +340,7 @@ Resource definitions can be exported for import using any of the following `sear
   * akamai_appsec_slow_post
   * akamai_appsec_version_notes
   * akamai_appsec_waf_mode
+  * akamai_appsec_threat_intel
 
 ### Resources
   * akamai_appsec_activations
@@ -352,6 +357,7 @@ Resource definitions can be exported for import using any of the following `sear
   * akamai_appsec_custom_rule
   * akamai_appsec_custom_rule_action
   * akamai_appsec_eval
+  * akamai_appsec_eval_group
   * akamai_appsec_eval_hostnames
   * akamai_appsec_eval_protect_host
   * akamai_appsec_eval_rule
@@ -378,4 +384,5 @@ Resource definitions can be exported for import using any of the following `sear
   * akamai_appsec_version_notes
   * akamai_appsec_waf_mode
   * akamai_appsec_waf_protection
+  * akamai_appsec_threat_intel
 

@@ -231,6 +231,22 @@ func (p *mockpapi) GetPropertyVersions(ctx context.Context, r papi.GetPropertyVe
 	return args.Get(0).(*papi.GetPropertyVersionsResponse), args.Error(1)
 }
 
+type GetPropertyVersionsFunc func(context.Context, papi.GetPropertyVersionsRequest) (*papi.GetPropertyVersionsResponse, error)
+
+// Expect a call to the mock's papi.GetPropertyVersions() where the return value is computed by the given
+// function
+func (p *mockpapi) OnGetPropertyVersions(ctx, req interface{}, impl GetPropertyVersionsFunc) *mock.Call {
+	call := p.On("GetPropertyVersions", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.GetPropertyVersionsRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
+}
+
 func (p *mockpapi) GetPropertyVersion(ctx context.Context, r papi.GetPropertyVersionRequest) (*papi.GetPropertyVersionsResponse, error) {
 	args := p.Called(ctx, r)
 

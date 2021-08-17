@@ -29,7 +29,7 @@ func resourceRatePolicy() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -44,7 +44,7 @@ func resourceRatePolicy() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
+				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},
 	}
@@ -54,7 +54,7 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyCreate")
-	logger.Debugf("!!! in resourceRatePolicyCreate")
+	logger.Debugf("in resourceRatePolicyCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -85,7 +85,7 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyRead")
-	logger.Debugf("!!! in resourceRatePolicyRead")
+	logger.Debugf("in resourceRatePolicyRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:ratepolicyid")
 	if err != nil {
@@ -134,7 +134,7 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyUpdate")
-	logger.Debugf("!!! in resourceRatePolicy`Update")
+	logger.Debugf("in resourceRatePolicy`Update")
 
 	idParts, err := splitID(d.Id(), 2, "configid:ratepolicyid")
 	if err != nil {
@@ -173,7 +173,7 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyDelete")
-	logger.Debugf("!!! in resourceRatePolicyDelete")
+	logger.Debugf("in resourceRatePolicyDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:ratepolicyid")
 	if err != nil {

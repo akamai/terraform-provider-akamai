@@ -24,7 +24,7 @@ func resourceAdvancedSettingsPrefetch() *schema.Resource {
 		UpdateContext: resourceAdvancedSettingsPrefetchUpdate,
 		DeleteContext: resourceAdvancedSettingsPrefetchDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -60,7 +60,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchCreate")
-	logger.Debugf("!!! in resourceAdvancedSettingsPrefetchCreate")
+	logger.Debugf("in resourceAdvancedSettingsPrefetchCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -95,7 +95,6 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	createAdvancedSettingsPrefetch.EnableAppLayer = enableAppLayer
 	createAdvancedSettingsPrefetch.AllExtensions = allExtensions
 	createAdvancedSettingsPrefetch.Extensions = exts
-	//logger.Errorf("calling 'getAdvancedSettingsPrefetch': Extensions %v", createAdvancedSettingsPrefetch.Extensions)
 	createAdvancedSettingsPrefetch.EnableRateControls = enableRateControls
 
 	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, createAdvancedSettingsPrefetch)
@@ -113,7 +112,7 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchRead")
-	logger.Debugf("!!! resourceAdvancedSettingsPrefetchRead")
+	logger.Debugf("resourceAdvancedSettingsPrefetchRead")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -154,7 +153,7 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchUpdate")
-	logger.Debugf("!!! resourceAdvancedSettingsPrefetchUpdate")
+	logger.Debugf("resourceAdvancedSettingsPrefetchUpdate")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -189,7 +188,7 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	updateAdvancedSettingsPrefetch.EnableAppLayer = enableAppLayer
 	updateAdvancedSettingsPrefetch.AllExtensions = allExtensions
 	updateAdvancedSettingsPrefetch.Extensions = exts
-	logger.Errorf("calling 'getAdvancedSettingsPrefetch': Extensions %v", updateAdvancedSettingsPrefetch.Extensions)
+	logger.Errorf("calling 'getAdvancedSettingsPrefetch': Extensions %w", updateAdvancedSettingsPrefetch.Extensions)
 	updateAdvancedSettingsPrefetch.EnableRateControls = enableRateControls
 
 	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, updateAdvancedSettingsPrefetch)
@@ -205,7 +204,7 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchDelete")
-	logger.Debugf("!!! resourceAdvancedSettingsPrefetchDelete")
+	logger.Debugf("resourceAdvancedSettingsPrefetchDelete")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {

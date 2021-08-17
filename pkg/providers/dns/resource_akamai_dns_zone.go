@@ -31,8 +31,9 @@ func resourceDNSv2Zone() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"contract": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: FieldPrefixSuppress,
 			},
 			"zone": {
 				Type:     schema.TypeString,
@@ -59,8 +60,9 @@ func resourceDNSv2Zone() *schema.Resource {
 				Default:  "Managed by Terraform",
 			},
 			"group": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: FieldPrefixSuppress,
 			},
 			"sign_and_serve": {
 				Type:     schema.TypeBool,
@@ -113,6 +115,26 @@ func resourceDNSv2Zone() *schema.Resource {
 			},
 		},
 	}
+}
+
+// Suppress check for contract and group fields that have prefix in tfstate
+func FieldPrefixSuppress(_, old, new string, _ *schema.ResourceData) bool {
+
+	var oldValStr, newValStr string
+
+	if strings.HasPrefix(old, "ctr_") || strings.HasPrefix(new, "ctr_") {
+		oldValStr = strings.TrimPrefix(old, "ctr_")
+		newValStr = strings.TrimPrefix(new, "ctr_")
+	} else if strings.HasPrefix(old, "grp_") || strings.HasPrefix(new, "grp_") {
+		oldValStr = strings.TrimPrefix(old, "grp_")
+		newValStr = strings.TrimPrefix(new, "grp_")
+	} else {
+		return false
+	}
+	if oldValStr == newValStr {
+		return true
+	}
+	return false
 }
 
 func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -172,16 +194,15 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 			Summary:  "Zone exists. Please import.",
 			Detail:   fmt.Sprintf("Zone create failure. Zone %s exists", hostname),
 		})
-	} else {
-		apiError, ok := e.(*dns.Error)
-		if !ok || apiError.StatusCode != http.StatusNotFound {
-			logger.Errorf("Create[ERROR] %w", e)
-			return append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Create API falure",
-				Detail:   e.Error(),
-			})
-		}
+	}
+	apiError, ok := e.(*dns.Error)
+	if !ok || apiError.StatusCode != http.StatusNotFound {
+		logger.Errorf("Create[ERROR] %w", e)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Create API falure",
+			Detail:   e.Error(),
+		})
 	}
 
 	// no existing zone.
@@ -442,7 +463,7 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSv2ZoneDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	hostname, err := tools.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -473,6 +494,9 @@ func validateZoneType(v interface{}, _ string) (ws []string, es []error) {
 // populate zone state based on API response.
 func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.ZoneResponse) error {
 
+	if err := d.Set("contract", zoneresp.ContractID); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	if err := d.Set("masters", zoneresp.Masters); err != nil {
 		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
@@ -673,7 +697,7 @@ func checkZoneSOAandNSRecords(ctx context.Context, meta akamai.OperationMeta, zo
 	return err
 }
 
-func createSOARecord(zone string, nameservers []string, logger log.Interface) dns.Recordset {
+func createSOARecord(zone string, nameservers []string, _ log.Interface) dns.Recordset {
 	rec := dns.Recordset{Name: zone, Type: "SOA"}
 	rec.TTL = 86400
 	pemail := fmt.Sprintf("hostmaster.%s.", zone)
@@ -683,7 +707,7 @@ func createSOARecord(zone string, nameservers []string, logger log.Interface) dn
 	return rec
 }
 
-func createNSRecord(zone string, nameservers []string, logger log.Interface) dns.Recordset {
+func createNSRecord(zone string, nameservers []string, _ log.Interface) dns.Recordset {
 	rec := dns.Recordset{Name: zone, Type: "NS"}
 	rec.TTL = 86400
 	rec.Rdata = nameservers

@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Options initializes and returns terraform.Resource with credentials for given section
 func Options(section string) *schema.Resource {
 	section = strings.ToUpper(section)
 

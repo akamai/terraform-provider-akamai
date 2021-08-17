@@ -68,7 +68,6 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "id", "43253:3008967"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResMatchTarget/update_by_id.tf"),

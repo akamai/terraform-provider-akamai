@@ -24,7 +24,7 @@ func resourceSecurityPolicyRename() *schema.Resource {
 		UpdateContext: resourceSecurityPolicyRenameUpdate,
 		DeleteContext: resourceSecurityPolicyRenameDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -47,7 +47,7 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameCreate")
-	logger.Debugf("!!! in resourceSecurityPolicyRenameCreate")
+	logger.Debugf("in resourceSecurityPolicyRenameCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -83,8 +83,8 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
-	logger.Debugf("!!! in resourceSecurityPolicyRenameRead")
+	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameRead")
+	logger.Debugf("in resourceSecurityPolicyRenameRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
@@ -123,8 +123,8 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceSecurityPolicyUpdate")
-	logger.Debugf("!!! in resourceSecurityPolicyRenameRead")
+	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameUpdate")
+	logger.Debugf("in resourceSecurityPolicyRenameUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
@@ -156,6 +156,6 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 	return resourceSecurityPolicyRenameRead(ctx, d, m)
 }
 
-func resourceSecurityPolicyRenameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecurityPolicyRenameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(context.TODO(), d, m)
 }

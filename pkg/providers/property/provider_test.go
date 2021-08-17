@@ -3,6 +3,7 @@ package property
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -19,25 +20,25 @@ var testAccProviders map[string]*schema.Provider
 
 var testProvider *schema.Provider
 
-func init() {
+func TestMain(m *testing.M) {
 	testProvider = akamai.Provider(Subprovider())()
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testProvider,
 	}
+	if err := akamai.TFTestSetup(); err != nil {
+		log.Fatal(err)
+	}
+	exitCode := m.Run()
+	if err := akamai.TFTestTeardown(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(exitCode)
 }
 
 func TestProvider(t *testing.T) {
 	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-}
-
-func testAccPreCheck(t *testing.T) {
-	TODO(t, "Check not implemented")
-}
-
-func getTestProvider() *schema.Provider {
-	return testProvider
 }
 
 // Only allow one test at a time to patch the client via useClient()

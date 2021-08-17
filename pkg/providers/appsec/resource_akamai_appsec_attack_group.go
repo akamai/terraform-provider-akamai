@@ -26,7 +26,7 @@ func resourceAttackGroup() *schema.Resource {
 		UpdateContext: resourceAttackGroupUpdate,
 		DeleteContext: resourceAttackGroupDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -54,7 +54,7 @@ func resourceAttackGroup() *schema.Resource {
 				Optional:         true,
 				Default:          "",
 				ValidateFunc:     validation.StringIsJSON,
-				DiffSuppressFunc: suppressEquivalentJsonDiffsGeneric,
+				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},
 	}
@@ -64,7 +64,7 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAttackGroupCreate")
-	logger.Debugf("!!! in resourceAttackGroupCreate")
+	logger.Debugf(" in resourceAttackGroupCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -102,9 +102,9 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	createAttackGroup.Action = action
 	createAttackGroup.JsonPayloadRaw = rawJSON
 
-	_, erru := client.UpdateAttackGroup(ctx, createAttackGroup)
-	if erru != nil {
-		logger.Warnf("calling 'createEvalRule': %s", erru.Error())
+	_, err = client.UpdateAttackGroup(ctx, createAttackGroup)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s:%s", createAttackGroup.ConfigID, createAttackGroup.PolicyID, createAttackGroup.Group))
@@ -116,7 +116,7 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAttackGroupRead")
-	logger.Debugf("!!! in resourceAttackGroupRead")
+	logger.Debugf(" in resourceAttackGroupRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
 	if err != nil {
@@ -157,7 +157,7 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	if !attackgroup.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(attackgroup.ConditionException)
 		if err != nil {
-			diag.FromErr(fmt.Errorf("%s", "Error Marshalling condition exception"))
+			diag.Errorf("%s", "Error Marshalling condition exception")
 		}
 		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -171,7 +171,7 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAttackGroupUpdate")
-	logger.Debugf("!!! in resourceAttackGroupUpdate")
+	logger.Debugf(" in resourceAttackGroupUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
 	if err != nil {
@@ -209,9 +209,9 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	updateAttackGroup.Action = action
 	updateAttackGroup.JsonPayloadRaw = rawJSON
 
-	_, erru := client.UpdateAttackGroup(ctx, updateAttackGroup)
-	if erru != nil {
-		logger.Warnf("calling 'updateAttackGroup': %s", erru.Error())
+	_, err = client.UpdateAttackGroup(ctx, updateAttackGroup)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceAttackGroupRead(ctx, d, m)
@@ -220,8 +220,8 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceAttackgroupDelete")
-	logger.Debugf("!!! in resourceAttackgroupDelete")
+	logger := meta.Log("APPSEC", "resourceAttackGroupDelete")
+	logger.Debugf(" in resourceAttackGroupDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
 	if err != nil {

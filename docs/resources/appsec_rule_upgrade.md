@@ -47,13 +47,15 @@ The following arguments are supported:
 
 * `security_policy_id` - (Required) The ID of the security policy to use.
 
+* `upgrade_mode` - __ASE Beta__. (Optional) ASE_AUTO or ASE_MANUAL.  ASE (Adaptive Security Engine) is currently in beta. Please contact your Akamai representative to learn more. Rule Actions and Threat Intelligence setting are read only in ASE_AUTO mode
+
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
 
  * `current_ruleset` - A string indicating the version number and release date of the current KRS rule set.
 
- * `mode` - A string indicating the current mode, either "KRS" or "AAG".
+ * `mode` - A string indicating the current mode, either KRS,AAG,ASE_AUTO,ASE_MANUAL
 
  * `eval_status` - TBD
 

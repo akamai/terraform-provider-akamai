@@ -1,6 +1,6 @@
 ---
 layout: "akamai"
-page_title: "Akamai: KRS Attack Groups
+page_title: "Akamai: KRS Attack Groups"
 subcategory: "Application Security"
 description: |-
  KRS Attack Groups
