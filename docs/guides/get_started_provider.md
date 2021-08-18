@@ -13,7 +13,7 @@ Provider for the first time.
 If you've set up Akamai APIs before, some of the Akamai Provider
 setup tasks will look familiar. You need to create Akamai API clients
 for each of the modules you'll be using, and retrieve IDs for your contracts
-and groups. Other tasks, like setting up your `akamai.tf` file, are
+and groups. Other tasks, like setting up your `.tf` configuration file, are
 specific to Terraform.
 
 -> **Note** Both Terraform and the Akamai Terraform CLI package come
@@ -53,21 +53,23 @@ answer these questions:
 
 * **Akamai configurations.** Are you going to use existing properties and other Akamai configurations with Terraform? Or are you going to start from scratch?
 
-* **Supporting processes.** Are other people in your organization used to making changes via Control Center, an Akamai API, or an Akamai CLI? If they are, you need to develop new processes to make sure your Terraform configuration files are fully up to date and from now on, the single source of changes.
+* **Single or multiple `.tf` files.** Do you want to manage the full lifecycle of your infrastructure in a single file? Or do you prefer to split it into smaller Terraform configurations with limited scope and delegate them to specific teams? Independent configurations use output variables to publish information and enable access to that data from other workspaces.
 
-## Set up your akamai.tf file
+* **Supporting processes.** Are other people in your organization used to making changes via Control Center, an Akamai API, or an Akamai CLI? If they are, you need to develop new processes to make sure your Terraform configuration files are fully up to date and from now on, the single source of changes. All the modifications your team makes outside of Terraform get overwritten whenever you [run the `terraform -apply` command](#apply-your-configuration).
 
-Now that you have all the answers, set up a Terraform configuration file for the Akamai modules you plan to use.
+## Set up your `.tf` files
+
+Now that you have all the answers, set up a Terraform configuration files for the Akamai modules you plan to use.
 
 1. Create a new folder called `terraform`.
-2. Create a file inside your new folder and name it `akamai.tf`.
+2. Create a file inside your new folder and name it `akamai.tf`. If you decided to split the configuration into smaller chunks, create all the files accordingly.
 3. Continue with [Create Akamai API clients](#create-akamai-api-clients).
 
 ## Create Akamai API clients
 
 Create an Akamai API client with the right permissions and valid credentials to authenticate your Akamai Provider files. The Akamai API client needs read-write permission to the APIs associated with the Akamai Provider modules you're using, like DNS Zone Administration or Property Provisioning.
 
-When your API clients are ready, add credential information to your `akamai.tf` file. See [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md)
+When your API clients are ready, add credential information to your `.tf` configuration files. See [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md)
 for details on creating API clients and available authentication methods. Once you're done authenticating, come back here to complete the Akamai Provider setup.
 
 **Note:** Depending on the contract and group you select, the Edge DNS and Global Traffic Management (GTM) modules may interact Property Manager (PAPI) API. If so, be sure to include PAPI authorization in the API Clients for Edge DNS and GTM.
@@ -143,10 +145,10 @@ sections here to initialize Akamai Provider, test the configuration, and apply t
 
 ## Initialize the Akamai Provider
 
-Once you have your configuration complete, save the `akamai.tf` file. Then
+Once you have your configuration complete, save the `.tf` files. Then
 switch to the terminal to initialize Terraform using the command:
 
-`$ terraform init`
+    $ terraform init
 
 This command installs the latest version of the Akamai Provider, as well
 as any other providers you're using. To update
@@ -157,16 +159,16 @@ init` again.
 
 To test your configuration, use Terraform's `plan` command:
 
-`$ terraform plan`
+    $ terraform plan
 
 This command makes Terraform create a plan for the work it will do
-based on the `akamai.tf` configuration file. It doesn't actually make any changes
+based on the `.tf` configuration file. It doesn't actually make any changes
 and is safe to run as many times as you like.
 
 ## Apply your configuration
 
 You can execute all the actions you set in the configuration by running:
 
-`$terraform apply`
+    $terraform apply
 
 The `apply` command previews all the changes before executing them, similarly to `plan`. Unless you set the `-auto-approve` flag, you need to confirm you want to proceed with the operation and propagate changes to the Akamai platform.
