@@ -1,9 +1,9 @@
 ---
 layout: "akamai"
-page_title: "Akamai: KRS Evaluation Attack Groups
+page_title: "Akamai: Evaluation Attack Groups"
 subcategory: "Application Security"
 description: |-
- KRS Eval Groups
+ Evaluation Attack Groups
 ---
 
 # akamai_appsec_eval_groups
