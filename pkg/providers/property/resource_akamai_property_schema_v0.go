@@ -54,7 +54,7 @@ func resourcePropertyV0() *schema.Resource {
 }
 
 // Upgrade state from schema version 0 to 1
-func upgradePropV0(ctx context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+func upgradePropV0(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
 	// Delete computed and removed attributes
 	delete(rawState, "account")
 	delete(rawState, "edge_hostnames")

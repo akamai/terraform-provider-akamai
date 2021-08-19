@@ -1,5 +1,32 @@
 # RELEASE NOTES
 
+## 1.7.0 (Aug 19, 2021)
+
+#### FEATURES/ENHANCEMENTS:
+* Terraform Plugin SDK updated to v2.7.0
+* Provider tested and now supports Terraform 1.0.4
+
+* APPSEC
+  * Add wap_selected_hostnames data source and resource
+  * Remove import templates for deprecated features
+  * Display policy IDs for siem settings in separate table
+  * Get an evaluation attack group's or risk score group's action
+* NETWORK LISTS
+  * Support contract_id and group_id for network list create/update
+* PAPI
+  * Possibility to set `note` field in property_activation resource
+  * Additional checks and validations in `terraform plan` ([#245](https://github.com/akamai/terraform-provider-akamai/issues/245))
+
+#### BUG FIXES:
+* APPSEC
+  * Configuration drift on reputation_profile create/apply
+  * Fix incorrect comments/URL references in inline documentation
+  * Data source akamai_appsec_security_policy returning incorrect policy ID
+* DNS
+  * Trim contract (ctr_) and group (grp_) prefixes when comparing configuration and TF state values ([#242](https://github.com/akamai/terraform-provider-akamai/issues/242))
+* GTM
+  * Trim contract (ctr_) and group (grp_) prefixes when comparing configuration and TF state values
+
 ## 1.6.1 (Jul 21, 2021)
 
 #### BUG FIXES:

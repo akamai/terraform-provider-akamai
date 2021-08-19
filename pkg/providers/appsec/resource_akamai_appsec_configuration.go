@@ -23,7 +23,7 @@ func resourceConfiguration() *schema.Resource {
 		UpdateContext: resourceConfigurationUpdate,
 		DeleteContext: resourceConfigurationDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -67,7 +67,7 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationCreate")
-	logger.Debug("!!! in resourceConfigurationCreate")
+	logger.Debug("in resourceConfigurationCreate")
 
 	name, err := tools.GetStringValue("name", d)
 	if err != nil {
@@ -149,7 +149,7 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationRead")
-	logger.Debug("!!! in resourceConfigurationRead")
+	logger.Debug("in resourceConfigurationRead")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -192,7 +192,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceConfigurationUpdate")
-	logger.Debug("!!! in resourceConfigurationUpdate")
+	logger.Debug("in resourceConfigurationUpdate")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -216,7 +216,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 	resp, erru := client.UpdateConfiguration(ctx, updateConfiguration)
 	if erru != nil {
 		logger.Errorf("calling 'updateConfiguration': %s", erru.Error())
-		logger.Debugf("response is %v", resp)
+		logger.Debugf("response is %w", resp)
 		return diag.FromErr(erru)
 	}
 
@@ -250,8 +250,8 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceConfigurationRemove")
-	logger.Debug("!!! in resourceConfigurationDelete")
+	logger := meta.Log("APPSEC", "resourceConfigurationDelete")
+	logger.Debug("in resourceConfigurationDelete")
 
 	configid, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -267,8 +267,8 @@ func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m 
 	}
 	for _, configVersion := range configurationVersions.VersionList {
 		if configVersion.Production.Status != "Inactive" || configVersion.Staging.Status != "Inactive" {
-			return diag.FromErr(fmt.Errorf("cannot delete configuration '%s' as version %d has been active in staging or production",
-				configurationVersions.ConfigName, configVersion.Version))
+			return diag.Errorf("cannot delete configuration '%s' as version %d has been active in staging or production",
+				configurationVersions.ConfigName, configVersion.Version)
 		}
 	}
 

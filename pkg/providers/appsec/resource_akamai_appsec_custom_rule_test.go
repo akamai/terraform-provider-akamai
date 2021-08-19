@@ -74,7 +74,6 @@ func TestAccAkamaiCustomRule_res_basic(t *testing.T) {
 						Config: loadFixtureString("testdata/TestResCustomRule/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
-							//resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "rules", compactJSON(loadFixtureBytes("testdata/TestResCustomRule/custom_rules.json"))),
 						),
 						ExpectNonEmptyPlan: true,
 					},

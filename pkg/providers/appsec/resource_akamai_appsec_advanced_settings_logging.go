@@ -27,10 +27,10 @@ func resourceAdvancedSettingsLogging() *schema.Resource {
 		UpdateContext: resourceAdvancedSettingsLoggingUpdate,
 		DeleteContext: resourceAdvancedSettingsLoggingDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -55,7 +55,7 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingCreate")
-	logger.Debugf("!!! in resourceAdvancedSettingsLoggingCreate")
+	logger.Debugf("in resourceAdvancedSettingsLoggingCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -95,7 +95,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingRead")
-	logger.Debugf("!!! resourceAdvancedSettingsLoggingRead")
+	logger.Debugf("resourceAdvancedSettingsLoggingRead")
 
 	getAdvancedSettingsLogging := appsec.GetAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -151,7 +151,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingUpdate")
-	logger.Debugf("!!! resourceAdvancedSettingsLoggingUpdate")
+	logger.Debugf("resourceAdvancedSettingsLoggingUpdate")
 
 	updateAdvancedSettingsLogging := appsec.UpdateAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -198,7 +198,7 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingDelete")
-	logger.Debugf("!!! resourceAdvancedSettingsLoggingDelete")
+	logger.Debugf("resourceAdvancedSettingsLoggingDelete")
 
 	removeAdvancedSettingsLogging := appsec.RemoveAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {

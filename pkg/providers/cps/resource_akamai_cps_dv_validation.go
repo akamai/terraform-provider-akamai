@@ -184,7 +184,7 @@ func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m 
 	return nil
 }
 
-func resourceCPSDVValidationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceCPSDVValidationDelete(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	d.SetId("")
 	return nil
 }

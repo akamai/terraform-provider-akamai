@@ -26,10 +26,10 @@ func resourceReputationProfile() *schema.Resource {
 		UpdateContext: resourceReputationProfileUpdate,
 		DeleteContext: resourceReputationProfileDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -54,7 +54,7 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileCreate")
-	logger.Debug("!!! in resourceReputationProfileCreate")
+	logger.Debug("in resourceReputationProfileCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -88,7 +88,7 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileRead")
-	logger.Debug("!!! in resourceReputationProfileRead")
+	logger.Debug("in resourceReputationProfileRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:reputationprofileid")
 	if err != nil {
@@ -136,7 +136,7 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileUpdate")
-	logger.Debug("!!! in resourceReputationProfileUpdate")
+	logger.Debug("in resourceReputationProfileUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:reputationprofileid")
 	if err != nil {
@@ -178,7 +178,7 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileDelete")
-	logger.Debug("!!! in resourceReputationProfileDelete")
+	logger.Debug("in resourceReputationProfileDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:reputationprofileid")
 	if err != nil {

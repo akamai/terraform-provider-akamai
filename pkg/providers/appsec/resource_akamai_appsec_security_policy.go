@@ -26,10 +26,10 @@ func resourceSecurityPolicy() *schema.Resource {
 		UpdateContext: resourceSecurityPolicyUpdate,
 		DeleteContext: resourceSecurityPolicyDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -49,10 +49,7 @@ func resourceSecurityPolicy() *schema.Resource {
 				Optional: true,
 				Default:  true,
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					if old == "" {
-						return false // on policy creation, read this setting and use it
-					}
-					return true // afterwards, ignore it
+					return old != "" // read & use this setting on policy creation, otherwise ignore it
 				},
 			},
 			"create_from_security_policy_id": {
@@ -72,7 +69,7 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCreate")
-	logger.Debugf("!!! in resourceSecurityPolicyCreate")
+	logger.Debugf("in resourceSecurityPolicyCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -143,7 +140,7 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
-	logger.Debugf("!!! in resourceSecurityPolicyRead")
+	logger.Debugf("in resourceSecurityPolicyRead")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
@@ -192,7 +189,7 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyUpdate")
-	logger.Debugf("!!! in resourceSecurityPolicyUpdate")
+	logger.Debugf("in resourceSecurityPolicyUpdate")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {
@@ -235,7 +232,7 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDelete")
-	logger.Debugf("!!! in resourceSecurityPolicyDelete")
+	logger.Debugf("in resourceSecurityPolicyDelete")
 
 	idParts, err := splitID(d.Id(), 2, "configid:policyid")
 	if err != nil {

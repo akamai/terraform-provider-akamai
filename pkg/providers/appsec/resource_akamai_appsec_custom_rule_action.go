@@ -24,10 +24,10 @@ func resourceCustomRuleAction() *schema.Resource {
 		UpdateContext: resourceCustomRuleActionUpdate,
 		DeleteContext: resourceCustomRuleActionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -55,7 +55,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionCreate")
-	logger.Debugf("!!! in resourceCustomRuleActionCreate")
+	logger.Debugf("in resourceCustomRuleActionCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -97,7 +97,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
-	logger.Debugf("!!! in resourceCustomRuleActionRead")
+	logger.Debugf("in resourceCustomRuleActionRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:customruleid")
 	if err != nil {
@@ -144,7 +144,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
-	logger.Debugf("!!! in resourceCustomRuleActionUpdate")
+	logger.Debugf("in resourceCustomRuleActionUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:customruleid")
 	if err != nil {
@@ -185,7 +185,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionDelete")
-	logger.Debugf("!!! in resourceCustomRuleActionDelete")
+	logger.Debugf("in resourceCustomRuleActionDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:customruleid")
 	if err != nil {
@@ -220,6 +220,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
+// Constant values
 const (
 	Alert = "alert"
 	Deny  = "deny"

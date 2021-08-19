@@ -60,9 +60,7 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	var configlist string
-	var configidfound int
-	configlist = configlist + " ConfigID Name  VersionList" + "\n"
+	var configid int
 
 	for _, configval := range configuration.Configurations {
 
@@ -82,7 +80,7 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 			if err := d.Set("production_version", configval.ProductionVersion); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
-			configidfound = configval.ID
+			configid = configval.ID
 		}
 	}
 
@@ -96,7 +94,7 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 		}
 	}
 
-	d.SetId(strconv.Itoa(configidfound))
+	d.SetId(strconv.Itoa(configid))
 
 	return nil
 }

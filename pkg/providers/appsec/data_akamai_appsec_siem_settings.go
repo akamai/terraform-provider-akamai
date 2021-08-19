@@ -59,9 +59,17 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "siemsettingsDS", siemsettings)
+	outputtext := ""
+	settingstext, err := RenderTemplates(ots, "siemsettingsDS", siemsettings)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		outputtext = outputtext + settingstext
+	}
+	policiestext, err := RenderTemplates(ots, "siempoliciesDS", siemsettings)
+	if err == nil {
+		outputtext = outputtext + policiestext
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.FromErr(err)
 	}
 
 	jsonBody, err := json.Marshal(siemsettings)

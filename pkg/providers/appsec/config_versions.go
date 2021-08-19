@@ -89,7 +89,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) in
 		return 0
 	}
 
-	logger.Debugf("Found config %v, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
+	logger.Debugf("Found config %w, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
 	return configuration.LatestVersion
 }
 
@@ -111,7 +111,7 @@ func getActiveConfigVersions(ctx context.Context, configID int, m interface{}) (
 		return 0, 0
 	}
 
-	logger.Debugf("Found config %v, returning %d, %d as its staging & production versions",
+	logger.Debugf("Found config %w, returning %d, %d as its staging & production versions",
 		configuration.ID, configuration.StagingVersion, configuration.ProductionVersion)
 	return configuration.StagingVersion, configuration.ProductionVersion
 }

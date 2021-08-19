@@ -132,24 +132,24 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 			Summary:  cStatus.Status.Message,
 		})
 	}
-	if waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d); err != nil {
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
 		return diag.FromErr(err)
-	} else {
-		if waitOnComplete {
-			done, err := waitForCompletion(ctx, domain, m)
-			if done {
-				logger.Infof("cidrMap Create completed")
+	}
+	if waitOnComplete {
+		done, err := waitForCompletion(ctx, domain, m)
+		if done {
+			logger.Infof("cidrMap Create completed")
+		} else {
+			if err == nil {
+				logger.Infof("cidrMap Create pending")
 			} else {
-				if err == nil {
-					logger.Infof("cidrMap Create pending")
-				} else {
-					logger.Errorf("cidrMap Create failed [%s]", err.Error())
-					return append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  "cidrMap Create failed",
-						Detail:   err.Error(),
-					})
-				}
+				logger.Errorf("cidrMap Create failed [%s]", err.Error())
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "cidrMap Create failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
 	}
@@ -175,7 +175,7 @@ func resourceGTMv1CidrMapRead(ctx context.Context, d *schema.ResourceData, m int
 	logger.Debugf("Reading cidrMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the property and domain
-	domain, cidrMap, err := parseResourceStringId(d.Id())
+	domain, cidrMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid cidrMap ID: %s", d.Id())
 		return diag.FromErr(err)
@@ -207,7 +207,7 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("Updating cidrMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// pull domain and cidrMap out of id
-	domain, cidrMap, err := parseResourceStringId(d.Id())
+	domain, cidrMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid cidrMap ID: %s", d.Id())
 		return diag.FromErr(err)
@@ -241,25 +241,24 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 			Summary:  uStat.Message,
 		})
 	}
-
-	if waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d); err != nil {
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
 		return diag.FromErr(err)
-	} else {
-		if waitOnComplete {
-			done, err := waitForCompletion(ctx, domain, m)
-			if done {
-				logger.Infof("cidrMap Update completed")
+	}
+	if waitOnComplete {
+		done, err := waitForCompletion(ctx, domain, m)
+		if done {
+			logger.Infof("cidrMap Update completed")
+		} else {
+			if err == nil {
+				logger.Infof("cidrMap Update pending")
 			} else {
-				if err == nil {
-					logger.Infof("cidrMap Update pending")
-				} else {
-					logger.Errorf("cidrMap Update failed [%s]", err.Error())
-					return append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  "cidrMap Update failed",
-						Detail:   err.Error(),
-					})
-				}
+				logger.Errorf("cidrMap Update failed [%s]", err.Error())
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "cidrMap Update failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
 	}
@@ -280,7 +279,7 @@ func resourceGTMv1CidrMapImport(d *schema.ResourceData, m interface{}) ([]*schem
 
 	logger.Infof("cidrMap [%s] Import", d.Id())
 	// pull domain and cidrMap out of cidrMap id
-	domain, cidrMap, err := parseResourceStringId(d.Id())
+	domain, cidrMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
@@ -314,7 +313,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("Deleting cidrMap: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing cidrMap
-	domain, cidrMap, err := parseResourceStringId(d.Id())
+	domain, cidrMap, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid cidrMap ID: %s", d.Id())
 		return diag.FromErr(err)
@@ -345,25 +344,24 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 			Summary:  uStat.Message,
 		})
 	}
-
-	if waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d); err != nil {
+	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	if err != nil {
 		return diag.FromErr(err)
-	} else {
-		if waitOnComplete {
-			done, err := waitForCompletion(ctx, domain, m)
-			if done {
-				logger.Infof("CidrMap Delete completed")
+	}
+	if waitOnComplete {
+		done, err := waitForCompletion(ctx, domain, m)
+		if done {
+			logger.Infof("CidrMap Delete completed")
+		} else {
+			if err == nil {
+				logger.Infof("cidrMap Delete pending")
 			} else {
-				if err == nil {
-					logger.Infof("cidrMap Delete pending")
-				} else {
-					logger.Errorf("cidrMap Delete failed [%s]", err.Error())
-					return append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  "cidrMap Delete failed",
-						Detail:   err.Error(),
-					})
-				}
+				logger.Errorf("cidrMap Delete failed [%s]", err.Error())
+				return append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "cidrMap Delete failed",
+					Detail:   err.Error(),
+				})
 			}
 		}
 	}

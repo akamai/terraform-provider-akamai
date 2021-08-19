@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func suppressEquivalentJsonDiffsGeneric(k, old, new string, d *schema.ResourceData) bool {
+func suppressEquivalentJSONDiffsGeneric(_, old, new string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
 	if err := json.Compact(&ob, []byte(old)); err != nil {
 		return false
@@ -39,7 +39,7 @@ func jsonBytesEqual(b1, b2 []byte) bool {
 	return reflect.DeepEqual(o1, o2)
 }
 
-func suppressEquivalentReputationProfileDiffs(k, old, new string, d *schema.ResourceData) bool {
+func suppressEquivalentReputationProfileDiffs(_, old, new string, _ *schema.ResourceData) bool {
 	var rpOld, rpNew appsec.CreateReputationProfileResponse
 
 	if err := json.Unmarshal([]byte(old), &rpOld); err != nil {
@@ -89,19 +89,19 @@ func compareReputationProfileCondition(rpOld, rpNew appsec.CreateReputationProfi
 				if acOld.CheckIps != acNew.CheckIps && acNew.CheckIps != "" {
 					return false
 				}
-				if acOld.NameCase != acNew.NameCase && !(acOld.NameCase == true && acNew.NameCase == false) {
+				if acOld.NameCase != acNew.NameCase && !(acOld.NameCase && !acNew.NameCase) {
 					return false
 				}
-				if acOld.NameWildcard != acNew.NameWildcard && !(acOld.NameWildcard == true && acNew.NameWildcard == false) {
+				if acOld.NameWildcard != acNew.NameWildcard && !(acOld.NameWildcard && !acNew.NameWildcard) {
 					return false
 				}
-				if acOld.ValueCase != acNew.ValueCase && !(acOld.ValueCase == true && acNew.ValueCase == false) {
+				if acOld.ValueCase != acNew.ValueCase && !(acOld.ValueCase && !acNew.ValueCase) {
 					return false
 				}
-				if acOld.ValueWildcard != acNew.ValueWildcard && !(acOld.ValueWildcard == true && acNew.ValueWildcard == false) {
+				if acOld.ValueWildcard != acNew.ValueWildcard && !(acOld.ValueWildcard && !acNew.ValueWildcard) {
 					return false
 				}
-				if acOld.PositiveMatch != acNew.PositiveMatch && !(acOld.PositiveMatch == true && acNew.PositiveMatch == false) {
+				if acOld.PositiveMatch != acNew.PositiveMatch && !(acOld.PositiveMatch && !acNew.PositiveMatch) {
 					// only 'true' is supported for this case
 					if acOld.ClassName != "HostCondition" {
 						return false
@@ -129,7 +129,7 @@ func suppressAtomicConditionSliceDiffs(old, new []string) bool {
 	for _, ov := range old {
 		found := false
 		for _, nv := range new {
-			if strings.ToLower(ov) == strings.ToLower(nv) {
+			if strings.EqualFold(ov, nv) {
 				found = true
 			}
 		}
@@ -140,7 +140,7 @@ func suppressAtomicConditionSliceDiffs(old, new []string) bool {
 	return true
 }
 
-func suppressEquivalentLoggingSettingsDiffs(k, old, new string, d *schema.ResourceData) bool {
+func suppressEquivalentLoggingSettingsDiffs(_, old, new string, _ *schema.ResourceData) bool {
 	var oldJSON, newJSON appsec.UpdateAdvancedSettingsLoggingResponse
 	if old == new {
 		return true
@@ -174,7 +174,7 @@ func compareLoggingSettings(old, new *appsec.UpdateAdvancedSettingsLoggingRespon
 	return reflect.DeepEqual(old, new)
 }
 
-func suppressCustomDenyJsonDiffs(k, old, new string, d *schema.ResourceData) bool {
+func suppressCustomDenyJSONDiffs(_, old, new string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
 	if err := json.Compact(&ob, []byte(old)); err != nil {
 		return false
@@ -213,12 +213,12 @@ func jsonBytesEqualIncludingParametersSlice(b1, b2 []byte) bool {
 	return reflect.DeepEqual(o1, o2)
 }
 
-func suppressEquivalentMatchTargetDiffs(k, old, new string, d *schema.ResourceData) bool {
+func suppressEquivalentMatchTargetDiffs(_, old, new string, _ *schema.ResourceData) bool {
 
 	return compareMatchTargetsJSON(old, new)
 }
 
-func suppressEquivalentJSONDiffsConditionException(k, old, new string, d *schema.ResourceData) bool {
+func suppressEquivalentJSONDiffsConditionException(_, old, new string, _ *schema.ResourceData) bool {
 	return compareConditionExceptionJSON(old, new)
 
 }

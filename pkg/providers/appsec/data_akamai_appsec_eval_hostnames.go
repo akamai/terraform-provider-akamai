@@ -80,11 +80,7 @@ func dataSourceEvalHostnamesRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	newhdata := make([]string, 0, len(evalhostnames.Hostnames))
-
-	for _, hosts := range evalhostnames.Hostnames {
-		newhdata = append(newhdata, hosts)
-	}
-
+	newhdata = append(newhdata, evalhostnames.Hostnames...)
 	if err := d.Set("hostnames", newhdata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}

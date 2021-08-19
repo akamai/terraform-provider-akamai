@@ -24,10 +24,10 @@ func resourceReputationProfileAction() *schema.Resource {
 		UpdateContext: resourceReputationProfileActionUpdate,
 		DeleteContext: resourceReputationProfileActionDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -55,7 +55,7 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionCreate")
-	logger.Debugf("!!! in resourceReputationProfileActionCreate")
+	logger.Debugf("in resourceReputationProfileActionCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -97,7 +97,7 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionRead")
-	logger.Debugf("!!! in resourceReputationProfileActionRead")
+	logger.Debugf("in resourceReputationProfileActionRead")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationprofileid")
 	if err != nil {
@@ -146,7 +146,7 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionUpdate")
-	logger.Debugf("!!! in resourceCustomRuleActionUpdate")
+	logger.Debugf("in resourceReputationProfileActionUpdate")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationrofileid")
 	if err != nil {
@@ -187,7 +187,7 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionDelete")
-	logger.Debugf("!!! in resourceReputationProfileActionDelete")
+	logger.Debugf("in resourceReputationProfileActionDelete")
 
 	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationprofileid")
 	if err != nil {

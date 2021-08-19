@@ -11,6 +11,9 @@ build_dir = .build
 TF_PLUGIN_DIR ?= ~/.terraform.d/plugins
 install_path = $(TF_PLUGIN_DIR)/$(registry_name)/$(namespace)/$(PKG_NAME)/$(version)/$$(go env GOOS)_$$(go env GOARCH)
 
+# Tools versions
+golangci-lint-version = v1.41.1
+
 default: build
 
 .PHONY: install
@@ -57,9 +60,9 @@ errcheck:
 	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
 
 .PHONY: lint
-lint: tools.golangci-lint
-	@echo "==> Checking source code againse golangci-lint"
-	@golangci-lint run ./$(PKG_NAME)
+lint:
+	@echo "==> Checking source code against golangci-lint"
+	@$$(go env GOPATH)/bin/golangci-lint run
 
 .PHONY: test-compile
 test-compile:
@@ -67,4 +70,8 @@ test-compile:
 
 .PHONY: tools.golangci-lint
 tools.golangci-lint:
-	GO111MODULE=on go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	@echo Installing golangci-lint
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin $(golangci-lint-version)
+
+.PHONY: init
+init: tools.golangci-lint

@@ -12,8 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// ErrNoPendingChanges represents error when no pending changes were found on enrollment
 var ErrNoPendingChanges = errors.New("no pending changes were found on enrollment")
 
+// GetContactInfo returns contact information from Set object
 func GetContactInfo(set *schema.Set) (*cps.Contact, error) {
 	contactList := set.List()
 	contactMap, ok := contactList[0].(map[string]interface{})
@@ -52,6 +54,7 @@ func GetContactInfo(set *schema.Set) (*cps.Contact, error) {
 	return &contact, nil
 }
 
+// GetCSR returns Certificate Signing Request object from ResourceData object
 func GetCSR(d *schema.ResourceData) (*cps.CSR, error) {
 	csrSet, err := tools.GetSetValue("csr", d)
 	if err != nil {
@@ -89,6 +92,7 @@ func GetCSR(d *schema.ResourceData) (*cps.CSR, error) {
 	return &csr, nil
 }
 
+// GetNetworkConfig returns Network Configuration settings from ResourceData object
 func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error) {
 	networkConfigSet, err := tools.GetSetValue("network_configuration", d)
 	if err != nil {
@@ -160,6 +164,7 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 	return &networkConfig, nil
 }
 
+// GetOrg returns organization information from ResourceData object
 func GetOrg(d *schema.ResourceData) (*cps.Org, error) {
 	orgSet, err := tools.GetSetValue("organization", d)
 	if err != nil {
@@ -193,6 +198,7 @@ func GetOrg(d *schema.ResourceData) (*cps.Org, error) {
 	return &org, nil
 }
 
+// ContactInfoToMap returns a map with contact information from Contact object
 func ContactInfoToMap(contact cps.Contact) map[string]interface{} {
 	contactMap := map[string]interface{}{
 		"first_name":       contact.FirstName,
@@ -212,6 +218,7 @@ func ContactInfoToMap(contact cps.Contact) map[string]interface{} {
 	return contactMap
 }
 
+// CSRToMap converts CSR object to a map and returns it
 func CSRToMap(csr cps.CSR) map[string]interface{} {
 	csrMap := map[string]interface{}{
 		"country_code":        csr.C,
@@ -223,6 +230,7 @@ func CSRToMap(csr cps.CSR) map[string]interface{} {
 	return csrMap
 }
 
+// NetworkConfigToMap converts NetworkConfiguration object to a map and returns it
 func NetworkConfigToMap(networkConfig cps.NetworkConfiguration) map[string]interface{} {
 	networkConfigMap := make(map[string]interface{})
 	if networkConfig.ClientMutualAuthentication != nil {
@@ -248,6 +256,7 @@ func NetworkConfigToMap(networkConfig cps.NetworkConfiguration) map[string]inter
 	return networkConfigMap
 }
 
+// OrgToMap converts Org object to a map and returns it
 func OrgToMap(org cps.Org) map[string]interface{} {
 	orgMap := map[string]interface{}{
 		"name":             org.Name,
@@ -263,6 +272,7 @@ func OrgToMap(org cps.Org) map[string]interface{} {
 	return orgMap
 }
 
+// GetChangeIDFromPendingChanges returns ChangeID of pending changes
 func GetChangeIDFromPendingChanges(pendingChanges []string) (int, error) {
 	if len(pendingChanges) < 1 {
 		return 0, ErrNoPendingChanges

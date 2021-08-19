@@ -11,8 +11,10 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
+// OutputTemplates is a map of templates
 type OutputTemplates map[string]*OutputTemplate
 
+// OutputTemplate contains template data
 type OutputTemplate struct {
 	TemplateName   string
 	TemplateType   string
@@ -20,6 +22,7 @@ type OutputTemplate struct {
 	TemplateString string
 }
 
+// GetTemplate given map of templates and a key, returns template stored under this key
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
 		return f, nil
@@ -28,6 +31,7 @@ func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, e
 
 }
 
+// RenderTemplates renders template and returns it as a string
 func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}) (string, error) {
 	var ostr, tstr bytes.Buffer
 	templ, err := GetTemplate(ots, key)
@@ -46,9 +50,8 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 			"dash": func(in int) string {
 				if in == 0 {
 					return "-"
-				} else {
-					return strconv.Itoa(in)
 				}
+				return strconv.Itoa(in)
 			},
 
 			"substring": func(start, end int, s string) string {
@@ -115,6 +118,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 
 }
 
+// InitTemplates populates map of templates given as argument with output templates
 func InitTemplates(otm map[string]*OutputTemplate) {
 
 	// DS templates

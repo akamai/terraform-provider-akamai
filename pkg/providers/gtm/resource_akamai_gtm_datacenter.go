@@ -137,7 +137,7 @@ func resourceGTMv1Datacenter() *schema.Resource {
 }
 
 // utility func to parse Terraform DC resource id
-func parseDatacenterResourceId(id string) (string, int, error) {
+func parseDatacenterResourceID(id string) (string, int, error) {
 
 	parts := strings.SplitN(id, ":", 2)
 
@@ -230,9 +230,9 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	// Give terraform the ID. Format domain::dcid
-	datacenterId := fmt.Sprintf("%s:%d", domain, cStatus.Resource.DatacenterId)
-	logger.Debugf("Generated DC resource Id: %s", datacenterId)
-	d.SetId(datacenterId)
+	datacenterID := fmt.Sprintf("%s:%d", domain, cStatus.Resource.DatacenterId)
+	logger.Debugf("Generated DC resource ID: %s", datacenterID)
+	d.SetId(datacenterID)
 	return resourceGTMv1DatacenterRead(ctx, d, m)
 
 }
@@ -251,7 +251,7 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 	logger.Debugf("Reading Datacenter: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the datacenter and domain
-	domain, dcID, err := parseDatacenterResourceId(d.Id())
+	domain, dcID, err := parseDatacenterResourceID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid datacenter resource ID")
 		return append(diags, diag.Diagnostic{
@@ -287,7 +287,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 	logger.Debugf("Updating Datacenter: %s", d.Id())
 	var diags diag.Diagnostics
 	// pull domain and dcid out of resource id
-	domain, dcID, err := parseDatacenterResourceId(d.Id())
+	domain, dcID, err := parseDatacenterResourceID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid datacenter resource ID")
 		return append(diags, diag.Diagnostic{
@@ -360,7 +360,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 
 	logger.Debugf("Importing Datacenter: %s", d.Id())
 	// retrieve the datacenter and domain
-	domain, dcID, err := parseDatacenterResourceId(d.Id())
+	domain, dcID, err := parseDatacenterResourceID(d.Id())
 	if err != nil {
 		return nil, fmt.Errorf("Invalid Datacenter resource ID")
 	}
@@ -393,7 +393,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 
 	logger.Debugf("Deleting Datacenter: %s", d.Id())
 	var diags diag.Diagnostics
-	domain, dcID, err := parseDatacenterResourceId(d.Id())
+	domain, dcID, err := parseDatacenterResourceID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid Datacenter resource ID")
 		return append(diags, diag.Diagnostic{

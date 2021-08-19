@@ -182,9 +182,9 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	// Give terraform the ID. Format domain:resource
-	resourceId := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	logger.Debugf("Generated Resource. Resource Id: %s", resourceId)
-	d.SetId(resourceId)
+	resourceID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
+	logger.Debugf("Generated Resource. Resource ID: %s", resourceID)
+	d.SetId(resourceID)
 	return resourceGTMv1ResourceRead(ctx, d, m)
 
 }
@@ -202,7 +202,7 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Reading Resource: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the property and domain
-	domain, resource, err := parseResourceStringId(d.Id())
+	domain, resource, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid resource Resource ID")
 		return diag.FromErr(err)
@@ -234,7 +234,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 	logger.Infof("Updating Resource %s", d.Id())
 	var diags diag.Diagnostics
 	// pull domain and resource out of id
-	domain, resource, err := parseResourceStringId(d.Id())
+	domain, resource, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid resource ID")
 		return diag.FromErr(err)
@@ -311,7 +311,7 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 
 	logger.Infof("Resource [%s] Import", d.Id())
 	// pull domain and resource out of resource id
-	domain, resource, err := parseResourceStringId(d.Id())
+	domain, resource, err := parseResourceStringID(d.Id())
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
@@ -342,7 +342,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 	logger.Debugf("Deleting Resource: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing resource
-	domain, resource, err := parseResourceStringId(d.Id())
+	domain, resource, err := parseResourceStringID(d.Id())
 	if err != nil {
 		logger.Errorf("Invalid resource ID")
 		return diag.FromErr(err)

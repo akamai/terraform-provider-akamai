@@ -1,0 +1,84 @@
+{
+    "attackGroupActions": [
+      {
+        "action": "alert",
+        "group": "TOOL"
+      },
+      {
+        "action": "alert",
+        "group": "PROTOCOL"
+      },
+      {
+        "action": "alert",
+        "group": "SQL",
+        "conditionException": {
+          "exception": {
+            "headerCookieOrParamValues": [
+              "test"
+            ],
+            "specificHeaderCookieOrParamNameValue": {
+              "name": "test",
+              "selector": "REQUEST_HEADERS",
+              "value": "test"
+            },
+            "specificHeaderCookieOrParamNames": [
+              {
+                "names": [
+                  "test"
+                ],
+                "selector": "REQUEST_HEADERS"
+              },
+              {
+                "names": [
+                  "test"
+                ],
+                "selector": "REQUEST_COOKIES"
+              },
+              {
+                "names": [
+                  "test"
+                ],
+                "selector": "ARGS"
+              },
+              {
+                "names": [
+                  "test"
+                ],
+                "selector": "JSON_PAIRS"
+              },
+              {
+                "names": [
+                  "test"
+                ],
+                "selector": "XML_PAIRS"
+              }
+            ],
+            "specificHeaderCookieOrParamPrefix": {
+              "prefix": "test",
+              "selector": "REQUEST_HEADERS"
+            }
+          }
+        }
+      },
+      {
+        "action": "alert",
+        "group": "XSS"
+      },
+      {
+        "action": "alert",
+        "group": "LFI"
+      },
+      {
+        "action": "alert",
+        "group": "RFI"
+      },
+      {
+        "action": "alert",
+        "group": "CMDI"
+      },
+      {
+        "action": "alert",
+        "group": "PLATFORM"
+      }
+    ]
+  }

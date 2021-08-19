@@ -27,11 +27,10 @@ func ValidateActions(v interface{}, k string) (warnings []string, errors []error
 	return warnings, errors
 }
 
-// VerifyIdUnchanged compares the configuration's value for the configuration ID with the resource's value
+// VerifyIDUnchanged compares the configuration's value for the configuration ID with the resource's value
 // specified in the resources's ID, to ensure that the user has not inadvertently modified the configuration's value;
 // any such modifications indicate an incorrect understanding of the Update operation.
-
-func VerifyIdUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+func VerifyIDUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("APPSEC", "configIdCustomDiff")
 

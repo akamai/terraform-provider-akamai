@@ -113,7 +113,7 @@ func resourceProperty() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: validatePropertyName,
 				Description:      "Name to give to the Property (must be unique)",
 			},
 
@@ -157,12 +157,12 @@ func resourceProperty() *schema.Resource {
 				StateFunc:   addPrefixToState("prd_"),
 			},
 			"product": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ConflictsWith: []string{"product_id"},
-				Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
-				StateFunc:     addPrefixToState("prd_"),
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"product_id"},
+				Deprecated:   akamai.NoticeDeprecatedUseAlias("product"),
+				StateFunc:    addPrefixToState("prd_"),
 			},
 
 			// Optional
@@ -330,10 +330,27 @@ func resourceProperty() *schema.Resource {
 	}
 }
 
+// isValidPropertyName is a function that validates if given string contains only letters, numbers, and these characters: . _ -
+var isValidPropertyName = regexp.MustCompile(`^[A-Za-z0-9.\-_]+$`).MatchString
+
+// validatePropertyName validates if name property contains valid characters
+func validatePropertyName(v interface{}, _ cty.Path) diag.Diagnostics {
+	name := v.(string)
+	maxPropertyNameLength := 85
+
+	if len(name) > maxPropertyNameLength {
+		return diag.Errorf("a name must be shorter than %d characters", maxPropertyNameLength+1)
+	}
+	if !isValidPropertyName(name) {
+		return diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
+	}
+	return nil
+}
+
 // rulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state and from a new configuration.
 // If some of these fields are empty lists in the new configuration and are nil in the terraform state, then this function
 // returns no difference for these fields
-func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interface{}) error {
+func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 	if !diff.HasChange("rules") {
 		return nil
 	}
@@ -459,9 +476,6 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	ProductID := d.Get("product_id").(string)
 	if ProductID == "" {
 		ProductID = d.Get("product").(string)
-		if ProductID == "" {
-			return diag.Errorf("one of product,product_id must be specified")
-		}
 	}
 	ProductID = tools.AddPrefix(ProductID, "prd_")
 
@@ -574,11 +588,10 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	if err != nil {
 		return diag.FromErr(err)
-	} else {
-		if v == 0 {
-			// use latest version unless "read_version" != 0
-			v = Property.LatestVersion
-		}
+	}
+	if v == 0 {
+		// use latest version unless "read_version" != 0
+		v = Property.LatestVersion
 	}
 
 	var StagingVersion int
