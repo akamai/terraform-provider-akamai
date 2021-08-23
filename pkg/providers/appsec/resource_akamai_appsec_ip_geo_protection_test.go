@@ -13,32 +13,82 @@ func TestAccAkamaiIPGeoProtection_res_basic(t *testing.T) {
 	t.Run("match by IPGeoProtection ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateIPGeoProtectionResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/IPGeoProtectionUpdate.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
-
-		cr := appsec.GetIPGeoProtectionResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/IPGeoProtection.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
-
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(tempJSON), &config)
 
+		allProtectionsFalse := appsec.GetPolicyProtectionsResponse{}
+		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"))
+		json.Unmarshal([]byte(tempJSON), &allProtectionsFalse)
+
+		oneProtectionTrue := appsec.GetPolicyProtectionsResponse{}
+		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/UpdatedPolicyProtections.json"))
+		json.Unmarshal([]byte(tempJSON), &oneProtectionTrue)
+
+		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
+		// is mocked individually because calls with the same parameters may have different return values.
+
+		// All calls to GetConfiguration have same parameters and return value
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		client.On("GetIPGeoProtection",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetIPGeoProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cr, nil)
+		// Create, with terminal Read
+		client.On("GetPolicyProtections",
+			mock.Anything,
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allProtectionsFalse, nil).Once()
+		client.On("UpdatePolicyProtections",
+			mock.Anything,
+			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allProtectionsFalse, nil).Once()
+		client.On("GetPolicyProtections",
+			mock.Anything,
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allProtectionsFalse, nil).Once()
 
-		client.On("UpdateIPGeoProtection",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateIPGeoProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApplyNetworkLayerControls: false},
-		).Return(&cu, nil)
+		// Reads performed via "id" and "enabled" checks
+		client.On("GetPolicyProtections",
+			mock.Anything,
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allProtectionsFalse, nil).Once()
+		client.On("GetPolicyProtections",
+			mock.Anything,
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allProtectionsFalse, nil).Once()
+
+		// Update, with terminal Read
+		client.On("GetPolicyProtections",
+			mock.Anything,
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allProtectionsFalse, nil).Once()
+		client.On("UpdatePolicyProtections",
+			mock.Anything,
+			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230",
+				ApplyNetworkLayerControls: true},
+		).Return(&oneProtectionTrue, nil).Once()
+		client.On("GetPolicyProtections",
+			mock.Anything,
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&oneProtectionTrue, nil).Once()
+
+		// Read, performed as part of "id" check.
+		// Question: shouldn't there be another one of these for the "enabled" check?
+		client.On("GetPolicyProtections",
+			mock.Anything,
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&oneProtectionTrue, nil).Once()
+
+		// Delete, performed automatically to clean up
+		client.On("GetPolicyProtections",
+			mock.Anything,
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&oneProtectionTrue, nil).Once()
+		client.On("UpdatePolicyProtections",
+			mock.Anything,
+			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allProtectionsFalse, nil).Once()
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -57,7 +107,7 @@ func TestAccAkamaiIPGeoProtection_res_basic(t *testing.T) {
 						Config: loadFixtureString("testdata/TestResIPGeoProtection/update_by_id.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo_protection.test", "id", "43253:AAAA_81230"),
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo_protection.test", "enabled", "false"),
+							resource.TestCheckResourceAttr("akamai_appsec_ip_geo_protection.test", "enabled", "true"),
 						),
 					},
 				},

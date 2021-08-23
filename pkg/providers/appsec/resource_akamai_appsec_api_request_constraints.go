@@ -245,23 +245,22 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 			return diag.FromErr(err)
 		}
 		if policyprotections.ApplyAPIConstraints {
-			removePolicyProtections := appsec.RemovePolicyProtectionsRequest{}
-			removePolicyProtections.ConfigID = configid
-			removePolicyProtections.Version = version
-			removePolicyProtections.PolicyID = policyid
-
-			removePolicyProtections.ApplyAPIConstraints = false
-			removePolicyProtections.ApplyApplicationLayerControls = policyprotections.ApplyApplicationLayerControls
-			removePolicyProtections.ApplyBotmanControls = policyprotections.ApplyBotmanControls
-			removePolicyProtections.ApplyNetworkLayerControls = policyprotections.ApplyNetworkLayerControls
-			removePolicyProtections.ApplyRateControls = policyprotections.ApplyRateControls
-			removePolicyProtections.ApplyReputationControls = policyprotections.ApplyReputationControls
-			removePolicyProtections.ApplySlowPostControls = policyprotections.ApplySlowPostControls
-
-			_, errd := client.RemovePolicyProtections(ctx, removePolicyProtections)
-			if errd != nil {
-				logger.Errorf("calling 'removePolicyProtections': %s", errd.Error())
-				return diag.FromErr(errd)
+			updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+				ConfigID:                      configid,
+				Version:                       version,
+				PolicyID:                      policyid,
+				ApplyAPIConstraints:           false,
+				ApplyApplicationLayerControls: policyprotections.ApplyApplicationLayerControls,
+				ApplyBotmanControls:           policyprotections.ApplyBotmanControls,
+				ApplyNetworkLayerControls:     policyprotections.ApplyNetworkLayerControls,
+				ApplyRateControls:             policyprotections.ApplyRateControls,
+				ApplyReputationControls:       policyprotections.ApplyReputationControls,
+				ApplySlowPostControls:         policyprotections.ApplySlowPostControls,
+			}
+			_, err := client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+			if err != nil {
+				logger.Errorf("calling 'removePolicyProtections': %s", err.Error())
+				return diag.FromErr(err)
 			}
 		}
 	} else {

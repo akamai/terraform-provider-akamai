@@ -1,9 +1,9 @@
 {
     "applyApiConstraints": true,
     "applyApplicationLayerControls": false,
-    "applyBotmanControls": true,
+    "applyBotmanControls": false,
     "applyNetworkLayerControls": false,
     "applyRateControls": false,
-    "applyReputationControls": true,
-    "applySlowPostControls": true
+    "applyReputationControls": false,
+    "applySlowPostControls": false
 }

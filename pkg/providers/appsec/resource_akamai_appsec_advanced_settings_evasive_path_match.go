@@ -25,7 +25,7 @@ func resourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 		UpdateContext: resourceAdvancedSettingsEvasivePathMatchUpdate,
 		DeleteContext: resourceAdvancedSettingsEvasivePathMatchDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyIdUnchanged,
+			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

@@ -66,24 +66,42 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	applyratecontrols, err := tools.GetBoolValue("enabled", d)
+	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	createRateProtection := appsec.UpdateRateProtectionRequest{}
-	createRateProtection.ConfigID = configid
-	createRateProtection.Version = version
-	createRateProtection.PolicyID = policyid
-	createRateProtection.ApplyRateControls = applyratecontrols
-
-	_, erru := client.UpdateRateProtection(ctx, createRateProtection)
-	if erru != nil {
-		logger.Errorf("calling 'createRateProtection': %s", erru.Error())
-		return diag.FromErr(erru)
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
 	}
 
-	d.SetId(fmt.Sprintf("%d:%s", createRateProtection.ConfigID, createRateProtection.PolicyID))
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
+		ApplyRateControls:             enabled,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	d.SetId(fmt.Sprintf("%d:%s", configid, policyid))
 
 	return resourceRateProtectionRead(ctx, d, m)
 }
@@ -105,29 +123,31 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getRateProtection := appsec.GetRateProtectionRequest{}
-	getRateProtection.ConfigID = configid
-	getRateProtection.Version = version
-	getRateProtection.PolicyID = policyid
+	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
-	rateprotection, err := client.GetRateProtection(ctx, getRateProtection)
+	policyProtections, err := client.GetPolicyProtections(ctx, policyProtectionsRequest)
 	if err != nil {
-		logger.Errorf("calling 'getRateProtection': %s", err.Error())
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
 		return diag.FromErr(err)
 	}
+	enabled := policyProtections.ApplyRateControls
 
-	if err := d.Set("config_id", getRateProtection.ConfigID); err != nil {
+	if err := d.Set("config_id", configid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("security_policy_id", getRateProtection.PolicyID); err != nil {
+	if err := d.Set("security_policy_id", policyid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("enabled", rateprotection.ApplyRateControls); err != nil {
+	if err := d.Set("enabled", enabled); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "rateProtectionDS", rateprotection)
+	outputtext, err := RenderTemplates(ots, "rateProtectionDS", enabled)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -153,21 +173,38 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 	}
 	version := getModifiableConfigVersion(ctx, configid, "rateProtection", m)
 	policyid := idParts[1]
-	applyratecontrols, err := tools.GetBoolValue("enabled", d)
+	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	updateRateProtection := appsec.UpdateRateProtectionRequest{}
-	updateRateProtection.ConfigID = configid
-	updateRateProtection.Version = version
-	updateRateProtection.PolicyID = policyid
-	updateRateProtection.ApplyRateControls = applyratecontrols
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
 
-	_, erru := client.UpdateRateProtection(ctx, updateRateProtection)
-	if erru != nil {
-		logger.Errorf("calling 'updateRateProtection': %s", erru.Error())
-		return diag.FromErr(erru)
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
+		ApplyRateControls:             enabled,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceRateProtectionRead(ctx, d, m)
@@ -190,18 +227,35 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 	version := getModifiableConfigVersion(ctx, configid, "rateProtection", m)
 	policyid := idParts[1]
 
-	removeRateProtection := appsec.UpdateRateProtectionRequest{}
-	removeRateProtection.ConfigID = configid
-
-	removeRateProtection.Version = version
-	removeRateProtection.PolicyID = policyid
-	removeRateProtection.ApplyRateControls = false
-
-	_, errd := client.UpdateRateProtection(ctx, removeRateProtection)
-	if errd != nil {
-		logger.Errorf("calling 'updateRateProtection': %s", errd.Error())
-		return diag.FromErr(errd)
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
 	}
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
+		ApplyRateControls:             false,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
 	d.SetId("")
 	return nil
 }

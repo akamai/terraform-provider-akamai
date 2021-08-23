@@ -66,25 +66,42 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	applynetworkcontrols, err := tools.GetBoolValue("enabled", d)
+	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	createnetworkProtection := appsec.UpdateIPGeoProtectionRequest{}
-	createnetworkProtection.ConfigID = configid
-	createnetworkProtection.Version = version
-	createnetworkProtection.PolicyID = policyid
-	createnetworkProtection.ApplyNetworkLayerControls = applynetworkcontrols
-
-	_, erru := client.UpdateIPGeoProtection(ctx, createnetworkProtection)
-	if erru != nil {
-		logger.Errorf("calling 'createnetworkProtection': %s", erru.Error())
-		return diag.FromErr(erru)
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
 	}
 
-	d.SetId(fmt.Sprintf("%d:%s", createnetworkProtection.ConfigID, createnetworkProtection.PolicyID))
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
 
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     enabled,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	d.SetId(fmt.Sprintf("%d:%s", configid, policyid))
 	return resourceIPGeoProtectionRead(ctx, d, m)
 }
 
@@ -105,29 +122,32 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getNetworkProtection := appsec.GetIPGeoProtectionRequest{}
-	getNetworkProtection.ConfigID = configid
-	getNetworkProtection.Version = version
-	getNetworkProtection.PolicyID = policyid
+	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
-	networkprotection, err := client.GetIPGeoProtection(ctx, getNetworkProtection)
+	policyProtections, err := client.GetPolicyProtections(ctx, policyProtectionsRequest)
 	if err != nil {
-		logger.Errorf("calling 'getNetworkProtection': %s", err.Error())
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
 		return diag.FromErr(err)
 	}
+	enabled := policyProtections.ApplyNetworkLayerControls
 
-	if err := d.Set("config_id", getNetworkProtection.ConfigID); err != nil {
+	if err := d.Set("config_id", configid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("security_policy_id", getNetworkProtection.PolicyID); err != nil {
+	if err := d.Set("security_policy_id", policyid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("enabled", networkprotection.ApplyNetworkLayerControls); err != nil {
+	if err := d.Set("enabled", enabled); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
+
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "networkProtectionDS", networkprotection)
+	outputtext, err := RenderTemplates(ots, "networkProtectionDS", enabled)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -153,21 +173,38 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	version := getModifiableConfigVersion(ctx, configid, "networkProtection", m)
 	policyid := idParts[1]
-	applynetworkcontrols, err := tools.GetBoolValue("enabled", d)
+	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	updateNetworkProtection := appsec.UpdateIPGeoProtectionRequest{}
-	updateNetworkProtection.ConfigID = configid
-	updateNetworkProtection.Version = version
-	updateNetworkProtection.PolicyID = policyid
-	updateNetworkProtection.ApplyNetworkLayerControls = applynetworkcontrols
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
 
-	_, erru := client.UpdateIPGeoProtection(ctx, updateNetworkProtection)
-	if erru != nil {
-		logger.Errorf("calling 'updateNetworkProtection': %s", erru.Error())
-		return diag.FromErr(erru)
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     enabled,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceIPGeoProtectionRead(ctx, d, m)
@@ -190,18 +227,35 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	version := getModifiableConfigVersion(ctx, configid, "ipgeoProtection", m)
 	policyid := idParts[1]
 
-	removeIPGeoProtection := appsec.UpdateIPGeoProtectionRequest{}
-	removeIPGeoProtection.ConfigID = configid
-
-	removeIPGeoProtection.Version = version
-	removeIPGeoProtection.PolicyID = policyid
-	removeIPGeoProtection.ApplyNetworkLayerControls = false
-
-	_, errd := client.UpdateIPGeoProtection(ctx, removeIPGeoProtection)
-	if errd != nil {
-		logger.Errorf("calling 'removeIPGeoProtection': %s", errd.Error())
-		return diag.FromErr(errd)
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
 	}
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     false,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
 	d.SetId("")
 	return nil
 }

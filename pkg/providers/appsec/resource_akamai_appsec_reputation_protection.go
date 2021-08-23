@@ -66,24 +66,42 @@ func resourceReputationProtectionCreate(ctx context.Context, d *schema.ResourceD
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	applyreputationcontrols, err := tools.GetBoolValue("enabled", d)
+	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	createReputationProtection := appsec.UpdateReputationProtectionRequest{}
-	createReputationProtection.ConfigID = configid
-	createReputationProtection.Version = version
-	createReputationProtection.PolicyID = policyid
-	createReputationProtection.ApplyReputationControls = applyreputationcontrols
-
-	_, erru := client.UpdateReputationProtection(ctx, createReputationProtection)
-	if erru != nil {
-		logger.Errorf("calling 'updateReputationProtection': %s", erru.Error())
-		return diag.FromErr(erru)
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
 	}
 
-	d.SetId(fmt.Sprintf("%d:%s", createReputationProtection.ConfigID, createReputationProtection.PolicyID))
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       enabled,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	d.SetId(fmt.Sprintf("%d:%s", configid, policyid))
 
 	return resourceReputationProtectionRead(ctx, d, m)
 }
@@ -105,29 +123,32 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getReputationProtection := appsec.GetReputationProtectionRequest{}
-	getReputationProtection.ConfigID = configid
-	getReputationProtection.Version = version
-	getReputationProtection.PolicyID = policyid
+	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
-	reputationprotection, err := client.GetReputationProtection(ctx, getReputationProtection)
+	policyProtections, err := client.GetPolicyProtections(ctx, policyProtectionsRequest)
 	if err != nil {
-		logger.Errorf("calling 'getReputationProtection': %s", err.Error())
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
 		return diag.FromErr(err)
 	}
+	enabled := policyProtections.ApplyReputationControls
 
-	if err := d.Set("config_id", getReputationProtection.ConfigID); err != nil {
+	if err := d.Set("config_id", configid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("security_policy_id", getReputationProtection.PolicyID); err != nil {
+	if err := d.Set("security_policy_id", policyid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("enabled", reputationprotection.ApplyReputationControls); err != nil {
+	if err := d.Set("enabled", enabled); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
+
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "reputationProtectionDS", reputationprotection)
+	outputtext, err := RenderTemplates(ots, "reputationProtectionDS", enabled)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
@@ -152,21 +173,39 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 	}
 	version := getModifiableConfigVersion(ctx, configid, "reputationProtection", m)
 	policyid := idParts[1]
-	applyreputationcontrols, err := tools.GetBoolValue("enabled", d)
+	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	updateReputationProtection := appsec.UpdateReputationProtectionRequest{}
-	updateReputationProtection.ConfigID = configid
-	updateReputationProtection.Version = version
-	updateReputationProtection.PolicyID = policyid
-	updateReputationProtection.ApplyReputationControls = applyreputationcontrols
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
-	_, erru := client.UpdateReputationProtection(ctx, updateReputationProtection)
-	if erru != nil {
-		logger.Errorf("calling 'updateReputationProtection': %s", erru.Error())
-		return diag.FromErr(erru)
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       enabled,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceReputationProtectionRead(ctx, d, m)
@@ -189,16 +228,33 @@ func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceD
 	version := getModifiableConfigVersion(ctx, configid, "reputationProtection", m)
 	policyid := idParts[1]
 
-	removeReputationProtection := appsec.RemoveReputationProtectionRequest{}
-	removeReputationProtection.ConfigID = configid
-	removeReputationProtection.Version = version
-	removeReputationProtection.PolicyID = policyid
-	removeReputationProtection.ApplyReputationControls = false
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
 
-	_, errd := client.RemoveReputationProtection(ctx, removeReputationProtection)
-	if errd != nil {
-		logger.Errorf("calling 'removeReputationProtection': %s", errd.Error())
-		return diag.FromErr(errd)
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       false,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

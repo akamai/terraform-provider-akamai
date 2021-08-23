@@ -235,16 +235,33 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	version := getModifiableConfigVersion(ctx, configid, "ipgeo", m)
 	policyid := idParts[1]
 
-	removePolicyProtections := appsec.UpdateNetworkLayerProtectionRequest{}
-	removePolicyProtections.ConfigID = configid
-	removePolicyProtections.Version = version
-	removePolicyProtections.PolicyID = policyid
-	removePolicyProtections.ApplyNetworkLayerControls = false
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
 
-	_, erru := client.UpdateNetworkLayerProtection(ctx, removePolicyProtections)
-	if erru != nil {
-		logger.Errorf("calling 'resourceIPGeoDelete': %s", erru.Error())
-		return diag.FromErr(erru)
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configid,
+		Version:                       version,
+		PolicyID:                      policyid,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     false,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
