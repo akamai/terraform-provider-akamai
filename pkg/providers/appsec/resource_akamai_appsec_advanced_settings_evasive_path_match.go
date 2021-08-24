@@ -28,7 +28,7 @@ func resourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -51,10 +51,10 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsEvasivePathMatchCreate")
-	logger.Debugf("!!! in resourceAdvancedSettingsEvasivePathMatchCreate")
+	logger.Debugf("in resourceAdvancedSettingsEvasivePathMatchCreate")
 
 	configid, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configid, "evasivePathMatchSetting", m)
@@ -63,7 +63,7 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 		return diag.FromErr(err)
 	}
 	enablePathMatch, err := tools.GetBoolValue("enable_path_match", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -73,10 +73,10 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 	createAdvancedSettingsEvasivePathMatch.PolicyID = policyid
 	createAdvancedSettingsEvasivePathMatch.EnablePathMatch = enablePathMatch
 
-	_, erru := client.UpdateAdvancedSettingsEvasivePathMatch(ctx, createAdvancedSettingsEvasivePathMatch)
-	if erru != nil {
-		logger.Errorf("calling 'createAdvancedSettingsEvasivePathMatch': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateAdvancedSettingsEvasivePathMatch(ctx, createAdvancedSettingsEvasivePathMatch)
+	if err != nil {
+		logger.Errorf("calling UpdateAdvancedSettingsEvasivePathMatch: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if len(createAdvancedSettingsEvasivePathMatch.PolicyID) > 0 {
@@ -92,7 +92,7 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsEvasivePathMatchRead")
-	logger.Debugf("!!! resourceAdvancedSettingsEvasivePathMatchRead")
+	logger.Debugf("resourceAdvancedSettingsEvasivePathMatchRead")
 
 	getAdvancedSettingsEvasivePathMatch := appsec.GetAdvancedSettingsEvasivePathMatchRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -123,11 +123,11 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 
 	advancedsettingsevasivepathmatch, err := client.GetAdvancedSettingsEvasivePathMatch(ctx, getAdvancedSettingsEvasivePathMatch)
 	if err != nil {
-		logger.Errorf("calling 'getAdvancedSettingsEvasivePathMatch': %s", err.Error())
+		logger.Errorf("calling GetAdvancedSettingsEvasivePathMatch: %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", getAdvancedSettingsEvasivePathMatch.ConfigID); err != nil {
+	if err = d.Set("config_id", getAdvancedSettingsEvasivePathMatch.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("security_policy_id", getAdvancedSettingsEvasivePathMatch.PolicyID); err != nil {
@@ -144,7 +144,7 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsEvasivePathMatchUpdate")
-	logger.Debugf("!!! resourceAdvancedSettingsEvasivePathMatchUpdate")
+	logger.Debugf("resourceAdvancedSettingsEvasivePathMatchUpdate")
 
 	updateAdvancedSettingsEvasivePathMatch := appsec.UpdateAdvancedSettingsEvasivePathMatchRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -173,15 +173,15 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 		updateAdvancedSettingsEvasivePathMatch.Version = version
 	}
 	enablePathMatch, err := tools.GetBoolValue("enable_path_match", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	updateAdvancedSettingsEvasivePathMatch.EnablePathMatch = enablePathMatch
 
-	_, erru := client.UpdateAdvancedSettingsEvasivePathMatch(ctx, updateAdvancedSettingsEvasivePathMatch)
-	if erru != nil {
-		logger.Errorf("calling 'updateAdvancedSettingsEvasivePathMatch': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateAdvancedSettingsEvasivePathMatch(ctx, updateAdvancedSettingsEvasivePathMatch)
+	if err != nil {
+		logger.Errorf("calling UpdateAdvancedSettingsEvasivePathMatch: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceAdvancedSettingsEvasivePathMatchRead(ctx, d, m)
@@ -191,7 +191,7 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsEvasivePathMatchDelete")
-	logger.Debugf("!!! resourceAdvancedSettingsEvasivePathMatchDelete")
+	logger.Debugf("resourceAdvancedSettingsEvasivePathMatchDelete")
 
 	removeAdvancedSettingsEvasivePathMatch := appsec.RemoveAdvancedSettingsEvasivePathMatchRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -222,10 +222,10 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 
 	removeAdvancedSettingsEvasivePathMatch.EnablePathMatch = false
 
-	_, erru := client.RemoveAdvancedSettingsEvasivePathMatch(ctx, removeAdvancedSettingsEvasivePathMatch)
-	if erru != nil {
-		logger.Errorf("calling 'removeAdvancedSettingsEvasivePathMatch': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err := client.RemoveAdvancedSettingsEvasivePathMatch(ctx, removeAdvancedSettingsEvasivePathMatch)
+	if err != nil {
+		logger.Errorf("calling RemoveAdvancedSettingsEvasivePathMatch: %s", err.Error())
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 	return nil
