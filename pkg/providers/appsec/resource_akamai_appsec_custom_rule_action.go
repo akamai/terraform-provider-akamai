@@ -43,9 +43,9 @@ func resourceCustomRuleAction() *schema.Resource {
 				Required: true,
 			},
 			"custom_rule_action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
 			},
 		},
 	}

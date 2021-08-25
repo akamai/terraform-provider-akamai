@@ -44,7 +44,7 @@ func resourceCustomRule() *schema.Resource {
 			"custom_rule": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateFunc:     validation.StringIsJSON,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},

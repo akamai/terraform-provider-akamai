@@ -42,12 +42,12 @@ func resourceWAFMode() *schema.Resource {
 			"mode": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					AAG,
 					KRS,
 					AseAuto,
 					AseManual,
-				}, false),
+				}, false)),
 			},
 			"current_ruleset": {
 				Type:     schema.TypeString,

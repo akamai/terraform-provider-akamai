@@ -42,13 +42,13 @@ func resourceEval() *schema.Resource {
 			"eval_operation": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					Start,
 					Stop,
 					Restart,
 					Update,
 					Complete,
-				}, false),
+				}, false)),
 			},
 			"eval_mode": {
 				Type:     schema.TypeString,

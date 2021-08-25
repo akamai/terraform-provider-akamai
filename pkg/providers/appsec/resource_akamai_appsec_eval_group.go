@@ -45,9 +45,9 @@ func resourceEvalGroup() *schema.Resource {
 				Required: true,
 			},
 			"attack_group_action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
 			},
 			"condition_exception": {
 				Type:             schema.TypeString,

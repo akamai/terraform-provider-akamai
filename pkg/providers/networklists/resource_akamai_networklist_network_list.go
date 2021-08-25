@@ -41,10 +41,10 @@ func resourceNetworkList() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					IP,
 					Geo,
-				}, false),
+				}, false)),
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -58,11 +58,11 @@ func resourceNetworkList() *schema.Resource {
 			"mode": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					Append,
 					Replace,
 					Remove,
-				}, false),
+				}, false)),
 			},
 			"uniqueid": {
 				Type:        schema.TypeString,

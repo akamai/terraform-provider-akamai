@@ -42,10 +42,10 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 			"slow_rate_action": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					Alert,
 					Abort,
-				}, false),
+				}, false)),
 			},
 			"slow_rate_threshold_rate": {
 				Type:     schema.TypeInt,

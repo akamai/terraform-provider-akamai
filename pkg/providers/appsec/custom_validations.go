@@ -5,26 +5,34 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // ValidateActions ensure actions are correct for API call
-func ValidateActions(v interface{}, k string) (warnings []string, errors []error) {
+func ValidateActions(v interface{}, path cty.Path) diag.Diagnostics {
 	value := v.(string)
+	schemaFieldName, err := tools.GetSchemaFieldNameFromPath(path)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	//alert, deny, deny_custom_{custom_deny_id}, none
 	m := map[string]bool{"alert": true, "deny": true, "none": true}
 	if m[value] { // will be false if "a" is not in the map
 		//it was in the map
-		return warnings, errors
+		return nil
 	}
 
 	if !(strings.Contains(value, "deny_custom_")) {
-		errors = append(errors, fmt.Errorf("%q may only contain alert, deny, deny_custom_{custom_deny_id}, none", k))
+		return diag.Errorf("%q may only contain alert, deny, deny_custom_{custom_deny_id}, none", schemaFieldName)
 	}
 
-	return warnings, errors
+	return nil
 }
 
 // VerifyIDUnchanged compares the configuration's value for the configuration ID with the resource's value

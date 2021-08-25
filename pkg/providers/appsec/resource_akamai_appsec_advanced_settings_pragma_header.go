@@ -41,7 +41,7 @@ func resourceAdvancedSettingsPragmaHeader() *schema.Resource {
 			"pragma_header": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateFunc:     validation.StringIsJSON,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},

@@ -43,9 +43,9 @@ func resourceReputationProfileAction() *schema.Resource {
 				Required: true,
 			},
 			"action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
 			},
 		},
 	}
