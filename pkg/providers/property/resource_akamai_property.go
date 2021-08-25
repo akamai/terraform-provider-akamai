@@ -667,6 +667,16 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
+	if _, ok := d.GetOk("hostnames"); !ok {
+		return diag.Diagnostics{
+			diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "hostnames argument is missing",
+				Detail:   "At least one property hostname is required",
+			},
+		}
+	}
+
 	return nil
 }
 
