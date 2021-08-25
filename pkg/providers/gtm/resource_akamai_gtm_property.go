@@ -351,7 +351,7 @@ func parseResourceStringID(id string) (string, string, error) {
 func validateTTL(v interface{}, path cty.Path) diag.Diagnostics {
 	schemaFieldName, err := tools.GetSchemaFieldNameFromPath(path)
 	if err != nil {
-		diag.FromErr(err)
+		return diag.FromErr(err)
 	}
 
 	if schemaFieldName == "static_ttl" {
