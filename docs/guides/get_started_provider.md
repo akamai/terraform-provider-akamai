@@ -72,7 +72,7 @@ Create an Akamai API client with the right permissions and valid credentials to 
 When your API clients are ready, add credential information to your `.tf` configuration files. See [Authenticate the Akamai Terraform Provider](../guides/akamai_provider_auth.md)
 for details on creating API clients and available authentication methods. Once you're done authenticating, come back here to complete the Akamai Provider setup.
 
-**Note:** Depending on the contract and group you select, the Edge DNS and Global Traffic Management (GTM) modules may interact Property Manager (PAPI) API. If so, be sure to include PAPI authorization in the API Clients for Edge DNS and GTM.
+**Note:** Depending on the contract and group you select, the Edge DNS and Global Traffic Management (GTM) modules may interact Property Manager API (PAPI). If so, be sure to include PAPI authorization in the API Clients for Edge DNS and GTM.
 
 ## Retrieve contract and group IDs
 
@@ -98,8 +98,7 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 ### Retrieve group IDs with akamai_group
 
-Akamai groups control access to your
-Akamai configurations and help consolidate reporting functions. Each account features a hierarchy of groups, which typically map to an organizational hierarchy.
+Akamai groups control access to your Akamai configurations and help consolidate reporting functions. Each account features a hierarchy of groups, which typically map to an organizational hierarchy.
 
 Your account admins can use Control Center or the [Identity Management: User Administration API](https://developer.akamai.com/en-us/api/core_features/identity_management_user_admin/v2.html)
 to set up groups, each with their own set of users and roles.
@@ -169,6 +168,6 @@ and is safe to run as many times as you like.
 
 You can execute all the actions you set in the configuration by running:
 
-    $terraform apply
+    $ terraform apply
 
 The `apply` command previews all the changes before executing them, similarly to `plan`. Unless you set the `-auto-approve` flag, you need to confirm you want to proceed with the operation and propagate changes to the Akamai platform.
