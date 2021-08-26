@@ -6,13 +6,20 @@ import (
 
 	// Load the providers
 	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers"
-
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/registry"
+	goplugin "github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	tf5server "github.com/hashicorp/terraform-plugin-go/tfprotov5/server"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"google.golang.org/grpc"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
+
+// gRPC message limit of 64MB
+const gRPCLimit = 64 << 20
 
 func main() {
 	var debugMode bool
@@ -37,8 +44,25 @@ func main() {
 			panic(err)
 		}
 	} else {
-		plugin.Serve(&plugin.ServeOpts{
-			ProviderFunc: prov,
-		})
+		// modified implementation of plugin.Serve() method from terraform SDK
+		// this is done in order to increase the max GRPC limit from 4MB to 64MB
+		serveConfig := goplugin.ServeConfig{
+			HandshakeConfig: plugin.Handshake,
+			GRPCServer: func(opts []grpc.ServerOption) *grpc.Server {
+				return grpc.NewServer(append(opts,
+					grpc.MaxSendMsgSize(gRPCLimit),
+					grpc.MaxRecvMsgSize(gRPCLimit))...)
+			},
+			VersionedPlugins: map[int]goplugin.PluginSet{
+				5: {
+					akamai.ProviderRegistryPath: &tf5server.GRPCProviderPlugin{
+						GRPCProvider: func() tfprotov5.ProviderServer {
+							return schema.NewGRPCProviderServer(prov())
+						},
+					},
+				},
+			},
+		}
+		goplugin.Serve(&serveConfig)
 	}
 }
