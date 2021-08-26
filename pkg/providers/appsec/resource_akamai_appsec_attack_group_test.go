@@ -2,6 +2,8 @@ package appsec
 
 import (
 	"encoding/json"
+	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -13,17 +15,16 @@ func TestAccAkamaiAttackGroup_res_basic(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateAttackGroupResponse{}
+		conditionExceptionJSON := loadFixtureString("testdata/TestResAttackGroup/ConditionException.json")
+		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
+
+		updateResponse := appsec.UpdateAttackGroupResponse{}
 		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(expectJSU), &updateResponse)
 
-		cr := appsec.GetAttackGroupResponse{}
+		getResponse := appsec.GetAttackGroupResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
-
-		cd := appsec.UpdateAttackGroupResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJSD), &cd)
+		json.Unmarshal([]byte(expectJS), &getResponse)
 
 		config := appsec.GetConfigurationResponse{}
 		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
@@ -35,19 +36,19 @@ func TestAccAkamaiAttackGroup_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetAttackGroup",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
-		).Return(&cr, nil)
+		).Return(&getResponse, nil)
 
 		client.On("UpdateAttackGroup",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "alert", JsonPayloadRaw: json.RawMessage{0x7b, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x22, 0x63, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x3a, 0x20, 0x5b, 0x5d, 0x2c, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x22, 0x65, 0x78, 0x63, 0x65, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x3a, 0x20, 0x7b, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x22, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x43, 0x6f, 0x6f, 0x6b, 0x69, 0x65, 0x4f, 0x72, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x22, 0x3a, 0x20, 0x5b, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x22, 0x61, 0x62, 0x63, 0x22, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x5d, 0x2c, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x22, 0x73, 0x70, 0x65, 0x63, 0x69, 0x66, 0x69, 0x63, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x43, 0x6f, 0x6f, 0x6b, 0x69, 0x65, 0x4f, 0x72, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x50, 0x72, 0x65, 0x66, 0x69, 0x78, 0x22, 0x3a, 0x20, 0x7b, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x22, 0x70, 0x72, 0x65, 0x66, 0x69, 0x78, 0x22, 0x3a, 0x20, 0x22, 0x61, 0x2a, 0x22, 0x2c, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x22, 0x73, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x22, 0x3a, 0x20, 0x22, 0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x5f, 0x43, 0x4f, 0x4f, 0x4b, 0x49, 0x45, 0x53, 0x22, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x7d, 0xa, 0x20, 0x20, 0x20, 0x20, 0x20, 0x7d, 0xa, 0x20, 0x7d, 0xa}},
-		).Return(&cu, nil)
+			mock.Anything,
+			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "alert", JsonPayloadRaw: conditionExceptionRawMessage},
+		).Return(&updateResponse, nil)
 
 		client.On("UpdateAttackGroup",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "none"},
-		).Return(&cd, nil)
+		).Return(&updateResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -59,7 +60,56 @@ func TestAccAkamaiAttackGroup_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_attack_group.test", "id", "43253:AAAA_81230:SQL"),
 						),
-						ExpectNonEmptyPlan: true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+}
+
+func TestAccAkamaiAttackGroup_res_error_updating_attack_group(t *testing.T) {
+	t.Run("match by AttackGroup ID", func(t *testing.T) {
+		client := &mockappsec{}
+
+		conditionExceptionJSON := loadFixtureString("testdata/TestResAttackGroup/ConditionException.json")
+		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
+
+		updateResponse := appsec.UpdateAttackGroupResponse{}
+		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"))
+		json.Unmarshal([]byte(expectJSU), &updateResponse)
+
+		getResponse := appsec.GetAttackGroupResponse{}
+		expectJS := compactJSON(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"))
+		json.Unmarshal([]byte(expectJS), &getResponse)
+
+		config := appsec.GetConfigurationResponse{}
+		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(expectConfigs), &config)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
+		client.On("UpdateAttackGroup",
+			mock.Anything,
+			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "alert", JsonPayloadRaw: conditionExceptionRawMessage},
+		).Return(nil, fmt.Errorf("UpdateAttackGroup failed"))
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest: true,
+				Providers:  testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResAttackGroup/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_attack_group.test", "id", "43253:AAAA_81230:SQL"),
+						),
+						ExpectError: regexp.MustCompile(`UpdateAttackGroup failed`),
 					},
 				},
 			})
