@@ -16,6 +16,7 @@ import (
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -40,10 +41,10 @@ func resourceDNSv2Zone() *schema.Resource {
 				Required: true,
 			},
 			"type": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validateZoneType,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateZoneType,
 				StateFunc: func(val interface{}) string {
 					return strings.ToUpper(val.(string))
 				},
@@ -482,13 +483,13 @@ func resourceDNSv2ZoneDelete(_ context.Context, d *schema.ResourceData, m interf
 	return diag.Errorf("DNS zone deletion is not supported via this sub provider")
 }
 
-// validateZoneType is a SchemaValidateFunc to validate the Zone type.
-func validateZoneType(v interface{}, _ string) (ws []string, es []error) {
+// validateZoneType is a SchemaValidateDiagFunc to validate the Zone type.
+func validateZoneType(v interface{}, _ cty.Path) diag.Diagnostics {
 	value := strings.ToUpper(v.(string))
 	if value != "PRIMARY" && value != "SECONDARY" && value != "ALIAS" {
-		es = append(es, fmt.Errorf("Type must be PRIMARY, SECONDARY, or ALIAS"))
+		return diag.Errorf("Type must be PRIMARY, SECONDARY, or ALIAS")
 	}
-	return
+	return nil
 }
 
 // populate zone state based on API response.

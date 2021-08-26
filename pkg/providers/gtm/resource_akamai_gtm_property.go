@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/go-cty/cty"
 	"strings"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -76,9 +77,9 @@ func resourceGTMv1Property() *schema.Resource {
 			},
 			"static_ttl": {
 				// Deprecated. Leaving for backward config compatibility.
-				Type:         schema.TypeInt,
-				Optional:     true,
-				ValidateFunc: validateTTL,
+				Type:             schema.TypeInt,
+				Optional:         true,
+				ValidateDiagFunc: validateTTL,
 			},
 			"static_rr_set": {
 				Type:     schema.TypeList,
@@ -114,10 +115,10 @@ func resourceGTMv1Property() *schema.Resource {
 				Optional: true,
 			},
 			"dynamic_ttl": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				ValidateFunc: validateTTL,
-				Default:      300,
+				Type:             schema.TypeInt,
+				Optional:         true,
+				ValidateDiagFunc: validateTTL,
+				Default:          300,
 			},
 			"max_unreachable_penalty": {
 				Type:     schema.TypeInt,
@@ -346,21 +347,29 @@ func parseResourceStringID(id string) (string, string, error) {
 
 }
 
-// validateTTL is a SchemaValidateFunc to validate dynamic_tll and static_ttl.
-func validateTTL(v interface{}, key string) (ws []string, es []error) {
-	if key == "static_ttl" {
-		ws = append(ws, fmt.Sprintf("static_ttl is deprecated and will be ignored. Use static_rr_sets to apply static ttls to records"))
-		return
+// validateTTL is a SchemaValidateDiagFunc to validate dynamic_ttl and static_ttl.
+func validateTTL(v interface{}, path cty.Path) diag.Diagnostics {
+	schemaFieldName, err := tools.GetSchemaFieldNameFromPath(path)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if schemaFieldName == "static_ttl" {
+		return diag.Diagnostics{
+			diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprintf("static_ttl is deprecated and will be ignored. Use static_rr_sets to apply static ttls to records"),
+			},
+		}
 	}
 	value, ok := v.(int)
 	if !ok {
-		es = append(es, fmt.Errorf("%s validation failed to read field attribute", key))
-		return
+		return diag.Errorf("%s validation failed to read field attribute", schemaFieldName)
 	}
 	if value < 30 || value > 3600 {
-		es = append(es, fmt.Errorf("%s value must be between 30 and 3600", key))
+		return diag.Errorf("%s value must be between 30 and 3600", schemaFieldName)
 	}
-	return
+	return nil
 }
 
 // Create a new GTM Property
