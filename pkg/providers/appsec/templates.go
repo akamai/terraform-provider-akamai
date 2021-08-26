@@ -205,14 +205,40 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 			tbl := table.NewWriter()
 			tbl.SetOutputMirror(&ostr)
 			tbl.SetTitle(key)
-			headers := templ.TableTitle
 
-			headercolumns := strings.Split(headers, "|")
-			trhdr := table.Row{}
-			for _, header := range headercolumns {
-				trhdr = append(trhdr, header)
+			columnnames := strings.Split(templ.TableTitle, "|")
+			columnwidths := make([]int, 0)
+			totalcolumnwidth := 0
+			for _, header := range columnnames {
+				columnwidths = append(columnwidths, len(header))
+				totalcolumnwidth += len(header)
 			}
-			tbl.AppendHeader(trhdr)
+			totalcolumnwidth += len(columnnames) - 1 // include '|' dividers in header row
+
+			// if table title would wrap (because total column widths are not large enough) then
+			// distribute the extra space needed to prevent this across the set of columns
+			if totalcolumnwidth < len(key) {
+				extra := len(key) - totalcolumnwidth
+				extraPerColumn := extra / len(columnwidths)
+				remainder := extra % len(columnwidths)
+				for i := range columnwidths {
+					columnwidths[i] += extraPerColumn
+				}
+				col := 0
+				for j := remainder; j > 0; j-- {
+					columnwidths[col]++
+					col++
+				}
+			}
+
+			headerrow := table.Row{}
+			for index, header := range columnnames {
+				w := columnwidths[index]
+				rightpad := strings.Repeat(" ", w-len(header))
+				headerstring := fmt.Sprintf("%s%s", header, rightpad)
+				headerrow = append(headerrow, headerstring)
+			}
+			tbl.AppendHeader(headerrow)
 
 			ar := strings.Split(tstr.String(), ",")
 			for _, recContent := range ar {
