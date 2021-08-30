@@ -75,12 +75,13 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	createReputationProfileAction := appsec.UpdateReputationProfileActionRequest{}
-	createReputationProfileAction.ConfigID = configid
-	createReputationProfileAction.Version = version
-	createReputationProfileAction.PolicyID = policyid
-	createReputationProfileAction.ReputationProfileID = reputationprofileid
-	createReputationProfileAction.Action = action
+	createReputationProfileAction := appsec.UpdateReputationProfileActionRequest{
+		ConfigID:            configid,
+		Version:             version,
+		PolicyID:            policyid,
+		ReputationProfileID: reputationprofileid,
+		Action:              action,
+	}
 
 	_, erru := client.UpdateReputationProfileAction(ctx, createReputationProfileAction)
 	if erru != nil {
@@ -114,11 +115,12 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	getReputationProfileAction := appsec.GetReputationProfileActionRequest{}
-	getReputationProfileAction.ConfigID = configid
-	getReputationProfileAction.Version = version
-	getReputationProfileAction.PolicyID = policyid
-	getReputationProfileAction.ReputationProfileID = reputationprofileid
+	getReputationProfileAction := appsec.GetReputationProfileActionRequest{
+		ConfigID:            configid,
+		Version:             version,
+		PolicyID:            policyid,
+		ReputationProfileID: reputationprofileid,
+	}
 
 	resp, errr := client.GetReputationProfileAction(ctx, getReputationProfileAction)
 	if errr != nil {
@@ -167,12 +169,13 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	updateReputationProfileAction := appsec.UpdateReputationProfileActionRequest{}
-	updateReputationProfileAction.ConfigID = configid
-	updateReputationProfileAction.Version = version
-	updateReputationProfileAction.PolicyID = policyid
-	updateReputationProfileAction.ReputationProfileID = reputationprofileid
-	updateReputationProfileAction.Action = action
+	updateReputationProfileAction := appsec.UpdateReputationProfileActionRequest{
+		ConfigID:            configid,
+		Version:             version,
+		PolicyID:            policyid,
+		ReputationProfileID: reputationprofileid,
+		Action:              action,
+	}
 
 	_, erru := client.UpdateReputationProfileAction(ctx, updateReputationProfileAction)
 	if erru != nil {
@@ -204,12 +207,13 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	removeReputationProfileAction := appsec.UpdateReputationProfileActionRequest{}
-	removeReputationProfileAction.ConfigID = configid
-	removeReputationProfileAction.Version = version
-	removeReputationProfileAction.PolicyID = policyid
-	removeReputationProfileAction.ReputationProfileID = reputationprofileid
-	removeReputationProfileAction.Action = "none"
+	removeReputationProfileAction := appsec.UpdateReputationProfileActionRequest{
+		ConfigID:            configid,
+		Version:             version,
+		PolicyID:            policyid,
+		ReputationProfileID: reputationprofileid,
+		Action:              "none",
+	}
 
 	_, errd := client.UpdateReputationProfileAction(ctx, removeReputationProfileAction)
 	if errd != nil {

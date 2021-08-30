@@ -94,13 +94,14 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	createAttackGroup := appsec.UpdateAttackGroupRequest{}
-	createAttackGroup.ConfigID = configid
-	createAttackGroup.Version = version
-	createAttackGroup.PolicyID = policyid
-	createAttackGroup.Group = attackgroup
-	createAttackGroup.Action = action
-	createAttackGroup.JsonPayloadRaw = rawJSON
+	createAttackGroup := appsec.UpdateAttackGroupRequest{
+		ConfigID:       configid,
+		Version:        version,
+		PolicyID:       policyid,
+		Group:          attackgroup,
+		Action:         action,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, err = client.UpdateAttackGroup(ctx, createAttackGroup)
 	if err != nil {
@@ -130,11 +131,12 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	policyid := idParts[1]
 	group := idParts[2]
 
-	getAttackGroup := appsec.GetAttackGroupRequest{}
-	getAttackGroup.ConfigID = configid
-	getAttackGroup.Version = version
-	getAttackGroup.PolicyID = policyid
-	getAttackGroup.Group = group
+	getAttackGroup := appsec.GetAttackGroupRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Group:    group,
+	}
 
 	attackgroup, err := client.GetAttackGroup(ctx, getAttackGroup)
 	if err != nil {
@@ -201,13 +203,14 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	jsonPayloadRaw := []byte(conditionexception)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	updateAttackGroup := appsec.UpdateAttackGroupRequest{}
-	updateAttackGroup.ConfigID = configid
-	updateAttackGroup.Version = version
-	updateAttackGroup.PolicyID = policyid
-	updateAttackGroup.Group = group
-	updateAttackGroup.Action = action
-	updateAttackGroup.JsonPayloadRaw = rawJSON
+	updateAttackGroup := appsec.UpdateAttackGroupRequest{
+		ConfigID:       configid,
+		Version:        version,
+		PolicyID:       policyid,
+		Group:          group,
+		Action:         action,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, err = client.UpdateAttackGroup(ctx, updateAttackGroup)
 	if err != nil {
@@ -235,12 +238,13 @@ func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 	policyid := idParts[1]
 	group := idParts[2]
 
-	removeAttackGroup := appsec.UpdateAttackGroupRequest{}
-	removeAttackGroup.ConfigID = configid
-	removeAttackGroup.Version = version
-	removeAttackGroup.PolicyID = policyid
-	removeAttackGroup.Group = group
-	removeAttackGroup.Action = "none"
+	removeAttackGroup := appsec.UpdateAttackGroupRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Group:    group,
+		Action:   "none",
+	}
 
 	_, errd := client.UpdateAttackGroup(ctx, removeAttackGroup)
 	if errd != nil {

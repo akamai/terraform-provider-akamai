@@ -89,12 +89,13 @@ func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 		evalHostnames = make([]string, 0)
 	}
 
-	updateWAPSelectedHostnames := appsec.UpdateWAPSelectedHostnamesRequest{}
-	updateWAPSelectedHostnames.ConfigID = configID
-	updateWAPSelectedHostnames.Version = getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", m)
-	updateWAPSelectedHostnames.SecurityPolicyID = securityPolicyID
-	updateWAPSelectedHostnames.ProtectedHosts = protectedHostnames
-	updateWAPSelectedHostnames.EvaluatedHosts = evalHostnames
+	updateWAPSelectedHostnames := appsec.UpdateWAPSelectedHostnamesRequest{
+		ConfigID: configID,
+		Version: getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", m),
+		SecurityPolicyID: securityPolicyID,
+		ProtectedHosts: protectedHostnames,
+		EvaluatedHosts: evalHostnames,
+	}
 
 	_, err = client.UpdateWAPSelectedHostnames(ctx, updateWAPSelectedHostnames)
 	if err != nil {
@@ -137,10 +138,11 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	version := getLatestConfigVersion(ctx, configID, m)
 	securityPolicyID := idParts[1]
 
-	getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{}
-	getWAPSelectedHostnamesRequest.ConfigID = configID
-	getWAPSelectedHostnamesRequest.Version = version
-	getWAPSelectedHostnamesRequest.SecurityPolicyID = securityPolicyID
+	getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{
+		ConfigID: configID,
+		Version: version,
+		SecurityPolicyID: securityPolicyID,
+	}
 
 	wapSelectedHostnames, err := client.GetWAPSelectedHostnames(ctx, getWAPSelectedHostnamesRequest)
 	if err != nil {
@@ -200,12 +202,13 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 		evalHostnames = make([]string, 0)
 	}
 
-	updateWAPSelectedHostnames := appsec.UpdateWAPSelectedHostnamesRequest{}
-	updateWAPSelectedHostnames.ConfigID = configID
-	updateWAPSelectedHostnames.Version = getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", m)
-	updateWAPSelectedHostnames.SecurityPolicyID = securityPolicyID
-	updateWAPSelectedHostnames.ProtectedHosts = protectedHostnames
-	updateWAPSelectedHostnames.EvaluatedHosts = evalHostnames
+	updateWAPSelectedHostnames := appsec.UpdateWAPSelectedHostnamesRequest{
+		ConfigID: configID,
+		Version: getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", m),
+		SecurityPolicyID: securityPolicyID,
+		ProtectedHosts: protectedHostnames,
+		EvaluatedHosts: evalHostnames,
+	}
 
 	_, err = client.UpdateWAPSelectedHostnames(ctx, updateWAPSelectedHostnames)
 	if err != nil {

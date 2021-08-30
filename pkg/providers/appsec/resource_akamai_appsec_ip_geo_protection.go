@@ -71,11 +71,12 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	createnetworkProtection := appsec.UpdateIPGeoProtectionRequest{}
-	createnetworkProtection.ConfigID = configid
-	createnetworkProtection.Version = version
-	createnetworkProtection.PolicyID = policyid
-	createnetworkProtection.ApplyNetworkLayerControls = applynetworkcontrols
+	createnetworkProtection := appsec.UpdateIPGeoProtectionRequest{
+		ConfigID:                  configid,
+		Version:                   version,
+		PolicyID:                  policyid,
+		ApplyNetworkLayerControls: applynetworkcontrols,
+	}
 
 	_, erru := client.UpdateIPGeoProtection(ctx, createnetworkProtection)
 	if erru != nil {
@@ -105,10 +106,11 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getNetworkProtection := appsec.GetIPGeoProtectionRequest{}
-	getNetworkProtection.ConfigID = configid
-	getNetworkProtection.Version = version
-	getNetworkProtection.PolicyID = policyid
+	getNetworkProtection := appsec.GetIPGeoProtectionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	networkprotection, err := client.GetIPGeoProtection(ctx, getNetworkProtection)
 	if err != nil {
@@ -158,11 +160,12 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	updateNetworkProtection := appsec.UpdateIPGeoProtectionRequest{}
-	updateNetworkProtection.ConfigID = configid
-	updateNetworkProtection.Version = version
-	updateNetworkProtection.PolicyID = policyid
-	updateNetworkProtection.ApplyNetworkLayerControls = applynetworkcontrols
+	updateNetworkProtection := appsec.UpdateIPGeoProtectionRequest{
+		ConfigID:                  configid,
+		Version:                   version,
+		PolicyID:                  policyid,
+		ApplyNetworkLayerControls: applynetworkcontrols,
+	}
 
 	_, erru := client.UpdateIPGeoProtection(ctx, updateNetworkProtection)
 	if erru != nil {
@@ -190,12 +193,12 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	version := getModifiableConfigVersion(ctx, configid, "ipgeoProtection", m)
 	policyid := idParts[1]
 
-	removeIPGeoProtection := appsec.UpdateIPGeoProtectionRequest{}
-	removeIPGeoProtection.ConfigID = configid
-
-	removeIPGeoProtection.Version = version
-	removeIPGeoProtection.PolicyID = policyid
-	removeIPGeoProtection.ApplyNetworkLayerControls = false
+	removeIPGeoProtection := appsec.UpdateIPGeoProtectionRequest{
+		ConfigID:                  configid,
+		Version:                   version,
+		PolicyID:                  policyid,
+		ApplyNetworkLayerControls: false,
+	}
 
 	_, errd := client.UpdateIPGeoProtection(ctx, removeIPGeoProtection)
 	if errd != nil {

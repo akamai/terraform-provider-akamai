@@ -65,10 +65,11 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	createRatePolicy := appsec.CreateRatePolicyRequest{}
-	createRatePolicy.ConfigID = configid
-	createRatePolicy.ConfigVersion = version
-	createRatePolicy.JsonPayloadRaw = rawJSON
+	createRatePolicy := appsec.CreateRatePolicyRequest{
+		ConfigID:       configid,
+		ConfigVersion:  version,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	ratepolicy, err := client.CreateRatePolicy(ctx, createRatePolicy)
 	if err != nil {
@@ -102,10 +103,11 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	readRatePolicy := appsec.GetRatePolicyRequest{}
-	readRatePolicy.ConfigID = configid
-	readRatePolicy.ConfigVersion = version
-	readRatePolicy.RatePolicyID = ratePolicyID
+	readRatePolicy := appsec.GetRatePolicyRequest{
+		ConfigID:      configid,
+		ConfigVersion: version,
+		RatePolicyID:  ratePolicyID,
+	}
 
 	ratepolicy, err := client.GetRatePolicy(ctx, readRatePolicy)
 	if err != nil {
@@ -154,11 +156,12 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	updateRatePolicy := appsec.UpdateRatePolicyRequest{}
-	updateRatePolicy.ConfigID = configid
-	updateRatePolicy.ConfigVersion = getModifiableConfigVersion(ctx, configid, "ratePolicy", m)
-	updateRatePolicy.RatePolicyID = ratePolicyID
-	updateRatePolicy.JsonPayloadRaw = rawJSON
+	updateRatePolicy := appsec.UpdateRatePolicyRequest{
+		ConfigID:       configid,
+		ConfigVersion:  getModifiableConfigVersion(ctx, configid, "ratePolicy", m),
+		RatePolicyID:   ratePolicyID,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, err = client.UpdateRatePolicy(ctx, updateRatePolicy)
 	if err != nil {
@@ -190,10 +193,11 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	deleteRatePolicy := appsec.RemoveRatePolicyRequest{}
-	deleteRatePolicy.ConfigID = configid
-	deleteRatePolicy.ConfigVersion = version
-	deleteRatePolicy.RatePolicyID = ratePolicyID
+	deleteRatePolicy := appsec.RemoveRatePolicyRequest{
+		ConfigID:      configid,
+		ConfigVersion: version,
+		RatePolicyID:  ratePolicyID,
+	}
 
 	_, err = client.RemoveRatePolicy(ctx, deleteRatePolicy)
 	if err != nil {

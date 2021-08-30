@@ -88,10 +88,11 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	blockediplists := tools.SetToStringSlice(d.Get("ip_network_lists").(*schema.Set))
 	exceptioniplists := tools.SetToStringSlice(d.Get("exception_ip_network_lists").(*schema.Set))
 
-	createIPGeo := appsec.UpdateIPGeoRequest{}
-	createIPGeo.ConfigID = configid
-	createIPGeo.Version = version
-	createIPGeo.PolicyID = policyid
+	createIPGeo := appsec.UpdateIPGeoRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 	if mode == Allow {
 		createIPGeo.Block = "blockAllTrafficExceptAllowedIPs"
 	}
@@ -130,10 +131,11 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getIPGeo := appsec.GetIPGeoRequest{}
-	getIPGeo.ConfigID = configid
-	getIPGeo.Version = version
-	getIPGeo.PolicyID = policyid
+	getIPGeo := appsec.GetIPGeoRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	ipgeo, err := client.GetIPGeo(ctx, getIPGeo)
 	if err != nil {
@@ -194,10 +196,11 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	blockediplists := tools.SetToStringSlice(d.Get("ip_network_lists").(*schema.Set))
 	exceptioniplists := tools.SetToStringSlice(d.Get("exception_ip_network_lists").(*schema.Set))
 
-	updateIPGeo := appsec.UpdateIPGeoRequest{}
-	updateIPGeo.ConfigID = configid
-	updateIPGeo.Version = version
-	updateIPGeo.PolicyID = policyid
+	updateIPGeo := appsec.UpdateIPGeoRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 	if mode == Allow {
 		updateIPGeo.Block = "blockAllTrafficExceptAllowedIPs"
 	}
@@ -235,12 +238,12 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	version := getModifiableConfigVersion(ctx, configid, "ipgeo", m)
 	policyid := idParts[1]
 
-	removePolicyProtections := appsec.UpdateNetworkLayerProtectionRequest{}
-	removePolicyProtections.ConfigID = configid
-	removePolicyProtections.Version = version
-	removePolicyProtections.PolicyID = policyid
-	removePolicyProtections.ApplyNetworkLayerControls = false
-
+	removePolicyProtections := appsec.UpdateNetworkLayerProtectionRequest{
+		ConfigID:                  configid,
+		Version:                   version,
+		PolicyID:                  policyid,
+		ApplyNetworkLayerControls: false,
+	}
 	_, erru := client.UpdateNetworkLayerProtection(ctx, removePolicyProtections)
 	if erru != nil {
 		logger.Errorf("calling 'resourceIPGeoDelete': %s", erru.Error())

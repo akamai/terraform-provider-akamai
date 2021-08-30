@@ -71,11 +71,12 @@ func resourceSlowPostProtectionCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	createSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{}
-	createSlowPostProtection.ConfigID = configid
-	createSlowPostProtection.Version = version
-	createSlowPostProtection.PolicyID = policyid
-	createSlowPostProtection.ApplySlowPostControls = applyslowpostcontrols
+	createSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{
+		ConfigID:              configid,
+		Version:               version,
+		PolicyID:              policyid,
+		ApplySlowPostControls: applyslowpostcontrols,
+	}
 
 	_, erru := client.UpdateSlowPostProtection(ctx, createSlowPostProtection)
 	if erru != nil {
@@ -105,10 +106,11 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getSlowPostProtection := appsec.GetSlowPostProtectionRequest{}
-	getSlowPostProtection.ConfigID = configid
-	getSlowPostProtection.Version = version
-	getSlowPostProtection.PolicyID = policyid
+	getSlowPostProtection := appsec.GetSlowPostProtectionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	slowpostprotection, err := client.GetSlowPostProtection(ctx, getSlowPostProtection)
 	if err != nil {
@@ -159,11 +161,12 @@ func resourceSlowPostProtectionUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	updateSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{}
-	updateSlowPostProtection.ConfigID = configid
-	updateSlowPostProtection.Version = version
-	updateSlowPostProtection.PolicyID = policyid
-	updateSlowPostProtection.ApplySlowPostControls = applyslowpostcontrols
+	updateSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{
+		ConfigID:              configid,
+		Version:               version,
+		PolicyID:              policyid,
+		ApplySlowPostControls: applyslowpostcontrols,
+	}
 
 	_, erru := client.UpdateSlowPostProtection(ctx, updateSlowPostProtection)
 	if erru != nil {
@@ -191,11 +194,12 @@ func resourceSlowPostProtectionDelete(ctx context.Context, d *schema.ResourceDat
 	version := getModifiableConfigVersion(ctx, configid, "slowpostProtection", m)
 	policyid := idParts[1]
 
-	removeSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{}
-	removeSlowPostProtection.ConfigID = configid
-	removeSlowPostProtection.Version = version
-	removeSlowPostProtection.PolicyID = policyid
-	removeSlowPostProtection.ApplySlowPostControls = false
+	removeSlowPostProtection := appsec.UpdateSlowPostProtectionRequest{
+		ConfigID:              configid,
+		Version:               version,
+		PolicyID:              policyid,
+		ApplySlowPostControls: false,
+	}
 
 	_, errd := client.UpdateSlowPostProtection(ctx, removeSlowPostProtection)
 	if errd != nil {

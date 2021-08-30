@@ -80,12 +80,13 @@ func resourcePenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	createPenaltyBox := appsec.UpdatePenaltyBoxRequest{}
-	createPenaltyBox.ConfigID = configid
-	createPenaltyBox.Version = version
-	createPenaltyBox.PolicyID = policyid
-	createPenaltyBox.PenaltyBoxProtection = penaltyboxprotection
-	createPenaltyBox.Action = penaltyboxaction
+	createPenaltyBox := appsec.UpdatePenaltyBoxRequest{
+		ConfigID:             configid,
+		Version:              version,
+		PolicyID:             policyid,
+		PenaltyBoxProtection: penaltyboxprotection,
+		Action:               penaltyboxaction,
+	}
 
 	_, erru := client.UpdatePenaltyBox(ctx, createPenaltyBox)
 	if erru != nil {
@@ -115,10 +116,11 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getPenaltyBox := appsec.GetPenaltyBoxRequest{}
-	getPenaltyBox.ConfigID = configid
-	getPenaltyBox.Version = version
-	getPenaltyBox.PolicyID = policyid
+	getPenaltyBox := appsec.GetPenaltyBoxRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	penaltybox, err := client.GetPenaltyBox(ctx, getPenaltyBox)
 	if err != nil {
@@ -167,12 +169,13 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	updatePenaltyBox := appsec.UpdatePenaltyBoxRequest{}
-	updatePenaltyBox.ConfigID = configid
-	updatePenaltyBox.Version = version
-	updatePenaltyBox.PolicyID = policyid
-	updatePenaltyBox.PenaltyBoxProtection = penaltyboxprotection
-	updatePenaltyBox.Action = penaltyboxaction
+	updatePenaltyBox := appsec.UpdatePenaltyBoxRequest{
+		ConfigID:             configid,
+		Version:              version,
+		PolicyID:             policyid,
+		PenaltyBoxProtection: penaltyboxprotection,
+		Action:               penaltyboxaction,
+	}
 
 	_, erru := client.UpdatePenaltyBox(ctx, updatePenaltyBox)
 	if erru != nil {
@@ -200,12 +203,13 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 	version := getModifiableConfigVersion(ctx, configid, "penaltyBoxAction", m)
 	policyid := idParts[1]
 
-	removePenaltyBox := appsec.UpdatePenaltyBoxRequest{}
-	removePenaltyBox.ConfigID = configid
-	removePenaltyBox.Version = version
-	removePenaltyBox.PolicyID = policyid
-	removePenaltyBox.PenaltyBoxProtection = false
-	removePenaltyBox.Action = "none"
+	removePenaltyBox := appsec.UpdatePenaltyBoxRequest{
+		ConfigID:             configid,
+		Version:              version,
+		PolicyID:             policyid,
+		PenaltyBoxProtection: false,
+		Action:               "none",
+	}
 
 	_, errd := client.UpdatePenaltyBox(ctx, removePenaltyBox)
 	if errd != nil {

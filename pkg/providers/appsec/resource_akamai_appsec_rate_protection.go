@@ -71,11 +71,12 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	createRateProtection := appsec.UpdateRateProtectionRequest{}
-	createRateProtection.ConfigID = configid
-	createRateProtection.Version = version
-	createRateProtection.PolicyID = policyid
-	createRateProtection.ApplyRateControls = applyratecontrols
+	createRateProtection := appsec.UpdateRateProtectionRequest{
+		ConfigID:          configid,
+		Version:           version,
+		PolicyID:          policyid,
+		ApplyRateControls: applyratecontrols,
+	}
 
 	_, erru := client.UpdateRateProtection(ctx, createRateProtection)
 	if erru != nil {
@@ -105,10 +106,11 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getRateProtection := appsec.GetRateProtectionRequest{}
-	getRateProtection.ConfigID = configid
-	getRateProtection.Version = version
-	getRateProtection.PolicyID = policyid
+	getRateProtection := appsec.GetRateProtectionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	rateprotection, err := client.GetRateProtection(ctx, getRateProtection)
 	if err != nil {
@@ -158,11 +160,12 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	updateRateProtection := appsec.UpdateRateProtectionRequest{}
-	updateRateProtection.ConfigID = configid
-	updateRateProtection.Version = version
-	updateRateProtection.PolicyID = policyid
-	updateRateProtection.ApplyRateControls = applyratecontrols
+	updateRateProtection := appsec.UpdateRateProtectionRequest{
+		ConfigID:          configid,
+		Version:           version,
+		PolicyID:          policyid,
+		ApplyRateControls: applyratecontrols,
+	}
 
 	_, erru := client.UpdateRateProtection(ctx, updateRateProtection)
 	if erru != nil {
@@ -190,12 +193,12 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 	version := getModifiableConfigVersion(ctx, configid, "rateProtection", m)
 	policyid := idParts[1]
 
-	removeRateProtection := appsec.UpdateRateProtectionRequest{}
-	removeRateProtection.ConfigID = configid
-
-	removeRateProtection.Version = version
-	removeRateProtection.PolicyID = policyid
-	removeRateProtection.ApplyRateControls = false
+	removeRateProtection := appsec.UpdateRateProtectionRequest{
+		ConfigID:          configid,
+		Version:           version,
+		PolicyID:          policyid,
+		ApplyRateControls: false,
+	}
 
 	_, errd := client.UpdateRateProtection(ctx, removeRateProtection)
 	if errd != nil {

@@ -68,10 +68,11 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	jsonPayloadRaw := []byte(jsonpostpayload)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	createReputationProfile := appsec.CreateReputationProfileRequest{}
-	createReputationProfile.ConfigID = configid
-	createReputationProfile.ConfigVersion = version
-	createReputationProfile.JsonPayloadRaw = rawJSON
+	createReputationProfile := appsec.CreateReputationProfileRequest{
+		ConfigID:       configid,
+		ConfigVersion:  version,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	response, err := client.CreateReputationProfile(ctx, createReputationProfile)
 	if err != nil {
@@ -104,10 +105,11 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	reputationProfileRequest := appsec.GetReputationProfileRequest{}
-	reputationProfileRequest.ConfigID = configid
-	reputationProfileRequest.ConfigVersion = getLatestConfigVersion(ctx, configid, m)
-	reputationProfileRequest.ReputationProfileId = reputationProfileID
+	reputationProfileRequest := appsec.GetReputationProfileRequest{
+		ConfigID:            configid,
+		ConfigVersion:       getLatestConfigVersion(ctx, configid, m),
+		ReputationProfileId: reputationProfileID,
+	}
 
 	reputationProfileResponse, err := client.GetReputationProfile(ctx, reputationProfileRequest)
 	if err != nil {
@@ -159,11 +161,12 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	jsonPayloadRaw := []byte(jsonpostpayload)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	updateReputationProfile := appsec.UpdateReputationProfileRequest{}
-	updateReputationProfile.ConfigID = configid
-	updateReputationProfile.ConfigVersion = version
-	updateReputationProfile.ReputationProfileId = reputationProfileID
-	updateReputationProfile.JsonPayloadRaw = rawJSON
+	updateReputationProfile := appsec.UpdateReputationProfileRequest{
+		ConfigID:            configid,
+		ConfigVersion:       version,
+		ReputationProfileId: reputationProfileID,
+		JsonPayloadRaw:      rawJSON,
+	}
 
 	_, err = client.UpdateReputationProfile(ctx, updateReputationProfile)
 	if err != nil {
@@ -195,10 +198,11 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	deleteReputationProfile := appsec.RemoveReputationProfileRequest{}
-	deleteReputationProfile.ConfigID = configid
-	deleteReputationProfile.ConfigVersion = version
-	deleteReputationProfile.ReputationProfileId = reputationProfileID
+	deleteReputationProfile := appsec.RemoveReputationProfileRequest{
+		ConfigID:            configid,
+		ConfigVersion:       version,
+		ReputationProfileId: reputationProfileID,
+	}
 
 	_, errd := client.RemoveReputationProfile(ctx, deleteReputationProfile)
 	if errd != nil {

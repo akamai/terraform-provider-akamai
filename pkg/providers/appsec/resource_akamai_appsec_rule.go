@@ -101,11 +101,12 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	if wafmode.Mode == AseAuto { // action is read only, only exception is writable
-		createRule := appsec.UpdateConditionExceptionRequest{}
-		createRule.ConfigID = configid
-		createRule.Version = version
-		createRule.PolicyID = policyid
-		createRule.RuleID = ruleid
+		createRule := appsec.UpdateConditionExceptionRequest{
+			ConfigID: configid,
+			Version: version,
+			PolicyID: policyid,
+			RuleID: ruleid,
+		}
 		var ruleConditionException appsec.RuleConditionException
 		err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
 		if err != nil {
@@ -129,13 +130,14 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 			return diag.FromErr(err)
 		}
 
-		createRule := appsec.UpdateRuleRequest{}
-		createRule.ConfigID = configid
-		createRule.Version = version
-		createRule.PolicyID = policyid
-		createRule.RuleID = ruleid
-		createRule.Action = action
-		createRule.JsonPayloadRaw = rawJSON
+		createRule := appsec.UpdateRuleRequest{
+			ConfigID:       configid,
+			Version:        version,
+			PolicyID:       policyid,
+			RuleID:         ruleid,
+			Action:         action,
+			JsonPayloadRaw: rawJSON,
+		}
 
 		resp, err := client.UpdateRule(ctx, createRule)
 		if err != nil {
@@ -171,11 +173,12 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return diag.FromErr(err)
 	}
 
-	getRule := appsec.GetRuleRequest{}
-	getRule.ConfigID = configid
-	getRule.Version = version
-	getRule.PolicyID = policyid
-	getRule.RuleID = ruleid
+	getRule := appsec.GetRuleRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		RuleID:   ruleid,
+	}
 
 	rule, err := client.GetRule(ctx, getRule)
 	if err != nil {
@@ -248,11 +251,13 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	if wafmode.Mode == AseAuto { // action is read only, only exception is writable
-		updateRule := appsec.UpdateConditionExceptionRequest{}
-		updateRule.ConfigID = configid
-		updateRule.Version = version
-		updateRule.PolicyID = policyid
-		updateRule.RuleID = ruleid
+		updateRule := appsec.UpdateConditionExceptionRequest{
+			ConfigID: configid,
+			Version: version,
+			PolicyID: policyid,
+			RuleID: ruleid,
+		}
+
 		var ruleConditionException appsec.RuleConditionException
 		err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
 		if err != nil {
@@ -276,13 +281,14 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 			return diag.FromErr(err)
 		}
 
-		updateRule := appsec.UpdateRuleRequest{}
-		updateRule.ConfigID = configid
-		updateRule.Version = version
-		updateRule.PolicyID = policyid
-		updateRule.RuleID = ruleid
-		updateRule.Action = action
-		updateRule.JsonPayloadRaw = rawJSON
+	updateRule := appsec.UpdateRuleRequest{
+		ConfigID:       configid,
+		Version:        version,
+		PolicyID:       policyid,
+		RuleID:         ruleid,
+		Action:         action,
+		JsonPayloadRaw: rawJSON,
+	}
 
 		_, err = client.UpdateRule(ctx, updateRule)
 		if err != nil {
@@ -329,11 +335,12 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	if wafmode.Mode == AseAuto {
-		updateRule := appsec.UpdateConditionExceptionRequest{}
-		updateRule.ConfigID = configid
-		updateRule.Version = version
-		updateRule.PolicyID = policyid
-		updateRule.RuleID = ruleid
+		updateRule := appsec.UpdateConditionExceptionRequest{
+			ConfigID: configid,
+			Version: version,
+			PolicyID: policyid,
+			RuleID: ruleid,
+		}
 
 		_, err = client.UpdateRuleConditionException(ctx, updateRule)
 		if err != nil {
@@ -341,13 +348,13 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 			return diag.FromErr(err)
 		}
 	} else {
-		updateRule := appsec.UpdateRuleRequest{}
-		updateRule.ConfigID = configid
-		updateRule.Version = version
-		updateRule.PolicyID = policyid
-		updateRule.RuleID = ruleid
-		updateRule.Action = "none"
-
+		updateRule := appsec.UpdateRuleRequest{
+			ConfigID: configid,
+			Version:  version,
+			PolicyID: policyid,
+			RuleID:   ruleid,
+			Action:   "none",
+		}
 		_, err = client.UpdateRule(ctx, updateRule)
 		if err != nil {
 			logger.Errorf("calling 'UpdateRule': %s", err.Error())

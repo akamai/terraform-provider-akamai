@@ -63,10 +63,11 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	createVersionNotes := appsec.UpdateVersionNotesRequest{}
-	createVersionNotes.ConfigID = configid
-	createVersionNotes.Version = version
-	createVersionNotes.Notes = notes
+	createVersionNotes := appsec.UpdateVersionNotesRequest{
+		ConfigID: configid,
+		Version:  version,
+		Notes:    notes,
+	}
 
 	_, erru := client.UpdateVersionNotes(ctx, createVersionNotes)
 	if erru != nil {
@@ -91,9 +92,10 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 	version := getLatestConfigVersion(ctx, configid, m)
 
-	getVersionNotes := appsec.GetVersionNotesRequest{}
-	getVersionNotes.ConfigID = configid
-	getVersionNotes.Version = version
+	getVersionNotes := appsec.GetVersionNotesRequest{
+		ConfigID: configid,
+		Version:  version,
+	}
 
 	versionnotes, err := client.GetVersionNotes(ctx, getVersionNotes)
 	if err != nil {
@@ -133,10 +135,11 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	updateVersionNotes := appsec.UpdateVersionNotesRequest{}
-	updateVersionNotes.ConfigID = configid
-	updateVersionNotes.Version = version
-	updateVersionNotes.Notes = notes
+	updateVersionNotes := appsec.UpdateVersionNotesRequest{
+		ConfigID: configid,
+		Version:  version,
+		Notes:    notes,
+	}
 
 	_, erru := client.UpdateVersionNotes(ctx, updateVersionNotes)
 	if erru != nil {
