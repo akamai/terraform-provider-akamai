@@ -159,16 +159,16 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	removeBypassNetworkLists := appsec.RemoveBypassNetworkListsRequest{}
-	removeBypassNetworkLists.ConfigID = configid
-	removeBypassNetworkLists.Version = getModifiableConfigVersion(ctx, configid, "bypassnetworklists", m)
-	networklistidlist := make([]string, 0, len(bypassnetworkidset.List()))
-	for _, networklistid := range bypassnetworkidset.List() {
-		networklistidlist = append(networklistidlist, networklistid.(string))
+	updateBypassNetworkListsRequest := appsec.UpdateBypassNetworkListsRequest{
+		ConfigID: configid,
+		Version:  getModifiableConfigVersion(ctx, configid, "bypassnetworklists", m),
 	}
-	removeBypassNetworkLists.NetworkLists = networklistidlist
+	updateBypassNetworkListsRequest.NetworkLists = make([]string, 0, len(bypassnetworkidset.List()))
+	for _, networklistid := range bypassnetworkidset.List() {
+		updateBypassNetworkListsRequest.NetworkLists = append(updateBypassNetworkListsRequest.NetworkLists, networklistid.(string))
+	}
 
-	_, erru := client.RemoveBypassNetworkLists(ctx, removeBypassNetworkLists)
+	_, erru := client.UpdateBypassNetworkLists(ctx, updateBypassNetworkListsRequest)
 	if erru != nil {
 		logger.Errorf("calling 'RemoveBypassNetworkLists': %s", erru.Error())
 		return diag.FromErr(erru)

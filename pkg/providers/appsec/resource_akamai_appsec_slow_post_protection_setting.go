@@ -135,36 +135,37 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getSlowPostProtectionSetting := appsec.GetSlowPostProtectionSettingRequest{}
-	getSlowPostProtectionSetting.ConfigID = configid
-	getSlowPostProtectionSetting.Version = version
-	getSlowPostProtectionSetting.PolicyID = policyid
+	getSlowPostProtectionSettingsRequest := appsec.GetSlowPostProtectionSettingsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
-	getslowpost, errg := client.GetSlowPostProtectionSetting(ctx, getSlowPostProtectionSetting)
+	slowPostProtectionSettings, errg := client.GetSlowPostProtectionSettings(ctx, getSlowPostProtectionSettingsRequest)
 	if errg != nil {
-		logger.Errorf("calling 'getSlowPostProtectionSetting': %s", errg.Error())
+		logger.Errorf("calling 'getSlowPostProtectionSettings': %s", errg.Error())
 		return diag.FromErr(errg)
 	}
 
-	if err := d.Set("config_id", getSlowPostProtectionSetting.ConfigID); err != nil {
+	if err := d.Set("config_id", configid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("security_policy_id", getSlowPostProtectionSetting.PolicyID); err != nil {
+	if err := d.Set("security_policy_id", policyid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("slow_rate_action", getslowpost.Action); err != nil {
+	if err := d.Set("slow_rate_action", slowPostProtectionSettings.Action); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	if getslowpost.SlowRateThreshold != nil {
-		if err := d.Set("slow_rate_threshold_rate", getslowpost.SlowRateThreshold.Rate); err != nil {
+	if slowPostProtectionSettings.SlowRateThreshold != nil {
+		if err := d.Set("slow_rate_threshold_rate", slowPostProtectionSettings.SlowRateThreshold.Rate); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-		if err := d.Set("slow_rate_threshold_period", getslowpost.SlowRateThreshold.Period); err != nil {
+		if err := d.Set("slow_rate_threshold_period", slowPostProtectionSettings.SlowRateThreshold.Period); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
-	if getslowpost.DurationThreshold != nil {
-		if err := d.Set("duration_threshold_timeout", getslowpost.DurationThreshold.Timeout); err != nil {
+	if slowPostProtectionSettings.DurationThreshold != nil {
+		if err := d.Set("duration_threshold_timeout", slowPostProtectionSettings.DurationThreshold.Timeout); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}

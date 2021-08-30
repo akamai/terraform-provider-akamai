@@ -86,17 +86,18 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	getEvalHost := appsec.GetEvalHostRequest{}
-	getEvalHost.ConfigID = configid
-	getEvalHost.Version = getLatestConfigVersion(ctx, configid, m)
+	getEvalHostsRequest := appsec.GetEvalHostsRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
-	evalHostResponse, err := client.GetEvalHost(ctx, getEvalHost)
+	evalHostResponse, err := client.GetEvalHosts(ctx, getEvalHostsRequest)
 	if err != nil {
 		logger.Errorf("calling 'getEvalHost': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", getEvalHost.ConfigID); err != nil {
+	if err := d.Set("config_id", getEvalHostsRequest.ConfigID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	evalhostnameset := schema.Set{F: schema.HashString}

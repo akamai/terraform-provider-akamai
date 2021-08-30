@@ -743,6 +743,16 @@ func (p *mockappsec) GetCustomRuleActions(ctx context.Context, params appsec.Get
 	return args.Get(0).(*appsec.GetCustomRuleActionsResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetExportConfiguration(ctx context.Context, params appsec.GetExportConfigurationRequest) (*appsec.GetExportConfigurationResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetExportConfigurationResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetExportConfigurations(ctx context.Context, params appsec.GetExportConfigurationsRequest) (*appsec.GetExportConfigurationsResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -861,6 +871,16 @@ func (p *mockappsec) GetSelectedHostname(ctx context.Context, params appsec.GetS
 	}
 
 	return args.Get(0).(*appsec.GetSelectedHostnameResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateSelectedHostnames(ctx context.Context, params appsec.UpdateSelectedHostnamesRequest) (*appsec.UpdateSelectedHostnamesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateSelectedHostnamesResponse), args.Error(1)
 }
 
 func (p *mockappsec) UpdateSelectedHostname(ctx context.Context, params appsec.UpdateSelectedHostnameRequest) (*appsec.UpdateSelectedHostnameResponse, error) {

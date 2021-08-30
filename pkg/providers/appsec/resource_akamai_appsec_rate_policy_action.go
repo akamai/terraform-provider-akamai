@@ -124,15 +124,16 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	readRatePolicyAction := appsec.GetRatePolicyActionRequest{}
-	readRatePolicyAction.ConfigID = configid
-	readRatePolicyAction.Version = version
-	readRatePolicyAction.PolicyID = securitypolicyid
-	readRatePolicyAction.ID = ratepolicyid
+	getRatePolicyActionsRequest := appsec.GetRatePolicyActionsRequest{
+		ConfigID:     configid,
+		Version:      version,
+		PolicyID:     securitypolicyid,
+		RatePolicyID: ratepolicyid,
+	}
 
-	ratepolicyaction, err := client.GetRatePolicyAction(ctx, readRatePolicyAction)
+	ratepolicyactions, err := client.GetRatePolicyActions(ctx, getRatePolicyActionsRequest)
 	if err != nil {
-		logger.Errorf("calling 'getRatePolicyAction': %s", err.Error())
+		logger.Errorf("calling 'getRatePolicyActions': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -145,7 +146,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	if err := d.Set("rate_policy_id", ratepolicyid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	for _, action := range ratepolicyaction.RatePolicyActions {
+	for _, action := range ratepolicyactions.RatePolicyActions {
 		if action.ID == ratepolicyid {
 			if err := d.Set("ipv4_action", action.Ipv4Action); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))

@@ -158,7 +158,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 
 				"replace": func(old, new, src string) string { return strings.Replace(src, old, new, -1) },
 
-				"collectWAPHostnameInfo": func(exportconfiguration *appsec.GetExportConfigurationsResponse) []wapHostnames {
+				"collectWAPHostnameInfo": func(exportconfiguration *appsec.GetExportConfigurationResponse) []wapHostnames {
 					hostnameListsByPolicy := make([]wapHostnames, 0)
 					matchTargets := exportconfiguration.MatchTargets
 					websiteTargets := matchTargets.WebsiteTargets

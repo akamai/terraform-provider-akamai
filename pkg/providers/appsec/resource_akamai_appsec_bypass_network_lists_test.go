@@ -30,7 +30,7 @@ func TestAccAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
-		crd := appsec.RemoveBypassNetworkListsResponse{}
+		crd := appsec.UpdateBypassNetworkListsResponse{}
 		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"))
 		json.Unmarshal([]byte(expectJSD), &crd)
 
@@ -42,12 +42,12 @@ func TestAccAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		client.On("UpdateBypassNetworkLists",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.UpdateBypassNetworkListsRequest{ConfigID: 43253, Version: 7, NetworkLists: []string{"1304427_AAXXBBLIST", "888518_ACDDCKERS"}},
-		).Return(&cu, nil)
+		).Return(&cu, nil).Once()
 
-		client.On("RemoveBypassNetworkLists",
+		client.On("UpdateBypassNetworkLists",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.RemoveBypassNetworkListsRequest{ConfigID: 43253, Version: 7, NetworkLists: []string{"1304427_AAXXBBLIST", "888518_ACDDCKERS"}},
-		).Return(&crd, nil)
+			appsec.UpdateBypassNetworkListsRequest{ConfigID: 43253, Version: 7, NetworkLists: []string{"1304427_AAXXBBLIST", "888518_ACDDCKERS"}},
+		).Return(&crd, nil).Once()
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

@@ -31,13 +31,13 @@ func TestAccAkamaiConfiguration_res_basic(t *testing.T) {
 		getConfigurationVersionJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"))
 		json.Unmarshal([]byte(getConfigurationVersionJSON), &getConfigurationVersionsResponse)
 
-		hns := appsec.GetSelectedHostnameResponse{}
+		hns := appsec.GetSelectedHostnamesResponse{}
 		expectJSHN := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
 		json.Unmarshal([]byte(expectJSHN), &hns)
 
-		client.On("GetSelectedHostname",
+		client.On("GetSelectedHostnames",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetSelectedHostnameRequest{ConfigID: 43253, Version: 7},
+			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&hns, nil)
 
 		client.On("CreateConfiguration",
@@ -99,13 +99,13 @@ func TestAccAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 		getConfigurationVersionJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"))
 		json.Unmarshal([]byte(getConfigurationVersionJSON), &getConfigurationVersionsResponse)
 
-		hns := appsec.GetSelectedHostnameResponse{}
+		hns := appsec.GetSelectedHostnamesResponse{}
 		expectJSHN := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
 		json.Unmarshal([]byte(expectJSHN), &hns)
 
-		client.On("GetSelectedHostname",
+		client.On("GetSelectedHostnames",
 			mock.Anything,
-			appsec.GetSelectedHostnameRequest{ConfigID: 43253, Version: 7},
+			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&hns, nil)
 
 		client.On("CreateConfiguration",

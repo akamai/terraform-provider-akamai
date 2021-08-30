@@ -17,13 +17,13 @@ func TestAccAkamaiRatePolicyAction_res_basic(t *testing.T) {
 		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyUpdateResponse.json"))
 		json.Unmarshal([]byte(expectJSU), &cu)
 
-		cr := appsec.GetRatePolicyActionResponse{}
+		cr := appsec.GetRatePolicyActionsResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyActions.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
-		client.On("GetRatePolicyAction",
+		client.On("GetRatePolicyActions",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetRatePolicyActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ID: 135355},
+			appsec.GetRatePolicyActionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RatePolicyID: 135355},
 		).Return(&cr, nil)
 
 		client.On("UpdateRatePolicyAction",

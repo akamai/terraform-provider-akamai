@@ -73,13 +73,14 @@ func resourceSelectedHostnameCreate(ctx context.Context, d *schema.ResourceData,
 
 	// determine the actual hostname list to send to the API by combining the given hostnames & mode with the current hostnames
 
-	getSelectedHostnameRequest := appsec.GetSelectedHostnameRequest{}
-	getSelectedHostnameRequest.ConfigID = configid
-	getSelectedHostnameRequest.Version = getLatestConfigVersion(ctx, configid, m)
+	getSelectedHostnamesRequest := appsec.GetSelectedHostnamesRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
-	currentselectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostnameRequest)
+	currentselectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnamesRequest)
 	if err != nil {
-		logger.Errorf("calling 'GetSelectedHostname': %s", err.Error())
+		logger.Errorf("calling 'GetSelectedHostnames': %s", err.Error())
 		return diag.FromErr(err)
 	}
 	currenthostnameset := schema.Set{F: schema.HashString}
@@ -108,14 +109,14 @@ func resourceSelectedHostnameCreate(ctx context.Context, d *schema.ResourceData,
 		newhostnames = append(newhostnames, hostname)
 	}
 
-	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
+	updateSelectedHostname := appsec.UpdateSelectedHostnamesRequest{}
 	updateSelectedHostname.ConfigID = configid
 	updateSelectedHostname.Version = getModifiableConfigVersion(ctx, configid, "selectedHostname", m)
 	updateSelectedHostname.HostnameList = newhostnames
 
-	_, err = client.UpdateSelectedHostname(ctx, updateSelectedHostname)
+	_, err = client.UpdateSelectedHostnames(ctx, updateSelectedHostname)
 	if err != nil {
-		logger.Errorf("calling 'UpdateSelectedHostname': %s", err.Error())
+		logger.Errorf("calling 'UpdateSelectedHostnames': %s", err.Error())
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
@@ -141,17 +142,18 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	getSelectedHostname := appsec.GetSelectedHostnameRequest{}
-	getSelectedHostname.ConfigID = configid
-	getSelectedHostname.Version = getLatestConfigVersion(ctx, configid, m)
+	getSelectedHostnamesRequest := appsec.GetSelectedHostnamesRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
-	selectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostname)
+	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnamesRequest)
 	if err != nil {
-		logger.Errorf("calling 'getSelectedHostname': %s", err.Error())
+		logger.Errorf("calling 'getSelectedHostnames': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", getSelectedHostname.ConfigID); err != nil {
+	if err := d.Set("config_id", configid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 	selectedhostnameset := schema.Set{F: schema.HashString}
@@ -192,13 +194,14 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 
 	// determine the actual hostname list to send to the API by combining the given hostnames & mode with the current hostnames
 
-	getSelectedHostnameRequest := appsec.GetSelectedHostnameRequest{}
-	getSelectedHostnameRequest.ConfigID = configid
-	getSelectedHostnameRequest.Version = getLatestConfigVersion(ctx, configid, m)
+	getSelectedHostnamesRequest := appsec.GetSelectedHostnamesRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
-	selectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostnameRequest)
+	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnamesRequest)
 	if err != nil {
-		logger.Errorf("calling 'GetSelectedHostname': %s", err.Error())
+		logger.Errorf("calling 'GetSelectedHostnames': %s", err.Error())
 		return diag.FromErr(err)
 	}
 	currenthostnameset := schema.Set{F: schema.HashString}
@@ -243,14 +246,14 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 		newhostnames = append(newhostnames, hostname)
 	}
 
-	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
+	updateSelectedHostname := appsec.UpdateSelectedHostnamesRequest{}
 	updateSelectedHostname.ConfigID = configid
 	updateSelectedHostname.Version = getModifiableConfigVersion(ctx, configid, "selectedHostname", m)
 	updateSelectedHostname.HostnameList = newhostnames
 
-	_, err = client.UpdateSelectedHostname(ctx, updateSelectedHostname)
+	_, err = client.UpdateSelectedHostnames(ctx, updateSelectedHostname)
 	if err != nil {
-		logger.Errorf("calling 'UpdateSelectedHostname': %s", err.Error())
+		logger.Errorf("calling 'UpdateSelectedHostnames': %s", err.Error())
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 

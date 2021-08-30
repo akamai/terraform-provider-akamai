@@ -169,11 +169,12 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 	d.Set("description", configuration.Description)
 	d.Set("config_id", configuration.ID)
 
-	getSelectedHostname := appsec.GetSelectedHostnameRequest{}
-	getSelectedHostname.ConfigID = configid
-	getSelectedHostname.Version = getLatestConfigVersion(ctx, configid, m)
+	getSelectedHostnamesRequest := appsec.GetSelectedHostnamesRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
-	selectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostname)
+	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnamesRequest)
 	if err != nil {
 		logger.Errorf("calling 'getSelectedHostname': %s", err.Error())
 		return diag.FromErr(err)
@@ -232,14 +233,14 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 			hostnames = append(hostnames, hostname)
 		}
 
-		updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
+		updateSelectedHostname := appsec.UpdateSelectedHostnamesRequest{}
 		updateSelectedHostname.ConfigID = configid
 		updateSelectedHostname.Version = getModifiableConfigVersion(ctx, configid, "configuration", m)
 		updateSelectedHostname.HostnameList = hostnames
 
-		_, err = client.UpdateSelectedHostname(ctx, updateSelectedHostname)
+		_, err = client.UpdateSelectedHostnames(ctx, updateSelectedHostname)
 		if err != nil {
-			logger.Errorf("calling 'UpdateSelectedHostname': %s", err.Error())
+			logger.Errorf("calling 'UpdateSelectedHostnames': %s", err.Error())
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}

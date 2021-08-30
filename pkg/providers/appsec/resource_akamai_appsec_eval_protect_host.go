@@ -89,11 +89,12 @@ func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	getEvalProtectHost := appsec.GetEvalProtectHostRequest{}
-	getEvalProtectHost.ConfigID = configid
-	getEvalProtectHost.Version = getLatestConfigVersion(ctx, configid, m)
+	getEvalProtectHostsRequest := appsec.GetEvalProtectHostsRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
-	evalprotecthostnames, err := client.GetEvalProtectHost(ctx, getEvalProtectHost)
+	evalprotecthostnames, err := client.GetEvalProtectHosts(ctx, getEvalProtectHostsRequest)
 	if err != nil {
 		logger.Errorf("calling 'updateEvalProtectHost': %s", err.Error())
 		return diag.FromErr(err)

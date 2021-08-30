@@ -51,7 +51,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceExportConfigurationRead")
 
-	getExportConfiguration := appsec.GetExportConfigurationsRequest{}
+	getExportConfiguration := appsec.GetExportConfigurationRequest{}
 
 	configid, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -65,7 +65,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	}
 	getExportConfiguration.Version = version
 
-	exportconfiguration, err := client.GetExportConfigurations(ctx, getExportConfiguration)
+	exportconfiguration, err := client.GetExportConfiguration(ctx, getExportConfiguration)
 	if err != nil {
 		logger.Errorf("calling 'getExportConfiguration': %s", err.Error())
 		return diag.FromErr(err)
