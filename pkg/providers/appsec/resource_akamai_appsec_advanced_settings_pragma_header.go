@@ -41,7 +41,7 @@ func resourceAdvancedSettingsPragmaHeader() *schema.Resource {
 			"pragma_header": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateFunc:     validation.StringIsJSON,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
 			},
 		},
@@ -68,11 +68,12 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	createAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{}
-	createAdvancedSettingsPragma.ConfigID = configid
-	createAdvancedSettingsPragma.Version = version
-	createAdvancedSettingsPragma.PolicyID = policyid
-	createAdvancedSettingsPragma.JsonPayloadRaw = rawJSON
+	createAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{
+		ConfigID:       configid,
+		Version:        version,
+		PolicyID:       policyid,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, erru := client.UpdateAdvancedSettingsPragma(ctx, createAdvancedSettingsPragma)
 	if erru != nil {
@@ -155,8 +156,9 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 	jsonPayloadRaw := []byte("{}")
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	removeAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{}
-	removeAdvancedSettingsPragma.JsonPayloadRaw = rawJSON
+	removeAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{
+		JsonPayloadRaw: rawJSON,
+	}
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
 		idParts, err := splitID(d.Id(), 2, "configid:policyid")

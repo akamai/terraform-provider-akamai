@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/go-cty/cty"
 	"net/http"
 	"strings"
 	"time"
@@ -54,9 +55,9 @@ func resourceGTMv1Domain() *schema.Resource {
 				Required: true,
 			},
 			"type": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validateDomainType,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateDomainType,
 			},
 			"comment": {
 				Type:     schema.TypeString,
@@ -510,12 +511,12 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 // validateDomainType is a SchemaValidateFunc to validate the Domain type.
-func validateDomainType(v interface{}, _ string) (ws []string, es []error) {
+func validateDomainType(v interface{}, _ cty.Path) diag.Diagnostics {
 	value := strings.ToUpper(v.(string))
 	if value != "BASIC" && value != "FULL" && value != "WEIGHTED" && value != "STATIC" && value != "FAILOVER-ONLY" {
-		es = append(es, fmt.Errorf("type must be basic, full, weighted, static, or failover-only"))
+		return diag.Errorf(("type must be basic, full, weighted, static, or failover-only"))
 	}
-	return
+	return nil
 }
 
 // Create and populate a new domain object from resource data

@@ -40,10 +40,10 @@ func resourceDNSv2Record() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"zone": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.NoZeroValues,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.NoZeroValues),
 			},
 			"name": {
 				Type:     schema.TypeString,
@@ -54,7 +54,7 @@ func resourceDNSv2Record() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					RRTypeA,
 					RRTypeAaaa,
 					RRTypeCname,
@@ -83,7 +83,7 @@ func resourceDNSv2Record() *schema.Resource {
 					RRTypeTlsa,
 					RRTypeSvcb,
 					RRTypeHTTPS,
-				}, false),
+				}, false)),
 			},
 			"ttl": {
 				Type:     schema.TypeInt,

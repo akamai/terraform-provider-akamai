@@ -45,15 +45,15 @@ func resourceEvalRule() *schema.Resource {
 				Required: true,
 			},
 			"rule_action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
 			},
 			"condition_exception": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "",
-				ValidateFunc:     validation.StringIsJSON,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsConditionException,
 			},
 		},
@@ -94,13 +94,14 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	createEvalRule := appsec.UpdateEvalRuleRequest{}
-	createEvalRule.ConfigID = configid
-	createEvalRule.Version = version
-	createEvalRule.PolicyID = policyid
-	createEvalRule.RuleID = ruleid
-	createEvalRule.Action = action
-	createEvalRule.JsonPayloadRaw = rawJSON
+	createEvalRule := appsec.UpdateEvalRuleRequest{
+		ConfigID:       configid,
+		Version:        version,
+		PolicyID:       policyid,
+		RuleID:         ruleid,
+		Action:         action,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, erru := client.UpdateEvalRule(ctx, createEvalRule)
 	if erru != nil {
@@ -133,11 +134,12 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	getEvalRule := appsec.GetEvalRuleRequest{}
-	getEvalRule.ConfigID = configid
-	getEvalRule.Version = version
-	getEvalRule.PolicyID = policyid
-	getEvalRule.RuleID = ruleid
+	getEvalRule := appsec.GetEvalRuleRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		RuleID:   ruleid,
+	}
 
 	evalrule, err := client.GetEvalRule(ctx, getEvalRule)
 	if err != nil {
@@ -206,13 +208,14 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	jsonPayloadRaw := []byte(conditionexception)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	updateEvalRule := appsec.UpdateEvalRuleRequest{}
-	updateEvalRule.ConfigID = configid
-	updateEvalRule.Version = version
-	updateEvalRule.PolicyID = policyid
-	updateEvalRule.RuleID = ruleid
-	updateEvalRule.Action = action
-	updateEvalRule.JsonPayloadRaw = rawJSON
+	updateEvalRule := appsec.UpdateEvalRuleRequest{
+		ConfigID:       configid,
+		Version:        version,
+		PolicyID:       policyid,
+		RuleID:         ruleid,
+		Action:         action,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, erru := client.UpdateEvalRule(ctx, updateEvalRule)
 	if erru != nil {
@@ -243,12 +246,13 @@ func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	removeEvalRule := appsec.UpdateEvalRuleRequest{}
-	removeEvalRule.ConfigID = configid
-	removeEvalRule.Version = version
-	removeEvalRule.PolicyID = policyid
-	removeEvalRule.RuleID = ruleid
-	removeEvalRule.Action = "none"
+	removeEvalRule := appsec.UpdateEvalRuleRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		RuleID:   ruleid,
+		Action:   "none",
+	}
 
 	_, errd := client.UpdateEvalRule(ctx, removeEvalRule)
 	if errd != nil {

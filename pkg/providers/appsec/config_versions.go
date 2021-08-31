@@ -34,8 +34,9 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	}()
 
 	logger.Debugf("Resource %s calling GetConfigurations", resource)
-	getConfigurationRequest := appsec.GetConfigurationRequest{}
-	getConfigurationRequest.ConfigID = configID
+	getConfigurationRequest := appsec.GetConfigurationRequest{
+		ConfigID: configID,
+	}
 
 	configuration, err := client.GetConfiguration(ctx, getConfigurationRequest)
 	if err != nil {
@@ -55,9 +56,10 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 		return latestVersion
 	}
 
-	createConfigurationVersionClone := appsec.CreateConfigurationVersionCloneRequest{}
-	createConfigurationVersionClone.ConfigID = configID
-	createConfigurationVersionClone.CreateFromVersion = latestVersion
+	createConfigurationVersionClone := appsec.CreateConfigurationVersionCloneRequest{
+		ConfigID:          configID,
+		CreateFromVersion: latestVersion,
+	}
 
 	logger.Debugf("Resource %s cloning configuration version %d", resource, latestVersion)
 	ccr, err := client.CreateConfigurationVersionClone(ctx, createConfigurationVersionClone)
@@ -79,8 +81,9 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) in
 	logger := meta.Log("APPSEC", "getLatestConfigVersion")
 
 	logger.Debugf("getLatestConfigVersion calling GetConfigurations")
-	getConfigurationRequest := appsec.GetConfigurationRequest{}
-	getConfigurationRequest.ConfigID = configID
+	getConfigurationRequest := appsec.GetConfigurationRequest{
+		ConfigID: configID,
+	}
 
 	configuration, err := client.GetConfiguration(ctx, getConfigurationRequest)
 	if err != nil {
@@ -102,8 +105,9 @@ func getActiveConfigVersions(ctx context.Context, configID int, m interface{}) (
 	logger := meta.Log("APPSEC", "getActiveConfigVersions")
 
 	logger.Debugf("getActiveConfigVersions calling GetConfigurations")
-	getConfigurationRequest := appsec.GetConfigurationRequest{}
-	getConfigurationRequest.ConfigID = configID
+	getConfigurationRequest := appsec.GetConfigurationRequest{
+		ConfigID: configID,
+	}
 
 	configuration, err := client.GetConfiguration(ctx, getConfigurationRequest)
 	if err != nil {

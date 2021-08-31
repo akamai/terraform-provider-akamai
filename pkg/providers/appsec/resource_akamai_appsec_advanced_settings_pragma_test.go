@@ -41,12 +41,12 @@ func TestAccAkamaiAdvancedSettingsPragma_res_basic(t *testing.T) {
 
 		client.On("UpdateAdvancedSettingsPragma",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateAdvancedSettingsPragmaRequest{ConfigID: 43253, Version: 7, PolicyID: "", JsonPayloadRaw: json.RawMessage{0x7b, 0x22, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x3a, 0x22, 0x52, 0x45, 0x4d, 0x4f, 0x56, 0x45, 0x22, 0x7d, 0x0a}},
+			appsec.UpdateAdvancedSettingsPragmaRequest{ConfigID: 43253, Version: 7, PolicyID: "", JsonPayloadRaw: json.RawMessage("{\"action\":\"REMOVE\"}\n")},
 		).Return(&cu, nil)
 
 		client.On("UpdateAdvancedSettingsPragma",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateAdvancedSettingsPragmaRequest{ConfigID: 43253, Version: 7, PolicyID: "", JsonPayloadRaw: json.RawMessage{0x7b, 0x7d}},
+			appsec.UpdateAdvancedSettingsPragmaRequest{ConfigID: 43253, Version: 7, PolicyID: "", JsonPayloadRaw: json.RawMessage("{}")},
 		).Return(&cu, nil)
 
 		useClient(client, func() {
