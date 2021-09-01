@@ -147,7 +147,7 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "networkProtectionDS", enabled)
+	outputtext, err := RenderTemplates(ots, "networkProtectionDS", policyProtections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))

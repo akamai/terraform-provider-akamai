@@ -147,7 +147,7 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "wafProtectionDS", enabled)
+	outputtext, err := RenderTemplates(ots, "wafProtectionDS", policyProtections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
