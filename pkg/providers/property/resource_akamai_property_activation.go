@@ -370,6 +370,10 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		for _, contact := range notifySet.List() {
 			notify = append(notify, cast.ToString(contact))
 		}
+		note, err := tools.GetStringValue("note", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
 
 		deleteActivation, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
 			PropertyID: propertyID,
@@ -379,6 +383,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 				PropertyVersion:        version,
 				NotifyEmails:           notify,
 				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
+				Note:                   note,
 			},
 		})
 		if err != nil {
