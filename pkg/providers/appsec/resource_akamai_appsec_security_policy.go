@@ -94,12 +94,13 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	if len(createfromsecuritypolicy) > 0 {
-		createSecurityPolicyClone := appsec.CreateSecurityPolicyCloneRequest{}
-		createSecurityPolicyClone.ConfigID = configid
-		createSecurityPolicyClone.Version = version
-		createSecurityPolicyClone.CreateFromSecurityPolicy = createfromsecuritypolicy
-		createSecurityPolicyClone.PolicyName = policyname
-		createSecurityPolicyClone.PolicyPrefix = policyprefix
+		createSecurityPolicyClone := appsec.CreateSecurityPolicyCloneRequest{
+			ConfigID:                 configid,
+			Version:                  version,
+			CreateFromSecurityPolicy: createfromsecuritypolicy,
+			PolicyName:               policyname,
+			PolicyPrefix:             policyprefix,
+		}
 
 		spcr, err := client.CreateSecurityPolicyClone(ctx, createSecurityPolicyClone)
 		if err != nil {
@@ -110,12 +111,13 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 		d.SetId(fmt.Sprintf("%d:%s", createSecurityPolicyClone.ConfigID, spcr.PolicyID))
 
 	} else {
-		createSecurityPolicy := appsec.CreateSecurityPolicyRequest{}
-		createSecurityPolicy.ConfigID = configid
-		createSecurityPolicy.Version = version
-		createSecurityPolicy.PolicyName = policyname
-		createSecurityPolicy.DefaultSettings = defaultSettings
-		createSecurityPolicy.PolicyPrefix = policyprefix
+		createSecurityPolicy := appsec.CreateSecurityPolicyRequest{
+			ConfigID:        configid,
+			Version:         version,
+			PolicyName:      policyname,
+			DefaultSettings: defaultSettings,
+			PolicyPrefix:    policyprefix,
+		}
 
 		spcr, errc := client.CreateSecurityPolicy(ctx, createSecurityPolicy)
 
@@ -154,10 +156,11 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getSecurityPolicy := appsec.GetSecurityPolicyRequest{}
-	getSecurityPolicy.ConfigID = configid
-	getSecurityPolicy.Version = version
-	getSecurityPolicy.PolicyID = policyid
+	getSecurityPolicy := appsec.GetSecurityPolicyRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	securitypolicy, err := client.GetSecurityPolicy(ctx, getSecurityPolicy)
 	if err != nil {
@@ -213,11 +216,12 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	updateSecurityPolicy := appsec.UpdateSecurityPolicyRequest{}
-	updateSecurityPolicy.ConfigID = configid
-	updateSecurityPolicy.Version = version
-	updateSecurityPolicy.PolicyID = securitypolicyid
-	updateSecurityPolicy.PolicyName = policyname
+	updateSecurityPolicy := appsec.UpdateSecurityPolicyRequest{
+		ConfigID:   configid,
+		Version:    version,
+		PolicyID:   securitypolicyid,
+		PolicyName: policyname,
+	}
 
 	_, err = client.UpdateSecurityPolicy(ctx, updateSecurityPolicy)
 	if err != nil {
@@ -251,10 +255,12 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	if latestVersion == stagingVersion || latestVersion == productionVersion {
 		logger.Debugf("latest version %d is active, DeleteContext is a no-op", latestVersion)
 	} else {
-		removeSecurityPolicy := appsec.RemoveSecurityPolicyRequest{}
-		removeSecurityPolicy.ConfigID = configid
-		removeSecurityPolicy.Version = version
-		removeSecurityPolicy.PolicyID = securitypolicyid
+		removeSecurityPolicy := appsec.RemoveSecurityPolicyRequest{
+			ConfigID: configid,
+			Version:  version,
+			PolicyID: securitypolicyid,
+		}
+
 		_, errd := client.RemoveSecurityPolicy(ctx, removeSecurityPolicy)
 		if errd != nil {
 			logger.Errorf("calling 'removeSecurityPolicy': %s", errd.Error())

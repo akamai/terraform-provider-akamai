@@ -3,6 +3,7 @@ package tools
 import (
 	"errors"
 	"fmt"
+	"github.com/hashicorp/go-cty/cty"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -16,11 +17,29 @@ var (
 	ErrValueSet = errors.New("setting property value")
 	// ErrEmptyKey is returned when setting property value returned an error
 	ErrEmptyKey = errors.New("provided key cannot be empty")
+	// ErrEmptyPath is returned when path is empty
+	ErrEmptyPath = errors.New("path cannot be empty")
 )
 
 // ResourceDataFetcher ...
 type ResourceDataFetcher interface {
 	GetOk(string) (interface{}, bool)
+}
+
+// GetSchemaFieldNameFromPath returns schema field name from given path
+//
+// if len of path is zero it returns empty string and error
+func GetSchemaFieldNameFromPath(path cty.Path) (string, error) {
+	if len(path) == 0 {
+		return "", ErrEmptyPath
+	}
+
+	attrStep, ok := path[len(path)-1].(cty.GetAttrStep)
+	if !ok {
+		return "", ErrInvalidType
+	}
+
+	return attrStep.Name, nil
 }
 
 // GetStringValue fetches value with given key from ResourceData object and attempts type cast to string

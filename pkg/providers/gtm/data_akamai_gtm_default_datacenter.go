@@ -27,11 +27,11 @@ func dataSourceGTMDefaultDatacenter() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  gtm.MapDefaultDC,
-				ValidateFunc: validation.IntInSlice([]int{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntInSlice([]int{
 					gtm.MapDefaultDC,
 					gtm.Ipv4DefaultDC,
 					gtm.Ipv6DefaultDC,
-				}),
+				})),
 			},
 			"datacenter_id": {
 				Type:     schema.TypeInt,

@@ -273,6 +273,7 @@ would then cause the `hostnames` list to be added to Terraform's local state.
 
 Resource definitions can be exported for import using any of the following `search` entries:
   * AdvancedSettingsLogging.tf
+  * AdvancedSettingsEvasivePathMatch.tf
   * AdvancedSettingsPragmaHeader.tf
   * AdvancedSettingsPrefetch.tf
   * ApiRequestConstraints.tf

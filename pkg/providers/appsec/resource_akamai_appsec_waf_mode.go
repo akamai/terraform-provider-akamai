@@ -42,12 +42,12 @@ func resourceWAFMode() *schema.Resource {
 			"mode": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					AAG,
 					KRS,
 					AseAuto,
 					AseManual,
-				}, false),
+				}, false)),
 			},
 			"current_ruleset": {
 				Type:     schema.TypeString,
@@ -94,11 +94,12 @@ func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	createWAFMode := appsec.UpdateWAFModeRequest{}
-	createWAFMode.ConfigID = configid
-	createWAFMode.Version = version
-	createWAFMode.PolicyID = policyid
-	createWAFMode.Mode = mode
+	createWAFMode := appsec.UpdateWAFModeRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Mode:     mode,
+	}
 
 	_, erru := client.UpdateWAFMode(ctx, createWAFMode)
 	if erru != nil {
@@ -128,10 +129,11 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getWAFMode := appsec.GetWAFModeRequest{}
-	getWAFMode.ConfigID = configid
-	getWAFMode.Version = version
-	getWAFMode.PolicyID = policyid
+	getWAFMode := appsec.GetWAFModeRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
@@ -193,11 +195,12 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	updateWAFMode := appsec.UpdateWAFModeRequest{}
-	updateWAFMode.ConfigID = configid
-	updateWAFMode.Version = version
-	updateWAFMode.PolicyID = policyid
-	updateWAFMode.Mode = mode
+	updateWAFMode := appsec.UpdateWAFModeRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Mode:     mode,
+	}
 
 	_, erru := client.UpdateWAFMode(ctx, updateWAFMode)
 	if erru != nil {

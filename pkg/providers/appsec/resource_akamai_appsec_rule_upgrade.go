@@ -84,12 +84,13 @@ func resourceRuleUpgradeCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	createRuleUpgrade := appsec.UpdateRuleUpgradeRequest{}
-	createRuleUpgrade.ConfigID = configid
-	createRuleUpgrade.Version = version
-	createRuleUpgrade.PolicyID = policyid
-	createRuleUpgrade.Upgrade = true
-	createRuleUpgrade.Mode = upgrademode
+	createRuleUpgrade := appsec.UpdateRuleUpgradeRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Upgrade:  true,
+		Mode: upgrademode,
+	}
 
 	_, err = client.UpdateRuleUpgrade(ctx, createRuleUpgrade)
 	if err != nil {
@@ -119,10 +120,11 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getWAFMode := appsec.GetWAFModeRequest{}
-	getWAFMode.ConfigID = configid
-	getWAFMode.Version = version
-	getWAFMode.PolicyID = policyid
+	getWAFMode := appsec.GetWAFModeRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
@@ -171,12 +173,13 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	updateRuleUpgrade := appsec.UpdateRuleUpgradeRequest{}
-	updateRuleUpgrade.ConfigID = configid
-	updateRuleUpgrade.Version = version
-	updateRuleUpgrade.PolicyID = policyid
-	updateRuleUpgrade.Upgrade = true
-	updateRuleUpgrade.Mode = upgrademode
+	updateRuleUpgrade := appsec.UpdateRuleUpgradeRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		Upgrade:  true,
+		Mode: upgrademode,
+	}
 
 	_, err = client.UpdateRuleUpgrade(ctx, updateRuleUpgrade)
 	if err != nil {

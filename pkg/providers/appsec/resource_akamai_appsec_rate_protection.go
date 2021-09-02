@@ -147,7 +147,7 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "rateProtectionDS", enabled)
+	outputtext, err := RenderTemplates(ots, "rateProtectionDS", policyProtections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))

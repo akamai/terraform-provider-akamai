@@ -148,7 +148,7 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "slowpostProtectionDS", enabled)
+	outputtext, err := RenderTemplates(ots, "slowpostProtectionDS", policyProtections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))

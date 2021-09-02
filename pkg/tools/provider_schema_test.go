@@ -2,6 +2,7 @@ package tools
 
 import (
 	"errors"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,6 +17,46 @@ type mocked struct {
 func (m *mocked) GetOk(key string) (interface{}, bool) {
 	args := m.Called(key)
 	return args.Get(0), args.Bool(1)
+}
+
+func TestGetSchemaFieldNameFromPath(t *testing.T) {
+	tests := map[string]struct {
+		path      cty.Path
+		expected  string
+		withError error
+	}{
+		"path is empty": {
+			path:      cty.Path{},
+			withError: ErrEmptyPath,
+		},
+		"path is valid": {
+			path:     cty.Path{cty.GetAttrStep{Name: "foo"}},
+			expected: "foo",
+		},
+		"path contains invalid type": {
+			path:      cty.Path{cty.IndexStep{}},
+			withError: ErrInvalidType,
+		},
+		"path contains multiple elements with last element of invalid type": {
+			path:      cty.Path{cty.GetAttrStep{Name: "foo"}, cty.IndexStep{}},
+			withError: ErrInvalidType,
+		},
+		"path contains multiple elements with last element of valid type": {
+			path:     cty.Path{cty.IndexStep{}, cty.GetAttrStep{Name: "foo"}},
+			expected: "foo",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			res, err := GetSchemaFieldNameFromPath(test.path)
+			if test.withError != nil {
+				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, res)
+		})
+	}
 }
 
 func TestGetStringValue(t *testing.T) {
