@@ -1,0 +1,24 @@
+{
+    "name": "new_custom_deny",
+    "description": "testing",
+    "isPageUrl" : false,
+    "id": "deny_custom_622918",
+    "parameters": [
+        {
+            "name": "response_status_code",
+            "value": "403"
+        },
+        {
+            "name": "prevent_browser_cache",
+            "value": "false"
+        },
+        {
+            "name": "response_content_type",
+            "value": "application/json"
+        },
+        {
+            "name": "response_body_content",
+            "value": "new testing"
+        }
+    ]
+}

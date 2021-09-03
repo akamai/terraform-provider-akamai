@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -73,13 +74,18 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 		JsonPayloadRaw: rawJSON,
 	}
 
-	postresp, errc := client.CreateCustomDeny(ctx, createCustomDeny)
+	createCustomDenyResponse, errc := client.CreateCustomDeny(ctx, createCustomDeny)
 	if errc != nil {
 		logger.Errorf("calling 'createCustomDeny': %s", errc.Error())
 		return diag.FromErr(errc)
 	}
+	for _, p := range createCustomDenyResponse.Parameters {
+		name := p.Name
+		val := p.Value
+		log.Print(fmt.Sprintf("%s = %s", string(name), string(val)))
+	}
 
-	d.SetId(fmt.Sprintf("%d:%s", configid, postresp.ID))
+	d.SetId(fmt.Sprintf("%d:%s", configid, createCustomDenyResponse.ID))
 
 	return resourceCustomDenyRead(ctx, d, m)
 }
@@ -107,10 +113,15 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 		ID:       customdenyid,
 	}
 
-	customdeny, err := client.GetCustomDeny(ctx, getCustomDeny)
+	getCustomDenyResponse, err := client.GetCustomDeny(ctx, getCustomDeny)
 	if err != nil {
 		logger.Errorf("calling 'getCustomDeny': %s", err.Error())
 		return diag.FromErr(err)
+	}
+	for _, p := range getCustomDenyResponse.Parameters {
+		name := p.Name
+		val := p.Value
+		log.Print(fmt.Sprintf("%s = %s", string(name), string(val)))
 	}
 
 	if err := d.Set("config_id", configid); err != nil {
@@ -119,7 +130,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err := d.Set("custom_deny_id", customdenyid); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	jsonBody, err := json.Marshal(customdeny)
+	jsonBody, err := json.Marshal(getCustomDenyResponse)
 	if err != nil {
 		return diag.FromErr(err)
 	}
