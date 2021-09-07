@@ -1612,33 +1612,3 @@ func (p *mockappsec) UpdateThreatIntel(ctx context.Context, params appsec.Update
 
 	return args.Get(0).(*appsec.UpdateThreatIntelResponse), args.Error(1)
 }
-
-func (p *mockappsec) GetAdvancedSettingsEvasivePathMatch(ctx context.Context, params appsec.GetAdvancedSettingsEvasivePathMatchRequest) (*appsec.GetAdvancedSettingsEvasivePathMatchResponse, error) {
-	args := p.Called(ctx, params)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	return args.Get(0).(*appsec.GetAdvancedSettingsEvasivePathMatchResponse), args.Error(1)
-}
-
-func (p *mockappsec) UpdateAdvancedSettingsEvasivePathMatch(ctx context.Context, params appsec.UpdateAdvancedSettingsEvasivePathMatchRequest) (*appsec.UpdateAdvancedSettingsEvasivePathMatchResponse, error) {
-	args := p.Called(ctx, params)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	return args.Get(0).(*appsec.UpdateAdvancedSettingsEvasivePathMatchResponse), args.Error(1)
-}
-
-func (p *mockappsec) RemoveAdvancedSettingsEvasivePathMatch(ctx context.Context, params appsec.RemoveAdvancedSettingsEvasivePathMatchRequest) (*appsec.RemoveAdvancedSettingsEvasivePathMatchResponse, error) {
-	args := p.Called(ctx, params)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	return args.Get(0).(*appsec.RemoveAdvancedSettingsEvasivePathMatchResponse), args.Error(1)
-}
