@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgegrid"
@@ -13,6 +14,43 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tj/assert"
 )
+
+func unsetEnvs(t *testing.T) map[string]string {
+	existingEnvs := make(map[string]string)
+
+	globalEnvs := os.Environ()
+	for _, env := range globalEnvs {
+		envKeyValue := strings.Split(env, "=")
+		if isConfigValue(envKeyValue[0]) {
+			existingEnvs[envKeyValue[0]] = envKeyValue[1]
+		}
+	}
+	for key := range existingEnvs {
+		err := os.Unsetenv(key)
+		assert.NoError(t, err)
+	}
+	return existingEnvs
+}
+
+func restoreEnvs(t *testing.T, envs map[string]string) {
+	for k, v := range envs {
+		err := os.Setenv(k, v)
+		assert.NoError(t, err)
+	}
+}
+
+func isConfigValue(key string) bool {
+	switch key {
+	case
+		"AKAMAI_ACCESS_TOKEN",
+		"AKAMAI_CLIENT_TOKEN",
+		"AKAMAI_CLIENT_SECRET",
+		"AKAMAI_HOST",
+		"AKAMAI_MAX_BODY":
+		return true
+	}
+	return false
+}
 
 func TestSetEdgegridEnvs(t *testing.T) {
 	tests := map[string]struct {
@@ -79,6 +117,11 @@ func TestSetEdgegridEnvs(t *testing.T) {
 			},
 		},
 	}
+
+	existingEnvs := unsetEnvs(t)
+	defer func() {
+		restoreEnvs(t, existingEnvs)
+	}()
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -190,6 +233,12 @@ func TestConfigureEdgercInContext(t *testing.T) {
 			withError:           false,
 		},
 	}
+
+	existingEnvs := unsetEnvs(t)
+	defer func() {
+		restoreEnvs(t, existingEnvs)
+	}()
+
 	for name, test := range tests {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
