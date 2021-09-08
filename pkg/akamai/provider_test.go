@@ -16,12 +16,19 @@ import (
 )
 
 func unsetEnvs(t *testing.T) map[string]string {
+	configVars := map[string]struct{}{
+		"AKAMAI_ACCESS_TOKEN":  {},
+		"AKAMAI_CLIENT_TOKEN":  {},
+		"AKAMAI_CLIENT_SECRET": {},
+		"AKAMAI_HOST":          {},
+		"AKAMAI_MAX_BODY":      {},
+	}
 	existingEnvs := make(map[string]string)
 
 	globalEnvs := os.Environ()
 	for _, env := range globalEnvs {
-		envKeyValue := strings.Split(env, "=")
-		if isConfigValue(envKeyValue[0]) {
+		envKeyValue := strings.SplitN(env, "=", 2)
+		if _, ok := configVars[envKeyValue[0]]; ok {
 			existingEnvs[envKeyValue[0]] = envKeyValue[1]
 		}
 	}
@@ -37,19 +44,6 @@ func restoreEnvs(t *testing.T, envs map[string]string) {
 		err := os.Setenv(k, v)
 		assert.NoError(t, err)
 	}
-}
-
-func isConfigValue(key string) bool {
-	switch key {
-	case
-		"AKAMAI_ACCESS_TOKEN",
-		"AKAMAI_CLIENT_TOKEN",
-		"AKAMAI_CLIENT_SECRET",
-		"AKAMAI_HOST",
-		"AKAMAI_MAX_BODY":
-		return true
-	}
-	return false
 }
 
 func TestSetEdgegridEnvs(t *testing.T) {
@@ -119,9 +113,7 @@ func TestSetEdgegridEnvs(t *testing.T) {
 	}
 
 	existingEnvs := unsetEnvs(t)
-	defer func() {
-		restoreEnvs(t, existingEnvs)
-	}()
+	defer restoreEnvs(t, existingEnvs)
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -235,9 +227,7 @@ func TestConfigureEdgercInContext(t *testing.T) {
 	}
 
 	existingEnvs := unsetEnvs(t)
-	defer func() {
-		restoreEnvs(t, existingEnvs)
-	}()
+	defer restoreEnvs(t, existingEnvs)
 
 	for name, test := range tests {
 		ctx := context.Background()
