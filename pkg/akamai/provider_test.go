@@ -112,11 +112,11 @@ func TestSetEdgegridEnvs(t *testing.T) {
 		},
 	}
 
-	existingEnvs := unsetEnvs(t)
-	defer restoreEnvs(t, existingEnvs)
-
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			existingEnvs := unsetEnvs(t)
+			defer restoreEnvs(t, existingEnvs)
+
 			currentEnvs := make(map[string]string, len(test.expectedEnvs))
 			for k := range test.expectedEnvs {
 				currentEnvs[k] = os.Getenv(k)
@@ -226,12 +226,12 @@ func TestConfigureEdgercInContext(t *testing.T) {
 		},
 	}
 
-	existingEnvs := unsetEnvs(t)
-	defer restoreEnvs(t, existingEnvs)
-
 	for name, test := range tests {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
+			existingEnvs := unsetEnvs(t)
+			defer restoreEnvs(t, existingEnvs)
+
 			meta, diagnostics := configureContext(ctx, test.resourceLocalData)
 			if test.withError {
 				assert.Nil(t, meta)
