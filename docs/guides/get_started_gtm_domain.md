@@ -61,11 +61,11 @@ To import using step-by-step construction, complete these tasks:
 
 The Domain itself is represented by a [`akamai_gtm_domain` resource](../resources/gtm_domain.md). Add this new resource block to your `akamai.tf` file after the provider block. **Note:** the domain must be the first GTM resource created as it provides operating context for all other contained objects.
 
-To define the entire configuration, we start by opening the resource block and giving the domain a `name`. In this case, we’re going to use the name "example".
+To define the entire configuration, we start by opening the resource block and giving the domain a `name`. In this case, we're going to use the name "example".
 
 Next, we set the required (`name`, `type`) and optional (`group_id`, `contract_id`, `email_notification_list`, `comment`) arguments.
 
-Once you’re done, your Domain configuration should look like this:
+Once you're done, your Domain configuration should look like this:
 
 ```
 resource "akamai_gtm_domain" "example" {
@@ -83,7 +83,7 @@ resource "akamai_gtm_domain" "example" {
 
 The Datacenter itself is represented by a [`akamai_gtm_datacenter` resource](../resources/gtm_datacenter.md). Add this new block to your `akamai.tf` file after the provider block.
 
-To define the entire configuration, we start by opening the resource block and giving it a name. In this case, we’re going to use the name "example_dc".
+To define the entire configuration, we start by opening the resource block and giving it a name. In this case, we're going to use the name "example_dc".
 
 Next, we set the required (`domain` name) and optional (`nickname`) arguments.
 
@@ -101,11 +101,11 @@ resource "akamai_gtm_datacenter" "example_dc" {
 
 The Property itself is represented by a [`akamai_gtm_property` resource](../resources/gtm_property.md). Add this new block to your `akamai.tf` file after the provider block.
 
-To define the entire configuration, we start by opening the resource block and giving it a name. In this case, we’re going to use the name "example_prop".
+To define the entire configuration, we start by opening the resource block and giving it a name. In this case, we're going to use the name "example_prop".
 
 Next, we set the required (`domain` name, property `name`, property `type`, `traffic_target`s, `liveness_test`s, `score_aggregation_type`, `handout_limit`, `handout_mode`) and optional (`failover_delay`, `failback_delay`) arguments.
 
-Once you’re done, your Property configuration should look like this:
+Once you're done, your Property configuration should look like this:
 
 ```
 resource "akamai_gtm_property" "example_prop" {

@@ -6,22 +6,35 @@ description: |-
   EvalProtectHost
 ---
 
-# resource_akamai_appsec_eval_protect_host
+# akamai_appsec_eval_protect_host
 
-The `resource_akamai_appsec_eval_protect_host` resource allows you to move hostnames that you are evaluating to active protection. When you move a hostname from the evaluation hostnames list, it’s added to your security policy as a protected hostname.
+**Scopes**: Security configuration
+
+Moves hostnames being evaluated to active protection. When you move a hostname from the evaluation hostnames list that host is added to your security policy as a protected hostname and is removed from the collection of hosts being evaluated.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/protect-eval-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putmoveevaluationhostnamestoprotection)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to move the evaluation hosts to protected
+// USE CASE: User wants to move the evaluation hosts to the protected hosts list.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 data "akamai_appsec_eval_hostnames" "eval_hostnames" {
@@ -36,15 +49,8 @@ resource "akamai_appsec_eval_protect_host" "protect_host" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `hostnames` - (Required) The evaluation hostnames to be moved to active protection.
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration in evaluation mode.
+- `hostnames` (Required). JSON array of the hostnames to be moved from the evaluation hostname list to the protected hostname list.
 

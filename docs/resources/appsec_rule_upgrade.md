@@ -6,27 +6,47 @@ description: |-
  Rule Upgrade
 ---
 
-TBD
 # akamai_appsec_rule_upgrade
 
-Use the `akamai_appsec_rule_upgrade` resource to upgrade to the most recent version of the KRS rule set. Akamai periodically updates these rules to keep protections current. However, the rules you use in your security policies do not automatically upgrade to the latest version when using mode: KRS. These rules do update automatically when you have mode set to AAG. Before you upgrade, run Get upgrade details to see which rules have changed. If you want to test how these rules would operate with live traffic before committing to the upgrade, run them in evaluation mode. This applies to KRS rules only and does not allow you to make any changes to the rules themselves. The response is the same as the mode response. 
+**Scopes**: Security policy
+
+Upgrades your Kona Rule Set (KRS) rules to the most recent version.
+Akamai periodically updates these rules to keep protections current.
+However, the rules you use in your security policies are not automatically upgraded to the latest version if you are running in **KRS** or **ASE_MANUAL** mode.
+(These rules *do* update automatically when you have mode set to **AAG** or **ASE_AUTO**.)
+This resource upgrades your Kona Rule Set rules for organizations running in **KRS** or **ASE_MANUAL** mode.
+
+Note that **ASE_MANUAL **and **ASE_AUTO** modes only apply to organizations running the beta version of Adaptive Security Engine (ASE). Please contact your Akamai representative if you'd like more information about the ASE beta.
+
+Before you upgrade it's recommended that you use the [akamai_appsec_rule_upgrade_details](https://registry.terraform.io/providers/akamai/akamai/latest/docs/data-sources/appsec_rule_upgrade_details) data source to determine which rules and rule sets (if any) have available upgrades. In addition to that, you might want to test the new rules in [evaluation mode](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_eval). In evaluation mode, rules are triggered the same way they are on the production network; however, the only action taken by the rules is to record how they *would* have responded had they been active on the production network. This enables you to see how the rules interact with your production network without actually making changes to that network.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putrules)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to set the waf mode
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: User wants to set the WAF mode.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 resource "akamai_appsec_rule_upgrade" "rule_upgrade" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
 }
 output "rule_upgrade_current_ruleset" {
   value = akamai_appsec_rule_upgrade.rule_upgrade.current_ruleset
@@ -41,21 +61,27 @@ output "rule_upgrade_eval_status" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the ruleset being upgraded.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the ruleset being upgraded.
+- `upgrade_mode`. (Optional). Modifies the upgrade type for organizations running the ASE beta. Allowed values are:
+  - **ASE_AUTO**. Akamai automatically updates your rulesets.
+  - **ASE_MANUAL**. Manually updates your rulesets.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+## Output Options
 
-* `upgrade_mode` - __ASE Beta__. (Optional) ASE_AUTO or ASE_MANUAL.  ASE (Adaptive Security Engine) is currently in beta. Please contact your Akamai representative to learn more. Rule Actions and Threat Intelligence setting are read only in ASE_AUTO mode
+The following options can be used to determine the information returned and how that returned information is formatted:
 
-## Attributes Reference
+- `current_ruleset`. Versioning information for your current KRS rule set.
+- `mode`. Specifies the current upgrade mode type. Valid values are:
+  - **KRS**. Rulesets must be manually upgraded.
 
-In addition to the arguments above, the following attributes are exported:
+  - **AAG**. Rulesets are automatically upgraded by Akamai.
 
- * `current_ruleset` - A string indicating the version number and release date of the current KRS rule set.
+  - **ASE_MANUAL**. Adaptive Security Engine rulesets must be manually upgraded.
 
- * `mode` - A string indicating the current mode, either KRS,AAG,ASE_AUTO,ASE_MANUAL
+  - **ASE_AUTO**. Adaptive Security Engine rulesets are automatically updated by Akamai.
 
- * `eval_status` - TBD
+- `eval_status`. Returns **enabled** if an evaluation is currently in progress; otherwise returns **disabled**.
 

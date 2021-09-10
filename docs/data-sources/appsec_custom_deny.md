@@ -6,29 +6,44 @@ description: |-
  CustomDeny
 ---
 
+
 # akamai_appsec_custom_deny
 
-Use the `akamai_appsec_custom_deny` data source to retrieve information about custom deny actions for a specific security configuration, or about a particular custom deny action. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcustomdeny).
+**Scopes**: Security configuration; custom deny
+
+Returns information about custom deny actions: the returned information is described in the [CustomDeny members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#63df3de3) section of the Application Security API. Custom denies allow you to craft your own error messages or redirect pages to use when HTTP requests are denied.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/custom-rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcustomdeny)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to view the custom deny data with a given security configuration
+// USE CASE: User wants to view the custom deny data for a given security configuration.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 data "akamai_appsec_custom_deny" "custom_deny_list" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
 }
 
-//tabular data with id and name
+// USE CASE: User wants to display the returned data in a table.
+
 output "custom_deny_list_output" {
   value = data.akamai_appsec_custom_deny.custom_deny_list.output_text
 }
@@ -37,10 +52,11 @@ output "custom_deny_list_json" {
   value = data.akamai_appsec_custom_deny.custom_deny_list.json
 }
 
-// USE CASE: user wants to see a single custom deny associated with a given security configuration version
+// USE CASE: User wants to view a specific custom deny associated with a security configuration.
+
 data "akamai_appsec_custom_deny" "custom_deny" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  custom_deny_id = var.custom_deny_id
+  config_id      = data.akamai_appsec_configuration.configuration.config_id
+  custom_deny_id = "deny_custom_64386"
 }
 
 output "custom_deny_json" {
@@ -54,18 +70,15 @@ output "custom_deny_output" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The configuration ID to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the custom denies.
+- `custom_deny_id` (Optional). Unique identifier of the custom deny you want to return information for. If not included. information is returned for all your custom denies.
 
-* `custom_deny_id` - (Optional) The ID of a specific custom deny action.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `json` - A JSON-formatted list of the custom deny action information. 
-
-* `output_text` - A tabular display showing the custom deny action information.
-
+- `json`. JSON-formatted list of custom deny information.
+- `output_text`. Tabular report of the custom deny information.
 

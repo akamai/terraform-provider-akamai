@@ -8,56 +8,67 @@ description: |-
 
 # akamai_appsec_activations
 
+**Scopes**: Security configuration
 
-The `akamai_appsec_activations` resource allows you to activate or deactivate a given security configuration version.
+Activates or deactivates a security configuration. Security configurations activated on the staging network can be used for testing and fine-tuning; security configurations activated on the production network are used to protect your actual websites.
+
+**Related API Endpoint**: [/appsec/v1/activations](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postactivations)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configuration" {
-  name = "Akamai Tools"
+  name = "Documentation"
 }
 
 resource "akamai_appsec_activations" "activation" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  network = "STAGING"
-  notes  = "TEST Notes"
-  notification_emails = [ "user@example.com" ]
+  config_id           = data.akamai_appsec_configuration.configuration.config_id
+  network             = "STAGING"
+  notes               = "This configuration was activated for testing purposes only."
+  notification_emails = ["user@example.com"]
 }
-
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration being activated.
 
-* `notification_emails` - (Required) A bracketed, comma-separated list of email addresses that will be notified when the operation is complete.
+- `notification_emails` (Required). JSON array containing the email addresses of the people to be notified when activation is complete.
 
-* `network` - The network in which the security configuration should be activated. If supplied, must be either STAGING or PRODUCTION. If not supplied, STAGING will be assumed.
+- `network` (Optional). Network on which activation will occur; allowed values are:
 
-* `notes` - (Required) A text note describing this operation. If no attributes were changed since the last time a security
-configuration was updated using the akamai_appsec_activations resource, an activation will not occur. To ensure an activation
-is called, please update one of the attributes, e.g. the notes attribute.
+  * **PRODUCTION**
+  * **STAGING**
 
-* `activate` - (Optional) A boolean indicating whether to activate the specified configuration version. If not supplied, True is assumed.
+  If not included, activation takes place on the staging network.
 
-## Attribute Reference
+- `notes` (Required). Brief description of the activation/deactivation process. Note that, if no attributes have changed since the last time you called the akamai_appsec_activations resource, neither activation nor deactivation takes place: that's because *something* must be different in order to trigger the activation/deactivation process. With that in mind, it's recommended that you always update the `notes` argument. That ensures that the resource will be called and that activation or deactivation will occur.
 
-In addition to the arguments above, the following attribute is exported:
+- `activate` (Optional). Set to **true** to activate the specified security configuration; set to **false** to deactivate the configuration. If not included, the security configuration will be activated.
 
-* `status` - The status of the operation. The following values are may be returned:
+## Output Options
 
-  * ACTIVATED
-  * DEACTIVATED
-  * FAILED
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
+- `status`. Status of the operation. Valid values are:
 
+  *	**ACTIVATED**
+  *	**DEACTIVATED**
+  *	**FAILED**
 

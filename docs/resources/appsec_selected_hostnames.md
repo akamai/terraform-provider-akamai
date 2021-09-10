@@ -8,48 +8,48 @@ description: |-
 
 # akamai_appsec_selected_hostnames
 
+**Scopes**: Security configuration
 
-The `akamai_appsec_selected_hostnames` resource allows you to set the list of hostnames protected under a given security configuration.
+Modifies the list of hostnames protected under by a security configuration.
 
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/selected-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putselectedhostnames)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configuration" {
-  name = "Akamai Tools"
+  name = "Documentation"
 }
 
 resource "akamai_appsec_selected_hostnames" "appsecselectedhostnames" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  hostnames = [ "example.com" ]
-  mode = "APPEND"
+  hostnames = ["example.com"]
+  mode      = "APPEND"
 }
-
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `hostnames` - (Required) The list of hostnames to be applied, added or removed.
-
-* `mode` - (Required) A string specifying the interpretation of the `hostnames` parameter. Must be one of the following:
-
-  * APPEND - the hosts listed in `hostnames` will be added to the current list of selected hostnames
-  * REPLACE - the hosts listed in `hostnames` will overwrite the current list of selected hostnames
-  * REMOVE - the hosts listed in `hostnames` will be removed from the current list of select hostnames
-
-# Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration associated with the hostnames.
+- `hostnames` (Required). JSON array of hostnames to be added or removed from the protected hosts list.
+- `mode` (Required). Indicates how the `hostnames` array is to be applied. Allowed values are:
+  - **APPEND**. Hosts listed in the `hostnames` array are added to the current list of selected hostnames.
+  - **REPLACE**. Hosts listed in the `hostnames`  array overwrite the current list of selected hostnames: the “old” hostnames are replaced by the specified set of hostnames.
+  - **REMOVE**, Hosts listed in the `hostnames` array are removed from the current list of select hostnames.
 

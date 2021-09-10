@@ -6,34 +6,49 @@ description: |-
  BypassNetworkLists
 ---
 
+
+
+
+
 # akamai_appsec_bypass_network_lists
 
-Use the `akamai_appsec_bypass_network_lists` data source to retrieve information about which network
-lists are used in the bypass network lists settings.  The information available is described
-[here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getbypassnetworklistsforawapconfigversion).
-Note: this data source is only applicable to WAP (Web Application Protector) configurations.
+**Scopes**: Security configuration
 
+Returns information about the network lists assigned to the bypass network list; networks on this list are not subject to firewall checking. The returned information is described in the [BypassNetworkList members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#bypassnetworklist) section of the Application Security API.
+
+Note that this data source is only applicable to WAP (Web Application Protector) configurations.
+
+**Related API Endpoint**:[/appsec/v1/configs/{configId}/versions/{versionNumber}/bypass-network-lists](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getbypassnetworklistsforawapconfigversion)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
 
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to see information about bypass network lists used in a Security Configuration version
+// USE CASE: User wants to view information about the bypass network list used in a security configuration.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 data "akamai_appsec_bypass_network_lists" "bypass_network_lists" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
 }
 
-//Tabular display of ID and Name of the network lists 
+// USE CASE: User wants to display returned data in a table.
+
 output "bypass_network_lists_output" {
   value = data.akamai_appsec_bypass_network_lists.bypass_network_lists.output_text
 }
@@ -49,17 +64,15 @@ output "bypass_network_lists_id_list" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The configuration ID to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the bypass network list.
 
-## Attributes Reference
+## Output Options
 
-In addition to the arguments above, the following attributes are exported:
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `bypass_network_list` - A list of strings containing the network list IDs.
-
-* `json` - A JSON-formatted list of information about the bypass network lists.
-
-* `output_text` - A tabular display showing the bypass network list information.
+- `bypass_network_list`. List of network IDs.
+- `json`. JSON-formatted list of information about the bypass networks.
+- `output_text`. Tabular report showing the bypass network list information.
 

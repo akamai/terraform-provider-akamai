@@ -8,19 +8,31 @@ description: |-
 
 # akamai_appsec_selected_hostnames
 
-Use the `akamai_appsec_selected_hostnames` data source to retrieve a list of the hostnames that are currently protected under a given security configuration.
+**Scopes**: Security configuration
+
+Returns a list of the hostnames currently protected by the specified security configuration.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/selected-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getselectedhostnames)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configuration" {
-  name = "Akamai Tools"
+  name = "Documentation"
 }
 
 data "akamai_appsec_selected_hostnames" "selected_hostnames" {
@@ -42,17 +54,15 @@ output "selected_hostnames_output_text" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the protected hosts.
 
-## Attributes Reference
+## Output Options
 
-In addition to the arguments above, the following attributes are exported:
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `hostnames` - The list of selected hostnames.
-
-* `hostnames_json` - The list of selected hostnames in JSON format.
-
-* `output_text` - A tabular display of the selected hostnames.
+- `hostnames`. List of selected hostnames.
+- `hostnames_json`. JSON-formatted list of selected hostnames.
+- `output_text`. Tabular report of the selected hostnames.
 

@@ -8,51 +8,55 @@ description: |-
 
 # akamai_appsec_custom_rule_action
 
+**Scopes**: Custom rule
 
-The `akamai_appsec_custom_rule_action` resource allows you to associate an action to a custom rule.
+Associates an action with a custom rule. Custom rules are rules that you define yourself and are not part of the Kona Rule Set.
 
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/custom-rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putactionruleid)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configuration" {
-  name = "Akamai Tools"
+  name = "Documentation"
 }
 
 resource "akamai_appsec_custom_rule_action" "create_custom_rule_action" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = "crAP_75829"
-  custom_rule_id = 12345
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
+  custom_rule_id     = 12345
   custom_rule_action = "alert"
 }
 
 output "custom_rule_id" {
   value = akamai_appsec_custom_rule_action.create_custom_rule_action.custom_rule_id
 }
-
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `security_policy_id` - (Required) The security policy to use.
-
-* `custom_rule_id` - (Required) The custom rule for which to apply the action.
-
-* `custom_rule_action` - (Required) The action to take when the custom rule is invoked: `alert` to record the trigger event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
-
-## Attribute Reference
-
-In addition to the arguments above, the following attribute is exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration associated with the custom rule action being modified.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the custom rule action being modified d.
+- `custom_rule_id` (Required). Unique identifier of the custom rule whose action is being modified.
+- `custom_rule_action` (Required). Action to be taken when the custom rule is invoked. Allowed values are:
+  - **alert**. Record the event.
+  - **deny**. Block the request.
+  - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
+  - **none**. Take no action.
 
