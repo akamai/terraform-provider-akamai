@@ -26,6 +26,40 @@ clean() {
   fi;
 }
 
+find_branch() {
+  # CURRENT_BRANCH=`git branch --show-current` # Note: --show-current requires Git 2.22.0+ which is not available on Jenkins agents
+  CURRENT_BRANCH=$GIT_BRANCH
+  if [[ "$CURRENT_BRANCH" == "develop" ]]; then
+    EDGEGRID_BRANCH="v2"
+  elif [[ $CURRENT_BRANCH =~ .*/sp-.* ]]; then
+    EDGEGRID_BRANCH=$CURRENT_BRANCH
+  else
+    # find parent branch from which this branch was created
+    EDGEGRID_BRANCH=`git log --pretty=format:'%D' HEAD^ | grep 'origin/' | head -n1 | sed 's@origin/@@' | sed 's@,.*@@'`
+  fi
+  git -C ./akamaiopen-edgegrid-golang branch -r | grep $EDGEGRID_BRANCH
+  if [[ $? -ne 0 ]]; then
+    echo "There is no matching EdgeGrid branch $EDGEGRID_BRANCH, fallback to 'v2'"
+    EDGEGRID_BRANCH='v2'
+  fi
+  if [[ "$EDGEGRID_BRANCH" == "develop" ]]; then
+    EDGEGRID_BRANCH="v2"
+  fi
+  echo "Current branch is $CURRENT_BRANCH, matching EdgeGrid branch is $EDGEGRID_BRANCH"
+}
+
+clone_edgegrid() {
+  git clone ssh://git@git.source.akamai.com:7999/devexp/akamaiopen-edgegrid-golang.git
+}
+
+checkout_edgegrid() {
+  cd akamaiopen-edgegrid-golang
+  git checkout $EDGEGRID_BRANCH
+  git pull
+  cd ..
+  pwd
+}
+
 build() {
   for platform in "${PLATFORMS[@]}"
   do
@@ -65,8 +99,15 @@ mod_edit() {
 }
 
 outputs=()
-clean
-mod_edit
 parse_arguments
+clean
+if [[ "$RELEASE_TYPE" == "snapshot" ]]; then
+  clone_edgegrid
+  find_branch
+  checkout_edgegrid
+  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2="./akamaiopen-edgegrid-golang"
+else
+  mod_edit
+fi
 build
 nexus_push
