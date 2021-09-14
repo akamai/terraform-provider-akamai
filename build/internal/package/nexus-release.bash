@@ -32,10 +32,10 @@ find_branch() {
   if [[ "$CURRENT_BRANCH" == "develop" ]]; then
     EDGEGRID_BRANCH="v2"
   elif [[ $CURRENT_BRANCH =~ .*/sp-.* ]]; then
-    EDGEGRID_BRANCH=$CURRENT_BRANCH
+    EDGEGRID_BRANCH=${CURRENT_BRANCH//origin\//}
   else
     # find parent branch from which this branch was created
-    EDGEGRID_BRANCH=`git log --pretty=format:'%D' HEAD^ | grep 'origin/' | head -n1 | sed 's@origin/@@' | sed 's@,.*@@'`
+    EDGEGRID_BRANCH=$(git log --pretty=format:'%D' HEAD^ | grep 'origin/' | head -n1 | sed 's@origin/@@' | sed 's@,.*@@')
   fi
   git -C ./akamaiopen-edgegrid-golang branch -r | grep $EDGEGRID_BRANCH
   if [[ $? -ne 0 ]]; then
