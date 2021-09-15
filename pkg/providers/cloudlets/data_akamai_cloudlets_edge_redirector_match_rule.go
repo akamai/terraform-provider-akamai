@@ -188,7 +188,7 @@ func GetMatchRules(set *schema.Set) (*cloudlets.MatchRules, error) {
 			ID:                       getInt64Value(matchRuleMap, "id"),
 			Matches:                  matches,
 			AkaRuleID:                getStringValue(matchRuleMap, "aka_rule_id"),
-			UseRelativeUrl:           getStringValue(matchRuleMap, "use_relative_url"),
+			UseRelativeURL:           getStringValue(matchRuleMap, "use_relative_url"),
 			StatusCode:               getIntValue(matchRuleMap, "status_code"),
 			RedirectURL:              getStringValue(matchRuleMap, "redirect_url"),
 			MatchURL:                 getStringValue(matchRuleMap, "match_url"),
