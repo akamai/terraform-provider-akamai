@@ -11,14 +11,6 @@ type mockcloudlets struct {
 	mock.Mock
 }
 
-func (m *mockcloudlets) CreateOrigin(_ context.Context, _ cloudlets.LoadBalancerOriginRequest) (*cloudlets.Origin, error) {
-	panic("implement me")
-}
-
-func (m *mockcloudlets) UpdateOrigin(_ context.Context, _ cloudlets.LoadBalancerOriginRequest) (*cloudlets.Origin, error) {
-	panic("implement me")
-}
-
 func (m *mockcloudlets) CreateLoadBalancerVersion(_ context.Context, _ cloudlets.CreateLoadBalancerVersionRequest) (*cloudlets.LoadBalancerVersion, error) {
 	panic("implement me")
 }
@@ -55,8 +47,32 @@ func (m *mockcloudlets) GetOrigin(_ context.Context, _ string) (*cloudlets.Origi
 	panic("implement me")
 }
 
-func (m *mockcloudlets) GetPolicy(_ context.Context, _ int64) (*cloudlets.Policy, error) {
+func (m *mockcloudlets) CreateOrigin(_ context.Context, _ cloudlets.LoadBalancerOriginRequest) (*cloudlets.Origin, error) {
 	panic("implement me")
+}
+
+func (m *mockcloudlets) UpdateOrigin(_ context.Context, _ cloudlets.LoadBalancerOriginRequest) (*cloudlets.Origin, error) {
+	panic("implement me")
+}
+
+func (m *mockcloudlets) ListPolicies(ctx context.Context, request cloudlets.ListPoliciesRequest) ([]cloudlets.Policy, error) {
+	args := m.Called(ctx, request)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).([]cloudlets.Policy), args.Error(1)
+}
+
+func (m *mockcloudlets) GetPolicy(ctx context.Context, request int64) (*cloudlets.Policy, error) {
+	args := m.Called(ctx, request)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*cloudlets.Policy), args.Error(1)
 }
 
 func (m *mockcloudlets) CreatePolicy(_ context.Context, _ cloudlets.CreatePolicyRequest) (*cloudlets.Policy, error) {
@@ -71,8 +87,24 @@ func (m *mockcloudlets) UpdatePolicy(_ context.Context, _ cloudlets.UpdatePolicy
 	panic("implement me")
 }
 
-func (m *mockcloudlets) GetPolicyVersion(_ context.Context, _ cloudlets.GetPolicyVersionRequest) (*cloudlets.PolicyVersion, error) {
-	panic("implement me")
+func (m *mockcloudlets) ListPolicyVersions(ctx context.Context, request cloudlets.ListPolicyVersionsRequest) ([]cloudlets.PolicyVersion, error) {
+	args := m.Called(ctx, request)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).([]cloudlets.PolicyVersion), args.Error(1)
+}
+
+func (m *mockcloudlets) GetPolicyVersion(ctx context.Context, request cloudlets.GetPolicyVersionRequest) (*cloudlets.PolicyVersion, error) {
+	args := m.Called(ctx, request)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*cloudlets.PolicyVersion), args.Error(1)
 }
 
 func (m *mockcloudlets) CreatePolicyVersion(_ context.Context, _ cloudlets.CreatePolicyVersionRequest) (*cloudlets.PolicyVersion, error) {
@@ -87,14 +119,6 @@ func (m *mockcloudlets) UpdatePolicyVersion(_ context.Context, _ cloudlets.Updat
 	panic("implement me")
 }
 
-func (m *mockcloudlets) ListPolicies(_ context.Context, _ cloudlets.ListPoliciesRequest) ([]cloudlets.Policy, error) {
-	panic("implement me")
-}
-
 func (m *mockcloudlets) GetPolicyProperties(_ context.Context, _ int64) (cloudlets.GetPolicyPropertiesResponse, error) {
-	panic("implement me")
-}
-
-func (m *mockcloudlets) ListPolicyVersions(_ context.Context, _ cloudlets.ListPolicyVersionsRequest) ([]cloudlets.PolicyVersion, error) {
 	panic("implement me")
 }
