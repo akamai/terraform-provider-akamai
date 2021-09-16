@@ -11,70 +11,90 @@ type mockcloudlets struct {
 	mock.Mock
 }
 
-func (m *mockcloudlets) CreateLoadBalancerVersion(context.Context, cloudlets.CreateLoadBalancerVersionRequest) (*cloudlets.LoadBalancerVersion, error) {
+func (m *mockcloudlets) CreateOrigin(_ context.Context, _ cloudlets.LoadBalancerOriginRequest) (*cloudlets.Origin, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) GetLoadBalancerVersion(context.Context, cloudlets.GetLoadBalancerVersionRequest) (*cloudlets.LoadBalancerVersion, error) {
+func (m *mockcloudlets) UpdateOrigin(_ context.Context, _ cloudlets.LoadBalancerOriginRequest) (*cloudlets.Origin, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) UpdateLoadBalancerVersion(context.Context, cloudlets.UpdateLoadBalancerVersionRequest) (*cloudlets.LoadBalancerVersion, error) {
+func (m *mockcloudlets) CreateLoadBalancerVersion(_ context.Context, _ cloudlets.CreateLoadBalancerVersionRequest) (*cloudlets.LoadBalancerVersion, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) GetLoadBalancerActivations(context.Context, string) (cloudlets.ActivationsList, error) {
+func (m *mockcloudlets) GetLoadBalancerVersion(_ context.Context, _ cloudlets.GetLoadBalancerVersionRequest) (*cloudlets.LoadBalancerVersion, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) ActivateLoadBalancerVersion(context.Context, cloudlets.ActivateLoadBalancerVersionRequest) (*cloudlets.ActivationResponse, error) {
+func (m *mockcloudlets) UpdateLoadBalancerVersion(_ context.Context, _ cloudlets.UpdateLoadBalancerVersionRequest) (*cloudlets.LoadBalancerVersion, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) ListPolicyActivations(context.Context, cloudlets.ListPolicyActivationsRequest) ([]cloudlets.PolicyActivation, error) {
+func (m *mockcloudlets) GetLoadBalancerActivations(_ context.Context, _ string) (cloudlets.ActivationsList, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) ActivatePolicyVersion(context.Context, cloudlets.ActivatePolicyVersionRequest) error {
+func (m *mockcloudlets) ActivateLoadBalancerVersion(_ context.Context, _ cloudlets.ActivateLoadBalancerVersionRequest) (*cloudlets.ActivationResponse, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) ListOrigins(context.Context, cloudlets.ListOriginsRequest) (cloudlets.Origins, error) {
+func (m *mockcloudlets) ListPolicyActivations(_ context.Context, _ cloudlets.ListPolicyActivationsRequest) ([]cloudlets.PolicyActivation, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) GetOrigin(context.Context, string) (*cloudlets.Origin, error) {
+func (m *mockcloudlets) ActivatePolicyVersion(_ context.Context, _ cloudlets.ActivatePolicyVersionRequest) error {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) GetPolicy(context.Context, int64) (*cloudlets.Policy, error) {
+func (m *mockcloudlets) ListOrigins(_ context.Context, _ cloudlets.ListOriginsRequest) ([]cloudlets.OriginResponse, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) CreatePolicy(context.Context, cloudlets.CreatePolicyRequest) (*cloudlets.Policy, error) {
+func (m *mockcloudlets) GetOrigin(_ context.Context, _ string) (*cloudlets.Origin, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) RemovePolicy(context.Context, int64) error {
+func (m *mockcloudlets) GetPolicy(_ context.Context, _ int64) (*cloudlets.Policy, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) UpdatePolicy(context.Context, cloudlets.UpdatePolicyRequest) (*cloudlets.Policy, error) {
+func (m *mockcloudlets) CreatePolicy(_ context.Context, _ cloudlets.CreatePolicyRequest) (*cloudlets.Policy, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) GetPolicyVersion(context.Context, cloudlets.GetPolicyVersionRequest) (*cloudlets.PolicyVersion, error) {
+func (m *mockcloudlets) RemovePolicy(_ context.Context, _ int64) error {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) CreatePolicyVersion(context.Context, cloudlets.CreatePolicyVersionRequest) (*cloudlets.PolicyVersion, error) {
+func (m *mockcloudlets) UpdatePolicy(_ context.Context, _ cloudlets.UpdatePolicyRequest) (*cloudlets.Policy, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) DeletePolicyVersion(context.Context, cloudlets.DeletePolicyVersionRequest) error {
+func (m *mockcloudlets) GetPolicyVersion(_ context.Context, _ cloudlets.GetPolicyVersionRequest) (*cloudlets.PolicyVersion, error) {
 	panic("implement me")
 }
 
-func (m *mockcloudlets) UpdatePolicyVersion(context.Context, cloudlets.UpdatePolicyVersionRequest) (*cloudlets.PolicyVersion, error) {
+func (m *mockcloudlets) CreatePolicyVersion(_ context.Context, _ cloudlets.CreatePolicyVersionRequest) (*cloudlets.PolicyVersion, error) {
+	panic("implement me")
+}
+
+func (m *mockcloudlets) DeletePolicyVersion(_ context.Context, _ cloudlets.DeletePolicyVersionRequest) error {
+	panic("implement me")
+}
+
+func (m *mockcloudlets) UpdatePolicyVersion(_ context.Context, _ cloudlets.UpdatePolicyVersionRequest) (*cloudlets.PolicyVersion, error) {
+	panic("implement me")
+}
+
+func (m *mockcloudlets) ListPolicies(_ context.Context, _ cloudlets.ListPoliciesRequest) ([]cloudlets.Policy, error) {
+	panic("implement me")
+}
+
+func (m *mockcloudlets) GetPolicyProperties(_ context.Context, _ int64) (cloudlets.GetPolicyPropertiesResponse, error) {
+	panic("implement me")
+}
+
+func (m *mockcloudlets) ListPolicyVersions(_ context.Context, _ cloudlets.ListPolicyVersionsRequest) ([]cloudlets.PolicyVersion, error) {
 	panic("implement me")
 }
