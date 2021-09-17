@@ -73,10 +73,6 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 								},
 							},
 						},
-						"aka_rule_id": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
 						"use_relative_url": {
 							Type:     schema.TypeString,
 							Required: true,
@@ -90,10 +86,6 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 							Required: true,
 						},
 						"match_url": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"location": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -187,12 +179,10 @@ func GetMatchRules(set *schema.Set) (*cloudlets.MatchRules, error) {
 			End:                      getIntValue(matchRuleMap, "end"),
 			ID:                       getInt64Value(matchRuleMap, "id"),
 			Matches:                  matches,
-			AkaRuleID:                getStringValue(matchRuleMap, "aka_rule_id"),
 			UseRelativeURL:           getStringValue(matchRuleMap, "use_relative_url"),
 			StatusCode:               getIntValue(matchRuleMap, "status_code"),
 			RedirectURL:              getStringValue(matchRuleMap, "redirect_url"),
 			MatchURL:                 getStringValue(matchRuleMap, "match_url"),
-			Location:                 getStringValue(matchRuleMap, "location"),
 			UseIncomingQueryString:   getBoolValue(matchRuleMap, "use_incoming_query_string"),
 			UseIncomingSchemeAndHost: getBoolValue(matchRuleMap, "use_incoming_scheme_and_host"),
 		}

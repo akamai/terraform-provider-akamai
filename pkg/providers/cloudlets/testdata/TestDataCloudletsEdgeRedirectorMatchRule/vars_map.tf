@@ -6,10 +6,8 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
 
   match_rules {
     type = "erMatchRule"
-    aka_rule_id = "a58392a7a43f19a3"
     end = 0
     id = 0
-    location = "/cloudlets/api/v2/policies/276858/versions/6/rules/a58392a7a43f19a3"
     match_url = null
     matches {
       case_sensitive = true
@@ -42,10 +40,8 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
   }
   match_rules {
     type = "erMatchRule"
-    aka_rule_id = "e38515c6542d2ed8"
     end = 0
     id = 0
-    location = "/cloudlets/api/v2/policies/276858/versions/6/rules/e38515c6542d2ed8"
     match_url = "ddd.aaa"
     name = "rule 2"
     redirect_url = "sss.com"
@@ -56,10 +52,8 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
   }
   match_rules {
     type = "erMatchRule"
-    aka_rule_id = "e1969ed65202167f"
     end = 0
     id = 0
-    location = "/cloudlets/api/v2/policies/276858/versions/6/rules/e1969ed65202167f"
     match_url = "abc.com"
     name = "r1"
     redirect_url = "/ddd"

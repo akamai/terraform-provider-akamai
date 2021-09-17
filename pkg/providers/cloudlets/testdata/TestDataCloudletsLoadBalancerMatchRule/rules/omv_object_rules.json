@@ -44,7 +44,6 @@
     "name": "rule2",
     "type": "albMatchRule",
     "id": 12333,
-    "akaRuleId": "abcd",
     "matchesAlways": false,
     "forwardSettings": {
       "originId": "1234"

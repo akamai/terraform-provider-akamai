@@ -124,15 +124,7 @@ func dataSourceCloudletsLoadBalancerMatchRule() *schema.Resource {
 								},
 							},
 						},
-						"aka_rule_id": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
 						"match_url": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"location": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -178,9 +170,7 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 		rule := cloudlets.MatchRuleALB{
 			Name:          getStringValue(rawRule, "name"),
 			Type:          cloudlets.MatchRuleType(getStringValue(rawRule, "type")),
-			AkaRuleID:     getStringValue(rawRule, "aka_rule_id"),
 			MatchURL:      getStringValue(rawRule, "match_url"),
-			Location:      getStringValue(rawRule, "location"),
 			Start:         getIntValue(rawRule, "start"),
 			End:           getIntValue(rawRule, "end"),
 			ID:            getInt64Value(rawRule, "id"),

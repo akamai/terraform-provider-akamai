@@ -6,23 +6,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAkamaiCloudletsLoadBalancerMatchRuleRead(t *testing.T) {
+func TestDataCloudletsLoadBalancerMatchRule(t *testing.T) {
 
 	tests := map[string]struct {
 		configPath       string
 		expectedJSONPath string
 	}{
 		"basic valid rule set": {
-			configPath:       "testdata/TestAkamaiCloudletsLoadBalancerMatchRuleRead/basic.tf",
-			expectedJSONPath: "testdata/TestAkamaiCloudletsLoadBalancerMatchRuleRead/rules/basic_rules.json",
+			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/basic.tf",
+			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/basic_rules.json",
 		},
 		"match criteria ALB - ObjectMatchValueObjectSubtype": {
-			configPath:       "testdata/TestAkamaiCloudletsLoadBalancerMatchRuleRead/omv_object.tf",
-			expectedJSONPath: "testdata/TestAkamaiCloudletsLoadBalancerMatchRuleRead/rules/omv_object_rules.json",
+			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_object.tf",
+			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/omv_object_rules.json",
 		},
 		"match criteria ALB - ObjectMatchValueRangeSubtype": {
-			configPath:       "testdata/TestAkamaiCloudletsLoadBalancerMatchRuleRead/omv_range.tf",
-			expectedJSONPath: "testdata/TestAkamaiCloudletsLoadBalancerMatchRuleRead/rules/omv_range_rules.json",
+			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_range.tf",
+			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/omv_range_rules.json",
 		},
 	}
 

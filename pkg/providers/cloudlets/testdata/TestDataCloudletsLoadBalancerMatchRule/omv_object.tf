@@ -39,7 +39,6 @@ data "akamai_cloudlets_application_load_balancer_match_rule" "test" {
     name = "rule2"
     type = "albMatchRule"
     id = 12333
-    aka_rule_id = "abcd"
     forward_settings {
       origin_id = "1234"
     }

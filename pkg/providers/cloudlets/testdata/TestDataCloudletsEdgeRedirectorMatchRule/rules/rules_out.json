@@ -2,26 +2,12 @@
   {
     "name": "rule 2",
     "type": "erMatchRule",
-    "akaRuleId": "e38515c6542d2ed8",
     "useRelativeUrl": "none",
     "statusCode": 301,
     "redirectURL": "sss.com",
     "matchURL": "ddd.aaa",
-    "location": "/cloudlets/api/v2/policies/276858/versions/6/rules/e38515c6542d2ed8",
     "useIncomingQueryString": true,
     "useIncomingSchemeAndHost": false
-  },
-  {
-    "name": "r1",
-    "type": "erMatchRule",
-    "akaRuleId": "e1969ed65202167f",
-    "useRelativeUrl": "copy_scheme_hostname",
-    "statusCode": 301,
-    "redirectURL": "/ddd",
-    "matchURL": "abc.com",
-    "location": "/cloudlets/api/v2/policies/276858/versions/6/rules/e1969ed65202167f",
-    "useIncomingQueryString": false,
-    "useIncomingSchemeAndHost": true
   },
   {
     "name": "rul3",
@@ -49,11 +35,19 @@
         "negate": false
       }
     ],
-    "akaRuleId": "a58392a7a43f19a3",
     "useRelativeUrl": "copy_scheme_hostname",
     "statusCode": 307,
     "redirectURL": "/abc/sss",
-    "location": "/cloudlets/api/v2/policies/276858/versions/6/rules/a58392a7a43f19a3",
+    "useIncomingQueryString": false,
+    "useIncomingSchemeAndHost": true
+  },
+  {
+    "name": "r1",
+    "type": "erMatchRule",
+    "useRelativeUrl": "copy_scheme_hostname",
+    "statusCode": 301,
+    "redirectURL": "/ddd",
+    "matchURL": "abc.com",
     "useIncomingQueryString": false,
     "useIncomingSchemeAndHost": true
   }

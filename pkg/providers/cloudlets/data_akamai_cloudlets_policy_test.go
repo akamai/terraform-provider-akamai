@@ -11,7 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
 )
 
-func TestAkamaiCloudletsPolicyRead(t *testing.T) {
+func TestDataCloudletsPolicy(t *testing.T) {
 	tests := map[string]struct {
 		configPath               string
 		listPolicyVersionsReturn []cloudlets.PolicyVersion
@@ -21,7 +21,7 @@ func TestAkamaiCloudletsPolicyRead(t *testing.T) {
 		withError                *regexp.Regexp
 	}{
 		"validate basic schema": {
-			configPath:               "testdata/TestAkamaiCloudletsPolicy/policy.tf",
+			configPath:               "testdata/TestDataCloudletsPolicy/policy.tf",
 			listPolicyVersionsReturn: []cloudlets.PolicyVersion{{Version: 1}},
 			getPolicyReturn: cloudlets.Policy{
 				Location:         "/cloudlets/api/v2/policies/1234",
@@ -76,13 +76,13 @@ func TestAkamaiCloudletsPolicyRead(t *testing.T) {
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "api_version", "2.0"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "revision_id", "4824132"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "rules_locked", "false"),
-				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "match_rules", loadFixtureString("testdata/TestAkamaiCloudletsPolicy/rules/match_rules_out.json")),
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "match_rules", loadFixtureString("testdata/TestDataCloudletsPolicy/rules/match_rules_out.json")),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "match_rule_format", "1.0"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "warnings", "null"),
 			},
 		},
 		"validate activations schema": {
-			configPath:               "testdata/TestAkamaiCloudletsPolicy/policy.tf",
+			configPath:               "testdata/TestDataCloudletsPolicy/policy.tf",
 			listPolicyVersionsReturn: []cloudlets.PolicyVersion{{Version: 3}, {Version: 2}, {Version: 1}},
 			getPolicyReturn: cloudlets.Policy{
 				Location:         "/cloudlets/api/v2/policies/1234",
@@ -210,13 +210,13 @@ func TestAkamaiCloudletsPolicyRead(t *testing.T) {
 			},
 		},
 		"pass version in tf file": {
-			configPath: "testdata/TestAkamaiCloudletsPolicy/policy_with_version.tf",
+			configPath: "testdata/TestDataCloudletsPolicy/policy_with_version.tf",
 			checkFuncs: []resource.TestCheckFunc{
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "version", "3"),
 			},
 		},
 		"deleted policy version": {
-			configPath: "testdata/TestAkamaiCloudletsPolicy/policy_with_version.tf",
+			configPath: "testdata/TestDataCloudletsPolicy/policy_with_version.tf",
 			getPolicyVersionReturn: cloudlets.PolicyVersion{
 				Version: 3,
 				Deleted: true,
@@ -224,7 +224,7 @@ func TestAkamaiCloudletsPolicyRead(t *testing.T) {
 			withError: regexp.MustCompile("specified policy version is deleted"),
 		},
 		"deleted policy": {
-			configPath: "testdata/TestAkamaiCloudletsPolicy/policy_with_version.tf",
+			configPath: "testdata/TestDataCloudletsPolicy/policy_with_version.tf",
 			getPolicyReturn: cloudlets.Policy{
 				Deleted: true,
 			},

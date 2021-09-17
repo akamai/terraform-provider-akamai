@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAkamaiCloudletsEdgeRedirectorMatchRuleRead(t *testing.T) {
+func TestDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 	t.Run("valid all vars map", func(t *testing.T) {
 		client := mockcloudlets{}
 		useClient(&client, func() {
@@ -14,10 +14,10 @@ func TestAkamaiCloudletsEdgeRedirectorMatchRuleRead(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestAkamaiCloudletsEdgeRedirectorMatchRuleRead/vars_map.tf"),
+						Config: loadFixtureString("testdata/TestDataCloudletsEdgeRedirectorMatchRule/vars_map.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_cloudlets_edge_redirector_match_rule.test", "json",
-								loadFixtureString("testdata/TestAkamaiCloudletsEdgeRedirectorMatchRuleRead/rules/rules_out.json")),
+								loadFixtureString("testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/rules_out.json")),
 						),
 					},
 				},
@@ -31,10 +31,10 @@ func TestAkamaiCloudletsEdgeRedirectorMatchRuleRead(t *testing.T) {
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestAkamaiCloudletsEdgeRedirectorMatchRuleRead/minimal_vars_map.tf"),
+						Config: loadFixtureString("testdata/TestDataCloudletsEdgeRedirectorMatchRule/minimal_vars_map.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_cloudlets_edge_redirector_match_rule.test", "json",
-								loadFixtureString("testdata/TestAkamaiCloudletsEdgeRedirectorMatchRuleRead/rules/minimal_rules_out.json")),
+								loadFixtureString("testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/minimal_rules_out.json")),
 						),
 					},
 				},
