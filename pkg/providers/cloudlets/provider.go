@@ -50,7 +50,9 @@ func Provider() *schema.Provider {
 			"akamai_cloudlets_edge_redirector_match_rule":           dataSourceCloudletsEdgeRedirectorMatchRule(),
 			"akamai_cloudlets_policy":                               dataSourceCloudletsPolicy(),
 		},
-		ResourcesMap: map[string]*schema.Resource{},
+		ResourcesMap: map[string]*schema.Resource{
+			"akamai_cloudlets_policy": resourceCloudletsPolicy(),
+		},
 	}
 	return provider
 }

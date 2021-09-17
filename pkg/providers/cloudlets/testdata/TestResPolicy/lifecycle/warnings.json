@@ -1,0 +1,8 @@
+[
+  {
+    "detail": "test warning details",
+    "jsonPointer": "/matchRules/1/matches/0",
+    "title": "test warning",
+    "type": "test type"
+  }
+]
