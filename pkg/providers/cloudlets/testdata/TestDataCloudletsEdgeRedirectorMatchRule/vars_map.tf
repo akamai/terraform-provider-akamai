@@ -7,7 +7,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
   match_rules {
     type = "erMatchRule"
     end = 0
-    id = 0
     match_url = null
     matches {
       case_sensitive = true
@@ -41,7 +40,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
   match_rules {
     type = "erMatchRule"
     end = 0
-    id = 0
     match_url = "ddd.aaa"
     name = "rule 2"
     redirect_url = "sss.com"
@@ -53,7 +51,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
   match_rules {
     type = "erMatchRule"
     end = 0
-    id = 0
     match_url = "abc.com"
     name = "r1"
     redirect_url = "/ddd"

@@ -37,10 +37,6 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
-						"id": {
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
 						"matches": {
 							Type:     schema.TypeSet,
 							Optional: true,
@@ -177,7 +173,6 @@ func GetMatchRules(set *schema.Set) (*cloudlets.MatchRules, error) {
 			Type:                     cloudlets.MatchRuleType(getStringValue(matchRuleMap, "type")),
 			Start:                    getIntValue(matchRuleMap, "start"),
 			End:                      getIntValue(matchRuleMap, "end"),
-			ID:                       getInt64Value(matchRuleMap, "id"),
 			Matches:                  matches,
 			UseRelativeURL:           getStringValue(matchRuleMap, "use_relative_url"),
 			StatusCode:               getIntValue(matchRuleMap, "status_code"),
