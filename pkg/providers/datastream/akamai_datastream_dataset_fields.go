@@ -59,11 +59,6 @@ func dataSourceDatasetFields() *schema.Resource {
 										Computed:    true,
 										Description: "A name of the data set field",
 									},
-									"order": {
-										Type:        schema.TypeInt,
-										Computed:    true,
-										Description: "Specifies the order of the field in a log line, starting at 0",
-									},
 								},
 							},
 						},
@@ -139,7 +134,6 @@ func parseDatasetFields(datasetFields []datastream.DatasetFields) []map[string]i
 		dataSetFieldsData["dataset_field_id"] = dataSetFields.DatasetFieldID
 		dataSetFieldsData["dataset_field_json_key"] = dataSetFields.DatasetFieldJsonKey
 		dataSetFieldsData["dataset_field_name"] = dataSetFields.DatasetFieldName
-		dataSetFieldsData["order"] = dataSetFields.Order
 		dSFields = append(dSFields, dataSetFieldsData)
 	}
 	return dSFields
