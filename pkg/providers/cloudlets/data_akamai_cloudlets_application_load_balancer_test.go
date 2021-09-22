@@ -12,10 +12,10 @@ import (
 
 func TestDataApplicationLoadBalancer(t *testing.T) {
 	tests := map[string]struct {
-		configPath               string
-		checkFunctions           []resource.TestCheckFunc
-		withError                *regexp.Regexp
-		init 					 func(*mockcloudlets)
+		configPath     string
+		checkFunctions []resource.TestCheckFunc
+		withError      *regexp.Regexp
+		init           func(*mockcloudlets)
 	}{
 		"validate schema": {
 			configPath: "testdata/TestDataCloudletsApplicationLoadBalancer/application_load_balancer.tf",
@@ -30,7 +30,7 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 					BalancingType: "WEIGHTED",
 					CreatedBy:     "jbond",
 					CreatedDate:   "2021-09-27T11:50:07.715Z",
-					DataCenters:    []cloudlets.DataCenter{
+					DataCenters: []cloudlets.DataCenter{
 						{
 							CloudServerHostHeaderOverride: false,
 							CloudService:                  false,
@@ -140,7 +140,7 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 		},
 		"specify load balancer version in file": {
 			configPath: "testdata/TestDataCloudletsApplicationLoadBalancer/application_load_balancer_version.tf",
-			init: 		func(m *mockcloudlets) {
+			init: func(m *mockcloudlets) {
 				m.On("GetLoadBalancerVersion", mock.Anything, mock.Anything).Return(&cloudlets.LoadBalancerVersion{Version: 10}, nil)
 				m.On("GetOrigin", mock.Anything, mock.Anything).Return(&cloudlets.Origin{}, nil)
 			},
@@ -150,7 +150,7 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 		},
 		"deleted load balancer version": {
 			configPath: "testdata/TestDataCloudletsApplicationLoadBalancer/application_load_balancer_version.tf",
-			init: 		func(m *mockcloudlets) {
+			init: func(m *mockcloudlets) {
 				m.On("GetLoadBalancerVersion", mock.Anything, mock.Anything).Return(&cloudlets.LoadBalancerVersion{Version: 10, Deleted: true}, nil)
 				m.On("GetOrigin", mock.Anything, mock.Anything).Return(&cloudlets.Origin{}, nil)
 			},
@@ -166,8 +166,8 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.configPath),
-							Check: resource.ComposeAggregateTestCheckFunc(test.checkFunctions...),
+							Config:      loadFixtureString(test.configPath),
+							Check:       resource.ComposeAggregateTestCheckFunc(test.checkFunctions...),
 							ExpectError: test.withError,
 						},
 					},

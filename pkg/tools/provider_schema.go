@@ -3,8 +3,10 @@ package tools
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -231,6 +233,37 @@ func ResolveKeyStringState(rd ResourceDataFetcher, key, fallbackKey string) (val
 		return "", err
 	}
 	return value, nil
+}
+
+// StateNetwork changes the value of the input before storing it in state
+func StateNetwork(i interface{}) string {
+	val, ok := i.(string)
+	if !ok {
+		panic(fmt.Sprintf("value type is not a string: %T", i))
+	}
+
+	switch strings.ToLower(val) {
+	case "production", "prod", "p":
+		return "production"
+	case "staging", "stag", "s":
+		return "staging"
+	}
+
+	// this should never happen :-)
+	return val
+}
+
+// ValidateNetwork defines network validation logic
+func ValidateNetwork(i interface{}, _ cty.Path) diag.Diagnostics {
+	val, ok := i.(string)
+	if !ok {
+		return diag.Errorf("'network' value is not a string: %v", i)
+	}
+	switch strings.ToLower(val) {
+	case "production", "prod", "p", "staging", "stag", "s":
+		return nil
+	}
+	return diag.Errorf("'%s' is an invalid network value: should be 'production', 'prod', 'p', 'staging', 'stag' or 's'", val)
 }
 
 // GetExactlyOneOf extracts exactly one value with given keys from ResourceData object

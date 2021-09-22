@@ -94,7 +94,7 @@ See: https://www.terraform.io/docs/configuration/resources.html#operation-timeou
 		Severity: diag.Warning,
 		Summary:  "Operation canceled while waiting for activation status",
 		Detail: `
-The activation creation request has been started successfully, however the a cancellation was recived
+The activation creation request has been started successfully, however the a cancellation was received
 while waiting for the remote resource to update. You may retry the operation to continue to wait for 
 the final status.
 
