@@ -46,6 +46,7 @@ func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{},
 		DataSourcesMap: map[string]*schema.Resource{
+			"akamai_cloudlets_application_load_balancer":            dataSourceCloudletsApplicationLoadBalancer(),
 			"akamai_cloudlets_application_load_balancer_match_rule": dataSourceCloudletsLoadBalancerMatchRule(),
 			"akamai_cloudlets_edge_redirector_match_rule":           dataSourceCloudletsEdgeRedirectorMatchRule(),
 			"akamai_cloudlets_policy":                               dataSourceCloudletsPolicy(),
