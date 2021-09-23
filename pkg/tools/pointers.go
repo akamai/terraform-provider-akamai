@@ -4,6 +4,10 @@ package tools
 func IntPtr(i int) *int {
 	return &i
 }
+// StringPtr returns a pointer to a string passed as an argument
+func StringPtr(i string) *string {
+	return &i
+}
 
 // StringPtr returns a pointer to a string passed as an argument
 func StringPtr(s string) *string {

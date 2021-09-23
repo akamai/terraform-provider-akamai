@@ -22,37 +22,37 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 			"origin_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Describes origin Id",
+				Description: "The conditional origin’s unique identifier",
 			},
 			"version": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Describes load balancer configuration version",
+				Description: "The load balancer configuration version",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Describes load balancer configuration",
+				Description: "The load balancer configuration description",
 			},
 			"type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Describes origin type",
+				Description: "The type of conditional origin",
 			},
 			"balancing_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Load balancer configuration type",
+				Description: "The type of load balancing being performed. Options include WEIGHTED and PERFORMANCE",
 			},
 			"created_by": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Describes value which is set by the server at the time of creation and never subsequently changes",
+				Description: "The value which is set by the server at the time of creation and never subsequently changes",
 			},
 			"created_date": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Describes the created date which is only set by the server the first time the load balancer version is created. All subsequent responses will contain the same value.",
+				Description: "The created date which is only set by the server the first time the load balancer version is created. All subsequent responses will contain the same value.",
 			},
 			"deleted": {
 				Type:        schema.TypeBool,
@@ -62,12 +62,12 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 			"immutable": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Describes if the load balancer version has been activated, thus marked as immutable",
+				Description: "Denotes whether you can edit the load balancing version. The default setting for this member is false. It automatically becomes true when the load balancing version is activated for the first time.",
 			},
 			"last_modified_by": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Describes the last modification of load balancer configuration which is set by the server",
+				Description: "The last modification of load balancer configuration which is set by the server",
 			},
 			"last_modified_date": {
 				Type:        schema.TypeString,
@@ -82,13 +82,13 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 			"data_centers": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Describes list of data center configurations used for ALB load balancing. The total weight of all data centers in this list must be add to 100%.",
+				Description: "The object containing information on conditional origins being used as data centers for an Application Load Balancer implementation. Only Conditional Origins with an originType of CUSTOMER or NETSTORAGE can be used as data centers in an application load balancer configuration.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"city": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The name of the city where the data center is located.",
+							Description: "The city in which the data center is located.",
 						},
 						"cloud_server_host_header_override": {
 							Type:        schema.TypeBool,
@@ -103,12 +103,12 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 						"continent": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes the two character ISO-3166 continent code for the data center's location",
+							Description: "The continent on which the data center is located",
 						},
 						"country": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes the two character ISO-3166 country code for the data center's location",
+							Description: "The country in which the data center is located",
 						},
 						"hostname": {
 							Type:        schema.TypeString,
@@ -118,33 +118,33 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 						"latitude": {
 							Type:        schema.TypeFloat,
 							Computed:    true,
-							Description: "Describes latitude location where this data center is located",
+							Description: "The latitude value for the data center. This member supports six decimal places of precision.",
 						},
 						"liveness_hosts": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
-							Description: "Describes list of hosts which can be checked for data center liveness",
+							Description: "An array of strings that represent the origin servers used to poll the data centers in an application load balancer configuration. These servers support basic HTTP polling.",
 						},
 						"longitude": {
 							Type:        schema.TypeFloat,
 							Computed:    true,
-							Description: "Describes latitude location where this data center is located",
+							Description: "The longitude value for the data center. This member supports six decimal places of precision.",
 						},
 						"origin_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes the Cloudlets origin Id corresponding to this data center",
+							Description: "The id of an origin that represents the data center. The conditional origin, which is defined in the Property Manager API, must have an originType of either CUSTOMER or NET_STORAGE",
 						},
 						"percent": {
 							Type:        schema.TypeFloat,
 							Computed:    true,
-							Description: "Describes percent of traffic for this meta-origin overall should try to route to this data center",
+							Description: "The percent of traffic that is sent to the data center. The total for all data centers must equal 100%.",
 						},
 						"state_or_province": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes name of the state or province where the data center is located",
+							Description: "The state, province, or region where the data center is located",
 						},
 					},
 				},
@@ -158,23 +158,23 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 						"host_header": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes the Host header for the liveness HTTP request",
+							Description: "The Host header for the liveness HTTP request",
 						},
 						"additional_headers": {
 							Type:        schema.TypeMap,
 							Computed:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
-							Description: "Describes the additional header for the leveness HTTP request",
+							Description: "Maps additional case-insensitive HTTP header names included to the liveness testing requests",
 						},
 						"interval": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Describes how often the liveness test will be performed",
+							Description: "Describes how often the liveness test will be performed. Optional defaults to 60 seconds, minimum is 10 seconds.",
 						},
 						"path": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes the path that will be requested to test for liveness",
+							Description: "The path to the test object used for liveness testing. The function of the test object is to help determine whether the data center is functioning.",
 						},
 						"peer_certificate_verification": {
 							Type:        schema.TypeBool,
@@ -184,42 +184,42 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 						"port": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Describes the port that will be used for the HTTP request",
+							Description: "The port for the test object. The default port is 80, which is standard for HTTP. Enter 443 if you are using HTTPS.",
 						},
 						"protocol": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes the protocol that will be used for the request. It can be HTTP, HTTPS, TCP, or TCPS",
+							Description: "The protocol or scheme for the database, either HTTP or HTTPS.",
 						},
 						"request_string": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes the request which will be used for TCP(S) tests",
+							Description: "The request which will be used for TCP(S) tests",
 						},
 						"response_string": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes the response which will be used for TCP(S) tests",
+							Description: "The response which will be used for TCP(S) tests",
 						},
 						"status_3xx_failure": {
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "Describes whether HTTP status codes in the 3xx range are considered liveness failure",
+							Description: "Set to true to mark the liveness test as failed when the request returns a 3xx (redirection) status code.",
 						},
 						"status_4xx_failure": {
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "Describes whether HTTP status codes in the 4xx range are considered liveness failure",
+							Description: "Set to true to mark the liveness test as failed when the request returns a 4xx (client error) status code.",
 						},
 						"status_5xx_failure": {
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "Describes whether HTTP status codes in the 5xx range are considered liveness failure",
+							Description: "Set to true to mark the liveness test as failed when the request returns a 5xx (server error) status code.",
 						},
 						"timeout": {
 							Type:        schema.TypeFloat,
 							Computed:    true,
-							Description: "Describes the timeout in seconds for the HTTP request. After this period passes the test will be considered to have failed",
+							Description: "The number of seconds the system waits before failing the liveness test. The default is 25 seconds.",
 						},
 					},
 				},
@@ -240,7 +240,6 @@ func dataApplicationLoadBalancerRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	origin, err := client.GetOrigin(ctx, originID)
-
 	if err != nil {
 		return diag.FromErr(err)
 	}
