@@ -1,9 +1,9 @@
 ---
 layout: "akamai"
-page_title: "Akamai: KRS Eval Rule"
+page_title: "Akamai: Evaluation Rule"
 subcategory: "Application Security"
 description: |-
- KRS Eval Rules
+ Evaluation Rules
 ---
 
 # akamai_appsec_eval_rules

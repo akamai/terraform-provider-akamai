@@ -1603,6 +1603,26 @@ func (p *mockappsec) GetThreatIntel(ctx context.Context, params appsec.GetThreat
 	return args.Get(0).(*appsec.GetThreatIntelResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetTuningRecommendations(ctx context.Context, params appsec.GetTuningRecommendationsRequest) (*appsec.GetTuningRecommendationsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetTuningRecommendationsResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetAttackGroupRecommendations(ctx context.Context, params appsec.GetAttackGroupRecommendationsRequest) (*appsec.GetAttackGroupRecommendationsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetAttackGroupRecommendationsResponse), args.Error(1)
+}
+
 func (p *mockappsec) UpdateThreatIntel(ctx context.Context, params appsec.UpdateThreatIntelRequest) (*appsec.UpdateThreatIntelResponse, error) {
 	args := p.Called(ctx, params)
 
