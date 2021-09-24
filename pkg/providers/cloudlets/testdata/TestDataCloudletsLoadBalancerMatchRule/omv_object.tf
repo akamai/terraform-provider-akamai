@@ -11,6 +11,7 @@ data "akamai_cloudlets_application_load_balancer_match_rule" "test" {
     matches {
       match_type = "clientip"
       match_value = "127.0.0.1"
+      match_operator = "equals"
       object_match_value {
         type = "simple"
         value = "[\"fghi\"]"

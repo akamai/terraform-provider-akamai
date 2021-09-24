@@ -244,6 +244,7 @@ func parseMatchCriteriaALB(match interface{}) (*cloudlets.MatchCriteriaALB, erro
 	matchCriteriaALB.MatchValue = getStringValue(m, "match_value")
 	matchCriteriaALB.CaseSensitive = getBoolValue(m, "case_sensitive")
 	matchCriteriaALB.Negate = getBoolValue(m, "negate")
+	matchCriteriaALB.MatchOperator = cloudlets.MatchOperator(getStringValue(m, "match_operator"))
 	if c, ok := m["check_ips"]; ok {
 		if checkIPs, ok := c.(cloudlets.CheckIPs); ok {
 			matchCriteriaALB.CheckIPs = checkIPs
