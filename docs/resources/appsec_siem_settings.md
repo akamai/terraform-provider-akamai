@@ -8,24 +8,37 @@ description: |-
 
 # akamai_appsec_siem_settings
 
-Use the `akamai_appsec_siem_settings` resource to mpdate the SIEM integration settings for a specific configuration.
+**Scopes**: Security configuration
+
+Modifies SIEM (Security Information and Event Management) integration settings for a security configuration.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/siem](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putsiemsettings)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to update the siem settings
+// USE CASE: User wants to update the SIEM settings.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 data "akamai_appsec_siem_definitions" "siem_definition" {
-  siem_definition_name = var.siem_definition_name
+  siem_definition_name = "SIEM Version 01"
 }
 
 data "akamai_appsec_security_policy" "security_policies" {
@@ -33,34 +46,29 @@ data "akamai_appsec_security_policy" "security_policies" {
 }
 
 resource "akamai_appsec_siem_settings" "siem" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  enable_siem = true
+  config_id               = data.akamai_appsec_configuration.configuration.config_id
+  enable_siem             = true
   enable_for_all_policies = false
-  enable_botman_siem = true
-  siem_id = data.akamai_appsec_siem_definitions.siem_definition.id
-  security_policy_ids = data.akamai_appsec_security_policy.security_policies.security_policy_id_list
+  enable_botman_siem      = true
+  siem_id                 = data.akamai_appsec_siem_definitions.siem_definition.id
+  security_policy_ids     = data.akamai_appsec_security_policy.security_policies.security_policy_id_list
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The configuration ID to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the SIEM settings being modified.
+- `enable_siem` (Required). Set to **true** to enable SIEM; set to **false** to disable SIEM.
+- `enable_for_all_policies` (Required). Set to **true** to enable SIEM on all security policies in the security configuration; set to **false** to only enable SIEM on the security policies specified by the `security_policy_ids` argument.
+- `enable_botman_siem` (Required). Set to **true** to include Bot Manager events in your SIEM events; set to **false** to exclude Bot Manager events from your SIEM events.
+- `siem_id` (Required). Unique identifier of the SIEM settings being modified.
+- `security_policy_ids` (Required if `enable_for_all_policies` is **false**) JSON array of IDs for the security policies where SIEM integration is to be enabled.
 
-* `enable_siem` - (Required) Whether you enabled SIEM in a security configuration version.
+## Output Options
 
-* `enable_for_all_policies` - (Required) Whether you enabled SIEM for all the security policies in the configuration.
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `enable_botman_siem` - (Required) Whether you enabled SIEM for the Bot Manager events.
-
-* `siem_id` - (Required) An integer that uniquely identifies the SIEM settings.
-
-* `security_policy_ids` - (Required) The list of security policy identifiers for which to enable the SIEM integration.
-
-## Attributes Reference
-
-In addition to the arguments above, the following attribute is exported:
-
-* `output_text` - A tabular display showing the updated SIEM integration settings.
+- `output_text`. Tabular report showing the updated SIEM integration settings.
 

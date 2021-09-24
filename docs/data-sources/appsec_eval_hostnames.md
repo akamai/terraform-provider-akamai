@@ -6,23 +6,38 @@ description: |-
  EvalHostnames
 ---
 
+
 # akamai_appsec_eval_hostnames
 
-Use the `akamai_appsec_eval_hostnames` data source to retrieve the evaluation hostnames for a configuration. Evaluation mode for hostnames is only available for Web Application Protector. Run hostnames in evaluation mode to see how your configuration settings protect traffic for that hostname before adding a hostname directly to a live configuration. An evaluation period lasts four weeks unless you stop the evaluation. Once you begin, the hostnames you evaluate start responding to traffic as if they are your current hostnames. However, instead of taking an action the evaluation hostnames log which action they would have taken if they were your actively-protected hostnames and not a test.
+**Scopes**: Security configuration
+
+Returns the evaluation hostnames for a configuration. In evaluation mode, you use evaluation hosts to monitor how well your configuration settings protects host traffic. (Note that the evaluation host isn't actually protected, and the host takes no action other than recording the actions it would have taken had it been on the production network).
+
+Evaluation mode for hostnames is only available for organizations running Web Application Protector.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/selected-hostnames/eval-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getevaluationhostnames)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to view the hosts which are under evaluation in a configuration
+// USE CASE: User wants to view the hosts being evaluated in evaluation mode.
 
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 data "akamai_appsec_eval_hostnames" "eval_hostnames" {
@@ -44,17 +59,15 @@ output "eval_hostnames_json" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration running in evaluation mode.
 
-## Attributes Reference
+## Output Options
 
-In addition to the arguments above, the following attributes are exported:
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `hostnames` - A list of the evaluation hostnames.
-
-* `json` - A JSON-formatted list of the evaluation hostnames.
-
-* `output_text` - A tabular display showing the evaluation hostnames.
+- `hostnames`. List of evaluation hostnames.
+- `json`. JSON-formatted list of evaluation hostnames.
+- `output_text`. Tabular report showing evaluation hostnames.
 

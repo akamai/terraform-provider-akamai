@@ -6,26 +6,40 @@ description: |-
  Penalty Box
 ---
 
+
 # akamai_appsec_penalty_box
 
-Use the `akamai_appsec_penalty_box` data source to retrieve the penalty box settings for a specified security policy.
+**Scopes**: Security policy
+
+Returns penalty box settings for the specified security policy. When using automated attack groups, and when the penalty box is enabled, clients that trigger an attack group are placed in the “penalty box.” That means that, for the next 10 minutes, all requests from that client are ignored.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/penalty-box](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getpenaltybox)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to view penalty box settings
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: User wants to view penalty box settings.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_penalty_box" "penalty_box" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
 }
 
 output "penalty_box_action" {
@@ -39,24 +53,24 @@ output "penalty_box_enabled" {
 output "penalty_box_text" {
   value = data.akamai_appsec_penalty_box.penalty_box.output_text
 }
-
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the penalty box settings.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the penalty box settings.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `action` - The action for the penalty box: `alert`, `deny`, or `none`.
-
-* `enabled` - Either `true` or `false`, indicating whether penalty box protection is enabled.
-
-* `output_text` - A tabular display of the `action` and `enabled` information.
+- `action`. Action taken any time the penalty box is triggered. Valid values are:
+  - **alert**. Record the event.
+  - **deny**. The request is blocked.
+  - **deny_custom_{custom_deny_id}**. The action defined by the custom deny is taken.
+  - **none**. Take no action.
+- `enabled`. If **true**, penalty box protection is enabled. If **false**, penalty box protection is disabled.
+- `output_text`. Tabular report of penalty box protection settings.
 

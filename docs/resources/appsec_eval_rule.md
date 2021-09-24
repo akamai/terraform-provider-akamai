@@ -8,47 +8,56 @@ description: |-
 
 # akamai_appsec_eval_rule
 
-Use the `akamai_appsec_eval_rule` resource to create or modify an eval rule's action, conditions and exceptions. When the conditions are met, the rule’s actions are ignored and not applied to that specific traffic.
+**Scopes**: Evaluation rule
+
+Creates or modifies an evaluation rule's action, conditions, and exceptions.
+Evaluation rules are Kona Rule Set rules used when running a security configuration in evaluation mode.
+Changes to these rules do not affect the rules used on your production network.
+
+**Related API Endpoints**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/eval-rules/{ruleId}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putevalrule) *and* [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/eval-rules/{ruleId}/condition-exception](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putevalconditionsexceptions)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to add action and condition-exception information to an eval rule using a JSON input file
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: User wants to add an action and condition-exception information to an evaluation rule by using a JSON input file.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 resource "akamai_appsec_eval_rule" "eval_rule" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  rule_id = var.rule_id
-  rule_action = var.action
+  config_id           = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id  = "gms1_134637"
+  rule_id             = 60029316
+  rule_action         = "deny"
   condition_exception = file("${path.module}/condition_exception.json")
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `security_policy_id` - (Required) The ID of the security policy to use.
-
-* `rule_id` - (Required) The ID of the eval rule to use.
-
-* `rule_action` - (Required) The action to be taken: `alert` to record the trigger of the event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
-
-* `condition_exception` - (Optional) The name of a file containing a JSON-formatted description of the conditions and exceptions to use ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putevalconditionsexceptions))
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration in evaluation mode.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the evaluation process.
+- `rule_id` (Required). Unique identifier of the evaluation rule being modified.
+- `rule_action` (Required). Action to be taken any time the evaluation rule is triggered, Allowed actions are:
+  - **alert**. Record the event.
+  - **deny**. Block the request.
+  - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
+  - **none**. Take no action.
+- `condition_exception` (Optional). Path to a JSON file containing the conditions and exceptions to be applied to the evaluation rule. To view a sample JSON file, see the [Modify the conditions and exceptions for an evaluation rule](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putevalconditionsexceptions) section of the Application Security API documentation.
 

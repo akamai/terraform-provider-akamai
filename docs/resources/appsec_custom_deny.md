@@ -6,25 +6,38 @@ description: |-
   CustomDeny
 ---
 
-# resource_akamai_appsec_custom_deny
+# akamai_appsec_custom_deny
 
-The `resource_akamai_appsec_custom_deny` resource allows you to create a new custom deny action for a specific configuration.
+**Scopes**: Custom deny
+
+Modifies a custom deny action. Custom denies enable you to craft your own error message or redirect pages for use when HTTP requests are denied.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/custom-deny](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putcustomdenyaction)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to create a custom deny action using a JSON definition
+// USE CASE: User wants to create a custom deny action by using a JSON-formatted definition.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 resource "akamai_appsec_custom_deny" "custom_deny" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
+  config_id   = data.akamai_appsec_configuration.configuration.config_id
   custom_deny = file("${path.module}/custom_deny.json")
 }
 
@@ -35,15 +48,14 @@ output "custom_deny_id" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the custom deny.
+- `custom_deny` (Required). Path to a JSON file containing properties and property values for the custom deny. For more information, see the [CustomDeny members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#63df3de3) section of the Application Security API documentation.
 
-* `custom_deny` - (Required) The JSON-formatted definition of the custom deny action ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#63df3de3)).
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-*`custom_deny_id` - The ID of the new custom deny action.
+- `custom_deny_id`. ID of the new custom deny action.
 

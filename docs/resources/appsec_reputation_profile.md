@@ -8,43 +8,56 @@ description: |-
 
 # akamai_appsec_reputation_profile
 
-Use the `akamai_appsec_reputation_profile` resource to create or modify a reputation profile for a specific security configuration.
+**Scopes**: Security policy
+
+Creates or modifies a reputation profile.
+Reputation profiles grade the security risk of an IP address based on previous activities associated with that address.
+Depending on the reputation score and how your configuration has been set up, requests from a specific IP address can trigger an alert or even be blocked.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/reputation-profiles](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postreputationprofiles)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
-// USE CASE: user wants to create a reputation profile for a given configuration and version, using a JSON definition
+// USE CASE: User wants to create a reputation profile for a given security configuration by using a JSON-formatted definition.
+
 resource "akamai_appsec_reputation_profile" "reputation_profile" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  reputation_profile =  file("${path.module}/reputation_profile.json")
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  reputation_profile = file("${path.module}/reputation_profile.json")
 }
 output "reputation_profile_id" {
-  value = akamai_appsec_reputation_profile.reputation_profile_id
+  value = akamai_appsec_reputation_profile.reputation_profile.reputation_profile_id
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the reputation profile being modified.
+- `reputation_profile` (Required). Path to a JSON file containing a definition of the reputation profile. You can view a sample JSON file in the [Create a reputation profile](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postreputationprofiles) section of the Application Security API documentation.
 
-* `reputation_profile` - (Required) The name of a file containing a JSON-formatted definition of the reputation profile. ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postreputationprofiles))
+## Output Options
 
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* `reputation_profile_id` - The ID of the newly created or modified reputation profile.
+- `reputation_profile_id`. ID of the newly-created or newly-modified reputation profile.
 

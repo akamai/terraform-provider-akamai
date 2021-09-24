@@ -8,28 +8,40 @@ description: |-
 
 # akamai_appsec_advanced_settings_prefetch
 
-Use the `akamai_appsec_advanced_settings_prefetch` data source to retrieve information the prefetch request settings for a security configuration. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getprefetchrequestsforaconfiguration).
+**Scopes**: Security configuration
 
-## Example Usage
+Returns information about your prefetch request settings. By default, the Web Application Firewall only inspects external requests: requests originating outside of your firewall or Akamai's edge servers. When prefetch is enabled, however, internal requests – that is, requests between your origin servers and Akamai's edge servers – can also be inspected by the firewall. The returned information is described in the [PrefetchRequest members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#deb7220d) section of the Application Security API.
 
+**Related** **API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/advanced-settings/prefetch](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getprefetchrequestsforaconfiguration)
+
+Example Usage
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to view the prefetch request settings for a given security configuration
-// /appsec/v1/configs/{configId}/versions/{versionNum}/advanced-settings/prefetch
+// USE CASE: User wants to view the prefetch request settings for a security configuration.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 data "akamai_appsec_advanced_settings_prefetch" "prefetch" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
 }
 
-//tabular data of all fields - 3 boolean fields and one extensions text
+//USE CASE: User wants to display returned data in a table.
+
 output "advanced_settings_prefetch_output" {
   value = data.akamai_appsec_advanced_settings_prefetch.prefetch.output_text
 }
@@ -41,15 +53,14 @@ output "advanced_settings_prefetch_json" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The configuration ID.
+- `config_id` (Required). Unique identifier of the security configuration associated with the prefetch settings.
 
-## Attributes Reference
+## Output Options
 
-In addition to the arguments above, the following attributes are exported:
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `json` - A JSON-formatted list of information about the prefetch request settings.
-
-* `output_text` - A tabular display showing the prefetch request settings.
+- `json`. JSON-formatted list of information about the prefetch request settings.
+- `output_text`. Tabular report showing the prefetch request settings.
 

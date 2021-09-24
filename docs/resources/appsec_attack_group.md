@@ -8,47 +8,54 @@ description: |-
 
 # akamai_appsec_attack_group
 
-Use the `akamai_appsec_attack_group` resource to create or modify an attack group's action, conditions and exceptions. When the conditions are met, the rule’s actions are ignored and not applied to that specific traffic.
+**Scopes**: Attack group
+
+Modify an attack group's action, conditions, and exceptions. Attack groups are collections of Kona Rule Set rules used to streamline the management of website protections.
+
+**Related API Endpoints**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/attack-groups/{attackGroupId}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putattackgroup) *and* [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/attack-groups/{attackGroupId}/condition-exception](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putattackgroupconditionexception)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to add action and condition-exception information to an attack group using a JSON input file
+// USE CASE: User wants to add action and condition-exception information to an attack group by using a JSON input file.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 resource "akamai_appsec_attack_group" "attack_group" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  attack_group = var.attack_group
-  attack_group_action = var.attack_group_action
+  config_id           = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id  = "gms1_134637"
+  attack_group        = "SQL"
+  attack_group_action = "deny"
   condition_exception = file("${path.module}/condition_exception.json")
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `security_policy_id` - (Required) The ID of the security policy to use.
-
-* `attack_group` - The attack group to use.
-
-* `attack_group_action` - (Required) The action to be taken: `alert` to record the trigger of the event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
-
-* `condition_exception` - (Optional) The name of a file containing a JSON-formatted description of the conditions and exceptions to use ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putattackgroupconditionexception)).
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration associated with the attack group being modified.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the attack group being modified.
+- `attack_group` (Required). Unique name of the attack group being modified.
+- `attack_group_action` (Required). Action taken any time the attack group is triggered. Allowed values are:
+  - **alert**. Record information about the request.
+  - **deny**. Block the request,
+  - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
+  - **none**. Take no action.
+- `condition_exception` (Optional). Path to a JSON file containing the conditions and exceptions to be assigned to the attack group. You can view a sample JSON file in the [Modify the exceptions of an attack group](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putattackgroupconditionexception) section of the Application Security API documentation.
 

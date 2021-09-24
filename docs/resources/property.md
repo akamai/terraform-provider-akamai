@@ -14,12 +14,12 @@ The `akamai_property` resource represents an Akamai property configuration.
 This resource lets you to create, update, and activate properties on the
 Akamai platform.
 
-Akamai’s edge network caches your web assets near to servers that request them.
+Akamai's edge network caches your web assets near to servers that request them.
 A property provides the main way to control how edge servers respond to various
 kinds of requests for those assets. Properties apply rules to a set of hostnames,
 and you can only apply one property at a time to any given hostname. Each property
 is assigned to a product, which determines which behaviors you can use. Each
-property’s default rule needs a valid content provider (CP) code assigned to bill
+property's default rule needs a valid content provider (CP) code assigned to bill
 and report for the service.
 
 ~> **Note** In version 0.10 and earlier of this resource, it also controlled content provider (CP) codes, origin settings, rules, and hostname associations. Starting with version 1.0.0, this logic is broken out into individual resources.
@@ -65,7 +65,7 @@ This resource supports these arguments:
 
       * `cname_from` - (Required) A string containing the original origin's hostname. For example, `"example.org"`.
       * `cname_to` - (Required) A string containing the hostname for edge content. For example,  `"example.org.edgesuite.net"`.
-      * `cert_provisioning_type` - (Required) The certificate’s provisioning type, either the default `CPS_MANAGED` type for the custom certificates you provision with the [Certificate Provisioning System (CPS)](https://learn.akamai.com/en-us/products/core_features/certificate_provisioning_system.html), or `DEFAULT` for certificates provisioned automatically.
+      * `cert_provisioning_type` - (Required) The certificate's provisioning type, either the default `CPS_MANAGED` type for the custom certificates you provision with the [Certificate Provisioning System (CPS)](https://learn.akamai.com/en-us/products/core_features/certificate_provisioning_system.html), or `DEFAULT` for certificates provisioned automatically.
 * `rules` - (Optional) A JSON-encoded rule tree for a given property. For this argument, you need to enter a complete JSON rule tree, unless you set up a series of JSON templates. See the [`akamai_property_rules`](../data-sources/property_rules.md) data source.
 * `rule_format` - (Optional) The [rule format](https://developer.akamai.com/api/core_features/property_manager/v1.html#getruleformats) to use. Uses the latest rule format by default.
 

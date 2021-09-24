@@ -6,50 +6,57 @@ description: |-
   AdvancedSettingsPrefetch
 ---
 
-# resource_akamai_appsec_advanced_settings_prefetch
+# akamai_appsec_advanced_settings_prefetch
 
-The `resource_akamai_appsec_advanced_settings_prefetch` resource allows you to enable inspection of internal requests (those between your origin and Akamai’s servers) for file types that you specify. You can also apply rate controls to prefetch requests. This operation applies at the configuration level.
+**Scopes**: Security configuration
+
+Enables inspection of internal requests (that is, requests between your origin servers and Akamai's edge servers).
+You can also use this resource to apply rate controls to prefetch requests.
+When prefetch is enabled, internal requests are inspected by your firewall the same way that external requests (requests that originate outside the firewall and outside Akamai's edge servers) are inspected.
+
+This operation applies at the security configuration level, meaning that the settings affect all the security policies in that configuration.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/advanced-settings/prefetch](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putprefetchrequestsforaconfiguration)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to set the prefetch settings
+// USE CASE: User wants to configure prefetch settings.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 resource "akamai_appsec_advanced_settings_prefetch" "prefetch" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  enable_app_layer = false
-  all_extensions = true
+  config_id            = data.akamai_appsec_configuration.configuration.config_id
+  enable_app_layer     = false
+  all_extensions       = true
   enable_rate_controls = false
-  extensions = var.extensions
+  extensions           = [".tiff", ".bmp", ".jpg", ".gif", ".png"]
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `enable_app_layer` - (Required) Whether to enable prefetch requests.
-
-* `all_extensions` - (Required) Whether to enable prefetch requests for all extensions.
-
-* `enable_rate_controls` - (Required) Whether to enable prefetch requests for rate controls.
-
-* `extensions` - (Required) The specific extensions for which to enable prefetch requests. If `all_extensions` is True, `extensions` must be an empty list.
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration associated with the prefetch settings being modified.
+- `enable_app_layer` (Required). Set to **true** to enable prefetch requests; set to **false** to disable prefetch requests.
+- `all_extensions` (Required). Set to **true** to enable prefetch requests for all file extensions; set to **false** to enable prefetch requests on only a specified set of file extensions. If set to false you must include the `extensions` argument.
+- `enable_rate_controls` (Required). Set to **true** to enable prefetch requests for rate controls; set to **false** to disable prefetch requests for rate controls.
+- `extensions` (Required). If `all_extensions` is **false**, this must be a JSON array of all the file extensions for which prefetch requests are enabled: prefetch requests won't be used with any file extensions not included in the array. If `all_extensions` is **true**, then this argument must be set to an empty array: **[]**.
 
