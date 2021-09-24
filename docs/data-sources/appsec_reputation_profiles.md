@@ -8,21 +8,34 @@ description: |-
 
 # akamai_appsec_reputation_profiles
 
-Use the `akamai_appsec_reputation_profiles` data source to retrieve details about all reputation profiles, or a specific reputation profiles.
+**Scopes**: Security configuration; reputation profile
+
+Returns information about your reputation profiles. Reputation profiles grade the security risk of an IP address based on previous activities associated with that address. Depending on the reputation score, and depending on how your configuration has been set up, requests from a specific IP address can trigger an alert, or even be blocked.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/reputation-profiles](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getreputationprofiles)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
-// USE CASE: user wants to see all the reputation profiles associated with a given configuration, or a single reputation profile.
+// USE CASE: User wants to view all the reputation profiles associated with a security configuration.
+
 data "akamai_appsec_reputation_profiles" "reputation_profiles" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
 }
@@ -33,10 +46,11 @@ output "reputation_profiles_json" {
   value = data.akamai_appsec_reputation_profiles.reputation_profiles.json
 }
 
-// USE CASE: user wants to see a single reputation profile associated with a given configuration
+// USE CASE: User wants to view a specific reputation profile associated with a given configuration
+
 data "akamai_appsec_reputation_profiles" "reputation_profile" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  reputation_profile_id = var.reputation_profile_id
+  config_id             = data.akamai_appsec_configuration.configuration.config_id
+  reputation_profile_id = "12345"
 }
 output "reputation_profile_json" {
   value = data.akamai_appsec_reputation_profiles.reputation_profile.json
@@ -48,17 +62,15 @@ output "reputation_profile_output" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the reputation profiles.
+- `reputation_profile_id` (Optional). Unique identifier of the reputation profile you want to return information for. If not included, information is returned for all your reputation profiles.
 
-* `reputation_profile_id` - (Optional) The ID of a given reputation profile. If not supplied, information about all reputation profiles is returned.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `output_text` - A tabular display of the details about the indicated reputation profile or profiles.
-
-* `json` - A JSON-formatted display of the details about the indicated reputation profile or profiles.
+- `output_text`. Tabular report of the details about the specified reputation profile or profiles.
+- `json`. JSON-formatted report of the details about the specified reputation profile or profiles.
 

@@ -13,7 +13,7 @@ func TestAccAkamaiPolicyProtections_data_basic(t *testing.T) {
 	t.Run("match by PolicyProtections ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetPolicyProtectionsResponse{}
+		cv := appsec.PolicyProtectionsResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSPolicyProtections/PolicyProtections.json"))
 		json.Unmarshal([]byte(expectJS), &cv)
 

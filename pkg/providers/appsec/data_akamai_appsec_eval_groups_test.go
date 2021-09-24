@@ -15,10 +15,6 @@ func TestAccAkamaiEvalGroups_data_basic(t *testing.T) {
 	t.Run("match by Eval Attack Group ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		getResp := appsec.GetAttackGroupsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSEvalGroups/AttackGroups.json"))
-		json.Unmarshal([]byte(expectJS), &getResp)
-
 		configs := appsec.GetConfigurationResponse{}
 		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
 		json.Unmarshal([]byte(expectConfigs), &configs)
@@ -56,10 +52,6 @@ func TestAccAkamaiEvalGroups_data_basic(t *testing.T) {
 func TestAccAkamaiEvalGroups_data_error_retrieving_eval_groups(t *testing.T) {
 	t.Run("match by Eval Attack Group ID", func(t *testing.T) {
 		client := &mockappsec{}
-
-		getResp := appsec.GetAttackGroupsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSEvalGroups/AttackGroups.json"))
-		json.Unmarshal([]byte(expectJS), &getResp)
 
 		configs := appsec.GetConfigurationResponse{}
 		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -53,11 +52,11 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 
 	getExportConfiguration := appsec.GetExportConfigurationRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getExportConfiguration.ConfigID = configid
+	getExportConfiguration.ConfigID = configID
 
 	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -77,7 +76,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	searchlist, ok := d.GetOk("search")
@@ -96,7 +95,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 
 		if len(outputtextresult) > 0 {
 			if err := d.Set("output_text", outputtextresult); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 		}
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -42,13 +41,13 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getSiemSettings := v2.GetSiemSettingsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSiemSettings.ConfigID = configid
+	getSiemSettings.ConfigID = configID
 
-	getSiemSettings.Version = getLatestConfigVersion(ctx, configid, m)
+	getSiemSettings.Version = getLatestConfigVersion(ctx, configID, m)
 
 	siemsettings, err := client.GetSiemSettings(ctx, getSiemSettings)
 	if err != nil {
@@ -78,7 +77,7 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	d.SetId(strconv.Itoa(getSiemSettings.ConfigID))
 

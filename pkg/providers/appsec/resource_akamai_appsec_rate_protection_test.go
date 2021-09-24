@@ -17,11 +17,11 @@ func TestAccAkamaiRateProtection_res_basic(t *testing.T) {
 		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
 		json.Unmarshal([]byte(tempJSON), &config)
 
-		allProtectionsFalse := appsec.GetPolicyProtectionsResponse{}
+		allProtectionsFalse := appsec.PolicyProtectionsResponse{}
 		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResRateProtection/PolicyProtections.json"))
 		json.Unmarshal([]byte(tempJSON), &allProtectionsFalse)
 
-		oneProtectionTrue := appsec.GetPolicyProtectionsResponse{}
+		oneProtectionTrue := appsec.PolicyProtectionsResponse{}
 		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResRateProtection/UpdatedPolicyProtections.json"))
 		json.Unmarshal([]byte(tempJSON), &oneProtectionTrue)
 
@@ -74,7 +74,6 @@ func TestAccAkamaiRateProtection_res_basic(t *testing.T) {
 		).Return(&oneProtectionTrue, nil).Once()
 
 		// Read, performed as part of "id" check.
-		// Question: shouldn't there be another one of these for the "enabled" check?
 		client.On("GetPolicyProtections",
 			mock.Anything,
 			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},

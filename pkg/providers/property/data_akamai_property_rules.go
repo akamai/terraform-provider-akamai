@@ -3,7 +3,6 @@ package property
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -60,10 +59,31 @@ var dataAkamaiPropertyRuleSchema = map[string]*schema.Schema{
 		Computed:    true,
 		Description: "JSON Rule representation",
 	},
+	"rule_format": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		Description: "Rule format",
+	},
 	"errors": {
 		Type:     schema.TypeString,
 		Computed: true,
 	},
+}
+
+func isValidRuleFormat(ctx context.Context, client papi.PAPI, format string) (bool, error) {
+	if format == "" {
+		return true, nil
+	}
+	rfs, err := client.GetRuleFormats(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, rf := range rfs.RuleFormats.Items {
+		if rf == format {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -72,14 +92,23 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 	logger := meta.Log("PAPI", "dataPropertyRulesRead")
 
 	var (
-		contractID, groupID, propertyID string
-		version                         int
-		err                             error
+		contractID, groupID, propertyID, ruleFormat string
+		version                                     int
+		err                                         error
 	)
 
 	// since contractID && groupID is optional, we should not return an error.
 	contractID, _ = tools.GetStringValue("contract_id", d)
 	groupID, _ = tools.GetStringValue("group_id", d)
+
+	ruleFormat, _ = tools.GetStringValue("rule_format", d)
+	ok, err := isValidRuleFormat(ctx, client, ruleFormat)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if !ok {
+		return diag.Errorf("given 'rule_format' is not supported: %q", ruleFormat)
+	}
 
 	if propertyID, err = tools.GetStringValue("property_id", d); err != nil {
 		return diag.FromErr(err)
@@ -124,6 +153,7 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 		GroupID:         groupID,
 		ValidateRules:   true,
 		ValidateMode:    papi.RuleValidateModeFull,
+		RuleFormat:      ruleFormat,
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -132,9 +162,12 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 	formattedRulesJSON, err := json.MarshalIndent(papi.RulesUpdate{Rules: getRuleTreeResponse.Rules}, "", "  ")
 	if err != nil {
 		logger.Debugf("Creating rule tree resulted in invalid JSON: %s", err)
-		return diag.FromErr(fmt.Errorf("invalid JSON result: %w", err))
+		return diag.Errorf("invalid JSON result: %s", err)
 	}
 	if err := d.Set("rules", string(formattedRulesJSON)); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("rule_format", getRuleTreeResponse.RuleFormat); err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -8,20 +8,33 @@ description: |-
 
 # akamai_appsec_match_targets
 
-Use the `akamai_appsec_match_targets` data source to retrieve information about the match targets associated with a given configuration, or about a specific match target.
+**Scopes**: Security configuration; match target
+
+Returns information about your match targets. Match targets determine which security policy should apply to an API, hostname or path.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets{?policyId,includeChildObjectName}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getmatchtargets)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to view the match targets associated with a given security configuration
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: User wants to view the match targets associated with a security configuration.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_match_targets" "match_targets" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
@@ -30,10 +43,11 @@ output "match_targets" {
   value = data.akamai_appsec_match_targets.match_targets.output_text
 }
 
-// USE CASE: user wants to see a single match target associated with a given security configuration version
+// USE CASE: User wants to view a single match target.
+
 data "akamai_appsec_match_targets" "match_target" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  match_target_id = var.match_target_id
+  config_id       = data.akamai_appsec_configuration.configuration.config_id
+  match_target_id = "2712938"
 }
 output "match_target_output" {
   value = data.akamai_appsec_match_targets.match_target.output_text
@@ -42,17 +56,15 @@ output "match_target_output" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the match targets.
+- `match_target_id` (Optional). Unique identifier of the match target you want to return information for. If not included, information is returned for all your match targets.
 
-* `match_target_id` - (Optional) The ID of the match target to use. If not supplied, information about all match targets is returned.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `output_text` - A tabular display showing the ID and Policy ID of all match targets associated with the specified security configuration, or of the specific match target if `match_target_id` was supplied.
-
-* `json` - A JSON-formatted list of the match target information.
+- `output_text`. Tabular report showing the ID and security policy ID of your match targets.
+- `json`. JSON-formatted list of the match target information.
 

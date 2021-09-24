@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -60,13 +59,13 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getMatchTargets := appsec.GetMatchTargetsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getMatchTargets.ConfigID = configid
+	getMatchTargets.ConfigID = configID
 
-	getMatchTargets.ConfigVersion = getLatestConfigVersion(ctx, configid, m)
+	getMatchTargets.ConfigVersion = getLatestConfigVersion(ctx, configID, m)
 
 	matchtargetid, err := tools.GetIntValue("match_target_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -86,7 +85,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	ots := OutputTemplates{}
@@ -103,7 +102,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
 	if err == nil {
 		if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 

@@ -13,7 +13,7 @@ func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
 	t.Run("match by IPGeo ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		allProtectionsFalse := appsec.GetPolicyProtectionsResponse{}
+		allProtectionsFalse := appsec.PolicyProtectionsResponse{}
 		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"))
 		json.Unmarshal([]byte(tempJSON), &allProtectionsFalse)
 

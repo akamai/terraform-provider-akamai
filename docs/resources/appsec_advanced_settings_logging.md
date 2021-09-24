@@ -6,50 +6,56 @@ description: |-
   AdvancedSettingsLogging
 ---
 
-# resource_akamai_appsec_advanced_settings_logging
+# akamai_appsec_advanced_settings_logging
 
-The `resource_akamai_appsec_advanced_settings_logging` resource allows you to enable, disable, or update HTTP header logging settings for a configuration. This operation applies at the configuration level, and therefore applies to all policies within a configuration. You may override these settings for a particular policy by specifying the policy using the security_policy_id parameter.
+**Scopes**: Security configuration; security policy
+
+Enables, disables, or updates HTTP header logging settings. By default, this operation applies at the configuration level, which means that it applies to all the security policies within that configuration. However, by using the `security_policy_id` parameter you can specify custom settings for an individual security policy.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/advanced-settings/logging](https://developer.akamai.com/api/cloud_security/application_security/v1.html#puthttpheaderlogging)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to set the logging settings
+// USE CASE: User wants to modify the logging settings for a security configuration.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 resource "akamai_appsec_advanced_settings_logging" "logging" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  logging = file("${path.module}/logging.json")
+  logging   = file("${path.module}/logging.json")
 }
 
-// USE CASE: user wants to override the logging settings for a security policy
+// USE CASE: User wants to configure logging settings for a security policy.
+
 resource "akamai_appsec_advanced_settings_logging" "policy_logging" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  logging =  file("${path.module}/logging.json")
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
+  logging            = file("${path.module}/logging.json")
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `logging` - (Required) The logging settings to apply ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#puthttpheaderloggingforaconfiguration)).
-
-* `security_policy_id` - (Optional) The ID of a specific security policy to which the logging settings should be applied. If not supplied, the indicated settings will be applied to all policies within the configuration.
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration containing the logging settings being modified.
+- `logging` (Required). Path to a JSON file containing the logging settings to be configured. A sample JSON file can be found in the [Modify HTTP header log settings for a configuration](https://developer.akamai.com/api/cloud_security/application_security/v1.html#puthttpheaderloggingforaconfiguration) section of the Application Security API documentation.
+- `security_policy_id` (Optional). Unique identifier of the security policies whose settings are being modified. If not included, the logging settings are modified at the configuration scope and, as a result, apply to all the security policies associated with the configuration.
 

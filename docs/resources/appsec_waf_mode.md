@@ -8,25 +8,40 @@ description: |-
 
 # akamai_appsec_waf_mode
 
-Use the `akamai_appsec_waf_mode` resource to specify how your rule sets are updated. Use KRS mode to update the rule sets manually, or AAG to have them update automatically.
+**Scopes**: Security policy
+
+Modifies the way your Kona Rule Set rules are updated.
+Use **KRS** mode to update the rule sets manually or **AAG** to have those rule sets automatically updated.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/mode](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putmode)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to set the waf mode
+// USE CASE: User wants to set the WAF mode.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
+
 resource "akamai_appsec_waf_mode" "waf_mode" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.policy_id
-  mode = var.mode
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
+  mode               = "KRS"
 }
 output "waf_mode_mode" {
   value = akamai_appsec_waf_mode.waf_mode.mode
@@ -47,25 +62,28 @@ output "waf_mode_eval_expiration_date" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the WAF mode settings being modified.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the WAF mode settings being modified.
 
-* `mode` - (Required) "KRS" to update the rule sets manually, or "AAG" to have them update automatically. For Adaptive Security Engine (ASE) __BETA__, use `ASE_AUTO` for automatic updates or `ASE_MANUAL` to manually get current rules. Please contact your Akamai representative to learn more about ASE. Policy Rule Actions and Threat Intelligence setting are read only in ASE_AUTO mode
+- `mode` (Required). Specifies how Kona Rule Set rules are upgraded. Allowed values are:
 
-## Attributes Reference
+  - **KRS**. Organizations must manually update their KRS rules.
+  - **AAG**. KRS rules are automatically updated by Akamai.
+  - **ASE_AUTO**. KRS rules  are automatically updated by Akamai. See the note below for more information.
+  - **ASE_MANUAL**. Organizations must manually update their KRS rules. See the note below for more information.
 
-In addition to the arguments above, the following attributes are exported:
+  Note. The **ASE_AUTO** and **ASE_MANUAL** options are only available to organizations running the Adaptive Security Engine (ASE) beta. For more information on ASE, please contact your Akamai representative.
 
-* `current_ruleset` - The current rule set.
+## Output Options
 
-* `eval_ruleset` - The rule set being evaluated if any.
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `eval_status` - Either `enabled` if an evaluation is currently in progress, or `disabled` otherwise.
-
-* `eval_expiration_date` - The date on which the evaluation period ends.
-
-* `output_text` - A tabular display showing the current rule set, WAF mode and evaluation status (`enabled` if a rule set is currently being evaluated, `disabled` otherwise).
+- `current_ruleset` – Versioning information for the current Kona Rule Set.
+- `eval_ruleset`. Versioning information for the Kona Rule Set being evaluated (if applicable) .
+- `eval_status`. Returns **enabled** if an evaluation is currently in progress; otherwise returns **disabled**.
+- `eval_expiration_date`. Date on which the evaluation period ends (if applicable).
+- `output_text`. Tabular report showing the current rule set, WAF mode and evaluation status.
 

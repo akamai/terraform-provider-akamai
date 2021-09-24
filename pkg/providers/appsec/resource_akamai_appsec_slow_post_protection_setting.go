@@ -42,10 +42,10 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 			"slow_rate_action": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					Alert,
 					Abort,
-				}, false),
+				}, false)),
 			},
 			"slow_rate_threshold_rate": {
 				Type:     schema.TypeInt,
@@ -72,12 +72,12 @@ func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingCreate")
 	logger.Debugf("in resourceSlowPostProtectionSettingCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "slowpostSettings", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "slowpostSettings", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -98,11 +98,12 @@ func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	createSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{}
-	createSlowPostProtectionSetting.ConfigID = configid
-	createSlowPostProtectionSetting.Version = version
-	createSlowPostProtectionSetting.PolicyID = policyid
-	createSlowPostProtectionSetting.Action = slowrateaction
+	createSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
+		Action:   slowrateaction,
+	}
 	createSlowPostProtectionSetting.SlowRateThreshold.Rate = slowratethresholdrate
 	createSlowPostProtectionSetting.SlowRateThreshold.Period = slowratethresholdperiod
 	createSlowPostProtectionSetting.DurationThreshold.Timeout = durationthresholdtimeout
@@ -124,21 +125,21 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingRead")
 	logger.Debugf("in resourceSlowPostProtectionSettingRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
 	getSlowPostProtectionSettingsRequest := appsec.GetSlowPostProtectionSettingsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	slowPostProtectionSettings, errg := client.GetSlowPostProtectionSettings(ctx, getSlowPostProtectionSettingsRequest)
@@ -147,26 +148,26 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 		return diag.FromErr(errg)
 	}
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("security_policy_id", policyid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("security_policy_id", policyID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("slow_rate_action", slowPostProtectionSettings.Action); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if slowPostProtectionSettings.SlowRateThreshold != nil {
 		if err := d.Set("slow_rate_threshold_rate", slowPostProtectionSettings.SlowRateThreshold.Rate); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 		if err := d.Set("slow_rate_threshold_period", slowPostProtectionSettings.SlowRateThreshold.Period); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 	if slowPostProtectionSettings.DurationThreshold != nil {
 		if err := d.Set("duration_threshold_timeout", slowPostProtectionSettings.DurationThreshold.Timeout); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 	return nil
@@ -178,16 +179,16 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
 	logger.Debugf("in resourceSlowPostProtectionSettingUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratepolicyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "slowpostSettings", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "slowpostSettings", m)
+	policyID := idParts[1]
 	slowrateaction, err := tools.GetStringValue("slow_rate_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -205,11 +206,12 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	updateSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{}
-	updateSlowPostProtectionSetting.ConfigID = configid
-	updateSlowPostProtectionSetting.Version = version
-	updateSlowPostProtectionSetting.PolicyID = policyid
-	updateSlowPostProtectionSetting.Action = slowrateaction
+	updateSlowPostProtectionSetting := appsec.UpdateSlowPostProtectionSettingRequest{
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
+		Action:   slowrateaction,
+	}
 	updateSlowPostProtectionSetting.SlowRateThreshold.Rate = slowratethresholdrate
 	updateSlowPostProtectionSetting.SlowRateThreshold.Period = slowratethresholdperiod
 	updateSlowPostProtectionSetting.DurationThreshold.Timeout = durationthresholdtimeout
@@ -229,21 +231,21 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingDelete")
 	logger.Debugf("in resourceSlowPostProtectionSettingDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratepolicyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "slowpostSettings", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "slowpostSettings", m)
+	policyID := idParts[1]
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
 	if err != nil {
@@ -252,9 +254,9 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,

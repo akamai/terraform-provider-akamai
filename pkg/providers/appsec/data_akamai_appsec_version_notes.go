@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -43,13 +42,13 @@ func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getVersionNotes := appsec.GetVersionNotesRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getVersionNotes.ConfigID = configid
+	getVersionNotes.ConfigID = configID
 
-	getVersionNotes.Version = getLatestConfigVersion(ctx, configid, m)
+	getVersionNotes.Version = getLatestConfigVersion(ctx, configID, m)
 
 	versionnotes, errr := client.GetVersionNotes(ctx, getVersionNotes)
 	if errr != nil {
@@ -71,7 +70,7 @@ func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getVersionNotes.ConfigID))

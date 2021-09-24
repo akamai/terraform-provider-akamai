@@ -57,12 +57,12 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionCreate")
 	logger.Debugf("in resourceCustomRuleActionCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "customRuleAction", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -76,9 +76,9 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	createCustomRuleAction := appsec.UpdateCustomRuleActionRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		RuleID:   ruleid,
 		Action:   customruleaction,
 	}
@@ -100,25 +100,25 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
 	logger.Debugf("in resourceCustomRuleActionRead")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:customruleid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customruleid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	getCustomRuleAction := appsec.GetCustomRuleActionRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		RuleID:   ruleid,
 	}
 
@@ -128,16 +128,16 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 	if err := d.Set("config_id", getCustomRuleAction.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getCustomRuleAction.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("custom_rule_id", getCustomRuleAction.RuleID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("custom_rule_action", customruleaction.Action); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	return nil
 }
@@ -148,16 +148,16 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
 	logger.Debugf("in resourceCustomRuleActionUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:customruleid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customruleid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "customRuleAction", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	policyID := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
@@ -168,9 +168,9 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		RuleID:   ruleid,
 		Action:   customruleaction,
 	}
@@ -190,25 +190,25 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionDelete")
 	logger.Debugf("in resourceCustomRuleActionDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:customruleid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customruleid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "customRuleAction", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	policyID := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	updateCustomRuleAction := appsec.UpdateCustomRuleActionRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		RuleID:   ruleid,
 		Action:   "none",
 	}

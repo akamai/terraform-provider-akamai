@@ -8,51 +8,59 @@ description: |-
 
 # akamai_appsec_slow_post
 
-Use the `akamai_appsec_slow_post` data source to retrieve the slow post protection settings for a given security configuration and policy.
+**Scopes**: Security policy
+
+Returns the slow POST protection settings for the specified security configuration and policy. Slow POST protections help defend a site against attacks that try to tie up the site by using extremely slow requests and responses: the idea is to keep the site occupied waiting for these requests and responses to finish instead of being occupied with new (and legitimate) transactions.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/slow-post](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getslowpostprotectionsettings)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to see the slow post protection settings associated with a given
-//           security configuration, version and security policy
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: user wants to view the slow post protection settings associated with a security policy.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_slow_post" "slow_post" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
 }
 output "slow_post_output_text" {
   value = data.akamai_appsec_slow_post.slow_post.output_text
 }
-
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the slow POST settings.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the slow POST settings.
 
-* `security_policy_id` - (Required) The ID of the security policy to use
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `output_text` - A tabular display including the following columns:
-
-  * `ACTION` - The action that the rule should trigger (either `alert` or `abort`)
-
-  * `SLOW_RATE_THRESHOLD RATE` - The average rate in bytes per second over the period specified by `period` before the specified `action` is triggered.
-
-  * `SLOW_RATE_THRESHOLD PERIOD` - The length in seconds of the period during which the server should accept a request before determining whether a POST request is too slow.
-
-  * `DURATION_THRESHOLD TIMEOUT` - The time in seconds before the first eight kilobytes of the POST body must be received to avoid triggering the specified `action`.
+- `output_text`. Tabular report including the following:
+  - **ACTION**. Action taken any time slow POST protection is triggered. Valid values are:
+    - **alert**. Record the event.
+    - **abort**. Block the request.
+  - **SLOW_RATE_THRESHOLD RATE**. Average rate (in bytes per second over the specified time period) allowed before the specified action is triggered.
+  - **SLOW_RATE_THRESHOLD PERIOD**. Amount of time (in seconds) that the server should allow a request before marking the request as being too slow
+  - **DURATION_THRESHOLD TIMEOUT**. Maximum amount of time (in seconds) that the first eight kilobytes of the POST body must be received in order to avoid triggering the specified action.
 

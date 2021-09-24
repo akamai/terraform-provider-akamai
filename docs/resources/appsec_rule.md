@@ -8,47 +8,60 @@ description: |-
 
 # akamai_appsec_rule
 
-Use the `akamai_appsec_rule` resource to create or modify a rule's action, conditions and exceptions. When the conditions are met, the rule’s actions are ignored and not applied to that specific traffic.
+**Scopes**: Rule
+
+Modifies a Kona Rule Set rule's action, conditions, and exceptions.
+
+**Related API Endpoints**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules/{ruleId}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putruleaction) *and* [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules/{ruleId}/condition-exception](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putruleconditionexception)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to add action and condition-exception information to a rule using a JSON input file
+// USE CASE: User wants to add an action and condition-exception information to a rule by using a JSON-formatted input file.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 resource "akamai_appsec_rule" "rule" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  rule_id = var.rule_id
-  rule_action = var.action
+  config_id           = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id  = "gms1_134637"
+  rule_id             = 60029316
+  rule_action         = "deny"
   condition_exception = file("${path.module}/condition_exception.json")
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the Kona Rule Set rule being modified.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the Kona Rule Set rule being modified.
 
-* `rule_id` - (Required) The ID of the rule to use.
+- `rule_id` (Required). Unique identifier of the rule being modified.
 
-* `rule_action` - (Optional) The action to be taken: `alert` to record the trigger of the event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action. __ASE Beta__. if policy is in ASE_AUTO mode, only condition_exception can be modified, "ASE (Adaptive Security Engine) is currently in beta. Please contact your Akamai representative to learn more.
+- `rule_action` - (Required except when the policy in ASE AUTO mode) Allowed values are:
+  - **alert**. Record the event.
+  - **deny**. Block the request.
+  - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
+  - **none**. Take no action. or `none` to take no action.
 
-* `condition_exception` - (Optional) The name of a file containing a JSON-formatted description of the conditions and exceptions to use ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putconditionexception))
+ __ASE Beta__. if policy is in `ASE_AUTO` mode, only condition_exception can be modified, "ASE" (Adaptive Security Engine) is currently in beta. Please contact your Akamai representative to learn more.
 
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `condition_exception` (Optional). Path to a JSON file containing a description of the conditions and exceptions to be associated with a rule. You can view a sample JSON file in the [Modify the conditions and exceptions of a rule](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putruleconditionexception) section of the Application Security API documentation.
 

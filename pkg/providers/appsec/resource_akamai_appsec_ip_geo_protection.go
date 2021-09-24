@@ -57,12 +57,12 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionCreate")
 	logger.Debugf("in resourceIPGeoProtectionCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ipgeoProtection", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "ipgeoProtection", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -72,9 +72,9 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
@@ -84,9 +84,9 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
@@ -101,7 +101,7 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(fmt.Sprintf("%d:%s", configid, policyid))
+	d.SetId(fmt.Sprintf("%d:%s", configID, policyID))
 	return resourceIPGeoProtectionRead(ctx, d, m)
 }
 
@@ -111,21 +111,21 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionRead")
 	logger.Debugf("in resourceIPGeoProtectionRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
 	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	policyProtections, err := client.GetPolicyProtections(ctx, policyProtectionsRequest)
@@ -135,14 +135,14 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 	enabled := policyProtections.ApplyNetworkLayerControls
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("security_policy_id", policyid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("security_policy_id", policyID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enabled", enabled); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	ots := OutputTemplates{}
@@ -150,7 +150,7 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	outputtext, err := RenderTemplates(ots, "networkProtectionDS", policyProtections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -163,25 +163,25 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionUpdate")
 	logger.Debugf("in resourceIPGeoProtectionUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "networkProtection", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "networkProtection", m)
+	policyID := idParts[1]
 	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
 	if err != nil {
@@ -190,9 +190,9 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
@@ -216,21 +216,21 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionDelete")
 	logger.Debugf("in resourceIPGeoProtectionDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ipgeoProtection", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "ipgeoProtection", m)
+	policyID := idParts[1]
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
 	if err != nil {
@@ -239,9 +239,9 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,

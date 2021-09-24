@@ -57,12 +57,12 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionCreate")
 	logger.Debugf("in resourceAPIConstraintsProtectionCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "apiConstraintsProtection", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -72,9 +72,9 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 	}
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
@@ -84,9 +84,9 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           enabled,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
@@ -102,7 +102,7 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 	}
 	logger.Debugf("API constraints protection created (set to %v)", policyProtections.ApplyAPIConstraints)
 
-	d.SetId(fmt.Sprintf("%d:%s", configid, policyid))
+	d.SetId(fmt.Sprintf("%d:%s", configID, policyID))
 	return resourceAPIConstraintsProtectionRead(ctx, d, m)
 }
 
@@ -112,21 +112,21 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionRead")
 	logger.Debugf("in resourceAPIConstraintsProtectionRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
 	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	policyProtections, err := client.GetPolicyProtections(ctx, policyProtectionsRequest)
@@ -136,14 +136,14 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 	}
 	enabled := policyProtections.ApplyAPIConstraints
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("security_policy_id", policyid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("security_policy_id", policyID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enabled", enabled); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	ots := OutputTemplates{}
@@ -151,7 +151,7 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 	outputtext, err := RenderTemplates(ots, "rateProtectionDS", policyProtections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -164,25 +164,25 @@ func resourceAPIConstraintsProtectionUpdate(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionUpdate")
 	logger.Debugf("in resourceAPIConstraintsProtectionUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "apiConstraintsProtection", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	policyID := idParts[1]
 	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
@@ -192,9 +192,9 @@ func resourceAPIConstraintsProtectionUpdate(ctx context.Context, d *schema.Resou
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           enabled,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
@@ -219,21 +219,21 @@ func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionDelete")
 	logger.Debugf("in resourceAPIConstraintsProtectionDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "apiConstraintsProtection", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	policyID := idParts[1]
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
 	if err != nil {
@@ -242,9 +242,9 @@ func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.Resou
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           false,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,

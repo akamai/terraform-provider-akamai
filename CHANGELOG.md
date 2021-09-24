@@ -1,5 +1,39 @@
 # RELEASE NOTES
 
+## 1.9.0 (Nov 29, 2021)
+
+#### FEATURES/ENHANCEMENTS
+* APPSEC
+SECKSD-11930 Add tuning recommendations datasource
+SECKSD-12502 ASE rules advanced exception
+SECKSD-12623 Update WAP bypass network lists for multi-policy WAP
+SECKSD-12624 Deprecate WAP-only datasource & resources
+
+## 1.8.0 (Oct 25, 2021)
+
+#### FEATURES/ENHANCEMENTS:
+* [IMPORTANT] DATASTREAM - Added DataStream configuration support
+  * New [DataStream module](docs/guides/get_started_datastream.md). This module provides scalable, low latency streaming of property data in raw form
+  * New resource:
+    * [akamai_datastream](docs/resources/datastream.md) - create, read and update log streams
+  * New data sources:
+    * [akamai_datastream_activation_history](docs/data-sources/datastream_activation_history.md) - list detailed information about the activation status changes for all versions of a stream
+    * [akamai_datastream_dataset_fields](docs/data-sources/datastream_dataset_fields.md) - list groups of data set fields available in the template
+* PAPI
+  * New [akamai_property_rules_template](docs/data-sources/property_rules_template.md) data source, which lets you use JSON template files to configure a rule tree
+
+## 1.7.1 (Sept 30, 2021)
+
+#### FEATURES/ENHANCEMENTS:
+* PAPI
+  * Handling `note` field during property deactivation
+* APPSEC
+  * Major documentation updates and clean up
+
+#### BUG FIXES:
+* PAPI
+  * GRPC limit increased to 64MB ([#220](https://github.com/akamai/terraform-provider-akamai/issues/220))
+
 ## 1.7.0 (Aug 19, 2021)
 
 #### FEATURES/ENHANCEMENTS:

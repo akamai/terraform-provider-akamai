@@ -1,0 +1,16 @@
+{
+  "attackGroupRecommendations" : [ {
+    "description" : "Description for group XSS",
+    "evidences" : [{"hostEvidences":["XSS.test.org"],"pathEvidences":["/graph/api/series/XSS/","/bsd/testBSD"],"userDataEvidences":["Evidence: PHP Injection Attack (Common Functions) [System (XSS)]"]}],
+    "exception" : {
+      "specificHeaderCookieParamXmlOrJsonNames" : [ {
+        "names" : [ "UTAF-TEST-HEADER" ],
+        "selector" : "REQUEST_HEADERS",
+        "wildcard" : true
+      } ]
+    },
+    "group" : "XSS"
+  } ],
+  "evaluationPeriodEnd" : "2021-09-13T20:48:41Z",
+  "evaluationPeriodStart" : "2021-08-29T20:48:41Z"
+}

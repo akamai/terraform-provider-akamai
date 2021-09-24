@@ -8,27 +8,44 @@ description: |-
 
 # akamai_appsec_security_policy
 
-Use the `akamai_appsec_security_policy` resource to create a new security policy.
+**Scopes**: Security configuration
+
+Creates a new security policy. The resource enables you to:
+
+- Create a new, “blank” security policy.
+- Create a new policy preconfigured with the default security policy settings.
+- Clone an existing security policy.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postsecuritypolicies)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to create a new security policy
+// USE CASE: User wants to create a new security policy.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 resource "akamai_appsec_security_policy" "security_policy_create" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  default_settings = var.default_settings
-  security_policy_name = var.policy_name
-  security_policy_prefix = var.policy_prefix
+  config_id              = data.akamai_appsec_configuration.configuration.config_id
+  default_settings       = true
+  security_policy_name   = "Documentation Policy"
+  security_policy_prefix = "gms1"
 }
 
 output "security_policy_create" {
@@ -38,21 +55,17 @@ output "security_policy_create" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The configuration ID to use.
+- `config_id` (Required). Unique identifier of the security configuration to be associated with the new security policy.
+- `security_policy_name` (Required). Name of the new security policy.
+- `security_policy_prefix` (Required). Four-character alphanumeric string prefix used in creating the security policy ID.
+- `default_settings` (Optional). Set to **true** to assign default setting values to the new policy; set to **false** to create a “blank” security policy. If not included, the new policy will be created using the default settings.
+- `create_from_security_policy_id` (Optional). Unique identifier of the existing security policy that the new policy will be cloned from.
 
-* `security_policy_name` - (Required) The name of the new security policy.
+## Output Options
 
-* `security_policy_prefix` - (Required) The four-character alphanumeric string prefix for the policy ID.
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `default_settings` - (Optional) Whether the new policy should use the default settings. If not supplied, defaults to true.
-
-* `create_from_security_policy_id` - (Optional) The ID of the security policy to clone from.
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* `security_policy_id` - The ID of the newly created security policy.
+- `security_policy_id`. ID of the newly-created security policy.
 

@@ -102,7 +102,6 @@ func TestAccAkamaiWAPSelectedHostnames_res_error_retrieving_hostnames(t *testing
 		client.On("GetWAPSelectedHostnames",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
-		//).Return(&cr, nil)
 		).Return(nil, fmt.Errorf("GetWAPSelectedHostnames failed"))
 
 		client.On("UpdateWAPSelectedHostnames",

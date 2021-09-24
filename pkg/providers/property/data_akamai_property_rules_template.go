@@ -1,9 +1,10 @@
 package property
 
 import (
-	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,9 +29,30 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 		ReadContext: dataAkamaiPropertyRulesRead,
 		Schema: map[string]*schema.Schema{
 			"template_file": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"template", "template_file"},
+				Description:  "File path to the template file inside 'property-snippets' subfolder",
+			},
+			"template": {
+				Type: schema.TypeSet,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"template_data": {
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: tools.IsNotBlank,
+							Description:      "Content of the template as string",
+						},
+						"template_dir": {
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: tools.IsNotBlank,
+							Description:      "Directory points to a folder ending with 'property-snippets', which contains snippets to include into template.",
+						},
+					},
+				},
+				Optional: true,
 			},
 			"variables": {
 				Type: schema.TypeSet,
@@ -93,20 +115,63 @@ const (
 func dataAkamaiPropertyRulesRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "dataAkamaiPropertyRulesRead")
+
 	file, err := tools.GetStringValue("template_file", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	if _, err := os.Stat(file); err != nil {
-		if os.IsNotExist(err) {
+
+	var dir string
+	if err == nil {
+		if _, err := os.Stat(file); err != nil {
+			return diag.FromErr(err)
+		}
+		dir = filepath.Dir(file)
+		if filepath.Base(dir) != "property-snippets" || filepath.Ext(file) != ".json" {
+			logger.Errorf("snippets file should be under 'property-snippets' folder with .json extension: %s", file)
+			return diag.FromErr(fmt.Errorf("snippets file should be under 'property-snippets' folder with .json extension. Invalid file: %s ", file))
+		}
+	}
+
+	var templateDataStr string
+	if dir == "" {
+		templateSet, err := tools.GetSetValue("template", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		templateDataStr, dir, err = flattenTemplate(templateSet.List())
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if _, err := os.Stat(dir); err != nil {
+			return diag.FromErr(err)
+		}
+
+		if filepath.Base(dir) != "property-snippets" {
+			logger.Errorf("'template_dir' should points to 'property-snippets' folder: %s", dir)
+			return diag.Errorf("'template_dir' should points to 'property-snippets' folder: %s", dir)
+		}
+	}
+
+	var templateStr string
+	if templateDataStr == "" {
+		templateStr, err = convertToTemplate(file)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		templateStr, err = stringToTemplate(templateDataStr)
+		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
-	dir := filepath.Dir(file)
-	if filepath.Base(dir) != "property-snippets" || filepath.Ext(file) != ".json" {
-		logger.Errorf("snippets file should be under 'property-snippets' folder with .json extension: %s", file)
-		return diag.FromErr(fmt.Errorf("snippets file should be under 'property-snippets' folder with .json extension. Invalid file: %s ", file))
+
+	tmpl, err := template.New("main").Delims(leftDelim, rightDelim).Option("missingkey=error").Parse(templateStr)
+	if err != nil {
+		return diag.FromErr(err)
 	}
+
 	varsMap := make(map[string]interface{})
 	vars, err := tools.GetSetValue("variables", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -132,14 +197,6 @@ func dataAkamaiPropertyRulesRead(_ context.Context, d *schema.ResourceData, m in
 		if err != nil {
 			return diag.FromErr(err)
 		}
-	}
-	templateStr, err := convertToTemplate(file)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	tmpl, err := template.New("main").Delims(leftDelim, rightDelim).Option("missingkey=error").Parse(templateStr)
-	if err != nil {
-		return diag.FromErr(err)
 	}
 	templateFiles := make(map[string]string)
 	err = filepath.Walk(dir,
@@ -171,10 +228,16 @@ func dataAkamaiPropertyRulesRead(_ context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if !jsonFileRegexp.MatchString(file) {
+	if file != "" && !jsonFileRegexp.MatchString(file) {
 		return diag.FromErr(fmt.Errorf("Snippets file under 'property-snippets' folder should have .json files. Invalid file %s ", file))
 	}
-	d.SetId(file)
+
+	// Create a new SHA1 hash based on templateDataStr
+	h := sha1.New()
+	h.Write([]byte(templateDataStr))
+	shaHash := hex.EncodeToString(h.Sum(nil))
+	d.SetId(shaHash)
+
 	formatted := bytes.Buffer{}
 	result := wr.Bytes()
 	err = json.Indent(&formatted, result, "", "  ")
@@ -205,28 +268,70 @@ var (
 	ErrUnknownType = errors.New("unknown 'type' value")
 )
 
+// flattenTemplate formats the template schema into a couple of strings holding template_data and template_dir values
+func flattenTemplate(templateList []interface{}) (string, string, error) {
+	if len(templateList) != 1 {
+		return "", "", fmt.Errorf("%w: only single entry of template<template_data, template_dir> is allowed. Invalid template: %v ", tools.ErrInvalidType, templateList)
+	}
+	templateMap, ok := templateList[0].(map[string]interface{})
+	if !ok {
+		return "", "", fmt.Errorf("%w: unable to convert map entry to data object: %v", tools.ErrInvalidType, templateMap)
+	}
+
+	templateData, ok := templateMap["template_data"]
+	if !ok {
+		return "", "", fmt.Errorf("%w: 'template_data' argument is required in template definition", tools.ErrNotFound)
+	}
+
+	templateDataStr, ok := templateData.(string)
+	if !ok {
+		return "", "", fmt.Errorf("%w: 'template_data' argument should be a string: %v", tools.ErrInvalidType, templateData)
+	}
+
+	templateDir, ok := templateMap["template_dir"]
+	if !ok {
+		return "", "", fmt.Errorf("%w: 'template_dir' argument is required in template definition", tools.ErrNotFound)
+	}
+
+	templateDirStr, ok := templateDir.(string)
+	if !ok {
+		return "", "", fmt.Errorf("%w: 'template_dir' argument should be a string: %v", tools.ErrInvalidType, templateDir)
+	}
+
+	return templateDataStr, filepath.Clean(templateDirStr), nil
+}
+
+// stringToTemplate takes a large string (templateDataStr) and formats include/variable statements.
+func stringToTemplate(templateDataStr string) (string, error) {
+	includeStatement := includeRegexp.FindString(templateDataStr)
+	for len(includeStatement) > 0 {
+		templateName := strings.TrimPrefix(strings.TrimSuffix(includeStatement, `"`), `"#include:`)
+		templateDataStr = strings.ReplaceAll(templateDataStr, includeStatement, fmt.Sprintf(`%stemplate "%s" .%s`, leftDelim, templateName, rightDelim))
+		includeStatement = includeRegexp.FindString(templateDataStr)
+	}
+
+	varStatement := varRegexp.FindString(templateDataStr)
+	for len(varStatement) > 0 {
+		varName := strings.TrimPrefix(strings.TrimSuffix(varStatement, `}"`), `"${env`)
+		templateDataStr = strings.ReplaceAll(templateDataStr, varStatement, fmt.Sprintf("%s%s%s", leftDelim, varName, rightDelim))
+		varStatement = varRegexp.FindString(templateDataStr)
+	}
+
+	if string(templateDataStr[len(templateDataStr)-1]) != "\n" {
+		return fmt.Sprintf("%s\n", templateDataStr), nil
+	}
+
+	return templateDataStr, nil
+}
+
+// convertToTemplate passes the string data to stringToTemplate after reading it from given path.
 func convertToTemplate(path string) (string, error) {
-	builder := strings.Builder{}
-	f, err := os.Open(path)
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", fmt.Errorf("%w: %s", ErrReadFile, err)
 	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if includeStatement := includeRegexp.Find(line); len(includeStatement) > 0 {
-			templateName := bytes.TrimPrefix(bytes.TrimSuffix(includeStatement, []byte(`"`)), []byte(`"#include:`))
-			line = includeRegexp.ReplaceAll(line, []byte(fmt.Sprintf(`%stemplate "%s" .%s`, leftDelim, templateName, rightDelim)))
-		}
-		if varStatement := varRegexp.Find(line); len(varStatement) > 0 {
-			varName := bytes.TrimPrefix(bytes.TrimSuffix(varStatement, []byte(`}"`)), []byte(`"${env`))
-			line = varRegexp.ReplaceAll(line, []byte(fmt.Sprintf("%s%s%s", leftDelim, varName, rightDelim)))
-		}
-		builder.Write(line)
-		builder.WriteString("\n")
-	}
-	return builder.String(), nil
+
+	return stringToTemplate(string(b))
 }
 
 func convertToTypedMap(vars []interface{}) (map[string]interface{}, error) {

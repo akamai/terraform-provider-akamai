@@ -8,41 +8,46 @@ description: |-
 
 # akamai_appsec_security_policy_rename
 
-The `akamai_appsec_security_policy_rename` resource allows you to rename an existing security policy.
+**Scopes**: Security policy
+
+Renames an existing security policy. Note that you can only change the name of the policy: once issued, the security policy ID can't be modified.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putsecuritypolicy)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to rename a security policy
+// USE CASE: User wants to rename a security policy.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
-resource "akamai_appsec_security_policy" "security_policy_rename" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  security_policy_name = var.name
+resource "akamai_appsec_security_policy_rename" "security_policy_rename" {
+  config_id            = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id   = "gms1_134637"
+  security_policy_name = "Documentation and Training Policy"
 }
+
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `security_policy_id` - (Required) The ID of the security policy to be renamed.
-
-* `security_policy_name` - (Required) The new name to be given to the security policy.
-
-## Attribute Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration associated with the security policy being renamed.
+- `security_policy_id` (Required). Unique identifier of the security policy being renamed.
+- `security_policy_name` (Required). New name to be given to the security policy.
 

@@ -45,10 +45,10 @@ This data source returns these attributes:
   * `edge_hostname_id` - The edge hostname's unique ID, including the `ehn_` prefix.
   * `cname_from` - A string containing the original origin's hostname.
   * `cname_to` - A string containing the hostname for edge content.
-  * `cert_provisioning_type` - The certificate’s provisioning type, either the default `CPS_MANAGED` type for the custom certificates you provision with the Certificate Provisioning System (CPS), or `DEFAULT` for certificates provisioned automatically.
+  * `cert_provisioning_type` - The certificate's provisioning type, either the default `CPS_MANAGED` type for the custom certificates you provision with the Certificate Provisioning System (CPS), or `DEFAULT` for certificates provisioned automatically.
   * `cert_status` - If applicable, this shows a list of certificate statuses, including:
-    * `target` - The destination part of the CNAME record used to validate the certificate’s domain.
-    * `hostname` - The hostname part of the CNAME record used to validate the certificate’s domain.
+    * `target` - The destination part of the CNAME record used to validate the certificate's domain.
+    * `hostname` - The hostname part of the CNAME record used to validate the certificate's domain.
     * `production_status` - A string containing the status of the certificate deployment on the production network.
     * `staging_status` - A string containing the status of the certificate deployment on the staging network.
 

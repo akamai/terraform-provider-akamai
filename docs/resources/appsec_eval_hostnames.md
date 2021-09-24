@@ -6,41 +6,51 @@ description: |-
   EvalHostnames
 ---
 
-# resource_akamai_appsec_eval_hostnames
+# akamai_appsec_eval_hostnames
 
-The `resource_akamai_appsec_eval_hostnames` resource allows you to update the list of hostnames you want to evaluate for a configuration.
+**Scopes**: Security configuration
+
+**Note**: This data source is deprecated and may be removed in a future release.
+
+Modifies the list of hostnames evaluated while a security configuration is in evaluation mode.
+During evaluation mode, hosts take no action of any kind when responding to traffic.
+Instead, these hosts simply maintain a record of the actions they *would* have taken if they had been responding to live traffic in your production network.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/selected-hostnames/eval-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putevaluationhostnames)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
-// USE CASE: user wants to specify the hostnames to evaluate
+// USE CASE: User wants to specify the hostnames to be evaluated in evaluation mode.
+
 resource "akamai_appsec_eval_hostnames" "eval_hostnames" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  hostnames = var.hostnames
+  hostnames = ["documentation.akamai.com", "training.akamai.com", "videos.akamai.com"]
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `hostnames` - (Required) A list of evaluation hostnames to be used for the specified configuration version.
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration in evaluation mode.
+- `hostnames` (Required). JSON array of hostnames to be used in the evaluation process. Note that this list replaces your existing list of evaluation hosts.
 

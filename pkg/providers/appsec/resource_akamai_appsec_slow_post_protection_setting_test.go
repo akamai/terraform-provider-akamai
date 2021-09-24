@@ -13,7 +13,7 @@ func TestAccAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 	t.Run("match by SlowPostProtectionSetting ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		allProtectionsFalse := appsec.GetPolicyProtectionsResponse{}
+		allProtectionsFalse := appsec.PolicyProtectionsResponse{}
 		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"))
 		json.Unmarshal([]byte(tempJSON), &allProtectionsFalse)
 
@@ -41,7 +41,7 @@ func TestAccAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		client.On("GetSlowPostProtectionSettings",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetSlowPostProtectionSettingsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cr, nil)
+		).Return(&cr, nil).Twice()
 
 		client.On("GetPolicyProtections",
 			mock.Anything,

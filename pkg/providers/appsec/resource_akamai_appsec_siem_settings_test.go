@@ -21,7 +21,7 @@ func TestAccAkamaiSiemSettings_res_basic(t *testing.T) {
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSiemSettings/SiemSettings.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
-		crd := appsec.UpdateSiemSettingsResponse{}
+		crd := appsec.RemoveSiemSettingsResponse{}
 		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResSiemSettings/SiemSettings.json"))
 		json.Unmarshal([]byte(expectJSD), &crd)
 
@@ -44,9 +44,9 @@ func TestAccAkamaiSiemSettings_res_basic(t *testing.T) {
 			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: true, SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"}},
 		).Return(&cu, nil)
 
-		client.On("UpdateSiemSettings",
+		client.On("RemoveSiemSettings",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, EnabledBotmanSiemEvents: false, SiemDefinitionID: 1, FirewallPolicyIds: []string(nil)},
+			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, EnabledBotmanSiemEvents: false, SiemDefinitionID: 0, FirewallPolicyIds: []string(nil)},
 		).Return(&crd, nil)
 
 		useClient(client, func() {

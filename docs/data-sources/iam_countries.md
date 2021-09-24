@@ -8,7 +8,7 @@ description: |-
 
 # akamai_iam_countries
 
-Use `akamai_iam_countries` to retrieve all the possible countries that Akamai supports. Use the values from this data source to add or update a user’s country information.
+Use `akamai_iam_countries` to retrieve all the possible countries that Akamai supports. Use the values from this data source to add or update a user's country information.
 
 ## Example usage
 

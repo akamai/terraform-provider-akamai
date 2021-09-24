@@ -8,30 +8,42 @@ description: |-
 
 # akamai_appsec_reputation_profile_action
 
-Use the `akamai_appsec_reputation_profile_action` resource to update what action should be taken when a reputation profile's rule is triggered.
+**Scopes**: Reputation profile
+
+Modifies the action taken when a reputation profile is triggered.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/reputation-profiles/{reputationProfileId}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putreputationprofileaction)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
-resource  "akamai_appsec_reputation_profile_action" "appsec_reputation_profile_action" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  reputation_profile_id = akamai_appsec_reputation_profile.reputation_profile.id
-  action = "alert"
+resource "akamai_appsec_reputation_profile_action" "appsec_reputation_profile_action" {
+  config_id             = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id    = "gms1_134637"
+  reputation_profile_id = 130713
+  action                = "alert"
 }
 
 output "reputation_profile_id" {
-  value = akamai_appsec_reputation_profile.reputation_profile.reputation_profile_id
+  value = akamai_appsec_reputation_profile_action.appsec_reputation_profile_action.reputation_profile_id
 }
 
 output "reputation_profile_action" {
@@ -41,19 +53,14 @@ output "reputation_profile_action" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `security_policy_id` - (Required) The ID of the security policy to use.
-
-* `reputation_profile_id` - (Required) The ID of the reputation profile to use.
-
-* `action` - (Required) The action to take when the specified reputation profile’s rule is triggered: `alert` to record the trigger event, `deny` to block the request, `deny_custom_{custom_deny_id}` to execute a custom deny action, or `none` to take no action.
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* None
+- `config_id` (Required). Unique identifier of the security configuration associated with the reputation profile action being modified.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the reputation profile action being modified.
+- `reputation_profile_id` (Required). Unique identifier of the reputation profile whose action is being modified.
+- `action` (Required). Action taken any time the reputation profile is triggered. Allows values are:
+  - **alert**. Record the event.
+  - **deny**. Block the request.
+  - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
+  - **none**. Take no action.
 

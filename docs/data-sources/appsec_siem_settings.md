@@ -3,26 +3,38 @@ layout: "akamai"
 page_title: "Akamai: SiemSettings"
 subcategory: "Application Security"
 description: |-
- SiemSettijgs
+ SiemSettings
 ---
 
 # akamai_appsec_siem_settings
 
-Use the `akamai_appsec_siem_settings` data source to retrieve the SIEM settings for a specific configuration. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemsettings).
+**Scopes**: Security configuration
+
+Returns the SIEM (Security Event and Information Management) settings for a security configuration. The returned information is described in the [SIEM members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#d8470aff) section of the Application Security API.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/siem](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemsettings)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-// OPEN API --> https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemsettings
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to view the siem settings with a given security configuration
+// USE CASE: User wants to view the SIEM settings for a security configuration.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 data "akamai_appsec_siem_settings" "siem_settings" {
@@ -40,15 +52,14 @@ output "siem_settings_output" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration you want to return information for.
 
-## Attributes Reference
+## Output Options
 
-In addition to the arguments above, the following attributes are exported:
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `json` - A JSON-formatted list of the SIEM setting information.
-
-* `output_text` - A tabular display showing the SIEM setting information.
+- `json`. JSON-formatted list of the SIEM setting information.
+- `output_text`. Tabular report showing the SIEM setting information.
 

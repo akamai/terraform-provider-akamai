@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -45,19 +44,19 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 
 	getCustomRuleActions := appsec.GetCustomRuleActionsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getCustomRuleActions.ConfigID = configid
+	getCustomRuleActions.ConfigID = configID
 
-	getCustomRuleActions.Version = getLatestConfigVersion(ctx, configid, m)
+	getCustomRuleActions.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getCustomRuleActions.PolicyID = policyid
+	getCustomRuleActions.PolicyID = policyID
 
 	customruleid, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -77,7 +76,7 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	outputtext, err := RenderTemplates(ots, "customRuleAction", customruleactions)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 

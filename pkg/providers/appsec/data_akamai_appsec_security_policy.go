@@ -49,19 +49,19 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceSecurityPolicyRead")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 	securityPolicyName, err := tools.GetStringValue("security_policy_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	getSecurityPoliciesRequest := appsec.GetSecurityPoliciesRequest{
-		ConfigID: configid,
-		Version: version,
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	securitypolicies, err := client.GetSecurityPolicies(ctx, getSecurityPoliciesRequest)
@@ -76,16 +76,16 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 		securityPoliciesList = append(securityPoliciesList, val.PolicyID)
 		if val.PolicyName == securityPolicyName {
 			if err := d.Set("security_policy_id", val.PolicyID); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 			if err = d.Set("security_policy_name", val.PolicyName); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 		}
 	}
 
 	if err := d.Set("security_policy_id_list", securityPoliciesList); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	ots := OutputTemplates{}
@@ -94,11 +94,11 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	outputtext, err := RenderTemplates(ots, "securityPoliciesDS", securitypolicies)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d", configid, version))
+	d.SetId(fmt.Sprintf("%d:%d", configID, version))
 
 	return nil
 }

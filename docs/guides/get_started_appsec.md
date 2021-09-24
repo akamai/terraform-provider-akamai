@@ -17,11 +17,11 @@ This Guide is for developers who:
 * are interested in implementing or updating an integration of Akamai functionality with Terraform.
 * already have some familiarity with Akamai.
  
-## Prerequisites
+-> **Note** For detailed instructions on "Creating a Security Configuration" and
+other appsec use cases in Terraform, please refer to the use case guides here:
+https://github.com/akamai/terraform-provider-akamai/tree/master/docs/use-cases
 
-~> **Note** The Application Security subprovider is currently in beta. If you’re currently using the Application Security module,
-the latest Akamai Terraform Provider release, v1.6.0, includes breaking changes that require you to update your existing Terraform
-configuration.
+## Prerequisites
 
 To manage Application Security resources, you need to obtain information regarding your 
 existing security implementation, including the following information:
@@ -341,6 +341,7 @@ Resource definitions can be exported for import using any of the following `sear
   * akamai_appsec_version_notes
   * akamai_appsec_waf_mode
   * akamai_appsec_threat_intel
+  * akamai_appsec_tuning_recommendations
 
 ### Resources
   * akamai_appsec_activations

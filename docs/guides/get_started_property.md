@@ -174,7 +174,7 @@ However, you still have to activate the property configuration for it to be live
 
 ## Activate your property
 
-Once you’re satisfied with a property version, an activation deploys it to
+Once you're satisfied with a property version, an activation deploys it to
 either the Akamai staging or production network. You activate a specific version,
 but the same version can be activated separately more than once.
 

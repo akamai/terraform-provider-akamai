@@ -8,24 +8,37 @@ description: |-
 
 # akamai_appsec_security_policy_protections
 
-Use the `akamai_appsec_security_policy_protections` data source to retrieve the protections in effect for a given security policy.
+**Scopes**: Security policy
+
+Returns information about the protections in effect for the specified security policy.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/protections](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getprotections)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to view all security policy protections
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: User wants to view all security policy protections.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_security_policy_protections" "protections" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
 }
 
 output "protections_json" {
@@ -59,36 +72,26 @@ output "protections_applyReputationControls" {
 output "protections_applySlowPostControls" {
   value = data.akamai_appsec_security_policy_protections.protections.apply_slow_post_controls
 }
-
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the security policy protections.
+- `security_policy_id` (Required). Unique identifier of the security policy you want to return protections information for.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `apply_application_layer_controls` - `true` or `false`, indicating whether application layer controls are in effect.
-
-* `apply_network_layer_controls` - `true` or `false`, indicating whether network layer controls are in effect.
-
-* `apply_rate_controls` - `true` or `false`, indicating whether rate controls are in effect.
-
-* `apply_reputation_controls` - `true` or `false`, indicating whether reputation controls are in effect.
-
-* `apply_botman_controls` - `true` or `false`, indicating whether botman controls are in effect.
-
-* `apply_api_constraints` - `true` or `false`, indicating whether API constraints are in effect.
-
-* `apply_slow_post_controls` - `true` or `false`, indicating whether slow post controls are in effect.
-
-* `json` - a JSON-formatted list showing the status of the protection settings
-
-* `output_text` - a tabular display showing the status of the protection settings
+- `apply_application_layer_controls`. Returns **true** if application layer controls are enabled; returns **false** if they are not.
+- `apply_network_layer_controls`. Returns **true** if network layer controls are enabled; returns **false** if they are not.
+- `apply_rate_controls`. Returns **true** if rate controls are enabled; returns **false** if they are not.
+- `apply_reputation_controls`. Returns **true** if reputation controls are enabled; returns **false** if they are not.
+- `apply_botman_controls`. Returns **true** if Bot Manager controls are enabled; returns **false** if they are not.
+- `apply_api_constraints`. Returns **true** if API constraints are enabled; returns **false** if they are not.
+- `apply_slow_post_controls`. Returns **true** if slow POST controls are enabled; returns **false** if they are not.
+- `json`. JSON-formatted list showing the status of the protection settings.
+- `output_text`. Tabular report showing the status of the protection settings
 
