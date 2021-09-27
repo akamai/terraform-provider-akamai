@@ -1,0 +1,30 @@
+[
+  {
+    "name": "rule1",
+    "type": "albMatchRule",
+    "start": 10,
+    "end": 10000,
+    "matches": [
+      {
+        "matchType": "clientip",
+        "matchValue": "127.0.0.1",
+        "caseSensitive": false,
+        "negate": false
+      }
+    ],
+    "matchURL": "example.com",
+    "matchesAlways": false,
+    "forwardSettings": {
+      "originId": ""
+    }
+  },
+  {
+    "name": "rule2",
+    "type": "albMatchRule",
+    "id": 12333,
+    "matchesAlways": false,
+    "forwardSettings": {
+      "originId": "1234"
+    }
+  }
+]

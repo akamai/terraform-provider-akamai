@@ -24,6 +24,10 @@ func TestDataCloudletsLoadBalancerMatchRule(t *testing.T) {
 			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_range.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/omv_range_rules.json",
 		},
+		"match criteria ALB - empty ObjectMatchValue": {
+			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_empty.tf",
+			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/omv_empty_rules.json",
+		},
 	}
 
 	for name, test := range tests {

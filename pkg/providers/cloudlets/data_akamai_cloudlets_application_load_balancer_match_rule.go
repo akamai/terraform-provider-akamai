@@ -261,7 +261,7 @@ func parseMatchCriteriaALB(match interface{}) (*cloudlets.MatchCriteriaALB, erro
 func parseObjectMatchValue(aMap map[string]interface{}) (interface{}, error) {
 	v, ok := aMap["object_match_value"]
 	if !ok {
-		return struct{}{}, nil
+		return nil, nil
 	}
 	rawObjects := v.(*schema.Set).List()
 	for _, rawObject := range rawObjects {
@@ -298,7 +298,7 @@ func parseObjectMatchValue(aMap map[string]interface{}) (interface{}, error) {
 			}
 		}
 	}
-	return struct{}{}, nil
+	return nil, nil
 }
 
 func parseOMVOptions(aMap map[string]interface{}) (*cloudlets.Options, error) {
