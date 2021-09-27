@@ -80,6 +80,9 @@ func resourceCloudletsPolicy() *schema.Resource {
 				Computed: true,
 			},
 		},
+		Importer: &schema.ResourceImporter{
+			StateContext: resourcePolicyImport,
+		},
 	}
 }
 
@@ -351,6 +354,55 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	d.SetId("")
 	return nil
+}
+
+func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Cloudlets", "resourcePolicyImport")
+	logger.Debugf("Import Policy")
+
+	client := inst.Client(meta)
+
+	name := d.Id()
+	if name == "" {
+		return nil, fmt.Errorf("policy name cannot be empty")
+	}
+
+	policies, err := client.ListPolicies(ctx, cloudlets.ListPoliciesRequest{})
+	if err != nil {
+		return nil, err
+	}
+	var policy *cloudlets.Policy
+	for _, p := range policies {
+		if p.Name == name {
+			policy = &p
+			break
+		}
+	}
+	if policy == nil {
+		return nil, fmt.Errorf("could not find policy with name: %s", name)
+	}
+
+	d.SetId(strconv.FormatInt(policy.PolicyID, 10))
+
+	versions, err := client.ListPolicyVersions(ctx, cloudlets.ListPolicyVersionsRequest{
+		PolicyID: policy.PolicyID,
+	})
+	if len(versions) == 0 {
+		return nil, fmt.Errorf("no policy version found")
+	}
+	var version int64
+	for _, v := range versions {
+		if v.Version > version {
+			version = v.Version
+		}
+	}
+	err = d.Set("version", version)
+	if err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func diffSuppressGroupID(_, old, new string, _ *schema.ResourceData) bool {
