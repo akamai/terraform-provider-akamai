@@ -35,6 +35,9 @@ data "akamai_cloudlets_application_load_balancer_match_rule" "test" {
       }
     }
     type = "albMatchRule"
+    forward_settings {
+      origin_id = "33"
+    }
   }
   match_rules {
     name = "rule2"

@@ -134,12 +134,12 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 						},
 						"forward_settings": {
 							Type:     schema.TypeSet,
-							Optional: true,
+							Required: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"origin_id": {
 										Type:     schema.TypeString,
-										Optional: true,
+										Required: true,
 									},
 								},
 							},
@@ -182,17 +182,16 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 			return diag.FromErr(err)
 		}
 
-		if forwardS, ok := rawRule["forward_settings"]; ok {
-			settings, ok := forwardS.(*schema.Set)
-			if !ok {
-				return diag.Errorf("%v: 'forward_settings' should be an *schema.Set", tools.ErrInvalidType)
-			}
-			rule.ForwardSettings = cloudlets.ForwardSettings{}
-			for _, element := range settings.List() {
-				entries := element.(map[string]interface{})
-				if originID, ok := entries["origin_id"]; ok {
-					rule.ForwardSettings.OriginID = originID.(string)
-				}
+		// Schema guarantees that "forward_settings" will be present and of type *schema.Set
+		settings, ok := rawRule["forward_settings"].(*schema.Set)
+		if !ok {
+			return diag.Errorf("%v: 'forward_settings' should be an *schema.Set", tools.ErrInvalidType)
+		}
+		for _, element := range settings.List() {
+			entries := element.(map[string]interface{})
+			// Schema guarantees that "origin_id" will be present
+			rule.ForwardSettings = cloudlets.ForwardSettings{
+				OriginID: entries["origin_id"].(string),
 			}
 		}
 

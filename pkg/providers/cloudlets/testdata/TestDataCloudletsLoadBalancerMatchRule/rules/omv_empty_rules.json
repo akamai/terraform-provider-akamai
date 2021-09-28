@@ -15,7 +15,7 @@
     "matchURL": "example.com",
     "matchesAlways": false,
     "forwardSettings": {
-      "originId": ""
+      "originId": "31"
     }
   },
   {

@@ -13,6 +13,9 @@ data "akamai_cloudlets_application_load_balancer_match_rule" "test" {
       match_value = "127.0.0.1"
     }
     type = "albMatchRule"
+    forward_settings {
+      origin_id = "31"
+    }
   }
   match_rules {
     name = "rule2"

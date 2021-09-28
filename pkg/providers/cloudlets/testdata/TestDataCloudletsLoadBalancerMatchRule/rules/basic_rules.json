@@ -3,7 +3,7 @@
     "name": "rule1",
     "matchesAlways": false,
     "forwardSettings": {
-      "originId": ""
+      "originId": "3"
     }
   }
 ]
