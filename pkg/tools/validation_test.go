@@ -105,3 +105,34 @@ func TestValidateJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestEmailValidation(t *testing.T) {
+	tests := map[string]struct {
+		givenVal      interface{}
+		expectedError bool
+	}{
+		"empty email": {
+			givenVal:      "",
+			expectedError: true,
+		},
+		"invalid email": {
+			givenVal:      "test",
+			expectedError: true,
+		},
+		"no domain": {
+			givenVal:      "test@akamai",
+			expectedError: true,
+		},
+		"valid email": {
+			givenVal:      "test@akamai.com",
+			expectedError: false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			diags := ValidateEmail(test.givenVal, nil)
+			assert.Equal(t, test.expectedError, diags.HasError())
+		})
+	}
+}

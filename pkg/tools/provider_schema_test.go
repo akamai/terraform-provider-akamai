@@ -2,12 +2,13 @@ package tools
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 type mocked struct {
@@ -547,6 +548,64 @@ func TestResolveKeyState(t *testing.T) {
 				return
 			}
 			assert.Equal(t, test.expected, res)
+		})
+	}
+}
+
+func TestGetExactlyOneOf(t *testing.T) {
+	value := &schema.Set{}
+	keys := []string{"key1", "key2", "key3"}
+
+	tests := map[string]struct {
+		key       string
+		foundKey  string
+		init      func(*mocked)
+		expected  *schema.Set
+		withError error
+	}{
+		"not found": {
+			init: func(m *mocked) {
+				m.On("GetOk", mock.Anything).Return(nil, false)
+			},
+			withError: ErrNotFound,
+		},
+		"exactly one value present": {
+			init: func(m *mocked) {
+				m.On("GetOk", "key2").Return(value, true).Once()
+				m.On("GetOk", mock.Anything).Return(nil, false)
+			},
+			expected: value,
+			foundKey: "key2",
+		},
+		"multiple values present": {
+			init: func(m *mocked) {
+				m.On("GetOk", "key2").Return(value, true).Once()
+				m.On("GetOk", "key3").Return(value, true).Maybe()
+				m.On("GetOk", mock.Anything).Return(nil, false)
+			},
+			expected: value,
+			foundKey: "key2",
+		},
+		"value type not set": {
+			init: func(m *mocked) {
+				m.On("GetOk", mock.Anything).Return(make([]string, 0), true).Once()
+			},
+			withError: ErrInvalidType,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			m := &mocked{}
+			test.init(m)
+			foundKey, res, err := GetExactlyOneOf(m, keys)
+			m.AssertExpectations(t)
+			if test.withError != nil {
+				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				return
+			}
+			assert.Equal(t, test.expected, res)
+			assert.Equal(t, test.foundKey, foundKey)
 		})
 	}
 }
