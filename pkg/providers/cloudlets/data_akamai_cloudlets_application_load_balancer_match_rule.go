@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceCloudletsLoadBalancerMatchRule() *schema.Resource {
+func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceCloudletsLoadBalancerMatchRuleRead,
 		Schema: map[string]*schema.Schema{
