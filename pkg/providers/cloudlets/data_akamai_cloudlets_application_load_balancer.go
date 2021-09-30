@@ -22,7 +22,7 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 			"origin_id": {
 				Type:		 schema.TypeString,
 				Required: 	 true,
-				Description: "Describes Origin Id",
+				Description: "Describes origin Id",
 			},
 			"version": {
 				Type:     	 schema.TypeInt,
@@ -37,7 +37,7 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 			"type": {
 				Type:     	 schema.TypeString,
 				Computed: 	 true,
-				Description: "Describes Origin type",
+				Description: "Describes origin type",
 			},
 			"balancing_type": {
 				Type:     	 schema.TypeString,
@@ -62,7 +62,7 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 			"immutable": {
 				Type:     	 schema.TypeBool,
 				Computed: 	 true,
-				Description: "Describes if the load balancer version is marked as immutable which means, that it has been activated",
+				Description: "Describes if the load balancer version has been activated, thus marked as immutable",
 			},
 			"last_modified_by": {
 				Type:     	 schema.TypeString,
@@ -134,7 +134,7 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 						"origin_id": {
 							Type:     	 schema.TypeString,
 							Computed: 	 true,
-							Description: "Describes the Cloudlets Origin Id corresponding to this data center",
+							Description: "Describes the Cloudlets origin Id corresponding to this data center",
 						},
 						"percent": {
 							Type:     	 schema.TypeFloat,
@@ -367,7 +367,7 @@ func getLatestVersionOfApplicationLoadBalancer(ctx context.Context, originID str
 		return 0, err
 	}
 	if len(versions) == 0 {
-		return 0, fmt.Errorf("no load balancer version found for given origin")
+		return 0, fmt.Errorf("no load balancer version found for origin: %s", originID)
 	}
 
 	var theLatestVersion int64
