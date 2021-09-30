@@ -6,26 +6,41 @@ description: |-
  ContractsGroups
 ---
 
+
 # akamai_appsec_contracts_groups
 
-Use the `akamai_appsec_contracts_groups` data source to retrieve information about the contracts and groups for your account. Each object contains the contract, groups associated with the contract, and whether Kona Site Defender or Web Application Protector is the product for that contract. You’ll need this information when you create a new security configuration or when you want to get a list of hostnames still available for use in a security policy. The information available via this data source is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcontractsandgroupswithksdorwaf).
+**Scopes**: Contract; group
+
+Returns information about the contracts and groups associated with your account. Among other things, this information is required to create a new security configuration and to return a list of the hostnames available for use in a security policy. The returned information for this data source is described in the [List contracts and groups](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcontractsandgroupswithksdorwaf) of the Application Security API.
+
+**Related API Endpoint**: [/appsec/v1/contracts-groups](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcontractsandgroupswithksdorwaf)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to see contract group details in an account
+// USE CASE: user wants to view the contracts and groups associated with their account.
+
 data "akamai_appsec_contracts_groups" "contracts_groups" {
-  contractid = var.contractid
-  groupid = var.groupid
+  contractid = "5-2WA382"
+  groupid    = 12198
 }
 
-//tabular data of contractid, displayname and group id
+// USE CASE: User wants to display returned data in a table.
+
 output "contracts_groups_list" {
   value = data.akamai_appsec_contracts_groups.contracts_groups.output_text
 }
@@ -34,7 +49,8 @@ output "contracts_groups_json" {
   value = data.akamai_appsec_contracts_groups.contracts_groups.json
 }
 
-//returns any of the contract/group
+//USE CASE: User wants to return all available contracts and contract groups.
+
 output "contract_groups_default_contractid" {
   value = data.akamai_appsec_contracts_groups.contracts_groups.default_contractid
 }
@@ -46,23 +62,17 @@ output "contract_groups_default_groupid" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-## Attributes Reference
+- `contractid` (Optional). Unique identifier of an Akamai contract. If not included, information is returned for all the Akamai contracts associated with your account.
+- `groupid` (Optional). Unique identifier of a contract group. If not included, information is returned for all the groups associated with your account.
 
-* `contractid` - (Optional) The ID of a contract for which to retrieve information.
+## Output Options
 
-* `groupid` - (Optional) The ID of a group for which to retrieve information.
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* `json` - A JSON-formatted list of the contract and group information.
-
-* `output_text` - A tabular display showing the contract and group information.
-
-* `default_contractid` - The default contract ID for the specified contract and group.
-
-* `default_groupid` - The default group ID for the specified contract and group.
+- `json`. JSON-formatted list of contract and group information.
+- `output_text`. Tabular report of contract and group information.
+- `default_contractid`. Default contract ID for the specified contract and group.
+- `default_groupid`. Default group ID for the specified contract and group.
 

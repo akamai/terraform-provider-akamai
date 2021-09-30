@@ -90,9 +90,10 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 	target := configuration.TargetProduct
 
 	if target == "KSD" {
-		getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
-		getSelectedHostnames.ConfigID = configid
-		getSelectedHostnames.Version = version
+		getSelectedHostnames := appsec.GetSelectedHostnamesRequest{
+			ConfigID: configid,
+			Version: version,
+		}
 
 		selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
 		if err != nil {
@@ -107,9 +108,10 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 
-		getMatchTargets := appsec.GetMatchTargetsRequest{}
-		getMatchTargets.ConfigID = configid
-		getMatchTargets.ConfigVersion = version
+		getMatchTargets := appsec.GetMatchTargetsRequest{
+			ConfigID: configid,
+			ConfigVersion: version,
+		}
 
 		matchtargets, err := client.GetMatchTargets(ctx, getMatchTargets)
 		if err != nil {
@@ -144,10 +146,11 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			}
 		}
 	} else { // WAP_AAG and WAP_PLUS accounts
-		getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{}
-		getWAPSelectedHostnamesRequest.ConfigID = configid
-		getWAPSelectedHostnamesRequest.Version = version
-		getWAPSelectedHostnamesRequest.SecurityPolicyID = securityPolicyID
+		getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{
+			ConfigID: configid,
+			Version: version,
+			SecurityPolicyID: securityPolicyID,
+		}
 
 		WAPSelectedHostnames, err := client.GetWAPSelectedHostnames(ctx, getWAPSelectedHostnamesRequest)
 		if err != nil {

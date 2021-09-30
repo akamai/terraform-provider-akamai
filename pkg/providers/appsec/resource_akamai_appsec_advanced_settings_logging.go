@@ -44,7 +44,7 @@ func resourceAdvancedSettingsLogging() *schema.Resource {
 			"logging": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateFunc:     validation.StringIsJSON,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentLoggingSettingsDiffs,
 			},
 		},
@@ -70,11 +70,12 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	createAdvancedSettingsLogging := appsec.UpdateAdvancedSettingsLoggingRequest{}
-	createAdvancedSettingsLogging.ConfigID = configid
-	createAdvancedSettingsLogging.Version = version
-	createAdvancedSettingsLogging.PolicyID = policyid
-	createAdvancedSettingsLogging.JsonPayloadRaw = rawJSON
+	createAdvancedSettingsLogging := appsec.UpdateAdvancedSettingsLoggingRequest{
+		ConfigID:       configid,
+		Version:        version,
+		PolicyID:       policyid,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, erru := client.UpdateAdvancedSettingsLogging(ctx, createAdvancedSettingsLogging)
 	if erru != nil {

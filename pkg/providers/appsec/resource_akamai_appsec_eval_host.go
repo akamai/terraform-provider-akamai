@@ -55,14 +55,16 @@ func resourceEvalHostCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	updateEvalHost := appsec.UpdateEvalHostRequest{}
-	updateEvalHost.ConfigID = configid
-	updateEvalHost.Version = getModifiableConfigVersion(ctx, configid, "evalhost", m)
 	hostnamelist := make([]string, 0, len(hostnameset.List()))
 	for _, hostname := range hostnameset.List() {
 		hostnamelist = append(hostnamelist, hostname.(string))
 	}
-	updateEvalHost.Hostnames = hostnamelist
+
+	updateEvalHost := appsec.UpdateEvalHostRequest{
+		ConfigID:  configid,
+		Version:   getModifiableConfigVersion(ctx, configid, "evalhost", m),
+		Hostnames: hostnamelist,
+	}
 
 	_, erru := client.UpdateEvalHost(ctx, updateEvalHost)
 	if erru != nil {
@@ -86,9 +88,10 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	getEvalHost := appsec.GetEvalHostRequest{}
-	getEvalHost.ConfigID = configid
-	getEvalHost.Version = getLatestConfigVersion(ctx, configid, m)
+	getEvalHost := appsec.GetEvalHostRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
 	evalHostResponse, err := client.GetEvalHost(ctx, getEvalHost)
 	if err != nil {
@@ -125,14 +128,16 @@ func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	updateEvalHost := appsec.UpdateEvalHostRequest{}
-	updateEvalHost.ConfigID = configid
-	updateEvalHost.Version = getModifiableConfigVersion(ctx, configid, "evalhost", m)
 	hostnamelist := make([]string, 0, len(hostnames.List()))
 	for _, hostname := range hostnames.List() {
 		hostnamelist = append(hostnamelist, hostname.(string))
 	}
-	updateEvalHost.Hostnames = hostnamelist
+
+	updateEvalHost := appsec.UpdateEvalHostRequest{
+		ConfigID:  configid,
+		Version:   getModifiableConfigVersion(ctx, configid, "evalhost", m),
+		Hostnames: hostnamelist,
+	}
 
 	_, erru := client.UpdateEvalHost(ctx, updateEvalHost)
 	if erru != nil {
@@ -155,11 +160,13 @@ func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	removeEvalHost := appsec.RemoveEvalHostRequest{}
-	removeEvalHost.ConfigID = configid
-	removeEvalHost.Version = getModifiableConfigVersion(ctx, configid, "evalhost", m)
 	hostnamelist := make([]string, 0)
-	removeEvalHost.Hostnames = hostnamelist
+
+	removeEvalHost := appsec.RemoveEvalHostRequest{
+		ConfigID:  configid,
+		Version:   getModifiableConfigVersion(ctx, configid, "evalhost", m),
+		Hostnames: hostnamelist,
+	}
 
 	_, erru := client.RemoveEvalHost(ctx, removeEvalHost)
 	if erru != nil {

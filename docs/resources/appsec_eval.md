@@ -8,25 +8,40 @@ description: |-
 
 # akamai_appsec_eval
 
-Use the `akamai_appsec_eval` resource to perform evaluation mode operations such as Start, Stop, Restart, Update, or Complete.
+**Scopes**: Security policy
+
+Issues an evaluation mode command (`Start`, `Stop`, `Restart`, `Update`, or `Complete`) to a security configuration.
+Evaluation mode is used for testing and fine-tuning your Kona Rule Set rules and configuration settings.
+In evaluation mode rules are triggered by events, but the only thing those rules do is record the actions they *would* have taken had the event occurred on the production network.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/eval](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postevaluationmode)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to set the eval operation
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: User wants to issue an evaluation mode command.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 resource "akamai_appsec_eval" "eval_operation" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  eval_operation = var.eval_operation
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
+  eval_operation     = "START"
 }
 output "eval_mode_evaluating_ruleset" {
   value = akamai_appsec_eval.eval_operation.evaluating_ruleset
@@ -44,25 +59,24 @@ output "eval_mode_status" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration where evaluation mode will take place (or is currently taking place).
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the evaluation process.
+- `eval_operation` (Required). Evaluation mode operation. Allowed values are:
+  - **START**. Starts evaluation mode. By default, evaluation mode runs for four weeks.
+  - **STOP**, Pauses evaluation mode without upgrading the Kona Rule Set on your production network.
+  - **RESTART**. Resumes an evaluation trial that was paused by using the **STOP** command.
+  - **UPDATE**. Upgrades the Kona Rule Set rules in the evaluation ruleset to their latest versions.
+  - **COMPLETE**. Concludes the evaluation period (even if the four-week trial mode is not over) and automatically upgrades the Kona Rule Set on your production network to the same rule set you just finished evaluating.
+- `eval_mode` (Optional). Set to **ASE_AUTO** to have your Kona Rule Set rules automatically updated during the evaluation period; set to **ASE_MANUAL** if you want to manually update your evaluation rules. Note that this option is only available to organizations running the Adaptive Security Engine (ASE) beta. For more information about ASE, please contact your Akamai representative.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+## Output Options
 
-* `eval_operation` - (Required) The operation to perform: START, STOP, RESTART, UPDATE, or COMPLETE.
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `eval_mode` - __ASE Beta__. (Optional) Used for ASE Rulesets: ASE_MANUAL or ASE_AUTO - default. "ASE (Adaptive Security Engine) is currently in beta. Please contact your Akamai representative to learn more. Policy Evaluation Rule Actions and Threat Intelligence setting are read only in ASE_AUTO evaluation mode
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* `evaluating_ruleset` - The set of rules being evaluated.
-
-* `expiration_date` - The date on which the evaluation period ends.
-
-* `current_ruleset` - The set of rules currently in effect.
-
-* `eval_status` - Either `enabled` if an evaluation is currently in progress (that is, if the `eval_operation` parameter was `START`, `RESTART`, or `COMPLETE`) or `disabled` otherwise (that is, if the `eval_operation` parameter was `STOP` or `UPDATE`).
+- `evaluation_ruleset`. Versioning information for the Kona Rule Set being evaluated.
+- `expiration_date`. Date when the evaluation period ends.
+- `current_ruleset`. Versioning information for the Kona Rule Set currently in use on the production network.
+- `eval_status`. If **true**, an evaluation is currently in progress; if **false**, evaluation is either paused or is not running.
 

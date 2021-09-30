@@ -62,7 +62,7 @@ To import using step-by-step construction, complete these tasks:
 
 The zone itself is represented by a [`akamai_dns_zone` resource](../resources/dns_zone.md). Add this new resource block to your `akamai.tf` file after the provider block. **Note:** the zone should be the first DNS resource created as it provides operating context for all other recordset resources.
 
-To define the entire configuration, we start by opening the resource block and giving the `zone` a name. In this case we’re going to use the name "example."
+To define the entire configuration, we start by opening the resource block and giving the `zone` a name. In this case we're going to use the name "example."
 
 Next, we set the required (`zone`, `type`, `group`, `contract`) and optional (`comment`) arguments for a simpler secondary `type`.
 
@@ -274,7 +274,7 @@ $ terraform plan
 
 The recordset itself is represented by a [`akamai_dns_record` resource](../resources/dns_record.md). Add this new block to your `akamai.tf` file after the provider block.
 
-To define the entire configuration, we start by opening the resource block and give it a name. In this case we’re going to use the name "example_a_record".
+To define the entire configuration, we start by opening the resource block and give it a name. In this case we're going to use the name "example_a_record".
 
 Next, we set the required (zone, recordtype, ttl) and any optional/required arguments based on recordtype. Required fields for each record type are itemized in [`akamai_dns_record` resource](../resources/dns_record.md).
 

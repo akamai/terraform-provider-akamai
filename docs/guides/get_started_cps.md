@@ -20,7 +20,7 @@ guide.
 
     * Certificate authorities (CAs)
 
-    * How Akamai obtains certificates on the requester’s behalf, which includes the generation of public/private key pairs and certificate signing requests (CSRs)
+    * How Akamai obtains certificates on the requester's behalf, which includes the generation of public/private key pairs and certificate signing requests (CSRs)
 
     * DNS
 
@@ -53,7 +53,7 @@ Once you set up the `akamai_cps_dv_enrollment` resource, run `terraform apply`. 
 
 ## Validate control over your domains
 
-You need to prove that you have control over each of the domains listed in the certificate. When you create or modify a DV enrollment that generates a certificate signing request (CSR), CPS automatically sends it to [Let’s Encrypt](https://letsencrypt.org/) for signing. Let’s Encrypt sends back a challenge for each domain listed on your certificate. You prove that you have control over the domains listed in the CSR by redirecting your traffic to Akamai. This allows Akamai to complete the challenge process for you by detecting the redirect and answering Let’s Encrypt’s challenge.
+You need to prove that you have control over each of the domains listed in the certificate. When you create or modify a DV enrollment that generates a certificate signing request (CSR), CPS automatically sends it to [Let's Encrypt](https://letsencrypt.org/) for signing. Let's Encrypt sends back a challenge for each domain listed on your certificate. You prove that you have control over the domains listed in the CSR by redirecting your traffic to Akamai. This allows Akamai to complete the challenge process for you by detecting the redirect and answering Let's Encrypt's challenge.
 
 Complete one of the challenges returned by [akamai_cps_dv_enrollment](../resources/cps_dv_enrollment.md) resource.
 
@@ -64,7 +64,7 @@ Complete one of the challenges returned by [akamai_cps_dv_enrollment](../resourc
 
 ## Send the validation acknowledgement
 
-Once you complete the Let’s Encrypt challenges, use the `akamai_cps_dv_validation` resource to send the acknowledgement to CPS and inform it that tokens are ready for validation.
+Once you complete the Let's Encrypt challenges, use the `akamai_cps_dv_validation` resource to send the acknowledgement to CPS and inform it that tokens are ready for validation.
 
 ## Modify Subject Alternate Names (SANs)
 

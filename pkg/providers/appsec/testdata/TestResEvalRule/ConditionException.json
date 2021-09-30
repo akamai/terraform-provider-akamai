@@ -1,0 +1,16 @@
+{
+     "conditions": [
+         {
+             "type": "extensionMatch",
+             "extensions": [
+                 "test"
+             ],
+             "positiveMatch": true
+         }
+     ],
+     "exception": {
+         "headerCookieOrParamValues": [
+             "test"
+         ]
+     }
+ }

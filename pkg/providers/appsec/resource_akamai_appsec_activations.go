@@ -106,16 +106,16 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 
-	activationConfig := appsec.ActivationConfigs{}
-	activationConfig.ConfigID = configid
-	activationConfig.ConfigVersion = version
-
-	createActivationRequest := appsec.CreateActivationsRequest{}
-	createActivationRequest.Action = "ACTIVATE"
-	createActivationRequest.Network = network
-	createActivationRequest.Note = note
-	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, activationConfig)
-	createActivationRequest.NotificationEmails = notificationEmails
+	createActivationRequest := appsec.CreateActivationsRequest{
+		Action:             "ACTIVATE",
+		Network:            network,
+		Note:               note,
+		NotificationEmails: notificationEmails,
+	}
+	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
+		ConfigID:      configid,
+		ConfigVersion: version,
+	})
 
 	postresp, err := client.CreateActivations(ctx, createActivationRequest, true)
 	if err != nil {
@@ -129,8 +129,10 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	getActivationRequest := appsec.GetActivationsRequest{}
-	getActivationRequest.ActivationID = postresp.ActivationID
+	getActivationRequest := appsec.GetActivationsRequest{
+		ActivationID: postresp.ActivationID,
+	}
+
 	activation, err := lookupActivation(ctx, client, getActivationRequest)
 	if err != nil {
 		return diag.FromErr(err)
@@ -163,8 +165,9 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	getActivations := appsec.GetActivationsRequest{}
-	getActivations.ActivationID = activationID
+	getActivations := appsec.GetActivationsRequest{
+		ActivationID: activationID,
+	}
 
 	activations, err := client.GetActivations(ctx, getActivations)
 	if err != nil {
@@ -213,16 +216,16 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 
-	activationConfig := appsec.ActivationConfigs{}
-	activationConfig.ConfigID = configid
-	activationConfig.ConfigVersion = version
-
-	createActivationRequest := appsec.CreateActivationsRequest{}
-	createActivationRequest.Action = "ACTIVATE"
-	createActivationRequest.Network = network
-	createActivationRequest.Note = note
-	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, activationConfig)
-	createActivationRequest.NotificationEmails = notificationEmails
+	createActivationRequest := appsec.CreateActivationsRequest{
+		Action:             "ACTIVATE",
+		Network:            network,
+		Note:               note,
+		NotificationEmails: notificationEmails,
+	}
+	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
+		ConfigID:      configid,
+		ConfigVersion: version,
+	})
 
 	postresp, err := client.CreateActivations(ctx, createActivationRequest, true)
 	if err != nil {
@@ -236,8 +239,10 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	getActivationRequest := appsec.GetActivationsRequest{}
-	getActivationRequest.ActivationID = postresp.ActivationID
+	getActivationRequest := appsec.GetActivationsRequest{
+		ActivationID: postresp.ActivationID,
+	}
+
 	activation, err := lookupActivation(ctx, client, getActivationRequest)
 	if err != nil {
 		return diag.FromErr(err)
@@ -295,16 +300,16 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 
-	activationConfig := appsec.ActivationConfigs{}
-	activationConfig.ConfigID = configid
-	activationConfig.ConfigVersion = version
-
-	removeActivationRequest := appsec.RemoveActivationsRequest{}
-	removeActivationRequest.ActivationID = activationID
-	removeActivationRequest.Action = "DEACTIVATE"
-	removeActivationRequest.Network = network
-	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, activationConfig)
-	removeActivationRequest.NotificationEmails = notificationEmails
+	removeActivationRequest := appsec.RemoveActivationsRequest{
+		ActivationID:       activationID,
+		Action:             "DEACTIVATE",
+		Network:            network,
+		NotificationEmails: notificationEmails,
+	}
+	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
+		ConfigID:      configid,
+		ConfigVersion: version,
+	})
 
 	postresp, err := client.RemoveActivations(ctx, removeActivationRequest)
 	if err != nil {
@@ -318,8 +323,9 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
-	getActivationRequest := appsec.GetActivationsRequest{}
-	getActivationRequest.ActivationID = activationID
+	getActivationRequest := appsec.GetActivationsRequest{
+		ActivationID: activationID,
+	}
 
 	activation, err := lookupActivation(ctx, client, getActivationRequest)
 	if err != nil {

@@ -43,14 +43,14 @@ func resourceRatePolicyAction() *schema.Resource {
 				Required: true,
 			},
 			"ipv4_action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
 			},
 			"ipv6_action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions},
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions},
 		},
 	}
 }
@@ -83,13 +83,14 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{}
-	updateRatePolicyAction.ConfigID = configid
-	updateRatePolicyAction.Version = version
-	updateRatePolicyAction.PolicyID = securitypolicyid
-	updateRatePolicyAction.RatePolicyID = ratepolicyid
-	updateRatePolicyAction.Ipv4Action = ipv4action
-	updateRatePolicyAction.Ipv6Action = ipv6action
+	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{
+		ConfigID:     configid,
+		Version:      version,
+		PolicyID:     securitypolicyid,
+		RatePolicyID: ratepolicyid,
+		Ipv4Action:   ipv4action,
+		Ipv6Action:   ipv6action,
+	}
 
 	_, err = client.UpdateRatePolicyAction(ctx, updateRatePolicyAction)
 	if err != nil {
@@ -124,11 +125,12 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	readRatePolicyAction := appsec.GetRatePolicyActionRequest{}
-	readRatePolicyAction.ConfigID = configid
-	readRatePolicyAction.Version = version
-	readRatePolicyAction.PolicyID = securitypolicyid
-	readRatePolicyAction.ID = ratepolicyid
+	readRatePolicyAction := appsec.GetRatePolicyActionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: securitypolicyid,
+		ID:       ratepolicyid,
+	}
 
 	ratepolicyaction, err := client.GetRatePolicyAction(ctx, readRatePolicyAction)
 	if err != nil {
@@ -188,13 +190,14 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{}
-	updateRatePolicyAction.ConfigID = configid
-	updateRatePolicyAction.Version = version
-	updateRatePolicyAction.PolicyID = securitypolicyid
-	updateRatePolicyAction.RatePolicyID = ratepolicyid
-	updateRatePolicyAction.Ipv4Action = ipv4action
-	updateRatePolicyAction.Ipv6Action = ipv6action
+	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{
+		ConfigID:     configid,
+		Version:      version,
+		PolicyID:     securitypolicyid,
+		RatePolicyID: ratepolicyid,
+		Ipv4Action:   ipv4action,
+		Ipv6Action:   ipv6action,
+	}
 
 	_, err = client.UpdateRatePolicyAction(ctx, updateRatePolicyAction)
 	if err != nil {
@@ -226,13 +229,14 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	deleteRatePolicyAction := appsec.UpdateRatePolicyActionRequest{}
-	deleteRatePolicyAction.ConfigID = configid
-	deleteRatePolicyAction.Version = version
-	deleteRatePolicyAction.PolicyID = securitypolicyid
-	deleteRatePolicyAction.RatePolicyID = ratepolicyid
-	deleteRatePolicyAction.Ipv4Action = "none"
-	deleteRatePolicyAction.Ipv6Action = "none"
+	deleteRatePolicyAction := appsec.UpdateRatePolicyActionRequest{
+		ConfigID:     configid,
+		Version:      version,
+		PolicyID:     securitypolicyid,
+		RatePolicyID: ratepolicyid,
+		Ipv4Action:   "none",
+		Ipv6Action:   "none",
+	}
 
 	_, err = client.UpdateRatePolicyAction(ctx, deleteRatePolicyAction)
 	if err != nil {

@@ -45,9 +45,9 @@ func resourceEvalGroup() *schema.Resource {
 				Required: true,
 			},
 			"attack_group_action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
 			},
 			"condition_exception": {
 				Type:             schema.TypeString,
@@ -94,13 +94,14 @@ func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	createAttackGroup := appsec.UpdateAttackGroupRequest{}
-	createAttackGroup.ConfigID = configid
-	createAttackGroup.Version = version
-	createAttackGroup.PolicyID = policyid
-	createAttackGroup.Group = attackgroup
-	createAttackGroup.Action = action
-	createAttackGroup.JsonPayloadRaw = rawJSON
+	createAttackGroup := appsec.UpdateAttackGroupRequest{
+		ConfigID: configid,
+		Version: version,
+		PolicyID: policyid,
+		Group: attackgroup,
+		Action: action,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, err = client.UpdateEvalGroup(ctx, createAttackGroup)
 	if err != nil {
@@ -131,11 +132,12 @@ func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	policyid := idParts[1]
 	group := idParts[2]
 
-	getAttackGroup := appsec.GetAttackGroupRequest{}
-	getAttackGroup.ConfigID = configid
-	getAttackGroup.Version = version
-	getAttackGroup.PolicyID = policyid
-	getAttackGroup.Group = group
+	getAttackGroup := appsec.GetAttackGroupRequest{
+		ConfigID: configid,
+		Version: version,
+		PolicyID: policyid,
+		Group: group,
+	}
 
 	attackgroup, err := client.GetEvalGroup(ctx, getAttackGroup)
 	if err != nil {
@@ -201,13 +203,14 @@ func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	rawJSON := json.RawMessage(conditionexception)
 
-	updateAttackGroup := appsec.UpdateAttackGroupRequest{}
-	updateAttackGroup.ConfigID = configid
-	updateAttackGroup.Version = version
-	updateAttackGroup.PolicyID = policyid
-	updateAttackGroup.Group = group
-	updateAttackGroup.Action = action
-	updateAttackGroup.JsonPayloadRaw = rawJSON
+	updateAttackGroup := appsec.UpdateAttackGroupRequest{
+		ConfigID: configid,
+		Version: version,
+		PolicyID: policyid,
+		Group: group,
+		Action: action,
+		JsonPayloadRaw: rawJSON,
+	}
 
 	_, err = client.UpdateEvalGroup(ctx, updateAttackGroup)
 	if err != nil {
@@ -236,12 +239,13 @@ func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m inte
 	policyid := idParts[1]
 	group := idParts[2]
 
-	removeAttackGroup := appsec.UpdateAttackGroupRequest{}
-	removeAttackGroup.ConfigID = configid
-	removeAttackGroup.Version = version
-	removeAttackGroup.PolicyID = policyid
-	removeAttackGroup.Group = group
-	removeAttackGroup.Action = "none"
+	removeAttackGroup := appsec.UpdateAttackGroupRequest{
+		ConfigID: configid,
+		Version: version,
+		PolicyID: policyid,
+		Group: group,
+		Action: "none",
+	}
 
 	_, err = client.UpdateEvalGroup(ctx, removeAttackGroup)
 	if err != nil {

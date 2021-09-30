@@ -1,6 +1,6 @@
 ---
 layout: "akamai"
-page_title: "Akamai: Threat Intelligence
+page_title: "Akamai: Threat Intelligence"
 subcategory: "Application Security"
 description: |-
  Threat Intelligence
@@ -8,25 +8,35 @@ description: |-
 
 # akamai_appsec_threat_intel
 
-Use the `akamai_appsec_threat_intel` data source to view threat intelligence setting for a policy
-__BETA__ This is Adaptive Security Engine(ASE) related data source. Please contact your akamai representative if you want to learn more
+**Scopes**: Security policy
+
+Returns threat intelligence settings for a security policy Note that this data source is only available to organizations running the Adaptive Security Engine (ASE) beta. For more information on ASE, please contact your Akamai representative.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules/threat-intel](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getthreatintelligence)l
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to view threat intelligence setting for a policy
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_threat_intel" "threat_intel" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
 }
 output "threat_intel" {
   value = data.akamai_appsec_threat_intel.threat_intel.threat_intel
@@ -42,21 +52,16 @@ output "output_text" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the threat intelligence settings.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the threat intelligence settings.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `threat_intel` - Threat Intelligence setting, either `on` or `off`.
-
-* `json` - A JSON-formatted threat intelligence object
-
-* `output_text` - A tabular display of the threat intel information.
-
-
+- `threat_intel`. Reports the threat Intelligence setting, either **on** or **off**.
+- `json`. JSON-formatted threat intelligence report
+- `output_text`. Tabular report of the threat intelligence information.
 

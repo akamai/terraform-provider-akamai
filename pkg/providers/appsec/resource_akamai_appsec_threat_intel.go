@@ -70,11 +70,12 @@ func resourceThreatIntelCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	createThreatIntel := appsec.UpdateThreatIntelRequest{}
-	createThreatIntel.ConfigID = configid
-	createThreatIntel.Version = version
-	createThreatIntel.PolicyID = policyid
-	createThreatIntel.ThreatIntel = threatintel
+	createThreatIntel := appsec.UpdateThreatIntelRequest{
+		ConfigID: configid,
+		Version: version,
+		PolicyID: policyid,
+		ThreatIntel: threatintel,
+	}
 
 	_, err = client.UpdateThreatIntel(ctx, createThreatIntel)
 	if err != nil {
@@ -151,11 +152,12 @@ func resourceThreatIntelUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	updateThreatIntel := appsec.UpdateThreatIntelRequest{}
-	updateThreatIntel.ConfigID = configid
-	updateThreatIntel.Version = version
-	updateThreatIntel.PolicyID = policyid
-	updateThreatIntel.ThreatIntel = threatintel
+	updateThreatIntel := appsec.UpdateThreatIntelRequest{
+		ConfigID: configid,
+		Version: version,
+		PolicyID: policyid,
+		ThreatIntel: threatintel,
+	}
 
 	_, err = client.UpdateThreatIntel(ctx, updateThreatIntel)
 	if err != nil {

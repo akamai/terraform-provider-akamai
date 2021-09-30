@@ -1,5 +1,17 @@
 # RELEASE NOTES
 
+## 1.7.1 (Sept 30, 2021)
+
+#### FEATURES/ENHANCEMENTS:
+* PAPI
+  * Handling `note` field during property deactivation
+* APPSEC
+  * Major documentation updates and clean up
+
+#### BUG FIXES:
+* PAPI
+  * GRPC limit increased to 64MB ([#220](https://github.com/akamai/terraform-provider-akamai/issues/220))
+
 ## 1.7.0 (Aug 19, 2021)
 
 #### FEATURES/ENHANCEMENTS:

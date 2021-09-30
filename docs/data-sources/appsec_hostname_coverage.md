@@ -6,23 +6,37 @@ description: |-
  HostnameCoverage
 ---
 
+
+
+
+
+
 # akamai_appsec_hostname_coverage
 
-Use the `akamai_appsec_hostname_coverage` data source to retrieve a list of hostnames in the account with their current protections, activation statuses, and other summary information. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#8eb23096).
+**Scopes**: Individual account
+
+Returns information about the hostnames associated with your account; the returned data includes the hostname's protections, activation status, and other summary information. This information is described in the [HostnameCoverage members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getfailoverhostnames) section of the Application Security API.
+
+**Related API Endpoint**: [/appsec/v1/hostname-coverage](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoverage)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to view the hostname coverage data
-data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
-}
+// USE CASE: User wants to view hostname coverage data.
 
 data "akamai_appsec_hostname_coverage" "hostname_coverage" {
 }
@@ -31,7 +45,8 @@ output "hostname_coverage_list_json" {
   value = data.akamai_appsec_hostname_coverage.hostname_coverage.json
 }
 
-//tabular data of hostname, status, hasMatchTarget
+// USE CASE: User wants to display the returned data in a table.
+
 output "hostname_coverage_list_output" {
   value = data.akamai_appsec_hostname_coverage.hostname_coverage.output_text
 }
@@ -39,15 +54,12 @@ output "hostname_coverage_list_output" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source does not support any arguments.
 
-* None
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-The following attributes are exported:
-
-* `json` - A JSON-formatted list of the hostname coverage information.
-
-* `output_text` - A tabular display of the hostname coverage information.
+- `json`. JSON-formatted list of the hostname coverage information.
+- `output_text`. Tabular report of the hostname coverage information.
 

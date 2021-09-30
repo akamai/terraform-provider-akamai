@@ -42,11 +42,11 @@ func resourceSelectedHostname() *schema.Resource {
 			"mode": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					Append,
 					Replace,
 					Remove,
-				}, false),
+				}, false)),
 			},
 		},
 	}
@@ -73,9 +73,10 @@ func resourceSelectedHostnameCreate(ctx context.Context, d *schema.ResourceData,
 
 	// determine the actual hostname list to send to the API by combining the given hostnames & mode with the current hostnames
 
-	getSelectedHostnameRequest := appsec.GetSelectedHostnameRequest{}
-	getSelectedHostnameRequest.ConfigID = configid
-	getSelectedHostnameRequest.Version = getLatestConfigVersion(ctx, configid, m)
+	getSelectedHostnameRequest := appsec.GetSelectedHostnameRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
 	currentselectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostnameRequest)
 	if err != nil {
@@ -103,15 +104,17 @@ func resourceSelectedHostnameCreate(ctx context.Context, d *schema.ResourceData,
 	desiredhostnamelist := desiredhostnameset.List()
 	newhostnames := make([]appsec.Hostname, 0, len(desiredhostnamelist))
 	for _, h := range desiredhostnamelist {
-		hostname := appsec.Hostname{}
-		hostname.Hostname = h.(string)
+		hostname := appsec.Hostname{
+			Hostname: h.(string),
+		}
 		newhostnames = append(newhostnames, hostname)
 	}
 
-	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
-	updateSelectedHostname.ConfigID = configid
-	updateSelectedHostname.Version = getModifiableConfigVersion(ctx, configid, "selectedHostname", m)
-	updateSelectedHostname.HostnameList = newhostnames
+	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{
+		ConfigID:     configid,
+		Version:      getModifiableConfigVersion(ctx, configid, "selectedHostname", m),
+		HostnameList: newhostnames,
+	}
 
 	_, err = client.UpdateSelectedHostname(ctx, updateSelectedHostname)
 	if err != nil {
@@ -141,9 +144,10 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	getSelectedHostname := appsec.GetSelectedHostnameRequest{}
-	getSelectedHostname.ConfigID = configid
-	getSelectedHostname.Version = getLatestConfigVersion(ctx, configid, m)
+	getSelectedHostname := appsec.GetSelectedHostnameRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
 	selectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostname)
 	if err != nil {
@@ -192,9 +196,10 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 
 	// determine the actual hostname list to send to the API by combining the given hostnames & mode with the current hostnames
 
-	getSelectedHostnameRequest := appsec.GetSelectedHostnameRequest{}
-	getSelectedHostnameRequest.ConfigID = configid
-	getSelectedHostnameRequest.Version = getLatestConfigVersion(ctx, configid, m)
+	getSelectedHostnameRequest := appsec.GetSelectedHostnameRequest{
+		ConfigID: configid,
+		Version:  getLatestConfigVersion(ctx, configid, m),
+	}
 
 	selectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostnameRequest)
 	if err != nil {
@@ -238,15 +243,17 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	desiredhostnamelist := desiredhostnameset.List()
 	newhostnames := make([]appsec.Hostname, 0, len(desiredhostnamelist))
 	for _, h := range desiredhostnamelist {
-		hostname := appsec.Hostname{}
-		hostname.Hostname = h.(string)
+		hostname := appsec.Hostname{
+			Hostname: h.(string),
+		}
 		newhostnames = append(newhostnames, hostname)
 	}
 
-	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{}
-	updateSelectedHostname.ConfigID = configid
-	updateSelectedHostname.Version = getModifiableConfigVersion(ctx, configid, "selectedHostname", m)
-	updateSelectedHostname.HostnameList = newhostnames
+	updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{
+		ConfigID:     configid,
+		Version:      getModifiableConfigVersion(ctx, configid, "selectedHostname", m),
+		HostnameList: newhostnames,
+	}
 
 	_, err = client.UpdateSelectedHostname(ctx, updateSelectedHostname)
 	if err != nil {

@@ -8,21 +8,30 @@ description: |-
 
 # akamai_appsec_siem_definitions
 
-Use the `akamai_appsec_siem_definitions` data source to retrieve information about the available SIEM versions, or about a specific SIEM version. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemversions).
+**Scopes**: SIEM definition
+
+Returns information about your SIEM (Security Information and Event Management) versions. The returned information is described in the [Get SIEM versions](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemversions) section of the Application Security API.
+
+**Related API Endpoint**: [/appsec/v1/siem-definitions](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemversions)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to view the siem settings with a given security configuration
-data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
-}
+// USE CASE: User wants to view the SIEM settings for a security configuration.
 
 data "akamai_appsec_siem_definitions" "siem_definitions" {
 }
@@ -36,7 +45,7 @@ output "siem_definitions_output" {
 }
 
 data "akamai_appsec_siem_definitions" "siem_definition" {
-  siem_definition_name = var.siem_definition_name
+  siem_definition_name = "SIEM Version 01"
 }
 
 output "siem_definition_id" {
@@ -46,15 +55,14 @@ output "siem_definition_id" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `siem_definition_name`- (Optional) The name of a specific SIEM definition for which to retrieve information.
+- `siem_definition_name` (Optional). Name of the SIEM definition you want to return information for. If not included, information is returned for all your SIEM definitions.
 
-## Attributes Reference
+## Output Options
 
-In addition to the arguments above, the following attributes are exported:
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `json` - A JSON-formatted list of the SIEM version information.
-
-* `output_text` - A tabular display showing the ID and name of each SIEM version.
+- `json`. JSON-formatted list of the SIEM version information.
+- `output_text`. Tabular report showing the ID and name of each SIEM version.
 

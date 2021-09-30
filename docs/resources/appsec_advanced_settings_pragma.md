@@ -6,43 +6,61 @@ description: |-
   AdvancedSettingsPragmaHeader
 ---
 
-# resource_akamai_appsec_advanced_settings_pragma_header
+# akamai_appsec_advanced_settings_pragma_header
 
-The `resource_akamai_appsec_advanced_settings_pragma_header` resource allows you to specify which headers you can exclude from inspection when you pass a `Pragma` debug header. This operation applies at the configuration level or policy level.
+**Scopes**: Security configuration; security policy
+
+Specifies the headers you can exclude from inspection when you are working with a Pragma debug header, a header that provides information about such things as: the edge routers used in a transaction; the Akamai IP addresses involved; whether a request was cached or not; etc. By default, pragma headers are removed from all responses.
+
+This operation can be applied at the security configuration level (in which case it applies to all the security policies in the configuration), or can be customized for an individual security policy.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/advanced-settings/pragma-header](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putpragmaheaderpolicy)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to set the pragma header settings for a configuration or a security policy
+// USE CASE: User wants to configure the pragma header settings for a security policy.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 resource "akamai_appsec_advanced_settings_pragma_header" "pragma_header" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  pragma_header = file("${path.module}/pragma_header.json")
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
+  pragma_header      = file("${path.module}/pragma_header.json")
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the pragma header settings being modified.
 
-* `security_policy_id` - (Optional) The ID of the security policy to use.
+- `security_policy_id` (Optional). Unique identifier of the security policy associated with the pragma header settings being modified. If not included, pragma header settings are modified at the configuration scope and, as a result, apply to all the security policies associated with the configuration.
 
-* `pragma_header` - (Required) The name of a file containing a JSON-formatted ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putpragmaheaderpolicy)) description of the conditions to exclude from the default `remove` action. By default, the Pragma header debugging information is stripped from an operation’s response except in cases where you set excludeCondition. To remove existing settings, submit your request with an empty payload {} at the top-level of an object. For example, submit "type": "{}" in the request body to remove the REQUEST_HEADER_VALUE_MATCH from the excluded conditions. If you submit an empty payload for each member, you’ll clear all of your condition settings. To modify Pragma header settings at the security configuration level, run Modify Pragma header settings for a configuration. Contact your account team if you’d like to run this operation.
+- `pragma_header` (Required). Path to a JSON file containing information about the conditions to exclude from the default remove action. By default, the Pragma header debugging information is stripped from an operation's response except in cases where you set `excludeCondition`. You can view a sample JSON file in the [Modify pragma settings for a security setting](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putpragmaheaderconfiguration) section of the Application Security API documentation.
 
-## Attributes Reference
+  To remove existing settings, submit your request with an empty payload ( **{}** ) at the top-level of an object. For example, use the following JSON snippet in the request body to remove the **REQUEST_HEADER_VALUE_MATCH** from the excluded conditions
 
-In addition to the arguments above, the following attributes are exported:
+  `"type": "{}"`
 
-* None
+  Note that, if you submit an empty payload for each member, you'll clear all of your condition settings.
+
+  If you want to modify pragma header settings at the security configuration scope (as opposed to the security policy scope), it's recommended that you first contact your Akamai representative.
+

@@ -6,27 +6,41 @@ description: |-
   Rate Policy
 ---
 
-# resource_akamai_appsec_rate_policy
+# akamai_appsec_rate_policy
 
+**Scopes**: Security configuration; rate policy
 
-The `resource_akamai_appsec_rate_policy` resource allows you to create, modify or delete rate policies for a specific security configuration.
+Creates, modifies or deletes rate policies.
+Rate polices help you monitor and moderate the number and  rate of all the requests you receive.
+In turn, this helps you prevent your website from being overwhelmed by a dramatic and unexpected surge in traffic.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/rate-policies](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postratepolicies)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to create a rate policy for a given configuration, using a JSON rule definition
+// USE CASE: User wants to create a rate policy for a security configuration by using a JSON-formatted rule definition.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 resource "akamai_appsec_rate_policy" "rate_policy" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  rate_policy =  file("${path.module}/rate_policy.json")
+  config_id   = data.akamai_appsec_configuration.configuration.config_id
+  rate_policy = file("${path.module}/rate_policy.json")
 }
 output "rate_policy_id" {
   value = akamai_appsec_rate_policy.rate_policy.rate_policy_id
@@ -35,18 +49,15 @@ output "rate_policy_id" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the rate policy being modified.
+- `rate_policy` (Required). Path to a JSON file containing a rate policy definition. You can view a sample rate policy JSON file in the [RatePolicy](https://developer.akamai.com/api/cloud_security/application_security/v1.html#ratepolicy) section of the Application Security API documentation.
+- `rate_policy_id` (Optional). Unique identifier of an existing rate policy.
 
-* `rate_policy` - (Required) The name of a file containing a JSON-formatted rate policy definition ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#57c65cbd)).
+## Output Options
 
-* `rate_policy_id` - (Optional) The ID of an existing rate policy to be modified.
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* `rate_policy_id` - The ID of the modified or newly created rate policy.
+- `rate_policy_id`. ID of the modified or newly-created rate policy.
 

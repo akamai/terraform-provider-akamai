@@ -96,14 +96,15 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	createSiemSettings := appsec.UpdateSiemSettingsRequest{}
-	createSiemSettings.ConfigID = configid
-	createSiemSettings.Version = version
-	createSiemSettings.EnableSiem = enableSiem
-	createSiemSettings.EnableForAllPolicies = enableForAllPolicies
-	createSiemSettings.FirewallPolicyIds = spids
-	createSiemSettings.EnabledBotmanSiemEvents = enableBotmanSiem
-	createSiemSettings.SiemDefinitionID = siemID
+	createSiemSettings := appsec.UpdateSiemSettingsRequest{
+		ConfigID:                configid,
+		Version:                 version,
+		EnableSiem:              enableSiem,
+		EnableForAllPolicies:    enableForAllPolicies,
+		FirewallPolicyIds:       spids,
+		EnabledBotmanSiemEvents: enableBotmanSiem,
+		SiemDefinitionID:        siemID,
+	}
 
 	_, erru := client.UpdateSiemSettings(ctx, createSiemSettings)
 	if erru != nil {
@@ -128,9 +129,10 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 	version := getLatestConfigVersion(ctx, configid, m)
 
-	getSiemSettings := appsec.GetSiemSettingsRequest{}
-	getSiemSettings.ConfigID = configid
-	getSiemSettings.Version = version
+	getSiemSettings := appsec.GetSiemSettingsRequest{
+		ConfigID: configid,
+		Version:  version,
+	}
 
 	siemsettings, err := client.GetSiemSettings(ctx, getSiemSettings)
 	if err != nil {
@@ -197,14 +199,15 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	updateSiemSettings := appsec.UpdateSiemSettingsRequest{}
-	updateSiemSettings.ConfigID = configid
-	updateSiemSettings.Version = version
-	updateSiemSettings.EnableSiem = enableSiem
-	updateSiemSettings.EnableForAllPolicies = enableForAllPolicies
-	updateSiemSettings.FirewallPolicyIds = spids
-	updateSiemSettings.EnabledBotmanSiemEvents = enableBotmanSiem
-	updateSiemSettings.SiemDefinitionID = siemID
+	updateSiemSettings := appsec.UpdateSiemSettingsRequest{
+		ConfigID:                configid,
+		Version:                 version,
+		EnableSiem:              enableSiem,
+		EnableForAllPolicies:    enableForAllPolicies,
+		FirewallPolicyIds:       spids,
+		EnabledBotmanSiemEvents: enableBotmanSiem,
+		SiemDefinitionID:        siemID,
+	}
 
 	_, erru := client.UpdateSiemSettings(ctx, updateSiemSettings)
 	if erru != nil {
@@ -231,11 +234,12 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	removeSiemSettings := appsec.RemoveSiemSettingsRequest{}
-	removeSiemSettings.ConfigID = configid
-	removeSiemSettings.Version = version
-	removeSiemSettings.EnableSiem = false
-	removeSiemSettings.SiemDefinitionID = siemID
+	removeSiemSettings := appsec.RemoveSiemSettingsRequest{
+		ConfigID:         configid,
+		Version:          version,
+		EnableSiem:       false,
+		SiemDefinitionID: siemID,
+	}
 
 	_, erru := client.RemoveSiemSettings(ctx, removeSiemSettings)
 	if erru != nil {

@@ -9,6 +9,8 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-hclog v0.15.0
+	github.com/hashicorp/go-plugin v1.4.1
+	github.com/hashicorp/terraform-plugin-go v0.3.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.7.0
 	github.com/jedib0t/go-pretty/v6 v6.0.4
 	github.com/jinzhu/copier v0.3.2
@@ -19,6 +21,7 @@ require (
 	golang.org/x/sys v0.0.0-20210816074244-15123e1e1f71 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	google.golang.org/api v0.34.0 // indirect
+	google.golang.org/grpc v1.32.0
 )
 
 replace (

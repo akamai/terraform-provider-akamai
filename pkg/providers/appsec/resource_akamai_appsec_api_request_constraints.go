@@ -45,9 +45,9 @@ func resourceAPIRequestConstraints() *schema.Resource {
 				Optional: true,
 			},
 			"action": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: ValidateActions,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
 			},
 		},
 	}
@@ -77,12 +77,13 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	createAPIRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
-	createAPIRequestConstraints.ConfigID = configid
-	createAPIRequestConstraints.Version = version
-	createAPIRequestConstraints.PolicyID = policyid
-	createAPIRequestConstraints.ApiID = apiEndpointID
-	createAPIRequestConstraints.Action = action
+	createAPIRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		ApiID:    apiEndpointID,
+		Action:   action,
+	}
 
 	_, erru := client.UpdateApiRequestConstraints(ctx, createAPIRequestConstraints)
 	if erru != nil {
@@ -122,11 +123,12 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 		}
 	}
 
-	getAPIRequestConstraints := appsec.GetApiRequestConstraintsRequest{}
-	getAPIRequestConstraints.ConfigID = configid
-	getAPIRequestConstraints.Version = version
-	getAPIRequestConstraints.PolicyID = policyid
-	getAPIRequestConstraints.ApiID = apiID
+	getAPIRequestConstraints := appsec.GetApiRequestConstraintsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		ApiID:    apiID,
+	}
 
 	response, err := client.GetApiRequestConstraints(ctx, getAPIRequestConstraints)
 	if err != nil {
@@ -187,12 +189,13 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	updateAPIRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{}
-	updateAPIRequestConstraints.ConfigID = configid
-	updateAPIRequestConstraints.Version = version
-	updateAPIRequestConstraints.PolicyID = policyid
-	updateAPIRequestConstraints.ApiID = apiID
-	updateAPIRequestConstraints.Action = action
+	updateAPIRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		ApiID:    apiID,
+		Action:   action,
+	}
 
 	_, erru := client.UpdateApiRequestConstraints(ctx, updateAPIRequestConstraints)
 	if erru != nil {
@@ -226,18 +229,20 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 		}
 	}
 
-	removeAPIRequestConstraints := appsec.RemoveApiRequestConstraintsRequest{}
-	removeAPIRequestConstraints.ConfigID = configid
-	removeAPIRequestConstraints.Version = version
-	removeAPIRequestConstraints.PolicyID = policyid
-	removeAPIRequestConstraints.ApiID = apiID
+	removeAPIRequestConstraints := appsec.RemoveApiRequestConstraintsRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+		ApiID:    apiID,
+	}
 
 	if removeAPIRequestConstraints.ApiID == 0 {
 
-		getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
-		getPolicyProtections.ConfigID = configid
-		getPolicyProtections.Version = version
-		getPolicyProtections.PolicyID = policyid
+		getPolicyProtections := appsec.GetPolicyProtectionsRequest{
+			ConfigID: configid,
+			Version:  version,
+			PolicyID: policyid,
+		}
 
 		policyprotections, err := client.GetPolicyProtections(ctx, getPolicyProtections)
 		if err != nil {
@@ -245,18 +250,19 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 			return diag.FromErr(err)
 		}
 		if policyprotections.ApplyAPIConstraints {
-			removePolicyProtections := appsec.RemovePolicyProtectionsRequest{}
-			removePolicyProtections.ConfigID = configid
-			removePolicyProtections.Version = version
-			removePolicyProtections.PolicyID = policyid
+			removePolicyProtections := appsec.RemovePolicyProtectionsRequest{
+				ConfigID: configid,
+				Version:  version,
+				PolicyID: policyid,
 
-			removePolicyProtections.ApplyAPIConstraints = false
-			removePolicyProtections.ApplyApplicationLayerControls = policyprotections.ApplyApplicationLayerControls
-			removePolicyProtections.ApplyBotmanControls = policyprotections.ApplyBotmanControls
-			removePolicyProtections.ApplyNetworkLayerControls = policyprotections.ApplyNetworkLayerControls
-			removePolicyProtections.ApplyRateControls = policyprotections.ApplyRateControls
-			removePolicyProtections.ApplyReputationControls = policyprotections.ApplyReputationControls
-			removePolicyProtections.ApplySlowPostControls = policyprotections.ApplySlowPostControls
+				ApplyAPIConstraints:           false,
+				ApplyApplicationLayerControls: policyprotections.ApplyApplicationLayerControls,
+				ApplyBotmanControls:           policyprotections.ApplyBotmanControls,
+				ApplyNetworkLayerControls:     policyprotections.ApplyNetworkLayerControls,
+				ApplyRateControls:             policyprotections.ApplyRateControls,
+				ApplyReputationControls:       policyprotections.ApplyReputationControls,
+				ApplySlowPostControls:         policyprotections.ApplySlowPostControls,
+			}
 
 			_, errd := client.RemovePolicyProtections(ctx, removePolicyProtections)
 			if errd != nil {

@@ -59,9 +59,10 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	getSecurityPoliciesRequest := appsec.GetSecurityPoliciesRequest{}
-	getSecurityPoliciesRequest.ConfigID = configid
-	getSecurityPoliciesRequest.Version = version
+	getSecurityPoliciesRequest := appsec.GetSecurityPoliciesRequest{
+		ConfigID: configid,
+		Version: version,
+	}
 
 	securitypolicies, err := client.GetSecurityPolicies(ctx, getSecurityPoliciesRequest)
 	if err != nil {

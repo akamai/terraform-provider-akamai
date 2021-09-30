@@ -35,7 +35,7 @@ resource "akamai_gtm_property" "demo_property" {
 This resource supports these arguments:
 
 * `domain` - (Required) DNS name for the GTM Domain set that includes this Property.
-* `name` - (Required) DNS name for a collection of IP address or CNAME responses. The value, together with the GTM domainName, forms the Property’s hostname.
+* `name` - (Required) DNS name for a collection of IP address or CNAME responses. The value, together with the GTM domainName, forms the Property's hostname.
 * `type` - (Required) Specifies the load balancing behavior for the property. Either failover, geographic, cidrmapping, weighted-round-robin, weighted-hashed, weighted-round-robin-load-feedback, qtr, or performance.
 * `score_aggregation_type` - (Required) Specifies how GTM aggregates liveness test scores across different tests, when multiple tests are configured.
 * `handout_limit` - (Required) Indicates the limit for the number of live IPs handed out to a DNS request.
@@ -55,7 +55,7 @@ This resource supports these arguments:
   * `answers_required` - (Optional) If `test_object_protocol` is DNS, enter a boolean value if an answer is needed for the DNS query to be successful.
   * `disabled` - (Optional) A boolean indicating whether the liveness test is disabled. When disabled, GTM stops running the test, effectively treating it as if it no longer exists.
   * `disable_nonstandard_port_warning` - (Optional) A boolean that if set to `true`, disables warnings when non-standard ports are used.
-  * `error_penalty` - (Optional) Specifies the score that’s reported if the liveness test encounters an error other than timeout, such as connection refused, and 404.
+  * `error_penalty` - (Optional) Specifies the score that's reported if the liveness test encounters an error other than timeout, such as connection refused, and 404.
   * `http_header` - (Optional) Contains HTTP headers to send if the `test_object_protocol` is `http` or `https`. You can have multiple `http_header` entries. Requires these arguments:
     * `name` - (Optional) Name of HTTP header.
     * `value` - (Optional) Value of HTTP header.
@@ -68,9 +68,9 @@ This resource supports these arguments:
   * `resource_type` - (Optional) Specifies the query type, if `test_object_protocol` is DNS.
   * `response_string` - (Optional) Specifies a response string.
   * `ssl_client_certificate` - (Optional) Indicates a Base64-encoded certificate. SSL client certificates are available for livenessTests that use secure protocols.
-  * `ssl_client_private_key` - (Optional) Indicates a Base64-encoded private key. The private key used to generate or request a certificate for livenessTests can’t have a passphrase nor be used for any other purpose.
-  * `test_object` - (Required) Specifies the static text that acts as a stand-in for the data that you’re sending on the network.
-  * `test_object_password` - (Optional) Specifies the test object’s password. It is required if testObjectProtocol is ftp.
+  * `ssl_client_private_key` - (Optional) Indicates a Base64-encoded private key. The private key used to generate or request a certificate for livenessTests can't have a passphrase nor be used for any other purpose.
+  * `test_object` - (Required) Specifies the static text that acts as a stand-in for the data that you're sending on the network.
+  * `test_object_password` - (Optional) Specifies the test object's password. It is required if testObjectProtocol is ftp.
   * `test_object_port` - (Required) Specifies the port number for the testObject.
   * `test_object_username` - (Optional) A descriptive name for the testObject.
   * `timeout_penalty`- (Optional) Specifies the score to be reported if the liveness test times out.
@@ -85,11 +85,11 @@ This resource supports these arguments:
 * `backup_ip` - (Optional) Specifies a backup IP. When GTM declares that all of the targets are down, the backup IP is handed out. If a backup IP is set, do not set a backup CNAME.
 * `backup_cname` - (Optional) Specifies a backup CNAME. If GTM declares that all of the servers configured for your property are down, the backup CNAME is handed out. If a backup CNAME is set, do not set a backup IP.
 * `balance_by_download_score` - (Optional) A boolean that indicates whether download score based load balancing is enabled.
-* `unreachable_threshold` - (Optional) For performance domains, this specifies a penalty value that’s added to liveness test scores when data centers have an aggregated loss fraction higher than this value.
+* `unreachable_threshold` - (Optional) For performance domains, this specifies a penalty value that's added to liveness test scores when data centers have an aggregated loss fraction higher than this value.
 * `health_multiplier` - (Optional) Configures a cutoff value that is computed from the median scores.
 * `dynamic_ttl` - (Optional) Indicates the TTL in seconds for records that might change dynamically based on liveness and load balancing such as A and AAAA records, and CNAMEs.
-* `max_unreachable_penalty` - (Optional) For performance domains, this specifies a penalty value that’s added to liveness test scores when data centers show an aggregated loss fraction higher than the penalty value.
-* `map_name` - (Optional) A descriptive label for a GeographicMap or a CidrMap that’s required if the property is either geographic or cidrmapping, in which case mapName needs to reference either an existing GeographicMap or CidrMap in the same domain.
+* `max_unreachable_penalty` - (Optional) For performance domains, this specifies a penalty value that's added to liveness test scores when data centers show an aggregated loss fraction higher than the penalty value.
+* `map_name` - (Optional) A descriptive label for a GeographicMap or a CidrMap that's required if the property is either geographic or cidrmapping, in which case mapName needs to reference either an existing GeographicMap or CidrMap in the same domain.
 * `load_imbalance_percentage` - (Optional) Indicates the percent of load imbalance factor (LIF) for the property.
 * `health_max` - (Optional) Defines the absolute limit beyond which IPs are declared unhealthy.
 * `cname` - (Optional) Indicates the fully qualified name aliased to a particular property.
@@ -98,7 +98,7 @@ This resource supports these arguments:
 * `min_live_fraction` - (Optional) Specifies what fraction of the servers need to respond to requests so GTM considers the data center up and able to receive traffic.
 * `static_rr_set` - (Optional) Contains static record sets. You can have multiple `static_rr_set` entries. Requires these arguments:
   * `type` - (Optional) The record type.
-  * `ttl` - (Optional) The number of seconds that this record should live in a resolver’s cache before being refetched.
+  * `ttl` - (Optional) The number of seconds that this record should live in a resolver's cache before being refetched.
   * `rdata` - (Optional) (List) An array of data strings, representing multiple records within a set.
 
 ## Attribute reference

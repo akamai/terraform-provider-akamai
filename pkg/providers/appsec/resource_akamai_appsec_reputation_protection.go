@@ -71,11 +71,12 @@ func resourceReputationProtectionCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	createReputationProtection := appsec.UpdateReputationProtectionRequest{}
-	createReputationProtection.ConfigID = configid
-	createReputationProtection.Version = version
-	createReputationProtection.PolicyID = policyid
-	createReputationProtection.ApplyReputationControls = applyreputationcontrols
+	createReputationProtection := appsec.UpdateReputationProtectionRequest{
+		ConfigID:                configid,
+		Version:                 version,
+		PolicyID:                policyid,
+		ApplyReputationControls: applyreputationcontrols,
+	}
 
 	_, erru := client.UpdateReputationProtection(ctx, createReputationProtection)
 	if erru != nil {
@@ -105,10 +106,11 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 	version := getLatestConfigVersion(ctx, configid, m)
 	policyid := idParts[1]
 
-	getReputationProtection := appsec.GetReputationProtectionRequest{}
-	getReputationProtection.ConfigID = configid
-	getReputationProtection.Version = version
-	getReputationProtection.PolicyID = policyid
+	getReputationProtection := appsec.GetReputationProtectionRequest{
+		ConfigID: configid,
+		Version:  version,
+		PolicyID: policyid,
+	}
 
 	reputationprotection, err := client.GetReputationProtection(ctx, getReputationProtection)
 	if err != nil {
@@ -157,11 +159,12 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	updateReputationProtection := appsec.UpdateReputationProtectionRequest{}
-	updateReputationProtection.ConfigID = configid
-	updateReputationProtection.Version = version
-	updateReputationProtection.PolicyID = policyid
-	updateReputationProtection.ApplyReputationControls = applyreputationcontrols
+	updateReputationProtection := appsec.UpdateReputationProtectionRequest{
+		ConfigID:                configid,
+		Version:                 version,
+		PolicyID:                policyid,
+		ApplyReputationControls: applyreputationcontrols,
+	}
 
 	_, erru := client.UpdateReputationProtection(ctx, updateReputationProtection)
 	if erru != nil {
@@ -189,11 +192,12 @@ func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceD
 	version := getModifiableConfigVersion(ctx, configid, "reputationProtection", m)
 	policyid := idParts[1]
 
-	removeReputationProtection := appsec.RemoveReputationProtectionRequest{}
-	removeReputationProtection.ConfigID = configid
-	removeReputationProtection.Version = version
-	removeReputationProtection.PolicyID = policyid
-	removeReputationProtection.ApplyReputationControls = false
+	removeReputationProtection := appsec.RemoveReputationProtectionRequest{
+		ConfigID:                configid,
+		Version:                 version,
+		PolicyID:                policyid,
+		ApplyReputationControls: false,
+	}
 
 	_, errd := client.RemoveReputationProtection(ctx, removeReputationProtection)
 	if errd != nil {

@@ -351,15 +351,23 @@ func validatePropertyName(v interface{}, _ cty.Path) diag.Diagnostics {
 // If some of these fields are empty lists in the new configuration and are nil in the terraform state, then this function
 // returns no difference for these fields
 func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
-	if !diff.HasChange("rules") {
-		return nil
-	}
 	o, n := diff.GetChange("rules")
 
 	oldValue := o.(string)
 	newValue := n.(string)
 
 	var oldRulesUpdate, newRulesUpdate papi.RulesUpdate
+
+	if diff.Id() == "" && newValue != "" {
+		rules, err := unifyRulesDiff(newValue)
+		if err != nil {
+			return err
+		}
+		if err = diff.SetNew("rules", rules); err != nil {
+			return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)
+		}
+		return nil
+	}
 
 	if oldValue == "" || newValue == "" {
 		return nil
@@ -379,11 +387,32 @@ func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}
 	if err != nil {
 		return fmt.Errorf("cannot encode rules JSON %s", err)
 	}
+	rulesBytes, err := json.Marshal(newRulesUpdate)
+	if err != nil {
+		return err
+	}
+	rules = string(rulesBytes)
 
 	if err = diff.SetNew("rules", rules); err != nil {
 		return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)
 	}
 	return nil
+}
+
+// unifyRulesDiff is invoked on first planning for property creation
+// Its main purpose is to unify the rules JSON with what we expect will be created by PAPI
+// It is used in order to prevent diffs on output on subsequent terraform applies
+func unifyRulesDiff(newValue string) (string, error) {
+	var newRulesUpdate papi.RulesUpdate
+	err := json.Unmarshal([]byte(newValue), &newRulesUpdate)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse rules JSON from config: %s", err)
+	}
+	rulesBytes, err := json.Marshal(newRulesUpdate)
+	if err != nil {
+		return "", err
+	}
+	return string(rulesBytes), nil
 }
 
 func compareFields(old, new *papi.RulesUpdate) (string, error) {
