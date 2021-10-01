@@ -16,107 +16,133 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 		ReadContext: dataSourceCloudletsLoadBalancerMatchRuleRead,
 		Schema: map[string]*schema.Schema{
 			"match_rules": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Defines a set of rules for policy",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The name of the rule",
 						},
 						"type": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The type of Cloudlet the rule is for",
 						},
 						"start": {
-							Type:     schema.TypeInt,
-							Optional: true,
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The start time for this match (in seconds since the epoch)",
 						},
 						"end": {
-							Type:     schema.TypeInt,
-							Optional: true,
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The end time for this match (in seconds since the epoch)",
 						},
 						"id": {
-							Type:     schema.TypeInt,
-							Optional: true,
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Akamai internal use only",
 						},
 						"matches": {
-							Type:     schema.TypeSet,
-							Optional: true,
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "Defines a set of match objects",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"match_type": {
-										Type:     schema.TypeString,
-										Optional: true,
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "The type of match used",
 									},
 									"match_value": {
-										Type:     schema.TypeString,
-										Optional: true,
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Depends on the matchType",
 									},
 									"match_operator": {
-										Type:     schema.TypeString,
-										Optional: true,
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Valid entries for this property: contains, exists, and equals",
 									},
 									"case_sensitive": {
-										Type:     schema.TypeBool,
-										Optional: true,
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "If true, the match is case sensitive",
 									},
 									"negate": {
-										Type:     schema.TypeBool,
-										Optional: true,
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "If true, negates the match",
 									},
 									"check_ips": {
-										Type:     schema.TypeString,
-										Optional: true,
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
 									},
 									"object_match_value": {
-										Type:     schema.TypeSet,
-										Optional: true,
+										Type:        schema.TypeSet,
+										Optional:    true,
+										Description: "An object used when a rule either includes more complex match criteria, like multiple value attributes, or a range match",
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"name": {
 													Type:     schema.TypeString,
 													Optional: true,
+													Description: "If using a match type that supports name attributes, enter the value in the incoming request to match on. " +
+														"The following match types support this property: cookie, header, parameter, and query",
 												},
 												"type": {
 													Type:     schema.TypeString,
 													Optional: true,
+													Description: "The array type, which can be one of the following: object, range, or simple. " +
+														"Use the simple option when adding only an array of string-based values",
 												},
 												"name_case_sensitive": {
-													Type:     schema.TypeBool,
-													Optional: true,
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: "Set to true if the entry for the name property should be evaluated based on case sensitivity",
 												},
 												"name_has_wildcard": {
-													Type:     schema.TypeBool,
-													Optional: true,
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: "Set to true if the entry for the name property includes wildcards",
 												},
 												"options": {
-													Type:     schema.TypeSet,
-													Optional: true,
+													Type:        schema.TypeSet,
+													Optional:    true,
+													Description: "If using the object type, use this set to list the values to match on (use only with the object type)",
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"value": {
-																Type:     schema.TypeString,
-																Optional: true,
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: "The value attributes in the incoming request to match on",
 															},
 															"value_has_wildcard": {
-																Type:     schema.TypeBool,
-																Optional: true,
+																Type:        schema.TypeBool,
+																Optional:    true,
+																Description: "Set to true if the entries for the value property include wildcards",
 															},
 															"value_case_sensitive": {
-																Type:     schema.TypeBool,
-																Optional: true,
+																Type:        schema.TypeBool,
+																Optional:    true,
+																Description: "Set to true if the entries for the value property should be evaluated based on case sensitivity",
 															},
 															"value_escaped": {
-																Type:     schema.TypeBool,
-																Optional: true,
+																Type:        schema.TypeBool,
+																Optional:    true,
+																Description: "Set to true if provided value should be compared in escaped form",
 															},
 														},
 													},
 												},
 												"value": {
-													Type:     schema.TypeString,
-													Optional: true,
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "The value attributes in the incoming request to match on (use only with simple or range type)",
 												},
 											},
 										},
@@ -125,21 +151,26 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 							},
 						},
 						"match_url": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "If using a URL match, this property is the URL that the Cloudlet uses to match the incoming request",
 						},
 						"matches_always": {
-							Type:     schema.TypeBool,
-							Optional: true,
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Is used in some cloudlets to support default rules (rule that is always matched)",
 						},
 						"forward_settings": {
 							Type:     schema.TypeSet,
 							Required: true,
+							Description: "This property defines data used to construct a new request URL if all conditions are met. " +
+								"If all of the conditions you set are true, then the Edge Server returns an HTTP response from the rewritten URL",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"origin_id": {
-										Type:     schema.TypeString,
-										Required: true,
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "The ID of the Conditional Origin requests are forwarded to",
 									},
 								},
 							},
@@ -148,8 +179,9 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 				},
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A match_rules JSON structure generated from the schema",
 			},
 		},
 	}

@@ -40,44 +40,53 @@ func resourceCloudletsPolicy() *schema.Resource {
 		DeleteContext: resourcePolicyDelete,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name of the policy. The name must be unique",
 			},
 			"cloudlet_code": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALB", "ER"}, true)),
+				Description:      "Code for the type of Cloudlet (ALB or ER)",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The description of this specific policy",
 			},
 			"group_id": {
 				Type:             schema.TypeString,
 				Required:         true,
 				DiffSuppressFunc: diffSuppressGroupID,
+				Description:      "Defines the group association for the policy. You must have edit privileges for the group",
 			},
 			"match_rule_format": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DiffSuppressFunc: diffSuppressMatchRuleFormat,
+				Description:      "The version of the Cloudlet specific matchRules",
 			},
 			"match_rules": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DiffSuppressFunc: diffSuppressMatchRules,
+				Description:      "A JSON structure that defines the rules for this policy",
 			},
 			"cloudlet_id": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "An integer that corresponds to a Cloudlets policy type (0 or 9)",
 			},
 			"version": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The version number of the policy",
 			},
 			"warnings": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A JSON encoded list of warnings",
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -388,6 +397,9 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 	versions, err := client.ListPolicyVersions(ctx, cloudlets.ListPolicyVersionsRequest{
 		PolicyID: policy.PolicyID,
 	})
+	if err != nil {
+		return nil, err
+	}
 	if len(versions) == 0 {
 		return nil, fmt.Errorf("no policy version found")
 	}
