@@ -18,33 +18,40 @@ func dataAkamaiDatastreamActivationHistory() *schema.Resource {
 		ReadContext: dataAkamaiDatastreamActivationHistoryRead,
 		Schema: map[string]*schema.Schema{
 			"stream_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Identifies the stream",
 			},
 			"activations": {
-				Type:     schema.TypeSet,
-				Computed: true,
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Provides detailed information about an activation status change for a version of a stream",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"created_by": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The username who activated or deactivated the stream",
 						},
 						"created_date": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time when activation status was modified",
 						},
 						"stream_id": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Identifies the stream",
 						},
 						"stream_version_id": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Identifies the version of the stream",
 						},
 						"is_active": {
-							Type:     schema.TypeBool,
-							Computed: true,
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Whether the version of the stream is active",
 						},
 					},
 				},
