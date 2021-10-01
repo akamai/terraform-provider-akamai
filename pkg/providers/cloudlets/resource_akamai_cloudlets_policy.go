@@ -357,7 +357,7 @@ func diffSuppressGroupID(_, old, new string, _ *schema.ResourceData) bool {
 	return strings.TrimPrefix(old, "grp_") == strings.TrimPrefix(new, "grp_")
 }
 
-func diffSuppressMatchRuleFormat(_, old, new string, _go *schema.ResourceData) bool {
+func diffSuppressMatchRuleFormat(_, old, new string, _ *schema.ResourceData) bool {
 	return old == new || new == "" && cloudlets.MatchRuleFormat(old) == cloudlets.MatchRuleFormatDefault
 }
 

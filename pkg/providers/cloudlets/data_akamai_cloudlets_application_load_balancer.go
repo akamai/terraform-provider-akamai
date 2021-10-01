@@ -20,205 +20,205 @@ func dataSourceCloudletsApplicationLoadBalancer() *schema.Resource {
 		ReadContext: dataApplicationLoadBalancerRead,
 		Schema: map[string]*schema.Schema{
 			"origin_id": {
-				Type:		 schema.TypeString,
-				Required: 	 true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "Describes origin Id",
 			},
 			"version": {
-				Type:     	 schema.TypeInt,
-				Optional: 	 true,
+				Type:        schema.TypeInt,
+				Optional:    true,
 				Description: "Describes load balancer configuration version",
 			},
 			"description": {
-				Type:     	 schema.TypeString,
-				Computed: 	 true,
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Describes load balancer configuration",
 			},
 			"type": {
-				Type:     	 schema.TypeString,
-				Computed: 	 true,
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Describes origin type",
 			},
 			"balancing_type": {
-				Type:     	 schema.TypeString,
-				Computed: 	 true,
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Load balancer configuration type",
 			},
 			"created_by": {
-				Type:     	 schema.TypeString,
-				Computed: 	 true,
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Describes value which is set by the server at the time of creation and never subsequently changes",
 			},
 			"created_date": {
-				Type:     	 schema.TypeString,
-				Computed: 	 true,
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Describes the created date which is only set by the server the first time the load balancer version is created. All subsequent responses will contain the same value.",
 			},
 			"deleted": {
-				Type:     	 schema.TypeBool,
-				Computed: 	 true,
+				Type:        schema.TypeBool,
+				Computed:    true,
 				Description: "Describes if load balancer version has been deleted",
 			},
 			"immutable": {
-				Type:     	 schema.TypeBool,
-				Computed: 	 true,
+				Type:        schema.TypeBool,
+				Computed:    true,
 				Description: "Describes if the load balancer version has been activated, thus marked as immutable",
 			},
 			"last_modified_by": {
-				Type:     	 schema.TypeString,
-				Computed: 	 true,
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Describes the last modification of load balancer configuration which is set by the server",
 			},
 			"last_modified_date": {
-				Type:     	 schema.TypeString,
-				Computed: 	 true,
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Describes when load balancer configuration has been modified for the last time",
 			},
 			"warnings": {
-				Type:     	 schema.TypeString,
-				Computed: 	 true,
+				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Describes warnings during activation of load balancer configuration",
 			},
 			"data_centers": {
-				Type:     	 schema.TypeSet,
-				Computed: 	 true,
+				Type:        schema.TypeSet,
+				Computed:    true,
 				Description: "Describes list of data center configurations used for ALB load balancing. The total weight of all data centers in this list must be add to 100%.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"city": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "The name of the city where the data center is located.",
 						},
 						"cloud_server_host_header_override": {
-							Type:     	 schema.TypeBool,
-							Computed: 	 true,
+							Type:        schema.TypeBool,
+							Computed:    true,
 							Description: "Describes if cloud server host header is overridden",
 						},
 						"cloud_service": {
-							Type:     	 schema.TypeBool,
-							Computed: 	 true,
+							Type:        schema.TypeBool,
+							Computed:    true,
 							Description: "Describes if this datacenter is a cloud service",
 						},
 						"continent": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "Describes the two character ISO-3166 continent code for the data center's location",
 						},
 						"country": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "Describes the two character ISO-3166 country code for the data center's location",
 						},
 						"hostname": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "This should match the 'hostname' value defined for this datacenter in Property Manager",
 						},
 						"latitude": {
-							Type:     	 schema.TypeFloat,
-							Computed: 	 true,
+							Type:        schema.TypeFloat,
+							Computed:    true,
 							Description: "Describes latitude location where this data center is located",
 						},
 						"liveness_hosts": {
-							Type:     	 schema.TypeSet,
-							Computed: 	 true,
-							Elem:     	 &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
 							Description: "Describes list of hosts which can be checked for data center liveness",
 						},
 						"longitude": {
-							Type:    	 schema.TypeFloat,
-							Computed: 	 true,
+							Type:        schema.TypeFloat,
+							Computed:    true,
 							Description: "Describes latitude location where this data center is located",
 						},
 						"origin_id": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "Describes the Cloudlets origin Id corresponding to this data center",
 						},
 						"percent": {
-							Type:     	 schema.TypeFloat,
-							Computed: 	 true,
+							Type:        schema.TypeFloat,
+							Computed:    true,
 							Description: "Describes percent of traffic for this meta-origin overall should try to route to this data center",
 						},
 						"state_or_province": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "Describes name of the state or province where the data center is located",
 						},
 					},
 				},
 			},
 			"liveness_settings": {
-				Type:     	 schema.TypeSet,
-				Computed: 	 true,
+				Type:        schema.TypeSet,
+				Computed:    true,
 				Description: "The liveness settings are used to determine the health of each load balanced data center defined in the data center list",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"host_header": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "Describes the Host header for the liveness HTTP request",
 						},
 						"additional_headers": {
-							Type:     	 schema.TypeMap,
-							Computed: 	 true,
-							Elem:     	 &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeMap,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
 							Description: "Describes the additional header for the leveness HTTP request",
 						},
 						"interval": {
-							Type:     	 schema.TypeInt,
-							Computed: 	 true,
+							Type:        schema.TypeInt,
+							Computed:    true,
 							Description: "Describes how often the liveness test will be performed",
 						},
 						"path": {
-							Type:     	 schema.TypeString,
-							Computed:	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "Describes the path that will be requested to test for liveness",
 						},
 						"peer_certificate_verification": {
-							Type:     	 schema.TypeBool,
-							Computed: 	 true,
+							Type:        schema.TypeBool,
+							Computed:    true,
 							Description: "Describes whether or not to validate the origin certificate for an HTTPS request",
 						},
 						"port": {
-							Type:     	 schema.TypeInt,
-							Computed: 	 true,
+							Type:        schema.TypeInt,
+							Computed:    true,
 							Description: "Describes the port that will be used for the HTTP request",
 						},
 						"protocol": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "Describes the protocol that will be used for the request. It can be HTTP, HTTPS, TCP, or TCPS",
 						},
 						"request_string": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "Describes the request which will be used for TCP(S) tests",
 						},
 						"response_string": {
-							Type:     	 schema.TypeString,
-							Computed: 	 true,
+							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "Describes the response which will be used for TCP(S) tests",
 						},
 						"status_3xx_failure": {
-							Type:     	 schema.TypeBool,
-							Computed: 	 true,
+							Type:        schema.TypeBool,
+							Computed:    true,
 							Description: "Describes whether HTTP status codes in the 3xx range are considered liveness failure",
 						},
 						"status_4xx_failure": {
-							Type:     	 schema.TypeBool,
-							Computed: 	 true,
+							Type:        schema.TypeBool,
+							Computed:    true,
 							Description: "Describes whether HTTP status codes in the 4xx range are considered liveness failure",
 						},
 						"status_5xx_failure": {
-							Type:     	 schema.TypeBool,
-							Computed: 	 true,
+							Type:        schema.TypeBool,
+							Computed:    true,
 							Description: "Describes whether HTTP status codes in the 5xx range are considered liveness failure",
 						},
 						"timeout": {
-							Type:     	 schema.TypeFloat,
-							Computed: 	 true,
+							Type:        schema.TypeFloat,
+							Computed:    true,
 							Description: "Describes the timeout in seconds for the HTTP request. After this period passes the test will be considered to have failed",
 						},
 					},
@@ -357,6 +357,8 @@ func getSchemaLivenessSettings(settings *cloudlets.LivenessSettings) []map[strin
 	return nil
 }
 
+var errNoVersionForOrigin = errors.New("no load balancer version found for origin")
+
 func getLatestVersionOfApplicationLoadBalancer(ctx context.Context, originID string, client cloudlets.Cloudlets) (int64, error) {
 	listLoadBalancerVersionsRequest := cloudlets.ListLoadBalancerVersionsRequest{
 		OriginID: originID,
@@ -367,7 +369,7 @@ func getLatestVersionOfApplicationLoadBalancer(ctx context.Context, originID str
 		return 0, err
 	}
 	if len(versions) == 0 {
-		return 0, fmt.Errorf("no load balancer version found for origin: %s", originID)
+		return 0, fmt.Errorf("%w: %s", errNoVersionForOrigin, originID)
 	}
 
 	var theLatestVersion int64

@@ -5,7 +5,7 @@ func IntPtr(i int) *int {
 	return &i
 }
 
-func StringPtr(i string) *string {
-	return &i
+// StringPtr returns a pointer to a string passed as an argument
+func StringPtr(s string) *string {
+	return &s
 }
-
