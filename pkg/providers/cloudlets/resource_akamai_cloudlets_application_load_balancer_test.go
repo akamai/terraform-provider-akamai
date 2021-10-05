@@ -2,7 +2,6 @@ package cloudlets
 
 import (
 	"fmt"
-	"net/http"
 	"regexp"
 	"testing"
 
@@ -195,7 +194,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
@@ -237,7 +235,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
@@ -279,7 +276,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_origin_update"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
@@ -320,7 +316,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_version_update"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
@@ -357,192 +352,10 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("attempt creating existing origin", func(t *testing.T) {
-		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(mockcloudlets)
-
-		origin := &cloudlets.Origin{
-			OriginID:    "test_origin",
-			Description: "some other description",
-			Type:        "APPLICATION_LOAD_BALANCER",
-		}
-		lbVersion := &cloudlets.LoadBalancerVersion{
-			BalancingType: "WEIGHTED",
-			DataCenters: []cloudlets.DataCenter{
-				{
-					City:            "Boston",
-					CloudService:    true,
-					Continent:       "NA",
-					Country:         "US",
-					Hostname:        "test-hostname",
-					Latitude:        102.78108,
-					LivenessHosts:   []string{"tf.test"},
-					Longitude:       -116.07064,
-					OriginID:        "test_origin",
-					Percent:         10,
-					StateOrProvince: tools.StringPtr("MA"),
-				},
-			},
-			LivenessSettings: &cloudlets.LivenessSettings{
-				HostHeader:        "header",
-				AdditionalHeaders: map[string]string{"abc": "123"},
-				Interval:          10,
-				Path:              "/status",
-				Port:              1234,
-				Protocol:          "HTTP",
-				RequestString:     "test_request_string",
-				ResponseString:    "test_response_string",
-				Timeout:           60,
-			},
-			Version: 1,
-			Warnings: []cloudlets.Warning{
-				{
-					Detail:      "test warning details",
-					JSONPointer: "/path",
-					Title:       "test warning",
-					Type:        "test type",
-				},
-			},
-		}
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(origin, nil).Once()
-		client.On("ListLoadBalancerVersions", mock.Anything, cloudlets.ListLoadBalancerVersionsRequest{
-			OriginID: origin.OriginID,
-		}).Return([]cloudlets.LoadBalancerVersion{*lbVersion}, nil).Once()
-
-		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
-
-		origin = expectUpdateOrigin(t, client, origin, "test description")
-
-		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "some other description",
-							balancingType: "WEIGHTED",
-						}),
-						ExpectNonEmptyPlan: true,
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description",
-							balancingType: "WEIGHTED",
-						}),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-
-	t.Run("attempt creating existing origin without existing version", func(t *testing.T) {
-		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(mockcloudlets)
-
-		origin := &cloudlets.Origin{
-			OriginID:    "test_origin",
-			Description: "test description",
-			Type:        "APPLICATION_LOAD_BALANCER",
-		}
-		lbVersion := &cloudlets.LoadBalancerVersion{
-			BalancingType: "WEIGHTED",
-			DataCenters: []cloudlets.DataCenter{
-				{
-					City:            "Boston",
-					CloudService:    true,
-					Continent:       "NA",
-					Country:         "US",
-					Hostname:        "test-hostname",
-					Latitude:        102.78108,
-					LivenessHosts:   []string{"tf.test"},
-					Longitude:       -116.07064,
-					OriginID:        "test_origin",
-					Percent:         10,
-					StateOrProvince: tools.StringPtr("MA"),
-				},
-			},
-			LivenessSettings: &cloudlets.LivenessSettings{
-				HostHeader:        "header",
-				AdditionalHeaders: map[string]string{"abc": "123"},
-				Interval:          10,
-				Path:              "/status",
-				Port:              1234,
-				Protocol:          "HTTP",
-				RequestString:     "test_request_string",
-				ResponseString:    "test_response_string",
-				Timeout:           60,
-			},
-			Version: 1,
-			Warnings: []cloudlets.Warning{
-				{
-					Detail:      "test warning details",
-					JSONPointer: "/path",
-					Title:       "test warning",
-					Type:        "test type",
-				},
-			},
-		}
-		client.On("GetOrigin", mock.Anything, origin.OriginID).Return(origin, nil).Once()
-		client.On("ListLoadBalancerVersions", mock.Anything, cloudlets.ListLoadBalancerVersionsRequest{
-			OriginID: origin.OriginID,
-		}).Return(nil, nil).Once()
-
-		client.On("GetOrigin", mock.Anything, origin.OriginID).Return(origin, nil).Times(3)
-
-		var lbVersionReq cloudlets.LoadBalancerVersion
-		err := copier.CopyWithOption(&lbVersionReq, lbVersion, copier.Option{DeepCopy: true})
-		require.NoError(t, err)
-
-		lbVersionReq.Version = 0
-		lbVersionReq.Warnings = nil
-		client.On("CreateLoadBalancerVersion", mock.Anything, cloudlets.CreateLoadBalancerVersionRequest{
-			OriginID:            origin.OriginID,
-			LoadBalancerVersion: lbVersionReq,
-		}).Return(lbVersion, nil).Once()
-
-		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:    "test_origin",
-							description: "test description",
-						}),
-						ExpectNonEmptyPlan: true,
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description",
-							balancingType: "WEIGHTED",
-						}),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-
 	t.Run("error creating origin", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		client.On("CreateOrigin", mock.Anything, cloudlets.LoadBalancerOriginCreateRequest{
 			OriginID:    "test_origin",
 			Description: cloudlets.Description{"test description"},
@@ -566,7 +379,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		client.On("CreateOrigin", mock.Anything, cloudlets.LoadBalancerOriginCreateRequest{
 			OriginID:    "test_origin",
 			Description: cloudlets.Description{"test description"},
@@ -624,7 +436,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
@@ -666,7 +477,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		_, _ = expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, fmt.Errorf("fetching origin")).Once()
@@ -689,7 +499,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		_, _ = expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		client.On("GetOrigin", mock.Anything, "test_origin").Return(&cloudlets.Origin{OriginID: "test_origin"}, nil).Once()
@@ -717,7 +526,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
@@ -747,7 +555,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
@@ -777,7 +584,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
@@ -807,7 +613,6 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
 		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)

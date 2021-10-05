@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
@@ -254,35 +253,6 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		Description: cloudlets.Description{description},
 	}
 
-	// verify whether origin with given id already exists
-	existingOrigin, err := client.GetOrigin(ctx, originID)
-	if err != nil {
-		var e *cloudlets.Error
-		if errors.As(err, &e) && e.StatusCode != http.StatusNotFound || !errors.As(err, &e) {
-			return diag.FromErr(err)
-		}
-	}
-	if existingOrigin != nil {
-		// if origin with given id already exists, find the latest version of this origin and set it in state
-		// in case no version is found, do not set 'version' attribute
-		latestVersion, err := getLatestVersionOfApplicationLoadBalancer(ctx, originID, client)
-		if err != nil && !errors.Is(err, errNoVersionForOrigin) {
-			return diag.FromErr(err)
-		}
-		if err == nil {
-			if err := d.Set("version", latestVersion); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
-		}
-		d.SetId(existingOrigin.OriginID)
-		// this warning will be appended to the result of read function
-		diags := diag.Diagnostics{diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "origin with given id already exists",
-			Detail:   "An existing origin with the provided id has been found on the server. It will be imported to state without modification. If you wish to modify this resource, please run `terraform apply` again",
-		}}
-		return append(diags, resourceALBRead(ctx, d, m)...)
-	}
 	createLBConfigResp, err := client.CreateOrigin(ctx, createLBConfigReq)
 	if err != nil {
 		return diag.FromErr(err)
@@ -326,14 +296,6 @@ func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	}
 	version, err := tools.GetIntValue("version", d)
 	if err != nil {
-		// if 'version' attribute is not set in state at this point, that means no version exists for given origin
-		// in that case, all attributes related to load balancer version have to be cleared in state
-		if errors.Is(err, tools.ErrNotFound) {
-			if err := tools.ResetAttrs(d, "balancing_type", "liveness_settings", "data_centers"); err != nil {
-				return diag.FromErr(err)
-			}
-			return nil
-		}
 		return diag.FromErr(err)
 	}
 	loadBalancerVersion, err := client.GetLoadBalancerVersion(ctx, cloudlets.GetLoadBalancerVersionRequest{
@@ -392,23 +354,8 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
-	}
-	// if 'version' is not found in state, a new version has to be created
-	if errors.Is(err, tools.ErrNotFound) {
-		loadBalancerVersion := getLoadBalancerVersion(d)
-		loadBalancerVersionResp, err := client.CreateLoadBalancerVersion(ctx, cloudlets.CreateLoadBalancerVersionRequest{
-			OriginID:            originID,
-			LoadBalancerVersion: loadBalancerVersion,
-		})
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("version", loadBalancerVersionResp.Version); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-		return resourceALBRead(ctx, d, m)
 	}
 
 	// if version-related attributes have changed, load balancer version has to be either created or updated (depending on whether it's active or not)
