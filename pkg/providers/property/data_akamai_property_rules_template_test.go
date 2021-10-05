@@ -25,6 +25,12 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
 					},
+					{
+						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map_with_data.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+						),
+					},
 				},
 			})
 		})
@@ -37,6 +43,12 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_null_values.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_null_values_with_data.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
 						),
@@ -56,6 +68,48 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_file_with_data.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+						),
+					},
+				},
+			})
+		})
+	})
+	t.Run("error conflicts in template_file and template", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_data_conflict.tf"),
+						ExpectError: regexp.MustCompile(`"template_file": only one of .template,template_file. can be specified`),
+					},
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_data_missing.tf"),
+						ExpectError: regexp.MustCompile(`"template_file": one of .template,template_file. must be specified`),
+					},
+				},
+			})
+		})
+	})
+	t.Run("error missing values in template", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_missing_data.tf"),
+						ExpectError: regexp.MustCompile(`The argument "template_data" is required, but no definition was found.`),
+					},
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_missing_dir.tf"),
+						ExpectError: regexp.MustCompile(`The argument "template_dir" is required, but no definition was found.`),
 					},
 				},
 			})
@@ -395,6 +449,86 @@ func TestConvertToTypedMap(t *testing.T) {
 	}
 }
 
+func TestFlattenTemplate(t *testing.T) {
+	tests := map[string]struct {
+		givenList    []interface{}
+		expectedData string
+		expectedDir  string
+		withError    error
+	}{
+		"valid list": {
+			givenList: []interface{}{
+				map[string]interface{}{
+					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
+					"template_dir":  "testData/TestDSRulesTemplate/rules/property-snippets/",
+				},
+			},
+			expectedData: loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
+			expectedDir:  "testData/TestDSRulesTemplate/rules/property-snippets",
+		},
+		"invalid list length": {
+			givenList: []interface{}{
+				map[string]interface{}{
+					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
+					"template_dir":  "testData/TestDSRulesTemplate/rules/property-snippets/",
+				},
+				map[string]interface{}{
+					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
+					"template_dir":  "testData/TestDSRulesTemplate/rules/property-snippets",
+				},
+			},
+			withError: tools.ErrInvalidType,
+		},
+		"missing 'template_data' in list": {
+			givenList: []interface{}{
+				map[string]interface{}{
+					"template_dir": "testData/TestDSRulesTemplate/rules/property-snippets/",
+				},
+			},
+			withError: tools.ErrNotFound,
+		},
+		"missing 'template_dir' in list": {
+			givenList: []interface{}{
+				map[string]interface{}{
+					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
+				},
+			},
+			withError: tools.ErrNotFound,
+		},
+		"invalid 'template_data' in list": {
+			givenList: []interface{}{
+				map[string]interface{}{
+					"template_data": 123,
+					"template_dir":  "testData/TestDSRulesTemplate/rules/property-snippets/",
+				},
+			},
+			withError: tools.ErrInvalidType,
+		},
+		"invalid 'template_dir' in list": {
+			givenList: []interface{}{
+				map[string]interface{}{
+					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
+					"template_dir":  true,
+				},
+			},
+			withError: tools.ErrInvalidType,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			resData, resDir, err := flattenTemplate(test.givenList)
+			if test.withError != nil {
+				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.expectedData, resData)
+			assert.Equal(t, test.expectedDir, resDir)
+		})
+	}
+}
+
 func TestConvertToTemplate(t *testing.T) {
 	templates := "testData/TestDSRulesTemplate/rules/property-snippets"
 	templatesOut := "testData/TestDSRulesTemplate/output"
@@ -415,10 +549,47 @@ func TestConvertToTemplate(t *testing.T) {
 			givenFile: "invalid.json",
 			withError: ErrReadFile,
 		},
+		"multiple vars": {
+			givenFile:    "/snippets/some-template.json",
+			expectedFile: "/property-snippets/some-template-out.json",
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			res, err := convertToTemplate(fmt.Sprintf("%s/%s", templates, test.givenFile))
+			if test.withError != nil {
+				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				return
+			}
+			require.NoError(t, err)
+			expected := loadFixtureString(fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
+			assert.Equal(t, expected, res)
+		})
+	}
+}
+
+func TestStringToTemplate(t *testing.T) {
+	templates := "testData/TestDSRulesTemplate/rules/property-snippets"
+	templatesOut := "testData/TestDSRulesTemplate/output"
+	tests := map[string]struct {
+		givenFile    string
+		expectedFile string
+		withError    error
+	}{
+		"valid conversion": {
+			givenFile:    "template_in.json",
+			expectedFile: "template_out.json",
+		},
+		"plain JSON passed": {
+			givenFile:    "plain_json.json",
+			expectedFile: "plain_json.json",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			givenString := loadFixtureString(fmt.Sprintf("%s/%s", templates, test.givenFile))
+			res, err := stringToTemplate(givenString)
+			fmt.Println(res)
 			if test.withError != nil {
 				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
 				return
