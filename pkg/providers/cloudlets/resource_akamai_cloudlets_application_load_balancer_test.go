@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -149,6 +150,18 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				LoadBalancerVersion: updateVersionReq,
 			}).Return(&updateVersionResp, nil).Once()
 			return &updateVersionResp
+		}
+
+		expectImportLoadBalancer = func(_ *testing.T, client *mockcloudlets, origin *cloudlets.Origin, numVersions int) {
+			client.On("GetOrigin", mock.Anything, origin.OriginID).Return(origin, nil).Once()
+
+			var versionList []cloudlets.LoadBalancerVersion
+			for i := 1; i <= numVersions; i++ {
+				versionList = append(versionList, cloudlets.LoadBalancerVersion{OriginID: origin.OriginID, Version: int64(i)})
+			}
+			client.On("ListLoadBalancerVersions", mock.Anything, cloudlets.ListLoadBalancerVersionsRequest{
+				OriginID: origin.OriginID,
+			}).Return(versionList, nil).Once()
 		}
 
 		checkAttributes = func(attrs loadBalancerAttributes) resource.TestCheckFunc {
@@ -693,6 +706,126 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("fetching version"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("import load balancer", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
+		client := new(mockcloudlets)
+
+		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+
+		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
+
+		expectImportLoadBalancer(t, client, origin, 1)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+					},
+					{
+						ImportState:       true,
+						ImportStateId:     "test_origin",
+						ResourceName:      "akamai_cloudlets_application_load_balancer.alb",
+						ImportStateVerify: true,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("error importing load balancer not found", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
+		client := new(mockcloudlets)
+
+		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+
+		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
+
+		client.On("GetOrigin", mock.Anything, "not_existing_test_origin").Return(nil, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+					},
+					{
+						ImportState:   true,
+						ImportStateId: "not_existing_test_origin",
+						ResourceName:  "akamai_cloudlets_application_load_balancer.alb",
+						ExpectError:   regexp.MustCompile("could not find origin with origin_id: not_existing_test_origin"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("error importing load balancer origin_id cannot be empty", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
+		client := new(mockcloudlets)
+
+		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+
+		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+					},
+					{
+						ImportState: true,
+						ImportStateIdFunc: func(state *terraform.State) (string, error) {
+							return "", nil
+						},
+						ResourceName: "akamai_cloudlets_application_load_balancer.alb",
+						ExpectError:  regexp.MustCompile("origin id cannot be empty"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("error importing load balancer no version found", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
+		client := new(mockcloudlets)
+
+		client.On("GetOrigin", mock.Anything, "test_origin").Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+
+		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
+
+		expectImportLoadBalancer(t, client, origin, 0)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+					},
+					{
+						ImportState:   true,
+						ImportStateId: "test_origin",
+						ResourceName:  "akamai_cloudlets_application_load_balancer.alb",
+						ExpectError:   regexp.MustCompile("no load balancer version found for origin_id: test_origin"),
 					},
 				},
 			})

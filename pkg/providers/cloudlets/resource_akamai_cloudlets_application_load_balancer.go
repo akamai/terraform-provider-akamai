@@ -225,6 +225,9 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 				Description: "Describes warnings during activation of load balancer configuration",
 			},
 		},
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceALBImport,
+		},
 	}
 }
 
@@ -456,6 +459,55 @@ func resourceALBDelete(_ context.Context, d *schema.ResourceData, m interface{})
 	logger.Info("Cloudlets API does not support load balancer configuration and load balancer configuration version deletion - resource will only be removed from state")
 	d.SetId("")
 	return nil
+}
+
+// resourceALBImport does a basic import based on the originID specified it imports the latest version
+func resourceALBImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Cloudlets", "resourceALBImport")
+	logger.Debug("Import ALB")
+
+	client := inst.Client(meta)
+	logger.Debug("Importing load balancer configuration")
+
+	originID := d.Id()
+	if originID == "" {
+		return nil, fmt.Errorf("origin id cannot be empty")
+	}
+
+	origin, err := client.GetOrigin(ctx, originID)
+	if err != nil {
+		return nil, err
+	}
+
+	if origin == nil {
+		return nil, fmt.Errorf("could not find origin with origin_id: %s", originID)
+	}
+
+	versions, err := client.ListLoadBalancerVersions(ctx, cloudlets.ListLoadBalancerVersionsRequest{
+		OriginID: origin.OriginID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(versions) == 0 {
+		return nil, fmt.Errorf("no load balancer version found for origin_id: %s", originID)
+	}
+
+	var version int64
+	for _, v := range versions {
+		if v.Version > version {
+			version = v.Version
+		}
+	}
+
+	err = d.Set("version", version)
+	if err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func populateDataCenters(dcs []cloudlets.DataCenter) []interface{} {
