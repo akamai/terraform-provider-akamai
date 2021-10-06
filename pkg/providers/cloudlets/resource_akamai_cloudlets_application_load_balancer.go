@@ -3,7 +3,6 @@ package cloudlets
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -244,13 +243,8 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	description, err := tools.GetStringValue("description", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
 	createLBConfigReq := cloudlets.LoadBalancerOriginCreateRequest{
-		OriginID:    originID,
-		Description: cloudlets.Description{description},
+		OriginID: originID,
 	}
 
 	createLBConfigResp, err := client.CreateOrigin(ctx, createLBConfigReq)
@@ -283,13 +277,8 @@ func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	client := inst.Client(meta)
 	logger.Debug("Reading load balancer configuration")
 	originID := d.Id()
-	loadBalancerConfig, err := client.GetOrigin(ctx, originID)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	loadBalancerConfigAttrs := map[string]interface{}{
-		"origin_id":   originID,
-		"description": loadBalancerConfig.Description,
+		"origin_id": originID,
 	}
 	if err := tools.SetAttrs(d, loadBalancerConfigAttrs); err != nil {
 		return diag.FromErr(err)
@@ -309,6 +298,7 @@ func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	attrs := make(map[string]interface{})
 	attrs["balancing_type"] = loadBalancerVersion.BalancingType
 	attrs["version"] = loadBalancerVersion.Version
+	attrs["description"] = loadBalancerVersion.Description
 	attrs["data_centers"] = populateDataCenters(loadBalancerVersion.DataCenters)
 	if loadBalancerVersion.LivenessSettings != nil {
 		attrs["liveness_settings"] = populateLivenessSettings(loadBalancerVersion.LivenessSettings)
@@ -338,20 +328,6 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	client := inst.Client(meta)
 	logger.Debug("Updating load balancer configuration")
 	originID := d.Id()
-	// if 'description' changed, origin has to be updated
-	if d.HasChange("description") {
-		description, err := tools.GetStringValue("description", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		_, err = client.UpdateOrigin(ctx, cloudlets.LoadBalancerOriginUpdateRequest{
-			OriginID:    originID,
-			Description: cloudlets.Description{description},
-		})
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
 
 	version, err := tools.GetIntValue("version", d)
 	if err != nil {
@@ -359,7 +335,7 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	// if version-related attributes have changed, load balancer version has to be either created or updated (depending on whether it's active or not)
-	if d.HasChanges("balancing_type", "data_centers", "liveness_settings") {
+	if d.HasChanges("description", "balancing_type", "data_centers", "liveness_settings") {
 		activations, err := client.GetLoadBalancerActivations(ctx, originID)
 		if err != nil {
 			return diag.FromErr(err)
@@ -501,10 +477,12 @@ func populateLivenessSettings(ls *cloudlets.LivenessSettings) []interface{} {
 }
 
 func getLoadBalancerVersion(d *schema.ResourceData) cloudlets.LoadBalancerVersion {
+	description := d.Get("description").(string)
 	balancingType := d.Get("balancing_type").(string)
 	dataCenters := getDataCenters(d)
 	livenessSettings := getLivenessSettings(d)
 	return cloudlets.LoadBalancerVersion{
+		Description:      description,
 		BalancingType:    cloudlets.BalancingType(balancingType),
 		DataCenters:      dataCenters,
 		LivenessSettings: livenessSettings,
