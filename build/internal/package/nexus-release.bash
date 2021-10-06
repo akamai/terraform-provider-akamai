@@ -44,7 +44,6 @@ find_branch() {
     do
       echo "Checking branch '${branch}'"
       EDGEGRID_BRANCH=$branch
-
       if [[ "$EDGEGRID_BRANCH" == "develop" ]]; then
         EDGEGRID_BRANCH="v2"
       fi
