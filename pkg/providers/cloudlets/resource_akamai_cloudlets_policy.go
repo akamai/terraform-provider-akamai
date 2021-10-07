@@ -114,10 +114,6 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	description, err := tools.GetStringValue("description", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
 	groupID, err := tools.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -127,10 +123,9 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.Errorf("invalid group_id provided: %s", err)
 	}
 	createPolicyReq := cloudlets.CreatePolicyRequest{
-		Name:        name,
-		CloudletID:  int64(cloudletID),
-		Description: description,
-		GroupID:     int64(groupIDNum),
+		Name:       name,
+		CloudletID: int64(cloudletID),
+		GroupID:    int64(groupIDNum),
 	}
 	createPolicyResp, err := client.CreatePolicy(ctx, createPolicyReq)
 	if err != nil {
@@ -155,10 +150,15 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err := json.Unmarshal([]byte(matchRulesJSON), &matchRules); err != nil {
 		return diag.Errorf("unmarshaling match rules JSON: %s", err)
 	}
+	description, err := tools.GetStringValue("description", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 	updateVersionRequest := cloudlets.UpdatePolicyVersionRequest{
 		UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 			MatchRuleFormat: cloudlets.MatchRuleFormat(matchRuleFormat),
 			MatchRules:      matchRules,
+			Description:     description,
 		},
 		PolicyID: createPolicyResp.PolicyID,
 		Version:  1,
@@ -203,7 +203,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 	attrs["group_id"] = strconv.FormatInt(policy.GroupID, 10)
 	attrs["cloudlet_code"] = policy.CloudletCode
 	attrs["cloudlet_id"] = policy.CloudletID
-	attrs["description"] = policy.Description
+	attrs["description"] = policyVersion.Description
 	attrs["match_rule_format"] = policyVersion.MatchRuleFormat
 	var matchRulesJSON []byte
 	if len(policyVersion.MatchRules) > 0 {
@@ -241,13 +241,9 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if d.HasChanges("name", "description", "group_id") {
+	if d.HasChanges("name", "group_id") {
 		name, err := tools.GetStringValue("name", d)
 		if err != nil {
-			return diag.FromErr(err)
-		}
-		description, err := tools.GetStringValue("description", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		groupID, err := tools.GetStringValue("group_id", d)
@@ -260,9 +256,8 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 		updatePolicyReq := cloudlets.UpdatePolicyRequest{
 			UpdatePolicy: cloudlets.UpdatePolicy{
-				Name:        name,
-				Description: description,
-				GroupID:     int64(groupIDNum),
+				Name:    name,
+				GroupID: int64(groupIDNum),
 			},
 			PolicyID: policyID,
 		}
@@ -271,7 +266,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(err)
 		}
 	}
-	if d.HasChanges("match_rules", "match_rule_format") {
+	if d.HasChanges("description", "match_rules", "match_rule_format") {
 		version, err := tools.GetIntValue("version", d)
 		if err != nil {
 			return diag.FromErr(err)
@@ -298,11 +293,16 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 				return diag.FromErr(err)
 			}
 		}
+		description, err := tools.GetStringValue("description", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
 		if len(versionResp.Activations) > 0 {
 			createVersionRequest := cloudlets.CreatePolicyVersionRequest{
 				CreatePolicyVersion: cloudlets.CreatePolicyVersion{
 					MatchRuleFormat: cloudlets.MatchRuleFormat(matchRuleFormat),
 					MatchRules:      matchRules,
+					Description:     description,
 				},
 				PolicyID: policyID,
 			}
@@ -319,6 +319,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 				MatchRuleFormat: cloudlets.MatchRuleFormat(matchRuleFormat),
 				MatchRules:      matchRules,
+				Description:     description,
 			},
 			PolicyID: policyID,
 			Version:  int64(version),
