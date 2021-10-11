@@ -287,6 +287,7 @@ func populateSchemaFieldsWithPolicyVersion(p *cloudlets.PolicyVersion, d *schema
 	}
 
 	fields := map[string]interface{}{
+		"version":             p.Version,
 		"version_description": p.Description,
 		"revision_id":         p.RevisionID,
 		"rules_locked":        p.RulesLocked,

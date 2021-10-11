@@ -67,6 +67,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				Warnings:        nil,
 			},
 			checkFuncs: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "version", "1"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "group_id", "2345"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "name", "SomeName"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "description", "Fancy Description"),
@@ -172,9 +173,11 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				Warnings:        nil,
 			},
 			checkFuncs: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.#", "2"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.api_version", "2.0"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.network", "prod"),
 
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.policy_info.#", "1"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.policy_info.0.policy_id", "1234"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.policy_info.0.name", "policy_name_0"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.policy_info.0.version", "3"),
@@ -183,6 +186,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.policy_info.0.activated_by", "jsmith"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.policy_info.0.activation_date", "1607507783000"),
 
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.property_info.#", "1"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.property_info.0.name", "property_name_0"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.property_info.0.version", "3"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.0.property_info.0.group_id", "132"),
@@ -193,6 +197,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.api_version", "2.0"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.network", "stage"),
 
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.policy_info.#", "1"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.policy_info.0.policy_id", "1234"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.policy_info.0.name", "policy_name_1"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.policy_info.0.version", "3"),
@@ -201,6 +206,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.policy_info.0.activated_by", "jsmith"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.policy_info.0.activation_date", "1607507783001"),
 
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.property_info.#", "1"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.property_info.0.name", "property_name_1"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.property_info.0.version", "4"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "activations.1.property_info.0.group_id", "133"),
@@ -211,6 +217,9 @@ func TestDataCloudletsPolicy(t *testing.T) {
 		},
 		"pass version in tf file": {
 			configPath: "testdata/TestDataCloudletsPolicy/policy_with_version.tf",
+			getPolicyVersionReturn: cloudlets.PolicyVersion{
+				Version: 3,
+			},
 			checkFuncs: []resource.TestCheckFunc{
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "version", "3"),
 			},
