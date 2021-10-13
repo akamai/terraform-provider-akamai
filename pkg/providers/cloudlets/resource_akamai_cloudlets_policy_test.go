@@ -588,40 +588,63 @@ func TestResourcePolicy(t *testing.T) {
 			CloudletID:   0,
 			CloudletCode: "ER",
 		}
-		client := new(mockcloudlets)
-		client.On("CreatePolicy", mock.Anything, cloudlets.CreatePolicyRequest{
-			Name:       "test_policy",
-			CloudletID: 0,
-			GroupID:    123,
-		}).Return(policy, nil)
-		client.On("UpdatePolicyVersion", mock.Anything, cloudlets.UpdatePolicyVersionRequest{
-			UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
-				Description: "test policy description",
-				MatchRules:  matchRules,
-			},
-			PolicyID: 2,
-			Version:  1,
-		}).Return(nil, fmt.Errorf("oops"))
-		expectRemovePolicy(t, client, 2, 0)
 
-		client.On("CreatePolicy", mock.Anything, cloudlets.CreatePolicyRequest{
-			Name:       "test_policy",
-			CloudletID: 0,
-			GroupID:    123,
-		}).Return(nil, fmt.Errorf("oops"))
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
-						ExpectError: regexp.MustCompile("oops"),
-					},
+		expectErrorCreatingVersion := func(client *mockcloudlets) {
+			client.On("CreatePolicy", mock.Anything, cloudlets.CreatePolicyRequest{
+				Name:       "test_policy",
+				CloudletID: 0,
+				GroupID:    123,
+			}).Return(policy, nil)
+			client.On("UpdatePolicyVersion", mock.Anything, cloudlets.UpdatePolicyVersionRequest{
+				UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
+					Description: "test policy description",
+					MatchRules:  matchRules,
 				},
+				PolicyID: 2,
+				Version:  1,
+			}).Return(nil, fmt.Errorf("UpdatePolicyVersionError"))
+			expectRemovePolicy(t, client, 2, 0)
+		}
+
+		testCases := []struct {
+			Expectations  func(client *mockcloudlets)
+			ExpectedError *regexp.Regexp
+		}{
+			{
+				Expectations: func(client *mockcloudlets) {
+					expectErrorCreatingVersion(client)
+					expectReadPolicy(t, client, policy, &cloudlets.PolicyVersion{
+						PolicyID: 2,
+						Version:  1,
+					}, 1)
+				},
+				ExpectedError: regexp.MustCompile("UpdatePolicyVersionError"),
+			},
+			{
+				Expectations: func(client *mockcloudlets) {
+					expectErrorCreatingVersion(client)
+					client.On("GetPolicy", mock.Anything, policy.PolicyID).Return(nil, fmt.Errorf("GetPolicyError"))
+				},
+				ExpectedError: regexp.MustCompile("(?s)GetPolicyError.*UpdatePolicyVersionError"),
+			},
+		}
+
+		for i := range testCases {
+			client := new(mockcloudlets)
+			testCases[i].Expectations(client)
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+							ExpectError: testCases[i].ExpectedError,
+						},
+					},
+				})
 			})
-		})
-		client.AssertExpectations(t)
+			client.AssertExpectations(t)
+		}
 	})
 
 	t.Run("error fetching policy", func(t *testing.T) {
@@ -732,7 +755,6 @@ func TestResourcePolicy(t *testing.T) {
 	t.Run("error updating version", func(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle_version_update"
 
-		client := new(mockcloudlets)
 		matchRules := cloudlets.MatchRules{
 			&cloudlets.MatchRuleER{
 				Name:                     "r1",
@@ -760,25 +782,51 @@ func TestResourcePolicy(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules)
-		expectReadPolicy(t, client, policy, version, 3)
-		client.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{
-			PolicyID:  policy.PolicyID,
-			Version:   version.Version,
-			OmitRules: true,
-		}).Return(version, nil).Once()
-		client.On("UpdatePolicyVersion", mock.Anything, cloudlets.UpdatePolicyVersionRequest{
-			UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
-				Description:     "test policy description",
-				MatchRuleFormat: "1.0",
-				MatchRules:      matchRules[:1],
-			},
-			PolicyID: policy.PolicyID,
-			Version:  version.Version,
-		}).Return(nil, fmt.Errorf("oops")).Once()
-		expectRemovePolicy(t, client, policy.PolicyID, 1)
 
-		useClient(client, func() {
+		expectErrorUpdatingVersion := func(client *mockcloudlets, expectReadPolicyTimes int) (policy *cloudlets.Policy) {
+			policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules)
+			expectReadPolicy(t, client, policy, version, expectReadPolicyTimes)
+			client.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{
+				PolicyID:  policy.PolicyID,
+				Version:   version.Version,
+				OmitRules: true,
+			}).Return(version, nil).Once()
+			client.On("UpdatePolicyVersion", mock.Anything, cloudlets.UpdatePolicyVersionRequest{
+				UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
+					Description:     "test policy description",
+					MatchRuleFormat: "1.0",
+					MatchRules:      matchRules[:1],
+				},
+				PolicyID: policy.PolicyID,
+				Version:  version.Version,
+			}).Return(nil, fmt.Errorf("UpdatePolicyVersionError")).Once()
+			expectRemovePolicy(t, client, policy.PolicyID, 1)
+			return
+		}
+
+		testCases := []struct {
+			Expectations  func(client *mockcloudlets)
+			ExpectedError *regexp.Regexp
+		}{
+			{
+				Expectations: func(client *mockcloudlets) {
+					expectErrorUpdatingVersion(client, 4)
+				},
+				ExpectedError: regexp.MustCompile("UpdatePolicyVersionError"),
+			},
+			{
+				Expectations: func(client *mockcloudlets) {
+					policy := expectErrorUpdatingVersion(client, 3)
+					client.On("GetPolicy", mock.Anything, policy.PolicyID).Return(nil, fmt.Errorf("GetPolicyError"))
+				},
+				ExpectedError: regexp.MustCompile("(?s)GetPolicyError.*UpdatePolicyVersionError"),
+			},
+		}
+
+		for i := range testCases {
+			client := new(mockcloudlets)
+			testCases[i].Expectations(client)
+			useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -787,12 +835,13 @@ func TestResourcePolicy(t *testing.T) {
 					},
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
-						ExpectError: regexp.MustCompile("oops"),
+						ExpectError: testCases[i].ExpectedError,
 					},
 				},
 			})
 		})
 		client.AssertExpectations(t)
+		}
 	})
 
 	t.Run("invalid group id passed", func(t *testing.T) {

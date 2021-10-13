@@ -165,6 +165,9 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if _, err = client.UpdatePolicyVersion(ctx, updateVersionRequest); err != nil {
+		if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
+			return append(errPolicyRead, diag.FromErr(err)...)
+		}
 		return diag.FromErr(err)
 	}
 	return resourcePolicyRead(ctx, d, m)
@@ -324,8 +327,10 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			PolicyID: policyID,
 			Version:  int64(version),
 		}
-		_, err = client.UpdatePolicyVersion(ctx, updateVersionReq)
-		if err != nil {
+		if _, err = client.UpdatePolicyVersion(ctx, updateVersionReq); err != nil {
+			if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
+				return append(errPolicyRead, diag.FromErr(err)...)
+			}
 			return diag.FromErr(err)
 		}
 	}
