@@ -26,3 +26,12 @@ func ConvertToString(data interface{}) (res string) {
 	}
 	return
 }
+
+func GetFirstNotEmpty(values ...string) string {
+	for _, s := range values {
+		if s != "" {
+			return s
+		}
+	}
+	return ""
+}

@@ -470,7 +470,7 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 	}
 }
 
-func TestDiffSuppressPropertyID(t *testing.T) {
+func TestPrefixSuppressor(t *testing.T) {
 	tests := []struct {
 		oldPropertyID, newPropertyID string
 		expected                     bool
@@ -485,9 +485,10 @@ func TestDiffSuppressPropertyID(t *testing.T) {
 		{"123", "1234", false},
 		{"prp_123", "prp_1234", false},
 	}
+	suppressor := prefixSuppressor("prp_")
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s vs %s", test.oldPropertyID, test.newPropertyID), func(t *testing.T) {
-			assert.Equal(t, test.expected, diffSuppressPropertyID("", test.oldPropertyID, test.newPropertyID, nil))
+			assert.Equal(t, test.expected, suppressor("", test.oldPropertyID, test.newPropertyID, nil))
 		})
 	}
 }

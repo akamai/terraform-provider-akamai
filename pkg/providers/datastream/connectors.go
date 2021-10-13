@@ -79,7 +79,6 @@ func ConnectorToMap(connectors []datastream.ConnectorDetails, d *schema.Resource
 	}
 
 	connectorProperties := mapper(connectorDetails, connectorItemProperties)
-
 	return resourceKey, connectorProperties, nil
 }
 
@@ -271,12 +270,14 @@ func GetSumoLogicConnector(props map[string]interface{}) datastream.AbstractConn
 
 // MapSumoLogicConnector selects fields needed for SumoLogicConnector
 func MapSumoLogicConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+	endpoint := tools.GetFirstNotEmpty(c.Endpoint, c.URL)
+
 	return map[string]interface{}{
 		"collector_code": s["collector_code"],
 		"compress_logs":  c.CompressLogs,
 		"connector_id":   c.ConnectorID,
 		"connector_name": c.ConnectorName,
-		"endpoint":       c.URL,
+		"endpoint":       endpoint,
 	}
 }
 

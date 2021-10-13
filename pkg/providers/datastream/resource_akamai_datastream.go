@@ -19,7 +19,7 @@ import (
 
 var (
 	// PollForActivationStatusChangeInterval defines retry interval for getting status of a pending change
-	PollForActivationStatusChangeInterval = 5 * time.Minute
+	PollForActivationStatusChangeInterval = 10 * time.Minute
 
 	// ExactlyOneConnectorRule defines connector fields names
 	ExactlyOneConnectorRule = []string{
@@ -32,8 +32,8 @@ var (
 		"https_connector", "datadog_connector", "splunk_connector", "sumologic_connector",
 	}
 
-	// DatastreamResourceTimeout is the default timeout for the resource operations
-	DatastreamResourceTimeout = 90 * time.Minute
+	// DatastreamResourceTimeout is the default timeout for the resource operations (max activation time + polling interval)
+	DatastreamResourceTimeout = (90 * time.Minute) + PollForActivationStatusChangeInterval
 )
 
 func resourceDatastream() *schema.Resource {
@@ -67,9 +67,10 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Description: "Provides information about the configuration related to logs (format, file names, delivery frequency)",
 	},
 	"contract_id": {
-		Type:        schema.TypeString,
-		Required:    true,
-		Description: "Identifies the contract that has access to the product",
+		Type:             schema.TypeString,
+		Required:         true,
+		DiffSuppressFunc: prefixSuppressor("ctr_"),
+		Description:      "Identifies the contract that has access to the product",
 	},
 	"created_by": {
 		Type:        schema.TypeString,
@@ -99,9 +100,10 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Description: "List of email addresses where the system sends notifications about activations and deactivations of the stream",
 	},
 	"group_id": {
-		Type:        schema.TypeInt,
-		Required:    true,
-		Description: "Identifies the group that has access to the product and for which the stream configuration was created",
+		Type:             schema.TypeString,
+		Required:         true,
+		DiffSuppressFunc: prefixSuppressor("grp_"),
+		Description:      "Identifies the group that has access to the product and for which the stream configuration was created",
 	},
 	"group_name": {
 		Type:        schema.TypeString,
@@ -138,7 +140,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Required: true,
 		Elem: &schema.Schema{
 			Type:             schema.TypeString,
-			DiffSuppressFunc: diffSuppressPropertyID,
+			DiffSuppressFunc: prefixSuppressor("prp_"),
 		},
 		Description: "Identifies the properties monitored in the stream",
 	},
@@ -261,9 +263,10 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"datadog_connector": {
-		Type:     schema.TypeSet,
-		MaxItems: 1,
-		Optional: true,
+		Type:             schema.TypeSet,
+		MaxItems:         1,
+		Optional:         true,
+		DiffSuppressFunc: urlSuppressor("url"),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"auth_token": {
@@ -315,9 +318,10 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"splunk_connector": {
-		Type:     schema.TypeSet,
-		MaxItems: 1,
-		Optional: true,
+		Type:             schema.TypeSet,
+		MaxItems:         1,
+		Optional:         true,
+		DiffSuppressFunc: urlSuppressor("url"),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"compress_logs": {
@@ -402,9 +406,10 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"https_connector": {
-		Type:     schema.TypeSet,
-		MaxItems: 1,
-		Optional: true,
+		Type:             schema.TypeSet,
+		MaxItems:         1,
+		Optional:         true,
+		DiffSuppressFunc: urlSuppressor("url"),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"authentication_type": {
@@ -451,9 +456,10 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"sumologic_connector": {
-		Type:     schema.TypeSet,
-		MaxItems: 1,
-		Optional: true,
+		Type:             schema.TypeSet,
+		MaxItems:         1,
+		Optional:         true,
+		DiffSuppressFunc: urlSuppressor("endpoint"),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"collector_code": {
@@ -615,6 +621,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	contractID = strings.TrimPrefix(contractID, "ctr_")
 
 	datasetFieldsIDsList, err := tools.GetListValue("dataset_fields_ids", d)
 	if err != nil {
@@ -628,7 +635,11 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	emailIDs := strings.Join(InterfaceSliceToStringSlice(emailIDsList), ",")
 
-	groupID, err := tools.GetIntValue("group_id", d)
+	groupIDStr, err := tools.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	groupID, err := strconv.Atoi(strings.TrimPrefix(groupIDStr, "grp_"))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -732,7 +743,7 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs["dataset_fields_ids"] = DataSetFieldsToList(streamDetails.Datasets)
 	attrs["contract_id"] = streamDetails.ContractID
 	attrs["email_ids"] = strings.Split(streamDetails.EmailIDs, ",")
-	attrs["group_id"] = streamDetails.GroupID
+	attrs["group_id"] = strconv.Itoa(streamDetails.GroupID)
 	attrs["group_name"] = streamDetails.GroupName
 	attrs["modified_by"] = streamDetails.ModifiedBy
 	attrs["modified_date"] = streamDetails.ModifiedDate
@@ -1087,8 +1098,37 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 	return &streamDetails.ActivationStatus, nil
 }
 
-func diffSuppressPropertyID(_, old string, new string, _ *schema.ResourceData) bool {
-	return strings.TrimPrefix(old, "prp_") == strings.TrimPrefix(new, "prp_")
+func prefixSuppressor(prefix string) schema.SchemaDiffSuppressFunc {
+	return func(_, old string, new string, _ *schema.ResourceData) bool {
+		return strings.TrimPrefix(old, prefix) == strings.TrimPrefix(new, prefix)
+	}
+}
+
+func urlSuppressor(key string) schema.SchemaDiffSuppressFunc {
+	return func(k string, _ string, _ string, d *schema.ResourceData) bool {
+		connectorName := strings.Split(k, ".")[0]
+		if !d.HasChange(connectorName) {
+			return false
+		}
+
+		o, n := d.GetChange(connectorName)
+		oSet, nSet := o.(*schema.Set), n.(*schema.Set)
+
+		if oSet.Len() != 1 || nSet.Len() != 1 {
+			return false
+		}
+
+		oElem := oSet.List()[0].(map[string]interface{})
+		nElem := nSet.List()[0].(map[string]interface{})
+
+		oItem, oOk := oElem[key]
+		nItem, nOk := nElem[key]
+		if !oOk || !nOk {
+			return false
+		}
+
+		return strings.TrimSuffix(oItem.(string), "/") == strings.TrimSuffix(nItem.(string), "/")
+	}
 }
 
 func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
