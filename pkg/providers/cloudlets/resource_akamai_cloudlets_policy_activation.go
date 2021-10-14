@@ -43,7 +43,7 @@ func resourceCloudletsPolicyActivationSchema() map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Required:         true,
 			ValidateDiagFunc: tools.ValidateNetwork,
-			StateFunc:        tools.StateNetwork,
+			StateFunc:        statePolicyActivationNetwork,
 			Description:      "The network you want to activate the policy version on (options are Staging and Production)",
 		},
 		"version": {
@@ -71,6 +71,9 @@ var (
 
 	// PolicyActivationResourceTimeout is the default timeout for the resource operations
 	PolicyActivationResourceTimeout = time.Minute * 90
+
+	// ErrNetworkName is used when the user inputs an invalid network name
+	ErrNetworkName = errors.New("invalid network name")
 )
 
 func resourcePolicyActivationDelete(_ context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -119,7 +122,10 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	activationNetwork := cloudlets.VersionActivationNetwork(network)
+	activationNetwork, err := getPolicyActivationNetwork(network)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	// 3. look for activation with this version which is active
 	if len(policy.Activations) > 0 {
@@ -200,7 +206,10 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	versionActivationNetwork := cloudlets.VersionActivationNetwork(tools.StateNetwork(network))
+	versionActivationNetwork, err := getPolicyActivationNetwork(network)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	associatedProps, err := tools.GetListValue("associated_properties", rd)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -293,7 +302,10 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	net := cloudlets.VersionActivationNetwork(network)
+	net, err := getPolicyActivationNetwork(network)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	version, err := tools.GetIntValue("version", rd)
 	var version64 int64
 	if err != nil {
@@ -400,4 +412,33 @@ func getLatestPolicyActivationVersion(ctx context.Context, client cloudlets.Clou
 		}
 	}
 	return tools.Int64Ptr(version), nil
+}
+
+func getPolicyActivationNetwork(net string) (cloudlets.VersionActivationNetwork, error) {
+
+	net = tools.StateNetwork(net)
+
+	switch net {
+	case "production":
+		return cloudlets.VersionActivationNetworkProduction, nil
+	case "staging":
+		return cloudlets.VersionActivationNetworkStaging, nil
+	}
+
+	return "", ErrNetworkName
+}
+
+func statePolicyActivationNetwork(i interface{}) string {
+
+	net := tools.StateNetwork(i)
+
+	switch net {
+	case "production":
+		return string(cloudlets.VersionActivationNetworkProduction)
+	case "staging":
+		return string(cloudlets.VersionActivationNetworkStaging)
+	}
+
+	// this should never happen :-)
+	return net
 }

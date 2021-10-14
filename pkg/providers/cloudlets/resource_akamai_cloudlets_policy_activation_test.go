@@ -36,6 +36,44 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 				},
 			},
 		},
+		"create and read activation, version == 1, production, inactive -> activate": {
+			init: func(m *mockcloudlets) {
+				// create
+				expectGetPolicyVersion(m, 1234, 1, cloudlets.StatusInactive).Once()
+				expectActivatePolicyVersion(m, 1234, 1, cloudlets.VersionActivationNetworkProduction, []string{"prp_0", "prp_1"}, nil).Once()
+				expectListPolicyActivations(m, 1234, 1, "prod", "property name", cloudlets.StatusActive, nil).Once()
+				// read
+				expectListPolicyActivations(m, 1234, 1, "prod", "", cloudlets.StatusActive, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResourceCloudletsPropertyActivation/policy_activation_version1_production.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
+					),
+				},
+			},
+		},
+		"create and read activation, version == 1, prod, inactive -> activate": {
+			init: func(m *mockcloudlets) {
+				// create
+				expectGetPolicyVersion(m, 1234, 1, cloudlets.StatusInactive).Once()
+				expectActivatePolicyVersion(m, 1234, 1, cloudlets.VersionActivationNetworkProduction, []string{"prp_0", "prp_1"}, nil).Once()
+				expectListPolicyActivations(m, 1234, 1, "prod", "property name", cloudlets.StatusActive, nil).Once()
+				// read
+				expectListPolicyActivations(m, 1234, 1, "prod", "", cloudlets.StatusActive, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResourceCloudletsPropertyActivation/policy_activation_version1_prod.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
+					),
+				},
+			},
+		},
 		"create and read activation, version == 1, inactive -> activate -> error": {
 			init: func(m *mockcloudlets) {
 				// create
@@ -458,21 +496,27 @@ func expectGetPolicyVersion(m *mockcloudlets, policyID, version int64, status cl
 		}, nil)
 }
 
-func expectListPolicyActivations(m *mockcloudlets, policyID, version int64, network, propertyName string, status cloudlets.Status, err error) *mock.Call {
+func expectListPolicyActivations(m *mockcloudlets, policyID, version int64, network, propertyName string, status cloudlets.Status, expectedErr error) *mock.Call {
+	policyActivationNetwork, err := getPolicyActivationNetwork(tools.StateNetwork(network))
 	if err != nil {
+		panic(err.Error())
+	}
+
+	if expectedErr != nil {
 		return m.On("ListPolicyActivations", mock.Anything, cloudlets.ListPolicyActivationsRequest{
 			PolicyID:     policyID,
-			Network:      cloudlets.VersionActivationNetwork(tools.StateNetwork(network)),
+			Network:      policyActivationNetwork,
 			PropertyName: propertyName,
-		}).Return(nil, err)
+		}).Return(nil, expectedErr)
 	}
+
 	return m.On("ListPolicyActivations", mock.Anything, cloudlets.ListPolicyActivationsRequest{
 		PolicyID:     policyID,
-		Network:      cloudlets.VersionActivationNetwork(tools.StateNetwork(network)),
+		Network:      policyActivationNetwork,
 		PropertyName: propertyName,
 	}).Return([]cloudlets.PolicyActivation{
 		{
-			Network:      cloudlets.VersionActivationNetwork(tools.StateNetwork(network)),
+			Network:      policyActivationNetwork,
 			APIVersion:   "1.0",
 			PropertyInfo: cloudlets.PropertyInfo{Name: propertyName},
 			PolicyInfo:   cloudlets.PolicyInfo{PolicyID: policyID, Status: status, Version: version},
