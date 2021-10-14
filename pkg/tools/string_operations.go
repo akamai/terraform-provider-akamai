@@ -35,3 +35,12 @@ func GetFirstNotEmpty(values ...string) string {
 	}
 	return ""
 }
+
+func ContainsString(s []string, searchTerm string) bool {
+	for _, v := range s {
+		if v == searchTerm {
+			return true
+		}
+	}
+	return false
+}

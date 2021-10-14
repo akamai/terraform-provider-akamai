@@ -84,3 +84,11 @@ func TestGetFirstNotEmpty(t *testing.T) {
 	assert.Equal(t, GetFirstNotEmpty("val", ""), "val")
 	assert.Equal(t, GetFirstNotEmpty("", ""), "")
 }
+
+func TestContainsString(t *testing.T) {
+	assert.False(t, ContainsString([]string{}, "a"))
+	assert.True(t, ContainsString([]string{"a"}, "a"))
+	assert.True(t, ContainsString([]string{"b", "a"}, "a"))
+	assert.False(t, ContainsString([]string{"b", "c"}, "a"))
+	assert.False(t, ContainsString([]string{"", "b"}, "a"))
+}

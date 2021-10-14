@@ -36,6 +36,14 @@ var (
 	DatastreamResourceTimeout = (90 * time.Minute) + PollForActivationStatusChangeInterval
 )
 
+const (
+	// DefaultUploadFilePrefix specifies default upload file prefix for supported connectors
+	DefaultUploadFilePrefix = "ak"
+
+	// DefaultUploadFileSuffix specifies default upload file suffix for supported connectors
+	DefaultUploadFileSuffix = "ds"
+)
+
 func resourceDatastream() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDatastreamCreate,
@@ -581,11 +589,13 @@ var configResource = &schema.Resource{
 		"upload_file_prefix": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Default:     DefaultUploadFilePrefix,
 			Description: "The prefix of the log file that will be send to a destination",
 		},
 		"upload_file_suffix": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Default:     DefaultUploadFileSuffix,
 			Description: "The suffix of the log file that will be send to a destination",
 		},
 	},
@@ -736,7 +746,6 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs := make(map[string]interface{})
 
 	attrs["active"] = streamDetails.ActivationStatus == datastream.ActivationStatusActivated
-	attrs["config"] = ConfigToSet(streamDetails.Config)
 	attrs["contract_id"] = streamDetails.ContractID
 	attrs["created_by"] = streamDetails.CreatedBy
 	attrs["created_date"] = streamDetails.CreatedDate
@@ -756,13 +765,28 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs["stream_version_id"] = streamDetails.StreamVersionID
 	attrs["template_name"] = streamDetails.TemplateName
 
-	key, connectorProps, err := ConnectorToMap(streamDetails.Connectors, d)
+	connectorKey, connectorProps, err := ConnectorToMap(streamDetails.Connectors, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if key != "" {
-		attrs[key] = []interface{}{connectorProps}
+	if connectorKey != "" {
+		attrs[connectorKey] = []interface{}{connectorProps}
+
+		if tools.ContainsString(ConnectorsWithoutFilenameOptionsConfig, connectorKey) {
+			// some connectors don't allow setting upload file prefix/suffix (API is ignoring them),
+			// but the documentation specifies default value for these fields (ak/ds respectively)
+			// so these fields should have default values in terraform provider too
+
+			// since we do validate connector and prefix/suffix combination in a validateConfig function
+			// we have to take into account the fact that terraform would still see the change between remote (no prefixes set)
+			// and local state (default prefixes set), so we have to ensure that local state has the default prefix/suffix set as well
+			// here we insert default values to satisfy terraform diff
+			streamDetails.Config.UploadFilePrefix = DefaultUploadFilePrefix
+			streamDetails.Config.UploadFileSuffix = DefaultUploadFileSuffix
+		}
 	}
+
+	attrs["config"] = ConfigToSet(streamDetails.Config)
 
 	err = tools.SetAttrs(d, attrs)
 	if err != nil {
@@ -1132,7 +1156,7 @@ func urlSuppressor(key string) schema.SchemaDiffSuppressFunc {
 }
 
 func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-	foundKey := ""
+	connectorName := ""
 	for _, k := range ConnectorsWithoutFilenameOptionsConfig {
 		connectorResource, exists := d.GetOkExists(k)
 		if !exists {
@@ -1141,12 +1165,12 @@ func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) er
 
 		connectorSet := connectorResource.(*schema.Set)
 		if connectorSet.Len() > 0 {
-			foundKey = k
+			connectorName = k
 			break
 		}
 	}
 
-	if foundKey == "" {
+	if connectorName == "" {
 		return nil
 	}
 
@@ -1164,8 +1188,8 @@ func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) er
 	prefixValue := config["upload_file_prefix"]
 	suffixValue := config["upload_file_suffix"]
 
-	if prefixValue.(string) != "" || suffixValue.(string) != "" {
-		return fmt.Errorf("upload_file_prefix/upload_file_suffix cannot be used with %s", foundKey)
+	if prefixValue.(string) != DefaultUploadFilePrefix || suffixValue.(string) != DefaultUploadFileSuffix {
+		return fmt.Errorf("upload_file_prefix (%s) / upload_file_suffix (%s) cannot be used with %s", prefixValue, suffixValue, connectorName)
 	}
 
 	return nil
