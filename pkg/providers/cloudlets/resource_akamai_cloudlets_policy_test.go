@@ -64,12 +64,17 @@ func TestResourcePolicy(t *testing.T) {
 			return policy, version
 		}
 
-		expectReadPolicy = func(_ *testing.T, client *mockcloudlets, policy *cloudlets.Policy, version *cloudlets.PolicyVersion, times int) {
+		expectReadPolicy = func(t *testing.T, client *mockcloudlets, policy *cloudlets.Policy, version *cloudlets.PolicyVersion, times int) {
 			client.On("GetPolicy", mock.Anything, policy.PolicyID).Return(policy, nil).Times(times)
+			var versionWithoutWarnings cloudlets.PolicyVersion
+			err := copier.CopyWithOption(&versionWithoutWarnings, version, copier.Option{DeepCopy: true})
+			require.NoError(t, err)
+			versionWithoutWarnings.Warnings = []cloudlets.Warning{}
+			versionWithoutWarnings.MatchRules = version.MatchRules
 			client.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{
 				PolicyID: policy.PolicyID,
 				Version:  version.Version,
-			}).Return(version, nil).Times(times)
+			}).Return(&versionWithoutWarnings, nil).Times(times)
 		}
 
 		expectUpdatePolicy = func(t *testing.T, client *mockcloudlets, policy *cloudlets.Policy, updatedName string) *cloudlets.Policy {
@@ -432,6 +437,68 @@ func TestResourcePolicy(t *testing.T) {
 							version:        "1",
 							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules_update.json", testDir),
 						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("warnings creating and updating version", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/lifecycle_version_update"
+
+		client := new(mockcloudlets)
+		matchRules := cloudlets.MatchRules{
+			&cloudlets.MatchRuleER{
+				Name:                     "r1",
+				Type:                     "erMatchRule",
+				UseRelativeURL:           "copy_scheme_hostname",
+				StatusCode:               301,
+				RedirectURL:              "/ddd",
+				MatchURL:                 "abc.com",
+				UseIncomingSchemeAndHost: true,
+			},
+			&cloudlets.MatchRuleER{
+				Name: "r3",
+				Type: "erMatchRule",
+				Matches: []cloudlets.MatchCriteriaER{
+					{
+						MatchType:     "hostname",
+						MatchValue:    "3333.dom",
+						MatchOperator: "equals",
+						CaseSensitive: true,
+					},
+				},
+				UseRelativeURL:           "copy_scheme_hostname",
+				StatusCode:               307,
+				RedirectURL:              "/abc/sss",
+				UseIncomingSchemeAndHost: true,
+			},
+		}
+		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules)
+		expectReadPolicy(t, client, policy, version, 3)
+		version = expectUpdatePolicyVersion(t, client, policy.PolicyID, version, matchRules[:1])
+		expectReadPolicy(t, client, policy, version, 4)
+		expectRemovePolicy(t, client, policy.PolicyID, 1)
+
+		warningsJSON, err := warningsToJSON(version.Warnings)
+		require.NoError(t, err)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Check: resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "warnings", string(warningsJSON)),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Check: resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "warnings", string(warningsJSON)),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Check: resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "warnings", string(warningsJSON)),
 					},
 				},
 			})
@@ -827,20 +894,20 @@ func TestResourcePolicy(t *testing.T) {
 			client := new(mockcloudlets)
 			testCases[i].Expectations(client)
 			useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						},
+						{
+							Config:      loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+							ExpectError: testCases[i].ExpectedError,
+						},
 					},
-					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
-						ExpectError: testCases[i].ExpectedError,
-					},
-				},
+				})
 			})
-		})
-		client.AssertExpectations(t)
+			client.AssertExpectations(t)
 		}
 	})
 
@@ -907,10 +974,11 @@ func TestResourcePolicy(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
 					},
 					{
-						ImportState:       true,
-						ImportStateId:     "test_policy",
-						ResourceName:      "akamai_cloudlets_policy.policy",
-						ImportStateVerify: true,
+						ImportState:       		 true,
+						ImportStateId:     		 "test_policy",
+						ResourceName:      		 "akamai_cloudlets_policy.policy",
+						ImportStateVerify: 		 true,
+						ImportStateVerifyIgnore: []string{"warnings"},
 					},
 				},
 			})

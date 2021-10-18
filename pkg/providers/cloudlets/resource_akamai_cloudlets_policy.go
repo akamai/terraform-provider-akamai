@@ -164,11 +164,15 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		Version:  1,
 	}
 
-	if _, err = client.UpdatePolicyVersion(ctx, updateVersionRequest); err != nil {
+	updateVersionResp, err := client.UpdatePolicyVersion(ctx, updateVersionRequest)
+	if err != nil {
 		if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
 			return append(errPolicyRead, diag.FromErr(err)...)
 		}
 		return diag.FromErr(err)
+	}
+	if err := setWarnings(d, updateVersionResp.Warnings); err != nil {
+		return err
 	}
 	return resourcePolicyRead(ctx, d, m)
 }
@@ -217,14 +221,6 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	attrs["match_rules"] = string(matchRulesJSON)
 	attrs["version"] = policyVersion.Version
-	var warningsJSON []byte
-	if len(policyVersion.Warnings) > 0 {
-		warningsJSON, err = json.MarshalIndent(policyVersion.Warnings, "", "  ")
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	attrs["warnings"] = string(warningsJSON)
 	if err := tools.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
@@ -316,6 +312,9 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			if err := d.Set("version", createVersionResp.Version); err != nil {
 				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 			}
+			if err := setWarnings(d, createVersionResp.Warnings); err != nil {
+				return err
+			}
 			return resourcePolicyRead(ctx, d, m)
 		}
 		updateVersionReq := cloudlets.UpdatePolicyVersionRequest{
@@ -327,11 +326,15 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			PolicyID: policyID,
 			Version:  int64(version),
 		}
-		if _, err = client.UpdatePolicyVersion(ctx, updateVersionReq); err != nil {
+		updateVersionResp, err := client.UpdatePolicyVersion(ctx, updateVersionReq)
+		if err != nil {
 			if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
 				return append(errPolicyRead, diag.FromErr(err)...)
 			}
 			return diag.FromErr(err)
+		}
+		if err := setWarnings(d, updateVersionResp.Warnings); err != nil {
+			return err
 		}
 	}
 	return resourcePolicyRead(ctx, d, m)
@@ -454,4 +457,30 @@ func diffSuppressMatchRules(_, old, new string, _ *schema.ResourceData) bool {
 		delete(rule, "akaRuleId")
 	}
 	return reflect.DeepEqual(oldRules, newRules)
+}
+
+func warningsToJSON(warnings []cloudlets.Warning) ([]byte, error) {
+	var warningsJSON []byte
+	if len(warnings) == 0 {
+		return warningsJSON, nil
+	}
+	
+	warningsJSON, err := json.MarshalIndent(warnings, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	return warningsJSON, nil
+}
+
+func setWarnings(d *schema.ResourceData, warnings []cloudlets.Warning) diag.Diagnostics {
+	warningsJSON, err := warningsToJSON(warnings)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("warnings", string(warningsJSON)); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
