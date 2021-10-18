@@ -229,6 +229,32 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 	}
 }
 
+func isAkamaized(dc cloudlets.DataCenter, origins []cloudlets.OriginResponse) bool {
+	for _, o := range origins {
+		if o.Hostname == dc.Hostname && o.OriginID == dc.OriginID {
+			return o.Akamaized
+		}
+	}
+	return false
+}
+
+func validateLivenessHosts(ctx context.Context, client cloudlets.Cloudlets, d *schema.ResourceData) error {
+	dcs := getDataCenters(d)
+
+	origins, err := client.ListOrigins(ctx, cloudlets.ListOriginsRequest{})
+	if err != nil {
+		return err
+	}
+
+	for _, dc := range dcs {
+		if len(dc.LivenessHosts) > 0 && isAkamaized(dc, origins) {
+			return fmt.Errorf("'liveness_hosts' field should be omitted for GTM hostname: %q. "+
+				"Liveness tests for this host can be configured in DNS traffic management", dc.Hostname)
+		}
+	}
+	return nil
+}
+
 func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Cloudlets", "resourceLoadBalancerConfigurationCreate")
@@ -243,6 +269,11 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	if err := validateLivenessHosts(ctx, client, d); err != nil {
+		return diag.FromErr(err)
+	}
+
 	createLBConfigReq := cloudlets.LoadBalancerOriginCreateRequest{
 		OriginID: originID,
 	}
@@ -331,6 +362,10 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	version, err := tools.GetIntValue("version", d)
 	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := validateLivenessHosts(ctx, client, d); err != nil {
 		return diag.FromErr(err)
 	}
 

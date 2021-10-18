@@ -19,9 +19,8 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	type loadBalancerAttributes struct {
 		originID, version, description, balancingType string
 	}
-
 	var (
-		expectCreateLoadBalancer = func(_ *testing.T, client *mockcloudlets, originID, description, balancingType string, version int64) (*cloudlets.Origin, *cloudlets.LoadBalancerVersion) {
+		expectCreateLoadBalancer = func(_ *testing.T, client *mockcloudlets, originID, description, balancingType string, version int64, livenessHosts []string) (*cloudlets.Origin, *cloudlets.LoadBalancerVersion) {
 			loadBalancerConfig := cloudlets.LoadBalancerOriginCreateRequest{
 				OriginID: originID,
 			}
@@ -36,7 +35,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						Country:         "US",
 						Hostname:        "test-hostname",
 						Latitude:        102.78108,
-						LivenessHosts:   []string{"tf.test"},
+						LivenessHosts:   livenessHosts,
 						Longitude:       -116.07064,
 						OriginID:        "test_origin",
 						Percent:         10,
@@ -70,6 +69,17 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				Description: description,
 				Type:        "APPLICATION_LOAD_BALANCER",
 			}
+			origins := []cloudlets.OriginResponse{
+				{
+					Hostname: "test-hostname",
+					Origin: cloudlets.Origin{
+						OriginID:  "test_origin",
+						Akamaized: false,
+					},
+				},
+			}
+			client.On("ListOrigins", mock.Anything, mock.Anything).Return(origins, nil)
+
 			client.On("CreateOrigin", mock.Anything, loadBalancerConfig).Return(&origin, nil).Once()
 			client.On("CreateLoadBalancerVersion", mock.Anything, cloudlets.CreateLoadBalancerVersionRequest{
 				OriginID:            originID,
@@ -190,7 +200,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -230,7 +240,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -270,7 +280,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_origin_update"
 		client := new(mockcloudlets)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -310,7 +320,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_version_update"
 		client := new(mockcloudlets)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -350,6 +360,17 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
+		origins := []cloudlets.OriginResponse{
+			{
+				Hostname: "test-hostname",
+				Origin: cloudlets.Origin{
+					OriginID:  "test_origin",
+					Akamaized: false,
+				},
+			},
+		}
+		client.On("ListOrigins", mock.Anything, mock.Anything).Return(origins, nil)
+
 		client.On("CreateOrigin", mock.Anything, cloudlets.LoadBalancerOriginCreateRequest{OriginID: "test_origin"}).Return(nil, fmt.Errorf("creating origin")).Once()
 
 		useClient(client, func() {
@@ -369,6 +390,17 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	t.Run("error creating version", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
+
+		origins := []cloudlets.OriginResponse{
+			{
+				Hostname: "test-hostname",
+				Origin: cloudlets.Origin{
+					OriginID:  "test_origin",
+					Akamaized: false,
+				},
+			},
+		}
+		client.On("ListOrigins", mock.Anything, mock.Anything).Return(origins, nil)
 
 		client.On("CreateOrigin", mock.Anything, cloudlets.LoadBalancerOriginCreateRequest{OriginID: "test_origin"}).Return(&cloudlets.Origin{OriginID: "test_origin"}, nil).Once()
 
@@ -425,7 +457,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -465,7 +497,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		_, _ = expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		_, _ = expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		client.On("GetLoadBalancerVersion", mock.Anything, cloudlets.GetLoadBalancerVersionRequest{
 			OriginID:       "test_origin",
@@ -491,7 +523,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -520,7 +552,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
 
@@ -549,7 +581,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
 
@@ -578,7 +610,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(mockcloudlets)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1)
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
 
@@ -596,6 +628,73 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						ImportStateId: "test_origin",
 						ResourceName:  "akamai_cloudlets_application_load_balancer.alb",
 						ExpectError:   regexp.MustCompile("no load balancer version found for origin_id: test_origin"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("error creating origin with akamaized dc", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
+		client := new(mockcloudlets)
+
+		origins := []cloudlets.OriginResponse{
+			{
+				Hostname: "test-hostname",
+				Origin: cloudlets.Origin{
+					OriginID:  "test_origin",
+					Akamaized: true,
+				},
+			},
+		}
+		client.On("ListOrigins", mock.Anything, mock.Anything).Return(origins, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
+							"Liveness tests for this host can be configured in DNS traffic management"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("error updating origin with akamized dc", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_dc_update"
+		client := new(mockcloudlets)
+
+		origins := []cloudlets.OriginResponse{
+			{
+				Hostname: "test-hostname",
+				Origin: cloudlets.Origin{
+					OriginID:  "test_origin",
+					Akamaized: true,
+				},
+			},
+		}
+		client.On("ListOrigins", mock.Anything, mock.Anything).Return(origins, nil).Times(2)
+
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{})
+
+		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
+						ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
+							"Liveness tests for this host can be configured in DNS traffic management"),
 					},
 				},
 			})
