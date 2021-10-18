@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+	"sort"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
@@ -38,34 +40,34 @@ func resourceCloudletsPolicyActivationSchema() map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Required:    true,
 			Description: "ID of the Cloudlets policy you want to activate",
+			ForceNew:    true,
 		},
 		"network": {
 			Type:             schema.TypeString,
 			Required:         true,
+			ForceNew:         true,
 			ValidateDiagFunc: tools.ValidateNetwork,
 			StateFunc:        statePolicyActivationNetwork,
 			Description:      "The network you want to activate the policy version on (options are Staging and Production)",
 		},
 		"version": {
 			Type:        schema.TypeInt,
-			Optional:    true,
+			Required:    true,
 			Description: "Cloudlets policy version you want to activate",
 		},
 		"associated_properties": {
-			Type:        schema.TypeList,
+			Type:        schema.TypeSet,
 			Optional:    true,
 			Elem:        &schema.Schema{Type: schema.TypeString},
-			Description: "List of property IDs to link to this Cloudlets policy",
+			Description: "Set of property IDs to link to this Cloudlets policy",
 		},
 	}
 }
 
-const (
+var (
 	// ActivationPollMinimum is the minimum polling interval for activation creation
 	ActivationPollMinimum = time.Minute
-)
 
-var (
 	// ActivationPollInterval is the interval for polling an activation status on creation
 	ActivationPollInterval = ActivationPollMinimum
 
@@ -90,12 +92,12 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationUpdate")
 
 	// 1. check if version has changed.
-	if !rd.HasChanges("version") {
-		logger.Debugf("version number has not changed, nothing to update")
+	if !rd.HasChanges("version", "associated_properties") {
+		logger.Debugf("nothing to update")
 		return nil
 	}
 
-	logger.Debugf("version number has changed: proceed to create and activate a new policy activation version")
+	logger.Debugf("proceeding to create and activate a new policy activation version")
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -104,18 +106,6 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	policyID, err := tools.GetIntValue("policy_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-	policy, err := client.GetPolicy(ctx, int64(policyID))
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("%v update: %s", ErrPolicyActivation, err.Error()))
-	}
-
-	createVersionResponse, err := client.CreatePolicyVersion(ctx, cloudlets.CreatePolicyVersionRequest{
-		PolicyID:            int64(policyID),
-		CreatePolicyVersion: cloudlets.CreatePolicyVersion{},
-	})
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("%v update: %s", ErrPolicyActivation, err.Error()))
 	}
 
 	network, err := tools.GetStringValue("network", rd)
@@ -127,44 +117,53 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	// 3. look for activation with this version which is active
-	if len(policy.Activations) > 0 {
-		propertyName := policy.Activations[0].PropertyInfo.Name
-		activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
-			PolicyID:     int64(policyID),
-			Network:      activationNetwork,
-			PropertyName: propertyName,
-		})
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("%v update: %s", ErrPolicyActivation, err.Error()))
-		}
-
-		for _, act := range activations {
-			if act.PolicyInfo.Version == createVersionResponse.Version {
-				if act.PolicyInfo.Status == cloudlets.StatusActive {
-					// in such case, return
-					logger.Debugf("This policy (ID=%d, version=%d) is already active.", policyID, createVersionResponse.Version)
-					return resourcePolicyActivationRead(ctx, rd, m)
-				}
-			}
-		}
+	v, err := tools.GetIntValue("version", rd)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	logger.Debugf("This policy (ID=%d, version=%d) is not active. Proceeding to activation.", policyID, createVersionResponse.Version)
+	version := int64(v)
 
-	// otherwise, create the activation for version and network
-	associatedProps, err := tools.GetListValue("associated_properties", rd)
+	// 3. look for activation with this version which is active
+	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+		PolicyID: int64(policyID),
+		Network:  activationNetwork,
+	})
+	if err != nil {
+		return diag.Errorf("%v update: %s", ErrPolicyActivation, err.Error())
+	}
+	activeProps := getAssociatedProperties(activations, version)
+
+	associatedProps, err := tools.GetSetValue("associated_properties", rd)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	additionalProps := make([]string, 0, len(associatedProps))
-	for _, prop := range associatedProps {
+	additionalProps := []string{}
+	for _, prop := range associatedProps.List() {
 		additionalProps = append(additionalProps, prop.(string))
 	}
+	sort.Strings(additionalProps)
+	// find out if there are activations with status==active and network==activationNetwork
+	var active bool
+	for _, act := range activations {
+		if act.PolicyInfo.Status == cloudlets.StatusActive {
+			if act.PolicyInfo.Version == version && act.Network == activationNetwork {
+				active = true
+				break
+			}
+		}
+	}
+	if active && reflect.DeepEqual(activeProps, additionalProps) {
+		// in such case, return
+		logger.Debugf("This policy (ID=%d, version=%d) is already active.", policyID, version)
+		return resourcePolicyActivationRead(ctx, rd, m)
+	}
+
+	logger.Debugf("This policy (ID=%d, version=%d) is not active in '%s' network. Proceeding to activation.", policyID, version, activationNetwork)
 
 	err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
 		PolicyID: int64(policyID),
 		Async:    true,
-		Version:  createVersionResponse.Version,
+		Version:  version,
 		RequestBody: cloudlets.ActivatePolicyVersionRequestBody{
 			Network:                 activationNetwork,
 			AdditionalPropertyNames: additionalProps,
@@ -175,14 +174,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	}
 
 	// 4. poll until active
-	if len(policy.Activations) == 0 {
-		policy, err = client.GetPolicy(ctx, int64(policyID))
-		if err != nil {
-			return diag.Errorf("%v update: %s", ErrPolicyActivation, err.Error())
-		}
-	}
-	propertyName := policy.Activations[0].PropertyInfo.Name
-	_, err = getActivePolicyActivation(ctx, client, propertyName, int64(policyID), createVersionResponse.Version, activationNetwork)
+	_, err = waitForPolicyActivation(ctx, client, int64(policyID), version, activationNetwork)
 	if err != nil {
 		return diag.Errorf("%v update: %s", ErrPolicyActivation, err.Error())
 	}
@@ -210,57 +202,53 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	associatedProps, err := tools.GetListValue("associated_properties", rd)
+	associatedProps, err := tools.GetSetValue("associated_properties", rd)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	additionalProps := make([]string, 0, len(associatedProps))
-	for _, prop := range associatedProps {
+	additionalProps := []string{}
+	for _, prop := range associatedProps.List() {
 		additionalProps = append(additionalProps, prop.(string))
 	}
+	sort.Strings(additionalProps)
 
-	version, err := tools.GetIntValue("version", rd)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	v, err := tools.GetIntValue("version", rd)
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	version64 := int64(version)
-	// if no version provided, we shall fetch latest instead
-	if version64 == 0 {
-		logger.Debugf("finding latest activation for the policy with ID==%d", int64(policyID))
-		v, err := getLatestPolicyActivationVersion(ctx, client, int64(policyID))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		version64 = *v
-	}
+	version := int64(v)
 
-	logger.Debugf("checking if policy version %d is active", version64)
+	logger.Debugf("checking if policy version %d is active", version)
 	policyVersion, err := client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
-		Version:   version64,
+		Version:   version,
 		PolicyID:  int64(policyID),
 		OmitRules: true,
 	})
 	if err != nil {
 		return diag.Errorf("%v create: %s", ErrPolicyActivation, err.Error())
 	}
-	var propertyName string
+	activeProperties := []string{}
+	var policyVersionActivation *cloudlets.Activation
 	for _, act := range policyVersion.Activations {
-		if cloudlets.VersionActivationNetwork(act.Network) == versionActivationNetwork {
-			if act.PolicyInfo.Status == cloudlets.StatusActive {
-				// if the given version is active, just refresh status and quit
-				logger.Debugf("policy version %d is already active in %s, fetching all details from server", version64, string(versionActivationNetwork))
-				return resourcePolicyActivationRead(ctx, rd, m)
-			}
-			propertyName = act.PropertyInfo.Name
-			break
+		if cloudlets.VersionActivationNetwork(act.Network) == versionActivationNetwork &&
+			act.PolicyInfo.Status == cloudlets.StatusActive {
+			activeProperties = append(activeProperties, act.PropertyInfo.Name)
+			policyVersionActivation = act
 		}
+	}
+	sort.Strings(activeProperties)
+	if reflect.DeepEqual(activeProperties, additionalProps) {
+		// if the given version is active, just refresh status and quit
+		logger.Debugf("policy version %d is already active in %s, fetching all details from server", version, string(versionActivationNetwork))
+		rd.SetId(formatPolicyActivationID(policyVersionActivation.PolicyInfo))
+		return resourcePolicyActivationRead(ctx, rd, m)
 	}
 
 	// at this point, we are sure that the given version is not active
-	logger.Debugf("activating policy version %d", version64)
+	logger.Debugf("activating policy version %d for policy %d", version, policyID)
 	err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
 		PolicyID: int64(policyID),
-		Version:  version64,
+		Version:  version,
 		Async:    true,
 		RequestBody: cloudlets.ActivatePolicyVersionRequestBody{
 			Network:                 versionActivationNetwork,
@@ -272,18 +260,13 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 	}
 
 	// wait until policy activation is done
-	activation, err := getActivePolicyActivation(ctx, client, propertyName, int64(policyID), version64, versionActivationNetwork)
+	act, err := waitForPolicyActivation(ctx, client, int64(policyID), version, versionActivationNetwork)
 	if err != nil {
 		return diag.Errorf("%v create: %s", ErrPolicyActivation, err.Error())
 	}
+	rd.SetId(formatPolicyActivationID(act[0].PolicyInfo))
 
-	if err := rd.Set("status", activation.PolicyInfo.Status); err != nil {
-		return diag.FromErr(err)
-	}
-
-	rd.SetId(formatPolicyActivationID(activation))
-
-	return nil
+	return resourcePolicyActivationRead(ctx, rd, m)
 }
 
 func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -298,6 +281,7 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	network, err := tools.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
@@ -306,20 +290,12 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := tools.GetIntValue("version", rd)
-	var version64 int64
+	v, err := tools.GetIntValue("version", rd)
 	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		v, err := getLatestPolicyActivationVersion(ctx, client, int64(policyID))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		version64 = *v
-	} else {
-		version64 = int64(version)
+		return diag.FromErr(err)
 	}
+
+	version := int64(v)
 
 	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: int64(policyID),
@@ -329,57 +305,94 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 		return diag.Errorf("%v read: %s", ErrPolicyActivation, err.Error())
 	}
 
+	associatedProperties := getAssociatedProperties(activations, version)
+
 	for _, act := range activations {
-		if act.PolicyInfo.Version == version64 {
+		if act.PolicyInfo.Version == version {
 			if err := rd.Set("status", act.PolicyInfo.Status); err != nil {
-				return diag.FromErr(err)
+				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 			}
-			rd.SetId(formatPolicyActivationID(&act))
+			if err := rd.Set("version", version); err != nil {
+				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			}
+			if err := rd.Set("associated_properties", associatedProperties); err != nil {
+				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			}
 
 			return nil
 		}
 	}
 
-	return diag.FromErr(fmt.Errorf("%v: cannot find the given policy activation version (%d)", ErrPolicyActivation, version64))
+	return diag.Errorf("%v read: cannot find the given policy activation version (%d)", ErrPolicyActivation, version)
 }
 
-func formatPolicyActivationID(activation *cloudlets.PolicyActivation) string {
-	return fmt.Sprintf("%d:%d", activation.PolicyInfo.PolicyID, activation.PolicyInfo.ActivationDate)
+func formatPolicyActivationID(policyInfo cloudlets.PolicyInfo) string {
+	return fmt.Sprintf("%d:%d", policyInfo.PolicyID, policyInfo.ActivationDate)
 }
 
-// getPolicyActivation gets a policy activation from server
-func getPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, propertyName string, policyID, version int64, network cloudlets.VersionActivationNetwork) (*cloudlets.PolicyActivation, error) {
+func getAssociatedProperties(policyActivations []cloudlets.PolicyActivation, version int64) []string {
+	activeProps := []string{}
+	for _, act := range policyActivations {
+		if act.PolicyInfo.Status == cloudlets.StatusActive && act.PolicyInfo.Version == version {
+			activeProps = append(activeProps, act.PropertyInfo.Name)
+		}
+	}
+	sort.Strings(activeProps)
+	return activeProps
+}
+
+// getActivePolicyActivations gets active policy activations for given policy id, version and network from the server
+func getActivePolicyActivations(ctx context.Context, client cloudlets.Cloudlets, policyID, version int64, network cloudlets.VersionActivationNetwork) ([]cloudlets.PolicyActivation, error) {
 	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
-		PolicyID:     policyID,
-		Network:      network,
-		PropertyName: propertyName,
+		PolicyID: policyID,
+		Network:  network,
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	policyActivations := []cloudlets.PolicyActivation{}
+
 	for _, act := range activations {
-		if act.PolicyInfo.Version == version {
-			return &act, nil
+		if act.PolicyInfo.Version == version && act.PolicyInfo.Status == cloudlets.StatusActive {
+			policyActivations = append(policyActivations, act)
 		}
 	}
 
-	return nil, fmt.Errorf("%v: policy activation version not found", ErrPolicyActivation)
+	if len(policyActivations) > 0 {
+		return policyActivations, nil
+	}
+
+	return nil, fmt.Errorf("%v: no activations found for given version", ErrPolicyActivation)
 }
 
-// getActivePolicyActivation polls server until the activation has active status or until context is closed (because of timeout, cancellation or context termination)
-func getActivePolicyActivation(ctx context.Context, client cloudlets.Cloudlets, propertyName string, policyID, version int64, network cloudlets.VersionActivationNetwork) (*cloudlets.PolicyActivation, error) {
-	activation, err := getPolicyActivation(ctx, client, propertyName, policyID, version, network)
+// waitForPolicyActivation polls server until the activation has active status or until context is closed (because of timeout, cancellation or context termination)
+func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, policyID, version int64, network cloudlets.VersionActivationNetwork) ([]cloudlets.PolicyActivation, error) {
+	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+		PolicyID: policyID,
+		Network:  network,
+	})
 	if err != nil {
 		return nil, err
 	}
-	for activation != nil && activation.PolicyInfo.Status != cloudlets.StatusActive {
-		if activation.PolicyInfo.Status == cloudlets.StatusFailed {
-			return nil, fmt.Errorf("%v: policyID %d: %s", ErrPolicyActivation, activation.PolicyInfo.PolicyID, activation.PolicyInfo.StatusDetail)
+	for len(activations) > 0 {
+		allActive := true
+		for _, act := range activations {
+			if act.PolicyInfo.Version == version {
+				if act.PolicyInfo.Status != cloudlets.StatusActive {
+					allActive = false
+				}
+				if act.PolicyInfo.Status == cloudlets.StatusFailed {
+					return nil, fmt.Errorf("%v: policyID %d: %s", ErrPolicyActivation, act.PolicyInfo.PolicyID, act.PolicyInfo.StatusDetail)
+				}
+			}
+		}
+		if allActive {
+			return activations, nil
 		}
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			activation, err = getPolicyActivation(ctx, client, propertyName, policyID, version, network)
+			activations, err = getActivePolicyActivations(ctx, client, policyID, version, network)
 			if err != nil {
 				return nil, err
 			}
@@ -395,23 +408,7 @@ func getActivePolicyActivation(ctx context.Context, client cloudlets.Cloudlets, 
 		}
 	}
 
-	return activation, nil
-}
-
-func getLatestPolicyActivationVersion(ctx context.Context, client cloudlets.Cloudlets, policyID int64) (*int64, error) {
-	versions, err := client.ListPolicyVersions(ctx, cloudlets.ListPolicyVersionsRequest{
-		PolicyID: int64(policyID),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%v: %s", ErrPolicyActivation, err.Error())
-	}
-	var version int64
-	for _, v := range versions {
-		if version < v.Version {
-			version = v.Version
-		}
-	}
-	return tools.Int64Ptr(version), nil
+	return activations, nil
 }
 
 func getPolicyActivationNetwork(net string) (cloudlets.VersionActivationNetwork, error) {

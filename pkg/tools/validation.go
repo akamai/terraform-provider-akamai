@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
@@ -56,6 +57,19 @@ func ValidateJSON(val interface{}, _ cty.Path) diag.Diagnostics {
 		return nil
 	}
 	return diag.Errorf("value is not a string: %s", val)
+}
+
+// ValidateNetwork defines network validation logic
+func ValidateNetwork(i interface{}, _ cty.Path) diag.Diagnostics {
+	val, ok := i.(string)
+	if !ok {
+		return diag.Errorf("'network' value is not a string: %v", i)
+	}
+	switch strings.ToLower(val) {
+	case "production", "prod", "p", "staging", "stag", "s":
+		return nil
+	}
+	return diag.Errorf("'%s' is an invalid network value: should be 'production', 'prod', 'p', 'staging', 'stag' or 's'", val)
 }
 
 // ValidateEmail checks if value is a valid email
