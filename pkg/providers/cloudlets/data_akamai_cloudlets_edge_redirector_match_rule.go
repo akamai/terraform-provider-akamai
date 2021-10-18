@@ -28,8 +28,7 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 						},
 						"type": {
 							Type:        schema.TypeString,
-							Optional:    true,
-							Default:     "erMatchRule",
+							Computed:    true,
 							Description: "The type of Cloudlet the rule is for",
 						},
 						"start": {
@@ -191,7 +190,7 @@ func GetMatchRules(set *schema.Set) (*cloudlets.MatchRules, error) {
 
 		matchRule := cloudlets.MatchRuleER{
 			Name:                     getStringValue(matchRuleMap, "name"),
-			Type:                     cloudlets.MatchRuleType(getStringValue(matchRuleMap, "type")),
+			Type:                     cloudlets.MatchRuleTypeER,
 			Start:                    getIntValue(matchRuleMap, "start"),
 			End:                      getIntValue(matchRuleMap, "end"),
 			Matches:                  matches,

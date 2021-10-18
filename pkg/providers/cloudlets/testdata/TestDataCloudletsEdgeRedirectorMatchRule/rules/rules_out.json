@@ -1,5 +1,15 @@
 [
   {
+    "name": "rule 2",
+    "type": "erMatchRule",
+    "useRelativeUrl": "none",
+    "statusCode": 301,
+    "redirectURL": "sss.com",
+    "matchURL": "ddd.aaa",
+    "useIncomingQueryString": true,
+    "useIncomingSchemeAndHost": false
+  },
+  {
     "name": "rul3",
     "type": "erMatchRule",
     "matches": [
@@ -40,15 +50,5 @@
     "matchURL": "abc.com",
     "useIncomingQueryString": false,
     "useIncomingSchemeAndHost": true
-  },
-  {
-    "name": "rule 2",
-    "type": "erMatchRule",
-    "useRelativeUrl": "none",
-    "statusCode": 301,
-    "redirectURL": "sss.com",
-    "matchURL": "ddd.aaa",
-    "useIncomingQueryString": true,
-    "useIncomingSchemeAndHost": false
   }
 ]

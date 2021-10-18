@@ -5,7 +5,6 @@ provider "akamai" {
 data "akamai_cloudlets_edge_redirector_match_rule" "test" {
 
   match_rules {
-    type = "erMatchRule"
     end = 0
     match_url = null
     matches {
@@ -38,7 +37,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     use_relative_url = "copy_scheme_hostname"
   }
   match_rules {
-    type = "erMatchRule"
     end = 0
     match_url = "ddd.aaa"
     name = "rule 2"
@@ -49,7 +47,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     use_relative_url = "none"
   }
   match_rules {
-    type = "erMatchRule"
     end = 0
     match_url = "abc.com"
     name = "r1"
