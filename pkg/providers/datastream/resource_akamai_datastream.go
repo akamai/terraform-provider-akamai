@@ -57,6 +57,9 @@ func resourceDatastream() *schema.Resource {
 			validateConfig,
 		),
 		Schema: datastreamResourceSchema,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 	}
 }
 

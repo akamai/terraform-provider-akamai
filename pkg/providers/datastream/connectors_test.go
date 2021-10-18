@@ -3,13 +3,9 @@ package datastream
 import (
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/datastream"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/stretchr/testify/assert"
 )
 
 var resourceSchema = map[string]*schema.Schema{
@@ -93,17 +89,6 @@ func TestConnectorToMap(t *testing.T) {
 				error: "",
 			},
 		},
-		"connector not found in resource": {
-			connectorDetails: []datastream.ConnectorDetails{
-				{
-					ConnectorType: datastream.ConnectorTypeS3,
-				},
-			},
-			resourceMap: nil,
-			expectedResult: expectedResult{
-				error: tools.ErrNotFound.Error(),
-			},
-		},
 		"no resource name for invalid connector type": {
 			connectorDetails: []datastream.ConnectorDetails{
 				{
@@ -113,6 +98,28 @@ func TestConnectorToMap(t *testing.T) {
 			resourceMap: nil,
 			expectedResult: expectedResult{
 				error: "cannot find",
+			},
+		},
+		"no connector in local resource": {
+			connectorDetails: []datastream.ConnectorDetails{
+				{
+					ConnectorID:   1337,
+					CompressLogs:  true,
+					ConnectorName: "sumologic connector",
+					ConnectorType: datastream.ConnectorTypeSumoLogic,
+					URL:           "sumologic endpoint",
+				},
+			},
+			resourceMap: nil,
+			expectedResult: expectedResult{
+				key: "sumologic_connector",
+				props: map[string]interface{}{
+					"collector_code": "",
+					"compress_logs":  true,
+					"connector_id":   1337,
+					"connector_name": "sumologic connector",
+					"endpoint":       "sumologic endpoint",
+				},
 			},
 		},
 		"proper configuration": {

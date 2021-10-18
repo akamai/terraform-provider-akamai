@@ -1,11 +1,11 @@
 package datastream
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -60,17 +60,16 @@ func ConnectorToMap(connectors []datastream.ConnectorDetails, d *schema.Resource
 	}
 
 	// get connector set from .tf file (needed for secrets, keys)
-	connectorSet, err := tools.GetSetValue(resourceKey, d)
-	if err != nil {
+	// when importing the resource, local configuration is initially empty
+	localConnectorSet, err := tools.GetSetValue(resourceKey, d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return "", nil, err
 	}
 
-	if connectorSet.Len() == 0 {
-		return "", nil, fmt.Errorf("no connectors found in configuration file (%s)", resourceKey)
+	var connectorItemProperties map[string]interface{}
+	if localConnectorSet.Len() > 0 {
+		connectorItemProperties = localConnectorSet.List()[0].(map[string]interface{})
 	}
-
-	// extract one item from connector set
-	connectorItemProperties := connectorSet.List()[0].(map[string]interface{})
 
 	// select proper mapper function and call it
 	mapper, ok := connectorMappers[connectorType]
@@ -123,16 +122,22 @@ func GetS3Connector(props map[string]interface{}) datastream.AbstractConnector {
 
 // MapS3Connector selects fields needed for S3Connector
 func MapS3Connector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
-		"access_key":        s["access_key"],
+	rv := map[string]interface{}{
+		"access_key":        "",
 		"bucket":            c.Bucket,
 		"compress_logs":     c.CompressLogs,
 		"connector_id":      c.ConnectorID,
 		"connector_name":    c.ConnectorName,
 		"path":              c.Path,
 		"region":            c.Region,
-		"secret_access_key": s["secret_access_key"],
+		"secret_access_key": "",
 	}
+
+	if s["access_key"] != nil && s["secret_access_key"] != nil {
+		rv["access_key"] = s["access_key"]
+		rv["secret_access_key"] = s["secret_access_key"]
+	}
+	return rv
 }
 
 // GetAzureConnector builds AzureConnector structure
@@ -148,8 +153,8 @@ func GetAzureConnector(props map[string]interface{}) datastream.AbstractConnecto
 
 // MapAzureConnector selects fields needed for AzureConnector
 func MapAzureConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
-		"access_key":     s["access_key"],
+	rv := map[string]interface{}{
+		"access_key":     "",
 		"account_name":   c.AccountName,
 		"compress_logs":  c.CompressLogs,
 		"connector_id":   c.ConnectorID,
@@ -157,6 +162,10 @@ func MapAzureConnector(c datastream.ConnectorDetails, s map[string]interface{}) 
 		"container_name": c.ContainerName,
 		"path":           c.Path,
 	}
+	if s["access_key"] != nil {
+		rv["access_key"] = s["access_key"]
+	}
+	return rv
 }
 
 // GetDatadogConnector builds DatadogConnector structure
@@ -174,8 +183,8 @@ func GetDatadogConnector(props map[string]interface{}) datastream.AbstractConnec
 
 // MapDatadogConnector selects fields needed for DatadogConnector
 func MapDatadogConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
-		"auth_token":     s["auth_token"],
+	rv := map[string]interface{}{
+		"auth_token":     "",
 		"compress_logs":  c.CompressLogs,
 		"connector_id":   c.ConnectorID,
 		"connector_name": c.ConnectorName,
@@ -184,6 +193,10 @@ func MapDatadogConnector(c datastream.ConnectorDetails, s map[string]interface{}
 		"tags":           c.Tags,
 		"url":            c.URL,
 	}
+	if s["auth_token"] != nil {
+		rv["auth_token"] = s["auth_token"]
+	}
+	return rv
 }
 
 // GetSplunkConnector builds SplunkConnector structure
@@ -198,13 +211,17 @@ func GetSplunkConnector(props map[string]interface{}) datastream.AbstractConnect
 
 // MapSplunkConnector selects fields needed for SplunkConnector
 func MapSplunkConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
+	rv := map[string]interface{}{
 		"compress_logs":         c.CompressLogs,
 		"connector_id":          c.ConnectorID,
 		"connector_name":        c.ConnectorName,
-		"event_collector_token": s["event_collector_token"],
+		"event_collector_token": "",
 		"url":                   c.URL,
 	}
+	if s["event_collector_token"] != nil {
+		rv["event_collector_token"] = s["event_collector_token"]
+	}
+	return rv
 }
 
 // GetGCSConnector builds GCSConnector structure
@@ -221,16 +238,20 @@ func GetGCSConnector(props map[string]interface{}) datastream.AbstractConnector 
 
 // MapGCSConnector selects fields needed for GCSConnector
 func MapGCSConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
+	rv := map[string]interface{}{
 		"bucket":               c.Bucket,
 		"compress_logs":        c.CompressLogs,
 		"connector_id":         c.ConnectorID,
 		"connector_name":       c.ConnectorName,
 		"path":                 c.Path,
-		"private_key":          s["private_key"],
+		"private_key":          "",
 		"project_id":           c.ProjectID,
 		"service_account_name": c.ServiceAccountName,
 	}
+	if s["private_key"] != nil {
+		rv["private_key"] = s["private_key"]
+	}
+	return rv
 }
 
 // GetHTTPSConnector builds CustomHTTPSConnector structure
@@ -247,15 +268,20 @@ func GetHTTPSConnector(props map[string]interface{}) datastream.AbstractConnecto
 
 // MapHTTPSConnector selects fields needed for CustomHTTPSConnector
 func MapHTTPSConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
+	rv := map[string]interface{}{
 		"authentication_type": c.AuthenticationType,
 		"compress_logs":       c.CompressLogs,
 		"connector_id":        c.ConnectorID,
 		"connector_name":      c.ConnectorName,
-		"password":            s["password"],
+		"password":            "",
 		"url":                 c.URL,
-		"user_name":           s["user_name"],
+		"user_name":           "",
 	}
+	if s["password"] != nil && s["user_name"] != nil {
+		rv["password"] = s["password"]
+		rv["user_name"] = s["user_name"]
+	}
+	return rv
 }
 
 // GetSumoLogicConnector builds SumoLogicConnector structure
@@ -272,13 +298,17 @@ func GetSumoLogicConnector(props map[string]interface{}) datastream.AbstractConn
 func MapSumoLogicConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
 	endpoint := tools.GetFirstNotEmpty(c.Endpoint, c.URL)
 
-	return map[string]interface{}{
-		"collector_code": s["collector_code"],
+	rv := map[string]interface{}{
+		"collector_code": "",
 		"compress_logs":  c.CompressLogs,
 		"connector_id":   c.ConnectorID,
 		"connector_name": c.ConnectorName,
 		"endpoint":       endpoint,
 	}
+	if s["collector_code"] != nil {
+		rv["collector_code"] = s["collector_code"]
+	}
+	return rv
 }
 
 // GetOracleConnector builds OracleCloudStorageConnector structure
@@ -296,8 +326,8 @@ func GetOracleConnector(props map[string]interface{}) datastream.AbstractConnect
 
 // MapOracleConnector selects fields needed for OracleCloudStorageConnector
 func MapOracleConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
-		"access_key":        s["access_key"],
+	rv := map[string]interface{}{
+		"access_key":        "",
 		"bucket":            c.Bucket,
 		"compress_logs":     c.CompressLogs,
 		"connector_id":      c.ConnectorID,
@@ -305,6 +335,11 @@ func MapOracleConnector(c datastream.ConnectorDetails, s map[string]interface{})
 		"namespace":         c.Namespace,
 		"path":              c.Path,
 		"region":            c.Region,
-		"secret_access_key": s["secret_access_key"],
+		"secret_access_key": "",
 	}
+	if s["access_key"] != nil && s["secret_access_key"] != nil {
+		rv["access_key"] = s["access_key"]
+		rv["secret_access_key"] = s["secret_access_key"]
+	}
+	return rv
 }
