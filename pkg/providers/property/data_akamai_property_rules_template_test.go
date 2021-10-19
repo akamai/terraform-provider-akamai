@@ -287,7 +287,7 @@ func TestFormatValue(t *testing.T) {
 }
 
 func TestGetValuesFromMap(t *testing.T) {
-	variablesPath := "testData/TestDSRulesTemplate/variables"
+	variablesPath := "testdata/TestDSRulesTemplate/variables"
 	tests := map[string]struct {
 		definitionsFile string
 		valuesFile      string
@@ -459,22 +459,22 @@ func TestFlattenTemplate(t *testing.T) {
 		"valid list": {
 			givenList: []interface{}{
 				map[string]interface{}{
-					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
-					"template_dir":  "testData/TestDSRulesTemplate/rules/property-snippets/",
+					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
+					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 			},
-			expectedData: loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
-			expectedDir:  "testData/TestDSRulesTemplate/rules/property-snippets",
+			expectedData: loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
+			expectedDir:  "testdata/TestDSRulesTemplate/rules/property-snippets",
 		},
 		"invalid list length": {
 			givenList: []interface{}{
 				map[string]interface{}{
-					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
-					"template_dir":  "testData/TestDSRulesTemplate/rules/property-snippets/",
+					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
+					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 				map[string]interface{}{
-					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
-					"template_dir":  "testData/TestDSRulesTemplate/rules/property-snippets",
+					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
+					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets",
 				},
 			},
 			withError: tools.ErrInvalidType,
@@ -482,7 +482,7 @@ func TestFlattenTemplate(t *testing.T) {
 		"missing 'template_data' in list": {
 			givenList: []interface{}{
 				map[string]interface{}{
-					"template_dir": "testData/TestDSRulesTemplate/rules/property-snippets/",
+					"template_dir": "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 			},
 			withError: tools.ErrNotFound,
@@ -490,7 +490,7 @@ func TestFlattenTemplate(t *testing.T) {
 		"missing 'template_dir' in list": {
 			givenList: []interface{}{
 				map[string]interface{}{
-					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
+					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
 				},
 			},
 			withError: tools.ErrNotFound,
@@ -499,7 +499,7 @@ func TestFlattenTemplate(t *testing.T) {
 			givenList: []interface{}{
 				map[string]interface{}{
 					"template_data": 123,
-					"template_dir":  "testData/TestDSRulesTemplate/rules/property-snippets/",
+					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 			},
 			withError: tools.ErrInvalidType,
@@ -507,7 +507,7 @@ func TestFlattenTemplate(t *testing.T) {
 		"invalid 'template_dir' in list": {
 			givenList: []interface{}{
 				map[string]interface{}{
-					"template_data": loadFixtureString("testData/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
+					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
 					"template_dir":  true,
 				},
 			},
@@ -530,8 +530,8 @@ func TestFlattenTemplate(t *testing.T) {
 }
 
 func TestConvertToTemplate(t *testing.T) {
-	templates := "testData/TestDSRulesTemplate/rules/property-snippets"
-	templatesOut := "testData/TestDSRulesTemplate/output"
+	templates := "testdata/TestDSRulesTemplate/rules/property-snippets"
+	templatesOut := "testdata/TestDSRulesTemplate/output"
 	tests := map[string]struct {
 		givenFile    string
 		expectedFile string
@@ -569,8 +569,8 @@ func TestConvertToTemplate(t *testing.T) {
 }
 
 func TestStringToTemplate(t *testing.T) {
-	templates := "testData/TestDSRulesTemplate/rules/property-snippets"
-	templatesOut := "testData/TestDSRulesTemplate/output"
+	templates := "testdata/TestDSRulesTemplate/rules/property-snippets"
+	templatesOut := "testdata/TestDSRulesTemplate/output"
 	tests := map[string]struct {
 		givenFile    string
 		expectedFile string

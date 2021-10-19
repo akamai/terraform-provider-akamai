@@ -24,6 +24,11 @@ clean() {
   if [[ -d "bin" ]]; then
     rm -rf bin
   fi;
+
+  if [[ -d "test" ]]; then
+    rm -rf test
+  fi;
+
 }
 
 find_branch() {
@@ -39,6 +44,7 @@ find_branch() {
     do
       echo "Checking branch '${branch}'"
       EDGEGRID_BRANCH=$branch
+
       if [[ "$EDGEGRID_BRANCH" == "develop" ]]; then
         EDGEGRID_BRANCH="v2"
       fi
@@ -127,5 +133,6 @@ if [[ "$RELEASE_TYPE" == "snapshot" ]]; then
 else
   mod_edit
 fi
+./build/internal/docker_jenkins.bash "$CURRENT_BRANCH" "$EDGEGRID_BRANCH"
 build
 nexus_push

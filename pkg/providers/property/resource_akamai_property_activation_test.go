@@ -574,7 +574,7 @@ func TestNoteFieldCannotBeUpdatedAfterActivationIsCompleted(t *testing.T) {
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_exists/resource_property_activation.tf"),
+						Config: loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_doesnt_exist/resource_property_activation.tf"),
 					},
 					{
 						Config:      loadFixtureString("testdata/TestPropertyActivation/update_note_field/note_field_exists/resource_property_activation_update.tf"),

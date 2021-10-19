@@ -30,7 +30,7 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 		json.Unmarshal([]byte(expectJSL), &crl)
 
 		cd := networklists.RemoveNetworkListResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResNetworkList/Empty.json"))
+		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResNetworkList/empty.json"))
 		json.Unmarshal([]byte(expectJSD), &cd)
 
 		client.On("CreateNetworkList",
