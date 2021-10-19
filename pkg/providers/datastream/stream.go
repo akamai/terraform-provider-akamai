@@ -144,7 +144,6 @@ func StreamIDToPapiJSON(id int64) string {
             "name": "datastream",
             "options": {
                 "streamType": "LOG",
-                "logStreamTitle": "",
                 "logEnabled": true,
                 "logStreamName": %d,
                 "samplingPercentage": 100
