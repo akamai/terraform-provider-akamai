@@ -31,8 +31,13 @@ func GetConfig(set *schema.Set) (*datastream.Config, error) {
 		return nil, err
 	}
 
+	var delimiterPtr *datastream.DelimiterType
+	if delimiterStr := configMap["delimiter"].(string); delimiterStr != "" {
+		delimiterPtr = datastream.DelimiterTypePtr(datastream.DelimiterType(delimiterStr))
+	}
+
 	return &datastream.Config{
-		Delimiter:        datastream.DelimiterTypePtr(datastream.DelimiterType(configMap["delimiter"].(string))),
+		Delimiter:        delimiterPtr,
 		Format:           datastream.FormatType(configMap["format"].(string)),
 		Frequency:        *frequency,
 		UploadFilePrefix: configMap["upload_file_prefix"].(string),
@@ -42,8 +47,13 @@ func GetConfig(set *schema.Set) (*datastream.Config, error) {
 
 // ConfigToSet converts Config struct to set
 func ConfigToSet(cfg datastream.Config) []map[string]interface{} {
+	delimiter := *datastream.DelimiterTypePtr("")
+	if cfg.Delimiter != nil {
+		delimiter = *cfg.Delimiter
+	}
+
 	return []map[string]interface{}{{
-		"delimiter":          string(*cfg.Delimiter),
+		"delimiter":          string(delimiter),
 		"format":             string(cfg.Format),
 		"frequency":          FrequencyToSet(cfg.Frequency),
 		"upload_file_prefix": cfg.UploadFilePrefix,

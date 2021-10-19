@@ -2,6 +2,7 @@ package datastream
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -644,7 +645,9 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	emailIDsList, err := tools.GetListValue("email_ids", d)
 	if err != nil {
-		return diag.FromErr(err)
+		if !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
 	}
 	emailIDs := strings.Join(InterfaceSliceToStringSlice(emailIDsList), ",")
 
@@ -930,7 +933,9 @@ func updateStream(ctx context.Context, client datastream.DS, logger log.Interfac
 
 		emailIDsList, err := tools.GetListValue("email_ids", d)
 		if err != nil {
-			return err
+			if !errors.Is(err, tools.ErrNotFound) {
+				return err
+			}
 		}
 		emailIDs := strings.Join(InterfaceSliceToStringSlice(emailIDsList), ",")
 
