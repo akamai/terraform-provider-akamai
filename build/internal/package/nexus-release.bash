@@ -44,6 +44,7 @@ find_branch() {
     do
       echo "Checking branch '${branch}'"
       EDGEGRID_BRANCH=$branch
+
       if [[ "$EDGEGRID_BRANCH" == "develop" ]]; then
         EDGEGRID_BRANCH="v2"
       fi
@@ -133,6 +134,7 @@ if [[ "$RELEASE_TYPE" == "snapshot" ]]; then
 else
   mod_edit
 fi
+./build/internal/docker_jenkins.bash "$CURRENT_BRANCH" "$EDGEGRID_BRANCH"
 build
 if ! ./build/internal/docker_jenkins.bash "$CURRENT_BRANCH" "$EDGEGRID_BRANCH"; then
     exit 1
