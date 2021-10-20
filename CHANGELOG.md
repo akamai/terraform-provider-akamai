@@ -1,5 +1,13 @@
 # RELEASE NOTES
 
+## 1.8.0 (Oct 25, 2021)
+
+#### FEATURES/ENHANCEMENTS:
+* PAPI
+  * New [akamai_property_rules_template](docs/data-sources/property_rules_template.md) data source, which lets you use JSON template files to configure a rule tree
+* DataStream
+  * New [DataStream module](docs/guides/get_started_datastream.md). This module provides scalable, low latency streaming of property data in raw form
+
 ## 1.7.1 (Sept 30, 2021)
 
 #### FEATURES/ENHANCEMENTS:
