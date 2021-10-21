@@ -100,20 +100,23 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 
-	if wafmode.Mode == AseAuto { // action is read only, only exception is writable
-		createRule := appsec.UpdateConditionExceptionRequest{
-			ConfigID: configid,
-			Version: version,
-			PolicyID: policyid,
-			RuleID: ruleid,
-		}
-		var ruleConditionException appsec.RuleConditionException
+	if wafmode.Mode == AseAuto { // action is read only, only ffexception is writable
+		ruleConditionException := appsec.RuleConditionException{}
 		err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		createRule.Conditions = ruleConditionException.Conditions
-		createRule.Exception = ruleConditionException.Exception
+
+		createRule := appsec.UpdateConditionExceptionRequest{
+			ConfigID:               configid,
+			Version:                version,
+			PolicyID:               policyid,
+			RuleID:                 ruleid,
+			Conditions:             ruleConditionException.Conditions,
+			Exception:              ruleConditionException.Exception,
+			AdvancedExceptionsList: ruleConditionException.AdvancedExceptionsList,
+		}
+
 		resp, err := client.UpdateRuleConditionException(ctx, createRule)
 		if err != nil {
 			logger.Errorf("calling 'UpdateRule': %s", err.Error())
@@ -251,20 +254,22 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	if wafmode.Mode == AseAuto { // action is read only, only exception is writable
-		updateRule := appsec.UpdateConditionExceptionRequest{
-			ConfigID: configid,
-			Version: version,
-			PolicyID: policyid,
-			RuleID: ruleid,
-		}
-
-		var ruleConditionException appsec.RuleConditionException
+		ruleConditionException := appsec.RuleConditionException{}
 		err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		updateRule.Conditions = ruleConditionException.Conditions
-		updateRule.Exception = ruleConditionException.Exception
+
+		updateRule := appsec.UpdateConditionExceptionRequest{
+			ConfigID:               configid,
+			Version:                version,
+			PolicyID:               policyid,
+			RuleID:                 ruleid,
+			Conditions:             ruleConditionException.Conditions,
+			Exception:              ruleConditionException.Exception,
+			AdvancedExceptionsList: ruleConditionException.AdvancedExceptionsList,
+		}
+
 		resp, err := client.UpdateRuleConditionException(ctx, updateRule)
 		if err != nil {
 			logger.Errorf("calling 'UpdateRule': %s", err.Error())
@@ -281,14 +286,14 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 			return diag.FromErr(err)
 		}
 
-	updateRule := appsec.UpdateRuleRequest{
-		ConfigID:       configid,
-		Version:        version,
-		PolicyID:       policyid,
-		RuleID:         ruleid,
-		Action:         action,
-		JsonPayloadRaw: rawJSON,
-	}
+		updateRule := appsec.UpdateRuleRequest{
+			ConfigID:       configid,
+			Version:        version,
+			PolicyID:       policyid,
+			RuleID:         ruleid,
+			Action:         action,
+			JsonPayloadRaw: rawJSON,
+		}
 
 		_, err = client.UpdateRule(ctx, updateRule)
 		if err != nil {
@@ -337,9 +342,9 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	if wafmode.Mode == AseAuto {
 		updateRule := appsec.UpdateConditionExceptionRequest{
 			ConfigID: configid,
-			Version: version,
+			Version:  version,
 			PolicyID: policyid,
-			RuleID: ruleid,
+			RuleID:   ruleid,
 		}
 
 		_, err = client.UpdateRuleConditionException(ctx, updateRule)
