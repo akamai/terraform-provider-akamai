@@ -3,10 +3,15 @@
 ## 1.8.0 (Oct 25, 2021)
 
 #### FEATURES/ENHANCEMENTS:
+* [IMPORTANT] DATASTREAM - Added DataStream configuration support
+  * New [DataStream module](docs/guides/get_started_datastream.md). This module provides scalable, low latency streaming of property data in raw form
+  * New resource:
+    * [akamai_datastream](docs/resources/datastream.md) - create, read and update log streams
+  * New data sources:
+    * [akamai_datastream_activation_history](docs/data-sources/datastream_activation_history.md) - list detailed information about the activation status changes for all versions of a stream
+    * [akamai_datastream_dataset_fields](docs/data-sources/datastream_dataset_fields.md) - list groups of data set fields available in the template
 * PAPI
   * New [akamai_property_rules_template](docs/data-sources/property_rules_template.md) data source, which lets you use JSON template files to configure a rule tree
-* DataStream
-  * New [DataStream module](docs/guides/get_started_datastream.md). This module provides scalable, low latency streaming of property data in raw form
 
 ## 1.7.1 (Sept 30, 2021)
 
