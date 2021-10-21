@@ -201,7 +201,7 @@ resource "akamai_appsec_security_policy" "security_policy_create" {
 }
 ```
 
-> **Note**. We won't go into any of the other details involved in creating a security policy. You can find that information in the article Creating a Security Policy.
+> **Note:** We won't go into any of the other details involved in creating a security policy. You can find that information in the article Creating a Security Policy.
 
 At this point we have a new configuration and a new security policy; all that's left is to specify the WAF mode. To do that, we need two things: the configuration ID and the security policy ID. We already have the configuration ID: we just used it to create the security policy. But what about the security policy ID?
 

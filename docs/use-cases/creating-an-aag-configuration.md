@@ -379,14 +379,14 @@ resource "akamai_appsec_rate_policy_action" "rate_policy_actions_1" {
  }
 ```
 
-Rate policies help you monitor and moderate the number and  rate of all the requests you receive; in turn, this helps you prevent your website from being overwhelmed by a sudden deluge of requests (which could be either an attack of some kind or just an unexpected surge in legitimate traffic). You create rate policies by using the [akamai_appsec_rate_policy](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_rate_policy) resource and the following arguments:
+Rate policies help you monitor and moderate the number and  rate of all the requests you receive. In turn, this helps you prevent your website from being overwhelmed by a sudden deluge of requests (which could be either an attack of some kind or just an unexpected surge in legitimate traffic). You create rate policies by using the [akamai_appsec_rate_policy](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_rate_policy) resource and the following arguments:
 
 | Argument    | Description                                                  |
 | ----------- | ------------------------------------------------------------ |
 | config_id   | Unique identifier of the security configuration associated with the rate policy. |
 | rate_policy | File path to the JSON file containing configuration information for the rate policy. In our sample configuration, **$(path.module)/** indicates that the JSON file (**rate_policy_1.json**) is stored in the same folder as the Terraform executable. This isn't required: you can store your JSON files anywhere you want. Just make sure that you specify the full path so that Terraform can actually find those files. |
 
-> **Note**. We won't delve into the JSON files in this article. See Creating a Rate Policy for more information about what one of these JSON files actually looks like.
+> **Note:** We won't delve into the JSON files in this article. See Creating a Rate Policy for more information about what one of these JSON files actually looks like.
 
 
 That's all you need to do to create a rate policy. However, when you create a rate policy the rate policy action is automatically set to a null value; that means that nothing happens any time the policy is triggered. Because we'd prefer to have requests be denied if they trigger one of our rate policies, we create the rate policy and then use a Terraform block similar to this to set the action for that policy:
@@ -438,7 +438,7 @@ resource "akamai_appsec_advanced_settings_logging" "logging" {
 }
 ```
 
-HTTP requests and responses are always accompanied by an HTTP header; the header contains detailed information about the request/response, including such things as the cookies set or returned, the web browser (user agent) involved in the transaction, etc. For example, an HTTP GET request includes a header with values similar to these:
+HTTP requests and responses are always accompanied by an HTTP header. The header contains detailed information about the request/response, including such things as the cookies set or returned, the web browser (user agent) involved in the transaction, etc. For example, an HTTP GET request includes a header with values similar to these:
 
 ```
 200 OK
@@ -577,8 +577,8 @@ resource "akamai_appsec_waf_protection" "akamai_appsec_waf_protection" {
 
 In order to use the Web Application Firewall (WAF), that firewall must be enabled. To enable firewall protection, use the [akamai_appsec_waf_protection](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_waf_protection) resource and:
 
-1.	Connect to the appropriate security configuration
-2.	Connect to the appropriate security policy (WAF is enabled/disabled on a security policy-by-security policy basis).
+1.	Connect to the appropriate security configuration.
+2.	Connect to the appropriate security policy. (WAF is enabled/disabled on a security policy-by-security policy basis).
 3.	Set the **enabled** property to **true**.
 
 But don't go just yet: after enabling the firewall you'll also want to configure the firewall mode and configure your attack group settings.
@@ -671,11 +671,11 @@ resource "akamai_appsec_penalty_box" "penalty_box" {
 }
 ```
 
-In hockey (and in a few other sports), players who commit more-egregious fouls are removed from the game and sent to the “penalty box.” Players in the penalty box, at least for purposes of the game, don't exist: they can't participate until they've served their time; in addition, and because they can't participate, they're pretty much ignored. Eventually players in the penalty box are allowed back into the game, but if they commit another foul they're returned to the penalty box and the whole cycle starts over again.
+In hockey (and in a few other sports), players who commit egregious fouls are removed from the game and sent to the “penalty box.” Players in the penalty box, at least for purposes of the game, don't exist: they can't participate until they've served their time; in addition, and because they can't participate, they're pretty much ignored. Eventually players in the penalty box are allowed back into the game, but if they commit another foul they're returned to the penalty box and the whole cycle starts over again.
 
 The Akamai penalty box serves a similar function: if a request triggers an attack group, the offending client is sent to the penalty box for 10 minutes. That means that all requests from that client are ignored during that 10-minute period. When time is up, the client can resume making requests, but another violation will send the client back to the penalty box for 10 more minutes.
 
-> **Note**. OK, yes: there's a bit more nuance to the penalty box than what we've described here, but this is explanation enough for our purposes.
+> **Note:** OK, yes: there's a bit more nuance to the penalty box than what we've described here, but this is explanation enough for our purposes.
 
 To employ the penalty box (available only if you're using automated attack groups), use the [akamai_appsec_penalty_box](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_penalty_box) resource and the following two arguments:
 

@@ -83,7 +83,7 @@ If you're looking for all the configuration values for our new policy, you won't
 rate_policy = file("${path.module}/rate_policy.json")=
 ```
 
-> **Note**. We'll look at a sample JSON file in a few minutes.
+> **Note:** We'll look at a sample JSON file in a few minutes.
 
 The syntax **${path.module}** is simply a shorthand way to specify that the JSON file is stored in the same folder as the Terraform executable. You don't have to store your JSON files in the same folder as the Terraform executable: just remember that, if you use a different folder, you'll need to specify the full path to the JSON file. Otherwise, Terraform won't be able to find it.
 
@@ -109,7 +109,7 @@ If you do not do this, you run the risk of denying more requests than you really
 - **deny_custom_{custom_deny_id}**. Takes the action specified by the custom dey.
 - **none**. No action of any kind is taken if the policy is triggered.
 
-> **Note**. As you'll see later in this documentation, rate policies have a property named `sameActionOnIpv` that indicates whether the same action (for example, **deny**) is used on both IPv4 and IPv6 addresses. When setting a rate policy action, however, you must specify both the IPv4 and IPv6 actions. For example, if you don't include the IPv4 action, then your configuration will fail because a required argument (in this example, `ipv4_action`) is missing.
+> **Note:** As you'll see later in this documentation, rate policies have a property named `sameActionOnIpv` that indicates whether the same action (for example, **deny**) is used on both IPv4 and IPv6 addresses. When setting a rate policy action, however, you must specify both the IPv4 and IPv6 actions. For example, if you don't include the IPv4 action, then your configuration will fail because a required argument (in this example, `ipv4_action`) is missing.
 
 In our sample configuration, we use the following Terraform block to set the rate policy actions:
 

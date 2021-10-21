@@ -56,7 +56,7 @@ resource "akamai_networklist_activations" "activation" {
 }
 ```
 
-> **Note**. The final block in this configuration activates the new network list. We'll ignore that block for now, then return to it in the Activating a Network List section of this documentation.
+> **Note:** The final block in this configuration activates the new network list. We'll ignore that block for now, then return to it in the Activating a Network List section of this documentation.
 
 The Terraform configuration starts by initializing the Akamai provider and by providing the authentication credentials. After that, the configuration uses the [akamai_networklist_network_list](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/networklist_network_list) resource and the following block to create the network list:
 

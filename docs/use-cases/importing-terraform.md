@@ -143,7 +143,7 @@ And what are we doing with the exported values? As it turns out, we're doing two
 filename = "${path.module}/export.tf"
 ```
 
-> **Note**. The syntax **$(path.module)/** simply indicates that we want to create the file in the same folder as the Terraform executable. But that's entirely up to you: if you'd rather save the file to a different folder, just replace **$(path.module)/** with the path to that folder.
+> **Note:** The syntax **$(path.module)/** simply indicates that we want to create the file in the same folder as the Terraform executable. But that's entirely up to you: if you'd rather save the file to a different folder, just replace **$(path.module)/** with the path to that folder.
 
 After that, we tell Terraform to take all the exported settings and setting values and write them to this new file:
 
