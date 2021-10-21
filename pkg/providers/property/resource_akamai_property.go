@@ -446,7 +446,7 @@ func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{
 	// TODO Do we add support for hostnames patch operation to enable this?
 	if len(oldVal.List()) > 0 && len(newVal.List()) == 0 {
 		logger.Errorf("Hostnames exist on server and cannot be updated to empty for %d", d.Id())
-		return fmt.Errorf("at least one hostname required to update existing list of hostnames associated to a property")
+		return fmt.Errorf("hostnames exist on server and cannot be updated to empty for property with id '%s'. Provide at least one hostname to update existing list of hostnames associated to this property", d.Id())
 	}
 	return nil
 }
