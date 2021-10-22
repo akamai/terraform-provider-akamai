@@ -52,9 +52,10 @@ func Provider() *schema.Provider {
 			"akamai_cloudlets_policy":                               dataSourceCloudletsPolicy(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cloudlets_application_load_balancer": resourceCloudletsApplicationLoadBalancer(),
-			"akamai_cloudlets_policy":                    resourceCloudletsPolicy(),
-			"akamai_cloudlets_policy_activation":         resourceCloudletsPolicyActivation(),
+			"akamai_cloudlets_application_load_balancer":            resourceCloudletsApplicationLoadBalancer(),
+			"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(),
+			"akamai_cloudlets_policy":                               resourceCloudletsPolicy(),
+			"akamai_cloudlets_policy_activation":                    resourceCloudletsPolicyActivation(),
 		},
 	}
 	return provider
