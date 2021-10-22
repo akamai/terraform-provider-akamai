@@ -46,7 +46,7 @@ func resourceRule() *schema.Resource {
 			},
 			"rule_action": {
 				Type:             schema.TypeString,
-				Optional:         true,
+				Required:         true,
 				ValidateDiagFunc: ValidateActions,
 			},
 			"condition_exception": {
