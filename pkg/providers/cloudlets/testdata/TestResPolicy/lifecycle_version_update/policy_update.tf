@@ -22,3 +22,7 @@ resource "akamai_cloudlets_policy" "policy" {
 ]
 EOF
 }
+
+output "policy_output" {
+  value = akamai_cloudlets_policy.policy.warnings
+}

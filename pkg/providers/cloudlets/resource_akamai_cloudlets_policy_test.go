@@ -484,21 +484,26 @@ func TestResourcePolicy(t *testing.T) {
 		warningsJSON, err := warningsToJSON(version.Warnings)
 		require.NoError(t, err)
 
+		checkWarnings := resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "warnings", string(warningsJSON)),
+			resource.TestMatchOutput("policy_output", regexp.MustCompile("test warning")),
+		)
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
-						Check: resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "warnings", string(warningsJSON)),
+						Check:  checkWarnings,
 					},
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
-						Check: resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "warnings", string(warningsJSON)),
+						Check:  checkWarnings,
 					},
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
-						Check: resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "warnings", string(warningsJSON)),
+						Check:  checkWarnings,
 					},
 				},
 			})
@@ -974,10 +979,10 @@ func TestResourcePolicy(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
 					},
 					{
-						ImportState:       		 true,
-						ImportStateId:     		 "test_policy",
-						ResourceName:      		 "akamai_cloudlets_policy.policy",
-						ImportStateVerify: 		 true,
+						ImportState:             true,
+						ImportStateId:           "test_policy",
+						ResourceName:            "akamai_cloudlets_policy.policy",
+						ImportStateVerify:       true,
 						ImportStateVerifyIgnore: []string{"warnings"},
 					},
 				},

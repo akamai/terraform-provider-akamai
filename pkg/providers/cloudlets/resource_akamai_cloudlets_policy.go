@@ -34,6 +34,13 @@ var cloudletIDs = map[string]int{
 
 func resourceCloudletsPolicy() *schema.Resource {
 	return &schema.Resource{
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
+			old, new := diff.GetChange("match_rules")
+			if diffMatchRules(old.(string), new.(string)) {
+				return nil
+			}
+			return diff.SetNewComputed("warnings")
+		},
 		CreateContext: resourcePolicyCreate,
 		ReadContext:   resourcePolicyRead,
 		UpdateContext: resourcePolicyUpdate,
@@ -435,7 +442,11 @@ func diffSuppressMatchRuleFormat(_, old, new string, _ *schema.ResourceData) boo
 }
 
 func diffSuppressMatchRules(_, old, new string, _ *schema.ResourceData) bool {
-	logger := akamai.Log("Cloudlets", "diffSuppressMatchRules")
+	return diffMatchRules(old, new)
+}
+
+func diffMatchRules(old, new string) bool {
+	logger := akamai.Log("Cloudlets", "diffMatchRules")
 	if old == new {
 		return true
 	}
