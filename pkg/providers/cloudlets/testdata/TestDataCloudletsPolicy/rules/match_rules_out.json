@@ -6,7 +6,6 @@
     "statusCode": 301,
     "redirectURL": "ss.exmaple.com",
     "matchURL": "aa.exmaple.com",
-    "location": "dd.example.com",
     "useIncomingQueryString": true,
     "useIncomingSchemeAndHost": false
   }
