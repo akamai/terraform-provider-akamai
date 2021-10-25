@@ -8,11 +8,9 @@ description: |-
 
 # Creating a Match Target
 
-Suppose your hire a clown to perform at your child's birthday party, and the performer promises to come to your office and collect his fee. Because you've just been called into a meeting, you ask a co-worker to give the performer the check when he arrives. Does that mean that your co-worker will hand out a check to everyone who walks into the office? Of course not. Instead, you give her very specific instructions: give the check to a man, in his late 40s, who's dressed in a clown suit, and who identifies himself as Mr. Freckles. That's the “match target” for the payment.
+Your website might get millions of requests each day, and you might have any number of security policies that help you handle those requests and help protect your site from potentially-malicious requests. Do you apply every single security policy to every single request? No. Instead, you use match targets to define which security policy (if any) should apply to a specific API, hostname, or path. Should a request come in that triggers a match target (for example, you might have a match target that scans for a specific set of file extensions), the security policy associated with the target goes into action, using protections such as rate controls, slow POST protections, and reputation controls to determine whether the request should be honored.
 
-Match targets in applications security might be a little less colorful, but they serve a somewhat-similar purpose. Your website might get millions of requests each day, and you might have any number of security policies that help you handle those requests and help protect your site from potentially-malicious requests. Do you apply every single security policy to every single request? No. Instead, you use match targets to define which security policy (if any) should apply to a specific API, hostname, or path. Should a request come in that triggers a match target (for example, you might have a match target that scans for a specific set of file extensions), the security policy associated with the target goes into action, using protections such as rate controls, slow POST protections, and reputation controls to determine whether the request should be honored.
-
-Match targets can be created in Terraform by using a configuration similar to this:
+You can create match targets in Terraform by using a configuration similar to this:
 
 ```
 terraform {
@@ -64,7 +62,7 @@ In this example, we're using a JSON file named **match_targets.json**. That file
 
 ## The Match Target JSON File
 
-When you create a match target, the properties and property values for that target are typically defined in a JSON file; when you run your Terraform configuration, information is extracted from that file and used to configure the new match target. A JSON file for creating a match target looks similar to this:
+When you create a match target, the properties and property values for that target are typically defined in a JSON file. When you run your Terraform configuration, information is extracted from that file and used to configure the new match target. A JSON file for creating a match target looks similar to this:
 
 ```
 {
@@ -172,7 +170,7 @@ Although that approach works, it might not be the most efficient route you can t
 
 In a case like that, you might be better off swapping the match target sequence order: start by looking at the hostname on each request instead of starting with the file extensions. After all, if the hostname isn't A, B, or C you're done: there's no need to check the file extensions associated with the request. Instead of checking file extensions on 1 million files, you're checking file extensions only on the 1,000 requests coming from hosts A, B, or C.
 
-> **Note**. A good rule of thumb is to start off by applying your most general match targets first, and then start working down to the more-specific match targets. Is the target shape blue? If not, then it doesn't matter. If so, then start to whittle down to questions like is it a blue circle; is it a blue circle with white polka dots; are the polka dots less than 1” in diameter; are those small polka dots oval-shaped rather than circular; etc.
+> **Note:** A good rule of thumb is to start off by applying your most general match targets first, and then start working down to the more-specific match targets. Is the target shape blue? If not, then it doesn't matter. If so, then start to whittle down to questions like is it a blue circle; is it a blue circle with white polka dots; are the polka dots less than 1” in diameter; are those small polka dots oval-shaped rather than circular; etc.
 
 As we learned a moment ago, by default match targets are applied in the order they were created: the first match target you create is applied first, the second match target you create is applied second, and so on. So what if you want to change the order in which your match targets are applied? Fortunately, you can do that by running a Terraform configuration similar to this:
 
@@ -207,7 +205,7 @@ match_target_sequence =  file("${path.module}/match_targets_sequence.json")
 
 In that line, the value f**ile("${path.module}/match_targets_sequence.json")** represents the path to the JSON file that contains the target ordering information. The syntax **${path.module}/** indicates that the JSON file (**match_targets_sequence.json**) is in the same folder as our Terraform executable file.
 
-> **Note**. What if you want to put the JSON file in a different folder? That's fine: just be sure you include the full path to that folder in your Terraform configuration.
+> **Note:** What if you want to put the JSON file in a different folder? That's fine: just be sure you include the full path to that folder in your Terraform configuration.
 
 As you might have guessed, the key to reordering your match targets is to specify the desired target sequence in this JSON file.
 

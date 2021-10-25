@@ -2,8 +2,9 @@ package tools
 
 import (
 	"encoding/json"
-	"github.com/tj/assert"
 	"testing"
+
+	"github.com/tj/assert"
 )
 
 func TestConvertToString(t *testing.T) {
@@ -75,4 +76,19 @@ func TestConvertToString(t *testing.T) {
 			assert.Equal(t, test.expected, res)
 		})
 	}
+}
+
+func TestGetFirstNotEmpty(t *testing.T) {
+	assert.Equal(t, GetFirstNotEmpty("", "def"), "def")
+	assert.Equal(t, GetFirstNotEmpty("val", "def"), "val")
+	assert.Equal(t, GetFirstNotEmpty("val", ""), "val")
+	assert.Equal(t, GetFirstNotEmpty("", ""), "")
+}
+
+func TestContainsString(t *testing.T) {
+	assert.False(t, ContainsString([]string{}, "a"))
+	assert.True(t, ContainsString([]string{"a"}, "a"))
+	assert.True(t, ContainsString([]string{"b", "a"}, "a"))
+	assert.False(t, ContainsString([]string{"b", "c"}, "a"))
+	assert.False(t, ContainsString([]string{"", "b"}, "a"))
 }

@@ -86,16 +86,16 @@ As you can see, no resources were added, changed, or destroyed. In other words, 
 
 The problem here lies in the way that Terraform processes .tf files. When we originally activated the security configuration, we used the Terraform block shown above. When we tried to reactivate the configuration using that same block, Terraform was unable to see any changes: the `config_id` is the same, the `network` is the same, etc. Because nothing seems to have changed, Terraform did just that: nothing.
 
-Perhaps the best way to work around this issue it to be sure and change the value assigned to the `notes` argument: this allows you to make a change of `some` kind without having to make a more drastic change (e.g., changing the network or the notification list). For example, when we originally activated the configuration, we used this line:
+Perhaps the best way to work around this issue is to change the value assigned to the `notes` argument: this allows you to make a change of "some" kind without having to make a more drastic change (e.g., changing the network or the notification list). For example, when we originally activated the configuration, we used this line:
 
 ```
 notes  = "This is a test configuration used by the documentation team."
 ```
 
-To reactivate the security configuration, we simply need to change the value to, well, anything but what we used the first time around:
+To reactivate the security configuration, we simply need to change the value:
 
 ```
 notes  = "This is a reactivated test configuration."
 ```
 
-Now you should be able to reactivate the configuration. If you need to run activation again, just make sure that you make a change of some kind to the notes argument.
+Now you should be able to reactivate the configuration. If you need to run activation again, just make a change to the `notes` argument.

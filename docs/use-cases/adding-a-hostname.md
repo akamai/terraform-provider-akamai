@@ -12,17 +12,17 @@ Security configurations are not designed to automatically protect every server i
 
 So how do you designate a host for protection by a security configuration? That turns out to be a two-step process:
 
-1.	Determine which hosts are “selectable;” that is, which hosts are available to be added to a security configuration. Note that it's possible that some of your hosts *can't* be added to a security configuration; for example, if a contract has expired you might not be able to offer protection to certain servers. Note also that a single security configuration can manage multiple hosts; however, an individual host can only be a member of a single security configuration. In other words, Host A can belong to Configuration A or Configuration B, but it can't belong to both Configuration A and Configuration B at the same time.
+1.	Determine which hosts are “selectable;” that is, which hosts are available to be added to a security configuration. Note that it's possible that some of your hosts *can't* be added to a security configuration. For example, if a contract has expired you might not be able to offer protection to certain servers. Note also that a single security configuration can manage multiple hosts. However, an individual host can only be a member of a single security configuration. In other words, Host A can belong to Configuration A or Configuration B, but it can't belong to both Configuration A and Configuration B at the same time.
 
-2.	Add the hostname to the appropriate security configuration. When updating the selected hosts for a security configuration you can either append the new host (or hosts: you can add multiple hosts in a single operation) to the existing collection of hosts, or you can replace the existing collection with the hosts specified in your Terraform configuration.
+2.	Add the hostname to the appropriate security configuration. When updating the selected hosts for a security configuration, you can either append the new host (or hosts: you can add multiple hosts in a single operation) to the existing collection of hosts, or you can replace the existing collection with the hosts specified in your Terraform configuration.
 
-When multiple adding hosts you can specify each host individually, or (if possible) you can use wildcard characters. For example, this syntax adds four hosts (**host1**, **host2**, **host3**, and **host4**) from the akamai.com domain to a security configuration:
+When adding multiple hosts you can specify each host individually, or (if possible) you can use wildcard characters. For example, this syntax adds four hosts (**host1**, **host2**, **host3**, and **host4**) from the akamai.com domain to a security configuration:
 
 ```
 hostnames = ["host1.akamai.com",  "host2.akamai.com", "host3.akamai.com", "host4.akamai.com"]
 ```
 
-That syntax works just fine. But so does this syntax, which adds all of your akamai.com hosts to the configuration:
+That syntax works just fine. But so does this syntax, which adds all of your `akamai.com` hosts to the configuration:
 
 ```
 hostnames = [ "*.akamai.com"]

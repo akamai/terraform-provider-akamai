@@ -104,7 +104,7 @@ When you enable one of these features, that feature is automatically assigned a 
 | alert  | 10                             | 60                               | Null                            |
 
 
-If those settings work for you that's great. If they don't, you can use an additional terraform block to change the setting values as needed. For example, this Terraform snippet modifies all four of the slow POST property values:
+If those settings work for you that's great. If they don't, you can use an additional Terraform block to change the setting values as needed. For example, this Terraform snippet modifies all four of the slow POST property values:
 
 ```
 data "akamai_appsec_configuration" "configuration" {
@@ -251,7 +251,7 @@ akamai_appsec_security_policy.security_policy_create: Creation complete after 9s
 Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 ```
 
-> **Hint**. It's the **gms2_135566** portion of **id=58843:gms2_135566**. That value happens to be the ID of the security configuration (**58843**) followed by a colon followed by the security policy ID.
+> **Hint:** It's the **gms2_135566** portion of **id=58843:gms2_135566**. That value happens to be the ID of the security configuration (**58843**) followed by a colon followed by the security policy ID.
 
 ## “Cloning” a Security Policy
 
@@ -308,9 +308,9 @@ default_settings = false
 create_from_security_policy_id = "gms1_134637"
 ```
 
-The first argument (**default_settings = false**) simply tells Terraform *not* to apply the default settings to the new policy. Instead, we want our new policy to have the same settings and settings values as the ones assigned to the existing security policy gms1_134637. As you might have guessed, that's what the second argument does: it specifies the ID of the security policy whose settings we want copied to the new policy.
+The first argument (**default_settings = false**) simply tells Terraform *not* to apply the default settings to the new policy. Instead, we want our new policy to have the same settings and settings values as the ones assigned to the existing security policy `gms1_134637`. As you might have guessed, that's what the second argument does: it specifies the ID of the security policy whose settings we want copied to the new policy.
 
-FThe rest is easy. Just like we did before, run `terraform plan` to verify your syntax, and then run `terraform apply` to create the new security policy. If everything goes according to plan, the policy will be created, and you'll see output similar to this:
+The rest is easy. Just like we did before, run `terraform plan` to verify your syntax, and then run `terraform apply` to create the new security policy. If everything goes according to plan, the policy will be created, and you'll see output similar to this:
 
 ```
 Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
@@ -320,7 +320,7 @@ security_policy_create = "gms3_135568"
 
 ## Adding Custom Setting Values When Creating a Security Policy
 
-As alluded to previously, another option available when creating a security policy is to create a policy that includes custom setting values; for example, you can create a policy that enables slow post protection, but that doesn't use the default setting values:
+Another option available when creating a security policy is to create a policy that includes custom setting values. For example, you can create a policy that enables slow post protection, but that doesn't use the default setting values:
 
 | Slow Post Setting          | Default Value | New Policy Value |
 | -------------------------- | ------------- | ---------------- |

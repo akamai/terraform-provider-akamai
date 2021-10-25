@@ -3,6 +3,7 @@ package tools
 import (
 	"errors"
 	"fmt"
+
 	"github.com/hashicorp/go-cty/cty"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -230,4 +231,22 @@ func ResolveKeyStringState(rd ResourceDataFetcher, key, fallbackKey string) (val
 		return "", err
 	}
 	return value, nil
+}
+
+// GetExactlyOneOf extracts exactly one value with given keys from ResourceData object
+// if multiple values are present the function returns first one found
+func GetExactlyOneOf(rd ResourceDataFetcher, keys []string) (foundKey string, value interface{}, err error) {
+	for _, key := range keys {
+		value, err := GetSetValue(key, rd)
+		if errors.Is(err, ErrNotFound) {
+			continue
+		}
+
+		if err != nil {
+			return "", nil, err
+		}
+
+		return key, value, nil
+	}
+	return "", nil, ErrNotFound
 }

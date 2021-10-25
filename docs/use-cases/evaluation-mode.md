@@ -169,7 +169,7 @@ If you want to remove all the hosts from evaluation mode simply set the value of
 hostnames = []
 ```
 
-> **Note**. Won't that cause problems if you remove all the hostnames from the evaluation list? No: you don't need to have any evaluation hosts if you don't want any. You might not get a lot of useful data without any evaluation hosts, but it won't cause any problems.
+> **Note:** Won't that cause problems if you remove all the hostnames from the evaluation list? No: you don't need to have any evaluation hosts if you don't want any. You might not get a lot of useful data without any evaluation hosts, but it won't cause any problems.
 
 If you'd like to review the current list of evaluation hosts, just use the [akamai_appsec_eval_hostnames](https://registry.terraform.io/providers/akamai/akamai/latest/docs/data-sources/appsec_failover_hostnames) data source and a Terraform configuration similar to the following:
 
