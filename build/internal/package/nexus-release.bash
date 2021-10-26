@@ -73,7 +73,8 @@ clone_edgegrid() {
 
 checkout_edgegrid() {
   pushd akamaiopen-edgegrid-golang
-  git checkout $EDGEGRID_BRANCH
+  git checkout $EDGEGRID_BRANCH -f
+  git reset --hard origin/$EDGEGRID_BRANCH
   git pull
   popd
 }
