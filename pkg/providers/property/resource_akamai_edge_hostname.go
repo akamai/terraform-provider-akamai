@@ -346,27 +346,21 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	defaultEdgeHostname := &edgeHostnames.EdgeHostnames.Items[0]
 
 	var edgeHostname string
 	if got, ok := d.GetOk("edge_hostname"); ok {
 		edgeHostname = got.(string)
 	}
 
-	if edgeHostname != "" {
-		found, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostname)
-		if err != nil && !errors.Is(err, ErrEdgeHostnameNotFound) {
-			return diag.FromErr(err)
-		}
-		if err == nil {
-			defaultEdgeHostname = found
-		}
+	foundEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostname)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	if err := d.Set("edge_hostname", defaultEdgeHostname.Domain); err != nil {
+	if err := d.Set("edge_hostname", foundEdgeHostname.Domain); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	d.SetId(defaultEdgeHostname.ID)
+	d.SetId(foundEdgeHostname.ID)
 
 	return nil
 }
@@ -392,7 +386,6 @@ func appendDefaultSuffixToEdgeHostname(i interface{}) string {
 }
 
 func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*papi.EdgeHostnameGetItem, error) {
-	var prefix string
 	suffix := "edgesuite.net"
 	if domain != "" {
 		if strings.HasSuffix(domain, "edgekey.net") {
@@ -401,12 +394,12 @@ func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*pap
 		if strings.HasSuffix(domain, "akamaized.net") {
 			suffix = "akamaized.net"
 		}
-		prefix = strings.TrimSuffix(domain, "."+suffix)
-	}
+		prefix := strings.TrimSuffix(domain, "."+suffix)
 
-	for _, eHn := range edgeHostnames.Items {
-		if eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix {
-			return &eHn, nil
+		for _, eHn := range edgeHostnames.Items {
+			if eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix {
+				return &eHn, nil
+			}
 		}
 	}
 
