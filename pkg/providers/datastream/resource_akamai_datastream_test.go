@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/datastream"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/datastream/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -467,28 +466,5 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 		})
 
 		client.AssertExpectations(t)
-	}
-}
-
-func TestPrefixSuppressor(t *testing.T) {
-	tests := []struct {
-		oldPropertyID, newPropertyID string
-		expected                     bool
-	}{
-		{"", "", true},
-		{"123", "123", true},
-		{"123", "prp_123", true},
-		{"prp_123", "123", true},
-		{"prp_123", "prp_123", true},
-		{"", "prp_123", false},
-		{"prp_123", "1234", false},
-		{"123", "1234", false},
-		{"prp_123", "prp_1234", false},
-	}
-	suppressor := prefixSuppressor("prp_")
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("%s vs %s", test.oldPropertyID, test.newPropertyID), func(t *testing.T) {
-			assert.Equal(t, test.expected, suppressor("", test.oldPropertyID, test.newPropertyID, nil))
-		})
 	}
 }
