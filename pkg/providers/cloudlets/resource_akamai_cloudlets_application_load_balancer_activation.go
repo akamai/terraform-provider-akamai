@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
@@ -228,7 +229,7 @@ func resourceApplicationLoadBalancerActivationRead(ctx context.Context, rd *sche
 	return diag.Errorf("%v: cannot find the given application load balancer activation version '%d' for network '%s'", ErrApplicationLoadBalancerActivation, version, net)
 }
 
-func getApplicationLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudlets, originID string, version int64, network cloudlets.ActivationNetwork) ([]cloudlets.ActivationResponse, error) {
+func getApplicationLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudlets, originID string, version int64, network cloudlets.ActivationNetwork) (*cloudlets.ActivationResponse, error) {
 	activations, err := client.GetLoadBalancerActivations(ctx, originID)
 	filteredActivations := make([]cloudlets.ActivationResponse, 0, len(activations))
 	if err != nil {
@@ -241,25 +242,32 @@ func getApplicationLoadBalancerActivation(ctx context.Context, client cloudlets.
 		}
 	}
 
+	// The API is not providing any id to match the status of the activation request within the list of the activation statuses.
+	// The recommended solution is to get the newest activation which is most likely the right one.
+	// So we sort by ActivatedDate to get the newest activation.
+	sort.Slice(filteredActivations, func(i, j int) bool {
+		return activations[i].ActivatedDate > activations[j].ActivatedDate
+	})
+
 	if len(filteredActivations) > 0 {
-		return filteredActivations, nil
+		return &filteredActivations[0], nil
 	}
 	return nil, fmt.Errorf("%v: application load balancer activation version not found", ErrApplicationLoadBalancerActivation)
 }
 
 // waitForLoadBalancerActivation polls server until the activation has active status or until context is closed (because of timeout, cancellation or context termination)
 func waitForLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudlets, originID string, version int64, network cloudlets.ActivationNetwork) (*cloudlets.ActivationResponse, error) {
-	activations, err := getApplicationLoadBalancerActivation(ctx, client, originID, version, network)
+	activation, err := getApplicationLoadBalancerActivation(ctx, client, originID, version, network)
 	if err != nil {
 		return nil, err
 	}
-	for !hasStatus(activations, cloudlets.ActivationStatusActive) {
-		if !hasStatus(activations, cloudlets.ActivationStatusPending) {
-			return nil, fmt.Errorf("%v: originID %s", ErrApplicationLoadBalancerActivation, activations[0].OriginID)
+	for activation.Status != cloudlets.ActivationStatusActive {
+		if activation.Status != cloudlets.ActivationStatusPending {
+			return nil, fmt.Errorf("%v: originID: %s, status: %s", ErrApplicationLoadBalancerActivation, activation.OriginID, activation.Status)
 		}
 		select {
 		case <-time.After(tools.MaxDuration(ALBActivationPollInterval, ALBActivationPollMinimum)):
-			activations, err = getApplicationLoadBalancerActivation(ctx, client, originID, version, network)
+			activation, err = getApplicationLoadBalancerActivation(ctx, client, originID, version, network)
 			if err != nil {
 				return nil, err
 			}
@@ -274,22 +282,11 @@ func waitForLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudle
 			return nil, fmt.Errorf("%v: %w", ErrApplicationLoadBalancerActivationContextTerminated, ctx.Err())
 		}
 	}
-	for _, activation := range activations {
-		if activation.Status == cloudlets.ActivationStatusActive {
-			return &activation, nil
-		}
+	if activation.Status == cloudlets.ActivationStatusActive {
+		return activation, nil
 	}
 	// should not reach here
-	return nil, nil
-}
-
-func hasStatus(activations []cloudlets.ActivationResponse, status cloudlets.ActivationStatus) bool {
-	for _, activation := range activations {
-		if activation.Status == status {
-			return true
-		}
-	}
-	return false
+	return nil, ErrApplicationLoadBalancerActivation
 }
 
 func getALBActivationNetwork(net string) (cloudlets.ActivationNetwork, error) {

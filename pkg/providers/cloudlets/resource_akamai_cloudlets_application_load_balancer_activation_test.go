@@ -49,44 +49,46 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 		},
 		"create and read activation, version == 1 (many statuses), inactive -> activate -> second attempt": {
 			init: func(m *mockcloudlets) {
-				// create
-				activations := cloudlets.ActivationsList{
-					cloudlets.ActivationResponse{
-						Network:  "STAGING",
-						OriginID: "org_1",
-						Status:   cloudlets.ActivationStatusInactive,
-						Version:  1,
-					},
-					cloudlets.ActivationResponse{
-						Network:  "STAGING",
-						OriginID: "org_1",
-						Status:   cloudlets.ActivationStatusDeactivated,
-						Version:  1,
-					},
-					cloudlets.ActivationResponse{
-						Network:  "STAGING",
-						OriginID: "org_1",
-						Status:   cloudlets.ActivationStatusPending,
-						Version:  1,
-					},
+				inactive := cloudlets.ActivationResponse{
+					ActivatedDate: "2021-10-29T00:00:10.000Z",
+					Network:       "STAGING",
+					OriginID:      "org_1",
+					Status:        cloudlets.ActivationStatusInactive,
+					Version:       1,
 				}
-				activated := append(activations, cloudlets.ActivationResponse{
-					Network:  "STAGING",
-					OriginID: "org_1",
-					Status:   cloudlets.ActivationStatusActive,
-					Version:  1,
-				})
+				deactivated := cloudlets.ActivationResponse{
+					ActivatedDate: "2021-10-29T00:00:20.000Z",
+					Network:       "STAGING",
+					OriginID:      "org_1",
+					Status:        cloudlets.ActivationStatusDeactivated,
+					Version:       1,
+				}
+				pending := cloudlets.ActivationResponse{
+					ActivatedDate: "2021-10-29T00:00:30.000Z",
+					Network:       "STAGING",
+					OriginID:      "org_1",
+					Status:        cloudlets.ActivationStatusPending,
+					Version:       1,
+				}
+				active := cloudlets.ActivationResponse{
+					ActivatedDate: "2021-10-29T00:00:40.000Z",
+					Network:       "STAGING",
+					OriginID:      "org_1",
+					Status:        cloudlets.ActivationStatusActive,
+					Version:       1,
+				}
 
-				expectGetLoadBalancerActivationsMany(m, "org_1", activations, nil).Once()
+				// create
+				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated}, nil).Once()
 				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivationsMany(m, "org_1", activations, nil).Once()
-				expectGetLoadBalancerActivationsMany(m, "org_1", activated, nil).Once()
+				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, pending}, nil).Once()
+				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
 				// read
-				expectGetLoadBalancerActivationsMany(m, "org_1", activated, nil).Once()
-				expectGetLoadBalancerActivationsMany(m, "org_1", activated, nil).Once()
+				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
+				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
 				// read
-				expectGetLoadBalancerActivationsMany(m, "org_1", activated, nil).Once()
-				expectGetLoadBalancerActivationsMany(m, "org_1", activated, nil).Once()
+				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
+				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
