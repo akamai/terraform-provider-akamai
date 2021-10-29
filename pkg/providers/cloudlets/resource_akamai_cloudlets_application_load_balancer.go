@@ -14,12 +14,16 @@ import (
 	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 	return &schema.Resource{
+		CustomizeDiff: customdiff.All(
+			EnforceVersionChange,
+		),
 		CreateContext: resourceALBCreate,
 		ReadContext:   resourceALBRead,
 		UpdateContext: resourceALBUpdate,
@@ -227,6 +231,19 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 			StateContext: resourceALBImport,
 		},
 	}
+}
+
+// EnforceVersionChange enforces that change to any field will most likely result in creating a new version
+func EnforceVersionChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	if diff.HasChange("origin_id") ||
+		diff.HasChange("description") ||
+		diff.HasChange("balancing_type") ||
+		diff.HasChange("data_centers") ||
+		diff.HasChange("liveness_settings") ||
+		diff.HasChange("version") {
+		return diff.SetNewComputed("version")
+	}
+	return nil
 }
 
 func isAkamaized(dc cloudlets.DataCenter, origins []cloudlets.OriginResponse) bool {
