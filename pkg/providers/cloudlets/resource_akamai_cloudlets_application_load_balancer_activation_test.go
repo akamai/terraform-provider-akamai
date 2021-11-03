@@ -19,29 +19,29 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 		"create and read activation, version == 1, inactive -> activate -> second attempt": {
 			init: func(m *mockcloudlets) {
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.ActivationStatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 					),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.ActivationStatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 					),
 				},
@@ -49,59 +49,59 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 		},
 		"create and read activation, version == 1 (many statuses), inactive -> activate -> second attempt": {
 			init: func(m *mockcloudlets) {
-				inactive := cloudlets.ActivationResponse{
+				inactive := cloudlets.LoadBalancerActivation{
 					ActivatedDate: "2021-10-29T00:00:10.000Z",
 					Network:       "STAGING",
 					OriginID:      "org_1",
-					Status:        cloudlets.ActivationStatusInactive,
+					Status:        cloudlets.LoadBalancerActivationStatusInactive,
 					Version:       1,
 				}
-				deactivated := cloudlets.ActivationResponse{
+				deactivated := cloudlets.LoadBalancerActivation{
 					ActivatedDate: "2021-10-29T00:00:20.000Z",
 					Network:       "STAGING",
 					OriginID:      "org_1",
-					Status:        cloudlets.ActivationStatusDeactivated,
+					Status:        cloudlets.LoadBalancerActivationStatusDeactivated,
 					Version:       1,
 				}
-				pending := cloudlets.ActivationResponse{
+				pending := cloudlets.LoadBalancerActivation{
 					ActivatedDate: "2021-10-29T00:00:30.000Z",
 					Network:       "STAGING",
 					OriginID:      "org_1",
-					Status:        cloudlets.ActivationStatusPending,
+					Status:        cloudlets.LoadBalancerActivationStatusPending,
 					Version:       1,
 				}
-				active := cloudlets.ActivationResponse{
+				active := cloudlets.LoadBalancerActivation{
 					ActivatedDate: "2021-10-29T00:00:40.000Z",
 					Network:       "STAGING",
 					OriginID:      "org_1",
-					Status:        cloudlets.ActivationStatusActive,
+					Status:        cloudlets.LoadBalancerActivationStatusActive,
 					Version:       1,
 				}
 
 				// create
-				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated}, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, pending}, nil).Once()
-				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
+				expectListLoadBalancerActivationsMany(m, "org_1", []cloudlets.LoadBalancerActivation{inactive, deactivated}, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivationsMany(m, "org_1", []cloudlets.LoadBalancerActivation{inactive, deactivated, pending}, nil).Once()
+				expectListLoadBalancerActivationsMany(m, "org_1", []cloudlets.LoadBalancerActivation{inactive, deactivated, active}, nil).Once()
 				// read
-				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
-				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
+				expectListLoadBalancerActivationsMany(m, "org_1", []cloudlets.LoadBalancerActivation{inactive, deactivated, active}, nil).Once()
+				expectListLoadBalancerActivationsMany(m, "org_1", []cloudlets.LoadBalancerActivation{inactive, deactivated, active}, nil).Once()
 				// read
-				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
-				expectGetLoadBalancerActivationsMany(m, "org_1", cloudlets.ActivationsList{inactive, deactivated, active}, nil).Once()
+				expectListLoadBalancerActivationsMany(m, "org_1", []cloudlets.LoadBalancerActivation{inactive, deactivated, active}, nil).Once()
+				expectListLoadBalancerActivationsMany(m, "org_1", []cloudlets.LoadBalancerActivation{inactive, deactivated, active}, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.ActivationStatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 					),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.ActivationStatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 					),
 				},
@@ -110,8 +110,8 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 		"create and read activation, version == 1, inactive -> activate -> error": {
 			init: func(m *mockcloudlets) {
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, fmt.Errorf("an error")).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, fmt.Errorf("an error")).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -123,10 +123,10 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 		"create and read activation, version == 1, inactive -> activate -> get active application load balancer activation -> error": {
 			init: func(m *mockcloudlets) {
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, fmt.Errorf("an error")).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, fmt.Errorf("an error")).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -138,16 +138,16 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 		"create and read activation, version == 1, active -> read": {
 			init: func(m *mockcloudlets) {
 				// create, alb active so no need to activate
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.ActivationStatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 					),
 				},
@@ -156,12 +156,12 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 		"create and read activation, version == 1, inactive -> activate -> read -> error": {
 			init: func(m *mockcloudlets) {
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, fmt.Errorf("an error")).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, fmt.Errorf("an error")).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -174,23 +174,23 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			init: func(m *mockcloudlets) {
 				// first test step
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// create: poll after activation
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// update
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
 					),
@@ -198,7 +198,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
 					),
@@ -209,26 +209,26 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			init: func(m *mockcloudlets) {
 				// 1 - for alb_activation_version1.tf
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// create: poll after activation
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 
 				// 2 - for alb_activation_version1.tf
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
 					),
@@ -236,7 +236,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
 					),
@@ -247,31 +247,31 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			init: func(m *mockcloudlets) {
 				// 1 - for alb_activation_version1.tf
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// create: poll after activation
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 
 				// 2 - for alb_activation_update.tf
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 2, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// create: poll after activation
-				expectGetLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
 					),
@@ -279,7 +279,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "2"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
 					),
@@ -290,32 +290,32 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			init: func(m *mockcloudlets) {
 				// 1 - for alb_activation_version1.tf
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// create: poll after activation
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 
 				// 2 - for alb_activation_update.tf
 				// create new resource
-				expectGetLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "PRODUCTION", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "PRODUCTION", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// create: poll after activation
-				expectGetLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "PRODUCTION", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "id", "org_1:STAGING"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
@@ -324,7 +324,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update_prod.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "id", "org_1:PRODUCTION"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "PRODUCTION"),
@@ -332,32 +332,32 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				},
 			},
 		},
-		"create and read activation. Update: GetLoadBalancerActivations error": {
+		"create and read activation. Update: ListLoadBalancerActivations error": {
 			init: func(m *mockcloudlets) {
 				// 1 - for alb_activation_version1.tf
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// create: poll after activation
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 
 				// 2 - for alb_activation_update.tf
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 2, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
 				// create: poll after activation
-				expectGetLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.ActivationStatusActive, fmt.Errorf("an error")).Once()
+				expectListLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusActive, fmt.Errorf("an error")).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
 					),
@@ -372,26 +372,26 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			init: func(m *mockcloudlets) {
 				// 1 - for alb_activation_version1.tf
 				// create
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// create: poll after activation
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusPending, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 
 				// 2 - for alb_activation_update.tf
 				// read
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectGetLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.ActivationStatusActive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 2, "STAGING", cloudlets.ActivationStatusPending, fmt.Errorf("an error")).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusPending, fmt.Errorf("an error")).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.StatusActive)),
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
 					),
@@ -425,21 +425,21 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 }
 
 var (
-	expectGetLoadBalancerActivations = func(m *mockcloudlets, originID string, version int64, network cloudlets.ActivationNetwork, status cloudlets.ActivationStatus, err error) *mock.Call {
+	expectListLoadBalancerActivations = func(m *mockcloudlets, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, status cloudlets.LoadBalancerActivationStatus, err error) *mock.Call {
 		if err != nil {
 			return m.On(
-				"GetLoadBalancerActivations",
+				"ListLoadBalancerActivations",
 				mock.Anything,
-				originID,
+				cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 			).Return(nil, err)
 		}
 		return m.On(
-			"GetLoadBalancerActivations",
+			"ListLoadBalancerActivations",
 			mock.Anything,
-			originID,
+			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(
-			cloudlets.ActivationsList{
-				cloudlets.ActivationResponse{
+			[]cloudlets.LoadBalancerActivation{
+				cloudlets.LoadBalancerActivation{
 					Network:  network,
 					OriginID: originID,
 					Status:   status,
@@ -448,22 +448,22 @@ var (
 			}, nil)
 	}
 
-	expectGetLoadBalancerActivationsMany = func(m *mockcloudlets, originID string, activations cloudlets.ActivationsList, err error) *mock.Call {
+	expectListLoadBalancerActivationsMany = func(m *mockcloudlets, originID string, activations []cloudlets.LoadBalancerActivation, err error) *mock.Call {
 		if err != nil {
 			return m.On(
-				"GetLoadBalancerActivations",
+				"ListLoadBalancerActivations",
 				mock.Anything,
-				originID,
+				cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 			).Return(nil, err)
 		}
 		return m.On(
-			"GetLoadBalancerActivations",
+			"ListLoadBalancerActivations",
 			mock.Anything,
-			originID,
+			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(activations, nil)
 	}
 
-	expectActivateLoadBalancerVersion = func(m *mockcloudlets, originID string, version int64, network cloudlets.ActivationNetwork, status cloudlets.ActivationStatus, err error) *mock.Call {
+	expectActivateLoadBalancerVersion = func(m *mockcloudlets, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, status cloudlets.LoadBalancerActivationStatus, err error) *mock.Call {
 		if err != nil {
 			return m.On(
 				"ActivateLoadBalancerVersion",
@@ -471,7 +471,7 @@ var (
 				cloudlets.ActivateLoadBalancerVersionRequest{
 					OriginID: originID,
 					Async:    true,
-					ActivationRequest: cloudlets.ActivationRequestParams{
+					LoadBalancerVersionActivation: cloudlets.LoadBalancerVersionActivation{
 						Network: network,
 						DryRun:  false,
 						Version: version,
@@ -485,14 +485,14 @@ var (
 			cloudlets.ActivateLoadBalancerVersionRequest{
 				OriginID: originID,
 				Async:    true,
-				ActivationRequest: cloudlets.ActivationRequestParams{
+				LoadBalancerVersionActivation: cloudlets.LoadBalancerVersionActivation{
 					Network: network,
 					DryRun:  false,
 					Version: version,
 				},
 			},
 		).Return(
-			&cloudlets.ActivationResponse{
+			&cloudlets.LoadBalancerActivation{
 				Network:  network,
 				OriginID: originID,
 				Status:   status,

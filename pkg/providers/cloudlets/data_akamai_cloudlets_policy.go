@@ -222,7 +222,7 @@ func getSchemaPropertyInfoFrom(p cloudlets.PropertyInfo) []map[string]interface{
 	}
 }
 
-func getSchemaActivationsFrom(act []*cloudlets.Activation) []map[string]interface{} {
+func getSchemaActivationsFrom(act []cloudlets.PolicyActivation) []map[string]interface{} {
 	var activations []map[string]interface{}
 
 	for _, a := range act {
@@ -346,7 +346,7 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	log.Debug("Getting Policy")
-	policy, err := client.GetPolicy(ctx, int64(policyID))
+	policy, err := client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: int64(policyID)})
 	if err != nil {
 		return diag.FromErr(err)
 	}

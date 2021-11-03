@@ -115,7 +115,7 @@ func resourceApplicationLoadBalancerActivationCreate(ctx context.Context, rd *sc
 	return resourceApplicationLoadBalancerActivationRead(ctx, rd, m)
 }
 
-func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *schema.ResourceData, logger log.Interface, client cloudlets.Cloudlets) (*cloudlets.ActivationResponse, error) {
+func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *schema.ResourceData, logger log.Interface, client cloudlets.Cloudlets) (*cloudlets.LoadBalancerActivation, error) {
 	originID, err := tools.GetStringValue("origin_id", rd)
 	if err != nil {
 		return nil, err
@@ -135,14 +135,14 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 	version := int64(v)
 
 	logger.Debugf("checking if application load balancer version %d is active", version)
-	activations, err := client.GetLoadBalancerActivations(ctx, originID)
+	activations, err := client.ListLoadBalancerActivations(ctx, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID})
 	if err != nil {
 		return nil, err
 	}
 
 	for _, act := range activations {
 		if act.Network == activationNetwork && act.Version == version {
-			if act.Status == cloudlets.ActivationStatusActive {
+			if act.Status == cloudlets.LoadBalancerActivationStatusActive {
 				// if the given version is active, just refresh status and quit
 				logger.Debugf("application load balancer version %d is already active in %s, fetching all details from server", version, string(activationNetwork))
 				return &act, nil
@@ -157,7 +157,7 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 	activation, err := client.ActivateLoadBalancerVersion(ctx, cloudlets.ActivateLoadBalancerVersionRequest{
 		OriginID: originID,
 		Async:    true,
-		ActivationRequest: cloudlets.ActivationRequestParams{
+		LoadBalancerVersionActivation: cloudlets.LoadBalancerVersionActivation{
 			Network: activationNetwork,
 			Version: version,
 		},
@@ -208,13 +208,13 @@ func resourceApplicationLoadBalancerActivationRead(ctx context.Context, rd *sche
 	}
 	version = int64(v)
 
-	activations, err := client.GetLoadBalancerActivations(ctx, originID)
+	activations, err := client.ListLoadBalancerActivations(ctx, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID})
 	if err != nil {
 		return diag.Errorf("%v read: %s", ErrApplicationLoadBalancerActivation, err.Error())
 	}
 
 	for _, act := range activations {
-		if act.Version == version && act.Network == net && act.Status == cloudlets.ActivationStatusActive {
+		if act.Version == version && act.Network == net && act.Status == cloudlets.LoadBalancerActivationStatusActive {
 			if err := rd.Set("status", act.Status); err != nil {
 				return diag.FromErr(err)
 			}
@@ -229,9 +229,9 @@ func resourceApplicationLoadBalancerActivationRead(ctx context.Context, rd *sche
 	return diag.Errorf("%v: cannot find the given application load balancer activation version '%d' for network '%s'", ErrApplicationLoadBalancerActivation, version, net)
 }
 
-func getApplicationLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudlets, originID string, version int64, network cloudlets.ActivationNetwork) (*cloudlets.ActivationResponse, error) {
-	activations, err := client.GetLoadBalancerActivations(ctx, originID)
-	filteredActivations := make([]cloudlets.ActivationResponse, 0, len(activations))
+func getApplicationLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudlets, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork) (*cloudlets.LoadBalancerActivation, error) {
+	activations, err := client.ListLoadBalancerActivations(ctx, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID})
+	filteredActivations := make([]cloudlets.LoadBalancerActivation, 0, len(activations))
 	if err != nil {
 		return nil, err
 	}
@@ -256,13 +256,13 @@ func getApplicationLoadBalancerActivation(ctx context.Context, client cloudlets.
 }
 
 // waitForLoadBalancerActivation polls server until the activation has active status or until context is closed (because of timeout, cancellation or context termination)
-func waitForLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudlets, originID string, version int64, network cloudlets.ActivationNetwork) (*cloudlets.ActivationResponse, error) {
+func waitForLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudlets, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork) (*cloudlets.LoadBalancerActivation, error) {
 	activation, err := getApplicationLoadBalancerActivation(ctx, client, originID, version, network)
 	if err != nil {
 		return nil, err
 	}
-	for activation.Status != cloudlets.ActivationStatusActive {
-		if activation.Status != cloudlets.ActivationStatusPending {
+	for activation.Status != cloudlets.LoadBalancerActivationStatusActive {
+		if activation.Status != cloudlets.LoadBalancerActivationStatusPending {
 			return nil, fmt.Errorf("%v: originID: %s, status: %s", ErrApplicationLoadBalancerActivation, activation.OriginID, activation.Status)
 		}
 		select {
@@ -282,20 +282,20 @@ func waitForLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudle
 			return nil, fmt.Errorf("%v: %w", ErrApplicationLoadBalancerActivationContextTerminated, ctx.Err())
 		}
 	}
-	if activation.Status == cloudlets.ActivationStatusActive {
+	if activation.Status == cloudlets.LoadBalancerActivationStatusActive {
 		return activation, nil
 	}
 	// should not reach here
 	return nil, ErrApplicationLoadBalancerActivation
 }
 
-func getALBActivationNetwork(net string) (cloudlets.ActivationNetwork, error) {
+func getALBActivationNetwork(net string) (cloudlets.LoadBalancerActivationNetwork, error) {
 
 	switch net {
 	case "PRODUCTION", "prod", "production":
-		return cloudlets.ActivationNetworkProduction, nil
+		return cloudlets.LoadBalancerActivationNetworkProduction, nil
 	case "STAGING", "staging":
-		return cloudlets.ActivationNetworkStaging, nil
+		return cloudlets.LoadBalancerActivationNetworkStaging, nil
 	}
 
 	return "", ErrNetworkName

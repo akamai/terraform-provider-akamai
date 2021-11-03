@@ -21,7 +21,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	}
 	var (
 		expectCreateLoadBalancer = func(_ *testing.T, client *mockcloudlets, originID, description, balancingType string, version int64, livenessHosts []string) (*cloudlets.Origin, *cloudlets.LoadBalancerVersion) {
-			loadBalancerConfig := cloudlets.LoadBalancerOriginCreateRequest{
+			loadBalancerConfig := cloudlets.CreateOriginRequest{
 				OriginID: originID,
 			}
 			loadBalancerVersionReq := cloudlets.LoadBalancerVersion{
@@ -98,12 +98,12 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		}
 
 		expectCreateLoadBalancerVersion = func(t *testing.T, client *mockcloudlets, originID string, loadBalancerVersion *cloudlets.LoadBalancerVersion, newBalancingType, description string) *cloudlets.LoadBalancerVersion {
-			client.On("GetLoadBalancerActivations", mock.Anything, originID).Return(cloudlets.ActivationsList{
-				cloudlets.ActivationResponse{
+			client.On("ListLoadBalancerActivations", mock.Anything, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID}).Return([]cloudlets.LoadBalancerActivation{
+				cloudlets.LoadBalancerActivation{
 					OriginID: originID,
-					Network:  cloudlets.ActivationNetworkProd,
+					Network:  cloudlets.LoadBalancerActivationNetworkProduction,
 					Version:  loadBalancerVersion.Version,
-					Status:   cloudlets.ActivationStatusActive,
+					Status:   cloudlets.LoadBalancerActivationStatusActive,
 				},
 			}, nil)
 			var newVersionReq, newVersionResp cloudlets.LoadBalancerVersion
@@ -128,7 +128,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		}
 
 		expectUpdateLoadBalancerVersion = func(t *testing.T, client *mockcloudlets, originID string, loadBalancerVersion *cloudlets.LoadBalancerVersion, newBalancingType, description string) *cloudlets.LoadBalancerVersion {
-			client.On("GetLoadBalancerActivations", mock.Anything, originID).Return(nil, nil)
+			client.On("ListLoadBalancerActivations", mock.Anything, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID}).Return(nil, nil)
 			var updateVersionReq, updateVersionResp cloudlets.LoadBalancerVersion
 			err := copier.CopyWithOption(&updateVersionReq, loadBalancerVersion, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
@@ -158,7 +158,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		}
 
 		expectImportLoadBalancer = func(_ *testing.T, client *mockcloudlets, origin *cloudlets.Origin, numVersions int) {
-			client.On("GetOrigin", mock.Anything, origin.OriginID).Return(origin, nil).Once()
+			client.On("GetOrigin", mock.Anything, cloudlets.GetOriginRequest{OriginID: origin.OriginID}).Return(origin, nil).Once()
 
 			var versionList []cloudlets.LoadBalancerVersion
 			for i := 1; i <= numVersions; i++ {
@@ -371,7 +371,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		}
 		client.On("ListOrigins", mock.Anything, mock.Anything).Return(origins, nil)
 
-		client.On("CreateOrigin", mock.Anything, cloudlets.LoadBalancerOriginCreateRequest{OriginID: "test_origin"}).Return(nil, fmt.Errorf("creating origin")).Once()
+		client.On("CreateOrigin", mock.Anything, cloudlets.CreateOriginRequest{OriginID: "test_origin"}).Return(nil, fmt.Errorf("creating origin")).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -402,7 +402,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		}
 		client.On("ListOrigins", mock.Anything, mock.Anything).Return(origins, nil)
 
-		client.On("CreateOrigin", mock.Anything, cloudlets.LoadBalancerOriginCreateRequest{OriginID: "test_origin"}).Return(&cloudlets.Origin{OriginID: "test_origin"}, nil).Once()
+		client.On("CreateOrigin", mock.Anything, cloudlets.CreateOriginRequest{OriginID: "test_origin"}).Return(&cloudlets.Origin{OriginID: "test_origin"}, nil).Once()
 
 		loadBalancerVersionReq := cloudlets.LoadBalancerVersion{
 			Description:   "test description",
@@ -556,7 +556,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
 
-		client.On("GetOrigin", mock.Anything, "not_existing_test_origin").Return(nil, nil).Once()
+		client.On("GetOrigin", mock.Anything, cloudlets.GetOriginRequest{OriginID: "not_existing_test_origin"}).Return(nil, nil).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

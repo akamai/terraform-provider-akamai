@@ -197,7 +197,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policy, err := client.GetPolicy(ctx, policyID)
+	policy, err := client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -374,7 +374,7 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(err)
 		}
 	}
-	if err := client.RemovePolicy(ctx, policyID); err != nil {
+	if err := client.RemovePolicy(ctx, cloudlets.RemovePolicyRequest{PolicyID: policyID}); err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId("")
@@ -475,7 +475,7 @@ func warningsToJSON(warnings []cloudlets.Warning) ([]byte, error) {
 	if len(warnings) == 0 {
 		return warningsJSON, nil
 	}
-	
+
 	warningsJSON, err := json.MarshalIndent(warnings, "", "  ")
 	if err != nil {
 		return nil, err

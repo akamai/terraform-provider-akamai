@@ -110,7 +110,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				LastModifiedBy:   "jsmith",
 				LastModifiedDate: 1631191583352,
 				RulesLocked:      false,
-				Activations: []*cloudlets.Activation{
+				Activations: []cloudlets.PolicyActivation{
 					{
 						APIVersion: "2.0",
 						Network:    "prod",

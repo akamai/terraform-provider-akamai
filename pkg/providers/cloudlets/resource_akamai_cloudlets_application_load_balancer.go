@@ -291,7 +291,7 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	createLBConfigReq := cloudlets.LoadBalancerOriginCreateRequest{
+	createLBConfigReq := cloudlets.CreateOriginRequest{
 		OriginID: originID,
 	}
 
@@ -388,13 +388,13 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	// if version-related attributes have changed, load balancer version has to be either created or updated (depending on whether it's active or not)
 	if d.HasChanges("description", "balancing_type", "data_centers", "liveness_settings") {
-		activations, err := client.GetLoadBalancerActivations(ctx, originID)
+		activations, err := client.ListLoadBalancerActivations(ctx, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID})
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		var versionActive bool
 		for _, activation := range activations {
-			if activation.Version == int64(version) && activation.Status == cloudlets.ActivationStatusActive {
+			if activation.Version == int64(version) && activation.Status == cloudlets.LoadBalancerActivationStatusActive {
 				versionActive = true
 				break
 			}
@@ -450,7 +450,7 @@ func resourceALBImport(ctx context.Context, d *schema.ResourceData, m interface{
 		return nil, fmt.Errorf("origin id cannot be empty")
 	}
 
-	origin, err := client.GetOrigin(ctx, originID)
+	origin, err := client.GetOrigin(ctx, cloudlets.GetOriginRequest{OriginID: originID})
 	if err != nil {
 		return nil, err
 	}

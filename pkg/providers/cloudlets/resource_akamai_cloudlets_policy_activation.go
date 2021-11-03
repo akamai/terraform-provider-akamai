@@ -145,7 +145,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	// find out if there are activations with status==active and network==activationNetwork
 	var active bool
 	for _, act := range activations {
-		if act.PolicyInfo.Status == cloudlets.StatusActive {
+		if act.PolicyInfo.Status == cloudlets.PolicyActivationStatusActive {
 			if act.PolicyInfo.Version == version && act.Network == activationNetwork {
 				active = true
 				break
@@ -164,7 +164,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		PolicyID: int64(policyID),
 		Async:    true,
 		Version:  version,
-		RequestBody: cloudlets.ActivatePolicyVersionRequestBody{
+		PolicyVersionActivation: cloudlets.PolicyVersionActivation{
 			Network:                 activationNetwork,
 			AdditionalPropertyNames: additionalProps,
 		},
@@ -228,12 +228,12 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 		return diag.Errorf("%v create: %s", ErrPolicyActivation, err.Error())
 	}
 	activeProperties := []string{}
-	var policyVersionActivation *cloudlets.Activation
+	var policyVersionActivation *cloudlets.PolicyActivation
 	for _, act := range policyVersion.Activations {
-		if cloudlets.VersionActivationNetwork(act.Network) == versionActivationNetwork &&
-			act.PolicyInfo.Status == cloudlets.StatusActive {
+		if act.Network == versionActivationNetwork &&
+			act.PolicyInfo.Status == cloudlets.PolicyActivationStatusActive {
 			activeProperties = append(activeProperties, act.PropertyInfo.Name)
-			policyVersionActivation = act
+			policyVersionActivation = &act
 		}
 	}
 	sort.Strings(activeProperties)
@@ -250,7 +250,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 		PolicyID: int64(policyID),
 		Version:  version,
 		Async:    true,
-		RequestBody: cloudlets.ActivatePolicyVersionRequestBody{
+		PolicyVersionActivation: cloudlets.PolicyVersionActivation{
 			Network:                 versionActivationNetwork,
 			AdditionalPropertyNames: additionalProps,
 		},
@@ -333,7 +333,7 @@ func formatPolicyActivationID(policyInfo cloudlets.PolicyInfo) string {
 func getAssociatedProperties(policyActivations []cloudlets.PolicyActivation, version int64) []string {
 	activeProps := []string{}
 	for _, act := range policyActivations {
-		if act.PolicyInfo.Status == cloudlets.StatusActive && act.PolicyInfo.Version == version {
+		if act.PolicyInfo.Status == cloudlets.PolicyActivationStatusActive && act.PolicyInfo.Version == version {
 			activeProps = append(activeProps, act.PropertyInfo.Name)
 		}
 	}
@@ -342,7 +342,7 @@ func getAssociatedProperties(policyActivations []cloudlets.PolicyActivation, ver
 }
 
 // getActivePolicyActivations gets active policy activations for given policy id, version and network from the server
-func getActivePolicyActivations(ctx context.Context, client cloudlets.Cloudlets, policyID, version int64, network cloudlets.VersionActivationNetwork) ([]cloudlets.PolicyActivation, error) {
+func getActivePolicyActivations(ctx context.Context, client cloudlets.Cloudlets, policyID, version int64, network cloudlets.PolicyActivationNetwork) ([]cloudlets.PolicyActivation, error) {
 	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: policyID,
 		Network:  network,
@@ -354,7 +354,7 @@ func getActivePolicyActivations(ctx context.Context, client cloudlets.Cloudlets,
 	policyActivations := []cloudlets.PolicyActivation{}
 
 	for _, act := range activations {
-		if act.PolicyInfo.Version == version && act.PolicyInfo.Status == cloudlets.StatusActive {
+		if act.PolicyInfo.Version == version && act.PolicyInfo.Status == cloudlets.PolicyActivationStatusActive {
 			policyActivations = append(policyActivations, act)
 		}
 	}
@@ -367,7 +367,7 @@ func getActivePolicyActivations(ctx context.Context, client cloudlets.Cloudlets,
 }
 
 // waitForPolicyActivation polls server until the activation has active status or until context is closed (because of timeout, cancellation or context termination)
-func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, policyID, version int64, network cloudlets.VersionActivationNetwork) ([]cloudlets.PolicyActivation, error) {
+func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, policyID, version int64, network cloudlets.PolicyActivationNetwork) ([]cloudlets.PolicyActivation, error) {
 	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: policyID,
 		Network:  network,
@@ -379,10 +379,10 @@ func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, po
 		allActive := true
 		for _, act := range activations {
 			if act.PolicyInfo.Version == version {
-				if act.PolicyInfo.Status != cloudlets.StatusActive {
+				if act.PolicyInfo.Status != cloudlets.PolicyActivationStatusActive {
 					allActive = false
 				}
-				if act.PolicyInfo.Status == cloudlets.StatusFailed {
+				if act.PolicyInfo.Status == cloudlets.PolicyActivationStatusFailed {
 					return nil, fmt.Errorf("%v: policyID %d: %s", ErrPolicyActivation, act.PolicyInfo.PolicyID, act.PolicyInfo.StatusDetail)
 				}
 			}
@@ -411,15 +411,15 @@ func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, po
 	return activations, nil
 }
 
-func getPolicyActivationNetwork(net string) (cloudlets.VersionActivationNetwork, error) {
+func getPolicyActivationNetwork(net string) (cloudlets.PolicyActivationNetwork, error) {
 
 	net = tools.StateNetwork(net)
 
 	switch net {
 	case "production":
-		return cloudlets.VersionActivationNetworkProduction, nil
+		return cloudlets.PolicyActivationNetworkProduction, nil
 	case "staging":
-		return cloudlets.VersionActivationNetworkStaging, nil
+		return cloudlets.PolicyActivationNetworkStaging, nil
 	}
 
 	return "", ErrNetworkName
@@ -431,9 +431,9 @@ func statePolicyActivationNetwork(i interface{}) string {
 
 	switch net {
 	case "production":
-		return string(cloudlets.VersionActivationNetworkProduction)
+		return string(cloudlets.PolicyActivationNetworkProduction)
 	case "staging":
-		return string(cloudlets.VersionActivationNetworkStaging)
+		return string(cloudlets.PolicyActivationNetworkStaging)
 	}
 
 	// this should never happen :-)

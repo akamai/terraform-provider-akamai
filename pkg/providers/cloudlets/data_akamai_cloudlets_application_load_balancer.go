@@ -239,7 +239,7 @@ func dataApplicationLoadBalancerRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	origin, err := client.GetOrigin(ctx, originID)
+	origin, err := client.GetOrigin(ctx, cloudlets.GetOriginRequest{OriginID: originID})
 	if err != nil {
 		return diag.FromErr(err)
 	}
