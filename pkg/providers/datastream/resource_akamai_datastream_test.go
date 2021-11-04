@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"testing"
 	"time"
 
@@ -43,7 +44,7 @@ func TestResourceStream(t *testing.T) {
 				},
 			},
 			ContractID:      "test_contract",
-			DatasetFieldIDs: []int{1000, 1001, 1002},
+			DatasetFieldIDs: []int{1001, 1002, 2000, 2001},
 			EmailIDs:        "test_email1@akamai.com,test_email2@akamai.com",
 			GroupID:         tools.IntPtr(1337),
 			PropertyIDs:     []int{1, 2, 3},
@@ -87,7 +88,7 @@ func TestResourceStream(t *testing.T) {
 					},
 				},
 				ContractID:      streamConfiguration.ContractID,
-				DatasetFieldIDs: streamConfiguration.DatasetFieldIDs,
+				DatasetFieldIDs: []int{2000, 1002, 2001, 1001},
 				EmailIDs:        "test_email1_updated@akamai.com,test_email2@akamai.com",
 				PropertyIDs:     streamConfiguration.PropertyIDs,
 				StreamName:      "test_stream_with_updated",
@@ -122,22 +123,34 @@ func TestResourceStream(t *testing.T) {
 					DatasetGroupDescription: "group_desc_1",
 					DatasetFields: []datastream.DatasetFields{
 						{
-							DatasetFieldID:          1000,
+							DatasetFieldID:          1001,
 							DatasetFieldName:        "dataset_field_name_1",
 							DatasetFieldDescription: "dataset_field_desc_1",
 							Order:                   0,
 						},
 						{
-							DatasetFieldID:          1001,
+							DatasetFieldID:          1002,
 							DatasetFieldName:        "dataset_field_name_2",
 							DatasetFieldDescription: "dataset_field_desc_2",
 							Order:                   1,
 						},
+					},
+				},
+				{
+					DatasetGroupName:        "group_name_2",
+					DatasetGroupDescription: "group_desc_2",
+					DatasetFields: []datastream.DatasetFields{
 						{
-							DatasetFieldID:          1002,
-							DatasetFieldName:        "dataset_field_name_3",
-							DatasetFieldDescription: "dataset_field_desc_3",
+							DatasetFieldID:          2000,
+							DatasetFieldName:        "dataset_field_name_1",
+							DatasetFieldDescription: "dataset_field_desc_1",
 							Order:                   2,
+						},
+						{
+							DatasetFieldID:          2001,
+							DatasetFieldName:        "dataset_field_name_2",
+							DatasetFieldDescription: "dataset_field_desc_2",
+							Order:                   3,
 						},
 					},
 				},
@@ -192,6 +205,44 @@ func TestResourceStream(t *testing.T) {
 					ConnectorName: "s3_test_connector_name_updated",
 					Path:          "s3_test_path",
 					Region:        "s3_test_region",
+				},
+			}
+			r.Datasets = []datastream.DataSets{
+				{
+					DatasetGroupName:        "group_name_1",
+					DatasetGroupDescription: "group_desc_1",
+					DatasetFields: []datastream.DatasetFields{
+						{
+							DatasetFieldID:          1001,
+							DatasetFieldName:        "dataset_field_name_1",
+							DatasetFieldDescription: "dataset_field_desc_1",
+							Order:                   3,
+						},
+						{
+							DatasetFieldID:          1002,
+							DatasetFieldName:        "dataset_field_name_2",
+							DatasetFieldDescription: "dataset_field_desc_2",
+							Order:                   1,
+						},
+					},
+				},
+				{
+					DatasetGroupName:        "group_name_2",
+					DatasetGroupDescription: "group_desc_2",
+					DatasetFields: []datastream.DatasetFields{
+						{
+							DatasetFieldID:          2000,
+							DatasetFieldName:        "dataset_field_name_1",
+							DatasetFieldDescription: "dataset_field_desc_1",
+							Order:                   0,
+						},
+						{
+							DatasetFieldID:          2001,
+							DatasetFieldName:        "dataset_field_name_2",
+							DatasetFieldDescription: "dataset_field_desc_2",
+							Order:                   2,
+						},
+					},
 				},
 			}
 		})
@@ -273,7 +324,7 @@ func TestResourceStream(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResourceStream/lifecycle/create_stream.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_datastream.s", "id", "12321"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "active", "true"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "config.#", "1"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.delimiter", string(datastream.DelimiterTypeSpace)),
@@ -283,7 +334,11 @@ func TestResourceStream(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.frequency.#", "1"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.frequency.0.time_in_sec", "30"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.#", "3"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.#", "4"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.0", "1001"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.1", "1002"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.2", "2000"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.3", "2001"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.#", "2"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.0", "test_email1@akamai.com"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.1", "test_email2@akamai.com"),
@@ -304,7 +359,7 @@ func TestResourceStream(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResourceStream/lifecycle/update_stream.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_datastream.s", "id", "12321"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "active", "true"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "config.#", "1"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.delimiter", string(datastream.DelimiterTypeSpace)),
@@ -314,7 +369,11 @@ func TestResourceStream(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.frequency.#", "1"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.frequency.0.time_in_sec", "30"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.#", "3"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.#", "4"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.0", "2000"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.1", "1002"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.2", "2001"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.3", "1001"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.#", "2"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.0", "test_email1_updated@akamai.com"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.1", "test_email2@akamai.com"),
@@ -338,6 +397,170 @@ func TestResourceStream(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	})
+}
+
+func TestEmailIDs(t *testing.T) {
+	streamID := int64(12321)
+
+	streamConfiguration := datastream.StreamConfiguration{
+		ActivateNow: false,
+		Config: datastream.Config{
+			Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+			Format:    datastream.FormatTypeStructured,
+			Frequency: datastream.Frequency{
+				TimeInSec: datastream.TimeInSec30,
+			},
+			UploadFilePrefix: DefaultUploadFilePrefix,
+			UploadFileSuffix: DefaultUploadFileSuffix,
+		},
+		Connectors: []datastream.AbstractConnector{
+			&datastream.SplunkConnector{
+				CompressLogs:        false,
+				ConnectorName:       "splunk_test_connector_name",
+				EventCollectorToken: "splunk_event_collector_token",
+				URL:                 "splunk_url",
+			},
+		},
+		ContractID:      "test_contract",
+		DatasetFieldIDs: []int{1001},
+		GroupID:         tools.IntPtr(1337),
+		PropertyIDs:     []int{1},
+		StreamName:      "test_stream",
+		StreamType:      datastream.StreamTypeRawLogs,
+		TemplateName:    datastream.TemplateNameEdgeLogs,
+	}
+
+	createStreamRequestFactory := func(emailIDs string) datastream.CreateStreamRequest {
+		streamConfigurationWithEmailIDs := streamConfiguration
+		if emailIDs != "" {
+			streamConfigurationWithEmailIDs.EmailIDs = emailIDs
+		}
+		return datastream.CreateStreamRequest{
+			StreamConfiguration: streamConfigurationWithEmailIDs,
+		}
+	}
+
+	responseFactory := func(emailIDs string) *datastream.DetailedStreamVersion {
+		return &datastream.DetailedStreamVersion{
+			ActivationStatus: datastream.ActivationStatusInactive,
+			Config:           streamConfiguration.Config,
+			Connectors: []datastream.ConnectorDetails{
+				{
+					ConnectorType: datastream.ConnectorTypeSplunk,
+					CompressLogs:  false,
+					ConnectorName: "splunk_test_connector_name",
+					URL:           "splunk_url",
+				},
+			},
+			ContractID: streamConfiguration.ContractID,
+			Datasets: []datastream.DataSets{
+				{
+					DatasetFields: []datastream.DatasetFields{
+						{
+							DatasetFieldID: 1001,
+							Order:          0,
+						},
+					},
+				},
+			},
+			EmailIDs: emailIDs,
+			GroupID:  *streamConfiguration.GroupID,
+			Properties: []datastream.Property{
+				{
+					PropertyID:   1,
+					PropertyName: "property_1",
+				},
+			},
+			StreamID:        streamID,
+			StreamName:      streamConfiguration.StreamName,
+			StreamType:      streamConfiguration.StreamType,
+			StreamVersionID: 2,
+			TemplateName:    streamConfiguration.TemplateName,
+		}
+	}
+
+	updateStreamResponse := &datastream.StreamUpdate{
+		StreamVersionKey: datastream.StreamVersionKey{
+			StreamID:        streamID,
+			StreamVersionID: 1,
+		},
+	}
+
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+	}
+
+	tests := map[string]struct {
+		Filename   string
+		Response   *datastream.DetailedStreamVersion
+		EmailIDs   string
+		TestChecks []resource.TestCheckFunc
+	}{
+		"two emails": {
+			Filename: "two_emails.tf",
+			EmailIDs: "test_email1@akamai.com,test_email2@akamai.com",
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.#", "2"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.0", "test_email1@akamai.com"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.1", "test_email2@akamai.com"),
+			},
+		},
+		"one email": {
+			Filename: "one_email.tf",
+			EmailIDs: "test_email1@akamai.com",
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.0", "test_email1@akamai.com"),
+			},
+		},
+		"empty email": {
+			Filename: "empty_email_ids.tf",
+			EmailIDs: "",
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.#", "0"),
+			},
+		},
+		"no email_ids field": {
+			Filename: "no_email_ids.tf",
+			EmailIDs: "",
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "email_ids.#", "0"),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &mockdatastream{}
+
+			createStreamRequest := createStreamRequestFactory(test.EmailIDs)
+			client.On("CreateStream", mock.Anything, createStreamRequest).
+				Return(updateStreamResponse, nil)
+
+			getStreamResponse := responseFactory(test.EmailIDs)
+			client.On("GetStream", mock.Anything, getStreamRequest).
+				Return(getStreamResponse, nil)
+
+			client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+				StreamID: streamID,
+			}).Return(&datastream.DeleteStreamResponse{Message: "Success"}, nil)
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/email_ids/%s", test.Filename)),
+							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
+						},
+					},
+				})
+
+				client.AssertExpectations(t)
+			})
+		})
+	}
+
 }
 
 func TestResourceStreamErrors(t *testing.T) {

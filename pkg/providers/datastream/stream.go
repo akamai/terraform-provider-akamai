@@ -2,6 +2,7 @@ package datastream
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -106,11 +107,18 @@ func InterfaceSliceToStringSlice(list []interface{}) []string {
 // DataSetFieldsToList converts slice of DataSets to slice of ints
 func DataSetFieldsToList(dataSets []datastream.DataSets) []int {
 	ids := make([]int, 0)
+	datasetFields := make([]datastream.DatasetFields, 0)
 
 	for _, datasetGroup := range dataSets {
-		for _, datasetFields := range datasetGroup.DatasetFields {
-			ids = append(ids, datasetFields.DatasetFieldID)
-		}
+		datasetFields = append(datasetFields, datasetGroup.DatasetFields...)
+	}
+
+	sort.Slice(datasetFields, func(i, j int) bool {
+		return datasetFields[i].Order < datasetFields[j].Order
+	})
+
+	for _, field := range datasetFields {
+		ids = append(ids, field.DatasetFieldID)
 	}
 
 	return ids

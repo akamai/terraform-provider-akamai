@@ -210,12 +210,15 @@ func TestDataSetFieldsToList(t *testing.T) {
 			DatasetFields: []datastream.DatasetFields{
 				{
 					DatasetFieldID: 1000,
+					Order:          3,
 				},
 				{
 					DatasetFieldID: 1002,
+					Order:          5,
 				},
 				{
 					DatasetFieldID: 1100,
+					Order:          1,
 				},
 			},
 		},
@@ -224,18 +227,21 @@ func TestDataSetFieldsToList(t *testing.T) {
 			DatasetFields: []datastream.DatasetFields{
 				{
 					DatasetFieldID: 2000,
+					Order:          4,
 				},
 				{
 					DatasetFieldID: 2002,
+					Order:          0,
 				},
 				{
 					DatasetFieldID: 2100,
+					Order:          2,
 				},
 			},
 		},
 	}
 
-	assert.Equal(t, []int{1000, 1002, 1100, 2000, 2002, 2100}, DataSetFieldsToList(datasets))
+	assert.Equal(t, []int{2002, 1100, 2100, 1000, 2000, 1002}, DataSetFieldsToList(datasets))
 }
 
 func TestPropertyToList(t *testing.T) {
