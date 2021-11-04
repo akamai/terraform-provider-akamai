@@ -129,6 +129,11 @@ func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.Res
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	err = setERMatchRuleSchemaType(matchRulesSet)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	matchRules, err := GetMatchRules(matchRulesSet)
 	if err != nil {
 		return diag.Errorf("'match_rules' - %s", err)
@@ -147,6 +152,19 @@ func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.Res
 		return diag.FromErr(err)
 	}
 	d.SetId(hashID)
+	return nil
+}
+
+// setERMatchRuleSchemaType takes ER matchrules schema set and sets type field for every rule in set
+func setERMatchRuleSchemaType(set *schema.Set) error {
+	matchRuleList := set.List()
+	for _, mr := range matchRuleList {
+		matchRuleMap, ok := mr.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("match rule is of invalid type: %T", mr)
+		}
+		matchRuleMap["type"] = cloudlets.MatchRuleTypeER
+	}
 	return nil
 }
 
@@ -180,7 +198,7 @@ func GetMatchRules(set *schema.Set) (*cloudlets.MatchRules, error) {
 	for _, mr := range matchRuleList {
 		matchRuleMap, ok := mr.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("match rule is of invalid type")
+			return nil, fmt.Errorf("match rule is of invalid type: %T", mr)
 		}
 
 		matches, err := GetMatchCriteria(matchRuleMap["matches"].(*schema.Set))

@@ -1,5 +1,14 @@
 [
   {
+    "name": "rule2",
+    "type": "albMatchRule",
+    "id": 12333,
+    "matchesAlways": false,
+    "forwardSettings": {
+      "originId": "1234"
+    }
+  },
+  {
     "name": "rule1",
     "type": "albMatchRule",
     "start": 10,
@@ -39,15 +48,6 @@
     "matchesAlways": false,
     "forwardSettings": {
       "originId": "33"
-    }
-  },
-  {
-    "name": "rule2",
-    "type": "albMatchRule",
-    "id": 12333,
-    "matchesAlways": false,
-    "forwardSettings": {
-      "originId": "1234"
     }
   }
 ]

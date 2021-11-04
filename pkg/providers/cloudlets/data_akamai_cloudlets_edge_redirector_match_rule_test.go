@@ -18,6 +18,7 @@ func TestDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_cloudlets_edge_redirector_match_rule.test", "json",
 								loadFixtureString("testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_cloudlets_edge_redirector_match_rule.test", "match_rules.0.type", "erMatchRule"),
 						),
 					},
 				},
@@ -35,6 +36,7 @@ func TestDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_cloudlets_edge_redirector_match_rule.test", "json",
 								loadFixtureString("testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/minimal_rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_cloudlets_edge_redirector_match_rule.test", "match_rules.0.type", "erMatchRule"),
 						),
 					},
 				},

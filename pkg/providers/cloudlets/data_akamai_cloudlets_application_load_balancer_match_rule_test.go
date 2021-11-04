@@ -41,6 +41,8 @@ func TestDataCloudletsLoadBalancerMatchRule(t *testing.T) {
 							resource.TestCheckResourceAttr(
 								"data.akamai_cloudlets_application_load_balancer_match_rule.test", "json",
 								loadFixtureString(test.expectedJSONPath)),
+							resource.TestCheckResourceAttr(
+								"data.akamai_cloudlets_application_load_balancer_match_rule.test", "match_rules.0.type", "albMatchRule"),
 						),
 					},
 				},

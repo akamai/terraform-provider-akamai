@@ -186,7 +186,7 @@ func (m *mockcloudlets) ListLoadBalancerVersions(ctx context.Context, req cloudl
 	return args.Get(0).([]cloudlets.LoadBalancerVersion), args.Error(1)
 }
 
-func (m *mockcloudlets) DeletePolicyProperty(ctx context.Context, policyID cloudlets.DeletePolicyPropertyRequest) error {
-	args := m.Called(ctx, policyID)
+func (m *mockcloudlets) DeletePolicyProperty(ctx context.Context, req cloudlets.DeletePolicyPropertyRequest) error {
+	args := m.Called(ctx, req)
 	return args.Error(0)
 }

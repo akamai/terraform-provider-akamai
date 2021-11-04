@@ -16,7 +16,6 @@ data "akamai_cloudlets_application_load_balancer_match_rule" "test" {
         value = "[1,50]"
       }
     }
-    type = "albMatchRule"
     forward_settings {
       origin_id = "12"
     }

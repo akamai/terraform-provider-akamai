@@ -1,6 +1,7 @@
 [
   {
     "name": "rule1",
+    "type": "albMatchRule",
     "matchesAlways": false,
     "forwardSettings": {
       "originId": "3"
