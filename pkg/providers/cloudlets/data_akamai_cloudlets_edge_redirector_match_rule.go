@@ -16,7 +16,7 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 		ReadContext: akamaiCloudletsEdgeRedirectorMatchRuleRead,
 		Schema: map[string]*schema.Schema{
 			"match_rules": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "A set of rules for policy",
 				Elem: &schema.Resource{
@@ -125,16 +125,17 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 }
 
 func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	matchRulesSet, err := tools.GetSetValue("match_rules", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = setERMatchRuleSchemaType(matchRulesSet)
+	matchRulesList, err := tools.GetListValue("match_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	matchRules, err := GetMatchRules(matchRulesSet)
+	err = setERMatchRuleSchemaType(matchRulesList)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	matchRules, err := GetMatchRules(matchRulesList)
 	if err != nil {
 		return diag.Errorf("'match_rules' - %s", err)
 	}
@@ -156,9 +157,8 @@ func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.Res
 }
 
 // setERMatchRuleSchemaType takes ER matchrules schema set and sets type field for every rule in set
-func setERMatchRuleSchemaType(set *schema.Set) error {
-	matchRuleList := set.List()
-	for _, mr := range matchRuleList {
+func setERMatchRuleSchemaType(matchRules []interface{}) error {
+	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("match rule is of invalid type: %T", mr)
@@ -192,10 +192,9 @@ func GetMatchCriteria(set *schema.Set) ([]cloudlets.MatchCriteriaER, error) {
 }
 
 // GetMatchRules returns contact information from Set object
-func GetMatchRules(set *schema.Set) (*cloudlets.MatchRules, error) {
-	matchRuleList := set.List()
-	result := make(cloudlets.MatchRules, 0, len(matchRuleList))
-	for _, mr := range matchRuleList {
+func GetMatchRules(matchRules []interface{}) (*cloudlets.MatchRules, error) {
+	result := make(cloudlets.MatchRules, 0, len(matchRules))
+	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("match rule is of invalid type: %T", mr)

@@ -16,7 +16,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 		ReadContext: dataSourceCloudletsLoadBalancerMatchRuleRead,
 		Schema: map[string]*schema.Schema{
 			"match_rules": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Defines a set of rules for policy",
 				Elem: &schema.Resource{
@@ -188,19 +188,18 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 }
 
 func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-
-	matchRules, err := tools.GetSetValue("match_rules", d)
+	matchRules, err := tools.GetListValue("match_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	err = setALBMatchRuleSchemaType(matchRules)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	rules := make(cloudlets.MatchRules, matchRules.Len())
-
-	for i, r := range matchRules.List() {
+	rules := make(cloudlets.MatchRules, len(matchRules))
+	for i, r := range matchRules {
 		rawRule := r.(map[string]interface{})
 
 		// types are guaranteed by the datasource schema -> no need for type assertions
@@ -255,9 +254,8 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 }
 
 // setALBMatchRuleSchemaType takes ALB matchrules schema set and sets type field for every rule in set
-func setALBMatchRuleSchemaType(set *schema.Set) error {
-	matchRuleList := set.List()
-	for _, mr := range matchRuleList {
+func setALBMatchRuleSchemaType(matchRules []interface{}) error {
+	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("match rule is of invalid type: %T", mr)
