@@ -46,7 +46,8 @@ func resourceRule() *schema.Resource {
 			},
 			"rule_action": {
 				Type:             schema.TypeString,
-				Required:         true,
+				Optional:         true,
+				Computed:         true,
 				ValidateDiagFunc: ValidateActions,
 			},
 			"condition_exception": {
@@ -100,11 +101,13 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 
-	if wafmode.Mode == AseAuto { // action is read only, only ffexception is writable
+	if wafmode.Mode == AseAuto { // action is read only, only condition exception is writable
 		ruleConditionException := appsec.RuleConditionException{}
-		err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
-		if err != nil {
-			return diag.FromErr(err)
+		if conditionexception != "" {
+			err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 
 		createRule := appsec.UpdateConditionExceptionRequest{
@@ -198,9 +201,11 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err := d.Set("rule_id", getRule.RuleID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
+
 	if err := d.Set("rule_action", rule.Action); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
+
 	if !rule.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(rule.ConditionException)
 		if err != nil {
@@ -229,7 +234,7 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 	policyid := idParts[1]
-	version := getModifiableConfigVersion(ctx, configid, "threatIntel", m)
+	version := getModifiableConfigVersion(ctx, configid, "rule", m)
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
@@ -255,9 +260,11 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 
 	if wafmode.Mode == AseAuto { // action is read only, only exception is writable
 		ruleConditionException := appsec.RuleConditionException{}
-		err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
-		if err != nil {
-			return diag.FromErr(err)
+		if conditionexception != "" {
+			err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 
 		updateRule := appsec.UpdateConditionExceptionRequest{

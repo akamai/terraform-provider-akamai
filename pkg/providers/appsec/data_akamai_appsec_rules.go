@@ -87,7 +87,24 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "RulesWithConditionExceptionDS", rules)
+	getWAFMode := appsec.GetWAFModeRequest{
+		ConfigID: configid,
+		Version:  getRules.Version,
+		PolicyID: policyid,
+	}
+
+	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
+	if err != nil {
+		logger.Errorf("calling 'getWAFMode': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	var templateName = "RulesWithConditionExceptionDS"
+	if wafmode.Mode == AseAuto || wafmode.Mode == AseManual {
+		templateName = "ASERulesWithConditionExceptionDS"
+	}
+
+	outputtext, err := RenderTemplates(ots, templateName, rules)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
