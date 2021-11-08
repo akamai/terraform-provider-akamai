@@ -1,11 +1,13 @@
 package cloudlets
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jinzhu/copier"
@@ -165,7 +167,7 @@ func TestResourcePolicy(t *testing.T) {
 				PolicyID: policyID,
 			}).Return(versionList, nil).Once()
 
-			client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{}).Return([]cloudlets.Policy{
+			client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).Return([]cloudlets.Policy{
 				{
 					PolicyID: policyID, Name: policyName,
 				},
@@ -997,7 +999,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil)
 		expectReadPolicy(t, client, policy, version, 2)
-		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{}).
+		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
 			Return([]cloudlets.Policy{}, nil).Once()
 		expectRemovePolicy(t, client, 2, 1)
 
@@ -1012,7 +1014,7 @@ func TestResourcePolicy(t *testing.T) {
 						ImportState:   true,
 						ImportStateId: "not_existing_test_policy",
 						ResourceName:  "akamai_cloudlets_policy.policy",
-						ExpectError:   regexp.MustCompile("could not find policy with name:"),
+						ExpectError:   regexp.MustCompile("policy 'not_existing_test_policy' does not exist"),
 					},
 				},
 			})
@@ -1117,6 +1119,86 @@ func TestDiffSuppressMatchRules(t *testing.T) {
 			newJSON := loadFixtureString(fmt.Sprintf("%s/%s", basePath, test.newPath))
 			res := diffSuppressMatchRules("", oldJSON, newJSON, nil)
 			assert.Equal(t, test.expected, res)
+		})
+	}
+}
+
+func TestFindPolicyByName(t *testing.T) {
+	preparePoliciesPage := func(pageSize, startingID int64) []cloudlets.Policy {
+		policies := make([]cloudlets.Policy, 0, pageSize)
+		for i := startingID; i < startingID+pageSize; i++ {
+			policies = append(policies, cloudlets.Policy{PolicyID: i, Name: fmt.Sprintf("%d", i)})
+		}
+		return policies
+	}
+	tests := map[string]struct {
+		policyName string
+		init       func(m *mockcloudlets)
+		expectedID int64
+		withError  bool
+	}{
+		"policy found in first iteration": {
+			policyName: "test_policy",
+			init: func(m *mockcloudlets) {
+				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).Return([]cloudlets.Policy{
+					{PolicyID: 9999999, Name: "some_policy"},
+					{PolicyID: 1234567, Name: "test_policy"},
+				}, nil).Once()
+			},
+			expectedID: 1234567,
+		},
+		"policy found on 3rd page": {
+			policyName: "test_policy",
+			init: func(m *mockcloudlets) {
+				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
+					Return(preparePoliciesPage(1000, 0), nil).Once()
+				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 1000}).
+					Return(preparePoliciesPage(1000, 1000), nil).Once()
+				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 2000}).Return([]cloudlets.Policy{
+					{PolicyID: 9999999, Name: "some_policy"},
+					{PolicyID: 1234567, Name: "test_policy"},
+				}, nil).Once()
+
+			},
+			expectedID: 1234567,
+		},
+		"policy not found": {
+			policyName: "test_policy",
+			init: func(m *mockcloudlets) {
+				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
+					Return(preparePoliciesPage(1000, 0), nil).Once()
+				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 1000}).
+					Return(preparePoliciesPage(1000, 1000), nil).Once()
+				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 2000}).
+					Return(preparePoliciesPage(250, 2000), nil).Once()
+
+			},
+			withError: true,
+		},
+		"error listing policies": {
+			policyName: "test_policy",
+			init: func(m *mockcloudlets) {
+				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
+					Return(preparePoliciesPage(1000, 0), nil).Once()
+				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 1000}).
+					Return(nil, fmt.Errorf("oops")).Once()
+
+			},
+			withError: true,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			m := new(mockcloudlets)
+			test.init(m)
+			policy, err := findPolicyByName(context.Background(), test.policyName, m)
+			m.AssertExpectations(t)
+			if test.withError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.expectedID, policy.PolicyID)
 		})
 	}
 }

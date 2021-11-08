@@ -393,19 +393,9 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 		return nil, fmt.Errorf("policy name cannot be empty")
 	}
 
-	policies, err := client.ListPolicies(ctx, cloudlets.ListPoliciesRequest{})
+	policy, err := findPolicyByName(ctx, name, client)
 	if err != nil {
 		return nil, err
-	}
-	var policy *cloudlets.Policy
-	for _, p := range policies {
-		if p.Name == name {
-			policy = &p
-			break
-		}
-	}
-	if policy == nil {
-		return nil, fmt.Errorf("could not find policy with name: %s", name)
 	}
 
 	d.SetId(strconv.FormatInt(policy.PolicyID, 10))
@@ -431,6 +421,31 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func findPolicyByName(ctx context.Context, name string, client cloudlets.Cloudlets) (*cloudlets.Policy, error) {
+	pageSize, offset := 1000, 0
+	var policy *cloudlets.Policy
+	for {
+		policies, err := client.ListPolicies(ctx, cloudlets.ListPoliciesRequest{
+			Offset:   offset,
+			PageSize: &pageSize,
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, p := range policies {
+			if p.Name == name {
+				policy = &p
+				return policy, nil
+			}
+		}
+		if len(policies) < pageSize {
+			break
+		}
+		offset += pageSize
+	}
+	return nil, fmt.Errorf("policy '%s' does not exist", name)
 }
 
 func diffSuppressGroupID(_, old, new string, _ *schema.ResourceData) bool {
