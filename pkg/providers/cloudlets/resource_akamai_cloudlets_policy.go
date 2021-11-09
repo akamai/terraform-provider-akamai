@@ -360,13 +360,11 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	listVersionsResponse, err := client.ListPolicyVersions(ctx, cloudlets.ListPolicyVersionsRequest{
-		PolicyID: policyID,
-	})
+	policyVersions, err := getAllPolicyVersions(ctx, policyID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	for _, ver := range listVersionsResponse {
+	for _, ver := range policyVersions {
 		if err := client.DeletePolicyVersion(ctx, cloudlets.DeletePolicyVersionRequest{
 			PolicyID: policyID,
 			Version:  ver.Version,
@@ -400,21 +398,11 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 
 	d.SetId(strconv.FormatInt(policy.PolicyID, 10))
 
-	versions, err := client.ListPolicyVersions(ctx, cloudlets.ListPolicyVersionsRequest{
-		PolicyID: policy.PolicyID,
-	})
+	version, err := findLatestPolicyVersion(ctx, policy.PolicyID, client)
 	if err != nil {
 		return nil, err
 	}
-	if len(versions) == 0 {
-		return nil, fmt.Errorf("no policy version found")
-	}
-	var version int64
-	for _, v := range versions {
-		if v.Version > version {
-			version = v.Version
-		}
-	}
+
 	err = d.Set("version", version)
 	if err != nil {
 		return nil, err

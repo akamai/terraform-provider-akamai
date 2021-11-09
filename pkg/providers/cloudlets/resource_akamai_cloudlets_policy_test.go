@@ -149,6 +149,8 @@ func TestResourcePolicy(t *testing.T) {
 			}
 			client.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
 				PolicyID: policyID,
+				PageSize: tools.IntPtr(1000),
+				Offset: 0,
 			}).Return(versionList, nil).Once()
 			for _, ver := range versionList {
 				client.On("DeletePolicyVersion", mock.Anything, cloudlets.DeletePolicyVersionRequest{
@@ -165,6 +167,8 @@ func TestResourcePolicy(t *testing.T) {
 			}
 			client.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
 				PolicyID: policyID,
+				PageSize: tools.IntPtr(1000),
+				Offset: 0,
 			}).Return(versionList, nil).Once()
 
 			client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).Return([]cloudlets.Policy{

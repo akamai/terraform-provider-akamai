@@ -256,26 +256,6 @@ func populateSchemaFieldsWithPolicy(p *cloudlets.Policy, d *schema.ResourceData)
 	return nil
 }
 
-func findLatestPolicyVersion(ctx context.Context, client cloudlets.Cloudlets, policyID int) (int64, error) {
-	versions, err := client.ListPolicyVersions(ctx, cloudlets.ListPolicyVersionsRequest{
-		PolicyID: int64(policyID),
-	})
-	if err != nil {
-		return 0, err
-	}
-
-	if len(versions) == 0 {
-		return 0, fmt.Errorf("latest policy version does not exist")
-	}
-	var latest int64
-	for _, v := range versions {
-		if v.Version > latest {
-			latest = v.Version
-		}
-	}
-	return latest, nil
-}
-
 func populateSchemaFieldsWithPolicyVersion(p *cloudlets.PolicyVersion, d *schema.ResourceData) error {
 	matchRules, err := json.MarshalIndent(p.MatchRules, "", "  ")
 	if err != nil {
@@ -320,7 +300,7 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 		if !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		version, err = findLatestPolicyVersion(ctx, client, policyID)
+		version, err = findLatestPolicyVersion(ctx, int64(policyID), client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
