@@ -11,6 +11,8 @@ description: |-
 
 **Scopes**: Security configuration
 
+**Note**: This data source is deprecated and may be removed in a future release.
+
 Returns the evaluation hostnames for a configuration. In evaluation mode, you use evaluation hosts to monitor how well your configuration settings protects host traffic. (Note that the evaluation host isn't actually protected, and the host takes no action other than recording the actions it would have taken had it been on the production network).
 
 Evaluation mode for hostnames is only available for organizations running Web Application Protector.

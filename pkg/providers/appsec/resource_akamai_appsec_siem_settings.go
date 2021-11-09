@@ -226,19 +226,14 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configid, "siemSetting", m)
-	siemID, err := tools.GetIntValue("siem_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
+
+	removeSiemSettings := appsec.RemoveSiemSettingsRequest{
+		ConfigID:   configid,
+		Version:    version,
+		EnableSiem: false,
 	}
 
-	updateSiemSettings := appsec.UpdateSiemSettingsRequest{
-		ConfigID:         configid,
-		Version:          version,
-		EnableSiem:       false,
-		SiemDefinitionID: siemID,
-	}
-
-	_, erru := client.UpdateSiemSettings(ctx, updateSiemSettings)
+	_, erru := client.RemoveSiemSettings(ctx, removeSiemSettings)
 	if erru != nil {
 		logger.Errorf("calling 'updateSiemSettings': %s", erru.Error())
 		return diag.FromErr(erru)

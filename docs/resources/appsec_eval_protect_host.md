@@ -10,6 +10,8 @@ description: |-
 
 **Scopes**: Security configuration
 
+**Note**: This data source is deprecated and may be removed in a future release.
+
 Moves hostnames being evaluated to active protection. When you move a hostname from the evaluation hostnames list that host is added to your security policy as a protected hostname and is removed from the collection of hosts being evaluated.
 
 **Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/protect-eval-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putmoveevaluationhostnamestoprotection)
