@@ -8,25 +8,38 @@ description: |-
 
 # akamai_appsec_waf_mode
 
-Use the `akamai_appsec_waf_mode` data source to retrieve the mode that indicates how the WAF rules of the given security configuration and security policy will be updated.
+**Scopes**: Security policy
+
+Returns information about how the Kona Rule Set rules associated with a security configuration and security policy are updated. The WAF (Web Application Firewall) mode determines whether Kona Rule Sets are automatically updated as part of automated attack groups (`mode = AAG`) or whether you must periodically check for new rules and then manually update those rules yourself (`mode = KRS`).
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/mode](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getmode)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to view waf mode details.
+// USE CASE: User wants to view WAF mode details.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 data "akamai_appsec_waf_mode" "waf_mode" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.policy_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
 }
 
 output "waf_mode_mode" {
@@ -36,7 +49,7 @@ output "waf_mode_current_ruleset" {
   value = data.akamai_appsec_waf_mode.waf_mode.current_ruleset
 }
 output "waf_mode_eval_status" {
-  value = data.akamai_appsec_waf_mode.waf_mode.eval_status //-- enabled/disabled
+  value = data.akamai_appsec_waf_mode.waf_mode.eval_status
 }
 output "waf_mode_eval_ruleset" {
   value = data.akamai_appsec_waf_mode.waf_mode.eval_ruleset
@@ -54,27 +67,20 @@ output "waf_mode_json" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the Kona Rule Set rules.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the Kona Rule Set rules.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `mode` - The security policy mode, either `KRS` (update manually) or `AAG` (update automatically), For Adaptive Security Engine (ASE) __BETA__, use `ASE_AUTO` for automatic updates or `ASE_MANUAL` to manually get current rules. Please contact your Akamai representative to learn more about ASE. 
-
-* `current_ruleset` - The current rule set version and the ISO 8601 date the rule set version was introduced; this date acts like a version number. 
-
-* `eval_status` - Whether the evaluation mode is enabled or disabled."
-
-* `eval_ruleset` - The evaluation rule set version and the ISO 8601 date the evaluation starts.
-
-* `eval_expiration_date` - The ISO 8601 time stamp when the evaluation is expiring. This value only appears when `eval` is set to "enabled".
-
-* `output_text` - A tabular display of the mode information.
-
-* `json` - A JSON-formatted list of the mode information.
+- `mode`. Security policy mode, either **KRS** (update manually) or **AAG** (update automatically), For organizations running the Adaptive Security Engine (ASE) beta, you'll get back **ASE_AUTO** for automatic updates or **ASE_MANUAL** for manual updates. Please contact your Akamai representative to learn more about ASE.
+- `current_ruleset`. Current ruleset version and the ISO 8601 date the version was introduced.
+- `eval_status`. Specifies whether evaluation mode is enabled or disabled.
+- `eval_ruleset`. Evaluation ruleset version and the ISO 8601 date the evaluation began.
+- `eval_expiration_date`. ISO 8601 timestamp indicating when evaluation mode expires. Valid only if `eval_status` is set to **enabled**.
+- `output_text`. Tabular report of the mode information.
+- `json`. JSON-formatted list of the mode information.
 

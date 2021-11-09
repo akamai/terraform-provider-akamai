@@ -33,6 +33,8 @@ const (
 	// ProviderName is the legacy name of the provider
 	// Deprecated: terrform now uses registry paths, the shortest of which would be akamai/akamai"
 	ProviderName = "terraform-provider-akamai"
+
+	ConfigurationIsNotSpecified = "Akamai EdgeGrid configuration was not specified. Specify the configuration using system environment variables or the location and file name containing the edgerc configuration. Default location the provider checks for is the current user’s home directory. Default configuration file name the provider checks for is .edgerc."
 )
 
 type (
@@ -133,91 +135,103 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 		}
 
 		instance.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-			// generate an operation id so we can correlate all calls to this provider
-			opid := uuid.Must(uuid.NewRandom()).String()
-
-			// create a log from the hclog in the context
-			log := hclog.FromContext(ctx).With(
-				"OperationID", opid,
-			)
-
-			// configure sub-providers
-			for _, p := range instance.subs {
-				if err := p.Configure(LogFromHCLog(log), d); err != nil {
-					return nil, err
-				}
-			}
-
-			cacheEnabled, err := tools.GetBoolValue("cache_enabled", d)
-			if err != nil && !IsNotFoundError(err) {
-				return nil, diag.FromErr(err)
-			}
-
-			edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
-
-			edgercPath, err := tools.GetStringValue("edgerc", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return nil, diag.FromErr(err)
-			}
-			if edgercPath == "" {
-				edgercPath = edgegrid.DefaultConfigFile
-			}
-			edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
-			edgercSection, err := tools.GetStringValue("config_section", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return nil, diag.FromErr(err)
-			}
-			if err == nil {
-				edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
-			}
-			envs, err := tools.GetSetValue("config", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
-				return nil, diag.FromErr(err)
-			}
-			if err == nil && len(envs.List()) > 0 {
-				envsMap, ok := envs.List()[0].(map[string]interface{})
-				if !ok {
-					return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "config", "map[string]interface{}"))
-				}
-				err = setEdgegridEnvs(envsMap, edgercSection)
-				if err != nil {
-					return nil, diag.FromErr(err)
-				}
-			}
-
-			edgerc, err := edgegrid.New(edgercOps...)
-			if err != nil {
-				return nil, diag.Errorf("Akamai EdgeGrid configuration was not specified. Specify the configuration using system environment variables or the location and file name containing the edgerc configuration. Default location the provider checks for is the current user’s home directory. Default configuration file name the provider checks for is .edgerc.")
-			}
-
-			if err := edgerc.Validate(); err != nil {
-				return nil, diag.Errorf(err.Error())
-			}
-
-			// PROVIDER_VERSION env value must be updated in version file, for every new release.
-			userAgent := instance.UserAgent(ProviderName, version.ProviderVersion)
-
-			sess, err := session.New(
-				session.WithSigner(edgerc),
-				session.WithUserAgent(userAgent),
-				session.WithLog(LogFromHCLog(log)),
-				session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
-			)
-
-			meta := &meta{
-				log:          log,
-				operationID:  opid,
-				sess:         sess,
-				cacheEnabled: cacheEnabled,
-			}
-
-			return meta, nil
+			return configureContext(ctx, d)
 		}
 	})
 
 	return func() *schema.Provider {
 		return &instance.Provider
 	}
+}
+
+func configureContext(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	// generate an operation id so we can correlate all calls to this provider
+	opid := uuid.Must(uuid.NewRandom()).String()
+
+	// create a log from the hclog in the context
+	log := hclog.FromContext(ctx).With(
+		"OperationID", opid,
+	)
+
+	// configure sub-providers
+	for _, p := range instance.subs {
+		if err := p.Configure(LogFromHCLog(log), d); err != nil {
+			return nil, err
+		}
+	}
+
+	cacheEnabled, err := tools.GetBoolValue("cache_enabled", d)
+	if err != nil && !IsNotFoundError(err) {
+		return nil, diag.FromErr(err)
+	}
+
+	edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
+
+	edgercPath, err := tools.GetStringValue("edgerc", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, diag.FromErr(err)
+	}
+	edgercPath = getEdgercPath(edgercPath)
+
+	edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
+	edgercSection, err := tools.GetStringValue("config_section", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, diag.FromErr(err)
+	}
+	if err == nil {
+		edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
+	}
+	envs, err := tools.GetSetValue("config", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, diag.FromErr(err)
+	}
+	if err == nil && len(envs.List()) > 0 {
+		envsMap, ok := envs.List()[0].(map[string]interface{})
+		if !ok {
+			return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "config", "map[string]interface{}"))
+		}
+		err = setEdgegridEnvs(envsMap, edgercSection)
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+	}
+
+	edgerc, err := edgegrid.New(edgercOps...)
+	if err != nil {
+		return nil, diag.Errorf(ConfigurationIsNotSpecified)
+	}
+
+	if err := edgerc.Validate(); err != nil {
+		return nil, diag.Errorf(err.Error())
+	}
+
+	// PROVIDER_VERSION env value must be updated in version file, for every new release.
+	userAgent := instance.UserAgent(ProviderName, version.ProviderVersion)
+	logger := LogFromHCLog(log)
+	logger.Infof("Provider version: %s", version.ProviderVersion)
+
+	sess, err := session.New(
+		session.WithSigner(edgerc),
+		session.WithUserAgent(userAgent),
+		session.WithLog(logger),
+		session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
+	)
+
+	meta := &meta{
+		log:          log,
+		operationID:  opid,
+		sess:         sess,
+		cacheEnabled: cacheEnabled,
+	}
+
+	return meta, nil
+}
+
+func getEdgercPath(edgercPath string) string {
+	if edgercPath == "" {
+		edgercPath = edgegrid.DefaultConfigFile
+	}
+	return edgercPath
 }
 
 func setEdgegridEnvs(envsMap map[string]interface{}, section string) error {

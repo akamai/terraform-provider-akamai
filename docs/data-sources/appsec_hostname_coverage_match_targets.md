@@ -8,36 +8,50 @@ description: |-
 
 # akamai_appsec_hostname_coverage_match_targets
 
-Use the `akamai_appsec_hostname_coverage_match_targets` data source to retrieve information about the API and website match targets that protect a hostname. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoveragematchtargets).
+**Scopes**: Hostname
+
+Returns information about the API and website match targets used to protect a hostname. The returned information is described in the [Get the hostname coverage match targets](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getfailoverhostnames) section of the Application Security API.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/hostname-coverage/match-targets?hostname={host}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoveragematchtargets)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
+data "akamai_appsec_configuration" "configuration" {
+  name = "Documentation"
+}
+
 data "akamai_appsec_hostname_coverage_match_targets" "match_targets" {
-  config_id = 43253
-  hostname = "example.com"
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  hostname  = "documentation.akamai.com"
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id`- (Required) The configuration ID.
+- `config_id`. (Required). Unique identifier of the security configuration associated with the hostname.
+- `hostname` (Required). Name of the host you want to return information for. You can only return information for a single host and hostname at a time.
 
-* `hostname` - (Required) The hostname for which to retrieve information.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `json` - A JSON-formatted list of the coverage information.
-
-* `output_text` - A tabular display of the coverage information.
+- `json`. JSON-formatted list of the coverage information.
+- `output_text`. Tabular report of the coverage information.
 

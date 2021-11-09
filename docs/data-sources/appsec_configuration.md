@@ -6,18 +6,31 @@ description: |-
  Configuration
 ---
 
+
+
 # akamai_appsec_configuration
 
-Use the `akamai_appsec_configuration` data source to retrieve the list of security configurations, or information about a specific security configuration.
+**Scopes**: Security configuration
 
+Returns information about all your security configurations, or returns information about a specific security configuration.
+
+**Related API Endpoint**: [/appsec/v1/configs](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getconfigurations)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configurations" {
@@ -28,7 +41,7 @@ output "configuration_list" {
 }
 
 data "akamai_appsec_configuration" "specific_configuration" {
-  name = "Akamai Tools"
+  name = "Documentation"
 }
 
 output "latest" {
@@ -49,23 +62,20 @@ output "id" {
 ```
 
 
+
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `name` - (Optional) The name of a specific security configuration. If not supplied, information about all security configurations is returned.
+- `name` (Optional). Name of the security configuration you want to return information for. If not included, information is returned for all your security configurations.
 
-## Attributes Reference
+## Output Options
 
-In addition to the arguments above, the following attributes are exported:
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `config_id` - The ID of the specified security configuration. Returned only if `name` was specified.
-
-* `output_text` - A tabular display showing the following information about all available security configurations: config_id, name, latest_version, version_active_in_staging, and version_active_in_production.
-
-* `latest_version` - The last version of the specified security configuration created. Returned only if `name` was specified.
-
-* `staging_version` - The version of the specified security configuration currently active in staging. Returned only if `name` was specified.
-
-* `production_version` - The version of the specified security configuration currently active in production. Returned only if `name` was specified.
+- `config_id`. ID of the specified security configuration. Returned only if the `name` argument is included.
+- `output_text`. Tabular report showing the `config_id,` `name`, `latest_version`, `version_active_in_staging`, and `version_active_in_production` values for all your security configurations.
+- `latest_version`. Most-recent version number of the specified security configuration. Returned only if the `name` argument is included in the Terraform configuration file.
+- `staging_version`. Version number of the specified security configuration currently active in staging. Returned only if the `name` argument is included in the Terraform configuration file.
+- `production_version`. Version number of the specified security configuration currently active in production. Returned only if the `name` argument is included in the Terraform configuration file.
 

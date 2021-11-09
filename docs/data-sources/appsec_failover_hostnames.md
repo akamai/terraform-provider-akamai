@@ -6,22 +6,36 @@ description: |-
  FailoverHostnames
 ---
 
+
 # akamai_appsec_failover_hostnames
 
-Use the `akamai_appsec_failover_hostnames` data source to retrieve a list of the failover hostnames in a configuration. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getfailoverhostnames).
+**Scopes**: Security configuration
+
+Returns a list of the failover hostnames in a configuration. The returned information is described in the [List failover hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getfailoverhostnames) section of the Application Security API.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/failover-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getfailoverhostnames)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to view the failover hostnames in a given security configuration
+// USE CASE: User wants to view the failover hostnames for a security configuration.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 
 data "akamai_appsec_failover_hostnames" "failover_hostnames" {
@@ -43,17 +57,14 @@ output "failover_hostnames_json" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the failover hosts.
 
-## Attributes Reference
+## Output Options
 
-In addition to the argument above, the following attributes are exported:
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `hostnames` - A list of the failover hostnames.
-
-* `json` - A JSON-formatted list of the failover hostnames.
-
-* `output_text` - A tabular display showing the failover hostnames.
+- `hostnames`. List of the failover hostnames.
+- `json`. JSON-formatted list of the failover hostnames.
 

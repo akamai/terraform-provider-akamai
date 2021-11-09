@@ -8,20 +8,31 @@ description: |-
 
 # akamai_appsec_custom_rule
 
+**Scopes**: Security configuration
 
-The `akamai_appsec_custom_rule` resource allows you to create or modify a custom rule associated with a given security configuration.
+Creates a custom rule associated with a security configuration. Custom rules are rules that you define yourself and are not part of the Kona Rule Set.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/custom-rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postcustomrules)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configuration" {
-  name = "Akamai Tools"
+  name = "Documentation"
 }
 
 data "local_file" "rules" {
@@ -29,7 +40,7 @@ data "local_file" "rules" {
 }
 
 resource "akamai_appsec_custom_rule" "custom_rule" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
+  config_id   = data.akamai_appsec_configuration.configuration.config_id
   custom_rule = data.local_file.rules.content
 }
 
@@ -40,15 +51,14 @@ output "custom_rule_rule_id" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
-
-* `custom_rule` - (Required) The name of a JSON file containing a custom rule definition ([format](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postcustomrules)).
+- `config_id` (Required). Unique identifier of the security configuration associated with the custom rule being modified.
+- `custom_rule` (Required). Path to a JSON file containing the custom rule definition. To view a sample JSON file, see the [Create a custom rule](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postcustomrules) section of the Application Security API documentation.
 
 ## Attribute Reference
 
 In addition to the arguments above, the following attribute is exported:
 
-* `custom_rule_id` - The ID of the custom rule.
+- `custom_rule_id`. ID of the new custom rule.
 

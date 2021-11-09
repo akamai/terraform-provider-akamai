@@ -8,44 +8,54 @@ description: |-
 
 # akamai_appsec_rate_policy_actions
 
-Use the `akamai_appsec_rate_policy_actions` data source to retrieve a list of all rate policies associated with a given configuration and security policy, or the actions associated with a specific rate policy.
+**Scopes**: Security policy; rate policy
+
+Returns information about your rate policy actions, Actions specify what happens any time a rate policy is triggered: the issue could be ignored, the request could be denied, or an alert could be generated.
+
+**Related API Endpoint:** [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rate-policies](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getratepolicyactions)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to view the all rate policy actions associated with a given security policy
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: User wants to view all the rate policy actions associated with a security policy.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_rate_policy_actions" "rate_policy_actions" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
 }
 output "rate_policy_actions" {
   value = data.akamai_appsec_rate_policy_actions.rate_policy_actions.output_text
 }
-
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the rate policies and rate policy actions.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the rate policies and rate policy actions.
+- `rate_policy_id` (Optional). Unique identifier of the rate policy you want to return action information for. If not included, action information is returned for all your rate policies.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+## Output Options
 
-* `rate_policy_id` - (Optional) The ID of the rate policy to use. If not supplied, information about all rate policies will be returned.
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* `output_text` - A tabular display showing the ID IPv4Action and IPv6Action of the indicated security policy.
+- `output_text`. Tabular report showing the ID, IPv4 action, and IPv6 action of the rate policies.
 

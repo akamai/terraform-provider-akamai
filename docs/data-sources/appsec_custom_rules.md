@@ -6,22 +6,36 @@ description: |-
  CustomRules
 ---
 
+
 # akamai_appsec_custom_rules
 
-Use the `akamai_appsec_custom_rules` data source to retrieve a list of the custom rules defined for a security configuration.
+**Scopes**: Security configuration; custom rule
+
+Returns a list of the custom rules defined for a security configuration; you can also use this resource to return information for an individual custom rule. Custom rules are rules you have created yourself and are not part of the Kona Rule Set.
+
+**Related API Endpoint**:[/appsec/v1/configs/{configId}/custom-rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcustomrules)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+    source = "akamai/akamai"
+    }
+  }
+ }
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to see the custom rules associated with a given security configuration
+// USE CASE: User wants to view the custom rules associated with a security configuration.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_custom_rules" "custom_rules" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
@@ -35,10 +49,11 @@ output "custom_rules_json" {
 output "custom_rules_config_id" {
   value = data.akamai_appsec_custom_rules.custom_rules.config_id
 }
-// USE CASE: user wants to see a specific custom rule
+// USE CASE: User wants to view a specific custom rule.
+
 data "akamai_appsec_custom_rules" "specific_custom_rule" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  custom_rule_id = var.custom_rule_id
+  custom_rule_id = "60029316"
 }
 output "specific_custom_rule_json" {
   value = data.akamai_appsec_custom_rules.specific_custom_rule.json
@@ -47,17 +62,15 @@ output "specific_custom_rule_json" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the custom rules
+- `custom_rule_id` (Optional). Unique identifier of the custom rule you want to return information for. If not included, information is returned for all your custom rules.
 
-* `custom_rule_id` - (Optional) The ID of a specific custom rule to use. If not supplied, information about all custom rules associated with the given security configuration will be returned.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the argument above, the following attribute is exported:
-
-* `output_text` - A tabular display showing the ID and name of the custom rule(s).
-
-* `json` - A JSON-formatted display of the custom rule information.
+- `output_text`. Tabular report showing the ID and name of the custom rule information.
+- `json`. JSON-formatted report of the custom rule information.
 

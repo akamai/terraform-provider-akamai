@@ -6,27 +6,40 @@ description: |-
  ExportConfiguration
 ---
 
+
 # akamai_appsec_export_configuration
 
-Use the `akamai_appsec_export_configuration` data source to retrieve comprehensive details about a security configuration version, including rate and security policies, rules, hostnames, and other settings. You can retrieve the entire set of information in JSON format, or a subset of the information in tabular format.
+**Scopes**: Security configuration and version
+
+Returns comprehensive details about a security configuration, including rate policies, security policies, rules, hostnames, and match targets.
+
+**Related API Endpoint**: [/appsec/v1/export/configs/{configId}/versions/{versionNumber}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getconfigurationversionexport)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
-  appsec_section = "default"
+  edgerc = "~/.edgerc"
 }
 
 data "akamai_appsec_configuration" "configuration" {
-  name = "Akamai Tools"
+  name = "Documentation"
 }
 
 data "akamai_appsec_export_configuration" "export" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
-  version = data.akamai_appsec_configuration.configuration.latest_version
-  search = ["securityPolicies", "selectedHosts"]
+  version   = data.akamai_appsec_configuration.configuration.latest_version
+  search    = ["securityPolicies", "selectedHosts"]
 }
 
 output "json" {
@@ -36,32 +49,43 @@ output "json" {
 output "text" {
   value = data.akamai_appsec_export_configuration.export.output_text
 }
-
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration you want to return information for.
+- `version` (Required). Version number of the security configuration.
+- `search` (Optional). JSON array of strings specifying the types of information to be retrieved. Allowed values include:
+> - **AdvancedSettingsLogging**
+> - **AdvancedSettingsPrefetch**
+> - **ApiRequestConstraints**
+> - **AttackGroup**
+> - **AttackGroupConditionException**
+> - **Eval**
+> - **EvalRuleConditionException**
+> - **CustomDeny**
+> - **CustomRule**
+> - **CustomRuleAction**
+> - **IPGeoFirewall**
+> - **MatchTarget**
+> - **PenaltyBox**
+> - **RatePolicy**
+> - **RatePolicyAction**
+> - **ReputationProfile**
+> - **ReputationProfileAction**
+> - **Rule**
+> - **RuleConditionException**
+> - **SecurityPolicy**
+> - **SiemSettings**
+> - **SlowPost**
 
-* `version` - (Required) The version number of the security configuration to use.
 
-* `search` - (Optional) A bracket-delimited list of quoted strings specifying the types of information to be retrieved and made available for display in the `output_text` format. The following types are available:
-  * customRules
-  * matchTargets
-  * ratePolicies
-  * reputationProfiles
-  * rulesets
-  * securityPolicies
-  * selectableHosts
-  * selectedHosts
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `json` - The complete set of information about the specified security configuration version, in JSON format. This includes the types available for the `search` parameter, plus several additional fields such as createDate and createdBy.
-
-* `output_text` - A tabular display showing the types of data specified in the `search` parameter. Included only if the `search` parameter specifies at least one type.
+- `json`. Complete set of information about the specified security configuration version in JSON format. Includes the types available for the `search` parameter as well as additional fields such as `createDate` and `createdBy`.
+- `output_text`. Tabular report showing the types of data specified in the `search` parameter. Valid only if the `search` parameter references at least one type.
 

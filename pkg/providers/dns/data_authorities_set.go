@@ -42,7 +42,7 @@ func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m
 
 	contract, err := tools.GetStringValue("contract", d)
 	if err != nil {
-		diag.FromErr(err)
+		return diag.FromErr(err)
 	}
 	contractID := strings.TrimPrefix(contract, "ctr_")
 	// Warning or Errors can be collected in a slice type

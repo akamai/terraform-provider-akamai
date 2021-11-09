@@ -8,36 +8,50 @@ description: |-
 
 # akamai_appsec_hostname_coverage_overlapping
 
-Use the `akamai_appsec_hostname_coverage_overlapping` data source to retrieve information about the configuration versions that contain a hostname also included in the current configuration version. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoverageoverlapping).
+**Scopes**: Security configuration; hostname
+
+Returns information about any other configuration versions that contain a hostname found in the current configuration version. The returned information is described in the [List hostname overlaps](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoverageoverlapping) section of the Application Security API.
+
+**Related API Endpoint**:[/appsec/v1/configs/{configId}/versions/{versionNumber}/hostname-coverage/overlapping?hostname={host}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoverageoverlapping)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-data "akamai_appsec_hostname_coverage_overlapping" "test"  {
-  config_id = 43253
-  hostname = "example.com"
+data "akamai_appsec_configuration" "configuration" {
+  name = "Documentation"
+}
+
+data "akamai_appsec_hostname_coverage_overlapping" "test" {
+  config_id = data.akamai_appsec_configuration.configuration.config_id
+  hostname  = "documentation.akamai.com"
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This resource supports the following arguments:
 
-* `config_id`- (Required) The configuration ID.
+- `config_id` (Required). Unique identifier of the security configuration you want to return information for.
+- `hostname` (Required). Name of the host you want to return information for.
 
-* `hostname` - (Optional) The hostname for which to retrieve information.
+## Output Options
 
-## Attributes Reference
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-In addition to the arguments above, the following attributes are exported:
-
-* `json` - A JSON-formatted list of the overlap information.
-
-* `output_text` - A tabular display of the overlap information.
+- `json`. JSON-formatted list of the overlap information.
+- `output_text`. Tabular report of the overlap information.
 

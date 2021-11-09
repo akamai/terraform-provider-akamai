@@ -8,20 +8,33 @@ description: |-
 
 # akamai_appsec_rate_policies
 
-Use the `akamai_appsec_rate_policies` data source to retrieve the rate policies for a specific security configuration, or a single rate policy.
+**Scopes**: Security configuration; rate policy
+
+Returns information about your rate policies. Rate polices help you monitor and moderate the number and rate of all the requests you receive; in turn, this helps you prevent your website from being overwhelmed by a dramatic, and unexpected, surge in traffic.
+
+**Related API Endpoint:** [/appsec/v1/configs/{configId}/versions/{versionNumber}/rate-policies](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getratepolicies)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
+}
+
 provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to see all rate policies associated with a given configuration version
+// USE CASE: User wants to view all the rate policies associated with a configuration.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_rate_policies" "rate_policies" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
@@ -33,10 +46,11 @@ output "rate_policies_json" {
   value = data.akamai_appsec_rate_policies.rate_policies.json
 }
 
-// USE CASE: user wants to see a single rate policy associated with a given Configuration Version
+// USE CASE: User wants to see a specific rate policy.
+
 data "akamai_appsec_rate_policies" "rate_policy" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  rate_policy_id = var.rate_policy_id
+  config_id      = data.akamai_appsec_configuration.configuration.config_id
+  rate_policy_id = "122149"
 }
 output "rate_policy_json" {
   value = data.akamai_appsec_rate_policies.rate_policy.json
@@ -48,19 +62,15 @@ output "rate_policy_output" {
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the rate policies.
+- `rate_policy_id` (Optional). Unique identifier of the rate policy you want to return information for. If not included, information is returned for all your rate policies.
 
-* `version` - (Required) The version number of the security configuration to use.
+## Output Options
 
-* `rate_policy_id` - (Optional) The ID of the rate policy to use. If this parameter is not supplied, information about all rate policies will be returned.
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* `output_text` - A tabular display showing the ID and name of all rate policies associated with the specified security configuration.
-
-* `json` - A JSON-formatted list of the rate policy information.
+- `output_text`. Tabular report showing the ID and name of the rate policies.
+- `json`. JSON-formatted list of the rate policy information.
 

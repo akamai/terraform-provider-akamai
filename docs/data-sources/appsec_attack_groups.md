@@ -6,64 +6,76 @@ description: |-
  KRS Attack Groups
 ---
 
+
 # akamai_appsec_attack_groups
 
-Use the `akamai_appsec_attack_groups` data source to list the action and condition-exception information for an attack
-group or groups.
+**Scopes**: Security policy; attack group
+
+Returns the action and the condition-exception information for an attack group or set of attack groups. Attack groups are collections of Kona Rule Set rules used to streamline the management of website protections.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/attack-groups](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getattackgroups)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to view action and condition-exception information for an attack group
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: User wants to view the action and the condition-exception information for an attack group.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_attack_groups" "attack_group" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  attack_group = var.attack_group
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
+  attack_group       = "SQL"
 }
 output "attack_group_action" {
-  value = akamai_appsec_attack_groups.attack_group.attack_group_action
+  value = data.akamai_appsec_attack_groups.attack_group.attack_group_action
 }
 output "condition_exception" {
-  value = akamai_appsec_attack_groups.attack_group.condition_exception
+  value = data.akamai_appsec_attack_groups.attack_group.condition_exception
 }
 output "json" {
-  value = akamai_appsec_attack_groups.attack_group.json
+  value = data.akamai_appsec_attack_groups.attack_group.json
 }
 output "output_text" {
-  value = akamai_appsec_attack_groups.attack_group.output_text
+  value = data.akamai_appsec_attack_groups.attack_group.output_text
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the attack group.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the attack group.
+- `attack_group` (Optional). Unique name of the attack group you want to return information for. If not included, information is returned for all your attack groups.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
 
-* `attack_group` - (Optional) The ID of the attack group to use.
 
-## Attributes Reference
+## Output Options
 
-In addition to the arguments above, the following attributes are exported:
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-* `attack_group_action` - The attack group's action, either `alert`, `deny`, or `none`.
-
-* `condition_exception` - The attack group's conditions and exceptions.
-
-* `json` - A JSON-formatted list of the action and condition-exception information for the specified attack
-group. This output is only generated if an attack group is specified.
-
-* `output_text` - A tabular display showing, for the specified attack group or groups, the attack group's action and
-boolean values indicating whether conditions and exceptions are present.
+- `attack_group_action`. Action taken anytime the attack group is triggered. Valid values are:
+  - **alert**. The event is recorded.
+  - **deny**. The request is blocked.
+  - **deny_custom_{custom_deny_id}**. The action defined by the custom deny is taken.
+  - **none**. No action is taken.
+- `condition_exception`. Conditions and exceptions assigned to the attack group.
+- `json`. JSON-formatted list of the action and the condition-exception information for the attack group. This option is available only if the `attack_group` argument is included in the Terraform configuration file.
+- `output_text`. Tabular report showing the attack group's action as well as Boolean values indicating whether conditions and exceptions have been configured for the group.
 

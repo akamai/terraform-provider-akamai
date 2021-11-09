@@ -3,10 +3,14 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"reflect"
 )
 
 // AggregateValidations takes any number of schema.SchemaValidateDiagFunc and executes them one by one
@@ -50,6 +54,14 @@ func ValidateJSON(val interface{}, _ cty.Path) diag.Diagnostics {
 			return diag.FromErr(fmt.Errorf("invalid JSON: %s", err))
 		}
 		return nil
+	}
+	return diag.Errorf("value is not a string: %s", val)
+}
+
+// ValidateEmail checks if value is a valid email
+func ValidateEmail(val interface{}, _ cty.Path) diag.Diagnostics {
+	if str, ok := val.(string); ok {
+		return diag.FromErr(validation.Validate(str, validation.Required, is.Email))
 	}
 	return diag.Errorf("value is not a string: %s", val)
 }

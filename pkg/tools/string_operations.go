@@ -26,3 +26,21 @@ func ConvertToString(data interface{}) (res string) {
 	}
 	return
 }
+
+func GetFirstNotEmpty(values ...string) string {
+	for _, s := range values {
+		if s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
+func ContainsString(s []string, searchTerm string) bool {
+	for _, v := range s {
+		if v == searchTerm {
+			return true
+		}
+	}
+	return false
+}

@@ -8,61 +8,71 @@ description: |-
 
 # akamai_appsec_rules
 
-Use the `akamai_appsec_rules` data source to list the action and condition-exception information for a rule or rules.
+**Scopes**: Security policy; rule
+
+Returns the action and the condition-exception information for your Kona Rule Set (KRS) rules.
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getrules)
 
 ## Example Usage
 
 Basic usage:
 
-```hcl
-provider "akamai" {
-  appsec_section = "default"
+```
+terraform {
+  required_providers {
+    akamai = {
+      source = "akamai/akamai"
+    }
+  }
 }
 
-// USE CASE: user wants to view action and condition-exception information for a rule
+provider "akamai" {
+  edgerc = "~/.edgerc"
+}
+
+// USE CASE: User wants to view the action and the condition-exception information for a rule.
+
 data "akamai_appsec_configuration" "configuration" {
-  name = var.security_configuration
+  name = "Documentation"
 }
 data "akamai_appsec_rules" "rule" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
-  security_policy_id = var.security_policy_id
-  rule_id = var.rule_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
+  rule_id            = "60029316"
 }
 output "rule_action" {
-  value = akamai_appsec_rules.rule.rule_action
+  value = data.akamai_appsec_rules.rule.rule_action
 }
 output "condition_exception" {
-  value = akamai_appsec_rules.rule.condition_exception
+  value = data.akamai_appsec_rules.rule.condition_exception
 }
 output "json" {
-  value = akamai_appsec_rules.rule.json
+  value = data.akamai_appsec_rules.rule.json
 }
 output "output_text" {
-  value = akamai_appsec_rules.rule.output_text
+  value = data.akamai_appsec_rules.rule.output_text
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
+This data source supports the following arguments:
 
-* `config_id` - (Required) The ID of the security configuration to use.
+- `config_id` (Required). Unique identifier of the security configuration associated with the rules.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the rules.
+- `rule_id` (Optional). Unique identifier of the Kona Rule Set rule you want to return information for. If not included, information is returned for all your KRS rules.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+## Output Options
 
-* `rule_id` - (Optional) The ID of the rule to use. If not specified, information about all rules will be returned.
+The following options can be used to determine the information returned, and how that returned information is formatted:
 
-## Attributes Reference
-
-In addition to the arguments above, the following attributes are exported:
-
-* `rule_action` - The rule's action, either `alert`, `deny`, or `none`.
-
-* `condition_exception` - The rule's conditions and exceptions.
-
-* `json` - A JSON-formatted list of the action and condition-exception information for the specified rule.
-This output is only generated if a rule is specified.
-
-* `output_text` - A tabular display showing, for the specified rule or rules, the rule action and boolean values
-indicating whether conditions and exceptions are present.
+- `rule_action`. Action taken anytime the rule is triggered. Valid values are:
+  - **alert**. The event is recorded.
+  - **deny**. The request is blocked.
+  - **deny_custom_{custom_deny_id}**. The action defined by the custom deny is taken.
+  - **none**. No action is taken.
+- `condition_exception`. Conditions and exceptions associated with the rule.
+- `json`. JSON-formatted list of the action and the condition-exception information for the rule. This option is only available if the `rule_id` argument is included in yur Terraform configuration file.
+- `output_text`. Tabular report showing the rule action as well as Boolean values indicating whether conditions and exceptions are configured.
 

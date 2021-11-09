@@ -162,7 +162,7 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if !evalrule.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(evalrule.ConditionException)
 		if err != nil {
-			diag.Errorf("%s", "Error Marshalling condition exception")
+			return diag.Errorf("%s", "Error Marshalling condition exception")
 		}
 		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
