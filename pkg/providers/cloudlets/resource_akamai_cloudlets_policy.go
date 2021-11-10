@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"reflect"
 	"strconv"
 	"strings"
@@ -34,13 +35,10 @@ var cloudletIDs = map[string]int{
 
 func resourceCloudletsPolicy() *schema.Resource {
 	return &schema.Resource{
-		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
-			old, new := diff.GetChange("match_rules")
-			if diffMatchRules(old.(string), new.(string)) {
-				return nil
-			}
-			return diff.SetNewComputed("warnings")
-		},
+		CustomizeDiff: customdiff.All(
+			EnforcePolicyVersionChange,
+			EnforceMatchRulesChange,
+		),
 		CreateContext: resourcePolicyCreate,
 		ReadContext:   resourcePolicyRead,
 		UpdateContext: resourcePolicyUpdate,
@@ -100,6 +98,27 @@ func resourceCloudletsPolicy() *schema.Resource {
 			StateContext: resourcePolicyImport,
 		},
 	}
+}
+
+// EnforceVersionChange enforces that change to any field will most likely result in creating a new version
+func EnforcePolicyVersionChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	if diff.HasChange("name") ||
+		diff.HasChange("description") ||
+		diff.HasChange("cloudlet_id") ||
+		diff.HasChange("match_rule_format") ||
+		diff.HasChange("version") {
+		return diff.SetNewComputed("version")
+	}
+	return nil
+}
+
+// EnforceMatchRulesChange enforces that any changes to match_rules will re compute the warnings
+func EnforceMatchRulesChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	old, new := diff.GetChange("match_rules")
+	if diffMatchRules(old.(string), new.(string)) {
+		return nil
+	}
+	return diff.SetNewComputed("warnings")
 }
 
 func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
