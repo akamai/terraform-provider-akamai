@@ -16,9 +16,7 @@ resource "akamai_datastream" "s" {
 
     contract_id        = "test_contract"
     dataset_fields_ids = [
-        1000,
-        1001,
-        1002
+        2000, 1002, 2001, 1001
     ]
     email_ids          = [
         "test_email1_updated@akamai.com",
