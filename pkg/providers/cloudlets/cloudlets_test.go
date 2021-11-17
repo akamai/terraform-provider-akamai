@@ -11,6 +11,11 @@ type mockcloudlets struct {
 	mock.Mock
 }
 
+func (m *mockcloudlets) DeletePolicyProperty(ctx context.Context, req cloudlets.DeletePolicyPropertyRequest) error {
+	args := m.Called(ctx, req)
+	return args.Error(0)
+}
+
 func (m *mockcloudlets) CreateLoadBalancerVersion(ctx context.Context, req cloudlets.CreateLoadBalancerVersionRequest) (*cloudlets.LoadBalancerVersion, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -184,9 +189,4 @@ func (m *mockcloudlets) ListLoadBalancerVersions(ctx context.Context, req cloudl
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]cloudlets.LoadBalancerVersion), args.Error(1)
-}
-
-func (m *mockcloudlets) DeletePolicyProperty(ctx context.Context, req cloudlets.DeletePolicyPropertyRequest) error {
-	args := m.Called(ctx, req)
-	return args.Error(0)
 }
