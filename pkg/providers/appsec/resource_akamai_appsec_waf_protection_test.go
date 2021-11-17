@@ -17,11 +17,11 @@ func TestAccAkamaiWAFProtection_res_basic(t *testing.T) {
 		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
 		json.Unmarshal([]byte(tempJSON), &config)
 
-		allProtectionsFalse := appsec.GetPolicyProtectionsResponse{}
+		allProtectionsFalse := appsec.PolicyProtectionsResponse{}
 		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResWAFProtection/PolicyProtections.json"))
 		json.Unmarshal([]byte(tempJSON), &allProtectionsFalse)
 
-		oneProtectionTrue := appsec.GetPolicyProtectionsResponse{}
+		oneProtectionTrue := appsec.PolicyProtectionsResponse{}
 		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResWAFProtection/UpdatedPolicyProtections.json"))
 		json.Unmarshal([]byte(tempJSON), &oneProtectionTrue)
 

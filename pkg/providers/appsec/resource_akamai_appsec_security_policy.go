@@ -71,11 +71,11 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCreate")
 	logger.Debugf("in resourceSecurityPolicyCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "securityPolicy", m)
+	version := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
 	policyname, err := tools.GetStringValue("security_policy_name", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -95,7 +95,7 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 
 	if len(createfromsecuritypolicy) > 0 {
 		createSecurityPolicyClone := appsec.CreateSecurityPolicyCloneRequest{
-			ConfigID:                 configid,
+			ConfigID:                 configID,
 			Version:                  version,
 			CreateFromSecurityPolicy: createfromsecuritypolicy,
 			PolicyName:               policyname,
@@ -112,7 +112,7 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 
 	} else {
 		createSecurityPolicy := appsec.CreateSecurityPolicyRequest{
-			ConfigID:        configid,
+			ConfigID:        configID,
 			Version:         version,
 			PolicyName:      policyname,
 			DefaultSettings: defaultSettings,
@@ -126,10 +126,10 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(errc)
 		}
 		if err := d.Set("security_policy_id", spcr.PolicyID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 		if err := d.Set("security_policy_name", spcr.PolicyName); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		d.SetId(fmt.Sprintf("%d:%s", createSecurityPolicy.ConfigID, spcr.PolicyID))
@@ -144,22 +144,22 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
 	logger.Debugf("in resourceSecurityPolicyRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	idParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
 	getSecurityPolicy := appsec.GetSecurityPolicyRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	securitypolicy, err := client.GetSecurityPolicy(ctx, getSecurityPolicy)
@@ -169,20 +169,20 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("config_id", getSecurityPolicy.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_name", securitypolicy.PolicyName); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	policyparts := strings.Split(securitypolicy.PolicyID, "_")
 	if err := d.Set("security_policy_prefix", policyparts[0]); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securitypolicy.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("default_settings", true); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -194,17 +194,17 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyUpdate")
 	logger.Debugf("in resourceSecurityPolicyUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	idParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "securityPolicy", m)
-	securitypolicyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	securityPolicyID := idParts[1]
 
 	// Prevent an update call with the same policy name since API will reject it.
 	if !d.HasChange("security_policy_name") {
@@ -217,9 +217,9 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	updateSecurityPolicy := appsec.UpdateSecurityPolicyRequest{
-		ConfigID:   configid,
+		ConfigID:   configID,
 		Version:    version,
-		PolicyID:   securitypolicyid,
+		PolicyID:   securityPolicyID,
 		PolicyName: policyname,
 	}
 
@@ -238,27 +238,27 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDelete")
 	logger.Debugf("in resourceSecurityPolicyDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	idParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "securityPolicy", m)
-	securitypolicyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	securityPolicyID := idParts[1]
 
-	latestVersion := getLatestConfigVersion(ctx, configid, m)
-	stagingVersion, productionVersion := getActiveConfigVersions(ctx, configid, m)
+	latestVersion := getLatestConfigVersion(ctx, configID, m)
+	stagingVersion, productionVersion := getActiveConfigVersions(ctx, configID, m)
 	if latestVersion == stagingVersion || latestVersion == productionVersion {
 		logger.Debugf("latest version %d is active, DeleteContext is a no-op", latestVersion)
 	} else {
 		removeSecurityPolicy := appsec.RemoveSecurityPolicyRequest{
-			ConfigID: configid,
+			ConfigID: configID,
 			Version:  version,
-			PolicyID: securitypolicyid,
+			PolicyID: securityPolicyID,
 		}
 
 		_, errd := client.RemoveSecurityPolicy(ctx, removeSecurityPolicy)

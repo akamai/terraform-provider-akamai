@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -49,13 +48,13 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 
 	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSelectedHostnames.ConfigID = configid
+	getSelectedHostnames.ConfigID = configID
 
-	getSelectedHostnames.Version = getLatestConfigVersion(ctx, configid, m)
+	getSelectedHostnames.Version = getLatestConfigVersion(ctx, configID, m)
 
 	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
 	if err != nil {
@@ -69,7 +68,7 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	if err := d.Set("hostnames_json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	newhdata := make([]string, 0, len(selectedhostnames.HostnameList))
@@ -79,11 +78,11 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	if err := d.Set("hostnames", newhdata); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("config_id", getSelectedHostnames.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	ots := OutputTemplates{}
@@ -92,7 +91,7 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 	outputtext, err := RenderTemplates(ots, "selectedHostsDS", selectedhostnames)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 

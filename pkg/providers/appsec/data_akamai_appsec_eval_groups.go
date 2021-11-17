@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -57,19 +56,19 @@ func dataSourceEvalGroupsRead(ctx context.Context, d *schema.ResourceData, m int
 
 	getAttackGroups := appsec.GetAttackGroupsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	getAttackGroups.ConfigID = configid
+	getAttackGroups.ConfigID = configID
 
-	getAttackGroups.Version = getLatestConfigVersion(ctx, configid, m)
+	getAttackGroups.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	getAttackGroups.PolicyID = policyid
+	getAttackGroups.PolicyID = policyID
 
 	attackgroup, err := tools.GetStringValue("attack_group", d)
 	if err != nil {
@@ -89,13 +88,13 @@ func dataSourceEvalGroupsRead(ctx context.Context, d *schema.ResourceData, m int
 	outputtext, err := RenderTemplates(ots, "EvalGroupDS", attackgroups)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
 	if len(attackgroups.AttackGroups) == 1 {
 		if err := d.Set("attack_group_action", attackgroups.AttackGroups[0].Action); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		conditionException, err := json.Marshal(attackgroups.AttackGroups[0].ConditionException)
@@ -104,7 +103,7 @@ func dataSourceEvalGroupsRead(ctx context.Context, d *schema.ResourceData, m int
 		}
 
 		if err := d.Set("condition_exception", string(conditionException)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		jsonBody, err := json.Marshal(attackgroups)
@@ -113,7 +112,7 @@ func dataSourceEvalGroupsRead(ctx context.Context, d *schema.ResourceData, m int
 		}
 
 		if err := d.Set("json", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 

@@ -56,12 +56,12 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisCreate")
 	logger.Debugf("in resourceReputationAnalysisCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAnalysis", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -75,9 +75,9 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	createReputationAnalysis := appsec.UpdateReputationAnalysisRequest{
-		ConfigID:                           configid,
+		ConfigID:                           configID,
 		Version:                            version,
-		PolicyID:                           policyid,
+		PolicyID:                           policyID,
 		ForwardToHTTPHeader:                forwardToHTTPHeader,
 		ForwardSharedIPToHTTPHeaderAndSIEM: forwardSharedIPToHTTPHeaderSiem,
 	}
@@ -99,21 +99,21 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisRead")
 	logger.Debugf("in resourceReputationAnalysisRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
 	getReputationAnalysis := appsec.GetReputationAnalysisRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	resp, errg := client.GetReputationAnalysis(ctx, getReputationAnalysis)
@@ -123,16 +123,16 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if err := d.Set("config_id", getReputationAnalysis.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getReputationAnalysis.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("forward_to_http_header", resp.ForwardToHTTPHeader); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("forward_shared_ip_to_http_header_siem", resp.ForwardSharedIPToHTTPHeaderAndSIEM); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -144,16 +144,16 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisUpdate")
 	logger.Debugf("in resourceReputationAnalysisUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAnalysis", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", m)
+	policyID := idParts[1]
 	forwardToHTTPHeader, err := tools.GetBoolValue("forward_to_http_header", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -164,9 +164,9 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	updateReputationAnalysis := appsec.UpdateReputationAnalysisRequest{
-		ConfigID:                           configid,
+		ConfigID:                           configID,
 		Version:                            version,
-		PolicyID:                           policyid,
+		PolicyID:                           policyID,
 		ForwardToHTTPHeader:                forwardToHTTPHeader,
 		ForwardSharedIPToHTTPHeaderAndSIEM: forwardSharedIPToHTTPHeaderSiem,
 	}
@@ -186,21 +186,21 @@ func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisDelete")
 	logger.Debugf("in resourceReputationAnalysisDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAnalysis", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", m)
+	policyID := idParts[1]
 
 	RemoveReputationAnalysis := appsec.RemoveReputationAnalysisRequest{
-		ConfigID:                           configid,
+		ConfigID:                           configID,
 		Version:                            version,
-		PolicyID:                           policyid,
+		PolicyID:                           policyID,
 		ForwardToHTTPHeader:                false,
 		ForwardSharedIPToHTTPHeaderAndSIEM: false,
 	}

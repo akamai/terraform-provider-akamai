@@ -67,12 +67,12 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceRuleCreate")
 	logger.Debugf("in resourceRuleCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "rule", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "rule", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,9 +91,9 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 
 	getWAFMode := appsec.GetWAFModeRequest{}
 
-	getWAFMode.ConfigID = configid
+	getWAFMode.ConfigID = configID
 	getWAFMode.Version = version
-	getWAFMode.PolicyID = policyid
+	getWAFMode.PolicyID = policyID
 
 	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
@@ -111,9 +111,9 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 		}
 
 		createRule := appsec.UpdateConditionExceptionRequest{
-			ConfigID:               configid,
+			ConfigID:               configID,
 			Version:                version,
-			PolicyID:               policyid,
+			PolicyID:               policyID,
 			RuleID:                 ruleid,
 			Conditions:             ruleConditionException.Conditions,
 			Exception:              ruleConditionException.Exception,
@@ -137,9 +137,9 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 		}
 
 		createRule := appsec.UpdateRuleRequest{
-			ConfigID:       configid,
+			ConfigID:       configID,
 			Version:        version,
-			PolicyID:       policyid,
+			PolicyID:       policyID,
 			RuleID:         ruleid,
 			Action:         action,
 			JsonPayloadRaw: rawJSON,
@@ -164,25 +164,25 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	logger := meta.Log("APPSEC", "resourceRuleRead")
 	logger.Debugf("in resourceRuleRead")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	getRule := appsec.GetRuleRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		RuleID:   ruleid,
 	}
 
@@ -193,17 +193,17 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 
 	if err := d.Set("config_id", getRule.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getRule.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("rule_id", getRule.RuleID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("rule_action", rule.Action); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if !rule.IsEmptyConditionException() {
@@ -212,7 +212,7 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 			return diag.FromErr(err)
 		}
 		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -225,16 +225,16 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceRuleUpdate")
 	logger.Debugf("in resourceRuleUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyid := idParts[1]
-	version := getModifiableConfigVersion(ctx, configid, "rule", m)
+	policyID := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "rule", m)
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
@@ -248,9 +248,9 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 
 	getWAFMode := appsec.GetWAFModeRequest{}
 
-	getWAFMode.ConfigID = configid
+	getWAFMode.ConfigID = configID
 	getWAFMode.Version = version
-	getWAFMode.PolicyID = policyid
+	getWAFMode.PolicyID = policyID
 
 	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
@@ -268,9 +268,9 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		}
 
 		updateRule := appsec.UpdateConditionExceptionRequest{
-			ConfigID:               configid,
+			ConfigID:               configID,
 			Version:                version,
-			PolicyID:               policyid,
+			PolicyID:               policyID,
 			RuleID:                 ruleid,
 			Conditions:             ruleConditionException.Conditions,
 			Exception:              ruleConditionException.Exception,
@@ -294,9 +294,9 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		}
 
 		updateRule := appsec.UpdateRuleRequest{
-			ConfigID:       configid,
+			ConfigID:       configID,
 			Version:        version,
-			PolicyID:       policyid,
+			PolicyID:       policyID,
 			RuleID:         ruleid,
 			Action:         action,
 			JsonPayloadRaw: rawJSON,
@@ -319,16 +319,16 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceRuleDelete")
 	logger.Debugf("in resourceRuleDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "rule", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "rule", m)
+	policyID := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
@@ -336,9 +336,9 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	getWAFMode := appsec.GetWAFModeRequest{}
 
-	getWAFMode.ConfigID = configid
+	getWAFMode.ConfigID = configID
 	getWAFMode.Version = version
-	getWAFMode.PolicyID = policyid
+	getWAFMode.PolicyID = policyID
 
 	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
@@ -348,9 +348,9 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	if wafmode.Mode == AseAuto {
 		updateRule := appsec.UpdateConditionExceptionRequest{
-			ConfigID: configid,
+			ConfigID: configID,
 			Version:  version,
-			PolicyID: policyid,
+			PolicyID: policyID,
 			RuleID:   ruleid,
 		}
 
@@ -361,9 +361,9 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 		}
 	} else {
 		updateRule := appsec.UpdateRuleRequest{
-			ConfigID: configid,
+			ConfigID: configID,
 			Version:  version,
-			PolicyID: policyid,
+			PolicyID: policyID,
 			RuleID:   ruleid,
 			Action:   "none",
 		}

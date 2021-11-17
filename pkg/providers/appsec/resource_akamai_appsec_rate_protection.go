@@ -57,12 +57,12 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceRateProtectionCreate")
 	logger.Debugf("in resourceRateProtectionCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "rateProtection", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "rateProtection", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -72,9 +72,9 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
@@ -84,9 +84,9 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
@@ -101,7 +101,7 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	d.SetId(fmt.Sprintf("%d:%s", configid, policyid))
+	d.SetId(fmt.Sprintf("%d:%s", configID, policyID))
 
 	return resourceRateProtectionRead(ctx, d, m)
 }
@@ -112,21 +112,21 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceRateProtectionRead")
 	logger.Debugf("in resourceRateProtectionRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
 	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	policyProtections, err := client.GetPolicyProtections(ctx, policyProtectionsRequest)
@@ -136,21 +136,21 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	enabled := policyProtections.ApplyRateControls
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("security_policy_id", policyid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("security_policy_id", policyID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enabled", enabled); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 	outputtext, err := RenderTemplates(ots, "rateProtectionDS", policyProtections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -163,25 +163,25 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceRateProtectionUpdate")
 	logger.Debugf("in resourceRateProtectionUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "rateProtection", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "rateProtection", m)
+	policyID := idParts[1]
 	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
 	if err != nil {
@@ -190,9 +190,9 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
@@ -216,21 +216,21 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceRateProtectionDelete")
 	logger.Debugf("in resourceRateProtectionDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "rateProtection", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "rateProtection", m)
+	policyID := idParts[1]
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
 	if err != nil {
@@ -239,9 +239,9 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configid,
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
 		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
 		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
 		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,

@@ -100,20 +100,20 @@ func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 	_, err = client.UpdateWAPSelectedHostnames(ctx, updateWAPSelectedHostnames)
 	if err != nil {
 		logger.Errorf("calling 'UpdateWAPSelectedHostnames': %s", err.Error())
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("protected_hosts", protectedHosts); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("evaluated_hosts", evaluatedHosts); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", configID, securityPolicyID))
@@ -127,7 +127,7 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesRead")
 	logger.Debugf("resourceWAPSelectedHostnamesRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	idParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -151,16 +151,16 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("protected_hosts", wapSelectedHostnames.ProtectedHosts); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("evaluated_hosts", wapSelectedHostnames.EvaluatedHosts); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -213,30 +213,30 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 	_, err = client.UpdateWAPSelectedHostnames(ctx, updateWAPSelectedHostnames)
 	if err != nil {
 		logger.Errorf("calling 'UpdateWAPSelectedHostnames': %s", err.Error())
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("protected_hosts", protectedHosts); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("evaluated_hosts", evaluatedHosts); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return resourceWAPSelectedHostnamesRead(ctx, d, m)
 }
 
-func resourceWAPSelectedHostnamesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(context.TODO(), d, m)
+func resourceWAPSelectedHostnamesDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return schema.NoopContext(ctx, d, m)
 }
 
-func verifyHostNotInBothLists(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+func verifyHostNotInBothLists(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	var protectedHostsSet, evaluatedHostsSet schema.Set
 	_, ok := d.GetOkExists("protected_hosts")
 	if ok {

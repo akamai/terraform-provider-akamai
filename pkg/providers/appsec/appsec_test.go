@@ -673,16 +673,6 @@ func (p *mockappsec) GetSiemSettings(ctx context.Context, params appsec.GetSiemS
 	return args.Get(0).(*appsec.GetSiemSettingsResponse), args.Error(1)
 }
 
-func (p *mockappsec) RemoveSiemSettings(ctx context.Context, params appsec.RemoveSiemSettingsRequest) (*appsec.RemoveSiemSettingsResponse, error) {
-	args := p.Called(ctx, params)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	return args.Get(0).(*appsec.RemoveSiemSettingsResponse), args.Error(1)
-}
-
 func (p *mockappsec) UpdateSiemSettings(ctx context.Context, params appsec.UpdateSiemSettingsRequest) (*appsec.UpdateSiemSettingsResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -691,6 +681,16 @@ func (p *mockappsec) UpdateSiemSettings(ctx context.Context, params appsec.Updat
 	}
 
 	return args.Get(0).(*appsec.UpdateSiemSettingsResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveSiemSettings(ctx context.Context, params appsec.RemoveSiemSettingsRequest) (*appsec.RemoveSiemSettingsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveSiemSettingsResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetCustomRule(ctx context.Context, params appsec.GetCustomRuleRequest) (*appsec.GetCustomRuleResponse, error) {
@@ -1211,34 +1211,34 @@ func (p *mockappsec) UpdateIPGeoProtection(ctx context.Context, params appsec.Up
 	return args.Get(0).(*appsec.UpdateIPGeoProtectionResponse), args.Error(1)
 }
 
-func (p *mockappsec) GetPolicyProtections(ctx context.Context, params appsec.GetPolicyProtectionsRequest) (*appsec.GetPolicyProtectionsResponse, error) {
+func (p *mockappsec) GetPolicyProtections(ctx context.Context, params appsec.GetPolicyProtectionsRequest) (*appsec.PolicyProtectionsResponse, error) {
 	args := p.Called(ctx, params)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(*appsec.GetPolicyProtectionsResponse), args.Error(1)
+	return args.Get(0).(*appsec.PolicyProtectionsResponse), args.Error(1)
 }
 
-func (p *mockappsec) UpdatePolicyProtections(ctx context.Context, params appsec.UpdatePolicyProtectionsRequest) (*appsec.GetPolicyProtectionsResponse, error) {
+func (p *mockappsec) UpdatePolicyProtections(ctx context.Context, params appsec.UpdatePolicyProtectionsRequest) (*appsec.PolicyProtectionsResponse, error) {
 	args := p.Called(ctx, params)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(*appsec.GetPolicyProtectionsResponse), args.Error(1)
+	return args.Get(0).(*appsec.PolicyProtectionsResponse), args.Error(1)
 }
 
-func (p *mockappsec) RemovePolicyProtections(ctx context.Context, params appsec.UpdatePolicyProtectionsRequest) (*appsec.GetPolicyProtectionsResponse, error) {
+func (p *mockappsec) RemovePolicyProtections(ctx context.Context, params appsec.UpdatePolicyProtectionsRequest) (*appsec.PolicyProtectionsResponse, error) {
 	args := p.Called(ctx, params)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(*appsec.GetPolicyProtectionsResponse), args.Error(1)
+	return args.Get(0).(*appsec.PolicyProtectionsResponse), args.Error(1)
 }
 
 func (p *mockappsec) GetRateProtection(ctx context.Context, params appsec.GetRateProtectionRequest) (*appsec.GetRateProtectionResponse, error) {

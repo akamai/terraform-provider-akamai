@@ -49,18 +49,18 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceCreate")
 	logger.Debugf("in resourceMatchTargetSequenceCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "matchTargetSequence", m)
+	version := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
 	jsonPayload := d.Get("match_target_sequence")
 
 	createMatchTargetSequence := appsec.UpdateMatchTargetSequenceRequest{}
 	if err := json.Unmarshal([]byte(jsonPayload.(string)), &createMatchTargetSequence); err != nil {
 		return diag.FromErr(err)
 	}
-	createMatchTargetSequence.ConfigID = configid
+	createMatchTargetSequence.ConfigID = configID
 	createMatchTargetSequence.ConfigVersion = version
 
 	_, err = client.UpdateMatchTargetSequence(ctx, createMatchTargetSequence)
@@ -79,20 +79,20 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
 	logger.Debugf("in resourceMatchTargetSequenceRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:matchtargettype")
+	idParts, err := splitID(d.Id(), 2, "configID:matchtargettype")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 	matchTargetType := idParts[1]
 
 	getMatchTargetSequence := appsec.GetMatchTargetSequenceRequest{
-		ConfigID:      configid,
+		ConfigID:      configID,
 		ConfigVersion: version,
 		Type:          matchTargetType,
 	}
@@ -108,11 +108,11 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("match_target_sequence", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -124,16 +124,16 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceUpdate")
 	logger.Debugf("in resourceMatchTargetSequenceUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:matchtargettype")
+	idParts, err := splitID(d.Id(), 2, "configID:matchtargettype")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "matchTargetSequence", m)
+	version := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
 	matchTargetType := idParts[1]
 
 	jsonPayload := d.Get("match_target_sequence")
@@ -142,7 +142,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	if err := json.Unmarshal([]byte(jsonPayload.(string)), &updateMatchTargetSequence); err != nil {
 		return diag.FromErr(err)
 	}
-	updateMatchTargetSequence.ConfigID = configid
+	updateMatchTargetSequence.ConfigID = configID
 	updateMatchTargetSequence.ConfigVersion = version
 
 	if matchTargetType != updateMatchTargetSequence.Type {
@@ -159,6 +159,6 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	return resourceMatchTargetSequenceRead(ctx, d, m)
 }
 
-func resourceMatchTargetSequenceDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(context.TODO(), d, m)
+func resourceMatchTargetSequenceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return schema.NoopContext(ctx, d, m)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -74,19 +73,19 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 
 	getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getPolicyProtections.ConfigID = configid
+	getPolicyProtections.ConfigID = configID
 
-	getPolicyProtections.Version = getLatestConfigVersion(ctx, configid, m)
+	getPolicyProtections.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getPolicyProtections.PolicyID = policyid
+	getPolicyProtections.PolicyID = policyID
 
 	policyprotections, err := client.GetPolicyProtections(ctx, getPolicyProtections)
 	if err != nil {
@@ -100,7 +99,7 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	outputtext, err := RenderTemplates(ots, "wafProtectionDS", policyprotections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -110,35 +109,35 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("apply_application_layer_controls", policyprotections.ApplyApplicationLayerControls); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("apply_network_layer_controls", policyprotections.ApplyNetworkLayerControls); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("apply_api_constraints", policyprotections.ApplyAPIConstraints); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("apply_rate_controls", policyprotections.ApplyRateControls); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("apply_reputation_controls", policyprotections.ApplyReputationControls); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("apply_botman_controls", policyprotections.ApplyBotmanControls); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("apply_slow_post_controls", policyprotections.ApplySlowPostControls); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getPolicyProtections.ConfigID))

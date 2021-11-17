@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -60,27 +59,27 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	var configid int
+	var configID int
 
 	for _, configval := range configuration.Configurations {
 
 		if configval.Name == configName {
 			if err := d.Set("config_id", configval.ID); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 
 			if err := d.Set("latest_version", configval.LatestVersion); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 
 			if err := d.Set("staging_version", configval.StagingVersion); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 
 			if err := d.Set("production_version", configval.ProductionVersion); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
-			configid = configval.ID
+			configID = configval.ID
 		}
 	}
 
@@ -90,11 +89,11 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 	outputtext, err := RenderTemplates(ots, "configuration", configuration)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
-	d.SetId(strconv.Itoa(configid))
+	d.SetId(strconv.Itoa(configID))
 
 	return nil
 }

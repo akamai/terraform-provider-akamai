@@ -55,17 +55,17 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceMatchTargetCreate")
 	logger.Debugf("in resourceMatchTargetCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "matchTarget", m)
+	version := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
 	createMatchTarget := appsec.CreateMatchTargetRequest{}
 	jsonpostpayload := d.Get("match_target")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	createMatchTarget.ConfigID = configid
+	createMatchTarget.ConfigID = configID
 	createMatchTarget.ConfigVersion = version
 	createMatchTarget.JsonPayloadRaw = rawJSON
 
@@ -86,23 +86,23 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceMatchTargetRead")
 	logger.Debugf("in resourceMatchTargetRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:matchtargetid")
+	idParts, err := splitID(d.Id(), 2, "configID:matchtargetid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 	targetid, err := strconv.Atoi(idParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	getMatchTarget := appsec.GetMatchTargetRequest{
-		ConfigID:      configid,
+		ConfigID:      configID,
 		ConfigVersion: version,
 		TargetID:      targetid,
 	}
@@ -117,14 +117,14 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("match_target", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("match_target_id", matchtarget.TargetID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -136,16 +136,16 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceMatchTargetUpdate")
 	logger.Debugf("in resourceMatchTargetUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:matchtargetid")
+	idParts, err := splitID(d.Id(), 2, "configID:matchtargetid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "matchTarget", m)
+	version := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
 	targetid, err := strconv.Atoi(idParts[1])
 	if err != nil {
 		return diag.FromErr(err)
@@ -155,7 +155,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateMatchTarget := appsec.UpdateMatchTargetRequest{
-		ConfigID:       configid,
+		ConfigID:       configID,
 		ConfigVersion:  version,
 		TargetID:       targetid,
 		JsonPayloadRaw: rawJSON,
@@ -176,23 +176,23 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceMatchTargetDelete")
 	logger.Debugf("in resourceMatchTargetDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:matchtargetid")
+	idParts, err := splitID(d.Id(), 2, "configID:matchtargetid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "matchTarget", m)
+	version := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
 	targetid, err := strconv.Atoi(idParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	removeMatchTarget := appsec.RemoveMatchTargetRequest{
-		ConfigID:      configid,
+		ConfigID:      configID,
 		ConfigVersion: version,
 		TargetID:      targetid,
 	}

@@ -8,10 +8,12 @@ description: |-
 
 # akamai_appsec_tuning_recommendations
 
-Use the `akamai_appsec_tuning_recommendations` data source to retrieve tuning recommendations for all attack groups in a security policy or for a specific attack group. To accept a recommendation, the exception block in the recommendation 
-for an attack group, could be passed as condition_exception argument value of the attack group resource. 
-If needed, the Akamai terraform provider users would have to merge a recommended exception for an attack group with the exception previously configured in the attack group resource. 
-Additional information is available [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getrecommendations).
+Returns tuning recommendations for the specified attack group (or, if the `attack_group` argument is not included, returns tuning recommendations for all the attack groups in the specified security policy).
+Tuning recommendations help minimize the number of false positives triggered by a security policy. With a false positive, a client request is marked as having violated the security policy restrictions even though it actually did not.
+Tuning recommendations are returned as attack group exceptions: if you choose, you can copy the response and use the `akamai_appsec_attack_group` resource to add the recommended exception to a security policy or attack group.
+If the data source response is empty, that means that there are no further recommendations for tuning your security policy or attack group.
+If you need, you can manually merge a recommended exception for an attack group with the exception previously configured in the attack group resource. 
+You can find additional information in our [Application Security API v1 documentation](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getrecommendations).
 
 ## Example Usage
 
@@ -22,10 +24,6 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-// USE CASE: user wants to view tuning recommendations for a security policy
-// /appsec/v1/configs/{configId}/versions/{versionNum}/security-policies/{policyId}/recommendations
-// user wants to view tuning recommendations for an attack group if attack group is specified
-// /appsec/v1/configs/{configId}/versions/{versionNum}/security-policies/{policyId}/recommendations/attack-group/{attack-group-id} 
 data "akamai_appsec_configuration" "configuration" {
   name = var.security_configuration
 }
@@ -54,16 +52,16 @@ output "attack_group_recommendations_json" {
 
 The following arguments are supported:
 
-* `config_id` - (Required) The configuration ID.
+* `config_id` - (Required). Unique identifier of the security configuration you want to return tuning recommendations for.
 
-* `security_policy_id` - (Required) The ID of the security policy to use.
+* `security_policy_id` - (Required). Unique identifier of the security policy you want to return tuning recommendations for.
 
-* `attack_group` - (Optional) The ID of the attack group to use. If not supplied, information about all attack groups will be returned.
+* `attack_group` - (Optional). Unique name of the attack group you want to return tuning recommendations for. If not included, recommendations are returned for all your attack groups.
 
 ## Attributes Reference
 
-In addition to the arguments above, the following attributes are exported:
+In addition to the arguments above, the following attribute is exported:
 
-* `json` - A JSON-formatted information about tuning recommendations. The exception block format in a recommendation conforms to the exception block format used in condition_exception element of attack_group resource.  
+* `json` - JSON-formatted list of the tuning recommendations for the security policy or the attack group. The exception block format in a recommendation conforms to the exception block format used in `condition_exception` element of `attack_group` resource.  
 
 

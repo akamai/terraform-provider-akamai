@@ -10,7 +10,7 @@ description: |-
 
 **Scopes**: Security configuration
 
-**Note**: This data source is deprecated and may be removed in a future release.
+**Important**: This data source is deprecated and may be removed in a future release. You may use the `akamai_appsec_wap_selected_hostnames` resource instead.
 
 Moves hostnames being evaluated to active protection. When you move a hostname from the evaluation hostnames list that host is added to your security policy as a protected hostname and is removed from the collection of hosts being evaluated.
 

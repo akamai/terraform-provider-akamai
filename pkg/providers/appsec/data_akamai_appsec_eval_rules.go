@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -58,19 +57,19 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	getEvalRules := appsec.GetEvalRulesRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEvalRules.ConfigID = configid
+	getEvalRules.ConfigID = configID
 
-	getEvalRules.Version = getLatestConfigVersion(ctx, configid, m)
+	getEvalRules.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEvalRules.PolicyID = policyid
+	getEvalRules.PolicyID = policyID
 
 	ruleid, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -90,13 +89,13 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 	outputtext, err := RenderTemplates(ots, "RulesWithConditionExceptionDS", evalrules)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
 	if len(evalrules.Rules) == 1 {
 		if err := d.Set("eval_rule_action", evalrules.Rules[0].Action); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		conditionException, err := json.Marshal(evalrules.Rules[0].ConditionException)
@@ -105,7 +104,7 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 		}
 
 		if err := d.Set("condition_exception", string(conditionException)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		jsonBody, err := json.Marshal(evalrules)
@@ -114,7 +113,7 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 		}
 
 		if err := d.Set("json", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 

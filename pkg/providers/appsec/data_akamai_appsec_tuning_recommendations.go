@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -20,20 +19,24 @@ func dataSourceTuningRecommendations() *schema.Resource {
 		ReadContext: dataSourceTuningRecommendationsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration for which to return tuning recommendations",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique identifier of the security policy for which to return tuning recommendations.",
 			},
 			"attack_group": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique name of a specific attack group for which to return tuning recommendations.",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON-formatted list of the tuning recommendations for the security policy or attack group.",
 			},
 		},
 	}
@@ -44,12 +47,12 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceTuningRecommendationsRead")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -62,11 +65,10 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 	var jsonBody []byte
 
 	if group != "" {
-
 		getAttackGroupRecommendationsRequest := appsec.GetAttackGroupRecommendationsRequest{
-			ConfigID: configid,
-			Version:  getLatestConfigVersion(ctx, configid, m),
-			PolicyID: policyid,
+			ConfigID: configID,
+			Version:  getLatestConfigVersion(ctx, configID, m),
+			PolicyID: policyID,
 			Group:    group,
 		}
 
@@ -80,13 +82,11 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
 	} else {
-
 		getTuningRecommendationsRequest := appsec.GetTuningRecommendationsRequest{
-			ConfigID: configid,
-			Version:  getLatestConfigVersion(ctx, configid, m),
-			PolicyID: policyid,
+			ConfigID: configID,
+			Version:  getLatestConfigVersion(ctx, configID, m),
+			PolicyID: policyID,
 		}
 
 		response, err := client.GetTuningRecommendations(ctx, getTuningRecommendationsRequest)
@@ -99,14 +99,13 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configid))
+	d.SetId(strconv.Itoa(configID))
 
 	return nil
 }
