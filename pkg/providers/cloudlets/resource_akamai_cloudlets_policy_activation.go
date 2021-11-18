@@ -186,15 +186,21 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		OmitRules: true,
 	})
 	if err != nil {
+		if diagnostics := tools.RestoreOldValues(rd, []string{"version", "associated_properties"}); diagnostics != nil {
+			return diagnostics
+		}
 		return diag.Errorf("%s: cannot find the given policy version (%d): %s", ErrPolicyActivation.Error(), version, err.Error())
 	}
 
 	associatedProps, err := tools.GetSetValue("associated_properties", rd)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	if errors.Is(err, tools.ErrNotFound) {
+	if errors.Is(err, tools.ErrNotFound) || len(associatedProps.List()) == 0 {
+		if diagnostics := tools.RestoreOldValues(rd, []string{"version", "associated_properties"}); diagnostics != nil {
+			return diagnostics
+		}
 		return diag.Errorf("Field associated_properties should not be empty. If you want to remove all policy associated properties, please run `terraform destroy` instead.")
+	}
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	var newPolicyProperties []string
 	for _, prop := range associatedProps.List() {
@@ -226,13 +232,9 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		return resourcePolicyActivationRead(ctx, rd, m)
 	}
 
-	// 5. remove from the server all unnecessary policy associated_properties
-	removedProperties, err := syncToServerRemovedProperties(ctx, logger, client, int64(policyID), activationNetwork, activeProps, newPolicyProperties)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	logger.Debugf("This policy (ID=%d, version=%d, properties=[%s], network='%s') is not active. Proceeding to activation.",
+	// 5. Activate policy version. This will include new associated_properties + the ones which need to be removed
+	// it will fail if any of the associated_properties are not valid
+	logger.Debugf("Proceeding to activate the policy ID=%d (version=%d, properties=[%s], network='%s') is not active.",
 		policyID, version, strings.Join(newPolicyProperties, ", "), activationNetwork)
 
 	err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
@@ -245,10 +247,19 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		},
 	})
 	if err != nil {
+		if diagnostics := tools.RestoreOldValues(rd, []string{"version", "associated_properties"}); diagnostics != nil {
+			return diagnostics
+		}
 		return diag.Errorf("%v update: %s", ErrPolicyActivation, err.Error())
 	}
 
-	// 4. poll until active
+	// 6. remove from the server all unnecessary policy associated_properties
+	removedProperties, err := syncToServerRemovedProperties(ctx, logger, client, int64(policyID), activationNetwork, activeProps, newPolicyProperties)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// 7. poll until active
 	_, err = waitForPolicyActivation(ctx, client, int64(policyID), version, activationNetwork, newPolicyProperties, removedProperties)
 	if err != nil {
 		return diag.Errorf("%v update: %s", ErrPolicyActivation, err.Error())
@@ -278,7 +289,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 		return diag.FromErr(err)
 	}
 	associatedProps, err := tools.GetSetValue("associated_properties", rd)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	var associatedProperties []string
@@ -427,7 +438,7 @@ func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, po
 		for _, act := range activations {
 			if act.PolicyInfo.Version == version {
 				if act.PolicyInfo.Status == cloudlets.PolicyActivationStatusFailed {
-					return nil, fmt.Errorf("%v: policyID %d: %s", ErrPolicyActivation, act.PolicyInfo.PolicyID, act.PolicyInfo.StatusDetail)
+					return nil, fmt.Errorf("%v: policyID %d activation failure: %s", ErrPolicyActivation, act.PolicyInfo.PolicyID, act.PolicyInfo.StatusDetail)
 				}
 				if act.PolicyInfo.Status != cloudlets.PolicyActivationStatusActive {
 					allActive = false
