@@ -13,7 +13,7 @@ data "akamai_cloudlets_application_load_balancer_match_rule" "test" {
       match_value = "127.0.0.1"
       object_match_value {
         type = "range"
-        value = [1,50]
+        value = ["abc", "asdf"]
       }
     }
     forward_settings {

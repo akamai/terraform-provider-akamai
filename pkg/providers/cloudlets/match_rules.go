@@ -3,9 +3,8 @@ package cloudlets
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"io"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
+	"io"
 )
 
 func getMatchRulesHashID(matchRules *cloudlets.MatchRules) (string, error) {
@@ -52,4 +51,15 @@ func getBoolValue(matchRuleMap map[string]interface{}, name string) bool {
 		return value.(bool)
 	}
 	return false
+}
+
+func getListOfStringsValue(matchRuleMap map[string]interface{}, name string) []string {
+	if value, ok := matchRuleMap[name]; ok {
+		var val []string
+		for _, v := range value.([]interface{}) {
+			val = append(val, v.(string))
+		}
+		return val
+	}
+	return nil
 }

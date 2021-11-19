@@ -26,24 +26,6 @@
             "fghi"
           ]
         }
-      },
-      {
-        "matchType": "cookie",
-        "matchValue": "cookie=cookievalue",
-        "caseSensitive": true,
-        "negate": false,
-        "objectMatchValue": {
-          "name": "abcde",
-          "type": "object",
-          "nameCaseSensitive": true,
-          "nameHasWildcard": false,
-          "options": {
-            "value": [
-              "asfas"
-            ],
-            "valueCaseSensitive": true
-          }
-        }
       }
     ],
     "matchURL": "example.com",

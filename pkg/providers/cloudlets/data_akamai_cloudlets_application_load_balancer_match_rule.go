@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -117,7 +118,8 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"value": {
-																Type:        schema.TypeString,
+																Type:        schema.TypeList,
+																Elem:        &schema.Schema{Type: schema.TypeString},
 																Optional:    true,
 																Description: "The value attributes in the incoming request to match on",
 															},
@@ -140,7 +142,8 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 													},
 												},
 												"value": {
-													Type:        schema.TypeString,
+													Type:        schema.TypeList,
+													Elem:        &schema.Schema{Type: schema.TypeString},
 													Optional:    true,
 													Description: "The value attributes in the incoming request to match on (use only with simple or range type)",
 												},
@@ -317,31 +320,45 @@ func parseObjectMatchValue(aMap map[string]interface{}) (interface{}, error) {
 			return nil, fmt.Errorf("%w: 'object_match_value' should be an object", tools.ErrInvalidType)
 		}
 		if t, ok := omv["type"]; ok {
-			if cloudlets.ObjectMatchValueObjectTypeSubtype(t.(string)) == cloudlets.ObjectMatchValueObjectTypeSubtypeObject {
-				object := cloudlets.ObjectMatchValueObjectSubtype{Type: cloudlets.ObjectMatchValueObjectTypeSubtypeObject}
-				object.Name = getStringValue(omv, "name")
-				object.NameCaseSensitive = getBoolValue(omv, "name_case_sensitive")
-				object.NameHasWildcard = getBoolValue(omv, "name_has_wildcard")
+			if cloudlets.ObjectMatchValueObjectType(t.(string)) == cloudlets.Object {
 				opts, err := parseOMVOptions(omv)
 				if err != nil {
 					return nil, err
 				}
-				object.Options = opts
-				return object, nil
+				objectType := cloudlets.ObjectMatchValueObject{
+					Type:              cloudlets.Object,
+					Name:              getStringValue(omv, "name"),
+					NameCaseSensitive: getBoolValue(omv, "name_case_sensitive"),
+					NameHasWildcard:   getBoolValue(omv, "name_has_wildcard"),
+					Options:           opts,
+				}
+				return objectType, nil
 			}
 
-			rangeOrSimpleTypeSubtype := cloudlets.ObjectMatchValueRangeOrSimpleTypeSubtype(t.(string))
-			if rangeOrSimpleTypeSubtype == cloudlets.ObjectMatchValueRangeOrSimpleTypeSubtypeRange ||
-				rangeOrSimpleTypeSubtype == cloudlets.ObjectMatchValueRangeOrSimpleTypeSubtypeSimple {
-				rangeOrSimpleType := cloudlets.ObjectMatchValueRangeOrSimpleSubtype{Type: rangeOrSimpleTypeSubtype}
-				if value, ok := omv["value"]; ok {
-					var val []interface{}
-					if err := json.Unmarshal([]byte(value.(string)), &val); err != nil {
-						return nil, err
-					}
-					rangeOrSimpleType.Value = val
+			if cloudlets.ObjectMatchValueSimpleType(t.(string)) == cloudlets.Simple {
+				simpleType := cloudlets.ObjectMatchValueSimple{
+					Type:  cloudlets.Simple,
+					Value: getListOfStringsValue(omv, "value"),
 				}
-				return rangeOrSimpleType, nil
+				return simpleType, nil
+			}
+
+			if cloudlets.ObjectMatchValueRangeType(t.(string)) == cloudlets.Range {
+				valuesAsString := getListOfStringsValue(omv, "value")
+				var valuesAsInt []int64
+				for _, valueAsString := range valuesAsString {
+					valueAsInt, err := strconv.ParseInt(valueAsString, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("cannot parse %s value as an integer: %s", valueAsString, err)
+					}
+					valuesAsInt = append(valuesAsInt, valueAsInt)
+				}
+
+				rangeType := cloudlets.ObjectMatchValueRange{
+					Type:  cloudlets.Range,
+					Value: valuesAsInt,
+				}
+				return rangeType, nil
 			}
 		}
 	}
@@ -359,7 +376,7 @@ func parseOMVOptions(aMap map[string]interface{}) (*cloudlets.Options, error) {
 			return nil, fmt.Errorf("%w: 'options' should be an object", tools.ErrInvalidType)
 		}
 		options := cloudlets.Options{}
-		options.Value = getStringValue(optionField, "value")
+		options.Value = getListOfStringsValue(optionField, "value")
 		options.ValueHasWildcard = getBoolValue(optionField, "value_has_wildcard")
 		options.ValueCaseSensitive = getBoolValue(optionField, "value_case_sensitive")
 		options.ValueEscaped = getBoolValue(optionField, "value_escaped")

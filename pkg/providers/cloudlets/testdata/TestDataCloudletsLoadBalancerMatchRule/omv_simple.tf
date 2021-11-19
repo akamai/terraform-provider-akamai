@@ -24,23 +24,6 @@ data "akamai_cloudlets_application_load_balancer_match_rule" "test" {
         value = ["fghi"]
       }
     }
-    matches {
-      case_sensitive = true
-      match_type = "cookie"
-      match_value = "cookie=cookievalue"
-      object_match_value {
-        type = "object"
-        name = "abcde"
-        name_case_sensitive = true
-        name_has_wildcard = false
-        options {
-          value = ["asfas"]
-          value_has_wildcard = false
-          value_case_sensitive = true
-          value_escaped = false
-        }
-      }
-    }
     forward_settings {
       origin_id = "33"
     }

@@ -67,7 +67,7 @@ clone_edgegrid() {
     echo "Repository 'akamaiopen-edgegrid-golang' already exists, so only cleaning and updating it"
     pushd akamaiopen-edgegrid-golang
     git reset --hard
-    git fetch
+    git fetch -p
     popd
   fi
 }
