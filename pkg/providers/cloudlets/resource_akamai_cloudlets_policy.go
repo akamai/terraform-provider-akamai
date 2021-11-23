@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
@@ -174,7 +175,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	var matchRules cloudlets.MatchRules
 	if err := json.Unmarshal([]byte(matchRulesJSON), &matchRules); err != nil {
-		return diag.Errorf("unmarshaling match rules JSON: %s", err)
+		return diag.Errorf("unmarshalling match rules JSON: %s", err)
 	}
 	description, err := tools.GetStringValue("description", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -392,6 +393,17 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 	if err := client.RemovePolicy(ctx, cloudlets.RemovePolicyRequest{PolicyID: policyID}); err != nil {
+		statusErr := new(cloudlets.Error)
+		if errors.As(err, &statusErr) &&
+			strings.Contains(statusErr.Detail, "Unable to delete policy because an activation for this policy is still pending") {
+			return diag.Diagnostics{
+				diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Unable to remove policy",
+					Detail:   "Policy could not be removed because some activations are still pending. Please try again later.",
+				},
+			}
+		}
 		return diag.FromErr(err)
 	}
 	d.SetId("")
