@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -97,7 +96,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 												},
 												"type": {
 													Type:     schema.TypeString,
-													Optional: true,
+													Required: true,
 													Description: "The array type, which can be one of the following: object, range, or simple. " +
 														"Use the simple option when adding only an array of string-based values",
 												},
@@ -113,6 +112,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 												},
 												"options": {
 													Type:        schema.TypeSet,
+													MaxItems:    1,
 													Optional:    true,
 													Description: "If using the object type, use this set to list the values to match on (use only with the object type)",
 													Elem: &schema.Resource{
@@ -289,18 +289,20 @@ func parseRuleMatches(rawRule map[string]interface{}, field string) ([]cloudlets
 
 func parseMatchCriteriaALB(match interface{}) (*cloudlets.MatchCriteriaALB, error) {
 	m := match.(map[string]interface{})
-	matchCriteriaALB := cloudlets.MatchCriteriaALB{}
-	matchCriteriaALB.MatchType = getStringValue(m, "match_type")
-	matchCriteriaALB.MatchValue = getStringValue(m, "match_value")
-	matchCriteriaALB.CaseSensitive = getBoolValue(m, "case_sensitive")
-	matchCriteriaALB.Negate = getBoolValue(m, "negate")
-	matchCriteriaALB.MatchOperator = cloudlets.MatchOperator(getStringValue(m, "match_operator"))
+	matchCriteriaALB := cloudlets.MatchCriteriaALB{
+		MatchType:     getStringValue(m, "match_type"),
+		MatchValue:    getStringValue(m, "match_value"),
+		CaseSensitive: getBoolValue(m, "case_sensitive"),
+		Negate:        getBoolValue(m, "negate"),
+		MatchOperator: cloudlets.MatchOperator(getStringValue(m, "match_operator")),
+	}
+
 	if c, ok := m["check_ips"]; ok {
 		if checkIPs, ok := c.(cloudlets.CheckIPs); ok {
 			matchCriteriaALB.CheckIPs = checkIPs
 		}
 	}
-	omv, err := parseObjectMatchValue(m)
+	omv, err := parseALBObjectMatchValue(m)
 	if err != nil {
 		return nil, err
 	}
@@ -308,79 +310,31 @@ func parseMatchCriteriaALB(match interface{}) (*cloudlets.MatchCriteriaALB, erro
 	return &matchCriteriaALB, err
 }
 
-func parseObjectMatchValue(aMap map[string]interface{}) (interface{}, error) {
+func parseALBObjectMatchValue(aMap map[string]interface{}) (interface{}, error) {
 	v, ok := aMap["object_match_value"]
 	if !ok {
 		return nil, nil
 	}
 	rawObjects := v.(*schema.Set).List()
-	for _, rawObject := range rawObjects {
-		omv, ok := rawObject.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("%w: 'object_match_value' should be an object", tools.ErrInvalidType)
-		}
-		if t, ok := omv["type"]; ok {
-			if cloudlets.ObjectMatchValueObjectType(t.(string)) == cloudlets.Object {
-				opts, err := parseOMVOptions(omv)
-				if err != nil {
-					return nil, err
-				}
-				objectType := cloudlets.ObjectMatchValueObject{
-					Type:              cloudlets.Object,
-					Name:              getStringValue(omv, "name"),
-					NameCaseSensitive: getBoolValue(omv, "name_case_sensitive"),
-					NameHasWildcard:   getBoolValue(omv, "name_has_wildcard"),
-					Options:           opts,
-				}
-				return objectType, nil
-			}
-
-			if cloudlets.ObjectMatchValueSimpleType(t.(string)) == cloudlets.Simple {
-				simpleType := cloudlets.ObjectMatchValueSimple{
-					Type:  cloudlets.Simple,
-					Value: getListOfStringsValue(omv, "value"),
-				}
-				return simpleType, nil
-			}
-
-			if cloudlets.ObjectMatchValueRangeType(t.(string)) == cloudlets.Range {
-				valuesAsString := getListOfStringsValue(omv, "value")
-				var valuesAsInt []int64
-				for _, valueAsString := range valuesAsString {
-					valueAsInt, err := strconv.ParseInt(valueAsString, 10, 64)
-					if err != nil {
-						return nil, fmt.Errorf("cannot parse %s value as an integer: %s", valueAsString, err)
-					}
-					valuesAsInt = append(valuesAsInt, valueAsInt)
-				}
-
-				rangeType := cloudlets.ObjectMatchValueRange{
-					Type:  cloudlets.Range,
-					Value: valuesAsInt,
-				}
-				return rangeType, nil
-			}
-		}
-	}
-	return nil, nil
-}
-
-func parseOMVOptions(aMap map[string]interface{}) (*cloudlets.Options, error) {
-	o, ok := aMap["options"]
-	if !ok {
+	if len(rawObjects) < 1 {
 		return nil, nil
 	}
-	for _, f := range o.(*schema.Set).List() {
-		optionField, ok := f.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("%w: 'options' should be an object", tools.ErrInvalidType)
+
+	omv, ok := rawObjects[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("%w: 'object_match_value' should be an object", tools.ErrInvalidType)
+	}
+	if omvType, ok := omv["type"]; ok {
+		if cloudlets.ObjectMatchValueObjectType(omvType.(string)) == cloudlets.Object {
+			return getOMVObjectType(omv)
 		}
-		options := cloudlets.Options{}
-		options.Value = getListOfStringsValue(optionField, "value")
-		options.ValueHasWildcard = getBoolValue(optionField, "value_has_wildcard")
-		options.ValueCaseSensitive = getBoolValue(optionField, "value_case_sensitive")
-		options.ValueEscaped = getBoolValue(optionField, "value_escaped")
-		return &options, nil
+		if cloudlets.ObjectMatchValueSimpleType(omvType.(string)) == cloudlets.Simple {
+			return getOMVSimpleType(omv), nil
+		}
+		if cloudlets.ObjectMatchValueRangeType(omvType.(string)) == cloudlets.Range {
+			return getOMVRangeType(omv)
+		}
+		return nil, fmt.Errorf("'object_match_value' type '%T' is invalid. Must be one of: 'simple', 'range' or 'object'", omvType)
 	}
 	return nil, nil
 }

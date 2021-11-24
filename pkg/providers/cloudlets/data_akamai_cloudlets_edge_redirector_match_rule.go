@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -77,6 +76,74 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 										Optional:    true,
 										Description: "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
 									},
+									"object_match_value": {
+										Type:        schema.TypeSet,
+										Optional:    true,
+										Description: "An object used when a rule either includes more complex match criteria, like multiple value attributes",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"name": {
+													Type:     schema.TypeString,
+													Optional: true,
+													Description: "If using a match type that supports name attributes, enter the value in the incoming request to match on. " +
+														"The following match types support this property: cookie, header, parameter, and query",
+												},
+												"type": {
+													Type:     schema.TypeString,
+													Required: true,
+													Description: "The array type, which can be one of the following: object or simple. " +
+														"Use the simple option when adding only an array of string-based values",
+												},
+												"name_case_sensitive": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: "Set to true if the entry for the name property should be evaluated based on case sensitivity",
+												},
+												"name_has_wildcard": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: "Set to true if the entry for the name property includes wildcards",
+												},
+												"options": {
+													Type:        schema.TypeSet,
+													MaxItems:    1,
+													Optional:    true,
+													Description: "If using the object type, use this set to list the values to match on (use only with the object type)",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"value": {
+																Type:        schema.TypeList,
+																Elem:        &schema.Schema{Type: schema.TypeString},
+																Optional:    true,
+																Description: "The value attributes in the incoming request to match on",
+															},
+															"value_has_wildcard": {
+																Type:        schema.TypeBool,
+																Optional:    true,
+																Description: "Set to true if the entries for the value property include wildcards",
+															},
+															"value_case_sensitive": {
+																Type:        schema.TypeBool,
+																Optional:    true,
+																Description: "Set to true if the entries for the value property should be evaluated based on case sensitivity",
+															},
+															"value_escaped": {
+																Type:        schema.TypeBool,
+																Optional:    true,
+																Description: "Set to true if provided value should be compared in escaped form",
+															},
+														},
+													},
+												},
+												"value": {
+													Type:        schema.TypeList,
+													Elem:        &schema.Schema{Type: schema.TypeString},
+													Optional:    true,
+													Description: "The value attributes in the incoming request to match on (use only with simple type)",
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -135,7 +202,7 @@ func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.Res
 		return diag.FromErr(err)
 	}
 
-	matchRules, err := GetMatchRules(matchRulesList)
+	matchRules, err := getMatchRules(matchRulesList)
 	if err != nil {
 		return diag.Errorf("'match_rules' - %s", err)
 	}
@@ -168,8 +235,7 @@ func setERMatchRuleSchemaType(matchRules []interface{}) error {
 	return nil
 }
 
-// GetMatchCriteria returns contact information from Set object
-func GetMatchCriteria(set *schema.Set) ([]cloudlets.MatchCriteriaER, error) {
+func getMatchCriteriaER(set *schema.Set) ([]cloudlets.MatchCriteriaER, error) {
 	matches := set.List()
 	result := make([]cloudlets.MatchCriteriaER, 0, len(matches))
 	for _, criterion := range matches {
@@ -178,21 +244,51 @@ func GetMatchCriteria(set *schema.Set) ([]cloudlets.MatchCriteriaER, error) {
 			return nil, fmt.Errorf("matches is of invalid type")
 		}
 
-		matchCriterion := cloudlets.MatchCriteriaER{
-			MatchType:     getStringValue(criterionMap, "match_type"),
-			MatchValue:    getStringValue(criterionMap, "match_value"),
-			MatchOperator: cloudlets.MatchOperator(getStringValue(criterionMap, "match_operator")),
-			CaseSensitive: getBoolValue(criterionMap, "case_sensitive"),
-			Negate:        getBoolValue(criterionMap, "negate"),
-			CheckIPs:      cloudlets.CheckIPs(getStringValue(criterionMap, "check_ips")),
+		omv, err := parseERObjectMatchValue(criterionMap)
+		if err != nil {
+			return nil, err
 		}
+
+		matchCriterion := cloudlets.MatchCriteriaER{
+			MatchType:        getStringValue(criterionMap, "match_type"),
+			MatchValue:       getStringValue(criterionMap, "match_value"),
+			MatchOperator:    cloudlets.MatchOperator(getStringValue(criterionMap, "match_operator")),
+			CaseSensitive:    getBoolValue(criterionMap, "case_sensitive"),
+			Negate:           getBoolValue(criterionMap, "negate"),
+			CheckIPs:         cloudlets.CheckIPs(getStringValue(criterionMap, "check_ips")),
+			ObjectMatchValue: omv,
+		}
+
 		result = append(result, matchCriterion)
 	}
 	return result, nil
 }
 
-// GetMatchRules returns contact information from Set object
-func GetMatchRules(matchRules []interface{}) (*cloudlets.MatchRules, error) {
+func parseERObjectMatchValue(criterionMap map[string]interface{}) (interface{}, error) {
+	v, ok := criterionMap["object_match_value"]
+	if !ok {
+		return nil, nil
+	}
+	rawObjects := v.(*schema.Set).List()
+	for _, rawObject := range rawObjects {
+		omv, ok := rawObject.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("%w: 'object_match_value' should be an object", tools.ErrInvalidType)
+		}
+		if omvType, ok := omv["type"]; ok {
+			if cloudlets.ObjectMatchValueObjectType(omvType.(string)) == cloudlets.Object {
+				return getOMVObjectType(omv)
+			}
+			if cloudlets.ObjectMatchValueSimpleType(omvType.(string)) == cloudlets.Simple {
+				return getOMVSimpleType(omv), nil
+			}
+			return nil, fmt.Errorf("'object_match_value' type '%s' is invalid. Must be one of: 'simple' or 'object'", omvType)
+		}
+	}
+	return nil, nil
+}
+
+func getMatchRules(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 	result := make(cloudlets.MatchRules, 0, len(matchRules))
 	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
@@ -200,7 +296,7 @@ func GetMatchRules(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 			return nil, fmt.Errorf("match rule is of invalid type: %T", mr)
 		}
 
-		matches, err := GetMatchCriteria(matchRuleMap["matches"].(*schema.Set))
+		matches, err := getMatchCriteriaER(matchRuleMap["matches"].(*schema.Set))
 		if err != nil {
 			return nil, err
 		}

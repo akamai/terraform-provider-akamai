@@ -3,8 +3,13 @@ package cloudlets
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
+	"fmt"
 	"io"
+	"strconv"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func getMatchRulesHashID(matchRules *cloudlets.MatchRules) (string, error) {
@@ -62,4 +67,68 @@ func getListOfStringsValue(matchRuleMap map[string]interface{}, name string) []s
 		return val
 	}
 	return nil
+}
+
+func getOMVSimpleType(omv map[string]interface{}) interface{} {
+	simpleType := cloudlets.ObjectMatchValueSimple{
+		Type:  cloudlets.Simple,
+		Value: getListOfStringsValue(omv, "value"),
+	}
+	return simpleType
+}
+
+func getOMVObjectType(omv map[string]interface{}) (interface{}, error) {
+	opts, err := parseOMVOptions(omv)
+	if err != nil {
+		return nil, err
+	}
+	objectType := cloudlets.ObjectMatchValueObject{
+		Type:              cloudlets.Object,
+		Name:              getStringValue(omv, "name"),
+		NameCaseSensitive: getBoolValue(omv, "name_case_sensitive"),
+		NameHasWildcard:   getBoolValue(omv, "name_has_wildcard"),
+		Options:           opts,
+	}
+	return objectType, nil
+}
+
+func getOMVRangeType(omv map[string]interface{}) (interface{}, error) {
+	valuesAsString := getListOfStringsValue(omv, "value")
+	var valuesAsInt []int64
+	for _, valueAsString := range valuesAsString {
+		valueAsInt, err := strconv.ParseInt(valueAsString, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse %s value as an integer: %s", valueAsString, err)
+		}
+		valuesAsInt = append(valuesAsInt, valueAsInt)
+	}
+
+	rangeType := cloudlets.ObjectMatchValueRange{
+		Type:  cloudlets.Range,
+		Value: valuesAsInt,
+	}
+	return rangeType, nil
+}
+
+func parseOMVOptions(omvOptions map[string]interface{}) (*cloudlets.Options, error) {
+	o, ok := omvOptions["options"]
+	if !ok {
+		return nil, nil
+	}
+	options := o.(*schema.Set).List()
+	if len(options) < 1 {
+		return nil, nil
+	}
+
+	optionFields, ok := options[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("%w: 'options' should be an object", tools.ErrInvalidType)
+	}
+	option := cloudlets.Options{
+		Value:              getListOfStringsValue(optionFields, "value"),
+		ValueHasWildcard:   getBoolValue(optionFields, "value_has_wildcard"),
+		ValueCaseSensitive: getBoolValue(optionFields, "value_case_sensitive"),
+		ValueEscaped:       getBoolValue(optionFields, "value_escaped"),
+	}
+	return &option, nil
 }

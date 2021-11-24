@@ -1,0 +1,28 @@
+[
+  {
+    "name": "rule",
+    "type": "erMatchRule",
+    "start": 10,
+    "end": 10000,
+    "matches": [
+      {
+        "matchType": "hostname",
+        "matchValue": "example.ex",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false,
+        "objectMatchValue": {
+          "type": "simple",
+          "value": [
+            "abc"
+          ]
+        }
+      }
+    ],
+    "useRelativeUrl": "copy_scheme_hostname",
+    "statusCode": 307,
+    "redirectURL": "/abc/sss",
+    "useIncomingQueryString": false,
+    "useIncomingSchemeAndHost": true
+  }
+]

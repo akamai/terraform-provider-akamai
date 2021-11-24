@@ -11,17 +11,17 @@
         "negate": false
       },
       {
-        "matchType": "cookie",
-        "matchValue": "cookie=cookievalue",
-        "matchOperator": "equals",
-        "caseSensitive": false,
-        "negate": false
-      },
-      {
         "matchType": "hostname",
         "matchValue": "3333.dom",
         "matchOperator": "equals",
         "caseSensitive": true,
+        "negate": false
+      },
+      {
+        "matchType": "cookie",
+        "matchValue": "cookie=cookievalue",
+        "matchOperator": "equals",
+        "caseSensitive": false,
         "negate": false
       }
     ],

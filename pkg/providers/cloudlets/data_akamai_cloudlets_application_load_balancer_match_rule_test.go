@@ -65,6 +65,14 @@ func TestIncorrectDataCloudletsLoadBalancerMatchRule(t *testing.T) {
 			configPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_incorrect_range.tf",
 			withError:  "cannot parse abc value as an integer: strconv.ParseInt: parsing \"abc\": invalid syntax",
 		},
+		"match criteria ALB - missed type field in ObjectMatchValue": {
+			configPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_missed_type.tf",
+			withError:  "Missing required argument",
+		},
+		"match criteria ALB - invalid type value for ObjectMatchValue": {
+			configPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_invalid_type.tf",
+			withError:  "is invalid. Must be one of: 'simple', 'range' or 'object'",
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -83,5 +91,4 @@ func TestIncorrectDataCloudletsLoadBalancerMatchRule(t *testing.T) {
 			})
 		})
 	}
-
 }
