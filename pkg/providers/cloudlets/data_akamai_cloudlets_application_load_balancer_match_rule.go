@@ -47,7 +47,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 							Description: "Akamai internal use only",
 						},
 						"matches": {
-							Type:        schema.TypeSet,
+							Type:        schema.TypeList,
 							Optional:    true,
 							Description: "Defines a set of match objects",
 							Elem: &schema.Resource{
@@ -274,7 +274,7 @@ func parseRuleMatches(rawRule map[string]interface{}, field string) ([]cloudlets
 		return nil, nil
 	}
 
-	rawMatches := matches.(*schema.Set).List()
+	rawMatches := matches.([]interface{})
 	matchCriteriaALBData := make([]cloudlets.MatchCriteriaALB, len(rawMatches))
 	for i, rawMatch := range rawMatches {
 		alb, err := parseMatchCriteriaALB(rawMatch)

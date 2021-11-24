@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -41,7 +42,7 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 							Description: "The end time for this match (in seconds since the epoch)",
 						},
 						"matches": {
-							Type:        schema.TypeSet,
+							Type:        schema.TypeList,
 							Optional:    true,
 							Description: "A set of match objects",
 							Elem: &schema.Resource{
@@ -223,7 +224,7 @@ func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.Res
 	return nil
 }
 
-// setERMatchRuleSchemaType takes ER matchrules schema set and sets type field for every rule in set
+// setERMatchRuleSchemaType takes ER matchrules schema list and sets type field for every rule in list
 func setERMatchRuleSchemaType(matchRules []interface{}) error {
 	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
@@ -235,8 +236,7 @@ func setERMatchRuleSchemaType(matchRules []interface{}) error {
 	return nil
 }
 
-func getMatchCriteriaER(set *schema.Set) ([]cloudlets.MatchCriteriaER, error) {
-	matches := set.List()
+func getMatchCriteriaER(matches []interface{}) ([]cloudlets.MatchCriteriaER, error) {
 	result := make([]cloudlets.MatchCriteriaER, 0, len(matches))
 	for _, criterion := range matches {
 		criterionMap, ok := criterion.(map[string]interface{})
@@ -296,7 +296,7 @@ func getMatchRules(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 			return nil, fmt.Errorf("match rule is of invalid type: %T", mr)
 		}
 
-		matches, err := getMatchCriteriaER(matchRuleMap["matches"].(*schema.Set))
+		matches, err := getMatchCriteriaER(matchRuleMap["matches"].([]interface{}))
 		if err != nil {
 			return nil, err
 		}

@@ -4,13 +4,6 @@
     "type": "erMatchRule",
     "matches": [
       {
-        "matchType": "extension",
-        "matchValue": "txt",
-        "matchOperator": "equals",
-        "caseSensitive": false,
-        "negate": false
-      },
-      {
         "matchType": "hostname",
         "matchValue": "3333.dom",
         "matchOperator": "equals",
@@ -20,6 +13,13 @@
       {
         "matchType": "cookie",
         "matchValue": "cookie=cookievalue",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false
+      },
+      {
+        "matchType": "extension",
+        "matchValue": "txt",
         "matchOperator": "equals",
         "caseSensitive": false,
         "negate": false
