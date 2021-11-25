@@ -63,7 +63,10 @@ Now that you have all the answers, set up a Terraform configuration files for th
 
 1. Create a new folder called `terraform`.
 2. Create a file inside your new folder and name it `akamai.tf`. If you decided to split the configuration into smaller chunks, create all the files accordingly.
-3. Continue with [Create Akamai API clients](#create-akamai-api-clients).
+3. To install the Akamai Provider:
+   * On the [Akamai registry page](https://registry.terraform.io/providers/akamai/akamai/latest), click **USE PROVIDER**.
+   * Copy and paste the displayed code into each of your Terraform configuration files.
+4. Continue with [Create Akamai API clients](#create-akamai-api-clients).
 
 ## Create Akamai API clients
 

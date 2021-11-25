@@ -60,11 +60,11 @@ resource "akamai_datastream" "stream" {
 The resource supports these arguments:
 
 * `active` - (Required) Whether you want to start activating the stream when applying the resource. Either `true` for activating the stream upon sending the request or `false` for leaving the stream inactive after the request.
-* `config` - (Required) Provides information about the log line configuration, log file format, names of log files sent, and file delivery.
+* `config` - (Required) Provides information about the log line configuration, log file format, names of log files sent, and file delivery. The argument includes these sub-arguments:
   * `delimiter` - (Optional) A delimiter that you want to use to separate data set fields in the log lines. Currently, `SPACE` is the only available delimiter. This field is required for the `STRUCTURED` log file `format`.
   * `format` - (Required) The format in which you want to receive log files, either `STRUCTURED` or `JSON`. When `delimiter` is present in the request, `STRUCTURED` is the mandatory format.
   * `frequency` - (Required) How often you want to collect logs from each uploader and send them to a destination.
-    * `time_in_sec` - (Required) The time in seconds after which the system bundles log lines into a file and sends it to a destination. `30` or `60` are the possible values.
+      * `time_in_sec` - (Required) The time in seconds after which the system bundles log lines into a file and sends it to a destination. `30` or `60` are the possible values.
   * `upload_file_prefix` - (Optional) The prefix of the log file that you want to send to a destination. It’s a string of at most 200 characters. If unspecified, defaults to `ak`.
   * `upload_file_suffix` - (Optional) The suffix of the log file that you want to send to a destination. It’s a static string of at most 10 characters. If unspecified, defaults to `ds`.
 * `contract_id` - (Required) Identifies the contract that has access to the product.

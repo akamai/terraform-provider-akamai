@@ -32,9 +32,9 @@ Use the [akamai_property](../resources/property.md) and [akamai_property_activat
 * [Create a data stream](#create-a-data-stream). Create a new stream to collect logs for associated properties and send that data to a connector.
 * [Add a DataStream rule to a property](#add-a-datastream-rule-to-a-property). Copy the returned JSON snippet into the rule tree configuration.
 * [Activate the property version](#activate-the-property-version). After you modify the rule tree, activate the changed property on the production network.
-* [Activate the stream](#activate-the-data-stream-version) Activate the latest version of a stream to start collecting and sending logs to a destination.
-* [View activation history](#view-activation-history) Check a history of activation status changes for all versions of a stream.
-* [Delete a data stream](#delete-a-data-stream) If you don't need the log data anymore, you can delete a stream.
+* [Activate the stream](#activate-the-data-stream-version). Activate the latest version of a stream to start collecting and sending logs to a destination.
+* [View activation history](#view-activation-history). Check a history of activation status changes for all versions of a stream.
+* [Delete a data stream](#delete-a-data-stream). If you don't need the log data anymore, you can delete a stream.
 
 ## Get the group ID
 
@@ -52,7 +52,7 @@ To monitor and gain real-time access to delivery performance, create a new strea
 
 -> **Note** Data stream activation might be time-consuming, so set the `active` flag to `false` until you completely finish the setup.
 
-Once you set up the `akamai_datastream` resource, run `terraform apply`. Terraform shows an overview of changes, so you can still go back and modify the configuration, or confirm to proceed. See [Command: apply](https://www.terraform.io/docs/commands/apply.html)
+Once you set up the `akamai_datastream` resource, run `terraform apply`. Terraform shows an overview of changes, so you can still go back and modify the configuration, or confirm to proceed. See [Command: apply](https://www.terraform.io/docs/commands/apply.html).
 
 ## Add a DataStream rule to a property
 

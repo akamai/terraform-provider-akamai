@@ -32,7 +32,7 @@ This data source returns these attributes:
   * `dataset_group_name` - The name of the data set group.
   * `dataset_group_description` - Additional information about the data set group.
   * `dataset_fields` - A list of data set fields available within the data set group, including:
-    * `dataset_field_description` - Additional information about the data set field.
-    * `dataset_field_id` - Unique identifier for the field.
-    * `dataset_field_json_key` - The JSON key for the field in a log line.
-    * `dataset_field_name` - The name of the data set field.
+      * `dataset_field_description` - Additional information about the data set field.
+      * `dataset_field_id` - Unique identifier for the field.
+      * `dataset_field_json_key` - The JSON key for the field in a log line.
+      * `dataset_field_name` - The name of the data set field.
