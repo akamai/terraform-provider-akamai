@@ -1,0 +1,20 @@
+[
+  {
+    "name": "rule 2",
+    "type": "erMatchRule",
+    "statusCode": 301,
+    "redirectURL": "sss.com",
+    "matchURL": "ddd.aaa",
+    "useIncomingQueryString": true,
+    "useIncomingSchemeAndHost": false
+  },
+  {
+    "name": "rule 1",
+    "type": "erMatchRule",
+    "statusCode": 301,
+    "redirectURL": "/ddd",
+    "matchURL": "abc.com",
+    "useIncomingQueryString": false,
+    "useIncomingSchemeAndHost": true
+  }
+]

@@ -20,6 +20,10 @@ func TestDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/minimal_vars_map.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/minimal_rules_out.json",
 		},
+		"valid vars map wth empty use_relative_url": {
+			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/empty_relative_url_vars_map.tf",
+			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/empty_relative_url_rules_out.json",
+		},
 		"match criteria ER - without ObjectMatchValue": {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/omv_empty.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/omv_empty_rules.json",
