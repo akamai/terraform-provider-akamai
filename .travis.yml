@@ -10,16 +10,18 @@ branches:
 
 language: go
 go:
-- "1.12.9"
+- "1.14"
 
 env:
   - GO111MODULE=on
     GOFLAGS=-mod=vendor
 
 install:
-- make tools
+- make init
 
 script:
 - make test
 - make build
+- make terraform-fmt
+- make terraform-lint
 - make website-test
