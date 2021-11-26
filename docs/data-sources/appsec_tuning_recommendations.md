@@ -64,4 +64,3 @@ In addition to the arguments above, the following attribute is exported:
 
 * `json` - JSON-formatted list of the tuning recommendations for the security policy or the attack group. The exception block format in a recommendation conforms to the exception block format used in `condition_exception` element of `attack_group` resource.  
 
-

@@ -89,7 +89,7 @@ func resourceRuleUpgradeCreate(ctx context.Context, d *schema.ResourceData, m in
 		Version:  version,
 		PolicyID: policyID,
 		Upgrade:  true,
-		Mode: upgrademode,
+		Mode:     upgrademode,
 	}
 
 	_, err = client.UpdateRuleUpgrade(ctx, createRuleUpgrade)
@@ -178,7 +178,7 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 		Version:  version,
 		PolicyID: policyID,
 		Upgrade:  true,
-		Mode: upgrademode,
+		Mode:     upgrademode,
 	}
 
 	_, err = client.UpdateRuleUpgrade(ctx, updateRuleUpgrade)

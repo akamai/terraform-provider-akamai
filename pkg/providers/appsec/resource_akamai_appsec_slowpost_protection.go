@@ -80,6 +80,7 @@ func resourceSlowPostProtectionCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
 		return diag.FromErr(err)
+
 	}
 
 	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
