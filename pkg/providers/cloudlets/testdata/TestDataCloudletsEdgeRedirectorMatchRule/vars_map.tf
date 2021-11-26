@@ -33,7 +33,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     start = 0
     status_code = 307
     use_incoming_query_string = false
-    use_incoming_scheme_and_host = true
     use_relative_url = "copy_scheme_hostname"
   }
   match_rules {
@@ -54,7 +53,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     start = 0
     status_code = 301
     use_incoming_query_string = false
-    use_incoming_scheme_and_host = true
     use_relative_url = "copy_scheme_hostname"
   }
 

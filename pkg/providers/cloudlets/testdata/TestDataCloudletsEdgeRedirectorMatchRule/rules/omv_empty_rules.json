@@ -17,6 +17,6 @@
     "redirectURL": "/abc/sss",
     "matchURL": "example.com",
     "useIncomingQueryString": false,
-    "useIncomingSchemeAndHost": false
+    "useIncomingSchemeAndHost": true
   }
 ]

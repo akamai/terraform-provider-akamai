@@ -5,6 +5,6 @@
     "statusCode": 301,
     "redirectURL": "/ddd",
     "useIncomingQueryString": false,
-    "useIncomingSchemeAndHost": false
+    "useIncomingSchemeAndHost": true
   }
 ]

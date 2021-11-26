@@ -27,7 +27,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "example" {
         status_code = 301
         use_incoming_query_string = false
         use_relative_url = "none"
-        use_incoming_scheme_and_host = true
         matches {
             case_sensitive = false
             match_operator = "equals"
@@ -69,12 +68,11 @@ This data source supports these arguments:
               * `value_case_sensitive` - (Optional) Whether the `value` argument should be evaluated based on case sensitivity.
               * `value_escaped` - (Optional) Whether the `value` argument should be compared in an escaped form.
           * `value` - (Optional) If you set the `type` argument to `simple`, specify the values in the incoming request to match on.
-* `use_relative_url` - (Optional) If set to `relative_url`, takes the path you specify in the `redirect_url` argument and sets it in the response’s Location header. The client or browser receiving the request decides which protocol and hostname to use. If set to `copy_scheme_hostname`, creates an absolute path by taking the protocol and hostname from the incoming request and combining them with path information you specify in the `redirect_url` argument. This absolute path is set in the response’s Location header. `copy_scheme_hostname` is also the only valid value if you set the `use_incoming_scheme_and_host` argument to `true`. If you leave `use_relative_url` out or set to `none`, then specify the `redirect_url` argument as a fully-qualified URL. If you omit `use_relative_url` or leave it empty when `use_incoming_scheme_and_host` is true, then API will change value of `use_relative_url` to `copy_scheme_hostname`.
+* `use_relative_url` - (Optional) If set to `relative_url`, takes the path you specify in the `redirect_url` argument and sets it in the response’s Location header. The client or browser receiving the request decides which protocol and hostname to use. If set to `copy_scheme_hostname`, creates an absolute path by taking the protocol and hostname from the incoming request and combining them with path information you specify in the `redirect_url` argument. This absolute path is set in the response’s Location header. If you do not specify use_relative_url or set to `none`, then specify the `redirect_url` argument as a fully-qualified URL.
 * `status_code` - (Required) The HTTP response status code, which is either `301` (permanent redirect) or `302` (temporary redirect).
 * `redirect_url` - (Required) The URL Edge Redirector redirects the request to. If you're using `use_relative_url`, you can enter a path for the value.
 * `match_url` - (Optional) If you're using a URL match, this specifies the URL that the Cloudlet uses to match the incoming request.
 * `use_incoming_query_string` - (Optional) Whether the Cloudlet should include the query string from the request in the rewritten or forwarded URL.
-* `use_incoming_scheme_and_host` - (Optional) Whether the Cloudlet should copy both the protocol/scheme and the hostname from the incoming request to use in the redirect URL.
 
 ## Attributes reference
 

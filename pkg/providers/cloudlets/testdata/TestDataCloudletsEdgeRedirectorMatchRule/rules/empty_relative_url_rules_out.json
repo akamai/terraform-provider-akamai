@@ -15,6 +15,6 @@
     "redirectURL": "/ddd",
     "matchURL": "abc.com",
     "useIncomingQueryString": false,
-    "useIncomingSchemeAndHost": true
+    "useIncomingSchemeAndHost": false
   }
 ]

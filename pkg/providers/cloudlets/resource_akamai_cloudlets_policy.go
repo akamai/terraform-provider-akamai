@@ -177,6 +177,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err := json.Unmarshal([]byte(matchRulesJSON), &matchRules); err != nil {
 		return diag.Errorf("unmarshalling match rules JSON: %s", err)
 	}
+
 	description, err := tools.GetStringValue("description", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
