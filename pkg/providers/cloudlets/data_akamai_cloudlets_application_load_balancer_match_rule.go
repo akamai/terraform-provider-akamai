@@ -218,7 +218,7 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 
 		rule.Matches, err = parseRuleMatches(rawRule, "matches")
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.Errorf("'match_rules' - %s", err)
 		}
 
 		// Schema guarantees that "forward_settings" will be present and of type *schema.Set
@@ -334,7 +334,7 @@ func parseALBObjectMatchValue(aMap map[string]interface{}) (interface{}, error) 
 		if cloudlets.ObjectMatchValueRangeType(omvType.(string)) == cloudlets.Range {
 			return getOMVRangeType(omv)
 		}
-		return nil, fmt.Errorf("'object_match_value' type '%T' is invalid. Must be one of: 'simple', 'range' or 'object'", omvType)
+		return nil, fmt.Errorf("'object_match_value' type '%s' is invalid. Must be one of: 'simple', 'range' or 'object'", omvType)
 	}
 	return nil, nil
 }
