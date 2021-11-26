@@ -437,7 +437,8 @@ func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, po
 	activations:
 		for _, act := range activations {
 			if act.PolicyInfo.Version == version {
-				if act.PolicyInfo.Status == cloudlets.PolicyActivationStatusFailed {
+				if act.PolicyInfo.Status == cloudlets.PolicyActivationStatusFailed ||
+					strings.Contains(act.PolicyInfo.StatusDetail, "fail") {
 					return nil, fmt.Errorf("%v: policyID %d activation failure: %s", ErrPolicyActivation, act.PolicyInfo.PolicyID, act.PolicyInfo.StatusDetail)
 				}
 				if act.PolicyInfo.Status != cloudlets.PolicyActivationStatusActive {

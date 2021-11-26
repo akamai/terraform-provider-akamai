@@ -305,6 +305,21 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 				},
 			},
 		},
+		"create activation - failed activation while polling with no failed status": {
+			init: func(m *mockcloudlets) {
+				// create
+				expectGetPolicyVersion(m, 1234, 1, []cloudlets.PolicyActivation{}, nil).Once()
+				expectActivatePolicyVersion(m, 1234, 1, "staging", []string{"prp_0", "prp_1"}, nil).Once()
+				// poll until active -> waitForPolicyActivation()
+				expectListPolicyActivations(m, 1234, 1, "staging", []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationStatusDeactivated, "failed", 1, fmt.Errorf("activation failed")).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					ExpectError: regexp.MustCompile("policy activation create: activation failed"),
+				},
+			},
+		},
 		"Create and read activation. Update: associated_properties empty -> validation error": {
 			init: func(m *mockcloudlets) {
 				policyID, v1, v2, properties, active, staging := int64(1234), int64(1), int64(2), []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationStatusActive, cloudlets.PolicyActivationNetworkStaging
