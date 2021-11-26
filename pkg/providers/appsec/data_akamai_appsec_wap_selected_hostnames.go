@@ -71,17 +71,17 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceWAPSelectedHostnamesRead")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	getConfigurationRequest := appsec.GetConfigurationRequest{ConfigID: configid}
+	getConfigurationRequest := appsec.GetConfigurationRequest{ConfigID: configID}
 	configuration, err := client.GetConfiguration(ctx, getConfigurationRequest)
 	if err != nil {
 		logger.Errorf("calling 'getConfiguration': %s", err.Error())
@@ -91,8 +91,8 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 
 	if target == "KSD" {
 		getSelectedHostnames := appsec.GetSelectedHostnamesRequest{
-			ConfigID: configid,
-			Version: version,
+			ConfigID: configID,
+			Version:  version,
 		}
 
 		selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
@@ -105,11 +105,11 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			newhdata = append(newhdata, hosts.Hostname)
 		}
 		if err := d.Set("selected_hosts", newhdata); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		getMatchTargets := appsec.GetMatchTargetsRequest{
-			ConfigID: configid,
+			ConfigID:      configID,
 			ConfigVersion: version,
 		}
 
@@ -125,7 +125,7 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			return diag.FromErr(err)
 		}
 		if err := d.Set("match_targets", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		ots := OutputTemplates{}
@@ -142,13 +142,13 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 		websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
 		if err == nil {
 			if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 		}
 	} else { // WAP_AAG and WAP_PLUS accounts
 		getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{
-			ConfigID: configid,
-			Version: version,
+			ConfigID:         configID,
+			Version:          version,
 			SecurityPolicyID: securityPolicyID,
 		}
 
@@ -159,10 +159,10 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 		}
 
 		if err := d.Set("protected_hosts", WAPSelectedHostnames.ProtectedHosts); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 		if err := d.Set("evaluated_hosts", WAPSelectedHostnames.EvaluatedHosts); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		jsonBody, err := json.Marshal(WAPSelectedHostnames)
@@ -170,7 +170,7 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			return diag.FromErr(err)
 		}
 		if err := d.Set("json", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		ots := OutputTemplates{}
@@ -189,14 +189,14 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 		outputtext, err := RenderTemplates(ots, "WAPSelectedHostsDS", textOutputEntries)
 		if err == nil {
 			if err := d.Set("output_text", outputtext); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 		} else {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
-	d.SetId(fmt.Sprintf("%d:%s", configid, securityPolicyID))
+	d.SetId(fmt.Sprintf("%d:%s", configID, securityPolicyID))
 
 	return nil
 }

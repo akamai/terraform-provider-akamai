@@ -31,6 +31,18 @@ func TestAccAkamaiRules_data_basic(t *testing.T) {
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configs, nil)
 
+		wm := appsec.GetWAFModeResponse{}
+		expectWM := compactJSON(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json"))
+		json.Unmarshal([]byte(expectWM), &wm)
+
+		client.On("GetWAFMode",
+			mock.Anything,
+			appsec.GetWAFModeRequest{
+				ConfigID: 43253,
+				Version:  7,
+				PolicyID: "AAAA_81230",
+			}).Return(&wm, nil)
+
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest: true,

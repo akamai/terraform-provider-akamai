@@ -46,7 +46,7 @@ func resourceEvalHostCreate(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceEvalHostCreate")
 	logger.Debug("in resourceEvalHostCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -61,8 +61,8 @@ func resourceEvalHostCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	updateEvalHost := appsec.UpdateEvalHostRequest{
-		ConfigID:  configid,
-		Version:   getModifiableConfigVersion(ctx, configid, "evalhost", m),
+		ConfigID:  configID,
+		Version:   getModifiableConfigVersion(ctx, configID, "evalhost", m),
 		Hostnames: hostnamelist,
 	}
 
@@ -72,7 +72,7 @@ func resourceEvalHostCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(erru)
 	}
 
-	d.SetId(fmt.Sprintf("%d", configid))
+	d.SetId(fmt.Sprintf("%d", configID))
 
 	return resourceEvalHostRead(ctx, d, m)
 }
@@ -83,31 +83,31 @@ func resourceEvalHostRead(ctx context.Context, d *schema.ResourceData, m interfa
 	logger := meta.Log("APPSEC", "resourceEvalHostRead")
 	logger.Debug("in resourceEvalHostRead")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	getEvalHost := appsec.GetEvalHostRequest{
-		ConfigID: configid,
-		Version:  getLatestConfigVersion(ctx, configid, m),
+	getEvalHostsRequest := appsec.GetEvalHostsRequest{
+		ConfigID: configID,
+		Version:  getLatestConfigVersion(ctx, configID, m),
 	}
 
-	evalHostResponse, err := client.GetEvalHost(ctx, getEvalHost)
+	evalHostResponse, err := client.GetEvalHosts(ctx, getEvalHostsRequest)
 	if err != nil {
 		logger.Errorf("calling 'getEvalHost': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", getEvalHost.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", getEvalHostsRequest.ConfigID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	evalhostnameset := schema.Set{F: schema.HashString}
 	for _, hostname := range evalHostResponse.Hostnames {
 		evalhostnameset.Add(hostname)
 	}
 	if err := d.Set("hostnames", evalhostnameset.List()); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -119,7 +119,7 @@ func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceEvalHostUpdate")
 	logger.Debug("in resourceEvalHostUpdate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,8 +134,8 @@ func resourceEvalHostUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	updateEvalHost := appsec.UpdateEvalHostRequest{
-		ConfigID:  configid,
-		Version:   getModifiableConfigVersion(ctx, configid, "evalhost", m),
+		ConfigID:  configID,
+		Version:   getModifiableConfigVersion(ctx, configID, "evalhost", m),
 		Hostnames: hostnamelist,
 	}
 
@@ -155,7 +155,7 @@ func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceEvalHostDelete")
 	logger.Debug("in resourceEvalHostDelete")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -163,8 +163,8 @@ func resourceEvalHostDelete(ctx context.Context, d *schema.ResourceData, m inter
 	hostnamelist := make([]string, 0)
 
 	removeEvalHost := appsec.RemoveEvalHostRequest{
-		ConfigID:  configid,
-		Version:   getModifiableConfigVersion(ctx, configid, "evalhost", m),
+		ConfigID:  configID,
+		Version:   getModifiableConfigVersion(ctx, configID, "evalhost", m),
 		Hostnames: hostnamelist,
 	}
 

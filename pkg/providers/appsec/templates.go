@@ -158,7 +158,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 
 				"replace": func(old, new, src string) string { return strings.Replace(src, old, new, -1) },
 
-				"collectWAPHostnameInfo": func(exportconfiguration *appsec.GetExportConfigurationsResponse) []wapHostnames {
+				"collectWAPHostnameInfo": func(exportconfiguration *appsec.GetExportConfigurationResponse) []wapHostnames {
 					hostnameListsByPolicy := make([]wapHostnames, 0)
 					matchTargets := exportconfiguration.MatchTargets
 					websiteTargets := matchTargets.WebsiteTargets
@@ -205,14 +205,40 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 			tbl := table.NewWriter()
 			tbl.SetOutputMirror(&ostr)
 			tbl.SetTitle(key)
-			headers := templ.TableTitle
 
-			headercolumns := strings.Split(headers, "|")
-			trhdr := table.Row{}
-			for _, header := range headercolumns {
-				trhdr = append(trhdr, header)
+			columnnames := strings.Split(templ.TableTitle, "|")
+			columnwidths := make([]int, 0)
+			totalcolumnwidth := 0
+			for _, header := range columnnames {
+				columnwidths = append(columnwidths, len(header))
+				totalcolumnwidth += len(header)
 			}
-			tbl.AppendHeader(trhdr)
+			totalcolumnwidth += len(columnnames) - 1 // include '|' dividers in header row
+
+			// if table title would wrap (because total column widths are not large enough) then
+			// distribute the extra space needed to prevent this across the set of columns
+			if totalcolumnwidth < len(key) {
+				extra := len(key) - totalcolumnwidth
+				extraPerColumn := extra / len(columnwidths)
+				remainder := extra % len(columnwidths)
+				for i := range columnwidths {
+					columnwidths[i] += extraPerColumn
+				}
+				col := 0
+				for j := remainder; j > 0; j-- {
+					columnwidths[col]++
+					col++
+				}
+			}
+
+			headerrow := table.Row{}
+			for index, header := range columnnames {
+				w := columnwidths[index]
+				rightpad := strings.Repeat(" ", w-len(header))
+				headerstring := fmt.Sprintf("%s%s", header, rightpad)
+				headerrow = append(headerrow, headerstring)
+			}
+			tbl.AppendHeader(headerrow)
 
 			ar := strings.Split(tstr.String(), ",")
 			for _, recContent := range ar {
@@ -270,6 +296,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["ratePolicyActions"] = &OutputTemplate{TemplateName: "ratePolicyActions", TableTitle: "ID|Ipv4Action|Ipv6Action", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .RatePolicyActions}}{{if $index}},{{end}}{{.ID}}| {{.Ipv4Action}}|{{.Ipv6Action}}{{end}}"}
 	otm["RulesDS"] = &OutputTemplate{TemplateName: "RulesDS", TableTitle: "ID|Action", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .RuleActions}}{{if $index}},{{end}}{{.ID}}|{{.Action}}{{end}}"}
 	otm["RulesWithConditionExceptionDS"] = &OutputTemplate{TemplateName: "RulesWithConditionExceptionDS", TableTitle: "ID|Action|Conditions|Exceptions", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Rules}}{{if $index}},{{end}}{{.ID}}|{{.Action}}|{{with .ConditionException}}{{if .Conditions}}True{{else}}False{{end}}{{else}}False{{end}}|{{with .ConditionException}}{{if .Exception}}True{{else}}False{{end}}{{else}}False{{end}}{{end}}"}
+	otm["ASERulesWithConditionExceptionDS"] = &OutputTemplate{TemplateName: "ASERulesWithConditionExceptionDS", TableTitle: "ID|Action|Conditions|Exceptions|Advanced Exceptions", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Rules}}{{if $index}},{{end}}{{.ID}}|{{.Action}}|{{with .ConditionException}}{{if .Conditions}}True{{else}}False{{end}}{{else}}False{{end}}|{{with .ConditionException}}{{if .Exception}}True{{else}}False{{end}}{{else}}False{{end}}|{{with .ConditionException}}{{if .AdvancedExceptionsList}}True{{else}}False{{end}}{{else}}False{{end}}{{end}}"}
 	otm["evalHostnamesDS"] = &OutputTemplate{TemplateName: "evalHostnamesDS", TableTitle: "Hostnames", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Hostnames}}{{if $index}},{{end}}{{.}}{{end}}"}
 	otm["securityPoliciesDS"] = &OutputTemplate{TemplateName: "securityPoliciesDS", TableTitle: "ID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Policies}}{{if $index}},{{end}}{{.PolicyID}}|{{.PolicyName}}{{end}}"}
 	otm["slowPostDS"] = &OutputTemplate{TemplateName: "slowPost", TableTitle: "Action|SLOW_RATE_THRESHOLD RATE|SLOW_RATE_THRESHOLD PERIOD|DURATION_THRESHOLD TIMEOUT", TemplateType: "TABULAR", TemplateString: "{{.Action}}|{{if .SlowRateThreshold}}{{.SlowRateThreshold.Rate}}|{{.SlowRateThreshold.Period}}{{else}}null|null{{end}}|{{if .DurationThreshold}}{{.DurationThreshold.Timeout}}{{else}}null{{end}}"}
@@ -314,8 +341,8 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["RatePolicyAction.tf"] = &OutputTemplate{TemplateName: "RatePolicyAction.tf", TableTitle: "RatePolicyAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .RatePolicyActions}} {{  range $index, $element := . }}\n// terraform import akamai_appsec_rate_policy_action.akamai_appsec_rate_policy_action_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}} {{$config}}:{{$prev_secpolicy}}:{{.ID}}\nresource \"akamai_appsec_rate_policy_action\" \"akamai_appsec_rate_policy_action_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  rate_policy_id = {{.ID}} \n  ipv4_action = \"{{.Ipv4Action}}\" \n  ipv6_action = \"{{.Ipv6Action}}\" \n }\n {{end}}{{end}} {{end}}"}
 	otm["ReputationProfile.tf"] = &OutputTemplate{TemplateName: "ReputationProfile.tf", TableTitle: "ReputationProfile", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{range $index, $element := .ReputationProfiles}}\n// terraform import akamai_appsec_reputation_profile.akamai_appsec_reputation_profile{{if $index}}_{{$index}}{{end}} {{$config}}:{{.ID}}\nresource \"akamai_appsec_reputation_profile\" \"akamai_appsec_reputation_profile{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{ $config}}\n  reputation_profile = <<-EOF\n {{marshalwithoutid .}}  \n \n EOF \n }\n{{end}}"}
 	otm["ReputationProfileAction.tf"] = &OutputTemplate{TemplateName: "ReputationProfileAction.tf", TableTitle: "ReputationProfileAction", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .ClientReputation.ReputationProfileActions}}{{range $index, $element := .}}\n// terraform import akamai_appsec_reputation_profile_action.akamai_appsec_reputation_profile_action_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}} {{$config}}:{{$prev_secpolicy}}:{{.ID}}\nresource \"akamai_appsec_reputation_profile_action\" \"akamai_appsec_reputation_profile_action_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n config_id = {{ $config }}\n security_policy_id = \"{{$prev_secpolicy}}\" \n  reputation_profile_id = {{.ID}} \n action =  \"{{.Action}}\" \n }\n{{end}}{{end}}{{end}}"}
-	otm["Rule.tf"] = &OutputTemplate{TemplateName: "Rule.tf", TableTitle: "Rule", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .WebApplicationFirewall}}{{with .RuleActions}}{{range $index, $element := .}}\n// terraform import akamai_appsec_rule.akamai_appsec_rule_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}} {{$config}}:{{$prev_secpolicy}}:{{.ID}}\nresource \"akamai_appsec_rule\" \"akamai_appsec_rule_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  rule_id = {{.ID}} \n  rule_action = \"{{.Action}}\"\n{{ if or .Conditions .Exception }}  condition_exception = <<-EOF\n  {{marshalconditionexception .}}\n \n EOF \n \n{{end}}}\n{{end}}{{end}}{{end}}{{end}}"}
-	otm["EvalRule.tf"] = &OutputTemplate{TemplateName: "EvalRule.tf", TableTitle: "EvalRule", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .WebApplicationFirewall}}{{with .Evaluation}}{{with .RuleActions}}{{range $index, $element := .}}\n// terraform import akamai_appsec_eval_rule.akamai_appsec_eval_rule_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}} {{$config}}:{{$prev_secpolicy}}:{{.ID}}\nresource \"akamai_appsec_eval_rule\" \"akamai_appsec_eval_rule_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  rule_id = {{.ID}} \n  rule_action = \"{{.Action}}\"\n{{ if or .Conditions .Exception}}  condition_exception = <<-EOF\n {{marshalconditionexception .}}  \n \n EOF \n \n{{end}}}\n{{end}}{{end}}{{end}}{{end}}{{end}}"}
+	otm["Rule.tf"] = &OutputTemplate{TemplateName: "Rule.tf", TableTitle: "Rule", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .WebApplicationFirewall}}{{with .RuleActions}}{{range $index, $element := .}}\n// terraform import akamai_appsec_rule.akamai_appsec_rule_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}} {{$config}}:{{$prev_secpolicy}}:{{.ID}}\nresource \"akamai_appsec_rule\" \"akamai_appsec_rule_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  rule_id = {{.ID}} \n  rule_action = \"{{.Action}}\"\n{{ if or .Conditions .Exception .AdvancedExceptionsList }}  condition_exception = <<-EOF\n  {{marshalconditionexception .}}\n \n EOF \n \n{{end}}}\n{{end}}{{end}}{{end}}{{end}}"}
+	otm["EvalRule.tf"] = &OutputTemplate{TemplateName: "EvalRule.tf", TableTitle: "EvalRule", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .WebApplicationFirewall}}{{with .Evaluation}}{{with .RuleActions}}{{range $index, $element := .}}\n// terraform import akamai_appsec_eval_rule.akamai_appsec_eval_rule_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}} {{$config}}:{{$prev_secpolicy}}:{{.ID}}\nresource \"akamai_appsec_eval_rule\" \"akamai_appsec_eval_rule_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  rule_id = {{.ID}} \n  rule_action = \"{{.Action}}\"\n{{ if or .Conditions .Exception .AdvancedExceptionsList}}  condition_exception = <<-EOF\n {{marshalconditionexception .}}  \n \n EOF \n \n{{end}}}\n{{end}}{{end}}{{end}}{{end}}{{end}}"}
 	otm["AttackGroup.tf"] = &OutputTemplate{TemplateName: "AttackGroup.tf", TableTitle: "AttackGroup", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}}{{with .WebApplicationFirewall.AttackGroupActions}} {{range $index, $element := .}}\n// terraform import akamai_appsec_attack_group.akamai_appsec_attack_group_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}} {{$config}}:{{$prev_secpolicy}}:{{.Group}}\nresource \"akamai_appsec_attack_group\" \"akamai_appsec_attack_group_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  attack_group = \"{{.Group}}\" \n  attack_group_action = \"{{.Action}}\" \n{{ if or .AdvancedExceptionsList .Exception}}  condition_exception = <<-EOF\n {{marshalconditionexception .}}  \n \n EOF \n \n {{end}}}\n{{end}}{{end}}{{end}}"}
 	otm["EvalGroup.tf"] = &OutputTemplate{TemplateName: "EvalGroup.tf", TableTitle: "EvaluationGroup", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $prev_secpolicy := \"\" }}{{range .SecurityPolicies}}{{$prev_secpolicy := .ID}} {{with .WebApplicationFirewall}}{{with .Evaluation}}{{with .AttackGroupActions}}{{range $index, $element := .}}\n// terraform import akamai_appsec_eval_group.akamai_appsec_eval_group_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}} {{$config}}:{{$prev_secpolicy}}:{{.Group}}\nresource \"akamai_appsec_eval_group\" \"akamai_appsec_eval_group_{{$prev_secpolicy}}{{if $index}}_{{$index}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  attack_group = \"{{.Group}}\" \n  attack_group_action = \"{{.Action}}\" \n{{ if or .AdvancedExceptions .Exception}}  condition_exception = <<-EOF\n {{marshalconditionexception .}}  \n \n EOF \n \n {{end}}}\n {{end}}{{end}}{{end}}{{end}}{{end}}"}
 	otm["ThreatIntel.tf"] = &OutputTemplate{TemplateName: "ThreatIntel.tf", TableTitle: "ThreatIntel", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range $index1, $element := .SecurityPolicies}}{{$prev_secpolicy := .ID}}\n// terraform import akamai_appsec_threat_intel.threat_intel{{if $index1}}_{{$index1}}{{end}} {{$config}}:{{$prev_secpolicy}} \nresource \"akamai_appsec_threat_intel\" \"threat_intel{{if $index1}}_{{$index1}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  threat_intel = \"{{.WebApplicationFirewall.ThreatIntel}}\"   \n }\n {{end}}"}

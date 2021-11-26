@@ -56,24 +56,24 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceRatePolicyCreate")
 	logger.Debugf("in resourceRatePolicyCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ratePolicy", m)
+	version := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
 	jsonpostpayload := d.Get("rate_policy")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	createRatePolicy := appsec.CreateRatePolicyRequest{
-		ConfigID:       configid,
+		ConfigID:       configID,
 		ConfigVersion:  version,
 		JsonPayloadRaw: rawJSON,
 	}
 
 	ratepolicy, err := client.CreateRatePolicy(ctx, createRatePolicy)
 	if err != nil {
-		logger.Warnf("calling 'createRatePolicyAction': %s", err.Error())
+		logger.Warnf("calling 'createRatePolicy': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -88,45 +88,45 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceRatePolicyRead")
 	logger.Debugf("in resourceRatePolicyRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 	ratePolicyID, err := strconv.Atoi(idParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	readRatePolicy := appsec.GetRatePolicyRequest{
-		ConfigID:      configid,
+		ConfigID:      configID,
 		ConfigVersion: version,
 		RatePolicyID:  ratePolicyID,
 	}
 
 	ratepolicy, err := client.GetRatePolicy(ctx, readRatePolicy)
 	if err != nil {
-		logger.Warnf("calling 'getRatePolicyAction': %s", err.Error())
+		logger.Warnf("calling 'getRatePolicy': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	jsonBody, err := json.Marshal(ratepolicy)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("rate_policy_id", ratePolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("rate_policy", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -138,12 +138,12 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceRatePolicyUpdate")
 	logger.Debugf("in resourceRatePolicy`Update")
 
-	idParts, err := splitID(d.Id(), 2, "configid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -157,15 +157,15 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateRatePolicy := appsec.UpdateRatePolicyRequest{
-		ConfigID:       configid,
-		ConfigVersion:  getModifiableConfigVersion(ctx, configid, "ratePolicy", m),
+		ConfigID:       configID,
+		ConfigVersion:  getModifiableConfigVersion(ctx, configID, "ratePolicy", m),
 		RatePolicyID:   ratePolicyID,
 		JsonPayloadRaw: rawJSON,
 	}
 
 	_, err = client.UpdateRatePolicy(ctx, updateRatePolicy)
 	if err != nil {
-		logger.Warnf("calling 'updateRatePolicyAction': %s", err.Error())
+		logger.Warnf("calling 'updateRatePolicy': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -178,30 +178,30 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceRatePolicyDelete")
 	logger.Debugf("in resourceRatePolicyDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ratePolicy", m)
+	version := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
 	ratePolicyID, err := strconv.Atoi(idParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	deleteRatePolicy := appsec.RemoveRatePolicyRequest{
-		ConfigID:      configid,
+		ConfigID:      configID,
 		ConfigVersion: version,
 		RatePolicyID:  ratePolicyID,
 	}
 
 	_, err = client.RemoveRatePolicy(ctx, deleteRatePolicy)
 	if err != nil {
-		logger.Warnf("calling 'removeRatePolicyAction': %s", err.Error())
+		logger.Warnf("calling 'removeRatePolicy': %s", err.Error())
 		return diag.FromErr(err)
 	}
 

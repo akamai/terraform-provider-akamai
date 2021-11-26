@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -47,13 +46,13 @@ func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 
 	getAPIHostnameCoverageMatchTargets := appsec.GetApiHostnameCoverageMatchTargetsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getAPIHostnameCoverageMatchTargets.ConfigID = configid
+	getAPIHostnameCoverageMatchTargets.ConfigID = configID
 
-	getAPIHostnameCoverageMatchTargets.Version = getLatestConfigVersion(ctx, configid, m)
+	getAPIHostnameCoverageMatchTargets.Version = getLatestConfigVersion(ctx, configID, m)
 
 	hostname, err := tools.GetStringValue("hostname", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -81,7 +80,7 @@ func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getAPIHostnameCoverageMatchTargets.ConfigID))

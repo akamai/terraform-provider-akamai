@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -50,11 +49,11 @@ func dataSourceFailoverHostnamesRead(ctx context.Context, d *schema.ResourceData
 
 	getFailoverHostnames := appsec.GetFailoverHostnamesRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getFailoverHostnames.ConfigID = configid
+	getFailoverHostnames.ConfigID = configID
 
 	failoverhostnames, err := client.GetFailoverHostnames(ctx, getFailoverHostnames)
 	if err != nil {
@@ -76,7 +75,7 @@ func dataSourceFailoverHostnamesRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	newhdata := make([]string, 0, len(failoverhostnames.HostnameList))
@@ -86,7 +85,7 @@ func dataSourceFailoverHostnamesRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	if err := d.Set("hostnames", newhdata); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getFailoverHostnames.ConfigID))

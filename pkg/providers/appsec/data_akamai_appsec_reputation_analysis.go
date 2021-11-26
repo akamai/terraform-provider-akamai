@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -47,19 +46,19 @@ func dataSourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceDat
 
 	getReputationAnalysis := appsec.GetReputationAnalysisRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getReputationAnalysis.ConfigID = configid
+	getReputationAnalysis.ConfigID = configID
 
-	getReputationAnalysis.Version = getLatestConfigVersion(ctx, configid, m)
+	getReputationAnalysis.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getReputationAnalysis.PolicyID = policyid
+	getReputationAnalysis.PolicyID = policyID
 
 	reputationanalysis, err := client.GetReputationAnalysis(ctx, getReputationAnalysis)
 	if err != nil {
@@ -73,7 +72,7 @@ func dataSourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceDat
 	outputtext, err := RenderTemplates(ots, "reputationAnalysisDS", reputationanalysis)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -83,7 +82,7 @@ func dataSourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getReputationAnalysis.ConfigID))

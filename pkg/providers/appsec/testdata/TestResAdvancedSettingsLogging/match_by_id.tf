@@ -18,7 +18,7 @@ resource "akamai_appsec_advanced_settings_logging" "test" {
         ]
     },
     "standardHeaders": {
-        "type": "only",
+        "type": "all",
         "values": [
             "Accept"
         ]

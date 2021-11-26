@@ -342,6 +342,7 @@ Resource definitions can be exported for import using any of the following `sear
   * akamai_appsec_version_notes
   * akamai_appsec_waf_mode
   * akamai_appsec_threat_intel
+  * akamai_appsec_tuning_recommendations
 
 ### Resources
   * akamai_appsec_activations

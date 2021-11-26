@@ -10,7 +10,7 @@
         ]
     },
     "standardHeaders": {
-        "type": "only",
+        "type": "all",
         "values": [
             "Accept"
         ]

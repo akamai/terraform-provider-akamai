@@ -13,42 +13,42 @@ func TestAccAkamaiAdvancedSettingsLogging_res_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsLogging ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateAdvancedSettingsLoggingResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		configResponse := appsec.GetConfigurationResponse{}
+		configResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(configResponseJSON), &configResponse)
 
-		cr := appsec.GetAdvancedSettingsLoggingResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		getResponse := appsec.GetAdvancedSettingsLoggingResponse{}
+		getResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"))
+		json.Unmarshal([]byte(getResponseJSON), &getResponse)
 
-		crd := appsec.RemoveAdvancedSettingsLoggingResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"))
-		json.Unmarshal([]byte(expectJSD), &crd)
+		updateResponse := appsec.UpdateAdvancedSettingsLoggingResponse{}
+		expectResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"))
+		json.Unmarshal([]byte(expectResponseJSON), &updateResponse)
 
-		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		removeResponse := appsec.RemoveAdvancedSettingsLoggingResponse{}
+		removeResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"))
+		json.Unmarshal([]byte(removeResponseJSON), &removeResponse)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&config, nil)
+		).Return(&configResponse, nil)
 
 		client.On("GetAdvancedSettingsLogging",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7},
-		).Return(&cr, nil)
+		).Return(&getResponse, nil)
 
 		updateAdvancedSettingsLoggingJSON := loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/UpdateAdvancedSettingsLogging.json")
 		client.On("UpdateAdvancedSettingsLogging",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7, PolicyID: "", JsonPayloadRaw: updateAdvancedSettingsLoggingJSON},
-		).Return(&cu, nil)
+		).Return(&updateResponse, nil)
 
 		client.On("RemoveAdvancedSettingsLogging",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7, PolicyID: ""},
-		).Return(&crd, nil)
+		).Return(&removeResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -60,7 +60,6 @@ func TestAccAkamaiAdvancedSettingsLogging_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_logging.test", "id", "43253"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

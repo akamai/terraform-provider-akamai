@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -54,19 +53,19 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 
 	getReputationProfileActions := appsec.GetReputationProfileActionsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getReputationProfileActions.ConfigID = configid
+	getReputationProfileActions.ConfigID = configID
 
-	getReputationProfileActions.Version = getLatestConfigVersion(ctx, configid, m)
+	getReputationProfileActions.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getReputationProfileActions.PolicyID = policyid
+	getReputationProfileActions.PolicyID = policyID
 
 	reputationprofileid, err := tools.GetIntValue("reputation_profile_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -86,7 +85,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	outputtext, err := RenderTemplates(ots, "reputationProfilesActions", reputationprofileactions)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -96,12 +95,12 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if len(reputationprofileactions.ReputationProfiles) > 0 {
 		if err := d.Set("action", reputationprofileactions.ReputationProfiles[0].Action); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 

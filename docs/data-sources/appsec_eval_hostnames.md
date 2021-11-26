@@ -11,9 +11,11 @@ description: |-
 
 **Scopes**: Security configuration
 
-Returns the evaluation hostnames for a configuration. In evaluation mode, you use evaluation hosts to monitor how well your configuration settings protects host traffic. (Note that the evaluation host isn't actually protected, and the host takes no action other than recording the actions it would have taken had it been on the production network).
+**Important**: This data source is deprecated and may be removed in a future release. You may use the `akamai_appsec_wap_selected_hostnames` data source instead.
 
-Evaluation mode for hostnames is only available for organizations running Web Application Protector.
+Returns the evaluation hostnames for a configuration. In evaluation mode, you use evaluation hosts to monitor how well your configuration settings protect host traffic. (Note that the evaluation host isn't actually protected, and the host takes no action other than recording the actions it would have taken had it been on the production network.)
+
+Evaluation mode for hostnames is available only for organizations running Web Application Protector.
 
 **Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/selected-hostnames/eval-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getevaluationhostnames)
 

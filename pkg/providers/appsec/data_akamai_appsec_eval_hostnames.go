@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -48,13 +47,13 @@ func dataSourceEvalHostnamesRead(ctx context.Context, d *schema.ResourceData, m 
 
 	getEvalHostnames := appsec.GetEvalHostsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEvalHostnames.ConfigID = configid
+	getEvalHostnames.ConfigID = configID
 
-	getEvalHostnames.Version = getLatestConfigVersion(ctx, configid, m)
+	getEvalHostnames.Version = getLatestConfigVersion(ctx, configID, m)
 
 	evalhostnames, err := client.GetEvalHosts(ctx, getEvalHostnames)
 	if err != nil {
@@ -76,13 +75,13 @@ func dataSourceEvalHostnamesRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	newhdata := make([]string, 0, len(evalhostnames.Hostnames))
 	newhdata = append(newhdata, evalhostnames.Hostnames...)
 	if err := d.Set("hostnames", newhdata); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getEvalHostnames.ConfigID))

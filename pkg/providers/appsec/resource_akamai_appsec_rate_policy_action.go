@@ -61,16 +61,16 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionCreate")
 	logger.Debugf("in resourceRatePolicyActionCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ratePolicyAction", m)
-	securitypolicyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
+	ratePolicyID, err := tools.GetIntValue("rate_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -84,10 +84,10 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{
-		ConfigID:     configid,
+		ConfigID:     configID,
 		Version:      version,
-		PolicyID:     securitypolicyid,
-		RatePolicyID: ratepolicyid,
+		PolicyID:     securityPolicyID,
+		RatePolicyID: ratePolicyID,
 		Ipv4Action:   ipv4action,
 		Ipv6Action:   ipv6action,
 	}
@@ -98,7 +98,7 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	d.SetId(fmt.Sprintf("%d:%s:%d", configid, securitypolicyid, ratepolicyid))
+	d.SetId(fmt.Sprintf("%d:%s:%d", configID, securityPolicyID, ratePolicyID))
 
 	return resourceRatePolicyActionRead(ctx, d, m)
 }
@@ -109,51 +109,51 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionRead")
 	logger.Debugf("in resourceRatePolicyActionRead")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ratepolicyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	securitypolicyid := idParts[1]
-	ratepolicyid, err := strconv.Atoi(idParts[2])
+	version := getLatestConfigVersion(ctx, configID, m)
+	securityPolicyID := idParts[1]
+	ratePolicyID, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	readRatePolicyAction := appsec.GetRatePolicyActionRequest{
-		ConfigID: configid,
-		Version:  version,
-		PolicyID: securitypolicyid,
-		ID:       ratepolicyid,
+	getRatePolicyActionsRequest := appsec.GetRatePolicyActionsRequest{
+		ConfigID:     configID,
+		Version:      version,
+		PolicyID:     securityPolicyID,
+		RatePolicyID: ratePolicyID,
 	}
 
-	ratepolicyaction, err := client.GetRatePolicyAction(ctx, readRatePolicyAction)
+	ratepolicyactions, err := client.GetRatePolicyActions(ctx, getRatePolicyActionsRequest)
 	if err != nil {
-		logger.Errorf("calling 'getRatePolicyAction': %s", err.Error())
+		logger.Errorf("calling 'getRatePolicyActions': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("security_policy_id", securitypolicyid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("rate_policy_id", ratepolicyid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("rate_policy_id", ratePolicyID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	for _, action := range ratepolicyaction.RatePolicyActions {
-		if action.ID == ratepolicyid {
+	for _, action := range ratepolicyactions.RatePolicyActions {
+		if action.ID == ratePolicyID {
 			if err := d.Set("ipv4_action", action.Ipv4Action); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 			if err := d.Set("ipv6_action", action.Ipv6Action); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 		}
 	}
@@ -167,17 +167,17 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionUpdate")
 	logger.Debugf("in resourceRatePolicyActionUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ratepolicyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ratePolicyAction", m)
-	securitypolicyid := idParts[1]
-	ratepolicyid, err := strconv.Atoi(idParts[2])
+	version := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	securityPolicyID := idParts[1]
+	ratePolicyID, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -191,10 +191,10 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	updateRatePolicyAction := appsec.UpdateRatePolicyActionRequest{
-		ConfigID:     configid,
+		ConfigID:     configID,
 		Version:      version,
-		PolicyID:     securitypolicyid,
-		RatePolicyID: ratepolicyid,
+		PolicyID:     securityPolicyID,
+		RatePolicyID: ratePolicyID,
 		Ipv4Action:   ipv4action,
 		Ipv6Action:   ipv6action,
 	}
@@ -214,26 +214,26 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionDelete")
 	logger.Debugf("in resourceRatePolicyActionDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ratepolicyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ratePolicyAction", m)
-	securitypolicyid := idParts[1]
-	ratepolicyid, err := strconv.Atoi(idParts[2])
+	version := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	securityPolicyID := idParts[1]
+	ratePolicyID, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	deleteRatePolicyAction := appsec.UpdateRatePolicyActionRequest{
-		ConfigID:     configid,
+		ConfigID:     configID,
 		Version:      version,
-		PolicyID:     securitypolicyid,
-		RatePolicyID: ratepolicyid,
+		PolicyID:     securityPolicyID,
+		RatePolicyID: ratePolicyID,
 		Ipv4Action:   "none",
 		Ipv6Action:   "none",
 	}

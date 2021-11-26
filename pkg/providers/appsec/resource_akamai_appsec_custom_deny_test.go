@@ -13,52 +13,55 @@ func TestAccAkamaiCustomDeny_res_basic(t *testing.T) {
 	t.Run("match by CustomDeny ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateCustomDenyResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyUpdate.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
-
-		cr := appsec.GetCustomDenyResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResCustomDeny/CustomDeny.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
-
-		crd := appsec.RemoveCustomDenyResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResCustomDeny/CustomDeny.json"))
-		json.Unmarshal([]byte(expectJSD), &crd)
-
-		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
-
+		configResponse := appsec.GetConfigurationResponse{}
+		configResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(configResponseJSON), &configResponse)
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&config, nil)
+		).Return(&configResponse, nil)
 
-		client.On("RemoveCustomDeny",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.RemoveCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
-		).Return(&crd, nil)
-
-		crc := appsec.CreateCustomDenyResponse{}
-		expectJSC := compactJSON(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyCreate.json"))
-		json.Unmarshal([]byte(expectJSC), &crc)
-
-		client.On("GetCustomDeny",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
-		).Return(&cr, nil)
-
-		customDenyWithPreventBrowserCacheFalseJSON := loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheFalse.json")
-		client.On("UpdateCustomDeny",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918", JsonPayloadRaw: customDenyWithPreventBrowserCacheFalseJSON},
-		).Return(&cu, nil)
-
-		customDenyWithPreventBrowserCacheTrueJSON := loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheTrue.json")
+		createRequestJSON := loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheTrue.json")
+		createResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyCreateResponse.json"))
+		createResponse := appsec.CreateCustomDenyResponse{}
+		json.Unmarshal([]byte(createResponseJSON), &createResponse)
 		client.On("CreateCustomDeny",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.CreateCustomDenyRequest{ConfigID: 43253, Version: 7, JsonPayloadRaw: customDenyWithPreventBrowserCacheTrueJSON},
-		).Return(&crc, nil)
+			mock.Anything,
+			appsec.CreateCustomDenyRequest{ConfigID: 43253, Version: 7, JsonPayloadRaw: createRequestJSON},
+		).Return(&createResponse, nil)
+
+		getResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyGetResponse.json"))
+		getResponse := appsec.GetCustomDenyResponse{}
+		json.Unmarshal([]byte(getResponseJSON), &getResponse)
+		client.On("GetCustomDeny",
+			mock.Anything,
+			appsec.GetCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
+		).Return(&getResponse, nil).Times(3)
+
+		updateRequestJSON := loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheFalse.json")
+		updateResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyUpdateResponse.json"))
+		updateResponse := appsec.UpdateCustomDenyResponse{}
+		json.Unmarshal([]byte(updateResponseJSON), &updateResponse)
+		client.On("UpdateCustomDeny",
+			mock.Anything,
+			appsec.UpdateCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918", JsonPayloadRaw: updateRequestJSON},
+		).Return(&updateResponse, nil)
+
+		getResponseAfterUpdateJSON := compactJSON(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyGetResponseAfterUpdate.json"))
+		getResponseAfterUpdate := appsec.GetCustomDenyResponse{}
+		json.Unmarshal([]byte(getResponseAfterUpdateJSON), &getResponseAfterUpdate)
+		client.On("GetCustomDeny",
+			mock.Anything,
+			appsec.GetCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
+		).Return(&getResponseAfterUpdate, nil).Twice()
+
+		removeResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResCustomDeny/CustomDeny.json"))
+		removeResponse := appsec.RemoveCustomDenyResponse{}
+		json.Unmarshal([]byte(removeResponseJSON), &removeResponse)
+		client.On("RemoveCustomDeny",
+			mock.Anything,
+			appsec.RemoveCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
+		).Return(&removeResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -70,14 +73,12 @@ func TestAccAkamaiCustomDeny_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_deny.test", "id", "43253:deny_custom_622918"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResCustomDeny/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_deny.test", "id", "43253:deny_custom_622918"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

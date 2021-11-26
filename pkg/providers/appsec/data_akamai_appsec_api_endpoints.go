@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -57,19 +56,19 @@ func dataSourceAPIEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getAPIEndpoints := appsec.GetApiEndpointsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getAPIEndpoints.ConfigID = configid
+	getAPIEndpoints.ConfigID = configID
 
-	getAPIEndpoints.Version = getLatestConfigVersion(ctx, configid, m)
+	getAPIEndpoints.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getAPIEndpoints.PolicyID = policyid
+	getAPIEndpoints.PolicyID = policyID
 
 	apiName, err := tools.GetStringValue("api_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -97,7 +96,7 @@ func dataSourceAPIEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	var idList []int
@@ -107,11 +106,9 @@ func dataSourceAPIEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 		idList = append(idList, ids.ID)
 	}
 
-	d.Set("id_list", idList)
-	// TODO errors out trying to set
-	/*if err := d.Set("id_list", idList); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}*/
+	if err := d.Set("id_list", idList); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
 
 	if len(apiendpoints.APIEndpoints) > 0 {
 		d.SetId(strconv.Itoa(apiendpoints.APIEndpoints[0].ID))

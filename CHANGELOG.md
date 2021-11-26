@@ -1,5 +1,14 @@
 # RELEASE NOTES
 
+## 1.9.0 (Nov 29, 2021)
+
+#### FEATURES/ENHANCEMENTS
+* APPSEC
+SECKSD-11930 Add tuning recommendations datasource
+SECKSD-12502 ASE rules advanced exception
+SECKSD-12623 Update WAP bypass network lists for multi-policy WAP
+SECKSD-12624 Deprecate WAP-only datasource & resources
+
 ## 1.8.0 (Oct 25, 2021)
 
 #### FEATURES/ENHANCEMENTS:

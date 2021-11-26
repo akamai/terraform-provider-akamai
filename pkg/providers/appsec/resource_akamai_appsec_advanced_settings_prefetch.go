@@ -62,11 +62,11 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchCreate")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "prefetchSetting", m)
+	version := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
 	enableAppLayer, err := tools.GetBoolValue("enable_app_layer", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -90,7 +90,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	}
 
 	createAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{
-		ConfigID:           configid,
+		ConfigID:           configID,
 		Version:            version,
 		EnableAppLayer:     enableAppLayer,
 		AllExtensions:      allExtensions,
@@ -115,14 +115,14 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchRead")
 	logger.Debugf("resourceAdvancedSettingsPrefetchRead")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 
 	getAdvancedSettingsPrefetch := appsec.GetAdvancedSettingsPrefetchRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
 	}
 
@@ -133,19 +133,19 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	}
 
 	if err := d.Set("config_id", getAdvancedSettingsPrefetch.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_app_layer", prefetchget.EnableAppLayer); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("all_extensions", prefetchget.AllExtensions); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("extensions", prefetchget.Extensions); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_rate_controls", prefetchget.EnableRateControls); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -157,11 +157,11 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchUpdate")
 	logger.Debugf("resourceAdvancedSettingsPrefetchUpdate")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "prefetchSetting", m)
+	version := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
 	enableAppLayer, err := tools.GetBoolValue("enable_app_layer", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -185,11 +185,11 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	}
 
 	updateAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{
-		ConfigID:       configid,
-		Version:        version,
-		EnableAppLayer: enableAppLayer,
-		AllExtensions:  allExtensions,
-		Extensions:     exts,
+		ConfigID:           configID,
+		Version:            version,
+		EnableAppLayer:     enableAppLayer,
+		AllExtensions:      allExtensions,
+		Extensions:         exts,
 		EnableRateControls: enableRateControls,
 	}
 
@@ -208,14 +208,14 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchDelete")
 	logger.Debugf("resourceAdvancedSettingsPrefetchDelete")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "prefetchSetting", m)
+	version := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
 
 	removeAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{
-		ConfigID:           configid,
+		ConfigID:           configID,
 		Version:            version,
 		EnableAppLayer:     false,
 		EnableRateControls: false,

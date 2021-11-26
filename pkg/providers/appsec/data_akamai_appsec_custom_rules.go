@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -46,11 +45,11 @@ func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m in
 
 	getCustomRules := appsec.GetCustomRulesRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getCustomRules.ConfigID = configid
+	getCustomRules.ConfigID = configID
 
 	customzruleid, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -70,7 +69,7 @@ func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m in
 	outputtext, err := RenderTemplates(ots, "customRules", customrules)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -80,7 +79,7 @@ func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getCustomRules.ConfigID))

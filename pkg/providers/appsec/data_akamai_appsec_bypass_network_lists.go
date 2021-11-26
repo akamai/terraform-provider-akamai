@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -22,6 +21,10 @@ func dataSourceBypassNetworkLists() *schema.Resource {
 			"config_id": {
 				Type:     schema.TypeInt,
 				Required: true,
+			},
+			"security_policy_id": {
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 			"bypass_network_list": {
 				Type:     schema.TypeList,
@@ -46,16 +49,22 @@ func dataSourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceDat
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceBypassNetworkListsRead")
 
-	getBypassNetworkLists := appsec.GetBypassNetworkListsRequest{}
-
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getBypassNetworkLists.ConfigID = configid
+	version := getLatestConfigVersion(ctx, configID, m)
 
-	getBypassNetworkLists.Version = getLatestConfigVersion(ctx, configid, m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 
+	getBypassNetworkLists := appsec.GetBypassNetworkListsRequest{
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
+	}
 	bypassnetworklists, err := client.GetBypassNetworkLists(ctx, getBypassNetworkLists)
 	if err != nil {
 		logger.Errorf("calling 'getBypassNetworkLists': %s", err.Error())
@@ -76,7 +85,7 @@ func dataSourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	nldata := make([]string, 0, len(bypassnetworklists.NetworkLists))
@@ -86,7 +95,7 @@ func dataSourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if err := d.Set("bypass_network_list", nldata); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getBypassNetworkLists.ConfigID))

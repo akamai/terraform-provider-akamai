@@ -57,35 +57,51 @@ func resourceWAFProtectionCreate(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceWAFProtectionCreate")
 	logger.Debugf("in resourceWAFProtectionCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "wafProtection", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "wafProtection", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	applyapplicationlayercontrols, err := tools.GetBoolValue("enabled", d)
+	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	createWAFProtection := appsec.UpdateWAFProtectionRequest{
-		ConfigID:                      configid,
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
+	}
+
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
-		ApplyApplicationLayerControls: applyapplicationlayercontrols,
+		PolicyID:                      policyID,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: enabled,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
-	_, erru := client.UpdateWAFProtection(ctx, createWAFProtection)
-	if erru != nil {
-		logger.Errorf("calling 'createWAFProtection': %s", erru.Error())
-		return diag.FromErr(erru)
-	}
-
-	d.SetId(fmt.Sprintf("%d:%s", createWAFProtection.ConfigID, createWAFProtection.PolicyID))
-
+	d.SetId(fmt.Sprintf("%d:%s", configID, policyID))
 	return resourceWAFProtectionRead(ctx, d, m)
 }
 
@@ -95,44 +111,46 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceWAFProtectionRead")
 	logger.Debugf("in resourceWAFProtectionRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
-	getWAFProtection := appsec.GetWAFProtectionRequest{
-		ConfigID: configid,
+	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
-	wafprotection, err := client.GetWAFProtection(ctx, getWAFProtection)
+	policyProtections, err := client.GetPolicyProtections(ctx, policyProtectionsRequest)
 	if err != nil {
-		logger.Errorf("calling 'getWAFProtection': %s", err.Error())
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
 		return diag.FromErr(err)
 	}
+	enabled := policyProtections.ApplyApplicationLayerControls
 
-	if err := d.Set("config_id", getWAFProtection.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("security_policy_id", getWAFProtection.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("security_policy_id", policyID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("enabled", wafprotection.ApplyApplicationLayerControls); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("enabled", enabled); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
+
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "wafProtectionDS", wafprotection)
+	outputtext, err := RenderTemplates(ots, "wafProtectionDS", policyProtections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -145,32 +163,49 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceWAFProtectionUpdate")
 	logger.Debugf("in resourceWAFProtectionUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratepolicyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "wafProtection", m)
-	policyid := idParts[1]
-	applyapplicationlayercontrols, err := tools.GetBoolValue("enabled", d)
+	version := getModifiableConfigVersion(ctx, configID, "wafProtection", m)
+	policyID := idParts[1]
+	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	updateWAFProtection := appsec.UpdateWAFProtectionRequest{
-		ConfigID:                      configid,
-		Version:                       version,
-		PolicyID:                      policyid,
-		ApplyApplicationLayerControls: applyapplicationlayercontrols,
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
 	}
 
-	_, erru := client.UpdateWAFProtection(ctx, updateWAFProtection)
-	if erru != nil {
-		logger.Errorf("calling 'updateWAFProtection': %s", erru.Error())
-		return diag.FromErr(erru)
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configID,
+		Version:                       version,
+		PolicyID:                      policyID,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: enabled,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceWAFProtectionRead(ctx, d, m)
@@ -182,29 +217,46 @@ func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceWAFProtectionDelete")
 	logger.Debugf("in resourceWAFProtectionDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratepolicyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "wafProtection", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "wafProtection", m)
+	policyID := idParts[1]
 
-	removeWAFProtection := appsec.UpdateWAFProtectionRequest{
-		ConfigID:                      configid,
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
+	}
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configID,
 		Version:                       version,
-		PolicyID:                      policyid,
+		PolicyID:                      policyID,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
 		ApplyApplicationLayerControls: false,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
-	_, errd := client.UpdateWAFProtection(ctx, removeWAFProtection)
-	if errd != nil {
-		logger.Errorf("calling 'removeWAFProtection': %s", errd.Error())
-		return diag.FromErr(errd)
-	}
 	d.SetId("")
 	return nil
 }

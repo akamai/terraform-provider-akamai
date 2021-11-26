@@ -104,6 +104,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_waf_mode":                        dataSourceWAFMode(),
 			"akamai_appsec_wap_selected_hostnames":          dataSourceWAPSelectedHostnames(),
 			"akamai_appsec_threat_intel":                    dataSourceThreatIntel(),
+			"akamai_appsec_tuning_recommendations":          dataSourceTuningRecommendations(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_appsec_advanced_settings_logging":       resourceAdvancedSettingsLogging(),
