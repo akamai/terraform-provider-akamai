@@ -4,10 +4,11 @@
 
 #### FEATURES/ENHANCEMENTS
 * APPSEC
-SECKSD-11930 Add tuning recommendations datasource
-SECKSD-12502 ASE rules advanced exception
-SECKSD-12623 Update WAP bypass network lists for multi-policy WAP
-SECKSD-12624 Deprecate WAP-only datasource & resources
+  * Add group/contract ID support to network list resource ([#243](https://github.com/akamai/terraform-provider-akamai/issues/243))
+  * Add tuning recommendations data source
+  * Add support for advanced exceptions in ASE rules
+  * Update WAP bypass network lists for multi-policy WAP
+  * Deprecate WAP-only datasource & resources
 
 ## 1.8.0 (Oct 25, 2021)
 
