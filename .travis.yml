@@ -14,14 +14,16 @@ go:
 
 env:
   - GO111MODULE=on
-    GOFLAGS=-mod=vendor
+  - GOBIN=$GOPATH/bin
 
 install:
 - make init
+- make tools.terraform
+- make dummy-edgerc
 
 script:
+- make check
 - make test
 - make build
 - make terraform-fmt
 - make terraform-lint
-- make website-test

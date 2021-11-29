@@ -34,6 +34,7 @@ const (
 	// Deprecated: terrform now uses registry paths, the shortest of which would be akamai/akamai"
 	ProviderName = "terraform-provider-akamai"
 
+	// ConfigurationIsNotSpecified is the message for when EdgeGrid configuration is not specified
 	ConfigurationIsNotSpecified = "Akamai EdgeGrid configuration was not specified. Specify the configuration using system environment variables or the location and file name containing the edgerc configuration. Default location the provider checks for is the current user’s home directory. Default configuration file name the provider checks for is .edgerc."
 )
 

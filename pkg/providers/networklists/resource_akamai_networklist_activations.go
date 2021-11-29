@@ -3,7 +3,6 @@ package networklists
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -111,7 +110,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	notificationEmails, ok := d.Get("notification_emails").(*schema.Set)
 	if !ok {
-		return diag.FromErr(fmt.Errorf("Activation Read failed"))
+		return diag.Errorf("Activation Read failed")
 	}
 	createActivations.NotificationRecipients = tools.SetToStringSlice(notificationEmails)
 
@@ -122,7 +121,9 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	logger.Debugf("calling 'createActivations': RESPONSE %v", postResp)
 	d.SetId(strconv.Itoa(postResp.ActivationID))
-	d.Set("status", string(postResp.ActivationStatus))
+	if err := d.Set("status", string(postResp.ActivationStatus)); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
 
 	lookupActivationreq.ActivationID = postResp.ActivationID
 
@@ -141,7 +142,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 			activation = act
 
 		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			return diag.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
 
@@ -176,7 +177,9 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 		logger.Warnf("calling 'getActivations': %s", err.Error())
 	}
 
-	d.Set("status", activation.ActivationStatus)
+	if err := d.Set("status", activation.ActivationStatus); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
 	d.SetId(strconv.Itoa(activation.ActivationID))
 
 	return nil

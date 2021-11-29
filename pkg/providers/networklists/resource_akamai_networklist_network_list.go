@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/networklists"
@@ -132,7 +131,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	if len(contractid) > 0 || groupid > 0 {
 		if len(contractid) == 0 || groupid == 0 {
-			return diag.FromErr(fmt.Errorf("If either a contract_id or group_id is provided, both must be provided"))
+			return diag.Errorf("If either a contract_id or group_id is provided, both must be provided")
 		}
 	}
 
@@ -199,28 +198,32 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	d.Set("name", spcr.Name)
+	if err := d.Set("name", spcr.Name); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
 
-	d.Set("sync_point", strconv.Itoa(spcr.SyncPoint))
+	if err := d.Set("sync_point", spcr.SyncPoint); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
 
 	if err := d.Set("uniqueid", spcr.UniqueID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("network_list_id", spcr.UniqueID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("mode", mode); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("contract_id", contractid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("group_id", groupid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(spcr.UniqueID)
@@ -268,7 +271,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	if len(contractid) > 0 || groupid > 0 {
 		if len(contractid) == 0 || groupid == 0 {
-			return diag.FromErr(fmt.Errorf("If either a contract_id or group_id is provided, both must be provided"))
+			return diag.Errorf("If either a contract_id or group_id is provided, both must be provided")
 		}
 	}
 
@@ -336,11 +339,11 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("contract_id", contractid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("group_id", groupid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return resourceNetworkListRead(ctx, d, m)
@@ -432,15 +435,15 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 	sort.Strings(finalldata)
 
 	if err := d.Set("sync_point", networklist.SyncPoint); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("name", networklist.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("type", networklist.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if detectCase == "LOWER" {
@@ -454,12 +457,14 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("description", networklist.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	d.Set("list", nil)
+	if err := d.Set("list", nil); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
 	if err := d.Set("list", finalldata); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if mode == "" {
@@ -467,15 +472,15 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("mode", mode); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("uniqueid", networklist.UniqueID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("network_list_id", networklist.UniqueID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(networklist.UniqueID)
@@ -500,7 +505,6 @@ func RemoveIndex(hl []string, index int) []string {
 // VerifyContractGroupUnchanged compares the configuration's value for the contract_id and group_id with the resource's
 // value specified in the resources's ID, to ensure that the user has not inadvertently modified the configuration's
 // value; any such modifications indicate an incorrect understanding of the Update operation.
-
 func VerifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("NETWORKLISTs", "VerifyContractGroupUnchanged")

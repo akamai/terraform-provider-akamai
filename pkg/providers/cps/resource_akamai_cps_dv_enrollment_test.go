@@ -716,11 +716,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
-		}).Return(&cps.PreVerificationWarnings{"some warning"}, nil).Once()
+		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
 		client.On("AcknowledgePreVerificationWarnings", mock.Anything, cps.AcknowledgementRequest{
 			EnrollmentID:    1,
 			ChangeID:        2,
-			Acknowledgement: cps.Acknowledgement{"acknowledge"},
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 		}).Return(nil).Once()
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
@@ -882,7 +882,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
-		}).Return(&cps.PreVerificationWarnings{"some warning"}, nil).Once()
+		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
 
 		allowCancel := true
 		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{

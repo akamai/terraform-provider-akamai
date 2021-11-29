@@ -31,7 +31,7 @@ check: errcheck fmtcheck lint vet
 
 .PHONY: test
 test: fmtcheck
-	go test $(TEST) -v $(TESTARGS) -timeout 10m
+	go test $(TEST) -v $(TESTARGS) -timeout 20m 2>&1 
 
 .PHONY: testacc
 testacc: fmtcheck
@@ -39,8 +39,9 @@ testacc: fmtcheck
 
 .PHONY: vet
 vet:
-	@echo "go vet ."
-	@go vet $$(go list ./...); if [ $$? -eq 1 ]; then \
+	@echo "==> Checking source code against vet"
+	# Appsec package excluded until https://track.akamai.com/jira/browse/SECKSD-12824 is done
+	@go vet $$(go list ./... | grep -v appsec); if [ $$? -ne 0 ]; then \
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
 		echo "and fix them if necessary before submitting the code for review."; \
@@ -89,3 +90,11 @@ tools.tflint:
 
 .PHONY: init
 init: tools.golangci-lint tools.tflint
+
+.PHONY: dummy-edgerc
+dummy-edgerc:
+	@sh -c "'$(CURDIR)/scripts/dummyedgerc.sh'"
+
+.PHONY: tools.terraform
+tools.terraform:
+	@sh -c "'$(CURDIR)/scripts/install_terraform.sh'"
