@@ -58,7 +58,14 @@ Once you set up the `akamai_datastream` resource, run `terraform apply`. Terrafo
 
 To start collecting logs for properties in a stream, you need to enable the DataStream behavior in each property that is part of any stream. You can't receive logs from properties with a disabled DataStream behavior even if they're part of active data streams.
 
-The `terraform apply` command returns a `papi_json` output with a JSON-encoded rule for DataStream, for example:
+The `terraform apply` command returns a `papi_json` attribute with a JSON-encoded rule for DataStream. Use the output block to declare the rule value exported by a module, for example:
+
+```hcl
+output "datastream_rule" {
+    value = data.akamai_datastream.example_stream.papi_json
+```
+
+An example of the JSON-encoded rule for DataStream:
 
 ```json
 {
