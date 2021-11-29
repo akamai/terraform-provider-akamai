@@ -762,7 +762,7 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 	if err != nil {
 		return err
 	}
-	for status.StatusInfo.Status != statusCoordinateDomainValidation && status.StatusInfo.Status != "complete" {
+	for (status.StatusInfo.Status != statusCoordinateDomainValidation || len(status.AllowedInput) == 0) && status.StatusInfo.Status != "complete" {
 		select {
 		case <-time.After(PollForChangeStatusInterval):
 			status, err = client.GetChangeStatus(ctx, changeStatusReq)

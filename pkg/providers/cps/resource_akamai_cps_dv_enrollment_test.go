@@ -17,6 +17,7 @@ import (
 
 func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
+		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &mockcps{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -101,6 +102,31 @@ func TestResourceDVEnrollment(t *testing.T) {
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
+		// first verification loop, invalid status
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "pre-verification-safety-checks",
+			},
+		}, nil).Once()
+
+		// second verification loop, valid status, empty allowed input array
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Once()
+
+		// final verification loop, everything in place
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -359,7 +385,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
-			AllowedInput: []cps.AllowedInput{},
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
 				Status: "coodinate-domain-validation",
