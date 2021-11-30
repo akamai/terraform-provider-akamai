@@ -134,9 +134,8 @@ if [[ "$RELEASE_TYPE" == "snapshot" ]]; then
 else
   mod_edit
 fi
-./build/internal/docker_jenkins.bash "$CURRENT_BRANCH" "$EDGEGRID_BRANCH"
-build
 if ! ./build/internal/docker_jenkins.bash "$CURRENT_BRANCH" "$EDGEGRID_BRANCH"; then
-    exit 1
+  exit 1
 fi
+build
 nexus_push
