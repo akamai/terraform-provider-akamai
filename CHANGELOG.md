@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 1.9.0 (Nov 29, 2021)
+## 1.9.0 (Dec 6, 2021)
 
 #### FEATURES/ENHANCEMENTS
 * [IMPORTANT] Added Cloudlets API support
