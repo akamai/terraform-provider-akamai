@@ -7,12 +7,12 @@ locals {
 }
 
 resource "akamai_gtm_resource" "tfexample_resource_1" {
-  domain           = local.gtmTestDomain 
+  domain           = local.gtmTestDomain
   name             = "tfexample_resource_1"
   aggregation_type = "latest"
   type             = "XML load object via HTTP"
   resource_instance {
-    datacenter_id           = 3131 
+    datacenter_id           = 3131
     use_default_load_object = false
     load_object             = "/test1"
     load_servers            = ["1.2.3.4"]

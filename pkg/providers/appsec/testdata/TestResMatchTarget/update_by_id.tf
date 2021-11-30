@@ -3,8 +3,8 @@ provider "akamai" {
 }
 
 resource "akamai_appsec_match_target" "test" {
-    config_id = 43253
-    match_target = <<-EOF
+  config_id    = 43253
+  match_target = <<-EOF
    {
     "type": "website",
     "configId": 43253,
@@ -46,5 +46,5 @@ resource "akamai_appsec_match_target" "test" {
     "sequence": 1
 }
 EOF
-    
+
 }

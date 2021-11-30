@@ -13,11 +13,12 @@ ARG SSH_PUB_KEY
 ARG SSH_KNOWN_HOSTS
 WORKDIR $GOPATH/src/github.com/akamai
 
-RUN apk add --update git bash openssh go gcc musl-dev openssl-dev ca-certificates && \
+RUN apk add --update git bash sudo openssh go gcc musl-dev openssl-dev ca-certificates unzip curl && \
     go get -u github.com/jstemmer/go-junit-report && \
     go get -u github.com/axw/gocov/... && \
     go get -u github.com/AlekSi/gocov-xml && \
-    mkdir -p /root/.ssh
+    mkdir -p /root/.ssh && \
+    curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
 
 ADD build/internal/package/AkamaiCorpRoot-G1.pem /usr/local/share/ca-certificates/AkamaiCorpRoot-G1.pem
 RUN update-ca-certificates

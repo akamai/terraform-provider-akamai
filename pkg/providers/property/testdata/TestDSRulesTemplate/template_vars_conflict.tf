@@ -3,27 +3,27 @@ provider "akamai" {
 }
 
 data "akamai_property_rules_template" "test" {
-  template_file = "testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"
+  template_file       = "testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"
   var_definition_file = "testdata/TestDSRulesTemplate/rules/variables/variableDefinitions.json"
-  var_values_file = "testdata/TestDSRulesTemplate/rules/variables/variables.json"
+  var_values_file     = "testdata/TestDSRulesTemplate/rules/variables/variables.json"
   variables {
-    name = "criteriaMustSatisfy"
+    name  = "criteriaMustSatisfy"
     value = "all"
-    type = "string"
+    type  = "string"
   }
   variables {
-    name = "name"
+    name  = "name"
     value = "test"
-    type = "string"
+    type  = "string"
   }
   variables {
-    name = "enabled"
+    name  = "enabled"
     value = "true"
-    type = "bool"
+    type  = "bool"
   }
   variables {
-    name = "options"
+    name  = "options"
     value = "{\"enabled\":true}"
-    type = "jsonBlock"
+    type  = "jsonBlock"
   }
 }

@@ -7,14 +7,14 @@ locals {
 }
 
 resource "akamai_gtm_geomap" "tfexample_geomap_1" {
-  domain = local.gtmTestDomain 
+  domain = local.gtmTestDomain
   name   = "tfexample_geomap_1"
   default_datacenter {
     datacenter_id = 5400
     nickname      = "default datacenter"
   }
   assignment {
-    datacenter_id = 3132 
+    datacenter_id = 3132
     nickname      = "tfexample_dc_2"
     // Optional
     countries = ["US"]

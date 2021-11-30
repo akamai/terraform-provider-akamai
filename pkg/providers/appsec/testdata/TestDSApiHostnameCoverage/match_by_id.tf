@@ -3,6 +3,6 @@ provider "akamai" {
 }
 
 data "akamai_appsec_hostname_coverage" "test" {
-  
+
 }
 

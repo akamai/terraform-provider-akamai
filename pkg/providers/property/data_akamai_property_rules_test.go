@@ -239,7 +239,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/empty_group_id.tf"),
-						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)group_id = ""`),
+						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)group_id += ""`),
 					},
 				},
 			})

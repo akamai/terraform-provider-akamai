@@ -4,6 +4,6 @@ provider "akamai" {
 
 
 data "akamai_property" "prop" {
-  name = "property_name"
+  name    = "property_name"
   version = 2
 }
