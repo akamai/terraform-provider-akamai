@@ -4,16 +4,16 @@ provider "akamai" {
 
 data "akamai_cloudlets_application_load_balancer_match_rule" "test" {
   match_rules {
-    name = "rule1"
-    start = 10
-    end = 10000
+    name      = "rule1"
+    start     = 10
+    end       = 10000
     match_url = "example.com"
     matches {
-      match_type = "clientip"
+      match_type  = "clientip"
       match_value = "127.0.0.1"
       object_match_value {
-        type = "range"
-        value = [1,50]
+        type  = "range"
+        value = [1, 50]
       }
     }
     forward_settings {

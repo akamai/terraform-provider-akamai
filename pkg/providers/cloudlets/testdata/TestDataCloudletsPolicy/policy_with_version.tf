@@ -3,6 +3,6 @@ provider "akamai" {
 }
 
 data "akamai_cloudlets_policy" "test" {
-    policy_id = 1234
-    version = 3
+  policy_id = 1234
+  version   = 3
 }

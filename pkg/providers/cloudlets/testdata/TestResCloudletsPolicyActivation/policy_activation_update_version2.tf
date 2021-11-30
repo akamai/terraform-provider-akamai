@@ -3,9 +3,9 @@ provider "akamai" {
 }
 
 resource "akamai_cloudlets_policy_activation" "test" {
-  policy_id = 1234
-  network = "staging"
-  version = 2
+  policy_id             = 1234
+  network               = "staging"
+  version               = 2
   associated_properties = ["prp_0", "prp_1"]
 }
 
