@@ -3,12 +3,15 @@ package cloudlets
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+var (
+	objectMatchValueHandlerALB ObjectMatchValueHandler = getObjectMatchValueObjectOrSimpleOrRange
 )
 
 func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
@@ -196,7 +199,7 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 		return diag.FromErr(err)
 	}
 
-	err = setALBMatchRuleSchemaType(matchRules)
+	err = setMatchRuleSchemaType(matchRules, cloudlets.MatchRuleTypeALB)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -256,18 +259,6 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 	return nil
 }
 
-// setALBMatchRuleSchemaType takes ALB matchrules schema set and sets type field for every rule in set
-func setALBMatchRuleSchemaType(matchRules []interface{}) error {
-	for _, mr := range matchRules {
-		matchRuleMap, ok := mr.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("match rule is of invalid type: %T", mr)
-		}
-		matchRuleMap["type"] = cloudlets.MatchRuleTypeALB
-	}
-	return nil
-}
-
 func parseRuleMatches(rawRule map[string]interface{}, field string) ([]cloudlets.MatchCriteriaALB, error) {
 	matches, ok := rawRule[field]
 	if !ok {
@@ -302,39 +293,10 @@ func parseMatchCriteriaALB(match interface{}) (*cloudlets.MatchCriteriaALB, erro
 			matchCriteriaALB.CheckIPs = checkIPs
 		}
 	}
-	omv, err := parseALBObjectMatchValue(m)
+	omv, err := parseObjectMatchValue(m, objectMatchValueHandlerALB)
 	if err != nil {
 		return nil, err
 	}
 	matchCriteriaALB.ObjectMatchValue = omv
 	return &matchCriteriaALB, err
-}
-
-func parseALBObjectMatchValue(aMap map[string]interface{}) (interface{}, error) {
-	v, ok := aMap["object_match_value"]
-	if !ok {
-		return nil, nil
-	}
-	rawObjects := v.(*schema.Set).List()
-	if len(rawObjects) < 1 {
-		return nil, nil
-	}
-
-	omv, ok := rawObjects[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("%w: 'object_match_value' should be an object", tools.ErrInvalidType)
-	}
-	if omvType, ok := omv["type"]; ok {
-		if cloudlets.ObjectMatchValueObjectType(omvType.(string)) == cloudlets.Object {
-			return getOMVObjectType(omv)
-		}
-		if cloudlets.ObjectMatchValueSimpleType(omvType.(string)) == cloudlets.Simple {
-			return getOMVSimpleType(omv), nil
-		}
-		if cloudlets.ObjectMatchValueRangeType(omvType.(string)) == cloudlets.Range {
-			return getOMVRangeType(omv)
-		}
-		return nil, fmt.Errorf("'object_match_value' type '%s' is invalid. Must be one of: 'simple', 'range' or 'object'", omvType)
-	}
-	return nil, nil
 }

@@ -1,0 +1,30 @@
+[
+  {
+    "name": "rule 2",
+    "type": "vpMatchRule",
+    "matches": [
+      {
+        "matchType": "hostname",
+        "matchValue": "example.ex",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false,
+        "objectMatchValue": {
+          "name": "abcde",
+          "type": "object",
+          "nameCaseSensitive": true,
+          "nameHasWildcard": false,
+          "options": {
+            "value": [
+              "test"
+            ],
+            "valueHasWildcard": true,
+            "valueCaseSensitive": true,
+            "valueEscaped": true
+          }
+        }
+      }
+    ],
+    "passThroughPercent": 50.5
+  }
+]

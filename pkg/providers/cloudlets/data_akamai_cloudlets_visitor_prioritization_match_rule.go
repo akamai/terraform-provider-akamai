@@ -12,17 +12,17 @@ import (
 )
 
 var (
-	objectMatchValueHandlerER ObjectMatchValueHandler = getObjectMatchValueObjectOrSimple
+	objectMatchValueHandlerVP ObjectMatchValueHandler = getObjectMatchValueObjectOrSimple
 )
 
-func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
+func dataSourceCloudletsVisitorPrioritizationMatchRule() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: akamaiCloudletsEdgeRedirectorMatchRuleRead,
+		ReadContext: dataSourceCloudletsVisitorPrioritizationMatchRuleRead,
 		Schema: map[string]*schema.Schema{
 			"match_rules": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				Description: "A set of rules for policy",
+				Description: "Defines a set of rules for policy",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -152,23 +152,6 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 								},
 							},
 						},
-						"use_relative_url": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Description: "If set to relative_url, takes the path entered for the redirectUrl and sets it in the response’s Location header. " +
-								"If set to copy_scheme_hostname, creates an absolute path by taking the protocol and hostname from the incoming request and combining them with path information entered for the redirectUrl. " +
-								"If this property is not included, or is set to none, then the redirect_url should be fully-qualified URL",
-						},
-						"status_code": {
-							Type:        schema.TypeInt,
-							Required:    true,
-							Description: "The HTTP response status code (allowed values: 301, 302, 303, 307, 308)",
-						},
-						"redirect_url": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The URL Edge Redirector redirects the request to. If using use_relative_url, you can enter a path for the value",
-						},
 						"match_url": {
 							Type:        schema.TypeString,
 							Optional:    true,
@@ -178,6 +161,12 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Description: "If set to true, the Cloudlet includes the query string from the request in the rewritten or forwarded URL",
+						},
+						"pass_through_percent": {
+							Type:     schema.TypeFloat,
+							Required: true,
+							Description: "The range 0.0: 99.0 specifies the percentage of requests that pass through to the origin. " +
+								"The value of 100 means the request always passes through to the origin. A value of -1 means send everyone to the waiting room.",
 						},
 					},
 				},
@@ -191,18 +180,18 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 	}
 }
 
-func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func dataSourceCloudletsVisitorPrioritizationMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	matchRulesList, err := tools.GetListValue("match_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	err = setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeER)
+	err = setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeVP)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	matchRules, err := getMatchRulesER(matchRulesList)
+	matchRules, err := getMatchRulesVP(matchRulesList)
 	if err != nil {
 		return diag.Errorf("'match_rules' - %s", err)
 	}
@@ -223,35 +212,7 @@ func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.Res
 	return nil
 }
 
-func getMatchCriteriaER(matches []interface{}) ([]cloudlets.MatchCriteriaER, error) {
-	result := make([]cloudlets.MatchCriteriaER, 0, len(matches))
-	for _, criterion := range matches {
-		criterionMap, ok := criterion.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("matches is of invalid type")
-		}
-
-		omv, err := parseObjectMatchValue(criterionMap, objectMatchValueHandlerER)
-		if err != nil {
-			return nil, err
-		}
-
-		matchCriterion := cloudlets.MatchCriteriaER{
-			MatchType:        getStringValue(criterionMap, "match_type"),
-			MatchValue:       getStringValue(criterionMap, "match_value"),
-			MatchOperator:    cloudlets.MatchOperator(getStringValue(criterionMap, "match_operator")),
-			CaseSensitive:    getBoolValue(criterionMap, "case_sensitive"),
-			Negate:           getBoolValue(criterionMap, "negate"),
-			CheckIPs:         cloudlets.CheckIPs(getStringValue(criterionMap, "check_ips")),
-			ObjectMatchValue: omv,
-		}
-
-		result = append(result, matchCriterion)
-	}
-	return result, nil
-}
-
-func getMatchRulesER(matchRules []interface{}) (*cloudlets.MatchRules, error) {
+func getMatchRulesVP(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 	result := make(cloudlets.MatchRules, 0, len(matchRules))
 	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
@@ -259,25 +220,50 @@ func getMatchRulesER(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 			return nil, fmt.Errorf("match rule is of invalid type: %T", mr)
 		}
 
-		matches, err := getMatchCriteriaER(matchRuleMap["matches"].([]interface{}))
+		matches, err := getMatchCriteriaVP(matchRuleMap["matches"].([]interface{}))
 		if err != nil {
 			return nil, err
 		}
 
-		matchRule := cloudlets.MatchRuleER{
-			Name:                     getStringValue(matchRuleMap, "name"),
-			Type:                     cloudlets.MatchRuleTypeER,
-			Start:                    getIntValue(matchRuleMap, "start"),
-			End:                      getIntValue(matchRuleMap, "end"),
-			Matches:                  matches,
-			UseRelativeURL:           getStringValue(matchRuleMap, "use_relative_url"),
-			StatusCode:               getIntValue(matchRuleMap, "status_code"),
-			RedirectURL:              getStringValue(matchRuleMap, "redirect_url"),
-			MatchURL:                 getStringValue(matchRuleMap, "match_url"),
-			UseIncomingQueryString:   getBoolValue(matchRuleMap, "use_incoming_query_string"),
-			UseIncomingSchemeAndHost: getStringValue(matchRuleMap, "use_relative_url") == "copy_scheme_hostname",
+		matchRule := cloudlets.MatchRuleVP{
+			Name:                   getStringValue(matchRuleMap, "name"),
+			Type:                   cloudlets.MatchRuleTypeVP,
+			Start:                  getIntValue(matchRuleMap, "start"),
+			End:                    getIntValue(matchRuleMap, "end"),
+			Matches:                matches,
+			MatchURL:               getStringValue(matchRuleMap, "match_url"),
+			UseIncomingQueryString: getBoolValue(matchRuleMap, "use_incoming_query_string"),
+			PassThroughPercent:     getFloat64Value(matchRuleMap, "pass_through_percent"),
 		}
 		result = append(result, matchRule)
 	}
 	return &result, nil
+}
+
+func getMatchCriteriaVP(matches []interface{}) ([]cloudlets.MatchCriteriaVP, error) {
+	result := make([]cloudlets.MatchCriteriaVP, 0, len(matches))
+	for _, criteria := range matches {
+		criteriaMap, ok := criteria.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("matches is of invalid type")
+		}
+
+		omv, err := parseObjectMatchValue(criteriaMap, objectMatchValueHandlerVP)
+		if err != nil {
+			return nil, err
+		}
+
+		matchCriterion := cloudlets.MatchCriteriaVP{
+			MatchType:        getStringValue(criteriaMap, "match_type"),
+			MatchValue:       getStringValue(criteriaMap, "match_value"),
+			MatchOperator:    cloudlets.MatchOperator(getStringValue(criteriaMap, "match_operator")),
+			CaseSensitive:    getBoolValue(criteriaMap, "case_sensitive"),
+			Negate:           getBoolValue(criteriaMap, "negate"),
+			CheckIPs:         cloudlets.CheckIPs(getStringValue(criteriaMap, "check_ips")),
+			ObjectMatchValue: omv,
+		}
+
+		result = append(result, matchCriterion)
+	}
+	return result, nil
 }
