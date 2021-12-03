@@ -229,7 +229,7 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 		for _, element := range settings.List() {
 			entries := element.(map[string]interface{})
 			// Schema guarantees that "origin_id" will be present
-			rule.ForwardSettings = cloudlets.ForwardSettings{
+			rule.ForwardSettings = cloudlets.ForwardSettingsALB{
 				OriginID: entries["origin_id"].(string),
 			}
 		}
