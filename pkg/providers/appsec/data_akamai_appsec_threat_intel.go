@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -49,19 +48,19 @@ func dataSourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m in
 
 	getThreatIntel := appsec.GetThreatIntelRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	getThreatIntel.ConfigID = configid
+	getThreatIntel.ConfigID = configID
 
-	getThreatIntel.Version = getLatestConfigVersion(ctx, configid, m)
+	getThreatIntel.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	getThreatIntel.PolicyID = policyid
+	getThreatIntel.PolicyID = policyID
 
 	threatintel, err := client.GetThreatIntel(ctx, getThreatIntel)
 	if err != nil {
@@ -79,7 +78,7 @@ func dataSourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(threatintel)
@@ -88,11 +87,11 @@ func dataSourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("threat_intel", threatintel.ThreatIntel); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getThreatIntel.ConfigID))

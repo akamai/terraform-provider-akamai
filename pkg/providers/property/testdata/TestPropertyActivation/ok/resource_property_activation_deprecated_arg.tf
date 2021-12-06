@@ -4,6 +4,6 @@ provider "akamai" {
 
 resource "akamai_property_activation" "test" {
   property = "test"
-  contact = ["user@example.com"]
-  version = 1
+  contact  = ["user@example.com"]
+  version  = 1
 }

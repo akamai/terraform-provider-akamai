@@ -7,7 +7,7 @@ locals {
 }
 
 resource "akamai_gtm_datacenter" "tfexample_dc_1" {
-  domain = local.gtmTestDomain
+  domain           = local.gtmTestDomain
   nickname         = "tfexample_dc_1"
   wait_on_complete = false
   default_load_object {

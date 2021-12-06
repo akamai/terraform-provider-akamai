@@ -1,0 +1,14 @@
+[
+  {
+    "location": "/rules/abc",
+    "akaRuleId": "abc",
+    "name": "r1",
+    "type": "erMatchRule",
+    "useRelativeUrl": "copy_scheme_hostname",
+    "statusCode": 301,
+    "redirectURL": "/ddd",
+    "matchURL": "abc.com",
+    "useIncomingQueryString": false,
+    "useIncomingSchemeAndHost": true
+  }
+]

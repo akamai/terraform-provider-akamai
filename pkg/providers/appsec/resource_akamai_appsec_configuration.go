@@ -119,7 +119,7 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 			return diag.FromErr(err)
 		}
 		if err := d.Set("config_id", response.ConfigID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 
 		d.SetId(fmt.Sprintf("%d", response.ConfigID))
@@ -139,7 +139,7 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 			return diag.FromErr(err)
 		}
 		if err := d.Set("config_id", response.ConfigID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 		d.SetId(fmt.Sprintf("%d", response.ConfigID))
 	}
@@ -153,13 +153,13 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceConfigurationRead")
 	logger.Debug("in resourceConfigurationRead")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	getConfiguration := appsec.GetConfigurationRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 	}
 
 	configuration, err := client.GetConfiguration(ctx, getConfiguration)
@@ -172,12 +172,12 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 	d.Set("description", configuration.Description)
 	d.Set("config_id", configuration.ID)
 
-	getSelectedHostname := appsec.GetSelectedHostnameRequest{
-		ConfigID: configid,
-		Version:  getLatestConfigVersion(ctx, configid, m),
+	getSelectedHostnamesRequest := appsec.GetSelectedHostnamesRequest{
+		ConfigID: configID,
+		Version:  getLatestConfigVersion(ctx, configID, m),
 	}
 
-	selectedhostnames, err := client.GetSelectedHostname(ctx, getSelectedHostname)
+	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnamesRequest)
 	if err != nil {
 		logger.Errorf("calling 'getSelectedHostname': %s", err.Error())
 		return diag.FromErr(err)
@@ -198,7 +198,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceConfigurationUpdate")
 	logger.Debug("in resourceConfigurationUpdate")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -213,7 +213,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	updateConfiguration := appsec.UpdateConfigurationRequest{
-		ConfigID:    configid,
+		ConfigID:    configID,
 		Name:        name,
 		Description: description,
 	}
@@ -237,16 +237,16 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 			hostnames = append(hostnames, hostname)
 		}
 
-		updateSelectedHostname := appsec.UpdateSelectedHostnameRequest{
-			ConfigID:     configid,
-			Version:      getModifiableConfigVersion(ctx, configid, "configuration", m),
+		updateSelectedHostnames := appsec.UpdateSelectedHostnamesRequest{
+			ConfigID:     configID,
+			Version:      getModifiableConfigVersion(ctx, configID, "configuration", m),
 			HostnameList: hostnames,
 		}
 
-		_, err = client.UpdateSelectedHostname(ctx, updateSelectedHostname)
+		_, err = client.UpdateSelectedHostnames(ctx, updateSelectedHostnames)
 		if err != nil {
-			logger.Errorf("calling 'UpdateSelectedHostname': %s", err.Error())
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			logger.Errorf("calling 'UpdateSelectedHostnames': %s", err.Error())
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -259,14 +259,14 @@ func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceConfigurationDelete")
 	logger.Debug("in resourceConfigurationDelete")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// Check whether any versions of this config have ever been activated
 	getConfigVersionsRequest := appsec.GetConfigurationVersionsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 	}
 
 	configurationVersions, err := client.GetConfigurationVersions(ctx, getConfigVersionsRequest)
@@ -281,7 +281,7 @@ func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	removeConfiguration := appsec.RemoveConfigurationRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 	}
 
 	_, errd := client.RemoveConfiguration(ctx, removeConfiguration)

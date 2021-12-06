@@ -1,0 +1,47 @@
+[
+  {
+    "name": "rule2",
+    "type": "erMatchRule",
+    "start": 10,
+    "end": 10000,
+    "matches": [
+      {
+        "matchType": "hostname",
+        "matchValue": "example.ex",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false,
+        "objectMatchValue": {
+          "type": "simple",
+          "value": [
+            "abc"
+          ]
+        }
+      },
+      {
+        "matchType": "cookie",
+        "matchValue": "cookie=cookievalue",
+        "matchOperator": "equals",
+        "caseSensitive": true,
+        "negate": false,
+        "objectMatchValue": {
+          "name": "abcde",
+          "type": "object",
+          "nameCaseSensitive": true,
+          "nameHasWildcard": false,
+          "options": {
+            "value": [
+              "asfas"
+            ],
+            "valueCaseSensitive": true
+          }
+        }
+      }
+    ],
+    "useRelativeUrl": "copy_scheme_hostname",
+    "statusCode": 307,
+    "redirectURL": "/abc/sss",
+    "useIncomingQueryString": false,
+    "useIncomingSchemeAndHost": true
+  }
+]

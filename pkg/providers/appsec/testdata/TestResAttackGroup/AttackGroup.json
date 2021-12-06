@@ -1,6 +1,6 @@
-{
-    "action": "alert",
-    "conditionException": {
+    {
+        "action": "alert",
+        "conditions": [],
         "exception": {
             "headerCookieOrParamValues": [
                 "abc"
@@ -11,4 +11,3 @@
             }
         }
     }
-}

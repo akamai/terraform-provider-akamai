@@ -10,6 +10,8 @@ description: |-
 
 **Scopes**: Security configuration
 
+**Note**: This data source is deprecated and may be removed in a future release.
+
 Modifies the list of hostnames evaluated while a security configuration is in evaluation mode.
 During evaluation mode, hosts take no action of any kind when responding to traffic.
 Instead, these hosts simply maintain a record of the actions they *would* have taken if they had been responding to live traffic in your production network.

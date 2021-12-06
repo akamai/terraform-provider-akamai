@@ -8,9 +8,9 @@ description: |-
 
 # akamai_gtm_geomap
 
-Use the `akamai_gtm_geomap` resource to create, configure, and import a GTM Geographic map. Geographic mapping lets you configure a property that returns a CNAME based on the geographic location of the request. 
+Use the `akamai_gtm_geomap` resource to create, configure, and import a GTM Geographic map. Geographic mapping lets you configure a property that returns a CNAME based on the geographic location of the request.
 
-You can reuse maps for multiple properties or create new ones. To configure a property for geographic mapping, you need to define at least one geographic map for your domain. Each map needs at least two definitions. For example, you can have one definition that maps a set of countries to a specific data center, and a second definition that routes all other traffic. 
+You can reuse maps for multiple properties or create new ones. To configure a property for geographic mapping, you need to define at least one geographic map for your domain. Each map needs at least two definitions. For example, you can have one definition that maps a set of countries to a specific data center, and a second definition that routes all other traffic.
 
 ~> **Note** Import requires an ID with this format: `existing_domain_name`:`existing_map_name`.
 
@@ -40,7 +40,7 @@ This resource supports these arguments:
   * `nickname` - (Required) A descriptive label for all other geographic zones.
 * `wait_on_complete` - (Optional) A boolean indicating whether to wait for transaction to complete. Set to `true` by default.
 * `assignment` - (Optional) Contains information about the geographic zone groupings of countries. You can have multiple `assignment` arguments. If used, requires these additional arguments:
-  * `datacenter_id` - (Optional) A unique identifier for an existing data center in the domain.
+  * `datacenter_id` - (Required) A unique identifier for an existing data center in the domain.
   * `nickname` - (Optional) A descriptive label for the group.
   * `countries` - (Optional) Specifies an array of two-letter ISO 3166 country codes, or for finer subdivisions, the two-letter country code and the two-letter stateOrProvince code separated by a forward slash.
 

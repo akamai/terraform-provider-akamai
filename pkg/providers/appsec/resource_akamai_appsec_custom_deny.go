@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -58,28 +59,33 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomDenyCreate")
 	logger.Debugf("in resourceCustomDenyCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "customDeny", m)
+	version := getModifiableConfigVersion(ctx, configID, "customDeny", m)
 	jsonpostpayload := d.Get("custom_deny")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	createCustomDeny := appsec.CreateCustomDenyRequest{
-		ConfigID:       configid,
+		ConfigID:       configID,
 		Version:        version,
 		JsonPayloadRaw: rawJSON,
 	}
 
-	postresp, errc := client.CreateCustomDeny(ctx, createCustomDeny)
-	if errc != nil {
-		logger.Errorf("calling 'createCustomDeny': %s", errc.Error())
-		return diag.FromErr(errc)
+	createCustomDenyResponse, err := client.CreateCustomDeny(ctx, createCustomDeny)
+	if err != nil {
+		logger.Errorf("calling 'createCustomDeny': %s", err.Error())
+		return diag.FromErr(err)
+	}
+	for _, p := range createCustomDenyResponse.Parameters {
+		name := p.Name
+		val := p.Value
+		log.Printf("%s = %s", string(name), string(val))
 	}
 
-	d.SetId(fmt.Sprintf("%d:%s", configid, postresp.ID))
+	d.SetId(fmt.Sprintf("%d:%s", configID, createCustomDenyResponse.ID))
 
 	return resourceCustomDenyRead(ctx, d, m)
 }
@@ -90,41 +96,46 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceCustomDenyRead")
 	logger.Debugf("in resourceCustomDenyRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:customdenyid")
+	idParts, err := splitID(d.Id(), 2, "configID:customdenyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	customdenyid := idParts[1]
 
 	getCustomDeny := appsec.GetCustomDenyRequest{
-		ConfigID: configid,
-		Version:  getLatestConfigVersion(ctx, configid, m),
+		ConfigID: configID,
+		Version:  getLatestConfigVersion(ctx, configID, m),
 		ID:       customdenyid,
 	}
 
-	customdeny, err := client.GetCustomDeny(ctx, getCustomDeny)
+	getCustomDenyResponse, err := client.GetCustomDeny(ctx, getCustomDeny)
 	if err != nil {
 		logger.Errorf("calling 'getCustomDeny': %s", err.Error())
 		return diag.FromErr(err)
 	}
+	for _, p := range getCustomDenyResponse.Parameters {
+		name := p.Name
+		val := p.Value
+		log.Printf("%s = %s", string(name), string(val))
+	}
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("custom_deny_id", customdenyid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(customdeny)
+	jsonBody, err := json.Marshal(getCustomDenyResponse)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("custom_deny", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -136,12 +147,12 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomDenyUpdate")
 	logger.Debugf("in resourceCustomDenyUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:customdenyid")
+	idParts, err := splitID(d.Id(), 2, "configID:customdenyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -152,8 +163,8 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateCustomDeny := appsec.UpdateCustomDenyRequest{
-		ConfigID:       configid,
-		Version:        getModifiableConfigVersion(ctx, configid, "customDeny", m),
+		ConfigID:       configID,
+		Version:        getModifiableConfigVersion(ctx, configID, "customDeny", m),
 		ID:             customdenyid,
 		JsonPayloadRaw: rawJSON,
 	}
@@ -173,20 +184,20 @@ func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomDenyDelete")
 	logger.Debugf("in resourceCustomDenyDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:customdenyid")
+	idParts, err := splitID(d.Id(), 2, "configID:customdenyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	customdenyid := idParts[1]
 
 	removeCustomDeny := appsec.RemoveCustomDenyRequest{
-		ConfigID: configid,
-		Version:  getModifiableConfigVersion(ctx, configid, "customDeny", m),
+		ConfigID: configID,
+		Version:  getModifiableConfigVersion(ctx, configID, "customDeny", m),
 		ID:       customdenyid,
 	}
 

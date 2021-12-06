@@ -27,6 +27,7 @@ func ConvertToString(data interface{}) (res string) {
 	return
 }
 
+// GetFirstNotEmpty returns first not empty string
 func GetFirstNotEmpty(values ...string) string {
 	for _, s := range values {
 		if s != "" {
@@ -36,6 +37,7 @@ func GetFirstNotEmpty(values ...string) string {
 	return ""
 }
 
+// ContainsString determines if the searched string appears in the array
 func ContainsString(s []string, searchTerm string) bool {
 	for _, v := range s {
 		if v == searchTerm {

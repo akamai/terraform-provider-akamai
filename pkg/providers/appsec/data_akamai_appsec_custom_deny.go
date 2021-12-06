@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -46,13 +45,13 @@ func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m int
 
 	getCustomDeny := appsec.GetCustomDenyListRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getCustomDeny.ConfigID = configid
+	getCustomDeny.ConfigID = configID
 
-	getCustomDeny.Version = getLatestConfigVersion(ctx, configid, m)
+	getCustomDeny.Version = getLatestConfigVersion(ctx, configID, m)
 
 	customDenyID, err := tools.GetStringValue("custom_deny_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -80,12 +79,11 @@ func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if len(customdeny.CustomDenyList) > 0 {
 
-		//d.SetId(strconv.Itoa(getCustomDeny.ConfigID))
 		d.SetId(string(customdeny.CustomDenyList[0].ID))
 	}
 

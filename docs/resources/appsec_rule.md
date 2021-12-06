@@ -55,16 +55,13 @@ This resource supports the following arguments:
 
 - `rule_id` (Required). Unique identifier of the rule being modified.
 
-- `rule_action` (Optional). Action to be taken anytime the rule is triggered. Allowed values are:
-
+- `rule_action` - (Required except when the policy in ASE AUTO mode) Allowed values are:
   - **alert**. Record the event.
   - **deny**. Block the request.
-  - **deny_custom_{custom_deny_id}** Take the action specified by the custom deny.
-  - **none**. Take no action.
+  - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
+  - **none**. Take no action. or `none` to take no action.
 
-  If you are running the Adaptive Security Engine (ASE) beta in **ASE_AUTO** mode, you can't modify the rule action.
-  You can only modify the rule's conditions and exception. 
-  Please contact your Akamai representative for more information.
+ __ASE Beta__. if policy is in `ASE_AUTO` mode, only condition_exception can be modified, "ASE" (Adaptive Security Engine) is currently in beta. Please contact your Akamai representative to learn more.
 
 - `condition_exception` (Optional). Path to a JSON file containing a description of the conditions and exceptions to be associated with a rule. You can view a sample JSON file in the [Modify the conditions and exceptions of a rule](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putruleconditionexception) section of the Application Security API documentation.
 

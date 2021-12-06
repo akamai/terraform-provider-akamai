@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/go-cty/cty"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
+
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	dns "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/dns"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
@@ -37,13 +37,13 @@ func resourceGTMv1Domain() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "",
-				DiffSuppressFunc: dns.FieldPrefixSuppress,
+				DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
 			},
 			"group": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "",
-				DiffSuppressFunc: dns.FieldPrefixSuppress,
+				DiffSuppressFunc: tools.FieldPrefixSuppress("grp_"),
 			},
 			"wait_on_complete": {
 				Type:     schema.TypeBool,

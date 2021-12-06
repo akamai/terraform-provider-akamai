@@ -14,26 +14,26 @@ data "akamai_property_rules_template" "test" {
   }
 }
 EOT
-    template_dir = "testdata/TestDSRulesTemplate/rules/property-snippets/"
+    template_dir  = "testdata/TestDSRulesTemplate/rules/property-snippets/"
   }
   variables {
-    name = "criteriaMustSatisfy"
+    name  = "criteriaMustSatisfy"
     value = "all"
-    type = "string"
+    type  = "string"
   }
   variables {
-    name = "name"
+    name  = "name"
     value = "test"
-    type = "string"
+    type  = "string"
   }
   variables {
-    name = "enabled"
+    name  = "enabled"
     value = "true"
-    type = "bool"
+    type  = "bool"
   }
   variables {
-    name = "options"
+    name  = "options"
     value = "{\"enabled\":true}"
-    type = "jsonBlock"
+    type  = "jsonBlock"
   }
 }

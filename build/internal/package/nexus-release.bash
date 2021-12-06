@@ -44,6 +44,7 @@ find_branch() {
     do
       echo "Checking branch '${branch}'"
       EDGEGRID_BRANCH=$branch
+
       if [[ "$EDGEGRID_BRANCH" == "develop" ]]; then
         EDGEGRID_BRANCH="v2"
       fi
@@ -66,14 +67,15 @@ clone_edgegrid() {
     echo "Repository 'akamaiopen-edgegrid-golang' already exists, so only cleaning and updating it"
     pushd akamaiopen-edgegrid-golang
     git reset --hard
-    git fetch
+    git fetch -p
     popd
   fi
 }
 
 checkout_edgegrid() {
   pushd akamaiopen-edgegrid-golang
-  git checkout $EDGEGRID_BRANCH
+  git checkout $EDGEGRID_BRANCH -f
+  git reset --hard origin/$EDGEGRID_BRANCH
   git pull
   popd
 }
@@ -132,6 +134,8 @@ if [[ "$RELEASE_TYPE" == "snapshot" ]]; then
 else
   mod_edit
 fi
-./build/internal/docker_jenkins.bash "$CURRENT_BRANCH" "$EDGEGRID_BRANCH"
+if ! ./build/internal/docker_jenkins.bash "$CURRENT_BRANCH" "$EDGEGRID_BRANCH"; then
+  exit 1
+fi
 build
 nexus_push

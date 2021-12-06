@@ -1,0 +1,22 @@
+[
+  {
+    "name": "rule1",
+    "type": "erMatchRule",
+    "start": 10,
+    "end": 10000,
+    "matches": [
+      {
+        "matchType": "clientip",
+        "matchValue": "127.0.0.1",
+        "caseSensitive": false,
+        "negate": false
+      }
+    ],
+    "useRelativeUrl": "copy_scheme_hostname",
+    "statusCode": 307,
+    "redirectURL": "/abc/sss",
+    "matchURL": "example.com",
+    "useIncomingQueryString": false,
+    "useIncomingSchemeAndHost": true
+  }
+]

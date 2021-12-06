@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -97,6 +98,13 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:     schema.TypeInt,
 		Optional: true,
 		ForceNew: true,
+	},
+	"use_cases": {
+		Type:             schema.TypeString,
+		Optional:         true,
+		ForceNew:         true,
+		DiffSuppressFunc: suppressEdgeHostnameUseCases,
+		Description:      "A JSON encoded list of use cases",
 	},
 }
 
@@ -201,9 +209,21 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(fmt.Errorf("a certificate enrollment ID is required for Enhanced TLS edge hostnames with 'edgekey.net' suffix"))
 		}
 	}
-
 	newHostname.CertEnrollmentID = certEnrollmentID
 	newHostname.SlotNumber = certEnrollmentID
+
+	useCasesJSON, err := tools.GetStringValue("use_cases", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if useCasesJSON != "" {
+		var useCases []papi.UseCase
+		if err := json.Unmarshal([]byte(useCasesJSON), &useCases); err != nil {
+			return diag.Errorf("error while un-marshaling use cases JSON: %s", err)
+		}
+		newHostname.UseCases = useCases
+	}
+
 	if ehnID == "" {
 		logger.Debugf("Creating new edge hostname: %#v", newHostname)
 		hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
@@ -272,6 +292,13 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("product_id", productID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	useCasesJSON, err := useCases2JSON(edgehostnameDetails.EdgeHostname.UseCases)
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Set("use_cases", string(useCasesJSON)); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
@@ -346,27 +373,29 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	defaultEdgeHostname := &edgeHostnames.EdgeHostnames.Items[0]
 
 	var edgeHostname string
 	if got, ok := d.GetOk("edge_hostname"); ok {
 		edgeHostname = got.(string)
 	}
 
-	if edgeHostname != "" {
-		found, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostname)
-		if err != nil && !errors.Is(err, ErrEdgeHostnameNotFound) {
-			return diag.FromErr(err)
-		}
-		if err == nil {
-			defaultEdgeHostname = found
-		}
+	foundEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostname)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	if err := d.Set("edge_hostname", defaultEdgeHostname.Domain); err != nil {
+	useCasesJSON, err := useCases2JSON(foundEdgeHostname.UseCases)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("use_cases", string(useCasesJSON)); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
-	d.SetId(defaultEdgeHostname.ID)
+
+	if err := d.Set("edge_hostname", foundEdgeHostname.Domain); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	}
+	d.SetId(foundEdgeHostname.ID)
 
 	return nil
 }
@@ -381,6 +410,40 @@ func suppressEdgeHostnameDomain(_, old, new string, _ *schema.ResourceData) bool
 	return false
 }
 
+func suppressEdgeHostnameUseCases(_, old, new string, _ *schema.ResourceData) bool {
+	logger := akamai.Log("PAPI", "suppressEdgeHostnameUseCases")
+	if old == new {
+		return true
+	}
+	var oldUseCases, newUseCases []papi.UseCase
+	if err := json.Unmarshal([]byte(old), &oldUseCases); err != nil {
+		logger.Errorf("Unable to unmarshal 'old' use cases: %s", err)
+		return false
+	}
+	if err := json.Unmarshal([]byte(new), &newUseCases); err != nil {
+		logger.Errorf("Unable to unmarshal 'new' use cases: %s", err)
+		return false
+	}
+
+	diff := make(map[papi.UseCase]int)
+	for _, useCase := range oldUseCases {
+		diff[useCase]++
+	}
+
+	for _, useCase := range newUseCases {
+		if _, ok := diff[useCase]; !ok {
+			return false
+		}
+
+		diff[useCase]--
+		if diff[useCase] == 0 {
+			delete(diff, useCase)
+		}
+	}
+
+	return len(diff) == 0
+}
+
 // appendDefaultSuffixToEdgeHostname is a StateFunc which appends ".edgesuite.net" to an edge hostname if none of the supported prefixes were provided
 // It is used in order to retain idempotency when "edge_hostname" value is used as output
 func appendDefaultSuffixToEdgeHostname(i interface{}) string {
@@ -392,7 +455,6 @@ func appendDefaultSuffixToEdgeHostname(i interface{}) string {
 }
 
 func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*papi.EdgeHostnameGetItem, error) {
-	var prefix string
 	suffix := "edgesuite.net"
 	if domain != "" {
 		if strings.HasSuffix(domain, "edgekey.net") {
@@ -401,14 +463,21 @@ func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*pap
 		if strings.HasSuffix(domain, "akamaized.net") {
 			suffix = "akamaized.net"
 		}
-		prefix = strings.TrimSuffix(domain, "."+suffix)
-	}
+		prefix := strings.TrimSuffix(domain, "."+suffix)
 
-	for _, eHn := range edgeHostnames.Items {
-		if eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix {
-			return &eHn, nil
+		for _, eHn := range edgeHostnames.Items {
+			if eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix {
+				return &eHn, nil
+			}
 		}
 	}
 
 	return nil, fmt.Errorf("%w: %s", ErrEdgeHostnameNotFound, domain)
+}
+
+func useCases2JSON(useCases []papi.UseCase) ([]byte, error) {
+	if len(useCases) == 0 {
+		return []byte{}, nil
+	}
+	return json.MarshalIndent(useCases, "", "  ")
 }

@@ -30,7 +30,7 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Once()
 
 		client.On("AcknowledgeDVChallenges", mock.Anything, cps.AcknowledgementRequest{
-			Acknowledgement: cps.Acknowledgement{"acknowledge"},
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 			EnrollmentID:    1,
 			ChangeID:        2,
 		}).Return(nil)
@@ -59,7 +59,7 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Once()
 
 		client.On("AcknowledgeDVChallenges", mock.Anything, cps.AcknowledgementRequest{
-			Acknowledgement: cps.Acknowledgement{"acknowledge"},
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 			EnrollmentID:    1,
 			ChangeID:        2,
 		}).Return(nil)
@@ -111,13 +111,13 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Once()
 
 		client.On("AcknowledgeDVChallenges", mock.Anything, cps.AcknowledgementRequest{
-			Acknowledgement: cps.Acknowledgement{"acknowledge"},
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 			EnrollmentID:    1,
 			ChangeID:        2,
 		}).Return(fmt.Errorf("oops")).Once()
 
 		client.On("AcknowledgeDVChallenges", mock.Anything, cps.AcknowledgementRequest{
-			Acknowledgement: cps.Acknowledgement{"acknowledge"},
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 			EnrollmentID:    1,
 			ChangeID:        2,
 		}).Return(nil).Once()
@@ -162,7 +162,7 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Once()
 
 		client.On("AcknowledgeDVChallenges", mock.Anything, cps.AcknowledgementRequest{
-			Acknowledgement: cps.Acknowledgement{"acknowledge"},
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 			EnrollmentID:    1,
 			ChangeID:        2,
 		}).Return(fmt.Errorf("oops"))

@@ -8,18 +8,18 @@ resource "akamai_appsec_attack_group" "test" {
   attack_group        = "SQL"
   attack_group_action = "alert"
   condition_exception = <<-EOF
-   {
-        "conditions": [],
-        "exception": {
-            "headerCookieOrParamValues": [
-                "abc"
-            ],
-            "specificHeaderCookieOrParamPrefix": {
-                "prefix": "a*",
-                "selector": "REQUEST_COOKIES"
-            }
+{
+    "conditions": [],
+    "exception": {
+        "headerCookieOrParamValues": [
+            "abc"
+        ],
+        "specificHeaderCookieOrParamPrefix": {
+            "prefix": "a*",
+            "selector": "REQUEST_COOKIES"
         }
     }
+}
 EOF
 }
 

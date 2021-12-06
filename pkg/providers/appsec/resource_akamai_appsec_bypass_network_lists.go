@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -31,6 +32,11 @@ func resourceBypassNetworkLists() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
+			"security_policy_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The ID of the security policy governing the bypass network lists",
+			},
 			"bypass_network_list": {
 				Type:     schema.TypeSet,
 				Required: true,
@@ -46,8 +52,12 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsCreate")
 	logger.Debug("in resourceBypassNetworkListsCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
+		return diag.FromErr(err)
+	}
+	policyID, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	networkListIDSet, err := tools.GetSetValue("bypass_network_list", d)
@@ -61,8 +71,9 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	updateBypassNetworkLists := appsec.UpdateBypassNetworkListsRequest{
-		ConfigID:     configid,
-		Version:      getModifiableConfigVersion(ctx, configid, "bypassnetworklists", m),
+		ConfigID:     configID,
+		Version:      getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m),
+		PolicyID:     policyID,
 		NetworkLists: networkListIDList,
 	}
 
@@ -71,7 +82,7 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 		logger.Errorf("calling 'UpdateBypassNetworkLists': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	d.SetId(fmt.Sprintf("%d", configid))
+	d.SetId(fmt.Sprintf("%d", configID))
 
 	return resourceBypassNetworkListsRead(ctx, d, m)
 }
@@ -82,14 +93,18 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsRead")
 	logger.Debug("in resourceBypassNetworkListsRead")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	policyID, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 	getBypassNetworkLists := appsec.GetBypassNetworkListsRequest{
-		ConfigID: configid,
-		Version:  getLatestConfigVersion(ctx, configid, m),
+		ConfigID: configID,
+		Version:  getLatestConfigVersion(ctx, configID, m),
+		PolicyID: policyID,
 	}
 
 	bypassNetworkListsResponse, err := client.GetBypassNetworkLists(ctx, getBypassNetworkLists)
@@ -98,15 +113,15 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	networkListIDSet := schema.Set{F: schema.HashString}
 	for _, networkList := range bypassNetworkListsResponse.NetworkLists {
 		networkListIDSet.Add(networkList.ID)
 	}
 	if err := d.Set("bypass_network_list", networkListIDSet.List()); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -118,8 +133,12 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsUpdate")
 	logger.Debug("in resourceBypassNetworkListsUpdate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
+		return diag.FromErr(err)
+	}
+	policyID, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	networkListIDSet, err := tools.GetSetValue("bypass_network_list", d)
@@ -133,8 +152,9 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	updateBypassNetworkLists := appsec.UpdateBypassNetworkListsRequest{
-		ConfigID:     configid,
-		Version:      getModifiableConfigVersion(ctx, configid, "bypassnetworklists", m),
+		ConfigID:     configID,
+		Version:      getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m),
+		PolicyID:     policyID,
 		NetworkLists: networkListIDList,
 	}
 
@@ -155,23 +175,22 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsDelete")
 	logger.Debug("in resourceBypassNetworkListsDelete")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	bypassNetworkIDSet, err := tools.GetSetValue("bypass_network_list", d)
-	if err != nil {
+	policyID, err := tools.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	networkListIDList := make([]string, 0, len(bypassNetworkIDSet.List()))
-	for _, networkListID := range bypassNetworkIDSet.List() {
-		networkListIDList = append(networkListIDList, networkListID.(string))
-	}
+	// Send an empty list to remove the entire current list.
+	networkListIDList := make([]string, 0)
 
 	removeBypassNetworkLists := appsec.RemoveBypassNetworkListsRequest{
-		ConfigID:     configid,
-		Version:      getModifiableConfigVersion(ctx, configid, "bypassnetworklists", m),
+		ConfigID:     configID,
+		Version:      getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m),
+		PolicyID:     policyID,
 		NetworkLists: networkListIDList,
 	}
 

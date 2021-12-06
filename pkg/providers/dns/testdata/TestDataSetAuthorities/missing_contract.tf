@@ -3,9 +3,9 @@ provider "akamai" {
 }
 
 data "akamai_authorities_set" "test" {
-	
+
 }
-  
+
 output "authorities" {
-	value = "${join(",", data.akamai_authorities_set.test.authorities)}"
+  value = join(",", data.akamai_authorities_set.test.authorities)
 }

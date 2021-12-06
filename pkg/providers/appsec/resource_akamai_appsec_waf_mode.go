@@ -80,12 +80,12 @@ func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	logger := meta.Log("APPSEC", "resourceWAFModeCreate")
 	logger.Debugf(" in resourceWAFModeCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "wafMode", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "wafMode", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -95,9 +95,9 @@ func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	createWAFMode := appsec.UpdateWAFModeRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		Mode:     mode,
 	}
 
@@ -118,21 +118,21 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	logger := meta.Log("APPSEC", "resourceWAFModeRead")
 	logger.Debugf(" in resourceWAFModeRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
 	getWAFMode := appsec.GetWAFModeRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
@@ -142,32 +142,32 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	if err := d.Set("config_id", getWAFMode.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getWAFMode.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("mode", wafmode.Mode); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("current_ruleset", wafmode.Current); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("eval_status", wafmode.Eval); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("eval_ruleset", wafmode.Evaluating); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("eval_expiration_date", wafmode.Expires); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 	outputtext, err := RenderTemplates(ots, "wafModesDS", wafmode)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -180,25 +180,25 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	logger := meta.Log("APPSEC", "resourceWAFModeUpdate")
 	logger.Debugf(" in resourceWAFModeUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid:ratepolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratepolicyid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "wafMode", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "wafMode", m)
+	policyID := idParts[1]
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	updateWAFMode := appsec.UpdateWAFModeRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		Mode:     mode,
 	}
 
@@ -211,8 +211,8 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourceWAFModeRead(ctx, d, m)
 }
 
-func resourceWAFModeDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(context.TODO(), d, m)
+func resourceWAFModeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return schema.NoopContext(ctx, d, m)
 }
 
 // Definition of constant variables

@@ -49,7 +49,7 @@ func resourceEvalProtectHostCreate(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceEvalProtectHostCreate")
 	logger.Debug("in resourceEvalProtectHostCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -63,8 +63,8 @@ func resourceEvalProtectHostCreate(ctx context.Context, d *schema.ResourceData, 
 		hostnamelist = append(hostnamelist, hostname.(string))
 	}
 	updateEvalProtectHost := appsec.UpdateEvalProtectHostRequest{
-		ConfigID:  configid,
-		Version:   getModifiableConfigVersion(ctx, configid, "evalprotecthostnames", m),
+		ConfigID:  configID,
+		Version:   getModifiableConfigVersion(ctx, configID, "evalprotecthostnames", m),
 		Hostnames: hostnamelist,
 	}
 
@@ -74,7 +74,7 @@ func resourceEvalProtectHostCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(fmt.Sprintf("%d", configid))
+	d.SetId(fmt.Sprintf("%d", configID))
 
 	return resourceEvalProtectHostRead(ctx, d, m)
 }
@@ -85,31 +85,31 @@ func resourceEvalProtectHostRead(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceEvalProtectHostRead")
 	logger.Debug("in resourceEvalProtectHostRead")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	getEvalProtectHost := appsec.GetEvalProtectHostRequest{
-		ConfigID: configid,
-		Version:  getLatestConfigVersion(ctx, configid, m),
+	getEvalProtectHostsRequest := appsec.GetEvalProtectHostsRequest{
+		ConfigID: configID,
+		Version:  getLatestConfigVersion(ctx, configID, m),
 	}
 
-	evalprotecthostnames, err := client.GetEvalProtectHost(ctx, getEvalProtectHost)
+	evalprotecthostnames, err := client.GetEvalProtectHosts(ctx, getEvalProtectHostsRequest)
 	if err != nil {
 		logger.Errorf("calling 'updateEvalProtectHost': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	evalprotecthostnameset := schema.Set{F: schema.HashString}
 	for _, hostname := range evalprotecthostnames.Hostnames {
 		evalprotecthostnameset.Add(hostname)
 	}
 	if err := d.Set("hostnames", evalprotecthostnameset.List()); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -121,7 +121,7 @@ func resourceEvalProtectHostUpdate(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceEvalProtectHostUpdate")
 	logger.Debug("in resourceEvalProtectHostUpdate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -131,8 +131,8 @@ func resourceEvalProtectHostUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	updateEvalProtectHost := appsec.UpdateEvalProtectHostRequest{
-		ConfigID: configid,
-		Version:  getModifiableConfigVersion(ctx, configid, "evalprotecthostnames", m),
+		ConfigID: configID,
+		Version:  getModifiableConfigVersion(ctx, configID, "evalprotecthostnames", m),
 	}
 
 	hostnamelist := make([]string, 0, len(hostnames.List()))
@@ -150,10 +150,10 @@ func resourceEvalProtectHostUpdate(ctx context.Context, d *schema.ResourceData, 
 	return resourceEvalProtectHostRead(ctx, d, m)
 }
 
-func resourceEvalProtectHostDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceEvalProtectHostDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("APPSEC", "resourceEvalProtectHostDelete")
 	logger.Debug("in resourceEvalProtectHostDelete")
 
-	return schema.NoopContext(context.TODO(), d, m)
+	return schema.NoopContext(ctx, d, m)
 }

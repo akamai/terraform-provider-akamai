@@ -53,18 +53,18 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceVersionNotesCreate")
 	logger.Debugf("in resourceVersionNotesCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "editVersionNotes", m)
+	version := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
 	notes, err := tools.GetStringValue("version_notes", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	createVersionNotes := appsec.UpdateVersionNotesRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
 		Notes:    notes,
 	}
@@ -86,14 +86,14 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceVersionNotesRead")
 	logger.Debugf("resourceVersionNotesRead")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 
 	getVersionNotes := appsec.GetVersionNotesRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
 	}
 
@@ -104,10 +104,10 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	if err := d.Set("config_id", getVersionNotes.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("version_notes", versionnotes.Notes); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
@@ -125,18 +125,18 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceVersionNotesUpdate")
 	logger.Debugf("resourceVersionNotesUpdate")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "editVersionNotes", m)
+	version := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
 	notes, err := tools.GetStringValue("version_notes", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	updateVersionNotes := appsec.UpdateVersionNotesRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
 		Notes:    notes,
 	}
@@ -149,6 +149,6 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	return resourceVersionNotesRead(ctx, d, m)
 }
 
-func resourceVersionNotesDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(context.TODO(), d, m)
+func resourceVersionNotesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return schema.NoopContext(ctx, d, m)
 }

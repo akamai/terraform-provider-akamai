@@ -13,13 +13,13 @@ func TestAccAkamaiExportConfiguration_data_basic(t *testing.T) {
 	t.Run("match by ExportConfiguration ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetExportConfigurationsResponse{}
+		cv := appsec.GetExportConfigurationResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSExportConfiguration/ExportConfiguration.json"))
 		json.Unmarshal([]byte(expectJS), &cv)
 
-		client.On("GetExportConfigurations",
+		client.On("GetExportConfiguration",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetExportConfigurationsRequest{ConfigID: 43253, Version: 7},
+			appsec.GetExportConfigurationRequest{ConfigID: 43253, Version: 7},
 		).Return(&cv, nil)
 
 		useClient(client, func() {

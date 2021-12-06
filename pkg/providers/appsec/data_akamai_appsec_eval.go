@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -41,19 +40,19 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	getEval := appsec.GetEvalRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEval.ConfigID = configid
+	getEval.ConfigID = configID
 
-	getEval.Version = getLatestConfigVersion(ctx, configid, m)
+	getEval.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEval.PolicyID = policyid
+	getEval.PolicyID = policyID
 
 	eval, err := client.GetEval(ctx, getEval)
 	if err != nil {
@@ -67,7 +66,7 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 	outputtext, err := RenderTemplates(ots, "EvalDS", eval)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 

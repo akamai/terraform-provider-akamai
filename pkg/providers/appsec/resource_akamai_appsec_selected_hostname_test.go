@@ -13,15 +13,15 @@ func TestAccAkamaiSelectedHostname_res_basic(t *testing.T) {
 	t.Run("match by SelectedHostname ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateSelectedHostnameResponse{}
+		cu := appsec.UpdateSelectedHostnamesResponse{}
 		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
 		json.Unmarshal([]byte(expectJSU), &cu)
 
-		cr := appsec.GetSelectedHostnameResponse{}
+		cr := appsec.GetSelectedHostnamesResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
-		hns := appsec.GetSelectedHostnameResponse{}
+		hns := appsec.GetSelectedHostnamesResponse{}
 		expectJSHN := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
 		json.Unmarshal([]byte(expectJSHN), &hns)
 
@@ -34,14 +34,14 @@ func TestAccAkamaiSelectedHostname_res_basic(t *testing.T) {
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		client.On("GetSelectedHostname",
+		client.On("GetSelectedHostnames",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetSelectedHostnameRequest{ConfigID: 43253, Version: 7},
+			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&cr, nil)
 
-		client.On("UpdateSelectedHostname",
+		client.On("UpdateSelectedHostnames",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateSelectedHostnameRequest{ConfigID: 43253, Version: 7, HostnameList: []appsec.Hostname{
+			appsec.UpdateSelectedHostnamesRequest{ConfigID: 43253, Version: 7, HostnameList: []appsec.Hostname{
 				{
 					Hostname: "rinaldi.sandbox.akamaideveloper.com",
 				},

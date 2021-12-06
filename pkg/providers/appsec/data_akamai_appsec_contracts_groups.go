@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -86,17 +85,17 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	for _, configval := range contractsgroups.ContractGroups {
 
 		if configval.ContractID == contract && configval.GroupID == group {
 			if err := d.Set("default_contractid", contract); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 			if err := d.Set("default_groupid", group); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 		}
 	}

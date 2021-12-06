@@ -4,8 +4,8 @@ provider "akamai" {
 
 
 resource "akamai_appsec_rate_policy" "test" {
-    config_id = 43253
-    rate_policy = <<-EOF
+  config_id   = 43253
+  rate_policy = <<-EOF
     {
     "matchType": "path",
     "type": "WAF",

@@ -34,7 +34,7 @@ var (
 	}
 
 	// DatastreamResourceTimeout is the default timeout for the resource operations (max activation time + polling interval)
-	DatastreamResourceTimeout = (90 * time.Minute) + PollForActivationStatusChangeInterval
+	DatastreamResourceTimeout = 180 * time.Minute
 )
 
 const (
@@ -81,7 +81,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 	"contract_id": {
 		Type:             schema.TypeString,
 		Required:         true,
-		DiffSuppressFunc: prefixSuppressor("ctr_"),
+		DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
 		Description:      "Identifies the contract that has access to the product",
 	},
 	"created_by": {
@@ -114,7 +114,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 	"group_id": {
 		Type:             schema.TypeString,
 		Required:         true,
-		DiffSuppressFunc: prefixSuppressor("grp_"),
+		DiffSuppressFunc: tools.FieldPrefixSuppress("grp_"),
 		Description:      "Identifies the group that has access to the product and for which the stream configuration was created",
 	},
 	"group_name": {
@@ -152,7 +152,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Required: true,
 		Elem: &schema.Schema{
 			Type:             schema.TypeString,
-			DiffSuppressFunc: prefixSuppressor("prp_"),
+			DiffSuppressFunc: tools.FieldPrefixSuppress("prp_"),
 		},
 		Description: "Identifies the properties monitored in the stream",
 	},
@@ -758,6 +758,12 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs["dataset_fields_ids"] = DataSetFieldsToList(streamDetails.Datasets)
 	attrs["contract_id"] = streamDetails.ContractID
 	attrs["email_ids"] = strings.Split(streamDetails.EmailIDs, ",")
+	var emailIDs []string
+	if streamDetails.EmailIDs != "" {
+		emailIDs = strings.Split(streamDetails.EmailIDs, ",")
+	}
+	attrs["email_ids"] = emailIDs
+
 	attrs["group_id"] = strconv.Itoa(streamDetails.GroupID)
 	attrs["group_name"] = streamDetails.GroupName
 	attrs["modified_by"] = streamDetails.ModifiedBy
@@ -1128,12 +1134,6 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 	}
 
 	return &streamDetails.ActivationStatus, nil
-}
-
-func prefixSuppressor(prefix string) schema.SchemaDiffSuppressFunc {
-	return func(_, old string, new string, _ *schema.ResourceData) bool {
-		return strings.TrimPrefix(old, prefix) == strings.TrimPrefix(new, prefix)
-	}
 }
 
 func urlSuppressor(key string) schema.SchemaDiffSuppressFunc {

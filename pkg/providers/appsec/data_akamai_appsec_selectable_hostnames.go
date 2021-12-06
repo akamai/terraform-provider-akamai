@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -68,13 +67,13 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 
 	getSelectableHostnames := appsec.GetSelectableHostnamesRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSelectableHostnames.ConfigID = configid
+	getSelectableHostnames.ConfigID = configID
 
-	getSelectableHostnames.Version = getLatestConfigVersion(ctx, configid, m)
+	getSelectableHostnames.Version = getLatestConfigVersion(ctx, configID, m)
 
 	contract, err := tools.GetStringValue("contractid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -100,7 +99,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if err := d.Set("hostnames_json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	var flagsetstg, flagsetprod string
@@ -146,7 +145,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if err := d.Set("hostnames", newhdata); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	ots := OutputTemplates{}
@@ -155,7 +154,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	outputtext, err := RenderTemplates(ots, "selectableHostsDS", selectablehostnames)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 

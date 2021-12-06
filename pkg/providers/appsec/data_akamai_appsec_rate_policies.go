@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -46,19 +45,19 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getRatePolicies := appsec.GetRatePoliciesRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getRatePolicies.ConfigID = configid
+	getRatePolicies.ConfigID = configID
 
-	getRatePolicies.ConfigVersion = getLatestConfigVersion(ctx, configid, m)
+	getRatePolicies.ConfigVersion = getLatestConfigVersion(ctx, configID, m)
 
-	ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
+	ratePolicyID, err := tools.GetIntValue("rate_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getRatePolicies.RatePolicyID = ratepolicyid
+	getRatePolicies.RatePolicyID = ratePolicyID
 
 	ratepolicies, err := client.GetRatePolicies(ctx, getRatePolicies)
 	if err != nil {
@@ -72,7 +71,7 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	outputtext, err := RenderTemplates(ots, "ratePolicies", ratepolicies)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -82,7 +81,7 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getRatePolicies.ConfigID))

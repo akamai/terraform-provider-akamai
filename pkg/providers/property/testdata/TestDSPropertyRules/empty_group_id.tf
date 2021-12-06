@@ -4,6 +4,6 @@ provider "akamai" {
 
 data "akamai_property_rules" "rules" {
   contract_id = "ctr_2"
-  group_id = ""
+  group_id    = ""
   property_id = "prp_2"
 }
