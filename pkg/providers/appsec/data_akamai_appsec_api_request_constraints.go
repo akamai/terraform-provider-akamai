@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -51,19 +50,19 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 
 	getAPIiRequestConstraints := v2.GetApiRequestConstraintsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getAPIiRequestConstraints.ConfigID = configid
+	getAPIiRequestConstraints.ConfigID = configID
 
-	getAPIiRequestConstraints.Version = getLatestConfigVersion(ctx, configid, m)
+	getAPIiRequestConstraints.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getAPIiRequestConstraints.PolicyID = policyid
+	getAPIiRequestConstraints.PolicyID = policyID
 
 	apiID, err := tools.GetIntValue("api_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -91,7 +90,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getAPIiRequestConstraints.ConfigID))

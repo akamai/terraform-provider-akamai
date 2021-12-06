@@ -71,12 +71,12 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	logger := meta.Log("APPSEC", "resourceIPGeoCreate")
 	logger.Debugf("in resourceIPGeoCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ipgeo", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,9 +89,9 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	exceptioniplists := tools.SetToStringSlice(d.Get("exception_ip_network_lists").(*schema.Set))
 
 	createIPGeo := appsec.UpdateIPGeoRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 	if mode == Allow {
 		createIPGeo.Block = "blockAllTrafficExceptAllowedIPs"
@@ -120,21 +120,21 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 	logger := meta.Log("APPSEC", "resourceIPGeoRead")
 	logger.Debugf("in resourceIPGeoRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
 	getIPGeo := appsec.GetIPGeoRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	ipgeo, err := client.GetIPGeo(ctx, getIPGeo)
@@ -144,29 +144,29 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if err := d.Set("config_id", getIPGeo.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getIPGeo.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if ipgeo.Block == "blockAllTrafficExceptAllowedIPs" {
 		if err := d.Set("mode", Allow); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 	if ipgeo.Block == "blockSpecificIPGeo" {
 		if err := d.Set("mode", Block); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 	if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -178,16 +178,16 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	logger := meta.Log("APPSEC", "resourceIPGeoUpdate")
 	logger.Debugf("in resourceIPGeoUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ipgeo", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	policyID := idParts[1]
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -197,9 +197,9 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	exceptioniplists := tools.SetToStringSlice(d.Get("exception_ip_network_lists").(*schema.Set))
 
 	updateIPGeo := appsec.UpdateIPGeoRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 	if mode == Allow {
 		updateIPGeo.Block = "blockAllTrafficExceptAllowedIPs"
@@ -227,27 +227,44 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	logger := meta.Log("APPSEC", "resourceIPGeoDelete")
 	logger.Debugf("in resourceIPGeoDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:securitypolicyid")
+	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "ipgeo", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	policyID := idParts[1]
 
-	removePolicyProtections := appsec.UpdateNetworkLayerProtectionRequest{
-		ConfigID:                  configid,
-		Version:                   version,
-		PolicyID:                  policyid,
-		ApplyNetworkLayerControls: false,
+	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
 	}
-	_, erru := client.UpdateNetworkLayerProtection(ctx, removePolicyProtections)
-	if erru != nil {
-		logger.Errorf("calling 'resourceIPGeoDelete': %s", erru.Error())
-		return diag.FromErr(erru)
+	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
+		ConfigID:                      configID,
+		Version:                       version,
+		PolicyID:                      policyID,
+		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
+		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
+		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
+		ApplyNetworkLayerControls:     false,
+		ApplyRateControls:             policyProtections.ApplyRateControls,
+		ApplyReputationControls:       policyProtections.ApplyReputationControls,
+		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
+	}
+	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	if err != nil {
+		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

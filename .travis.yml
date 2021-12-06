@@ -10,16 +10,20 @@ branches:
 
 language: go
 go:
-- "1.12.9"
+- "1.14"
 
 env:
   - GO111MODULE=on
-    GOFLAGS=-mod=vendor
+  - GOBIN=$GOPATH/bin
 
 install:
-- make tools
+- make init
+- make tools.terraform
+- make dummy-edgerc
 
 script:
+- make check
 - make test
 - make build
-- make website-test
+- make terraform-fmt
+- make terraform-lint

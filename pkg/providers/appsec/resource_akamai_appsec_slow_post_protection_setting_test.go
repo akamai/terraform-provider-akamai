@@ -13,11 +13,15 @@ func TestAccAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 	t.Run("match by SlowPostProtectionSetting ID", func(t *testing.T) {
 		client := &mockappsec{}
 
+		allProtectionsFalse := appsec.PolicyProtectionsResponse{}
+		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"))
+		json.Unmarshal([]byte(tempJSON), &allProtectionsFalse)
+
 		cu := appsec.UpdateSlowPostProtectionSettingResponse{}
 		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"))
 		json.Unmarshal([]byte(expectJSU), &cu)
 
-		cr := appsec.GetSlowPostProtectionSettingResponse{}
+		cr := appsec.GetSlowPostProtectionSettingsResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
@@ -34,15 +38,20 @@ func TestAccAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		client.On("GetSlowPostProtectionSetting",
+		client.On("GetSlowPostProtectionSettings",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetSlowPostProtectionSettingRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cr, nil)
+			appsec.GetSlowPostProtectionSettingsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&cr, nil).Twice()
 
-		client.On("UpdateSlowPostProtection",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateSlowPostProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cup, nil)
+		client.On("GetPolicyProtections",
+			mock.Anything,
+			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allProtectionsFalse, nil).Once()
+
+		client.On("UpdatePolicyProtections",
+			mock.Anything,
+			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allProtectionsFalse, nil).Once()
 
 		client.On("UpdateSlowPostProtectionSetting",
 			mock.Anything, // ctx is irrelevant for this test

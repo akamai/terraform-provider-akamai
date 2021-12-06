@@ -66,12 +66,12 @@ func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceEvalGroupCreate")
 	logger.Debugf("in resourceEvalGroupCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "atackGroup", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "atackGroup", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -95,19 +95,20 @@ func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	createAttackGroup := appsec.UpdateAttackGroupRequest{
-		ConfigID: configid,
-		Version: version,
-		PolicyID: policyid,
-		Group: attackgroup,
-		Action: action,
+		ConfigID:       configID,
+		Version:        version,
+		PolicyID:       policyID,
+		Group:          attackgroup,
+		Action:         action,
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, err = client.UpdateEvalGroup(ctx, createAttackGroup)
+	updateEvalGroupResponse, err := client.UpdateEvalGroup(ctx, createAttackGroup)
 	if err != nil {
 		logger.Errorf("calling 'createEvalGroup': %s", err.Error())
 		return diag.FromErr(err)
 	}
+	logger.Debugf("updateEvalGroupResponse: %v", updateEvalGroupResponse)
 
 	d.SetId(fmt.Sprintf("%d:%s:%s", createAttackGroup.ConfigID, createAttackGroup.PolicyID, createAttackGroup.Group))
 
@@ -120,23 +121,23 @@ func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	logger := meta.Log("APPSEC", "resourceEvalGroupRead")
 	logger.Debugf("in resourceEvalGroupRead")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 	group := idParts[2]
 
 	getAttackGroup := appsec.GetAttackGroupRequest{
-		ConfigID: configid,
-		Version: version,
-		PolicyID: policyid,
-		Group: group,
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
+		Group:    group,
 	}
 
 	attackgroup, err := client.GetEvalGroup(ctx, getAttackGroup)
@@ -145,25 +146,25 @@ func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	if err := d.Set("config_id", getAttackGroup.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getAttackGroup.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("attack_group", getAttackGroup.Group); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("attack_group_action", string(attackgroup.Action)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if !attackgroup.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(attackgroup.ConditionException)
 		if err != nil {
-			diag.FromErr(fmt.Errorf("%s", "Error Marshalling condition exception"))
+			return diag.Errorf("%s", "Error Marshalling condition exception")
 		}
 		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -176,16 +177,16 @@ func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceEvalGroupUpdate")
 	logger.Debugf("in resourceEvalGroupUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "evalGroup", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "evalGroup", m)
+	policyID := idParts[1]
 	group := idParts[2]
 
 	action, err := tools.GetStringValue("attack_group_action", d)
@@ -204,11 +205,11 @@ func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	rawJSON := json.RawMessage(conditionexception)
 
 	updateAttackGroup := appsec.UpdateAttackGroupRequest{
-		ConfigID: configid,
-		Version: version,
-		PolicyID: policyid,
-		Group: group,
-		Action: action,
+		ConfigID:       configID,
+		Version:        version,
+		PolicyID:       policyID,
+		Group:          group,
+		Action:         action,
 		JsonPayloadRaw: rawJSON,
 	}
 
@@ -227,24 +228,24 @@ func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceEvalgroupDelete")
 	logger.Debugf("in resourceEvalGroupDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "evalGroup", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "evalGroup", m)
+	policyID := idParts[1]
 	group := idParts[2]
 
 	removeAttackGroup := appsec.UpdateAttackGroupRequest{
-		ConfigID: configid,
-		Version: version,
-		PolicyID: policyid,
-		Group: group,
-		Action: "none",
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
+		Group:    group,
+		Action:   "none",
 	}
 
 	_, err = client.UpdateEvalGroup(ctx, removeAttackGroup)

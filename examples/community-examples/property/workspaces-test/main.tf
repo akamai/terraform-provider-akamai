@@ -128,7 +128,7 @@ data "template_file" "rules" {
 }
 
 resource "akamai_property" "default" {
-  name    = var.conf_name
+  name     = var.conf_name
   product  = "prd_${var.product}"
   contract = data.akamai_contract.default.id
   group    = data.akamai_group.default.id

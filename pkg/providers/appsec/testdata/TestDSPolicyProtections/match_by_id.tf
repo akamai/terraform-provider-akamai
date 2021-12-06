@@ -4,8 +4,8 @@ provider "akamai" {
 
 
 data "akamai_appsec_security_policy_protections" "test" {
-    config_id = 43253
-    security_policy_id = "AAAA_81230"
+  config_id          = 43253
+  security_policy_id = "AAAA_81230"
 }
 
 output "appsecwafmode" {

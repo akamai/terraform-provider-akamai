@@ -56,11 +56,11 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceReputationProfileCreate")
 	logger.Debug("in resourceReputationProfileCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "reputationProfile", m)
+	version := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
 	jsonpostpayload, err := tools.GetStringValue("reputation_profile", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -69,7 +69,7 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	createReputationProfile := appsec.CreateReputationProfileRequest{
-		ConfigID:       configid,
+		ConfigID:       configID,
 		ConfigVersion:  version,
 		JsonPayloadRaw: rawJSON,
 	}
@@ -91,12 +91,12 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceReputationProfileRead")
 	logger.Debug("in resourceReputationProfileRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:reputationprofileid")
+	idParts, err := splitID(d.Id(), 2, "configID:reputationprofileid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -106,8 +106,8 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	reputationProfileRequest := appsec.GetReputationProfileRequest{
-		ConfigID:            configid,
-		ConfigVersion:       getLatestConfigVersion(ctx, configid, m),
+		ConfigID:            configID,
+		ConfigVersion:       getLatestConfigVersion(ctx, configID, m),
 		ReputationProfileId: reputationProfileID,
 	}
 
@@ -117,18 +117,18 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", configid); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("reputation_profile_id", reputationProfileID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	jsonBody, err := json.Marshal(reputationProfileResponse)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("reputation_profile", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -140,12 +140,12 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceReputationProfileUpdate")
 	logger.Debug("in resourceReputationProfileUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:reputationprofileid")
+	idParts, err := splitID(d.Id(), 2, "configID:reputationprofileid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -157,12 +157,12 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "reputationProfile", m)
+	version := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
 	jsonPayloadRaw := []byte(jsonpostpayload)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateReputationProfile := appsec.UpdateReputationProfileRequest{
-		ConfigID:            configid,
+		ConfigID:            configID,
 		ConfigVersion:       version,
 		ReputationProfileId: reputationProfileID,
 		JsonPayloadRaw:      rawJSON,
@@ -183,23 +183,23 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceReputationProfileDelete")
 	logger.Debug("in resourceReputationProfileDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configid:reputationprofileid")
+	idParts, err := splitID(d.Id(), 2, "configID:reputationprofileid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "reputationProfile", m)
+	version := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
 	reputationProfileID, err := strconv.Atoi(idParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	deleteReputationProfile := appsec.RemoveReputationProfileRequest{
-		ConfigID:            configid,
+		ConfigID:            configID,
 		ConfigVersion:       version,
 		ReputationProfileId: reputationProfileID,
 	}

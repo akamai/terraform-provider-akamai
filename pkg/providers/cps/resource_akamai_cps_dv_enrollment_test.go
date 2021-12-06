@@ -17,6 +17,7 @@ import (
 
 func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
+		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &mockcps{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -101,6 +102,31 @@ func TestResourceDVEnrollment(t *testing.T) {
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
+		// first verification loop, invalid status
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "pre-verification-safety-checks",
+			},
+		}, nil).Once()
+
+		// second verification loop, valid status, empty allowed input array
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Once()
+
+		// final verification loop, everything in place
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -359,7 +385,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
-			AllowedInput: []cps.AllowedInput{},
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
 				Status: "coodinate-domain-validation",
@@ -716,11 +742,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
-		}).Return(&cps.PreVerificationWarnings{"some warning"}, nil).Once()
+		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
 		client.On("AcknowledgePreVerificationWarnings", mock.Anything, cps.AcknowledgementRequest{
 			EnrollmentID:    1,
 			ChangeID:        2,
-			Acknowledgement: cps.Acknowledgement{"acknowledge"},
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 		}).Return(nil).Once()
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
@@ -882,7 +908,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
-		}).Return(&cps.PreVerificationWarnings{"some warning"}, nil).Once()
+		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
 
 		allowCancel := true
 		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
@@ -1145,24 +1171,4 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			},
 		})
 	})
-}
-
-func TestDiffSuppressContractID(t *testing.T) {
-	tests := map[string]struct {
-		oldContractID, newContractID string
-		expected                     bool
-	}{
-		"1": {"", "", true},
-		"2": {"test", "test", true},
-		"3": {"ctr_test", "test", true},
-		"4": {"test", "ctr_test", true},
-		"5": {"test", "", false},
-		"6": {"", "test", false},
-		"7": {"ctr_test", "_test", false},
-	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, test.expected, diffSuppressContractID("", test.oldContractID, test.newContractID, nil))
-		})
-	}
 }

@@ -64,10 +64,10 @@ resource "akamai_gtm_domain" "tfexample_domain" {
   group                     = local.group
   email_notification_list   = []
   load_imbalance_percentage = 40
-  default_timeout_penalty = 50
-  default_error_penalty = 100
+  default_timeout_penalty   = 50
+  default_error_penalty     = 100
   // Required
-  wait_on_complete          = false 
+  wait_on_complete = false
 }
 
 resource "akamai_gtm_datacenter" "tfexample_dc_1" {

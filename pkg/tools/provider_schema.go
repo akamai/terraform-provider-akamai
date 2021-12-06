@@ -3,9 +3,11 @@ package tools
 import (
 	"errors"
 	"fmt"
+	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/go-cty/cty"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -231,6 +233,37 @@ func ResolveKeyStringState(rd ResourceDataFetcher, key, fallbackKey string) (val
 		return "", err
 	}
 	return value, nil
+}
+
+// StateNetwork changes the value of the input before storing it in state
+func StateNetwork(i interface{}) string {
+	val, ok := i.(string)
+	if !ok {
+		panic(fmt.Sprintf("value type is not a string: %T", i))
+	}
+
+	switch strings.ToLower(val) {
+	case "production", "prod", "p":
+		return "production"
+	case "staging", "stag", "s":
+		return "staging"
+	}
+
+	// this should never happen :-)
+	return val
+}
+
+// RestoreOldValues reverts the value in schema of the given keys
+func RestoreOldValues(rd *schema.ResourceData, keys []string) diag.Diagnostics {
+	for _, key := range keys {
+		if rd.HasChange(key) {
+			oldVersion, _ := rd.GetChange(key)
+			if err := rd.Set(key, oldVersion); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+	return nil
 }
 
 // GetExactlyOneOf extracts exactly one value with given keys from ResourceData object

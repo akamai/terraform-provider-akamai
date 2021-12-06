@@ -13,7 +13,7 @@ func TestAccAkamaiEvalHost_res_basic(t *testing.T) {
 	t.Run("match by EvalHost ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cr := appsec.GetEvalHostResponse{}
+		cr := appsec.GetEvalHostsResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResEvalHost/EvalHost.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
@@ -34,9 +34,9 @@ func TestAccAkamaiEvalHost_res_basic(t *testing.T) {
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		client.On("GetEvalHost",
+		client.On("GetEvalHosts",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetEvalHostRequest{ConfigID: 43253, Version: 7},
+			appsec.GetEvalHostsRequest{ConfigID: 43253, Version: 7},
 		).Return(&cr, nil)
 
 		client.On("UpdateEvalHost",

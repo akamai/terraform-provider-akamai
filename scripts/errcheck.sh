@@ -5,14 +5,18 @@ echo "==> Checking for unchecked errors..."
 
 if ! which errcheck > /dev/null; then
     echo "==> Installing errcheck..."
-    go get -u github.com/kisielk/errcheck
+    go install github.com/kisielk/errcheck
 fi
+
+# Don't run errcheck on appsec package until
+# https://track.akamai.com/jira/browse/SECKSD-12824 is done
+packages=$(go list ./... | grep -v appsec)
 
 err_files=$($GOBIN/errcheck -ignoretests \
                      -ignore 'github.com/hashicorp/terraform/helper/schema:Set' \
                      -ignore 'bytes:.*' \
                      -ignore 'io:Close|Write' \
-                     $(go list ./...) 2>&1 )
+                     $packages 2>&1 )
 
 if [[ -n ${err_files} ]]; then
     echo 'Unchecked errors found in the following places:'

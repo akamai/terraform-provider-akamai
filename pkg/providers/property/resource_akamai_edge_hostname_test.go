@@ -1,6 +1,8 @@
 package property
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -16,6 +18,7 @@ import (
 )
 
 func TestResourceEdgeHostname(t *testing.T) {
+	testDir := "testdata/TestResourceEdgeHostname"
 	tests := map[string]struct {
 		givenTF            string
 		init               func(*mockpapi)
@@ -303,6 +306,13 @@ func TestResourceEdgeHostname(t *testing.T) {
 						DomainSuffix:      "edgesuite.net",
 						SecureNetwork:     "",
 						IPVersionBehavior: "IPV4",
+						UseCases: []papi.UseCase{
+							{
+								UseCase: "Download_Mode",
+								Option:  "BACKGROUND",
+								Type:    "GLOBAL",
+							},
+						},
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
@@ -334,6 +344,13 @@ func TestResourceEdgeHostname(t *testing.T) {
 							ProductID:    "prd_2",
 							DomainPrefix: "test.aka",
 							DomainSuffix: "edgesuite.net",
+							UseCases: []papi.UseCase{
+								{
+									UseCase: "Download_Mode",
+									Option:  "BACKGROUND",
+									Type:    "GLOBAL",
+								},
+							},
 						},
 					}},
 				}, nil)
@@ -344,6 +361,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				"contract":      "ctr_2",
 				"group":         "grp_2",
 				"edge_hostname": "test.aka.edgesuite.net",
+				"use_cases":     loadFixtureString(fmt.Sprintf("%s/use_cases/use_cases_new.json", testDir)),
 			},
 			expectedOutputs: map[string]string{
 				"edge_hostname": "test.aka.edgesuite.net",
@@ -448,6 +466,48 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			withError: regexp.MustCompile("oops"),
 		},
+		"error edge hostname not found": {
+			givenTF: "new_akamaized_net.tf",
+			init: func(m *mockpapi) {
+				m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_1",
+							Domain:       "test2.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test2",
+							DomainSuffix: "edgesuite.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test3.edgesuite.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test3",
+							DomainSuffix: "edgesuite.net",
+						},
+					}},
+				}, nil).Twice()
+				m.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV6_COMPLIANCE",
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "eh_123",
+				}, nil)
+			},
+			withError: regexp.MustCompile("unable to find edge hostname"),
+		},
 	}
 
 	for name, test := range tests {
@@ -466,7 +526,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(fmt.Sprintf("testdata/TestResourceEdgeHostname/%s", test.givenTF)),
+							Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, test.givenTF)),
 							Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
 							ExpectError: test.withError,
 						},
@@ -491,8 +551,8 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 				ID:                "eh_1",
 				Domain:            "test.akamaized.net",
 				ProductID:         "prd_2",
-				DomainPrefix:      "test2",
-				DomainSuffix:      "edgesuite.net",
+				DomainPrefix:      "test",
+				DomainSuffix:      "akamaized.net",
 				IPVersionBehavior: "IPV4",
 			},
 			EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
@@ -500,8 +560,8 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 					ID:                "eh_1",
 					Domain:            "test.akamaized.net",
 					ProductID:         "prd_2",
-					DomainPrefix:      "test2",
-					DomainSuffix:      "edgesuite.net",
+					DomainPrefix:      "test",
+					DomainSuffix:      "akamaized.net",
 					IPVersionBehavior: "IPV4",
 				},
 				{
@@ -523,21 +583,13 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		}).Return(&papi.GetEdgeHostnamesResponse{
 			ContractID: "ctr_1",
 			GroupID:    "grp_2",
-			EdgeHostname: papi.EdgeHostnameGetItem{
-				ID:                "eh_1",
-				Domain:            "test.akamaized.net",
-				ProductID:         "prd_2",
-				DomainPrefix:      "test2",
-				DomainSuffix:      "edgesuite.net",
-				IPVersionBehavior: "IPV4",
-			},
 			EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 				{
 					ID:                "eh_1",
 					Domain:            "test.akamaized.net",
 					ProductID:         "prd_2",
-					DomainPrefix:      "test2",
-					DomainSuffix:      "edgesuite.net",
+					DomainPrefix:      "test",
+					DomainSuffix:      "akamaized.net",
 					IPVersionBehavior: "IPV4",
 				},
 				{
@@ -552,29 +604,12 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		}, nil)
 	}
 
-	expectCreateEdgeHostName := func(m *mockpapi, ContractID, GroupID string) *mock.Call {
-		return m.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
-			ContractID: "ctr_1",
-			GroupID:    "grp_2",
-			EdgeHostname: papi.EdgeHostnameCreate{
-				ProductID:         "prd_2",
-				DomainPrefix:      "test",
-				DomainSuffix:      "akamaized.net",
-				IPVersionBehavior: "IPV4",
-				SecureNetwork:     "SHARED_CERT",
-			},
-		}).Return(&papi.CreateEdgeHostnameResponse{
-			EdgeHostnameID: "eh_1",
-		}, nil)
-	}
-
 	t.Run("import existing edgehostname code", func(t *testing.T) {
 		client := &mockpapi{}
 		id := "eh_1,1,2"
 
 		expectGetEdgeHostname(client, "eh_1", "ctr_1", "grp_2")
 		expectGetEdgeHostnames(client, "ctr_1", "grp_2")
-		expectCreateEdgeHostName(client, "ctr_1", "grp_2")
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
@@ -761,6 +796,98 @@ func TestSuppressEdgeHostnameDomain(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, test.expected, suppressEdgeHostnameDomain("", test.old, test.new, nil))
+		})
+	}
+}
+
+func TestSuppressEdgeHostnameUseCases(t *testing.T) {
+	testDir := "testdata/TestResourceEdgeHostname/use_cases"
+	tests := map[string]struct {
+		oldPath, newPath string
+		expected         bool
+	}{
+		"equal use cases in the same order": {
+			oldPath:  "use_cases1.json",
+			newPath:  "use_cases2.json",
+			expected: true,
+		},
+		"equal use cases in different order": {
+			oldPath:  "use_cases1.json",
+			newPath:  "use_cases1_mixed.json",
+			expected: true,
+		},
+		"not equal use cases": {
+			oldPath:  "use_cases1.json",
+			newPath:  "use_cases3.json",
+			expected: false,
+		},
+		"error unmarshalling new": {
+			oldPath:  "use_cases1.json",
+			newPath:  "invalid_use_cases.json",
+			expected: false,
+		},
+		"error unmarshalling old": {
+			oldPath:  "invalid_use_cases.json",
+			newPath:  "use_cases1.json",
+			expected: false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			old := loadFixtureString(fmt.Sprintf("%s/%s", testDir, test.oldPath))
+			new := loadFixtureString(fmt.Sprintf("%s/%s", testDir, test.newPath))
+
+			assert.Equal(t, test.expected, suppressEdgeHostnameUseCases("", old, new, nil))
+		})
+	}
+}
+
+func TestConvertingUseCases2JSON(t *testing.T) {
+	testDir := "testdata/TestResourceEdgeHostname/use_cases"
+	tests := map[string]struct {
+		useCases []papi.UseCase
+		expected []byte
+	}{
+		"no use cases": {
+			useCases: []papi.UseCase{},
+			expected: []byte{},
+		},
+		"two use cases": {
+			useCases: []papi.UseCase{
+				{
+					Option:  "BACKGROUND",
+					Type:    "GLOBAL",
+					UseCase: "Download_Mode",
+				},
+				{
+					Option:  "FOREGROUND",
+					Type:    "GLOBAL",
+					UseCase: "Download_Mode",
+				},
+			},
+			expected: loadFixtureBytes(fmt.Sprintf("%s/%s", testDir, "use_cases1.json")),
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			useCasesJSON, err := useCases2JSON(test.useCases)
+			assert.NoError(t, err)
+
+			if len(useCasesJSON) > 0 {
+				expected := new(bytes.Buffer)
+				err = json.Compact(expected, test.expected)
+				assert.NoError(t, err)
+
+				actual := new(bytes.Buffer)
+				err = json.Compact(actual, useCasesJSON)
+				assert.NoError(t, err)
+
+				assert.Equal(t, expected.String(), actual.String())
+			} else {
+				assert.Equal(t, test.expected, useCasesJSON)
+			}
 		})
 	}
 }

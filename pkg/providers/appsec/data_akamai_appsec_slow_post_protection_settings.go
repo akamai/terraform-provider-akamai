@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -46,19 +45,19 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 
 	getSlowPostProtectionSettings := appsec.GetSlowPostProtectionSettingsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSlowPostProtectionSettings.ConfigID = configid
+	getSlowPostProtectionSettings.ConfigID = configID
 
-	getSlowPostProtectionSettings.Version = getLatestConfigVersion(ctx, configid, m)
+	getSlowPostProtectionSettings.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSlowPostProtectionSettings.PolicyID = policyid
+	getSlowPostProtectionSettings.PolicyID = policyID
 
 	slowpostprotectionsettings, err := client.GetSlowPostProtectionSettings(ctx, getSlowPostProtectionSettings)
 	if err != nil {
@@ -72,7 +71,7 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 	outputtext, err := RenderTemplates(ots, "slowPostDS", slowpostprotectionsettings)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -82,7 +81,7 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getSlowPostProtectionSettings.ConfigID))

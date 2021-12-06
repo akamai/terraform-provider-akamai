@@ -7,19 +7,19 @@ data "akamai_contract" "akacontract" {
 }
 
 data "akamai_group" "akagroup" {
-  name = var.group
+  name        = var.group
   contract_id = data.akamai_contract.akacontract.id
 }
 
 data "akamai_group" "akgroup" {
-  name = var.group
+  name     = var.group
   contract = data.akamai_contract.akacontract.id
 }
 
 variable "group" {
   description = "Name of the group associated with this property"
-  type = string
-  default = "test"
+  type        = string
+  default     = "test"
 }
 
 output "aka_contract" {

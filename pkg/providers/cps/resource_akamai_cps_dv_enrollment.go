@@ -227,7 +227,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Type:             schema.TypeString,
 				ForceNew:         true,
 				Required:         true,
-				DiffSuppressFunc: diffSuppressContractID,
+				DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
 			},
 			"certificate_type": {
 				Type:     schema.TypeString,
@@ -762,7 +762,7 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 	if err != nil {
 		return err
 	}
-	for status.StatusInfo.Status != statusCoordinateDomainValidation && status.StatusInfo.Status != "complete" {
+	for (status.StatusInfo.Status != statusCoordinateDomainValidation || len(status.AllowedInput) == 0) && status.StatusInfo.Status != "complete" {
 		select {
 		case <-time.After(PollForChangeStatusInterval):
 			status, err = client.GetChangeStatus(ctx, changeStatusReq)
@@ -829,14 +829,4 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(enrollmentID)
 	return []*schema.ResourceData{d}, nil
-}
-
-func diffSuppressContractID(_, old, new string, _ *schema.ResourceData) bool {
-	trimPrefixFromOld := strings.TrimPrefix(old, "ctr_")
-	trimPrefixFromNew := strings.TrimPrefix(new, "ctr_")
-
-	if trimPrefixFromOld == trimPrefixFromNew {
-		return true
-	}
-	return false
 }

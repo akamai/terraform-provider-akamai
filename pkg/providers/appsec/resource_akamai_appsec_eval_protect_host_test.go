@@ -17,7 +17,7 @@ func TestAccAkamaiEvalProtectHost_res_basic(t *testing.T) {
 		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResEvalProtectHost/EvalProtectHost.json"))
 		json.Unmarshal([]byte(expectJSU), &cu)
 
-		cr := appsec.GetEvalProtectHostResponse{}
+		cr := appsec.GetEvalProtectHostsResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestResEvalProtectHost/EvalProtectHost.json"))
 		json.Unmarshal([]byte(expectJS), &cr)
 
@@ -30,9 +30,9 @@ func TestAccAkamaiEvalProtectHost_res_basic(t *testing.T) {
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		client.On("GetEvalProtectHost",
+		client.On("GetEvalProtectHosts",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetEvalProtectHostRequest{ConfigID: 43253, Version: 7},
+			appsec.GetEvalProtectHostsRequest{ConfigID: 43253, Version: 7},
 		).Return(&cr, nil)
 
 		client.On("UpdateEvalProtectHost",

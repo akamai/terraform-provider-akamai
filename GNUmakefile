@@ -31,7 +31,7 @@ check: errcheck fmtcheck lint vet
 
 .PHONY: test
 test: fmtcheck
-	go test $(TEST) -v $(TESTARGS) -timeout 10m
+	go test $(TEST) -v $(TESTARGS) -timeout 20m 2>&1 
 
 .PHONY: testacc
 testacc: fmtcheck
@@ -39,8 +39,9 @@ testacc: fmtcheck
 
 .PHONY: vet
 vet:
-	@echo "go vet ."
-	@go vet $$(go list ./...); if [ $$? -eq 1 ]; then \
+	@echo "==> Checking source code against vet"
+	# Appsec package excluded until https://track.akamai.com/jira/browse/SECKSD-12824 is done
+	@go vet $$(go list ./... | grep -v appsec); if [ $$? -ne 0 ]; then \
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
 		echo "and fix them if necessary before submitting the code for review."; \
@@ -50,6 +51,10 @@ vet:
 .PHONY: fmt
 fmt:
 	gofmt -w $(GOFMT_FILES)
+
+.PHONY: terraform-fmt
+terraform-fmt:
+	terraform fmt -recursive -check
 
 .PHONY: fmtcheck
 fmtcheck:
@@ -64,6 +69,11 @@ lint:
 	@echo "==> Checking source code against golangci-lint"
 	@$$(go env GOPATH)/bin/golangci-lint run
 
+.PHONY: terraform-lint
+terraform-lint:
+	@echo "==> Checking source code against tflint"
+	@find ./examples -type f -name "*.tf" | xargs -I % dirname % | sort -u | xargs -I @ sh -c "echo @ && tflint @"
+
 .PHONY: test-compile
 test-compile:
 	go test -c ./akamai $(TESTARGS)
@@ -73,5 +83,18 @@ tools.golangci-lint:
 	@echo Installing golangci-lint
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin $(golangci-lint-version)
 
+.PHONY: tools.tflint
+tools.tflint:
+	@echo Installing tf-lint
+	@curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
 .PHONY: init
-init: tools.golangci-lint
+init: tools.golangci-lint tools.tflint
+
+.PHONY: dummy-edgerc
+dummy-edgerc:
+	@sh -c "'$(CURDIR)/scripts/dummyedgerc.sh'"
+
+.PHONY: tools.terraform
+tools.terraform:
+	@sh -c "'$(CURDIR)/scripts/install_terraform.sh'"

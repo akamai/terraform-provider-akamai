@@ -1,0 +1,12 @@
+[
+  {
+    "name": "rule 2",
+    "type": "erMatchRule",
+    "useRelativeUrl": "none",
+    "statusCode": 301,
+    "redirectURL": "ss.exmaple.com",
+    "matchURL": "aa.exmaple.com",
+    "useIncomingQueryString": true,
+    "useIncomingSchemeAndHost": false
+  }
+]

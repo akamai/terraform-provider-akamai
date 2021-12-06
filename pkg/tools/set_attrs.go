@@ -14,3 +14,14 @@ func SetAttrs(d *schema.ResourceData, AttributeValues map[string]interface{}) er
 
 	return nil
 }
+
+// ResetAttrs resets (sets to nil) the provided set of attributes
+func ResetAttrs(d *schema.ResourceData, attributes ...string) error {
+	for _, attr := range attributes {
+		if err := d.Set(attr, nil); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

@@ -49,12 +49,12 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameCreate")
 	logger.Debugf("in resourceSecurityPolicyRenameCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "securityPolicyRename", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -64,9 +64,9 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 	}
 
 	createSecurityPolicy := appsec.UpdateSecurityPolicyRequest{
-		ConfigID:   configid,
+		ConfigID:   configID,
 		Version:    version,
-		PolicyID:   policyid,
+		PolicyID:   policyID,
 		PolicyName: policyname,
 	}
 
@@ -87,21 +87,21 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameRead")
 	logger.Debugf("in resourceSecurityPolicyRenameRead")
 
-	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	idParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 
 	getSecurityPolicy := appsec.GetSecurityPolicyRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 	}
 
 	securitypolicy, err := client.GetSecurityPolicy(ctx, getSecurityPolicy)
@@ -110,13 +110,13 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if err := d.Set("config_id", getSecurityPolicy.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getSecurityPolicy.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_name", securitypolicy.PolicyName); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -128,25 +128,25 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameUpdate")
 	logger.Debugf("in resourceSecurityPolicyRenameUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configid:policyid")
+	idParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "securityPolicyRename", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", m)
+	policyID := idParts[1]
 	policyname, err := tools.GetStringValue("security_policy_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	updateSecurityPolicy := appsec.UpdateSecurityPolicyRequest{
-		ConfigID:   configid,
+		ConfigID:   configID,
 		Version:    version,
-		PolicyID:   policyid,
+		PolicyID:   policyID,
 		PolicyName: policyname,
 	}
 
@@ -159,6 +159,6 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 	return resourceSecurityPolicyRenameRead(ctx, d, m)
 }
 
-func resourceSecurityPolicyRenameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return schema.NoopContext(context.TODO(), d, m)
+func resourceSecurityPolicyRenameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return schema.NoopContext(ctx, d, m)
 }

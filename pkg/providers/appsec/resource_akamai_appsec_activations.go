@@ -78,11 +78,11 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceActivationsCreate")
 	logger.Debug("in resourceActivationsCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 	network, err := tools.GetStringValue("network", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -113,7 +113,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		NotificationEmails: notificationEmails,
 	}
 	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
-		ConfigID:      configid,
+		ConfigID:      configID,
 		ConfigVersion: version,
 	})
 
@@ -126,7 +126,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	d.SetId(strconv.Itoa(postresp.ActivationID))
 
 	if err := d.Set("status", postresp.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	getActivationRequest := appsec.GetActivationsRequest{
@@ -176,7 +176,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("status", activations.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -188,11 +188,11 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceActivationsUpdate")
 	logger.Debug("in resourceActivationsUpdate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 	network, err := tools.GetStringValue("network", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -223,7 +223,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		NotificationEmails: notificationEmails,
 	}
 	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
-		ConfigID:      configid,
+		ConfigID:      configID,
 		ConfigVersion: version,
 	})
 
@@ -236,7 +236,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	d.SetId(strconv.Itoa(postresp.ActivationID))
 
 	if err := d.Set("status", postresp.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	getActivationRequest := appsec.GetActivationsRequest{
@@ -276,11 +276,11 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 	network, err := tools.GetStringValue("network", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -307,7 +307,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		NotificationEmails: notificationEmails,
 	}
 	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
-		ConfigID:      configid,
+		ConfigID:      configID,
 		ConfigVersion: version,
 	})
 
@@ -320,7 +320,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	d.SetId(strconv.Itoa(postresp.ActivationID))
 
 	if err := d.Set("status", postresp.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	getActivationRequest := appsec.GetActivationsRequest{
@@ -347,7 +347,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("status", activation.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId("")

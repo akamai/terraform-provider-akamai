@@ -1,11 +1,11 @@
 # all basic info B with notifications C and grants
 resource "akamai_iam_user" "test" {
-  first_name     = "first name B"
-  last_name      = "last name B"
-  email          = "email@akamai.net"
-  country        = "country B"
-  phone          = "(111) 111-1111"
-  enable_tfa     = false
+  first_name = "first name B"
+  last_name  = "last name B"
+  email      = "email@akamai.net"
+  country    = "country B"
+  phone      = "(111) 111-1111"
+  enable_tfa = false
 
   contact_type       = "contact type B"
   job_title          = "job title B"

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -46,13 +45,13 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 
 	getReputationProfiles := appsec.GetReputationProfilesRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getReputationProfiles.ConfigID = configid
+	getReputationProfiles.ConfigID = configID
 
-	getReputationProfiles.ConfigVersion = getLatestConfigVersion(ctx, configid, m)
+	getReputationProfiles.ConfigVersion = getLatestConfigVersion(ctx, configID, m)
 
 	reputationprofileid, err := tools.GetIntValue("reputation_profile_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -72,7 +71,7 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 	outputtext, err := RenderTemplates(ots, "reputationProfilesDS", reputationprofiles)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -82,10 +81,10 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configid))
+	d.SetId(strconv.Itoa(configID))
 
 	return nil
 }

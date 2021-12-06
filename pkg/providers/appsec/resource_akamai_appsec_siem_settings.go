@@ -65,11 +65,11 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceSiemSettingsCreate")
 	logger.Debugf("in resourceSiemSettingsCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "siemSetting", m)
+	version := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
 	enableSiem, err := tools.GetBoolValue("enable_siem", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -97,7 +97,7 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	createSiemSettings := appsec.UpdateSiemSettingsRequest{
-		ConfigID:                configid,
+		ConfigID:                configID,
 		Version:                 version,
 		EnableSiem:              enableSiem,
 		EnableForAllPolicies:    enableForAllPolicies,
@@ -123,14 +123,14 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceSiemSettingsRead")
 	logger.Debugf("resourceSiemSettingsRead")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
+	version := getLatestConfigVersion(ctx, configID, m)
 
 	getSiemSettings := appsec.GetSiemSettingsRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
 	}
 
@@ -141,22 +141,22 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	if err := d.Set("config_id", getSiemSettings.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_siem", siemsettings.EnableSiem); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_for_all_policies", siemsettings.EnableForAllPolicies); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_ids", siemsettings.FirewallPolicyIds); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_botman_siem", siemsettings.EnabledBotmanSiemEvents); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("siem_id", siemsettings.SiemDefinitionID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -168,11 +168,11 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
 	logger.Debugf("resourceSiemSettingsUpdate")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "siemSetting", m)
+	version := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
 	enableSiem, err := tools.GetBoolValue("enable_siem", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -200,7 +200,7 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	updateSiemSettings := appsec.UpdateSiemSettingsRequest{
-		ConfigID:                configid,
+		ConfigID:                configID,
 		Version:                 version,
 		EnableSiem:              enableSiem,
 		EnableForAllPolicies:    enableForAllPolicies,
@@ -224,26 +224,21 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceSiemSettingsDelete")
 	logger.Debugf("resourceSiemSettingsDelete")
 
-	configid, err := strconv.Atoi(d.Id())
+	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "siemSetting", m)
-	siemID, err := tools.GetIntValue("siem_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
+	version := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
 
 	removeSiemSettings := appsec.RemoveSiemSettingsRequest{
-		ConfigID:         configid,
-		Version:          version,
-		EnableSiem:       false,
-		SiemDefinitionID: siemID,
+		ConfigID:   configID,
+		Version:    version,
+		EnableSiem: false,
 	}
 
 	_, erru := client.RemoveSiemSettings(ctx, removeSiemSettings)
 	if erru != nil {
-		logger.Errorf("calling 'removeSiemSettings': %s", erru.Error())
+		logger.Errorf("calling 'updateSiemSettings': %s", erru.Error())
 		return diag.FromErr(erru)
 	}
 

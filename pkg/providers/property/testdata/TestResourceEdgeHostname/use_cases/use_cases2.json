@@ -1,0 +1,12 @@
+[
+	{
+        "useCase": "Download_Mode",
+		"option": "BACKGROUND",
+		"type": "GLOBAL"
+	},
+	{
+        "type": "GLOBAL",
+		"option": "FOREGROUND",
+        "useCase": "Download_Mode"
+	}
+]

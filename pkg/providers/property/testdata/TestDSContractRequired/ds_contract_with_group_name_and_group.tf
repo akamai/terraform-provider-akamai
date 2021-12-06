@@ -3,7 +3,7 @@ provider "akamai" {
 }
 
 data "akamai_contract" "akacontract" {
-  group = "Example.com-1-1TJZH5"
+  group      = "Example.com-1-1TJZH5"
   group_name = "Example.com-1-1TJZH5"
 }
 

@@ -57,12 +57,12 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionCreate")
 	logger.Debugf("in resourceReputationProfileActionCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAction", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -76,9 +76,9 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 	}
 
 	createReputationProfileAction := appsec.UpdateReputationProfileActionRequest{
-		ConfigID:            configid,
+		ConfigID:            configID,
 		Version:             version,
-		PolicyID:            policyid,
+		PolicyID:            policyID,
 		ReputationProfileID: reputationprofileid,
 		Action:              action,
 	}
@@ -100,25 +100,25 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionRead")
 	logger.Debugf("in resourceReputationProfileActionRead")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationprofileid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:reputationprofileid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 	reputationprofileid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	getReputationProfileAction := appsec.GetReputationProfileActionRequest{
-		ConfigID:            configid,
+		ConfigID:            configID,
 		Version:             version,
-		PolicyID:            policyid,
+		PolicyID:            policyID,
 		ReputationProfileID: reputationprofileid,
 	}
 
@@ -129,16 +129,16 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	}
 
 	if err := d.Set("config_id", getReputationProfileAction.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getReputationProfileAction.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("reputation_profile_id", getReputationProfileAction.ReputationProfileID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("action", resp.Action); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -150,16 +150,16 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionUpdate")
 	logger.Debugf("in resourceReputationProfileActionUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationrofileid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:reputationrofileid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAction", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	policyID := idParts[1]
 	reputationprofileid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
@@ -170,9 +170,9 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	}
 
 	updateReputationProfileAction := appsec.UpdateReputationProfileActionRequest{
-		ConfigID:            configid,
+		ConfigID:            configID,
 		Version:             version,
-		PolicyID:            policyid,
+		PolicyID:            policyID,
 		ReputationProfileID: reputationprofileid,
 		Action:              action,
 	}
@@ -192,25 +192,25 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionDelete")
 	logger.Debugf("in resourceReputationProfileActionDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:reputationprofileid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:reputationprofileid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "reputationProfileAction", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	policyID := idParts[1]
 	reputationprofileid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	removeReputationProfileAction := appsec.UpdateReputationProfileActionRequest{
-		ConfigID:            configid,
+		ConfigID:            configID,
 		Version:             version,
-		PolicyID:            policyid,
+		PolicyID:            policyID,
 		ReputationProfileID: reputationprofileid,
 		Action:              "none",
 	}

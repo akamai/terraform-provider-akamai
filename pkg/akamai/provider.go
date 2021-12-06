@@ -34,6 +34,7 @@ const (
 	// Deprecated: terrform now uses registry paths, the shortest of which would be akamai/akamai"
 	ProviderName = "terraform-provider-akamai"
 
+	// ConfigurationIsNotSpecified is the message for when EdgeGrid configuration is not specified
 	ConfigurationIsNotSpecified = "Akamai EdgeGrid configuration was not specified. Specify the configuration using system environment variables or the location and file name containing the edgerc configuration. Default location the provider checks for is the current user’s home directory. Default configuration file name the provider checks for is .edgerc."
 )
 
@@ -207,11 +208,13 @@ func configureContext(ctx context.Context, d *schema.ResourceData) (interface{},
 
 	// PROVIDER_VERSION env value must be updated in version file, for every new release.
 	userAgent := instance.UserAgent(ProviderName, version.ProviderVersion)
+	logger := LogFromHCLog(log)
+	logger.Infof("Provider version: %s", version.ProviderVersion)
 
 	sess, err := session.New(
 		session.WithSigner(edgerc),
 		session.WithUserAgent(userAgent),
-		session.WithLog(LogFromHCLog(log)),
+		session.WithLog(logger),
 		session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
 	)
 

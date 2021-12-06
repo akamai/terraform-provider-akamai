@@ -66,12 +66,12 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceAttackGroupCreate")
 	logger.Debugf(" in resourceAttackGroupCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "atackGroup", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "atackGroup", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -95,9 +95,9 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	createAttackGroup := appsec.UpdateAttackGroupRequest{
-		ConfigID:       configid,
+		ConfigID:       configID,
 		Version:        version,
-		PolicyID:       policyid,
+		PolicyID:       policyID,
 		Group:          attackgroup,
 		Action:         action,
 		JsonPayloadRaw: rawJSON,
@@ -119,22 +119,22 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceAttackGroupRead")
 	logger.Debugf(" in resourceAttackGroupRead")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 	group := idParts[2]
 
 	getAttackGroup := appsec.GetAttackGroupRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		Group:    group,
 	}
 
@@ -144,25 +144,25 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("config_id", getAttackGroup.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getAttackGroup.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("attack_group", getAttackGroup.Group); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("attack_group_action", string(attackgroup.Action)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if !attackgroup.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(attackgroup.ConditionException)
 		if err != nil {
-			diag.Errorf("%s", "Error Marshalling condition exception")
+			return diag.Errorf("%s", "Error Marshalling condition exception")
 		}
 		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -175,16 +175,16 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceAttackGroupUpdate")
 	logger.Debugf(" in resourceAttackGroupUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "attackGroup", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "attackGroup", m)
+	policyID := idParts[1]
 	group := idParts[2]
 
 	action, err := tools.GetStringValue("attack_group_action", d)
@@ -204,9 +204,9 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateAttackGroup := appsec.UpdateAttackGroupRequest{
-		ConfigID:       configid,
+		ConfigID:       configID,
 		Version:        version,
-		PolicyID:       policyid,
+		PolicyID:       policyID,
 		Group:          group,
 		Action:         action,
 		JsonPayloadRaw: rawJSON,
@@ -226,22 +226,22 @@ func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceAttackGroupDelete")
 	logger.Debugf(" in resourceAttackGroupDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:group")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "attackGroup", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "attackGroup", m)
+	policyID := idParts[1]
 	group := idParts[2]
 
 	removeAttackGroup := appsec.UpdateAttackGroupRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		Group:    group,
 		Action:   "none",
 	}

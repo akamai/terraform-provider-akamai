@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -45,25 +44,25 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 
 	getRatePolicyActions := appsec.GetRatePolicyActionsRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getRatePolicyActions.ConfigID = configid
+	getRatePolicyActions.ConfigID = configID
 
-	getRatePolicyActions.Version = getLatestConfigVersion(ctx, configid, m)
+	getRatePolicyActions.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getRatePolicyActions.PolicyID = policyid
+	getRatePolicyActions.PolicyID = policyID
 
-	ratepolicyid, err := tools.GetIntValue("rate_policy_id", d)
+	ratePolicyID, err := tools.GetIntValue("rate_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getRatePolicyActions.RatePolicyID = ratepolicyid
+	getRatePolicyActions.RatePolicyID = ratePolicyID
 
 	ratepolicyactions, err := client.GetRatePolicyActions(ctx, getRatePolicyActions)
 	if err != nil {
@@ -81,7 +80,7 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 	outputtext, err := RenderTemplates(ots, "ratePolicyActions", ratepolicyactions)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 

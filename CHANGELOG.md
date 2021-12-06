@@ -1,5 +1,42 @@
 # RELEASE NOTES
 
+## 1.9.0 (Dec 6, 2021)
+
+#### FEATURES/ENHANCEMENTS
+* [IMPORTANT] Added Cloudlets API support
+  * Added resources allowing management of policy and policy activations:
+    * `akamai_cloudlets_policy` - create, read, update, delete and import policy
+    * `akamai_cloudlets_policy_activation` - create, read, update and delete policy activations
+  * Added resources allowing management of application load balancer configuration and application load balancer activations:
+    * `akamai_cloudlets_application_load_balancer` - create, read, update, delete and import application load balancer configuration
+    * `akamai_cloudlets_application_load_balancer_activation` - create, read, update and delete application load balancer activations
+  * Added data sources:
+    * `akamai_cloudlets_policy` - lists information about policy
+    * `akamai_cloudlets_application_load_balancer` - lists information about application load balancer configuration 
+    * `akamai_cloudlets_application_load_balancer_match_rule` - lists information about application load balancer match rules
+    * `akamai_cloudlets_edge_redirector_match_rule` - lists information about edge redirector match rules
+* APPSEC
+  * Add group/contract ID support to network list resource ([#243](https://github.com/akamai/terraform-provider-akamai/issues/243))
+  * Add tuning recommendations data source
+  * Add support for advanced exceptions in ASE rules
+  * Update WAP bypass network lists for multi-policy WAP
+  * Deprecate WAP-only datasource & resources
+* PAPI
+  * Updated documentation for data source akamai_property_rules
+  * Allowed user to select a rule format in `resource akamai_property`
+  * Added optional `use_cases` attribute for `akamai_edge_hostname` resource
+#### BUG FIXES:
+* Fixed example usage for provider import ([#212](https://github.com/akamai/terraform-provider-akamai/pull/212))
+* PAPI
+  * Removing default value for `ip_behavior` in `akamai_edge_hostname` resource ([#213](https://github.com/akamai/terraform-provider-akamai/pull/213))
+  * Returned an error if `edge_hostname` attribute in `akamai_edge_hostname` resource does not exist  ([#258](https://github.com/akamai/terraform-provider-akamai/issues/258))
+* CPS
+  * Attribute `dns_challenges` should not be empty on initial apply for `akamai_cps_dv_enrollment` resource ([#253](https://github.com/akamai/terraform-provider-akamai/issues/253))
+* DATASTREAM
+  * Attribute `dataset_fields_ids` should not be sorted numerically in `akamai_datastream` resource ([#263](https://github.com/akamai/terraform-provider-akamai/issues/263))
+* GTM
+  * Attribute `datacenter_id` should be required in `akamai_gtm_geomap` resource ([#259](https://github.com/akamai/terraform-provider-akamai/issues/259))
+
 ## 1.8.0 (Oct 25, 2021)
 
 #### FEATURES/ENHANCEMENTS:

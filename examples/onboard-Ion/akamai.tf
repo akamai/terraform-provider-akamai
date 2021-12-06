@@ -1,6 +1,6 @@
 provider "akamai" {
   #Credentials can be provided inline using services such as Terraform Vault or by via an .edgerc file
-  edgerc       = "../../.edgerc"
+  edgerc         = "../../.edgerc"
   config_section = "papi"
   #  property {
   #        host = "${var.akamai_host}"
@@ -11,7 +11,7 @@ provider "akamai" {
 }
 
 data "akamai_group" "group" {
-  name = "test"
+  name     = "test"
   contract = data.akamai_contract.contract.id
 }
 
@@ -26,14 +26,14 @@ data "akamai_cp_code" "cp_code" {
 }
 
 data "template_file" "rule_template" {
-  template = "${file("${path.module}/rules/rules.json")}"
+  template = file("${path.module}/rules/rules.json")
   vars = {
     snippets = "${path.module}/rules/snippets"
   }
 }
 
 data "template_file" "rules" {
-  template = "${data.template_file.rule_template.rendered}"
+  template = data.template_file.rule_template.rendered
   vars = {
     tdenabled = var.tdenabled
   }
@@ -54,14 +54,15 @@ resource "akamai_property" "example-property" {
   product     = "prd_xxxx"
   rule_format = "latest"
   hostnames = {
-    "example.mydomain.com" = "${akamai_edge_hostname.example-property.edge_hostname}",
+    "example.mydomain.com" = akamai_edge_hostname.example-property.edge_hostname,
   }
-  rules     = "${data.template_file.rules.rendered}"
+  rules     = data.template_file.rules.rendered
   is_secure = true
+  contact   = []
 }
 
 resource "akamai_property_activation" "example-property" {
-  property = "${akamai_property.example-property.id}"
+  property = akamai_property.example-property.id
   contact  = ["me@mydomain.com"]
   network  = "STAGING"
 }

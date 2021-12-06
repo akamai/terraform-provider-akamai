@@ -37,6 +37,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				Rules: papi.Rules{
 					Name: "some rule tree",
 				},
+				RuleFormat: "latest",
 				Response: papi.Response{
 					Errors: []*papi.Error{
 						{
@@ -59,8 +60,126 @@ func TestDSPropertyRulesRead(t *testing.T) {
 							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "group_id", "grp_2"),
 							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "contract_id", "ctr_2"),
 							resource.TestCheckResourceAttrSet("data.akamai_property_rules.rules", "rules"),
+							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "rule_format", "latest"),
 							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "errors", `[{"type":"","title":"some error","detail":""}]`),
 						),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("get datasource property rules with rule format", func(t *testing.T) {
+		tests := map[string]struct {
+			configFile         string
+			expectedRuleFormat string
+		}{
+			"versioned": {
+				configFile:         "testdata/TestDSPropertyRules/with_versioned_rule_format.tf",
+				expectedRuleFormat: "v2015-08-17",
+			},
+			"latest": {
+				configFile:         "testdata/TestDSPropertyRules/with_latest_rule_format.tf",
+				expectedRuleFormat: "latest",
+			},
+		}
+
+		mockImpl := func(m *mockpapi, ruleFormat string) {
+			m.On("GetRuleFormats", mock.Anything).Return(&papi.GetRuleFormatsResponse{
+				RuleFormats: papi.RuleFormatItems{
+					Items: []string{
+						"latest",
+						"v2021-09-22",
+						"v2016-11-15",
+						"v2015-08-17",
+					},
+				},
+			}, nil)
+			m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+				ContractID: "ctr_2",
+				GroupID:    "grp_2",
+				PropertyID: "prp_2",
+			}).Return(&papi.GetPropertyVersionsResponse{
+				ContractID: "ctr_2",
+				GroupID:    "grp_2",
+				Version: papi.PropertyVersionGetItem{
+					PropertyVersion: 1,
+				},
+			}, nil)
+			m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+				ContractID:      "ctr_2",
+				GroupID:         "grp_2",
+				PropertyID:      "prp_2",
+				PropertyVersion: 1,
+				ValidateRules:   true,
+				ValidateMode:    papi.RuleValidateModeFull,
+				RuleFormat:      ruleFormat,
+			}).Return(&papi.GetRuleTreeResponse{
+				RuleFormat: ruleFormat,
+			}, nil)
+		}
+
+		for name, test := range tests {
+			t.Run(name, func(t *testing.T) {
+				client := &mockpapi{}
+				mockImpl(client, test.expectedRuleFormat)
+
+				useClient(client, func() {
+					resource.UnitTest(t, resource.TestCase{
+						Providers: testAccProviders,
+						Steps: []resource.TestStep{
+							{
+								Config: loadFixtureString(test.configFile),
+								Check: resource.ComposeAggregateTestCheckFunc(
+									resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "rule_format", test.expectedRuleFormat),
+								),
+							},
+						},
+					})
+				})
+				client.AssertExpectations(t)
+			})
+		}
+	})
+	t.Run("error getting datasource property rules with invalid rule format", func(t *testing.T) {
+		client := &mockpapi{}
+		mockImpl := func(m *mockpapi) {
+			m.On("GetRuleFormats", mock.Anything).Return(&papi.GetRuleFormatsResponse{
+				RuleFormats: papi.RuleFormatItems{
+					Items: []string{
+						"latest",
+						"v2021-09-22",
+					},
+				},
+			}, nil)
+		}
+		mockImpl(client)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
+						ExpectError: regexp.MustCompile("given 'rule_format' is not supported: \"v2015-08-17\""),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("error getting rule formats", func(t *testing.T) {
+		client := &mockpapi{}
+		mockImpl := func(m *mockpapi) {
+			m.On("GetRuleFormats", mock.Anything).Return(nil, fmt.Errorf("oops"))
+		}
+		mockImpl(client)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
+						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
 			})
@@ -120,7 +239,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/empty_group_id.tf"),
-						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)group_id = ""`),
+						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)group_id += ""`),
 					},
 				},
 			})

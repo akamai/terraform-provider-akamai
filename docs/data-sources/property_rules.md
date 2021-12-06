@@ -19,7 +19,7 @@ and groups you have access to.
 This example returns the rule tree for version 3 of a property based on the selected contract and group:
 
 ```hcl
-datasource "akamai_property_rules" "my-example" {
+data "akamai_property_rules" "my-example" {
     property_id = "prp_123"
     group_id = "grp_12345"
     contract_id = "ctr_1-AB123"
@@ -44,5 +44,6 @@ This data source supports these arguments:
 
 This data source returns these attributes:
 
+* `rule_format` - The rule tree version used. Property rule objects are versioned infrequently, and are known as rule formats. See [About rule formats](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#rf) to learn more.
 * `rules` - A JSON-encoded rule tree for the property.
 * `errors` - A list of validation errors for the rule tree object returned. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the Property Manager API documentation.

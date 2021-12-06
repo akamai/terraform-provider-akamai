@@ -66,12 +66,12 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceEvalRuleCreate")
 	logger.Debugf("in resourceEvalRuleCreate")
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "evalRule", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	version := getModifiableConfigVersion(ctx, configID, "evalRule", m)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -95,9 +95,9 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	createEvalRule := appsec.UpdateEvalRuleRequest{
-		ConfigID:       configid,
+		ConfigID:       configID,
 		Version:        version,
-		PolicyID:       policyid,
+		PolicyID:       policyID,
 		RuleID:         ruleid,
 		Action:         action,
 		JsonPayloadRaw: rawJSON,
@@ -119,25 +119,25 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 	logger := meta.Log("APPSEC", "resourceEvalRuleRead")
 	logger.Debugf("in resourceEvalRuleRead")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configid, m)
-	policyid := idParts[1]
+	version := getLatestConfigVersion(ctx, configID, m)
+	policyID := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	getEvalRule := appsec.GetEvalRuleRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		RuleID:   ruleid,
 	}
 
@@ -147,25 +147,25 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if err := d.Set("config_id", getEvalRule.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getEvalRule.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("rule_id", getEvalRule.RuleID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("rule_action", string(evalrule.Action)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if !evalrule.IsEmptyConditionException() {
 		jsonBody, err := json.Marshal(evalrule.ConditionException)
 		if err != nil {
-			diag.Errorf("%s", "Error Marshalling condition exception")
+			return diag.Errorf("%s", "Error Marshalling condition exception")
 		}
 		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}
 
@@ -178,16 +178,16 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceEvalRuleUpdate")
 	logger.Debugf("in resourceEvalRuleUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "evalRule", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "evalRule", m)
+	policyID := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
@@ -209,9 +209,9 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateEvalRule := appsec.UpdateEvalRuleRequest{
-		ConfigID:       configid,
+		ConfigID:       configID,
 		Version:        version,
-		PolicyID:       policyid,
+		PolicyID:       policyID,
 		RuleID:         ruleid,
 		Action:         action,
 		JsonPayloadRaw: rawJSON,
@@ -231,25 +231,25 @@ func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceEvalRuleDelete")
 	logger.Debugf("in resourceEvalRuleDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configid:securitypolicyid:ruleid")
+	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleid")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configid, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(idParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configid, "evalRule", m)
-	policyid := idParts[1]
+	version := getModifiableConfigVersion(ctx, configID, "evalRule", m)
+	policyID := idParts[1]
 	ruleid, err := strconv.Atoi(idParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	removeEvalRule := appsec.UpdateEvalRuleRequest{
-		ConfigID: configid,
+		ConfigID: configID,
 		Version:  version,
-		PolicyID: policyid,
+		PolicyID: policyID,
 		RuleID:   ruleid,
 		Action:   "none",
 	}

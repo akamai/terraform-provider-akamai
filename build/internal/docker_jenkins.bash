@@ -2,11 +2,18 @@
 # This script will build the provider and associated library after checking out from git on jenkins.
 #
 # It uses the same docker image for all builds unless RELOAD_DOCKER_IMAGE parameter is set true.
+
+# Script will end immediately when some command exits with a non-zero exit code.
+set -e
+
 PROVIDER_BRANCH_NAME="${1:-develop}"
 EDGEGRID_BRANCH_NAME_V2="${2:-v2}"
 EDGEGRID_BRANCH_NAME_V1="${3:-develop}"
 RELOAD_DOCKER_IMAGE="${4:-false}"
+
+# Recalculate DOCKER_IMAGE_SIZE if any changes to dockerfile.
 TIMEOUT="20m"
+DOCKER_IMAGE_SIZE="642345946"
 
 SSH_PRV_KEY="$(cat ~/.ssh/id_rsa)"
 SSH_PUB_KEY="$(cat ~/.ssh/id_rsa.pub)"
@@ -41,7 +48,8 @@ if [[ "$RELOAD_DOCKER_IMAGE" == true ]]; then
   docker image rm -f terraform/akamai:terraform-provider-akamai 2> /dev/null || true
 fi
 
-if [[ "$(docker images -q terraform/akamai:terraform-provider-akamai 2> /dev/null)" == "" ]]; then
+if [[ "$(docker images -q terraform/akamai:terraform-provider-akamai 2> /dev/null)" == "" ||
+      "$(docker inspect -f '{{ .Size }}' terraform/akamai:terraform-provider-akamai)" != "$DOCKER_IMAGE_SIZE" ]]; then
   echo "Building new image terraform/akamai:terraform-provider-akamai"
   DOCKER_BUILDKIT=1 docker build \
     -f build/internal/package/Dockerfile \
@@ -49,7 +57,6 @@ if [[ "$(docker images -q terraform/akamai:terraform-provider-akamai 2> /dev/nul
     --no-cache \
     -t terraform/akamai:terraform-provider-akamai .
 fi
-
 
 echo "Creating docker container"
 docker run -d -it --name akatf-container --entrypoint "/usr/bin/tail" \
@@ -108,5 +115,11 @@ echo "Creating docker build"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; go install -tags all;
                                    mkdir -p /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/${PROVIDER_VERSION}/linux_amd64;
                                    cp /root/go/bin/terraform-provider-akamai /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/${PROVIDER_VERSION}/linux_amd64/terraform-provider-akamai_v${PROVIDER_VERSION}'
+
+echo "Running terraform fmt"
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; terraform fmt -recursive -check'
+
+echo "Running tflint on examples"
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; find ./examples -type f -name "*.tf" | xargs -I % dirname % | sort -u | xargs -I @ sh -c "echo @ && tflint @"'
 
 docker rm -f akatf-container 2> /dev/null || true
