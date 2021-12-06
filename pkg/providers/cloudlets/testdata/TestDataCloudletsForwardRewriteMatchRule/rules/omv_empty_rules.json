@@ -1,0 +1,30 @@
+[
+  {
+    "name": "rule1",
+    "type": "frMatchRule",
+    "start": 10,
+    "end": 10000,
+    "matches": [
+      {
+        "matchType": "clientip",
+        "matchValue": "127.0.0.1",
+        "caseSensitive": false,
+        "negate": false
+      }
+    ],
+    "matchURL": "example.com",
+    "forwardSettings": {
+      "pathAndQS": "/test",
+      "useIncomingQueryString": true,
+      "originId": "31"
+    }
+  },
+  {
+    "name": "rule2",
+    "type": "frMatchRule",
+    "forwardSettings": {
+      "pathAndQS": "/test",
+      "originId": "1234"
+    }
+  }
+]

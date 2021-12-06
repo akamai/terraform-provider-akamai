@@ -11,10 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var (
-	objectMatchValueHandlerVP ObjectMatchValueHandler = getObjectMatchValueObjectOrSimple
-)
-
 func dataSourceCloudletsVisitorPrioritizationMatchRule() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceCloudletsVisitorPrioritizationMatchRuleRead,
@@ -248,7 +244,7 @@ func getMatchCriteriaVP(matches []interface{}) ([]cloudlets.MatchCriteriaVP, err
 			return nil, fmt.Errorf("matches is of invalid type")
 		}
 
-		omv, err := parseObjectMatchValue(criteriaMap, objectMatchValueHandlerVP)
+		omv, err := parseObjectMatchValue(criteriaMap, getObjectMatchValueObjectOrSimple)
 		if err != nil {
 			return nil, err
 		}

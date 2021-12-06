@@ -13,7 +13,8 @@ import (
 )
 
 type (
-	ObjectMatchValueHandler func(map[string]interface{}, string) (interface{}, error)
+	// objectMatchValueHandler is type alias function for casting ObjectMatchValue into a specified type
+	objectMatchValueHandler func(map[string]interface{}, string) (interface{}, error)
 )
 
 func getMatchRulesHashID(matchRules *cloudlets.MatchRules) (string, error) {
@@ -155,7 +156,7 @@ func setMatchRuleSchemaType(matchRules []interface{}, t cloudlets.MatchRuleType)
 	return nil
 }
 
-func parseObjectMatchValue(criteriaMap map[string]interface{}, handler ObjectMatchValueHandler) (interface{}, error) {
+func parseObjectMatchValue(criteriaMap map[string]interface{}, handler objectMatchValueHandler) (interface{}, error) {
 	v, ok := criteriaMap["object_match_value"]
 	if !ok {
 		return nil, nil

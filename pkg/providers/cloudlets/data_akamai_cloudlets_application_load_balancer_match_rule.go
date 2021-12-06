@@ -10,10 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var (
-	objectMatchValueHandlerALB ObjectMatchValueHandler = getObjectMatchValueObjectOrSimpleOrRange
-)
-
 func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceCloudletsLoadBalancerMatchRuleRead,
@@ -293,7 +289,7 @@ func parseMatchCriteriaALB(match interface{}) (*cloudlets.MatchCriteriaALB, erro
 			matchCriteriaALB.CheckIPs = checkIPs
 		}
 	}
-	omv, err := parseObjectMatchValue(m, objectMatchValueHandlerALB)
+	omv, err := parseObjectMatchValue(m, getObjectMatchValueObjectOrSimpleOrRange)
 	if err != nil {
 		return nil, err
 	}

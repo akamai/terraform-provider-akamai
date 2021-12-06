@@ -1,0 +1,7 @@
+[
+  {
+    "name": "rule1",
+    "type": "frMatchRule",
+    "forwardSettings": {}
+  }
+]

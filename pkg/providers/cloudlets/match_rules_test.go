@@ -17,7 +17,7 @@ func TestParseObjectMatchValue(t *testing.T) {
 
 	tests := map[string]struct {
 		criteria       map[string]interface{}
-		handler        ObjectMatchValueHandler
+		handler        objectMatchValueHandler
 		expectedOutput interface{}
 		expectedError  *regexp.Regexp
 	}{
