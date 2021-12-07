@@ -28,8 +28,7 @@ data "akamai_cloudlets_visitor_prioritization_match_rule" "test" {
       match_value    = "txt"
       negate         = false
     }
-    name                      = "rul3"
-    start                     = 0
-    use_incoming_query_string = false
+    name  = "rul3"
+    start = 0
   }
 }

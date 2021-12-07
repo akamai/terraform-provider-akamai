@@ -56,11 +56,12 @@ func getInt64Value(matchRuleMap map[string]interface{}, name string) int64 {
 	return 0
 }
 
-func getFloat64Value(matchRuleMap map[string]interface{}, name string) float64 {
+func getFloat64PtrValue(matchRuleMap map[string]interface{}, name string) *float64 {
 	if value, ok := matchRuleMap[name]; ok {
-		return float64(value.(float64))
+		v := value.(float64)
+		return &v
 	}
-	return 0
+	return nil
 }
 
 func getBoolValue(matchRuleMap map[string]interface{}, name string) bool {

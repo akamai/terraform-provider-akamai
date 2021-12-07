@@ -153,11 +153,6 @@ func dataSourceCloudletsVisitorPrioritizationMatchRule() *schema.Resource {
 							Optional:    true,
 							Description: "If using a URL match, this property is the URL that the Cloudlet uses to match the incoming request",
 						},
-						"use_incoming_query_string": {
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: "If set to true, the Cloudlet includes the query string from the request in the rewritten or forwarded URL",
-						},
 						"pass_through_percent": {
 							Type:     schema.TypeFloat,
 							Required: true,
@@ -182,8 +177,7 @@ func dataSourceCloudletsVisitorPrioritizationMatchRuleRead(_ context.Context, d 
 		return diag.FromErr(err)
 	}
 
-	err = setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeVP)
-	if err != nil {
+	if err := setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeVP); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -228,8 +222,7 @@ func getMatchRulesVP(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 			End:                    getIntValue(matchRuleMap, "end"),
 			Matches:                matches,
 			MatchURL:               getStringValue(matchRuleMap, "match_url"),
-			UseIncomingQueryString: getBoolValue(matchRuleMap, "use_incoming_query_string"),
-			PassThroughPercent:     getFloat64Value(matchRuleMap, "pass_through_percent"),
+			PassThroughPercent:     getFloat64PtrValue(matchRuleMap, "pass_through_percent"),
 		}
 		result = append(result, matchRule)
 	}

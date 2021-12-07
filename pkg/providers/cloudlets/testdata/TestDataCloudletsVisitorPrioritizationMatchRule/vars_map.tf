@@ -28,18 +28,16 @@ data "akamai_cloudlets_visitor_prioritization_match_rule" "test" {
       match_value    = "txt"
       negate         = false
     }
-    name                      = "rul3"
-    start                     = 0
-    use_incoming_query_string = false
-    pass_through_percent      = -1
+    name                 = "rul3"
+    start                = 0
+    pass_through_percent = -1
   }
   match_rules {
-    end                       = 0
-    match_url                 = "ddd.aaa"
-    name                      = "rule 2"
-    start                     = 0
-    use_incoming_query_string = true
-    pass_through_percent      = 100
+    end                  = 0
+    match_url            = "ddd.aaa"
+    name                 = "rule 2"
+    start                = 0
+    pass_through_percent = 100
   }
   match_rules {
     end                  = 0

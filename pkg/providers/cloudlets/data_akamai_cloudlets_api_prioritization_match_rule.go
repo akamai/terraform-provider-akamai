@@ -222,7 +222,7 @@ func getMatchRulesAP(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 			End:                getIntValue(matchRuleMap, "end"),
 			Matches:            matches,
 			MatchURL:           getStringValue(matchRuleMap, "match_url"),
-			PassThroughPercent: getFloat64Value(matchRuleMap, "pass_through_percent"),
+			PassThroughPercent: getFloat64PtrValue(matchRuleMap, "pass_through_percent"),
 		}
 		result = append(result, matchRule)
 	}

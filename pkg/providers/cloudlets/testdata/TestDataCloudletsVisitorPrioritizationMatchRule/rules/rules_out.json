@@ -31,7 +31,6 @@
     "name": "rule 2",
     "type": "vpMatchRule",
     "matchURL": "ddd.aaa",
-    "useIncomingQueryString": true,
     "passThroughPercent": 100
   },
   {
