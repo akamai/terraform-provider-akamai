@@ -53,8 +53,8 @@ func resourceCloudletsPolicy() *schema.Resource {
 			"cloudlet_code": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALB", "ER", "FR", "VP"}, true)),
-				Description:      "Code for the type of Cloudlet (ALB, ER, FR or VP)",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALB", "AP", "ER", "FR", "VP"}, true)),
+				Description:      "Code for the type of Cloudlet (ALB, AP, ER, FR or VP)",
 			},
 			"description": {
 				Type:        schema.TypeString,

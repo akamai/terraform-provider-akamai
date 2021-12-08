@@ -1,0 +1,22 @@
+[
+  {
+    "name": "rule 2",
+    "type": "apMatchRule",
+    "matches": [
+      {
+        "matchType": "hostname",
+        "matchValue": "example.ex",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false,
+        "objectMatchValue": {
+          "type": "simple",
+          "value": [
+            "abc"
+          ]
+        }
+      }
+    ],
+    "passThroughPercent": 50.5
+  }
+]

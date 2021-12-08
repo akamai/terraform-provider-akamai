@@ -1,0 +1,42 @@
+[
+  {
+    "name": "rul3",
+    "type": "apMatchRule",
+    "matches": [
+      {
+        "matchType": "hostname",
+        "matchValue": "3333.dom",
+        "matchOperator": "equals",
+        "caseSensitive": true,
+        "negate": false
+      },
+      {
+        "matchType": "cookie",
+        "matchValue": "cookie=cookievalue",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false
+      },
+      {
+        "matchType": "extension",
+        "matchValue": "txt",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false
+      }
+    ],
+    "passThroughPercent": -1
+  },
+  {
+    "name": "rule 2",
+    "type": "apMatchRule",
+    "matchURL": "ddd.aaa",
+    "passThroughPercent": 100
+  },
+  {
+    "name": "r1",
+    "type": "apMatchRule",
+    "matchURL": "abc.com",
+    "passThroughPercent": 50.55
+  }
+]
