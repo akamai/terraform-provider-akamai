@@ -17,9 +17,9 @@ type (
 	objectMatchValueHandler func(map[string]interface{}, string) (interface{}, error)
 )
 
-func getMatchRulesHashID(matchRules *cloudlets.MatchRules) (string, error) {
+func getMatchRulesHashID(matchRules cloudlets.MatchRules) (string, error) {
 	id := "id"
-	for _, rule := range *matchRules {
+	for _, rule := range matchRules {
 		switch r := rule.(type) {
 		case cloudlets.MatchRuleER:
 			id = id + ":" + r.Name
@@ -87,7 +87,7 @@ func getOMVSimpleType(omv map[string]interface{}) interface{} {
 		Type:  cloudlets.Simple,
 		Value: getListOfStringsValue(omv, "value"),
 	}
-	return simpleType
+	return &simpleType
 }
 
 func getOMVObjectType(omv map[string]interface{}) (interface{}, error) {
@@ -102,7 +102,7 @@ func getOMVObjectType(omv map[string]interface{}) (interface{}, error) {
 		NameHasWildcard:   getBoolValue(omv, "name_has_wildcard"),
 		Options:           opts,
 	}
-	return objectType, nil
+	return &objectType, nil
 }
 
 func getOMVRangeType(omv map[string]interface{}) (interface{}, error) {
@@ -120,7 +120,7 @@ func getOMVRangeType(omv map[string]interface{}) (interface{}, error) {
 		Type:  cloudlets.Range,
 		Value: valuesAsInt,
 	}
-	return rangeType, nil
+	return &rangeType, nil
 }
 
 func parseOMVOptions(omvOptions map[string]interface{}) (*cloudlets.Options, error) {

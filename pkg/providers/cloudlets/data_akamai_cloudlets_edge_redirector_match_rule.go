@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
@@ -22,9 +23,10 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The name of the rule",
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "The name of the rule",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 						},
 						"type": {
 							Type:        schema.TypeString,
@@ -32,14 +34,16 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 							Description: "The type of Cloudlet the rule is for",
 						},
 						"start": {
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Description: "The start time for this match (in seconds since the epoch)",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Description:      "The start time for this match (in seconds since the epoch)",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 						"end": {
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Description: "The end time for this match (in seconds since the epoch)",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Description:      "The end time for this match (in seconds since the epoch)",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 						"matches": {
 							Type:        schema.TypeList,
@@ -51,16 +55,20 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The type of match used",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"header", "hostname", "path", "extension", "query", "regex",
+											"cookie", "deviceCharacteristics", "clientip", "continent", "countrycode", "regioncode", "protocol", "method", "proxy"}, false)),
 									},
 									"match_value": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Depends on the matchType",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "Depends on the matchType",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 									},
 									"match_operator": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Valid entries for this property: contains, exists, and equals",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "Valid entries for this property: contains, exists, and equals",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"contains", "exists", "equals", ""}, false)),
 									},
 									"case_sensitive": {
 										Type:        schema.TypeBool,
@@ -73,9 +81,10 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 										Description: "If true, negates the match",
 									},
 									"check_ips": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"CONNECTING_IP", "XFF_HEADERS", "CONNECTING_IP XFF_HEADERS", ""}, false)),
 									},
 									"object_match_value": {
 										Type:        schema.TypeSet,
@@ -88,12 +97,14 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 													Optional: true,
 													Description: "If using a match type that supports name attributes, enter the value in the incoming request to match on. " +
 														"The following match types support this property: cookie, header, parameter, and query",
+													ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 												},
 												"type": {
 													Type:     schema.TypeString,
 													Required: true,
 													Description: "The array type, which can be one of the following: object or simple. " +
 														"Use the simple option when adding only an array of string-based values",
+													ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"simple", "object"}, false)),
 												},
 												"name_case_sensitive": {
 													Type:        schema.TypeBool,
@@ -154,21 +165,25 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 							Description: "If set to relative_url, takes the path entered for the redirectUrl and sets it in the response’s Location header. " +
 								"If set to copy_scheme_hostname, creates an absolute path by taking the protocol and hostname from the incoming request and combining them with path information entered for the redirectUrl. " +
 								"If this property is not included, or is set to none, then the redirect_url should be fully-qualified URL",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"relative_url", "copy_scheme_hostname", "none", ""}, false)),
 						},
 						"status_code": {
-							Type:        schema.TypeInt,
-							Required:    true,
-							Description: "The HTTP response status code (allowed values: 301, 302, 303, 307, 308)",
+							Type:             schema.TypeInt,
+							Required:         true,
+							Description:      "The HTTP response status code (allowed values: 301, 302, 303, 307, 308)",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntInSlice([]int{301, 302, 303, 307, 308})),
 						},
 						"redirect_url": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The URL Edge Redirector redirects the request to. If using use_relative_url, you can enter a path for the value",
+							Type:             schema.TypeString,
+							Required:         true,
+							Description:      "The URL Edge Redirector redirects the request to. If using use_relative_url, you can enter a path for the value",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 						},
 						"match_url": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "If using a URL match, this property is the URL that the Cloudlet uses to match the incoming request",
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "If using a URL match, this property is the URL that the Cloudlet uses to match the incoming request",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 						},
 						"use_incoming_query_string": {
 							Type:        schema.TypeBool,
@@ -206,6 +221,10 @@ func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.Res
 	matchRules, err := getMatchRulesER(matchRulesList)
 	if err != nil {
 		return diag.Errorf("'match_rules' - %s", err)
+	}
+
+	if err := matchRules.Validate(); err != nil {
+		return diag.FromErr(err)
 	}
 
 	jsonBody, err := json.MarshalIndent(matchRules, "", "  ")
@@ -252,7 +271,7 @@ func getMatchCriteriaER(matches []interface{}) ([]cloudlets.MatchCriteriaER, err
 	return result, nil
 }
 
-func getMatchRulesER(matchRules []interface{}) (*cloudlets.MatchRules, error) {
+func getMatchRulesER(matchRules []interface{}) (cloudlets.MatchRules, error) {
 	result := make(cloudlets.MatchRules, 0, len(matchRules))
 	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
@@ -281,5 +300,5 @@ func getMatchRulesER(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 		}
 		result = append(result, matchRule)
 	}
-	return &result, nil
+	return result, nil
 }

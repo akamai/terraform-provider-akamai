@@ -71,7 +71,19 @@ func TestIncorrectDataPhasedReleaseDeploymentMatchRule(t *testing.T) {
 		},
 		"match criteria PR - invalid type value for ObjectMatchValue": {
 			configPath: "testdata/TestDataCloudletsPhasedReleaseMatchRule/omv_invalid_type.tf",
-			withError:  "is invalid. Must be one of: 'simple' or 'object'",
+			withError:  `expected type to be one of \[simple object\], got invalid_type`,
+		},
+		"match criteria PR - invalid percent value for forward_settings": {
+			configPath: "testdata/TestDataCloudletsPhasedReleaseMatchRule/invalid_percent.tf",
+			withError:  `expected percent to be in the range \(1 - 100\), got 123`,
+		},
+		"match criteria PR - invalid chack_ips value for matches": {
+			configPath: "testdata/TestDataCloudletsPhasedReleaseMatchRule/matches_invalid_checkips.tf",
+			withError:  `expected check_ips to be one of \[CONNECTING_IP XFF_HEADERS CONNECTING_IP XFF_HEADERS \], got invalid`,
+		},
+		"match criteria PR - invalid match_operator value matches": {
+			configPath: "testdata/TestDataCloudletsPhasedReleaseMatchRule/matches_invalid_operator.tf",
+			withError:  `expected match_operator to be one of \[contains exists equals \], got invalid`,
 		},
 	}
 	for name, test := range tests {

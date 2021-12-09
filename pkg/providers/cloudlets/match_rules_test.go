@@ -56,7 +56,7 @@ func TestParseObjectMatchValue(t *testing.T) {
 				}),
 			},
 			handler: getObjectMatchValueObjectOrSimpleOrRange,
-			expectedOutput: cloudlets.ObjectMatchValueSimple{
+			expectedOutput: &cloudlets.ObjectMatchValueSimple{
 				Type:  "simple",
 				Value: []string{"foo"},
 			},
@@ -80,7 +80,7 @@ func TestParseObjectMatchValue(t *testing.T) {
 				}),
 			},
 			handler: getObjectMatchValueObjectOrSimpleOrRange,
-			expectedOutput: cloudlets.ObjectMatchValueObject{
+			expectedOutput: &cloudlets.ObjectMatchValueObject{
 				Name:              "omv",
 				Type:              "object",
 				NameCaseSensitive: true,
@@ -102,7 +102,7 @@ func TestParseObjectMatchValue(t *testing.T) {
 				}),
 			},
 			handler: getObjectMatchValueObjectOrSimpleOrRange,
-			expectedOutput: cloudlets.ObjectMatchValueRange{
+			expectedOutput: &cloudlets.ObjectMatchValueRange{
 				Type:  "range",
 				Value: []int64{1, 50},
 			},

@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
@@ -22,9 +23,10 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The name of the rule",
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "The name of the rule",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 						},
 						"type": {
 							Type:        schema.TypeString,
@@ -32,14 +34,16 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 							Description: "The type of Cloudlet the rule is for",
 						},
 						"start": {
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Description: "The start time for this match (in seconds since the epoch)",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Description:      "The start time for this match (in seconds since the epoch)",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 						"end": {
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Description: "The end time for this match (in seconds since the epoch)",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Description:      "The end time for this match (in seconds since the epoch)",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 						"matches": {
 							Type:        schema.TypeList,
@@ -51,16 +55,20 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The type of match used",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"header", "hostname", "path", "extension", "query", "regex",
+											"cookie", "deviceCharacteristics", "clientip", "continent", "countrycode", "regioncode", "protocol", "method", "proxy"}, false)),
 									},
 									"match_value": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Depends on the matchType",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "Depends on the matchType",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 									},
 									"match_operator": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Valid entries for this property: contains, exists, and equals",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "Valid entries for this property: contains, exists, and equals",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"contains", "exists", "equals", ""}, false)),
 									},
 									"case_sensitive": {
 										Type:        schema.TypeBool,
@@ -73,9 +81,10 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 										Description: "If true, negates the match",
 									},
 									"check_ips": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"CONNECTING_IP", "XFF_HEADERS", "CONNECTING_IP XFF_HEADERS", ""}, false)),
 									},
 									"object_match_value": {
 										Type:        schema.TypeSet,
@@ -88,12 +97,14 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 													Optional: true,
 													Description: "If using a match type that supports name attributes, enter the value in the incoming request to match on. " +
 														"The following match types support this property: cookie, header, parameter, and query",
+													ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 												},
 												"type": {
 													Type:     schema.TypeString,
 													Required: true,
 													Description: "The array type, which can be one of the following: object or simple. " +
 														"Use the simple option when adding only an array of string-based values",
+													ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"simple", "object"}, false)),
 												},
 												"name_case_sensitive": {
 													Type:        schema.TypeBool,
@@ -149,9 +160,10 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 							},
 						},
 						"match_url": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "If using a URL match, this property is the URL that the Cloudlet uses to match the incoming request",
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "If using a URL match, this property is the URL that the Cloudlet uses to match the incoming request",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 						},
 						"forward_settings": {
 							Type:     schema.TypeSet,
@@ -162,9 +174,10 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"origin_id": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The ID of the Conditional Origin requests are forwarded to",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "The ID of the Conditional Origin requests are forwarded to",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 									},
 									"use_incoming_query_string": {
 										Type:     schema.TypeBool,
@@ -177,6 +190,7 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 										Optional: true,
 										Description: "If a value is provided and match conditions are met, this property defines " +
 											"the path/resource/query string to rewrite URL for the incoming request.",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 									},
 								},
 							},
@@ -213,6 +227,10 @@ func dataSourceCloudletsForwardRewriteMatchRuleRead(_ context.Context, d *schema
 		return diag.Errorf("'match_rules' - %s", err)
 	}
 
+	if err := matchRules.Validate(); err != nil {
+		return diag.FromErr(err)
+	}
+
 	jsonBody, err := json.MarshalIndent(matchRules, "", "  ")
 	if err != nil {
 		return diag.FromErr(err)
@@ -231,7 +249,7 @@ func dataSourceCloudletsForwardRewriteMatchRuleRead(_ context.Context, d *schema
 	return nil
 }
 
-func getMatchRulesFR(matchRules []interface{}) (*cloudlets.MatchRules, error) {
+func getMatchRulesFR(matchRules []interface{}) (cloudlets.MatchRules, error) {
 	result := make(cloudlets.MatchRules, 0, len(matchRules))
 	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
@@ -270,7 +288,7 @@ func getMatchRulesFR(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 
 		result = append(result, matchRule)
 	}
-	return &result, nil
+	return result, nil
 }
 
 func getMatchCriteriaFR(matches []interface{}) ([]cloudlets.MatchCriteriaFR, error) {
