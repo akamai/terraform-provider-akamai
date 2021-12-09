@@ -101,7 +101,7 @@ func resourceCloudletsPolicy() *schema.Resource {
 	}
 }
 
-// EnforceVersionChange enforces that change to any field will most likely result in creating a new version
+// EnforcePolicyVersionChange enforces that change to any field will most likely result in creating a new version
 func EnforcePolicyVersionChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 	if diff.HasChange("name") ||
 		diff.HasChange("description") ||

@@ -14,7 +14,6 @@ go:
 
 env:
   - GO111MODULE=on
-  - GOBIN=$GOPATH/bin
 
 install:
 - make init
