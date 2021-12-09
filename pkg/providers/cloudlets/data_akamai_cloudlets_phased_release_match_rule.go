@@ -11,9 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
+func dataSourceCloudletsPhasedReleaseMatchRule() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceCloudletsForwardRewriteMatchRuleRead,
+		ReadContext: dataSourcePhasedReleaseMatchRuleRead,
 		Schema: map[string]*schema.Schema{
 			"match_rules": {
 				Type:        schema.TypeList,
@@ -29,7 +29,7 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 						"type": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The type of Cloudlet the rule is for",
+							Description: "The type of Cloudlet the rule is for. It is known as Continuous Deployment (CD) too.",
 						},
 						"start": {
 							Type:        schema.TypeInt,
@@ -163,23 +163,21 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"origin_id": {
 										Type:        schema.TypeString,
-										Optional:    true,
+										Required:    true,
 										Description: "The ID of the Conditional Origin requests are forwarded to",
 									},
-									"use_incoming_query_string": {
-										Type:     schema.TypeBool,
-										Optional: true,
-										Description: "If set to true, the Cloudlet includes the query string from the request " +
-											"in the rewritten or forwarded URL.",
-									},
-									"path_and_qs": {
-										Type:     schema.TypeString,
-										Optional: true,
-										Description: "If a value is provided and match conditions are met, this property defines " +
-											"the path/resource/query string to rewrite URL for the incoming request.",
+									"percent": {
+										Type:        schema.TypeInt,
+										Required:    true,
+										Description: "The percent of traffic that is sent to the data center.",
 									},
 								},
 							},
+						},
+						"matches_always": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Is used in some cloudlets to support default rules (rule that is always matched)",
 						},
 					},
 				},
@@ -193,17 +191,17 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 	}
 }
 
-func dataSourceCloudletsForwardRewriteMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func dataSourcePhasedReleaseMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	matchRulesList, err := tools.GetListValue("match_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err = setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeFR); err != nil {
+	if err = setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypePR); err != nil {
 		return diag.FromErr(err)
 	}
 
-	matchRules, err := getMatchRulesFR(matchRulesList)
+	matchRules, err := getMatchRulesPR(matchRulesList)
 	if err != nil {
 		return diag.Errorf("'match_rules' - %s", err)
 	}
@@ -226,7 +224,7 @@ func dataSourceCloudletsForwardRewriteMatchRuleRead(_ context.Context, d *schema
 	return nil
 }
 
-func getMatchRulesFR(matchRules []interface{}) (*cloudlets.MatchRules, error) {
+func getMatchRulesPR(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 	result := make(cloudlets.MatchRules, 0, len(matchRules))
 	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
@@ -234,18 +232,19 @@ func getMatchRulesFR(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 			return nil, fmt.Errorf("match rule is of invalid type: %T", mr)
 		}
 
-		matches, err := getMatchCriteriaFR(matchRuleMap["matches"].([]interface{}))
+		matches, err := getMatchCriteriaPR(matchRuleMap["matches"].([]interface{}))
 		if err != nil {
 			return nil, err
 		}
 
-		matchRule := cloudlets.MatchRuleFR{
-			Name:     getStringValue(matchRuleMap, "name"),
-			Type:     cloudlets.MatchRuleTypeFR,
-			MatchURL: getStringValue(matchRuleMap, "match_url"),
-			Start:    getIntValue(matchRuleMap, "start"),
-			End:      getIntValue(matchRuleMap, "end"),
-			Matches:  matches,
+		matchRule := cloudlets.MatchRulePR{
+			Name:          getStringValue(matchRuleMap, "name"),
+			Type:          cloudlets.MatchRuleTypePR,
+			Start:         getIntValue(matchRuleMap, "start"),
+			End:           getIntValue(matchRuleMap, "end"),
+			Matches:       matches,
+			MatchURL:      getStringValue(matchRuleMap, "match_url"),
+			MatchesAlways: getBoolValue(matchRuleMap, "matches_always"),
 		}
 
 		// Schema guarantees that "forward_settings" will be present and of type *schema.Set
@@ -255,10 +254,9 @@ func getMatchRulesFR(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 		}
 		for _, element := range settings.List() {
 			entries := element.(map[string]interface{})
-			matchRule.ForwardSettings = cloudlets.ForwardSettingsFR{
-				OriginID:               entries["origin_id"].(string),
-				PathAndQS:              entries["path_and_qs"].(string),
-				UseIncomingQueryString: entries["use_incoming_query_string"].(bool),
+			matchRule.ForwardSettings = cloudlets.ForwardSettingsPR{
+				OriginID: getStringValue(entries, "origin_id"),
+				Percent:  getIntValue(entries, "percent"),
 			}
 		}
 
@@ -267,8 +265,8 @@ func getMatchRulesFR(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 	return &result, nil
 }
 
-func getMatchCriteriaFR(matches []interface{}) ([]cloudlets.MatchCriteriaFR, error) {
-	result := make([]cloudlets.MatchCriteriaFR, 0, len(matches))
+func getMatchCriteriaPR(matches []interface{}) ([]cloudlets.MatchCriteriaPR, error) {
+	result := make([]cloudlets.MatchCriteriaPR, 0, len(matches))
 	for _, criteria := range matches {
 		criteriaMap, ok := criteria.(map[string]interface{})
 		if !ok {
@@ -280,7 +278,7 @@ func getMatchCriteriaFR(matches []interface{}) ([]cloudlets.MatchCriteriaFR, err
 			return nil, err
 		}
 
-		matchCriterion := cloudlets.MatchCriteriaFR{
+		matchCriterion := cloudlets.MatchCriteriaPR{
 			MatchType:        getStringValue(criteriaMap, "match_type"),
 			MatchValue:       getStringValue(criteriaMap, "match_value"),
 			MatchOperator:    cloudlets.MatchOperator(getStringValue(criteriaMap, "match_operator")),
