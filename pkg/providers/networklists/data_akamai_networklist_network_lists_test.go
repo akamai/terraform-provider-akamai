@@ -41,8 +41,8 @@ func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
 	})
 }
 
-func TestAccAkamaiNetworkList_data_by_uniqueid(t *testing.T) {
-	t.Run("match by uniqueid", func(t *testing.T) {
+func TestAccAkamaiNetworkList_data_by_uniqueID(t *testing.T) {
+	t.Run("match by uniqueID", func(t *testing.T) {
 		client := &mocknetworklists{}
 
 		cv := network.GetNetworkListResponse{}

@@ -66,12 +66,12 @@ func resourceNetworkList() *schema.Resource {
 			"uniqueid": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "uniqueId",
+				Description: "unique ID",
 			},
 			"network_list_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "network_list_id",
+				Description: "network list ID",
 			},
 			"sync_point": {
 				Type:        schema.TypeInt,
@@ -81,12 +81,12 @@ func resourceNetworkList() *schema.Resource {
 			"contract_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Contract ID",
+				Description: "contract ID",
 			},
 			"group_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Group ID",
+				Description: "group ID",
 			},
 		},
 	}
@@ -117,20 +117,20 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	createNetworkList.Description = description
 
-	contractid, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tools.GetStringValue("contract_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createNetworkList.ContractID = contractid
+	createNetworkList.ContractID = contractID
 
-	groupid, err := tools.GetIntValue("group_id", d)
+	groupID, err := tools.GetIntValue("group_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createNetworkList.GroupID = groupid
+	createNetworkList.GroupID = groupID
 
-	if len(contractid) > 0 || groupid > 0 {
-		if len(contractid) == 0 || groupid == 0 {
+	if len(contractID) > 0 || groupID > 0 {
+		if len(contractID) == 0 || groupID == 0 {
 			return diag.Errorf("If either a contract_id or group_id is provided, both must be provided")
 		}
 	}
@@ -218,11 +218,11 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("contract_id", contractid); err != nil {
+	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("group_id", groupid); err != nil {
+	if err := d.Set("group_id", groupID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
@@ -257,20 +257,20 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	updateNetworkList.Description = description
 
-	contractid, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tools.GetStringValue("contract_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateNetworkList.ContractID = contractid
+	updateNetworkList.ContractID = contractID
 
-	groupid, err := tools.GetIntValue("group_id", d)
+	groupID, err := tools.GetIntValue("group_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateNetworkList.GroupID = groupid
+	updateNetworkList.GroupID = groupID
 
-	if len(contractid) > 0 || groupid > 0 {
-		if len(contractid) == 0 || groupid == 0 {
+	if len(contractID) > 0 || groupID > 0 {
+		if len(contractID) == 0 || groupID == 0 {
 			return diag.Errorf("If either a contract_id or group_id is provided, both must be provided")
 		}
 	}
@@ -338,11 +338,11 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("contract_id", contractid); err != nil {
+	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("group_id", groupid); err != nil {
+	if err := d.Set("group_id", groupID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
