@@ -52,7 +52,7 @@ func dataSourceCloudletsPolicy() *schema.Resource {
 			"cloudlet_code": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Code for the type of Cloudlet (ALB or ER)",
+				Description: "Code for the type of Cloudlet (ALB, AP, CD, ER, FR or VP)",
 			},
 			"revision_id": {
 				Type:        schema.TypeInt,
