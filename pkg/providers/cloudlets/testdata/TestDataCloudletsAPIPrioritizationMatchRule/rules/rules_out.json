@@ -31,7 +31,8 @@
     "name": "rule 2",
     "type": "apMatchRule",
     "matchURL": "ddd.aaa",
-    "passThroughPercent": 100
+    "passThroughPercent": 100,
+    "disabled": true
   },
   {
     "name": "r1",

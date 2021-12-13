@@ -9,5 +9,6 @@ data "akamai_cloudlets_phased_release_match_rule" "test" {
       origin_id = "1234"
       percent   = 30
     }
+    disabled = true
   }
 }

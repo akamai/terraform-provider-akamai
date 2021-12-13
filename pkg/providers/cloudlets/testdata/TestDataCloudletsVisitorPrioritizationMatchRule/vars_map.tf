@@ -38,6 +38,7 @@ data "akamai_cloudlets_visitor_prioritization_match_rule" "test" {
     name                 = "rule 2"
     start                = 0
     pass_through_percent = 100
+    disabled             = true
   }
   match_rules {
     end                  = 0
@@ -45,6 +46,7 @@ data "akamai_cloudlets_visitor_prioritization_match_rule" "test" {
     name                 = "r1"
     start                = 0
     pass_through_percent = 50.55
+    disabled             = false
   }
 }
 

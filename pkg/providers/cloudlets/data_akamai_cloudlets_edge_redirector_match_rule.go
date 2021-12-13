@@ -175,6 +175,11 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 							Optional:    true,
 							Description: "If set to true, the Cloudlet includes the query string from the request in the rewritten or forwarded URL",
 						},
+						"disabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "If set to true, disables a rule so it is not evaluated against incoming requests.",
+						},
 					},
 				},
 			},
@@ -272,6 +277,7 @@ func getMatchRulesER(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 			MatchURL:                 getStringValue(matchRuleMap, "match_url"),
 			UseIncomingQueryString:   getBoolValue(matchRuleMap, "use_incoming_query_string"),
 			UseIncomingSchemeAndHost: getStringValue(matchRuleMap, "use_relative_url") == "copy_scheme_hostname",
+			Disabled:                 getBoolValue(matchRuleMap, "disabled"),
 		}
 		result = append(result, matchRule)
 	}

@@ -174,6 +174,11 @@ func dataSourceCloudletsPhasedReleaseMatchRule() *schema.Resource {
 								},
 							},
 						},
+						"disabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "If set to true, disables a rule so it is not evaluated against incoming requests.",
+						},
 						"matches_always": {
 							Type:        schema.TypeBool,
 							Optional:    true,
@@ -244,6 +249,7 @@ func getMatchRulesPR(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 			End:           getIntValue(matchRuleMap, "end"),
 			Matches:       matches,
 			MatchURL:      getStringValue(matchRuleMap, "match_url"),
+			Disabled:      getBoolValue(matchRuleMap, "disabled"),
 			MatchesAlways: getBoolValue(matchRuleMap, "matches_always"),
 		}
 

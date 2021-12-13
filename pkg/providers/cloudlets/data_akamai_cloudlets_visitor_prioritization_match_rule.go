@@ -159,6 +159,11 @@ func dataSourceCloudletsVisitorPrioritizationMatchRule() *schema.Resource {
 							Description: "The range 0.0: 99.0 specifies the percentage of requests that pass through to the origin. " +
 								"The value of 100 means the request always passes through to the origin. A value of -1 means send everyone to the waiting room.",
 						},
+						"disabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "If set to true, disables a rule so it is not evaluated against incoming requests.",
+						},
 					},
 				},
 			},
@@ -216,13 +221,14 @@ func getMatchRulesVP(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 		}
 
 		matchRule := cloudlets.MatchRuleVP{
-			Name:                   getStringValue(matchRuleMap, "name"),
-			Type:                   cloudlets.MatchRuleTypeVP,
-			Start:                  getIntValue(matchRuleMap, "start"),
-			End:                    getIntValue(matchRuleMap, "end"),
-			Matches:                matches,
-			MatchURL:               getStringValue(matchRuleMap, "match_url"),
-			PassThroughPercent:     getFloat64PtrValue(matchRuleMap, "pass_through_percent"),
+			Name:               getStringValue(matchRuleMap, "name"),
+			Type:               cloudlets.MatchRuleTypeVP,
+			Start:              getIntValue(matchRuleMap, "start"),
+			End:                getIntValue(matchRuleMap, "end"),
+			Matches:            matches,
+			MatchURL:           getStringValue(matchRuleMap, "match_url"),
+			PassThroughPercent: getFloat64PtrValue(matchRuleMap, "pass_through_percent"),
+			Disabled:           getBoolValue(matchRuleMap, "disabled"),
 		}
 		result = append(result, matchRule)
 	}

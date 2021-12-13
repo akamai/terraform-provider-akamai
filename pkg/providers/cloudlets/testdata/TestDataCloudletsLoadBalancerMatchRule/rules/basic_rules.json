@@ -5,6 +5,7 @@
     "matchesAlways": false,
     "forwardSettings": {
       "originId": "3"
-    }
+    },
+    "disabled": true
   }
 ]

@@ -181,6 +181,11 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 								},
 							},
 						},
+						"disabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "If set to true, disables a rule so it is not evaluated against incoming requests.",
+						},
 					},
 				},
 			},
@@ -246,6 +251,7 @@ func getMatchRulesFR(matchRules []interface{}) (*cloudlets.MatchRules, error) {
 			Start:    getIntValue(matchRuleMap, "start"),
 			End:      getIntValue(matchRuleMap, "end"),
 			Matches:  matches,
+			Disabled: getBoolValue(matchRuleMap, "disabled"),
 		}
 
 		// Schema guarantees that "forward_settings" will be present and of type *schema.Set

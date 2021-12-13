@@ -177,6 +177,11 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 								},
 							},
 						},
+						"disabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "If set to true, disables a rule so it is not evaluated against incoming requests.",
+						},
 					},
 				},
 			},
@@ -213,6 +218,7 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 			End:           getIntValue(rawRule, "end"),
 			ID:            getInt64Value(rawRule, "id"),
 			MatchesAlways: getBoolValue(rawRule, "matches_always"),
+			Disabled:      getBoolValue(rawRule, "disabled"),
 		}
 
 		rule.Matches, err = parseRuleMatches(rawRule, "matches")
