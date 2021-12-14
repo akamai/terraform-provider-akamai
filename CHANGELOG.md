@@ -1,5 +1,11 @@
 # RELEASE NOTES
 
+## 1.9.1 (Dec 16, 2021)
+
+#### BUG FIXES:
+* DNS
+  * Refactored MX Bind processing and target suppress to fix failing import
+
 ## 1.9.0 (Dec 6, 2021)
 
 #### FEATURES/ENHANCEMENTS
