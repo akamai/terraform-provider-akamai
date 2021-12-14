@@ -461,6 +461,13 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, old str
 	if len(oldTargetList) != len(newTargetList) {
 		return false
 	}
+
+	logger.Debugf("diffQuotedDNSRecord Suppress. recodtype: %v", recordType)
+	logger.Debugf("diffQuotedDNSRecord Suppress. oldTargetList: [%v]", oldTargetList)
+	logger.Debugf("diffQuotedDNSRecord Suppress. newTargetList: [%v]", newTargetList)
+	logger.Debugf("diffQuotedDNSRecord Suppress. old: [%v]", old)
+	logger.Debugf("diffQuotedDNSRecord Suppress. new: [%v]", new)
+
 	var compList []string
 	var baseVal string
 	var compTrim bool
@@ -504,33 +511,15 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, old str
 	}
 
 	if recordType == RRTypeMx {
-		// MX record target can contain priority. strip if present for comparison
-		baseComponents := strings.Split(baseVal, " ")
-		if len(baseComponents) > 2 || len(baseComponents) < 1 {
-			logger.Warnf("updated baseVal: %v invalid", baseVal)
-			return false
+
+		// lists are same length
+		for i := 0; i < len(oldTargetList); i++ {
+			oldTargetList[i] = strings.TrimRight(oldTargetList[i], ".")
+			newTargetList[i] = strings.TrimRight(newTargetList[i], ".")
 		}
-		if len(baseComponents) == 2 {
-			baseVal = baseComponents[1]
-		}
-		baseVal = strings.TrimRight(baseVal, ".")
-		for _, compval := range compList {
-			compComponents := strings.Split(compval, " ")
-			if len(compComponents) > 2 || len(compComponents) < 1 {
-				logger.Warnf("updated compval: %v invalid", compval)
-				return false
-			}
-			if len(compComponents) == 2 {
-				compval = compComponents[1]
-			}
-			compval = strings.TrimRight(compval, ".")
-			logger.Debugf("updated baseVal: %v", baseVal)
-			logger.Debugf("compval: %v", compval)
-			if baseVal == compval {
-				return true
-			}
-		}
-		return false
+		oldTargetString := strings.Join(oldTargetList, " ")
+		newTargetString := strings.Join(newTargetList, " ")
+		return oldTargetString == newTargetString
 	}
 
 	if recordType == RRTypeAfsdb || recordType == RRTypeCname || recordType == RRTypePtr || recordType == RRTypeSrv || recordType == RRTypeNs {
@@ -956,10 +945,10 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	if len(rdata) == 0 {
 		return resourceDNSRecordRead(ctx, d, meta)
 	}
-	sort.Strings(rdata)
 	extractString = strings.Join(rdata, " ")
 	sha1hashtest := tools.GetSHAString(extractString)
 	logger.Debugf("UPDATE SHA sum from recordread [%s]", sha1hashtest)
+	sort.Strings(rdata)
 	// If there's no existing record we'll create a blank one
 	if e != nil {
 		// if the record is not found/404 we will create a new
@@ -1044,9 +1033,9 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		"recordtype": recordType,
 	}).Debugf("READ record JSON from bind records: %s ", string(b))
 
-	sort.Strings(recordCreate.Target)
 	extractString := strings.Join(recordCreate.Target, " ")
 	sha1hash := tools.GetSHAString(extractString)
+	sort.Strings(recordCreate.Target)
 	logger.Debugf("READ SHA sum for Existing SHA test %s %s", extractString, sha1hash)
 
 	// try to get the zone from the API
@@ -1091,9 +1080,9 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	switch recordType {
 	case RRTypeMx:
 		// calc rdata sha from read record
-		sort.Strings(record.Target)
 		rdataString := strings.Join(record.Target, " ")
 		recordSHA, err := tools.GetStringValue("record_sha", d)
+		sort.Strings(recordCreate.Target)
 		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
@@ -1285,7 +1274,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		d.SetId("")
 		return []*schema.ResourceData{d}, nil
 	}
-	if recordType != "MX" {
+	if recordType != RRTypeMx {
 		// MX Target Order important
 		sort.Strings(targets)
 	}
@@ -1342,7 +1331,9 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 		}
 		records = append(records, recContentStr)
 	}
-	sort.Strings(records)
+	if recordType != RRTypeMx {
+		sort.Strings(records)
+	}
 	logger.Debugf("Delete zone Record. Zone: %s, Host: %s, Recordtype:  %s", zone, host, recordType)
 	recordcreate := dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
@@ -1548,22 +1539,27 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		}
 		logger.Debugf("Existing MX records to append to target %v", rdata)
 
+		// keep track of rdata order
+		rdataTarget := make([]string, 0, len(target)+len(rdata))
 		//create map from rdata
 		rdataTargetMap := make(map[string]int, len(rdata))
 		for _, r := range rdata {
 			entryparts := strings.Split(r, " ")
-			if len(entryparts) < 1 {
+			if len(entryparts) < 2 {
 				return dns.RecordBody{}, fmt.Errorf("RData shcould consist of at least 2 parts separated with ' '")
 			}
 			rn := entryparts[1]
 			if !strings.HasSuffix(rn, ".") {
 				rn += "."
 			}
+			// keep track of order for merge later
+			rdataTarget = append(rdataTarget, rn)
 			rdataTargetMap[rn], err = strconv.Atoi(entryparts[0])
 			if err != nil {
 				logger.Warnf("First part of RData string should be represented as integer: %s", entryparts[0])
 			}
 		}
+		logger.Debugf("Created rdataTarget %v", rdataTarget)
 		if d.HasChange("target") {
 			// see if any entry was deleted. If so, remove from rdata map.
 			oldList, newList := d.GetChange("target")
@@ -1575,6 +1571,8 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 			if !ok {
 				return dns.RecordBody{}, fmt.Errorf("'newList' is of invalid type; should be '[]interface{}'")
 			}
+			logger.Debugf("oldTargetList: %v", oldTargetList)
+			logger.Debugf("newTargetList: %v", newTargetList)
 			for _, oldTarg := range oldTargetList {
 				oldTargStr, ok := oldTarg.(string)
 				if !ok {
@@ -1599,6 +1597,15 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 					delTarg = rdtParts[1]
 				}
 				delete(rdataTargetMap, delTarg)
+				logger.Debugf("Removing %v from rdataTarget %v", delTarg, rdataTarget)
+				for i, item := range rdataTarget {
+					if len(rdataTarget) > 0 && item == delTarg {
+						copy(rdataTarget[i:], rdataTarget[i+1:])
+						rdataTarget[len(rdataTarget)-1] = ""
+						rdataTarget = rdataTarget[:len(rdataTarget)-1]
+						logger.Debugf("Remove: UPDATED rdataTarget %v", rdataTarget)
+					}
+				}
 			}
 		}
 		records := make([]string, 0, len(target)+len(rdata))
@@ -1613,6 +1620,7 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		}
 		logger.Debugf("MX BIND Priority: %d ; Increment: %d", priority, increment)
 		// walk thru target first
+		var r int
 		for _, recContent := range target {
 			targEntry, ok := recContent.(string)
 			if !ok {
@@ -1637,13 +1645,41 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 			} else {
 				targPri = priority
 			}
-			if pri, ok := rdataTargetMap[targHost]; ok {
+			pri, ok := rdataTargetMap[targHost]
+			if ok {
 				logger.Debugf("MX BIND. %s in existing map", targEntry)
 				// target already in rdata
 				if pri != targPri {
 					return dns.RecordBody{}, fmt.Errorf("MX Record Priority Mismatch. Target order must align with EdgeDNS")
 				}
-				delete(rdataTargetMap, targHost)
+			}
+			// either match or we have inserted hosts in TF target
+			if (r < len(rdataTarget) && rdataTarget[r] == targHost) || r >= len(rdataTarget) || !ok {
+				if len(targParts) == 1 {
+					records = append(records, strconv.Itoa(priority)+" "+targEntry)
+				} else {
+					records = append(records, targEntry)
+				}
+				if increment > 0 {
+					priority += increment
+				}
+				if r < len(rdataTarget) && rdataTarget[r] == targHost {
+					r++
+					delete(rdataTargetMap, targHost)
+				}
+				continue
+			}
+			// mismatch. host in EdgeDns. Not at current target position
+			logger.Debugf("Insert new target to records")
+			// append what ever is left ...
+			for {
+				if (r >= len(rdataTarget)) || (rdataTarget[r] == targHost) {
+					break
+				}
+				ntpri, _ := rdataTargetMap[rdataTarget[r]]
+				records = append(records, strconv.Itoa(ntpri)+" "+rdataTarget[r])
+				delete(rdataTargetMap, rdataTarget[r])
+				r++
 			}
 			if len(targParts) == 1 {
 				records = append(records, strconv.Itoa(priority)+" "+targEntry)
@@ -1653,15 +1689,22 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 			if increment > 0 {
 				priority += increment
 			}
+			r++
+			delete(rdataTargetMap, targHost)
 		}
 		logger.Debugf("Appended new target to target array LEN %d %v", len(records), records)
 		// append what ever is left ...
-		for targName, tPri := range rdataTargetMap {
-			records = append(records, strconv.Itoa(tPri)+" "+targName)
+		for {
+			if r >= len(rdataTarget) {
+				break
+			}
+			ntpri, _ := rdataTargetMap[rdataTarget[r]]
+			logger.Debugf("Appending target %v pri %v", rdataTarget[r], ntpri)
+			records = append(records, strconv.Itoa(ntpri)+" "+rdataTarget[r])
+			r++
 		}
 		logger.Debugf("Existing MX records to append to target before schema data LEN %d %v", len(rdata), records)
 
-		sort.Strings(records)
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeNaptr:
