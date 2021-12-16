@@ -59,8 +59,8 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The type of match used",
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"header", "hostname", "path", "extension", "query",
-											"cookie", "deviceCharacteristics", "clientip", "continent", "countrycode", "regioncode", "protocol", "method", "proxy", "range"}, false)),
+										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"header", "hostname", "path", "extension", "query",
+											"cookie", "deviceCharacteristics", "clientip", "continent", "countrycode", "regioncode", "protocol", "method", "proxy", "range"}),
 									},
 									"match_value": {
 										Type:             schema.TypeString,
@@ -72,7 +72,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 										Type:             schema.TypeString,
 										Optional:         true,
 										Description:      "Valid entries for this property: contains, exists, and equals",
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"contains", "exists", "equals", ""}, false)),
+										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"contains", "exists", "equals", ""}),
 									},
 									"case_sensitive": {
 										Type:        schema.TypeBool,
@@ -88,7 +88,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 										Type:             schema.TypeString,
 										Optional:         true,
 										Description:      "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"CONNECTING_IP", "XFF_HEADERS", "CONNECTING_IP XFF_HEADERS", ""}, false)),
+										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"CONNECTING_IP", "XFF_HEADERS", "CONNECTING_IP XFF_HEADERS", ""}),
 									},
 									"object_match_value": {
 										Type:        schema.TypeSet,
@@ -108,7 +108,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 													Required: true,
 													Description: "The array type, which can be one of the following: object, range, or simple. " +
 														"Use the simple option when adding only an array of string-based values",
-													ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"simple", "object", "range"}, false)),
+													ValidateDiagFunc: tools.ValidateStringInSlice([]string{"simple", "object", "range"}),
 												},
 												"name_case_sensitive": {
 													Type:        schema.TypeBool,

@@ -76,12 +76,12 @@ func TestIncorrectDataCloudletsVisitorPrioritizationMatchRule(t *testing.T) {
 		},
 		"match criteria VP - invalid type value for ObjectMatchValue": {
 			configPath:     fmt.Sprintf("%s/omv_invalid_type.tf", workdir),
-			withError:      `expected type to be one of \[simple object\], got range`,
+			withError:      `expected type to be one of \['simple', 'object'\], got range`,
 			matchRulesSize: 1,
 		},
 		"match criteria VP - invalid matches_operator value": {
 			configPath:     fmt.Sprintf("%s/matches_invalid_operator.tf", workdir),
-			withError:      `expected match_operator to be one of \[contains exists equals \], got invalid`,
+			withError:      `expected match_operator to be one of \['contains', 'exists', 'equals', ''\], got invalid`,
 			matchRulesSize: 1,
 		},
 		"match criteria VP - invalid pass_through_percent value": {

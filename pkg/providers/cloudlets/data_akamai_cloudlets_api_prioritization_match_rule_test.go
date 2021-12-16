@@ -76,16 +76,16 @@ func TestIncorrectDataCloudletsAPIPrioritizationMatchRule(t *testing.T) {
 		},
 		"match criteria AP - invalid type value for ObjectMatchValue": {
 			configPath:     fmt.Sprintf("%s/omv_invalid_type.tf", workdir),
-			withError:      `expected type to be one of \[simple object\], got range`,
+			withError:      `expected type to be one of \['simple', 'object'\], got range`,
 			matchRulesSize: 1,
 		},
 		"match criteria AP - invalid match_operator value": {
 			configPath: fmt.Sprintf("%s/matches_invalid_operator.tf", workdir),
-			withError:  `expected match_operator to be one of \[contains exists equals \], got invalid`,
+			withError:  `expected match_operator to be one of \['contains', 'exists', 'equals', ''\], got invalid`,
 		},
 		"match criteria AP - invalid check_ips value": {
 			configPath: fmt.Sprintf("%s/matches_invalid_checkips.tf", workdir),
-			withError:  `expected check_ips to be one of \[CONNECTING_IP XFF_HEADERS CONNECTING_IP XFF_HEADERS \], got invalid`,
+			withError:  `expected check_ips to be one of \['CONNECTING_IP', 'XFF_HEADERS', 'CONNECTING_IP XFF_HEADERS', ''\], got invalid`,
 		},
 		"match criteria AP - invalid pass_through_percent value": {
 			configPath:     fmt.Sprintf("%s/invalid_pass_through_percent.tf", workdir),

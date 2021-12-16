@@ -69,15 +69,15 @@ func TestIncorrectDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 		},
 		"match criteria ER - invalid type value for ObjectMatchValue": {
 			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/omv_invalid_type.tf",
-			withError:  `expected type to be one of \[simple object\], got invalid_type`,
+			withError:  `expected type to be one of \['simple', 'object'\], got invalid_type`,
 		},
 		"match criteria ER - invalid match_operator value": {
 			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/matches_invalid_operator.tf",
-			withError:  `expected match_operator to be one of \[contains exists equals \], got invalid`,
+			withError:  `expected match_operator to be one of \['contains', 'exists', 'equals', ''\], got invalid`,
 		},
 		"match criteria ER - invalid check_ips value": {
 			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/matches_invalid_checkips.tf",
-			withError:  `expected check_ips to be one of \[CONNECTING_IP XFF_HEADERS CONNECTING_IP XFF_HEADERS \], got invalid`,
+			withError:  `expected check_ips to be one of \['CONNECTING_IP', 'XFF_HEADERS', 'CONNECTING_IP XFF_HEADERS', ''\], got invalid`,
 		},
 		"match criteria ER - invalid status_code": {
 			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/invalid_status_code.tf",
