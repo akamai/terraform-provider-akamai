@@ -38,7 +38,7 @@ This first example shows two variables passed in data source definition:
 
 ```hcl
 data "akamai_property_rules_template" "akarules" {
-  template_file = abspath("${path.root}/rules/main.json")
+  template_file = abspath("${path.root}/property-snippets/main.json")
   variables {
     name = "enabled"
     value = "true"
