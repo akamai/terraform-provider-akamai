@@ -128,7 +128,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	lookupActivationreq.ActivationID = postResp.ActivationID
 
 	logger.Debugf("calling 'createActivations': SET ID %d", postResp.ActivationID)
-	activation, err := lookupActivation(ctx, client, lookupActivationreq)
+	activation, _ := lookupActivation(ctx, client, lookupActivationreq)
 	logger.Debugf("calling 'createActivations': GET STATUS ID %v", activation)
 
 	for activation.ActivationStatus != "ACTIVATED" {

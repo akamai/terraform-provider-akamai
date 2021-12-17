@@ -29,7 +29,7 @@ func resourceNetworkList() *schema.Resource {
 			VerifyContractGroupUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 
@@ -180,7 +180,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 			oneShot = true
 		}
 
-		if oneShot == false {
+		if !oneShot {
 			finallist = nru
 		}
 
@@ -303,7 +303,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		for _, hl := range netlist.List() {
 
 			for idx, h := range networkLists.List {
-				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+				if strings.EqualFold(h, hl.(string)) {
 					networkLists.List = RemoveIndex(networkLists.List, idx)
 				}
 			}
@@ -401,7 +401,7 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		for _, hl := range netlist.List() {
 			for _, h := range networklist.List {
 
-				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+				if strings.EqualFold(h, hl.(string)) {
 					finalldata = append(finalldata, strings.ToLower(h))
 				}
 			}
@@ -417,7 +417,7 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		for _, h := range networklist.List {
 
 			for _, hl := range netlist.List() {
-				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+				if strings.EqualFold(h, hl.(string)) {
 					finalldata = append(finalldata, strings.ToLower(h))
 				}
 			}

@@ -21,7 +21,7 @@ func resourceNetworkListDescription() *schema.Resource {
 		UpdateContext: resourceNetworkListDescriptionUpdate,
 		DeleteContext: resourceNetworkListDescriptionDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"network_list_id": {
@@ -60,9 +60,9 @@ func resourceNetworkListDescriptionRead(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceNetworkListDescriptionDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNetworkListDescriptionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	return schema.NoopContext(nil, d, m)
+	return schema.NoopContext(ctx, d, m)
 }
 
 func resourceNetworkListDescriptionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
