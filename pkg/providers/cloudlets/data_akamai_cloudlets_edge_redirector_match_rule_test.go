@@ -83,6 +83,14 @@ func TestIncorrectDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/invalid_status_code.tf",
 			withError:  `expected status_code to be one of \[301 302 303 307 308\], got 111`,
 		},
+		"match criteria ER - match_value and object_match_value together": {
+			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/match_value_and_omv_together.tf",
+			withError:  `(?s)must be blank when ObjectMatchValue is set.*must be blank when MatchValue is set`,
+		},
+		"match criteria ER - no match_value and object_match_value": {
+			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/no_match_value_and_omv.tf",
+			withError:  `(?s)cannot be blank when ObjectMatchValue is blank.*cannot be blank when MatchValue is blank`,
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {

@@ -14,10 +14,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     matches {
       match_type     = "hostname"
       match_operator = "equals"
-      object_match_value {
-        type  = "invalid_type"
-        value = ["abc"]
-      }
     }
   }
 }

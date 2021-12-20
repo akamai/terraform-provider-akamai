@@ -7,7 +7,6 @@
     "matches": [
       {
         "matchType": "clientip",
-        "matchValue": "127.0.0.1",
         "caseSensitive": false,
         "negate": false,
         "objectMatchValue": {

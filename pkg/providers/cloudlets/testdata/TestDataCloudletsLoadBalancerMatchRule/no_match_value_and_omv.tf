@@ -10,14 +10,11 @@ data "akamai_cloudlets_application_load_balancer_match_rule" "test" {
     match_url = "example.com"
     matches {
       match_type     = "clientip"
-      match_operator = "invalid"
-      object_match_value {
-        type  = "simple"
-        value = ["fghi"]
-      }
+      match_operator = "equals"
     }
     forward_settings {
       origin_id = "33"
     }
+    disabled = false
   }
 }

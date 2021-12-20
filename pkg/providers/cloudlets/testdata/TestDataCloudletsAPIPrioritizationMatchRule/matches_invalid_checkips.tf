@@ -7,7 +7,6 @@ data "akamai_cloudlets_api_prioritization_match_rule" "test" {
     pass_through_percent = 0
     matches {
       match_type     = "clientip"
-      match_value    = "127.0.0.1"
       match_operator = "equals"
       check_ips      = "invalid"
       object_match_value {

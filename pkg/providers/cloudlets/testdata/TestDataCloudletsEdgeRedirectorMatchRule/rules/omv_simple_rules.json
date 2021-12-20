@@ -7,7 +7,6 @@
     "matches": [
       {
         "matchType": "hostname",
-        "matchValue": "example.ex",
         "matchOperator": "equals",
         "caseSensitive": false,
         "negate": false,

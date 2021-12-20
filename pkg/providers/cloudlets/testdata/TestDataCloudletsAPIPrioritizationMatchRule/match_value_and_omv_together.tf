@@ -12,17 +12,10 @@ data "akamai_cloudlets_api_prioritization_match_rule" "test" {
     matches {
       match_type     = "hostname"
       match_operator = "equals"
+      match_value    = "example.ex"
       object_match_value {
-        type                = "object"
-        name                = "abcde"
-        name_case_sensitive = true
-        name_has_wildcard   = false
-        options {
-          value                = ["test"]
-          value_has_wildcard   = true
-          value_case_sensitive = true
-          value_escaped        = true
-        }
+        type  = "simple"
+        value = ["abc"]
       }
     }
   }

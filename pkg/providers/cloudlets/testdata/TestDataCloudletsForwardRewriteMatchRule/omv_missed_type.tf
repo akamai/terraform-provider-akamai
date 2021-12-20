@@ -11,7 +11,6 @@ data "akamai_cloudlets_forward_rewrite_match_rule" "test" {
     matches {
       case_sensitive = true
       match_type     = "cookie"
-      match_value    = "cookie=cookievalue"
       object_match_value {
         name                = "abcde"
         name_case_sensitive = true

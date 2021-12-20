@@ -89,6 +89,16 @@ func TestIncorrectDataCloudletsVisitorPrioritizationMatchRule(t *testing.T) {
 			withError:      `expected pass_through_percent to be in the range \(-1.000000 - 100.000000\), got -2.000000`,
 			matchRulesSize: 1,
 		},
+		"match criteria VP - match_value and object_match_value together": {
+			configPath:     fmt.Sprintf("%s/match_value_and_omv_together.tf", workdir),
+			withError:      `(?s)must be blank when ObjectMatchValue is set.*must be blank when MatchValue is set`,
+			matchRulesSize: 1,
+		},
+		"match criteria VP - no match_value and object_match_value": {
+			configPath:     fmt.Sprintf("%s/no_match_value_and_omv.tf", workdir),
+			withError:      `(?s)cannot be blank when ObjectMatchValue is blank.*cannot be blank when MatchValue is blank`,
+			matchRulesSize: 1,
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {

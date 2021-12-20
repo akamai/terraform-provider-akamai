@@ -7,7 +7,6 @@ data "akamai_cloudlets_phased_release_match_rule" "test" {
     name = "rule1"
     matches {
       match_type     = "clientip"
-      match_value    = "127.0.0.1"
       match_operator = "invalid"
       object_match_value {
         type  = "simple"

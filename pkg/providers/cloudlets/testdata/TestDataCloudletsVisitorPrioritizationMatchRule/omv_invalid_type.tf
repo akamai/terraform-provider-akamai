@@ -11,7 +11,6 @@ data "akamai_cloudlets_visitor_prioritization_match_rule" "test" {
     pass_through_percent = 50.5
     matches {
       match_type     = "hostname"
-      match_value    = "example.ex"
       match_operator = "equals"
       object_match_value {
         type  = "range"

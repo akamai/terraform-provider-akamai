@@ -7,7 +7,6 @@
     "matches": [
       {
         "matchType": "hostname",
-        "matchValue": "example.ex",
         "matchOperator": "equals",
         "caseSensitive": false,
         "negate": false,
@@ -20,7 +19,6 @@
       },
       {
         "matchType": "cookie",
-        "matchValue": "cookie=cookievalue",
         "matchOperator": "equals",
         "caseSensitive": true,
         "negate": false,
