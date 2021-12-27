@@ -240,8 +240,8 @@ func getMatchRulesAP(matchRules []interface{}) (cloudlets.MatchRules, error) {
 		matchRule := cloudlets.MatchRuleAP{
 			Name:               getStringValue(matchRuleMap, "name"),
 			Type:               cloudlets.MatchRuleTypeAP,
-			Start:              getIntValue(matchRuleMap, "start"),
-			End:                getIntValue(matchRuleMap, "end"),
+			Start:              getInt64Value(matchRuleMap, "start"),
+			End:                getInt64Value(matchRuleMap, "end"),
 			Matches:            matches,
 			MatchURL:           getStringValue(matchRuleMap, "match_url"),
 			PassThroughPercent: getFloat64PtrValue(matchRuleMap, "pass_through_percent"),

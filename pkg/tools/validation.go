@@ -89,7 +89,7 @@ func ValidateStringInSlice(valid []string) schema.SchemaValidateDiagFunc {
 		if !ok {
 			return diag.Errorf("expected type of %s to be string", name)
 		}
-		
+
 		for _, s := range valid {
 			if v == s {
 				return nil

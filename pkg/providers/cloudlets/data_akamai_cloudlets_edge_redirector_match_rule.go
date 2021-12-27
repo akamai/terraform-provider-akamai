@@ -287,8 +287,8 @@ func getMatchRulesER(matchRules []interface{}) (cloudlets.MatchRules, error) {
 		matchRule := cloudlets.MatchRuleER{
 			Name:                     getStringValue(matchRuleMap, "name"),
 			Type:                     cloudlets.MatchRuleTypeER,
-			Start:                    getIntValue(matchRuleMap, "start"),
-			End:                      getIntValue(matchRuleMap, "end"),
+			Start:                    getInt64Value(matchRuleMap, "start"),
+			End:                      getInt64Value(matchRuleMap, "end"),
 			Matches:                  matches,
 			UseRelativeURL:           getStringValue(matchRuleMap, "use_relative_url"),
 			StatusCode:               getIntValue(matchRuleMap, "status_code"),

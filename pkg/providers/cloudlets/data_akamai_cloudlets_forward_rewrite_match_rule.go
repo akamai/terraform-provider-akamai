@@ -266,8 +266,8 @@ func getMatchRulesFR(matchRules []interface{}) (cloudlets.MatchRules, error) {
 			Name:     getStringValue(matchRuleMap, "name"),
 			Type:     cloudlets.MatchRuleTypeFR,
 			MatchURL: getStringValue(matchRuleMap, "match_url"),
-			Start:    getIntValue(matchRuleMap, "start"),
-			End:      getIntValue(matchRuleMap, "end"),
+			Start:    getInt64Value(matchRuleMap, "start"),
+			End:      getInt64Value(matchRuleMap, "end"),
 			Matches:  matches,
 			Disabled: getBoolValue(matchRuleMap, "disabled"),
 		}

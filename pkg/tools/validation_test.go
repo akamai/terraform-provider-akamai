@@ -143,19 +143,19 @@ func TestValidateStringInSlice(t *testing.T) {
 	validator := ValidateStringInSlice(valid)
 
 	tests := map[string]struct {
-		input         interface{}
+		input        interface{}
 		expectedDiag diag.Diagnostics
 	}{
 		"string found": {
-			input: "valid3",
+			input:        "valid3",
 			expectedDiag: nil,
 		},
 		"string not found": {
-			input: "test",
+			input:        "test",
 			expectedDiag: diag.Errorf("expected testAttr to be one of ['%s'], got test", strings.Join(valid, "', '")),
 		},
 		"error - provided value is not string": {
-			input: 1,
+			input:        1,
 			expectedDiag: diag.Errorf("expected type of testAttr to be string"),
 		},
 	}
