@@ -53,11 +53,11 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 
 	getContractsGroups := v2.GetContractsGroupsRequest{}
 
-	contract, err := tools.GetStringValue("contractid", d)
+	contractID, err := tools.GetStringValue("contractid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getContractsGroups.ContractID = contract
+	getContractsGroups.ContractID = contractID
 
 	group, err := tools.GetIntValue("groupid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -90,8 +90,8 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 
 	for _, configval := range contractsgroups.ContractGroups {
 
-		if configval.ContractID == contract && configval.GroupID == group {
-			if err := d.Set("default_contractid", contract); err != nil {
+		if configval.ContractID == contractID && configval.GroupID == group {
+			if err := d.Set("default_contractid", contractID); err != nil {
 				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
 			if err := d.Set("default_groupid", group); err != nil {

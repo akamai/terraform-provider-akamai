@@ -20,16 +20,19 @@ func dataSourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 		ReadContext: dataSourceAdvancedSettingsEvasivePathMatchRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "config ID",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "security policy ID",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
@@ -47,13 +50,13 @@ func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *sche
 
 	getAdvancedSettingsEvasivePathMatch := appsec.GetAdvancedSettingsEvasivePathMatchRequest{}
 
-	configid, err := tools.GetIntValue("config_id", d)
+	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getAdvancedSettingsEvasivePathMatch.ConfigID = configid
+	getAdvancedSettingsEvasivePathMatch.ConfigID = configID
 
-	getAdvancedSettingsEvasivePathMatch.Version = getLatestConfigVersion(ctx, configid, m)
+	getAdvancedSettingsEvasivePathMatch.Version = getLatestConfigVersion(ctx, configID, m)
 
 	policyid, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
