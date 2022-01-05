@@ -189,3 +189,59 @@ func (m *mockedgeworkers) GetResourceTier(ctx context.Context, req edgeworkers.G
 	}
 	return args.Get(0).(*edgeworkers.ResourceTier), args.Error(1)
 }
+
+func (m *mockedgeworkers) ValidateBundle(ctx context.Context, req edgeworkers.ValidateBundleRequest) (*edgeworkers.ValidateBundleResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.ValidateBundleResponse), args.Error(1)
+}
+
+func (m *mockedgeworkers) ListContracts(ctx context.Context) (*edgeworkers.ListContractsResponse, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.ListContractsResponse), args.Error(1)
+}
+
+func (m *mockedgeworkers) CreateEdgeKVAccessToken(ctx context.Context, request edgeworkers.CreateEdgeKVAccessTokenRequest) (*edgeworkers.CreateEdgeKVAccessTokenResponse, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.CreateEdgeKVAccessTokenResponse), args.Error(1)
+}
+
+func (m *mockedgeworkers) GetEdgeKVAccessToken(ctx context.Context, request edgeworkers.GetEdgeKVAccessTokenRequest) (*edgeworkers.GetEdgeKVAccessTokenResponse, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.GetEdgeKVAccessTokenResponse), args.Error(1)
+}
+
+func (m *mockedgeworkers) ListEdgeKVAccessTokens(ctx context.Context, request edgeworkers.ListEdgeKVAccessTokensRequest) (*edgeworkers.ListEdgeKVAccessTokensResponse, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.ListEdgeKVAccessTokensResponse), args.Error(1)
+}
+
+func (m *mockedgeworkers) DeleteEdgeKVAccessToken(ctx context.Context, request edgeworkers.DeleteEdgeKVAccessTokenRequest) (*edgeworkers.DeleteEdgeKVAccessTokenResponse, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.DeleteEdgeKVAccessTokenResponse), args.Error(1)
+}
+
+func (m *mockedgeworkers) CreateSecureToken(ctx context.Context, request edgeworkers.CreateSecureTokenRequest) (*edgeworkers.CreateSecureTokenResponse, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.CreateSecureTokenResponse), args.Error(1)
+}
