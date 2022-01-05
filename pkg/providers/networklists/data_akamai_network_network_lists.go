@@ -30,11 +30,11 @@ func dataSourceNetworkList() *schema.Resource {
 					Geo,
 				}, false)),
 			},
-			"uniqueid": {
+			"network_list_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				Description: "uniqueId",
+				Description: "network list ID",
 			},
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -77,14 +77,14 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	uniqueID, err := tools.GetStringValue("uniqueid", d)
+	network_list_id, err := tools.GetStringValue("network_list_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	if uniqueID != "" {
+	if network_list_id != "" {
 		networkList, err := client.GetNetworkList(ctx, network.GetNetworkListRequest{
-			UniqueID: uniqueID,
+			UniqueID: network_list_id,
 		})
 		if err != nil {
 			logger.Errorf("calling 'GetNetworkList': %s", err.Error())
@@ -92,7 +92,7 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		}
 		d.SetId(networkList.UniqueID)
 
-		if err := d.Set("uniqueid", networkList.UniqueID); err != nil {
+		if err := d.Set("network_list_id", networkList.UniqueID); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 		if err := d.Set("group_id", networkList.GroupID); err != nil {

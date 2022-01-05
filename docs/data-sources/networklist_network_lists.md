@@ -65,13 +65,14 @@ output "network_lists_filter_list" {
 * `type` - (Optional) The type of network lists to be retrieved; must be either "IP" or "GEO". If not supplied,
   information about both types will be returned.
 
+* `network_list_id` - (Optional) The ID of a specific network list to retrieve. If not supplied, information about all network
+  lists will be returned.
+
 The following arguments are supported:
 
 ## Attributes Reference
 
 In addition to the arguments above, the following attributes are exported:
-
-* `uniqueid` - The ID of the indicated list (if the `name` argument was supplied).
 
 * `json` - A JSON-formatted list of information about the specified network list(s).
 
