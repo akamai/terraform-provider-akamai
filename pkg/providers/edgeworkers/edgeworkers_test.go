@@ -11,6 +11,38 @@ type mockedgeworkers struct {
 	mock.Mock
 }
 
+func (m *mockedgeworkers) ListItems(ctx context.Context, req edgeworkers.ListItemsRequest) (*edgeworkers.ListItemsResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.ListItemsResponse), args.Error(1)
+}
+
+func (m *mockedgeworkers) GetItem(ctx context.Context, req edgeworkers.GetItemRequest) (*edgeworkers.Item, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.Item), args.Error(1)
+}
+
+func (m *mockedgeworkers) UpsertItem(ctx context.Context, req edgeworkers.UpsertItemRequest) (*string, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*string), args.Error(1)
+}
+
+func (m *mockedgeworkers) DeleteItem(ctx context.Context, req edgeworkers.DeleteItemRequest) (*string, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*string), args.Error(1)
+}
+
 func (m *mockedgeworkers) ListActivations(ctx context.Context, req edgeworkers.ListActivationsRequest) (*edgeworkers.ListActivationsResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -206,40 +238,40 @@ func (m *mockedgeworkers) ListContracts(ctx context.Context) (*edgeworkers.ListC
 	return args.Get(0).(*edgeworkers.ListContractsResponse), args.Error(1)
 }
 
-func (m *mockedgeworkers) CreateEdgeKVAccessToken(ctx context.Context, request edgeworkers.CreateEdgeKVAccessTokenRequest) (*edgeworkers.CreateEdgeKVAccessTokenResponse, error) {
-	args := m.Called(ctx)
+func (m *mockedgeworkers) CreateEdgeKVAccessToken(ctx context.Context, req edgeworkers.CreateEdgeKVAccessTokenRequest) (*edgeworkers.CreateEdgeKVAccessTokenResponse, error) {
+	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*edgeworkers.CreateEdgeKVAccessTokenResponse), args.Error(1)
 }
 
-func (m *mockedgeworkers) GetEdgeKVAccessToken(ctx context.Context, request edgeworkers.GetEdgeKVAccessTokenRequest) (*edgeworkers.GetEdgeKVAccessTokenResponse, error) {
-	args := m.Called(ctx)
+func (m *mockedgeworkers) GetEdgeKVAccessToken(ctx context.Context, req edgeworkers.GetEdgeKVAccessTokenRequest) (*edgeworkers.GetEdgeKVAccessTokenResponse, error) {
+	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*edgeworkers.GetEdgeKVAccessTokenResponse), args.Error(1)
 }
 
-func (m *mockedgeworkers) ListEdgeKVAccessTokens(ctx context.Context, request edgeworkers.ListEdgeKVAccessTokensRequest) (*edgeworkers.ListEdgeKVAccessTokensResponse, error) {
-	args := m.Called(ctx)
+func (m *mockedgeworkers) ListEdgeKVAccessTokens(ctx context.Context, req edgeworkers.ListEdgeKVAccessTokensRequest) (*edgeworkers.ListEdgeKVAccessTokensResponse, error) {
+	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*edgeworkers.ListEdgeKVAccessTokensResponse), args.Error(1)
 }
 
-func (m *mockedgeworkers) DeleteEdgeKVAccessToken(ctx context.Context, request edgeworkers.DeleteEdgeKVAccessTokenRequest) (*edgeworkers.DeleteEdgeKVAccessTokenResponse, error) {
-	args := m.Called(ctx)
+func (m *mockedgeworkers) DeleteEdgeKVAccessToken(ctx context.Context, req edgeworkers.DeleteEdgeKVAccessTokenRequest) (*edgeworkers.DeleteEdgeKVAccessTokenResponse, error) {
+	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*edgeworkers.DeleteEdgeKVAccessTokenResponse), args.Error(1)
 }
 
-func (m *mockedgeworkers) CreateSecureToken(ctx context.Context, request edgeworkers.CreateSecureTokenRequest) (*edgeworkers.CreateSecureTokenResponse, error) {
-	args := m.Called(ctx)
+func (m *mockedgeworkers) CreateSecureToken(ctx context.Context, req edgeworkers.CreateSecureTokenRequest) (*edgeworkers.CreateSecureTokenResponse, error) {
+	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

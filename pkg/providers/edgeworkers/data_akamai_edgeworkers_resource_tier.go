@@ -3,6 +3,7 @@ package edgeworkers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgeworkers"
 
@@ -18,9 +19,10 @@ func dataSourceEdgeworkersResourceTier() *schema.Resource {
 		ReadContext: dataEdgeworkersResourceTierRead,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Unique identifier of a contract",
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "Unique identifier of a contract",
+				DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
 			},
 			"resource_tier_name": {
 				Type:        schema.TypeString,
@@ -51,7 +53,7 @@ func dataEdgeworkersResourceTierRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	resp, err := client.ListResourceTiers(ctx, edgeworkers.ListResourceTiersRequest{ContractID: contractID})
+	resp, err := client.ListResourceTiers(ctx, edgeworkers.ListResourceTiersRequest{ContractID: strings.TrimPrefix(contractID, "ctr_")})
 	if err != nil {
 		return diag.FromErr(err)
 	}

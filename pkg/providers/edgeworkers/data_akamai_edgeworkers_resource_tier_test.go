@@ -39,6 +39,67 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 				},
 			},
 		},
+		"ctr contract prefix": {
+			init: func(m *mockedgeworkers) {
+				m.On("ListResourceTiers", mock.Anything, edgeworkers.ListResourceTiersRequest{
+					ContractID: "1-599K",
+				}).Return(&edgeworkers.ListResourceTiersResponse{
+					ResourceTiers: []edgeworkers.ResourceTier{
+						{
+							ID:   100,
+							Name: "Basic Compute",
+						},
+						{
+							ID:   200,
+							Name: "Dynamic Compute",
+						},
+					},
+				}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestDataEdgeworkersResourceTier/ctr_prefix.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "resource_tier_id", "100"),
+						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "contract_id", "ctr_1-599K"),
+					),
+				},
+			},
+		},
+		"ctr contract prefix update": {
+			init: func(m *mockedgeworkers) {
+				m.On("ListResourceTiers", mock.Anything, edgeworkers.ListResourceTiersRequest{
+					ContractID: "1-599K",
+				}).Return(&edgeworkers.ListResourceTiersResponse{
+					ResourceTiers: []edgeworkers.ResourceTier{
+						{
+							ID:   100,
+							Name: "Basic Compute",
+						},
+						{
+							ID:   200,
+							Name: "Dynamic Compute",
+						},
+					},
+				}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestDataEdgeworkersResourceTier/basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "resource_tier_id", "100"),
+						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "contract_id", "1-599K"),
+					),
+				},
+				{
+					Config: loadFixtureString("./testdata/TestDataEdgeworkersResourceTier/ctr_prefix.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "resource_tier_id", "100"),
+						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "contract_id", "ctr_1-599K"),
+					),
+				},
+			},
+		},
 		"contract id not exist": {
 			init: func(m *mockedgeworkers) {
 				m.On("ListResourceTiers", mock.Anything, edgeworkers.ListResourceTiersRequest{
