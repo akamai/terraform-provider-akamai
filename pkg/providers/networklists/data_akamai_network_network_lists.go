@@ -34,7 +34,7 @@ func dataSourceNetworkList() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				Description: "network list ID",
+				Description: "The ID of a specific network list to retrieve. If not supplied, information about all network lists will be returned.",
 			},
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -77,14 +77,14 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	network_list_id, err := tools.GetStringValue("network_list_id", d)
+	networkListID, err := tools.GetStringValue("network_list_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	if network_list_id != "" {
+	if networkListID != "" {
 		networkList, err := client.GetNetworkList(ctx, network.GetNetworkListRequest{
-			UniqueID: network_list_id,
+			UniqueID: networkListID,
 		})
 		if err != nil {
 			logger.Errorf("calling 'GetNetworkList': %s", err.Error())
