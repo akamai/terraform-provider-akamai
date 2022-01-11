@@ -1,5 +1,16 @@
 # RELEASE NOTES
 
+
+## 2.0.0 (Jan 11, 2022)
+
+#### FEATURES/ENHANCEMENTS
+
+* APPSEC
+  * Remove WAP-only datasource and resources
+  * Add support for Evasive Path Match feature 
+* NETWORK LISTS
+  * Include contract_id & group_id in akamai_networklist_network_lists datasource
+
 ## 1.9.1 (Dec 16, 2021)
 
 #### BUG FIXES:
