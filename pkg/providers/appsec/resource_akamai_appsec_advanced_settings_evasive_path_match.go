@@ -32,16 +32,19 @@ func resourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Security configuration ID",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Security policy ID",
 			},
 			"enable_path_match": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable the evasive path match setting",
 			},
 		},
 	}

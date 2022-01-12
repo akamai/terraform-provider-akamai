@@ -27,7 +27,7 @@ func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, e
 	if f, ok := ots[key]; ok && f != nil {
 		return f, nil
 	}
-	return nil, fmt.Errorf("error not found")
+	return nil, fmt.Errorf("error: template '%s' not found", key)
 
 }
 

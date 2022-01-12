@@ -45,14 +45,14 @@ func TestAccAkamaiNetworkList_data_by_uniqueID(t *testing.T) {
 	t.Run("match by uniqueID", func(t *testing.T) {
 		client := &mocknetworklists{}
 
-		cv := network.GetNetworkListResponse{}
+		networkListResponse := network.GetNetworkListResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSNetworkList/SingleNetworkList.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(expectJS), &networkListResponse)
 
 		client.On("GetNetworkList",
 			mock.Anything, // ctx is irrelevant for this test
 			network.GetNetworkListRequest{UniqueID: "86093_AGEOLIST"},
-		).Return(&cv, nil)
+		).Return(&networkListResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

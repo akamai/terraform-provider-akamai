@@ -32,7 +32,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 
 		client.On("CreateActivations",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.CreateActivationsRequest{Action: "ACTIVATE", Network: "STAGING", Note: "", NotificationEmails: []string{"martin@email.io"}, ActivationConfigs: []struct {
+			appsec.CreateActivationsRequest{Action: "ACTIVATE", Network: "STAGING", Note: "", NotificationEmails: []string{"user@example.com"}, ActivationConfigs: []struct {
 				ConfigID      int "json:\"configId\""
 				ConfigVersion int "json:\"configVersion\""
 			}{{ConfigID: 43253, ConfigVersion: 7}}},
@@ -40,7 +40,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 
 		client.On("RemoveActivations",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.RemoveActivationsRequest{ActivationID: 547694, Action: "DEACTIVATE", Network: "STAGING", Note: "", NotificationEmails: []string{"martin@email.io"}, ActivationConfigs: []struct {
+			appsec.RemoveActivationsRequest{ActivationID: 547694, Action: "DEACTIVATE", Network: "STAGING", Note: "", NotificationEmails: []string{"user@example.com"}, ActivationConfigs: []struct {
 				ConfigID      int "json:\"configId\""
 				ConfigVersion int "json:\"configVersion\""
 			}{{ConfigID: 43253, ConfigVersion: 7}}},
