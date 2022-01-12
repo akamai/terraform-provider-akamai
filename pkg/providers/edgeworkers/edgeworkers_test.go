@@ -277,3 +277,67 @@ func (m *mockedgeworkers) CreateSecureToken(ctx context.Context, req edgeworkers
 	}
 	return args.Get(0).(*edgeworkers.CreateSecureTokenResponse), args.Error(1)
 }
+
+func (m *mockedgeworkers) ListEdgeKVNamespaces(ctx context.Context, req edgeworkers.ListEdgeKVNamespacesRequest) (*edgeworkers.ListEdgeKVNamespacesResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.ListEdgeKVNamespacesResponse), args.Error(1)
+}
+
+func (m *mockedgeworkers) GetEdgeKVNamespace(ctx context.Context, req edgeworkers.GetEdgeKVNamespaceRequest) (*edgeworkers.Namespace, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.Namespace), args.Error(1)
+}
+
+func (m *mockedgeworkers) CreateEdgeKVNamespace(ctx context.Context, req edgeworkers.CreateEdgeKVNamespaceRequest) (*edgeworkers.Namespace, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.Namespace), args.Error(1)
+}
+
+func (m *mockedgeworkers) UpdateEdgeKVNamespace(ctx context.Context, req edgeworkers.UpdateEdgeKVNamespaceRequest) (*edgeworkers.Namespace, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.Namespace), args.Error(1)
+}
+
+func (m *mockedgeworkers) InitializeEdgeKV(ctx context.Context) (*edgeworkers.EdgeKVInitializationStatus, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.EdgeKVInitializationStatus), args.Error(1)
+}
+
+func (m *mockedgeworkers) GetEdgeKVInitializationStatus(ctx context.Context) (*edgeworkers.EdgeKVInitializationStatus, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.EdgeKVInitializationStatus), args.Error(1)
+}
+
+func (m *mockedgeworkers) GetReport(ctx context.Context, req edgeworkers.GetReportRequest) (*edgeworkers.GetReportResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.GetReportResponse), args.Error(1)
+}
+
+func (m *mockedgeworkers) ListReports(ctx context.Context) (*edgeworkers.ListReportsResponse, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.ListReportsResponse), args.Error(1)
+}
