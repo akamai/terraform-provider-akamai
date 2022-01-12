@@ -34,29 +34,34 @@ func resourceNetworkList() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name to be assigned to the network list",
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The type of the network list; must be either 'IP' or 'GEO'",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					IP,
 					Geo,
 				}, false)),
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "A description of the network list",
 			},
 			"list": {
-				Type:     schema.TypeSet,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
+				Type:        schema.TypeSet,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Description: "A list of IP addresses or locations to be included in the list, added to an existing list, or removed from an existing list",
 			},
 			"mode": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "A string specifying the interpretation of the `list` parameter. Must be 'APPEND', 'REPLACE', or 'REMOVE'",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					Append,
 					Replace,
@@ -151,10 +156,10 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	netlist := d.Get("list").(*schema.Set)
-	nru := make([]string, 0, len(netlist.List()))
+	networkListElements := make([]string, 0, len(netlist.List()))
 
 	for _, h := range netlist.List() {
-		nru = append(nru, strings.ToLower(h.(string)))
+		networkListElements = append(networkListElements, strings.ToLower(h.(string)))
 	}
 
 	finallist := make([]string, 0, len(netlist.List()))
@@ -181,13 +186,11 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		}
 
 		if !oneShot {
-			finallist = nru
+			finallist = networkListElements
 		}
 
-	case Replace:
-		finallist = nru
 	default:
-		finallist = nru
+		finallist = networkListElements
 	}
 
 	createNetworkList.List = finallist

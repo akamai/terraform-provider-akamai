@@ -13,14 +13,14 @@ func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
 	t.Run("match by NetworkList ID", func(t *testing.T) {
 		client := &mocknetworklists{}
 
-		cv := network.GetNetworkListsResponse{}
+		networkListsResponse := network.GetNetworkListsResponse{}
 		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSNetworkList/NetworkList.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(expectJS), &networkListsResponse)
 
 		client.On("GetNetworkLists",
 			mock.Anything, // ctx is irrelevant for this test
 			network.GetNetworkListsRequest{Name: "40996_ARTYLABWHITELIST", Type: "IP"},
-		).Return(&cv, nil)
+		).Return(&networkListsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
