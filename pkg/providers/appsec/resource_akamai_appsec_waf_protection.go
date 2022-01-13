@@ -163,7 +163,7 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceWAFProtectionUpdate")
 	logger.Debugf("in resourceWAFProtectionUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratePolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -217,7 +217,7 @@ func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceWAFProtectionDelete")
 	logger.Debugf("in resourceWAFProtectionDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratePolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

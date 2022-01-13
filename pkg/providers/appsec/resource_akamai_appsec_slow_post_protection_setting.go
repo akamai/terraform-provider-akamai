@@ -179,7 +179,7 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
 	logger.Debugf("in resourceSlowPostProtectionSettingUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratePolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -231,7 +231,7 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingDelete")
 	logger.Debugf("in resourceSlowPostProtectionSettingDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratePolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

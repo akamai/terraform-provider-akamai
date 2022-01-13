@@ -79,7 +79,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
 	logger.Debugf("in resourceMatchTargetSequenceRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:matchtargettype")
+	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetType")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -124,7 +124,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceUpdate")
 	logger.Debugf("in resourceMatchTargetSequenceUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:matchtargettype")
+	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetType")
 	if err != nil {
 		return diag.FromErr(err)
 	}

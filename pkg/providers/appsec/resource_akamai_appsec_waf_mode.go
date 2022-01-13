@@ -180,7 +180,7 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	logger := meta.Log("APPSEC", "resourceWAFModeUpdate")
 	logger.Debugf(" in resourceWAFModeUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratePolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
