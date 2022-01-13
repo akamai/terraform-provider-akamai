@@ -66,7 +66,8 @@ output "network_lists_filter_list" {
   information about both types will be returned.
 
 * `network_list_id` - (Optional) The ID of a specific network list to retrieve. If not supplied, information about all network
-  lists will be returned.
+* `network_list_id` - (Optional) The ID of a specific network list to retrieve.
+If not supplied, information about all network lists will be returned.
 
 The following arguments are supported:
 
