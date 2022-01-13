@@ -167,10 +167,10 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, erru := client.UpdateCustomRule(ctx, updateCustomRule)
-	if erru != nil {
-		logger.Errorf("calling 'updateCustomRule': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateCustomRule(ctx, updateCustomRule)
+	if err != nil {
+		logger.Errorf("calling 'updateCustomRule': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceCustomRuleRead(ctx, d, m)
@@ -216,10 +216,10 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 			ID:       customRuleID,
 		}
 
-		_, errd := client.RemoveCustomRule(ctx, removeCustomRule)
-		if errd != nil {
-			logger.Errorf("calling 'removeCustomRule': %s", errd.Error())
-			return diag.FromErr(errd)
+		_, err = client.RemoveCustomRule(ctx, removeCustomRule)
+		if err != nil {
+			logger.Errorf("calling 'removeCustomRule': %s", err.Error())
+			return diag.FromErr(err)
 		}
 		d.SetId("")
 	} else {

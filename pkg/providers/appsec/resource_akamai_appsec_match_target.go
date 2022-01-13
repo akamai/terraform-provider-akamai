@@ -197,10 +197,10 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 		TargetID:      targetID,
 	}
 
-	_, errd := client.RemoveMatchTarget(ctx, removeMatchTarget)
-	if errd != nil {
-		logger.Errorf("calling 'removeMatchTarget': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.RemoveMatchTarget(ctx, removeMatchTarget)
+	if err != nil {
+		logger.Errorf("calling 'removeMatchTarget': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

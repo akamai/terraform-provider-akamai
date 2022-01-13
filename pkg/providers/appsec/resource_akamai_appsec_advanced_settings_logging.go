@@ -77,10 +77,10 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, erru := client.UpdateAdvancedSettingsLogging(ctx, createAdvancedSettingsLogging)
-	if erru != nil {
-		logger.Errorf("calling 'createAdvancedSettingsLogging': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateAdvancedSettingsLogging(ctx, createAdvancedSettingsLogging)
+	if err != nil {
+		logger.Errorf("calling 'createAdvancedSettingsLogging': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if len(createAdvancedSettingsLogging.PolicyID) > 0 {
@@ -186,10 +186,10 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateAdvancedSettingsLogging.JsonPayloadRaw = rawJSON
-	_, erru := client.UpdateAdvancedSettingsLogging(ctx, updateAdvancedSettingsLogging)
-	if erru != nil {
-		logger.Errorf("calling 'updateAdvancedSettingsLogging': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err := client.UpdateAdvancedSettingsLogging(ctx, updateAdvancedSettingsLogging)
+	if err != nil {
+		logger.Errorf("calling 'updateAdvancedSettingsLogging': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceAdvancedSettingsLoggingRead(ctx, d, m)
@@ -230,10 +230,10 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		removeAdvancedSettingsLogging.AllowSampling = false
 	}
 
-	_, erru := client.RemoveAdvancedSettingsLogging(ctx, removeAdvancedSettingsLogging)
-	if erru != nil {
-		logger.Errorf("calling 'removeAdvancedSettingsLogging': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err := client.RemoveAdvancedSettingsLogging(ctx, removeAdvancedSettingsLogging)
+	if err != nil {
+		logger.Errorf("calling 'removeAdvancedSettingsLogging': %s", err.Error())
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 	return nil

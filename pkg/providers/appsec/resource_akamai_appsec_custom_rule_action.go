@@ -83,10 +83,10 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 		Action:   customruleaction,
 	}
 
-	_, erru := client.UpdateCustomRuleAction(ctx, createCustomRuleAction)
-	if erru != nil {
-		logger.Errorf("calling 'createCustomRuleAction': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateCustomRuleAction(ctx, createCustomRuleAction)
+	if err != nil {
+		logger.Errorf("calling 'createCustomRuleAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s:%d", createCustomRuleAction.ConfigID, createCustomRuleAction.PolicyID, createCustomRuleAction.RuleID))
@@ -175,10 +175,10 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 		Action:   customruleaction,
 	}
 
-	_, erru := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
-	if erru != nil {
-		logger.Errorf("calling 'updateCustomRuleAction': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
+	if err != nil {
+		logger.Errorf("calling 'updateCustomRuleAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceCustomRuleActionRead(ctx, d, m)
@@ -213,10 +213,10 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 		Action:   "none",
 	}
 
-	_, errd := client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
-	if errd != nil {
-		logger.Errorf("calling 'removeCustomRuleAction': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.UpdateCustomRuleAction(ctx, updateCustomRuleAction)
+	if err != nil {
+		logger.Errorf("calling 'removeCustomRuleAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

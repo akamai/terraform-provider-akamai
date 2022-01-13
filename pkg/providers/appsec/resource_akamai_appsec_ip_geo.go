@@ -103,10 +103,10 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	createIPGeo.IPControls.BlockedIPNetworkLists.NetworkList = blockediplists
 	createIPGeo.IPControls.AllowedIPNetworkLists.NetworkList = exceptioniplists
 
-	_, erru := client.UpdateIPGeo(ctx, createIPGeo)
-	if erru != nil {
-		logger.Errorf("calling 'createIPGeo': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateIPGeo(ctx, createIPGeo)
+	if err != nil {
+		logger.Errorf("calling 'createIPGeo': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", createIPGeo.ConfigID, createIPGeo.PolicyID))
@@ -212,10 +212,10 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	updateIPGeo.IPControls.BlockedIPNetworkLists.NetworkList = blockediplists
 	updateIPGeo.IPControls.AllowedIPNetworkLists.NetworkList = exceptioniplists
 
-	_, erru := client.UpdateIPGeo(ctx, updateIPGeo)
-	if erru != nil {
-		logger.Errorf("calling 'updateIPGeo': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateIPGeo(ctx, updateIPGeo)
+	if err != nil {
+		logger.Errorf("calling 'updateIPGeo': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceIPGeoRead(ctx, d, m)

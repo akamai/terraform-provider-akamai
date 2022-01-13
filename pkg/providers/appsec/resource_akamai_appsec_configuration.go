@@ -218,11 +218,11 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 		Description: description,
 	}
 
-	resp, erru := client.UpdateConfiguration(ctx, updateConfiguration)
-	if erru != nil {
-		logger.Errorf("calling 'updateConfiguration': %s", erru.Error())
+	resp, err := client.UpdateConfiguration(ctx, updateConfiguration)
+	if err != nil {
+		logger.Errorf("calling 'updateConfiguration': %s", err.Error())
 		logger.Debugf("response is %w", resp)
-		return diag.FromErr(erru)
+		return diag.FromErr(err)
 	}
 
 	if d.HasChange("host_names") {
@@ -284,10 +284,10 @@ func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m 
 		ConfigID: configID,
 	}
 
-	_, errd := client.RemoveConfiguration(ctx, removeConfiguration)
-	if errd != nil {
-		logger.Errorf("calling 'removeConfiguration': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.RemoveConfiguration(ctx, removeConfiguration)
+	if err != nil {
+		logger.Errorf("calling 'removeConfiguration': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

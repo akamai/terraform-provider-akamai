@@ -88,10 +88,10 @@ func resourcePenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m int
 		Action:               penaltyboxaction,
 	}
 
-	_, erru := client.UpdatePenaltyBox(ctx, createPenaltyBox)
-	if erru != nil {
-		logger.Errorf("calling 'createPenaltyBox': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdatePenaltyBox(ctx, createPenaltyBox)
+	if err != nil {
+		logger.Errorf("calling 'createPenaltyBox': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", createPenaltyBox.ConfigID, createPenaltyBox.PolicyID))
@@ -177,10 +177,10 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 		Action:               penaltyboxaction,
 	}
 
-	_, erru := client.UpdatePenaltyBox(ctx, updatePenaltyBox)
-	if erru != nil {
-		logger.Errorf("calling 'updatePenaltyBox': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdatePenaltyBox(ctx, updatePenaltyBox)
+	if err != nil {
+		logger.Errorf("calling 'updatePenaltyBox': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourcePenaltyBoxRead(ctx, d, m)
@@ -211,10 +211,10 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 		Action:               "none",
 	}
 
-	_, errd := client.UpdatePenaltyBox(ctx, removePenaltyBox)
-	if errd != nil {
-		logger.Errorf("calling 'removePenaltyBox': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.UpdatePenaltyBox(ctx, removePenaltyBox)
+	if err != nil {
+		logger.Errorf("calling 'removePenaltyBox': %s", err.Error())
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 

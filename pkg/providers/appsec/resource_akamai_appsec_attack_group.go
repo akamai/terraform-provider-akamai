@@ -246,10 +246,10 @@ func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 		Action:   "none",
 	}
 
-	_, errd := client.UpdateAttackGroup(ctx, removeAttackGroup)
-	if errd != nil {
-		logger.Errorf("calling 'RemoveAttackGroup': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.UpdateAttackGroup(ctx, removeAttackGroup)
+	if err != nil {
+		logger.Errorf("calling 'RemoveAttackGroup': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

@@ -83,10 +83,10 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 		Action:              action,
 	}
 
-	_, erru := client.UpdateReputationProfileAction(ctx, createReputationProfileAction)
-	if erru != nil {
-		logger.Errorf("calling 'createReputationProfileAction': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateReputationProfileAction(ctx, createReputationProfileAction)
+	if err != nil {
+		logger.Errorf("calling 'createReputationProfileAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s:%d", createReputationProfileAction.ConfigID, createReputationProfileAction.PolicyID, createReputationProfileAction.ReputationProfileID))
@@ -122,10 +122,10 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 		ReputationProfileID: reputationProfileID,
 	}
 
-	resp, errr := client.GetReputationProfileAction(ctx, getReputationProfileAction)
-	if errr != nil {
-		logger.Errorf("calling 'getReputationProfileAction': %s", errr.Error())
-		return diag.FromErr(errr)
+	resp, err := client.GetReputationProfileAction(ctx, getReputationProfileAction)
+	if err != nil {
+		logger.Errorf("calling 'getReputationProfileAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("config_id", getReputationProfileAction.ConfigID); err != nil {
@@ -177,10 +177,10 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 		Action:              action,
 	}
 
-	_, erru := client.UpdateReputationProfileAction(ctx, updateReputationProfileAction)
-	if erru != nil {
-		logger.Errorf("calling 'updateReputationProfileAction': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateReputationProfileAction(ctx, updateReputationProfileAction)
+	if err != nil {
+		logger.Errorf("calling 'updateReputationProfileAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceReputationProfileActionRead(ctx, d, m)
@@ -215,10 +215,10 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 		Action:              "none",
 	}
 
-	_, errd := client.UpdateReputationProfileAction(ctx, removeReputationProfileAction)
-	if errd != nil {
-		logger.Errorf("calling 'removeReputationProfileAction': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.UpdateReputationProfileAction(ctx, removeReputationProfileAction)
+	if err != nil {
+		logger.Errorf("calling 'removeReputationProfileAction': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

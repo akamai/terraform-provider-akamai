@@ -82,10 +82,10 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 		ForwardSharedIPToHTTPHeaderAndSIEM: forwardSharedIPToHTTPHeaderSiem,
 	}
 
-	_, erru := client.UpdateReputationAnalysis(ctx, createReputationAnalysis)
-	if erru != nil {
-		logger.Errorf("calling 'createReputationAnalysis': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateReputationAnalysis(ctx, createReputationAnalysis)
+	if err != nil {
+		logger.Errorf("calling 'createReputationAnalysis': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", createReputationAnalysis.ConfigID, createReputationAnalysis.PolicyID))
@@ -116,10 +116,10 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 		PolicyID: policyID,
 	}
 
-	resp, errg := client.GetReputationAnalysis(ctx, getReputationAnalysis)
-	if errg != nil {
-		logger.Errorf("calling 'getReputationAnalysis': %s", errg.Error())
-		return diag.FromErr(errg)
+	resp, err := client.GetReputationAnalysis(ctx, getReputationAnalysis)
+	if err != nil {
+		logger.Errorf("calling 'getReputationAnalysis': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("config_id", getReputationAnalysis.ConfigID); err != nil {
@@ -171,10 +171,10 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 		ForwardSharedIPToHTTPHeaderAndSIEM: forwardSharedIPToHTTPHeaderSiem,
 	}
 
-	_, erru := client.UpdateReputationAnalysis(ctx, updateReputationAnalysis)
-	if erru != nil {
-		logger.Errorf("calling 'updateReputationAnalysis': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateReputationAnalysis(ctx, updateReputationAnalysis)
+	if err != nil {
+		logger.Errorf("calling 'updateReputationAnalysis': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceReputationAnalysisRead(ctx, d, m)
@@ -205,10 +205,10 @@ func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceDat
 		ForwardSharedIPToHTTPHeaderAndSIEM: false,
 	}
 
-	_, erru := client.RemoveReputationAnalysis(ctx, RemoveReputationAnalysis)
-	if erru != nil {
-		logger.Errorf("calling 'RemoveReputationAnalysis': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.RemoveReputationAnalysis(ctx, RemoveReputationAnalysis)
+	if err != nil {
+		logger.Errorf("calling 'RemoveReputationAnalysis': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

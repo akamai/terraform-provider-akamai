@@ -101,10 +101,10 @@ func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Mode:     mode,
 	}
 
-	_, erru := client.UpdateWAFMode(ctx, createWAFMode)
-	if erru != nil {
-		logger.Errorf("calling 'createWAFMode': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateWAFMode(ctx, createWAFMode)
+	if err != nil {
+		logger.Errorf("calling 'createWAFMode': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", createWAFMode.ConfigID, createWAFMode.PolicyID))
@@ -202,10 +202,10 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		Mode:     mode,
 	}
 
-	_, erru := client.UpdateWAFMode(ctx, updateWAFMode)
-	if erru != nil {
-		logger.Errorf("calling 'updateWAFMode': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateWAFMode(ctx, updateWAFMode)
+	if err != nil {
+		logger.Errorf("calling 'updateWAFMode': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceWAFModeRead(ctx, d, m)

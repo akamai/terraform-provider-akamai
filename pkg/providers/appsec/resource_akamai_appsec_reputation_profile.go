@@ -204,10 +204,10 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 		ReputationProfileId: reputationProfileID,
 	}
 
-	_, errd := client.RemoveReputationProfile(ctx, deleteReputationProfile)
-	if errd != nil {
-		logger.Errorf("calling 'removeReputationProfile': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.RemoveReputationProfile(ctx, deleteReputationProfile)
+	if err != nil {
+		logger.Errorf("calling 'removeReputationProfile': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

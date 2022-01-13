@@ -119,11 +119,10 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 			PolicyPrefix:    policyprefix,
 		}
 
-		spcr, errc := client.CreateSecurityPolicy(ctx, createSecurityPolicy)
-
-		if errc != nil {
-			logger.Errorf("calling 'createSecurityPolicy': %s", errc.Error())
-			return diag.FromErr(errc)
+		spcr, err := client.CreateSecurityPolicy(ctx, createSecurityPolicy)
+		if err != nil {
+			logger.Errorf("calling 'createSecurityPolicy': %s", err.Error())
+			return diag.FromErr(err)
 		}
 		if err := d.Set("security_policy_id", spcr.PolicyID); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
@@ -261,10 +260,10 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 			PolicyID: securityPolicyID,
 		}
 
-		_, errd := client.RemoveSecurityPolicy(ctx, removeSecurityPolicy)
-		if errd != nil {
-			logger.Errorf("calling 'removeSecurityPolicy': %s", errd.Error())
-			return diag.FromErr(errd)
+		_, err = client.RemoveSecurityPolicy(ctx, removeSecurityPolicy)
+		if err != nil {
+			logger.Errorf("calling 'removeSecurityPolicy': %s", err.Error())
+			return diag.FromErr(err)
 		}
 
 		d.SetId("")

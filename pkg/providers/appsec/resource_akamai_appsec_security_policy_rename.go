@@ -70,10 +70,10 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 		PolicyName: policyname,
 	}
 
-	_, erru := client.UpdateSecurityPolicy(ctx, createSecurityPolicy)
-	if erru != nil {
-		logger.Errorf("calling 'createSecurityPolicy': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateSecurityPolicy(ctx, createSecurityPolicy)
+	if err != nil {
+		logger.Errorf("calling 'createSecurityPolicy': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", createSecurityPolicy.ConfigID, createSecurityPolicy.PolicyID))
@@ -150,10 +150,10 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 		PolicyName: policyname,
 	}
 
-	_, erru := client.UpdateSecurityPolicy(ctx, updateSecurityPolicy)
-	if erru != nil {
-		logger.Errorf("calling 'updateSecurityPolicy': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateSecurityPolicy(ctx, updateSecurityPolicy)
+	if err != nil {
+		logger.Errorf("calling 'updateSecurityPolicy': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceSecurityPolicyRenameRead(ctx, d, m)

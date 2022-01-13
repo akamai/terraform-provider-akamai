@@ -103,9 +103,9 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, erru := client.UpdateEvalRule(ctx, createEvalRule)
-	if erru != nil {
-		logger.Warnf("calling 'createEvalRule': %s", erru.Error())
+	_, err = client.UpdateEvalRule(ctx, createEvalRule)
+	if err != nil {
+		logger.Warnf("calling 'createEvalRule': %s", err.Error())
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s:%d", createEvalRule.ConfigID, createEvalRule.PolicyID, createEvalRule.RuleID))
@@ -217,9 +217,9 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, erru := client.UpdateEvalRule(ctx, updateEvalRule)
-	if erru != nil {
-		logger.Warnf("calling 'updateEvalRule': %s", erru.Error())
+	_, err = client.UpdateEvalRule(ctx, updateEvalRule)
+	if err != nil {
+		logger.Warnf("calling 'updateEvalRule': %s", err.Error())
 	}
 
 	return resourceEvalRuleRead(ctx, d, m)
@@ -254,10 +254,10 @@ func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m inter
 		Action:   "none",
 	}
 
-	_, errd := client.UpdateEvalRule(ctx, removeEvalRule)
-	if errd != nil {
-		logger.Errorf("calling 'RemoveEvalRule': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.UpdateEvalRule(ctx, removeEvalRule)
+	if err != nil {
+		logger.Errorf("calling 'RemoveEvalRule': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

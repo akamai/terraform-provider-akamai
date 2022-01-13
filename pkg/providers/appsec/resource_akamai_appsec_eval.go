@@ -111,10 +111,10 @@ func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface
 		Mode:     evalmode,
 	}
 
-	_, erru := client.UpdateEval(ctx, createEval)
-	if erru != nil {
-		logger.Errorf("calling 'createEval': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateEval(ctx, createEval)
+	if err != nil {
+		logger.Errorf("calling 'createEval': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", createEval.ConfigID, createEval.PolicyID))
@@ -206,10 +206,10 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		Mode:     evalmode,
 	}
 
-	_, erru := client.UpdateEval(ctx, updateEval)
-	if erru != nil {
-		logger.Errorf("calling 'updateEval': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateEval(ctx, updateEval)
+	if err != nil {
+		logger.Errorf("calling 'updateEval': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceEvalRead(ctx, d, m)
@@ -239,10 +239,10 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 		Eval:     "STOP",
 	}
 
-	_, erru := client.RemoveEval(ctx, removeEval)
-	if erru != nil {
-		logger.Errorf("calling 'removeEval': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.RemoveEval(ctx, removeEval)
+	if err != nil {
+		logger.Errorf("calling 'removeEval': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

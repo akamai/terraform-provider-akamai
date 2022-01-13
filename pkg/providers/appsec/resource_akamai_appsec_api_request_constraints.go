@@ -85,10 +85,10 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 		Action:   action,
 	}
 
-	_, erru := client.UpdateApiRequestConstraints(ctx, createAPIRequestConstraints)
-	if erru != nil {
-		logger.Errorf("calling 'createAPIRequestConstraints': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateApiRequestConstraints(ctx, createAPIRequestConstraints)
+	if err != nil {
+		logger.Errorf("calling 'createAPIRequestConstraints': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if apiEndpointID != 0 {
@@ -197,10 +197,10 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 		Action:   action,
 	}
 
-	_, erru := client.UpdateApiRequestConstraints(ctx, updateAPIRequestConstraints)
-	if erru != nil {
-		logger.Errorf("calling 'updateAPIRequestConstraints': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateApiRequestConstraints(ctx, updateAPIRequestConstraints)
+	if err != nil {
+		logger.Errorf("calling 'updateAPIRequestConstraints': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceAPIRequestConstraintsRead(ctx, d, m)
@@ -270,10 +270,10 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 		}
 	} else {
 		removeAPIRequestConstraints.Action = "none"
-		_, erru := client.RemoveApiRequestConstraints(ctx, removeAPIRequestConstraints)
-		if erru != nil {
-			logger.Errorf("calling 'removeApiRequestConstraints': %s", erru.Error())
-			return diag.FromErr(erru)
+		_, err := client.RemoveApiRequestConstraints(ctx, removeAPIRequestConstraints)
+		if err != nil {
+			logger.Errorf("calling 'removeApiRequestConstraints': %s", err.Error())
+			return diag.FromErr(err)
 		}
 	}
 

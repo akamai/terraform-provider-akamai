@@ -108,10 +108,10 @@ func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.Reso
 	createSlowPostProtectionSetting.SlowRateThreshold.Period = slowratethresholdperiod
 	createSlowPostProtectionSetting.DurationThreshold.Timeout = durationthresholdtimeout
 
-	_, erru := client.UpdateSlowPostProtectionSetting(ctx, createSlowPostProtectionSetting)
-	if erru != nil {
-		logger.Errorf("calling 'updateSlowPostProtectionSetting': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateSlowPostProtectionSetting(ctx, createSlowPostProtectionSetting)
+	if err != nil {
+		logger.Errorf("calling 'updateSlowPostProtectionSetting': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", createSlowPostProtectionSetting.ConfigID, createSlowPostProtectionSetting.PolicyID))
@@ -142,19 +142,19 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 		PolicyID: policyID,
 	}
 
-	slowPostProtectionSettings, errg := client.GetSlowPostProtectionSettings(ctx, getSlowPostProtectionSettingsRequest)
-	if errg != nil {
-		logger.Errorf("calling 'getSlowPostProtectionSettings': %s", errg.Error())
-		return diag.FromErr(errg)
+	slowPostProtectionSettings, err := client.GetSlowPostProtectionSettings(ctx, getSlowPostProtectionSettingsRequest)
+	if err != nil {
+		logger.Errorf("calling 'getSlowPostProtectionSettings': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("security_policy_id", policyID); err != nil {
+	if err = d.Set("security_policy_id", policyID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("slow_rate_action", slowPostProtectionSettings.Action); err != nil {
+	if err = d.Set("slow_rate_action", slowPostProtectionSettings.Action); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if slowPostProtectionSettings.SlowRateThreshold != nil {
@@ -216,10 +216,10 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 	updateSlowPostProtectionSetting.SlowRateThreshold.Period = slowratethresholdperiod
 	updateSlowPostProtectionSetting.DurationThreshold.Timeout = durationthresholdtimeout
 
-	_, erru := client.UpdateSlowPostProtectionSetting(ctx, updateSlowPostProtectionSetting)
-	if erru != nil {
-		logger.Errorf("calling 'updateSlowPostProtectionSetting': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateSlowPostProtectionSetting(ctx, updateSlowPostProtectionSetting)
+	if err != nil {
+		logger.Errorf("calling 'updateSlowPostProtectionSetting': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceSlowPostProtectionSettingRead(ctx, d, m)
