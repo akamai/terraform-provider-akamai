@@ -144,17 +144,17 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
 	logger.Debugf("in resourceSecurityPolicyRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getSecurityPolicy := appsec.GetSecurityPolicyRequest{
 		ConfigID: configID,
@@ -194,17 +194,17 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyUpdate")
 	logger.Debugf("in resourceSecurityPolicyUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
-	securityPolicyID := idParts[1]
+	securityPolicyID := iDParts[1]
 
 	// Prevent an update call with the same policy name since API will reject it.
 	if !d.HasChange("security_policy_name") {
@@ -238,17 +238,17 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDelete")
 	logger.Debugf("in resourceSecurityPolicyDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
-	securityPolicyID := idParts[1]
+	securityPolicyID := iDParts[1]
 
 	latestVersion := getLatestConfigVersion(ctx, configID, m)
 	stagingVersion, productionVersion := getActiveConfigVersions(ctx, configID, m)

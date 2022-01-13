@@ -87,16 +87,16 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameRead")
 	logger.Debugf("in resourceSecurityPolicyRenameRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getSecurityPolicy := appsec.GetSecurityPolicyRequest{
 		ConfigID: configID,
@@ -128,16 +128,16 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameUpdate")
 	logger.Debugf("in resourceSecurityPolicyRenameUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	policyname, err := tools.GetStringValue("security_policy_name", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

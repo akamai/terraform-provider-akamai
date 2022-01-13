@@ -127,16 +127,16 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesRead")
 	logger.Debugf("resourceWAPSelectedHostnamesRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	securityPolicyID := idParts[1]
+	securityPolicyID := iDParts[1]
 
 	getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{
 		ConfigID:         configID,

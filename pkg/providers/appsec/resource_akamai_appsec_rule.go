@@ -76,7 +76,7 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ruleid, err := tools.GetIntValue("rule_id", d)
+	ruleID, err := tools.GetIntValue("rule_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -114,7 +114,7 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 			ConfigID:               configID,
 			Version:                version,
 			PolicyID:               policyID,
-			RuleID:                 ruleid,
+			RuleID:                 ruleID,
 			Conditions:             ruleConditionException.Conditions,
 			Exception:              ruleConditionException.Exception,
 			AdvancedExceptionsList: ruleConditionException.AdvancedExceptionsList,
@@ -140,7 +140,7 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 			ConfigID:       configID,
 			Version:        version,
 			PolicyID:       policyID,
-			RuleID:         ruleid,
+			RuleID:         ruleID,
 			Action:         action,
 			JsonPayloadRaw: rawJSON,
 		}
@@ -164,17 +164,17 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	logger := meta.Log("APPSEC", "resourceRuleRead")
 	logger.Debugf("in resourceRuleRead")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleid")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
-	ruleid, err := strconv.Atoi(idParts[2])
+	policyID := iDParts[1]
+	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -183,7 +183,7 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
-		RuleID:   ruleid,
+		RuleID:   ruleID,
 	}
 
 	rule, err := client.GetRule(ctx, getRule)
@@ -225,17 +225,17 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceRuleUpdate")
 	logger.Debugf("in resourceRuleUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleid")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	version := getModifiableConfigVersion(ctx, configID, "rule", m)
-	ruleid, err := strconv.Atoi(idParts[2])
+	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -271,7 +271,7 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 			ConfigID:               configID,
 			Version:                version,
 			PolicyID:               policyID,
-			RuleID:                 ruleid,
+			RuleID:                 ruleID,
 			Conditions:             ruleConditionException.Conditions,
 			Exception:              ruleConditionException.Exception,
 			AdvancedExceptionsList: ruleConditionException.AdvancedExceptionsList,
@@ -297,7 +297,7 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 			ConfigID:       configID,
 			Version:        version,
 			PolicyID:       policyID,
-			RuleID:         ruleid,
+			RuleID:         ruleID,
 			Action:         action,
 			JsonPayloadRaw: rawJSON,
 		}
@@ -319,17 +319,17 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceRuleDelete")
 	logger.Debugf("in resourceRuleDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleid")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "rule", m)
-	policyID := idParts[1]
-	ruleid, err := strconv.Atoi(idParts[2])
+	policyID := iDParts[1]
+	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -351,7 +351,7 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 			ConfigID: configID,
 			Version:  version,
 			PolicyID: policyID,
-			RuleID:   ruleid,
+			RuleID:   ruleID,
 		}
 
 		_, err = client.UpdateRuleConditionException(ctx, updateRule)
@@ -364,7 +364,7 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 			ConfigID: configID,
 			Version:  version,
 			PolicyID: policyID,
-			RuleID:   ruleid,
+			RuleID:   ruleID,
 			Action:   "none",
 		}
 		_, err = client.UpdateRule(ctx, updateRule)

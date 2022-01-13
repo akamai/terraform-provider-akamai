@@ -109,16 +109,16 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceRuleUpgradeRead")
 	logger.Debugf(" in resourceRuleUpgradeRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getWAFMode := appsec.GetWAFModeRequest{
 		ConfigID: configID,
@@ -157,16 +157,16 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceRuleUpgradeUpdate")
 	logger.Debugf(" in resourceRuleUpgradeUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	upgrademode, err := tools.GetStringValue("upgrade_mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

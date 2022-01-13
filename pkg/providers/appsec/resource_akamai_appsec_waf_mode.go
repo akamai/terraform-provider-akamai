@@ -118,16 +118,16 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	logger := meta.Log("APPSEC", "resourceWAFModeRead")
 	logger.Debugf(" in resourceWAFModeRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getWAFMode := appsec.GetWAFModeRequest{
 		ConfigID: configID,
@@ -180,16 +180,16 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	logger := meta.Log("APPSEC", "resourceWAFModeUpdate")
 	logger.Debugf(" in resourceWAFModeUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratepolicyid")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "wafMode", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

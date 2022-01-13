@@ -56,13 +56,13 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 	recSHA := tools.GetSHAString(extractString)
 
 	uniqueIDs := d.Get("network_list").([]interface{})
-	uids := make([]string, 0, len(uniqueIDs))
+	IDs := make([]string, 0, len(uniqueIDs))
 
 	for _, h := range uniqueIDs {
-		uids = append(uids, h.(string))
+		IDs = append(IDs, h.(string))
 	}
 
-	getNetworkListSubscription.UniqueIds = uids
+	getNetworkListSubscription.UniqueIds = IDs
 
 	extractStringUID := strings.Join(getNetworkListSubscription.UniqueIds, " ")
 	recSHAUID := tools.GetSHAString(extractStringUID)
@@ -93,13 +93,13 @@ func resourceNetworkListSubscriptionDelete(ctx context.Context, d *schema.Resour
 	removeNetworkListSubscription.Recipients = nru
 
 	uniqueIDs := d.Get("network_list").([]interface{})
-	uids := make([]string, 0, len(uniqueIDs))
+	IDs := make([]string, 0, len(uniqueIDs))
 
 	for _, h := range uniqueIDs {
-		uids = append(uids, h.(string))
+		IDs = append(IDs, h.(string))
 	}
 
-	removeNetworkListSubscription.UniqueIds = uids
+	removeNetworkListSubscription.UniqueIds = IDs
 	_, errd := client.RemoveNetworkListSubscription(ctx, removeNetworkListSubscription)
 	if errd != nil {
 		logger.Errorf("calling 'updateNetworkListSubscription': %s", errd.Error())
@@ -127,13 +127,13 @@ func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.Resour
 	recSHA := tools.GetSHAString(extractString)
 
 	uniqueIDs := d.Get("network_list").([]interface{})
-	uids := make([]string, 0, len(uniqueIDs))
+	IDs := make([]string, 0, len(uniqueIDs))
 
 	for _, h := range uniqueIDs {
-		uids = append(uids, h.(string))
+		IDs = append(IDs, h.(string))
 	}
 
-	updateNetworkListSubscription.UniqueIds = uids
+	updateNetworkListSubscription.UniqueIds = IDs
 
 	extractStringUID := strings.Join(updateNetworkListSubscription.UniqueIds, " ")
 	recSHAUID := tools.GetSHAString(extractStringUID)

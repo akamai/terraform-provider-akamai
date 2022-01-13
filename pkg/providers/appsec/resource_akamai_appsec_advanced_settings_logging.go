@@ -100,16 +100,16 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 
 	getAdvancedSettingsLogging := appsec.GetAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getLatestConfigVersion(ctx, configID, m)
-		policyID := idParts[1]
+		policyID := iDParts[1]
 
 		getAdvancedSettingsLogging.ConfigID = configID
 		getAdvancedSettingsLogging.Version = version
@@ -156,16 +156,16 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 
 	updateAdvancedSettingsLogging := appsec.UpdateAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
-		policyID := idParts[1]
+		policyID := iDParts[1]
 
 		updateAdvancedSettingsLogging.ConfigID = configID
 		updateAdvancedSettingsLogging.Version = version
@@ -203,16 +203,16 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 
 	removeAdvancedSettingsLogging := appsec.RemoveAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
-		policyID := idParts[1]
+		policyID := iDParts[1]
 
 		removeAdvancedSettingsLogging.ConfigID = configID
 		removeAdvancedSettingsLogging.Version = version

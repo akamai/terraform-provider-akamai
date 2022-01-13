@@ -94,16 +94,16 @@ func resourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceThreatIntelRead")
 	logger.Debugf(" in resourceThreatIntelRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getThreatIntel := appsec.GetThreatIntelRequest{
 		ConfigID: configID,
@@ -136,16 +136,16 @@ func resourceThreatIntelUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceThreatIntelUpdate")
 	logger.Debugf("in resourceThreatIntelUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "threatIntel", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	threatintel, err := tools.GetStringValue("threat_intel", d)
 	if err != nil {

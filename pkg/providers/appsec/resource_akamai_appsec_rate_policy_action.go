@@ -109,18 +109,18 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionRead")
 	logger.Debugf("in resourceRatePolicyActionRead")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ratepolicyid")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	securityPolicyID := idParts[1]
-	ratePolicyID, err := strconv.Atoi(idParts[2])
+	securityPolicyID := iDParts[1]
+	ratePolicyID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -167,17 +167,17 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionUpdate")
 	logger.Debugf("in resourceRatePolicyActionUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ratepolicyid")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
-	securityPolicyID := idParts[1]
-	ratePolicyID, err := strconv.Atoi(idParts[2])
+	securityPolicyID := iDParts[1]
+	ratePolicyID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -214,17 +214,17 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionDelete")
 	logger.Debugf("in resourceRatePolicyActionDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ratepolicyid")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
-	securityPolicyID := idParts[1]
-	ratePolicyID, err := strconv.Atoi(idParts[2])
+	securityPolicyID := iDParts[1]
+	ratePolicyID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}

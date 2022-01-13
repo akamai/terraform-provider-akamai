@@ -105,16 +105,16 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxRead")
 	logger.Debugf("in resourcePenaltyBoxRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getPenaltyBox := appsec.GetPenaltyBoxRequest{
 		ConfigID: configID,
@@ -150,16 +150,16 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxUpdate")
 	logger.Debugf("in resourcePenaltyBoxUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -192,16 +192,16 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxDelete")
 	logger.Debugf("in resourcePenaltyBoxDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	removePenaltyBox := appsec.UpdatePenaltyBoxRequest{
 		ConfigID:             configID,

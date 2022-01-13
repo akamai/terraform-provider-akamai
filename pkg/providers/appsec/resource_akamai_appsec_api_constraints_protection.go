@@ -112,16 +112,16 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionRead")
 	logger.Debugf("in resourceAPIConstraintsProtectionRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
 		ConfigID: configID,
@@ -164,16 +164,16 @@ func resourceAPIConstraintsProtectionUpdate(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionUpdate")
 	logger.Debugf("in resourceAPIConstraintsProtectionUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -219,16 +219,16 @@ func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionDelete")
 	logger.Debugf("in resourceAPIConstraintsProtectionDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
 		ConfigID: configID,

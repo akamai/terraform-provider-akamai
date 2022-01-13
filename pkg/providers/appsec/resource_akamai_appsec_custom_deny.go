@@ -96,21 +96,21 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceCustomDenyRead")
 	logger.Debugf("in resourceCustomDenyRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:customdenyid")
+	iDParts, err := splitID(d.Id(), 2, "configID:customdenyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	customdenyid := idParts[1]
+	customDenyID := iDParts[1]
 
 	getCustomDeny := appsec.GetCustomDenyRequest{
 		ConfigID: configID,
 		Version:  getLatestConfigVersion(ctx, configID, m),
-		ID:       customdenyid,
+		ID:       customDenyID,
 	}
 
 	getCustomDenyResponse, err := client.GetCustomDeny(ctx, getCustomDeny)
@@ -127,7 +127,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err := d.Set("config_id", configID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("custom_deny_id", customdenyid); err != nil {
+	if err := d.Set("custom_deny_id", customDenyID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	jsonBody, err := json.Marshal(getCustomDenyResponse)
@@ -147,16 +147,16 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomDenyUpdate")
 	logger.Debugf("in resourceCustomDenyUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:customdenyid")
+	iDParts, err := splitID(d.Id(), 2, "configID:customdenyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	customdenyid := idParts[1]
+	customDenyID := iDParts[1]
 
 	jsonpostpayload := d.Get("custom_deny")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
@@ -165,7 +165,7 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	updateCustomDeny := appsec.UpdateCustomDenyRequest{
 		ConfigID:       configID,
 		Version:        getModifiableConfigVersion(ctx, configID, "customDeny", m),
-		ID:             customdenyid,
+		ID:             customDenyID,
 		JsonPayloadRaw: rawJSON,
 	}
 
@@ -184,21 +184,21 @@ func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomDenyDelete")
 	logger.Debugf("in resourceCustomDenyDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:customdenyid")
+	iDParts, err := splitID(d.Id(), 2, "configID:customdenyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	customdenyid := idParts[1]
+	customDenyID := iDParts[1]
 
 	removeCustomDeny := appsec.RemoveCustomDenyRequest{
 		ConfigID: configID,
 		Version:  getModifiableConfigVersion(ctx, configID, "customDeny", m),
-		ID:       customdenyid,
+		ID:       customDenyID,
 	}
 
 	_, err = client.RemoveCustomDeny(ctx, removeCustomDeny)

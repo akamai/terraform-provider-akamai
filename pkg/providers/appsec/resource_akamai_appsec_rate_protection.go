@@ -112,16 +112,16 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceRateProtectionRead")
 	logger.Debugf("in resourceRateProtectionRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
 		ConfigID: configID,
@@ -163,16 +163,16 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceRateProtectionUpdate")
 	logger.Debugf("in resourceRateProtectionUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "rateProtection", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -216,16 +216,16 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceRateProtectionDelete")
 	logger.Debugf("in resourceRateProtectionDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "rateProtection", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
 		ConfigID: configID,

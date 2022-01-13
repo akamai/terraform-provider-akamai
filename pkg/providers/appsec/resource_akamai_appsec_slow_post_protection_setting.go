@@ -125,16 +125,16 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingRead")
 	logger.Debugf("in resourceSlowPostProtectionSettingRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getSlowPostProtectionSettingsRequest := appsec.GetSlowPostProtectionSettingsRequest{
 		ConfigID: configID,
@@ -179,16 +179,16 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
 	logger.Debugf("in resourceSlowPostProtectionSettingUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratepolicyid")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "slowpostSettings", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	slowrateaction, err := tools.GetStringValue("slow_rate_action", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -231,16 +231,16 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingDelete")
 	logger.Debugf("in resourceSlowPostProtectionSettingDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratepolicyid")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "slowpostSettings", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
 		ConfigID: configID,

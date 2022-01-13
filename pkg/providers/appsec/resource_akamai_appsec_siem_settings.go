@@ -82,9 +82,9 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	spids := make([]string, 0, len(securityPolicyIDs.List()))
+	spIDs := make([]string, 0, len(securityPolicyIDs.List()))
 	for _, h := range securityPolicyIDs.List() {
-		spids = append(spids, h.(string))
+		spIDs = append(spIDs, h.(string))
 
 	}
 	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
@@ -101,7 +101,7 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 		Version:                 version,
 		EnableSiem:              enableSiem,
 		EnableForAllPolicies:    enableForAllPolicies,
-		FirewallPolicyIds:       spids,
+		FirewallPolicyIds:       spIDs,
 		EnabledBotmanSiemEvents: enableBotmanSiem,
 		SiemDefinitionID:        siemID,
 	}
@@ -185,9 +185,9 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	spids := make([]string, 0, len(securityPolicyIDs.List()))
+	spIDs := make([]string, 0, len(securityPolicyIDs.List()))
 	for _, h := range securityPolicyIDs.List() {
-		spids = append(spids, h.(string))
+		spIDs = append(spIDs, h.(string))
 
 	}
 	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
@@ -204,7 +204,7 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 		Version:                 version,
 		EnableSiem:              enableSiem,
 		EnableForAllPolicies:    enableForAllPolicies,
-		FirewallPolicyIds:       spids,
+		FirewallPolicyIds:       spIDs,
 		EnabledBotmanSiemEvents: enableBotmanSiem,
 		SiemDefinitionID:        siemID,
 	}

@@ -111,16 +111,16 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionRead")
 	logger.Debugf("in resourceIPGeoProtectionRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
 		ConfigID: configID,
@@ -163,16 +163,16 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionUpdate")
 	logger.Debugf("in resourceIPGeoProtectionUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "networkProtection", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -216,16 +216,16 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionDelete")
 	logger.Debugf("in resourceIPGeoProtectionDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "ipgeoProtection", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
 		ConfigID: configID,

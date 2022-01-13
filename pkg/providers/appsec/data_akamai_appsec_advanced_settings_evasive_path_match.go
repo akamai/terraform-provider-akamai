@@ -58,11 +58,11 @@ func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *sche
 
 	getAdvancedSettingsEvasivePathMatch.Version = getLatestConfigVersion(ctx, configID, m)
 
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getAdvancedSettingsEvasivePathMatch.PolicyID = policyid
+	getAdvancedSettingsEvasivePathMatch.PolicyID = policyID
 
 	advancedsettingsevasivepathmatch, err := client.GetAdvancedSettingsEvasivePathMatch(ctx, getAdvancedSettingsEvasivePathMatch)
 	if err != nil {

@@ -86,17 +86,17 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceMatchTargetRead")
 	logger.Debugf("in resourceMatchTargetRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:matchtargetid")
+	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	targetid, err := strconv.Atoi(idParts[1])
+	targetID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -104,7 +104,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	getMatchTarget := appsec.GetMatchTargetRequest{
 		ConfigID:      configID,
 		ConfigVersion: version,
-		TargetID:      targetid,
+		TargetID:      targetID,
 	}
 
 	matchtarget, err := client.GetMatchTarget(ctx, getMatchTarget)
@@ -136,17 +136,17 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceMatchTargetUpdate")
 	logger.Debugf("in resourceMatchTargetUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:matchtargetid")
+	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
-	targetid, err := strconv.Atoi(idParts[1])
+	targetID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -157,7 +157,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	updateMatchTarget := appsec.UpdateMatchTargetRequest{
 		ConfigID:       configID,
 		ConfigVersion:  version,
-		TargetID:       targetid,
+		TargetID:       targetID,
 		JsonPayloadRaw: rawJSON,
 	}
 
@@ -176,17 +176,17 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceMatchTargetDelete")
 	logger.Debugf("in resourceMatchTargetDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:matchtargetid")
+	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
-	targetid, err := strconv.Atoi(idParts[1])
+	targetID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -194,7 +194,7 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	removeMatchTarget := appsec.RemoveMatchTargetRequest{
 		ConfigID:      configID,
 		ConfigVersion: version,
-		TargetID:      targetid,
+		TargetID:      targetID,
 	}
 
 	_, errd := client.RemoveMatchTarget(ctx, removeMatchTarget)

@@ -99,16 +99,16 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisRead")
 	logger.Debugf("in resourceReputationAnalysisRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getReputationAnalysis := appsec.GetReputationAnalysisRequest{
 		ConfigID: configID,
@@ -144,16 +144,16 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisUpdate")
 	logger.Debugf("in resourceReputationAnalysisUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	forwardToHTTPHeader, err := tools.GetBoolValue("forward_to_http_header", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -186,16 +186,16 @@ func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisDelete")
 	logger.Debugf("in resourceReputationAnalysisDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	RemoveReputationAnalysis := appsec.RemoveReputationAnalysisRequest{
 		ConfigID:                           configID,

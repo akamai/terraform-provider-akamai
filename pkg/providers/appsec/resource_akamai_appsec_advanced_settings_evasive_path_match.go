@@ -61,7 +61,7 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
-	policyid, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -73,7 +73,7 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 	createAdvancedSettingsEvasivePathMatch := appsec.UpdateAdvancedSettingsEvasivePathMatchRequest{
 		ConfigID:        configID,
 		Version:         version,
-		PolicyID:        policyid,
+		PolicyID:        policyID,
 		EnablePathMatch: enablePathMatch,
 	}
 
@@ -100,20 +100,20 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 
 	getAdvancedSettingsEvasivePathMatch := appsec.GetAdvancedSettingsEvasivePathMatchRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configid:policyid")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getLatestConfigVersion(ctx, configID, m)
-		policyid := idParts[1]
+		policyID := iDParts[1]
 
 		getAdvancedSettingsEvasivePathMatch.ConfigID = configID
 		getAdvancedSettingsEvasivePathMatch.Version = version
-		getAdvancedSettingsEvasivePathMatch.PolicyID = policyid
+		getAdvancedSettingsEvasivePathMatch.PolicyID = policyID
 	} else {
 		configID, err := strconv.Atoi(d.Id())
 		if err != nil {
@@ -152,20 +152,20 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 
 	updateAdvancedSettingsEvasivePathMatch := appsec.UpdateAdvancedSettingsEvasivePathMatchRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configid:policyid")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
-		policyid := idParts[1]
+		policyID := iDParts[1]
 
 		updateAdvancedSettingsEvasivePathMatch.ConfigID = configID
 		updateAdvancedSettingsEvasivePathMatch.Version = version
-		updateAdvancedSettingsEvasivePathMatch.PolicyID = policyid
+		updateAdvancedSettingsEvasivePathMatch.PolicyID = policyID
 	} else {
 		configID, err := strconv.Atoi(d.Id())
 		if err != nil {
@@ -199,20 +199,20 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 
 	removeAdvancedSettingsEvasivePathMatch := appsec.RemoveAdvancedSettingsEvasivePathMatchRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configid:policyid")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
-		policyid := idParts[1]
+		policyID := iDParts[1]
 
 		removeAdvancedSettingsEvasivePathMatch.ConfigID = configID
 		removeAdvancedSettingsEvasivePathMatch.Version = version
-		removeAdvancedSettingsEvasivePathMatch.PolicyID = policyid
+		removeAdvancedSettingsEvasivePathMatch.PolicyID = policyID
 	} else {
 		configID, err := strconv.Atoi(d.Id())
 		if err != nil {

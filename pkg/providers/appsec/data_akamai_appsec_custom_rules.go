@@ -51,11 +51,11 @@ func dataSourceCustomRulesRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 	getCustomRules.ConfigID = configID
 
-	customzruleid, err := tools.GetIntValue("custom_rule_id", d)
+	customRuleID, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getCustomRules.ID = customzruleid
+	getCustomRules.ID = customRuleID
 
 	customrules, err := client.GetCustomRules(ctx, getCustomRules)
 	if err != nil {

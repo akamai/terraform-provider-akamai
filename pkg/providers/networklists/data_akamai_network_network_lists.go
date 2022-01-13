@@ -155,11 +155,11 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		if err := d.Set("json", string(jsonBody)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
-		ids := make([]string, 0, len(networkLists.NetworkLists))
+		IDs := make([]string, 0, len(networkLists.NetworkLists))
 		for _, networkList := range networkLists.NetworkLists {
-			ids = append(ids, networkList.UniqueID)
+			IDs = append(IDs, networkList.UniqueID)
 		}
-		if err := d.Set("list", ids); err != nil {
+		if err := d.Set("list", IDs); err != nil {
 			logger.Errorf("error setting 'list': %s", err.Error())
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}

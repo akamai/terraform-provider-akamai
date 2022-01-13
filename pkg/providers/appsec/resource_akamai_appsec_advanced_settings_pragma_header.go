@@ -98,16 +98,16 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getLatestConfigVersion(ctx, configID, m)
-		policyID := idParts[1]
+		policyID := iDParts[1]
 
 		getAdvancedSettingsPragma.ConfigID = configID
 		getAdvancedSettingsPragma.Version = version
@@ -161,16 +161,16 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 	}
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
-		policyID := idParts[1]
+		policyID := iDParts[1]
 
 		removeAdvancedSettingsPragma.ConfigID = configID
 		removeAdvancedSettingsPragma.Version = version
@@ -204,17 +204,17 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 
 	updateAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
 
-		policyID := idParts[1]
+		policyID := iDParts[1]
 
 		updateAdvancedSettingsPragma.ConfigID = configID
 		updateAdvancedSettingsPragma.Version = version

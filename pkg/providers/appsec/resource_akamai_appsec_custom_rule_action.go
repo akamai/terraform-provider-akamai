@@ -66,7 +66,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	ruleid, err := tools.GetIntValue("custom_rule_id", d)
+	ruleID, err := tools.GetIntValue("custom_rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -79,7 +79,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
-		RuleID:   ruleid,
+		RuleID:   ruleID,
 		Action:   customruleaction,
 	}
 
@@ -100,17 +100,17 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
 	logger.Debugf("in resourceCustomRuleActionRead")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customruleid")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
-	ruleid, err := strconv.Atoi(idParts[2])
+	policyID := iDParts[1]
+	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,7 +119,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
-		RuleID:   ruleid,
+		RuleID:   ruleID,
 	}
 
 	customruleaction, err := client.GetCustomRuleAction(ctx, getCustomRuleAction)
@@ -148,17 +148,17 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
 	logger.Debugf("in resourceCustomRuleActionUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customruleid")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
-	policyID := idParts[1]
-	ruleid, err := strconv.Atoi(idParts[2])
+	policyID := iDParts[1]
+	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -171,7 +171,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
-		RuleID:   ruleid,
+		RuleID:   ruleID,
 		Action:   customruleaction,
 	}
 
@@ -190,17 +190,17 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionDelete")
 	logger.Debugf("in resourceCustomRuleActionDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customruleid")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
-	policyID := idParts[1]
-	ruleid, err := strconv.Atoi(idParts[2])
+	policyID := iDParts[1]
+	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -209,7 +209,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
-		RuleID:   ruleid,
+		RuleID:   ruleID,
 		Action:   "none",
 	}
 
