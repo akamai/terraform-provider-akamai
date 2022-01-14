@@ -76,10 +76,10 @@ func validateActionAndConditionException(action, conditionexception string) erro
 	return nil
 }
 
-func splitID(ID string, expectedNum int, example string) ([]string, error) {
-	parts := strings.Split(ID, ":")
+func splitID(id string, expectedNum int, example string) ([]string, error) {
+	parts := strings.Split(id, ":")
 	if len(parts) != expectedNum {
-		return nil, fmt.Errorf("ID '%s' incorrectly formatted: should be of form '%s'", ID, example)
+		return nil, fmt.Errorf("ID '%s' incorrectly formatted: should be of form '%s'", id, example)
 	}
 	return parts, nil
 }
