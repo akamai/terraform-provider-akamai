@@ -585,11 +585,11 @@ func getDataCenters(d *schema.ResourceData) []cloudlets.DataCenter {
 			Continent:                     dcMap["continent"].(string),
 			Country:                       dcMap["country"].(string),
 			Hostname:                      dcMap["hostname"].(string),
-			Latitude:                      dcMap["latitude"].(float64),
+			Latitude:                      getFloat64PtrValue(dcMap, "latitude"),
 			LivenessHosts:                 livenessHostsStr,
-			Longitude:                     dcMap["longitude"].(float64),
+			Longitude:                     getFloat64PtrValue(dcMap, "longitude"),
 			OriginID:                      dcMap["origin_id"].(string),
-			Percent:                       dcMap["percent"].(float64),
+			Percent:                       getFloat64PtrValue(dcMap, "percent"),
 			StateOrProvince:               stateOrProvince,
 		}
 	}
