@@ -143,7 +143,7 @@ This resource returns these attributes:
 * `modified_by` - The user who modified the stream.
 * `modified_date` - The date and time when the stream was modified.
 * `papi_json` - The JSON-encoded rule you need to include in the property rule tree to enable the DataStream behavior. See the [DataStream workflow](../guides/get_started_datastream.md#add-a-datastream-rule-to-a-property) for more information.
-* `product_id` - The ID of the product that you created stream for.
+* `product_id` - The ID of the product that you created stream for. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix#common-product-ids) for more information.
 * `product_name` - The name of the product that you created this stream for.
 * `stream_version_id` - Identifies the configuration version of the stream.
 * `compress_logs` - Whether the GZIP compression for a log file was sent to a destination.

@@ -14,7 +14,7 @@ The permissions you need for the Akamai Provider depend on
 the subset of Akamai resources and data sources you'll use. Without
 these permissions, your Terraform configurations won't execute.
 
-See [Get Started with APIs](https://developer.akamai.com/api/getting-started)
+See [Create authentication credentials](https://techdocs.akamai.com/developer/docs/set-up-authentication-credentials)
 for more information on the process of creating Akamai credentials.
 
 
@@ -22,8 +22,8 @@ for more information on the process of creating Akamai credentials.
 
 To prepare the `.edgerc` file, you need to:
 
-1.  Determine which Akamai Provider modules you want to use with Terraform.
-2. Find the API service name for the modules you'll be adding and [create an API client](https://developer.akamai.com/api/getting-started#createanapiclient).
+1. Determine which Akamai Provider modules you want to use with Terraform.
+2. Find the API service name for the modules you'll be adding and [create an API client](https://techdocs.akamai.com/developer/docs/set-up-authentication-credentials).
 3.  If you already have the API clients you need, you can add the credentials to your local `.edgerc` file.
 
 For example, if you want to add Akamai properties to your existing
@@ -38,6 +38,8 @@ supporting API service names:
 |-------------|----------------------|
 | **Application Security** | Application Security |
 | **Certificate Provisioning** | Certificate Provisioning System |
+| **Cloudlets** | Cloudlets Policy Manager |
+| **DataStream** | DataStream  |
 | **DNS Zone Administration Module** | DNS Zone Management |
 | **Global Traffic Management Domain Administration** | Global Traffic Management |
 | **Identity and Access Management** | Identity Management: User Administration |
