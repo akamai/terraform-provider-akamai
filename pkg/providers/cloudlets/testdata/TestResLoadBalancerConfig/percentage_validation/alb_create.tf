@@ -4,7 +4,7 @@ provider "akamai" {
 
 resource "akamai_cloudlets_application_load_balancer" "alb" {
   origin_id      = "test_origin"
-  description    = "test description updated"
+  description    = "test description"
   balancing_type = "WEIGHTED"
   data_centers {
     cloud_server_host_header_override = false
@@ -13,7 +13,7 @@ resource "akamai_cloudlets_application_load_balancer" "alb" {
     continent                         = "NA"
     latitude                          = 102.78108
     longitude                         = -116.07064
-    percent                           = 100
+    percent                           = 10.012
     liveness_hosts = [
     "tf.test"]
     hostname          = "test-hostname"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
@@ -23,6 +24,7 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 	return &schema.Resource{
 		CustomizeDiff: customdiff.All(
 			EnforceVersionChange,
+			ensureTotalPercentageSum,
 		),
 		CreateContext: resourceALBCreate,
 		ReadContext:   resourceALBRead,
@@ -231,6 +233,27 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 			StateContext: resourceALBImport,
 		},
 	}
+}
+
+// ensureTotalPercentageSum ensures that all datacenters' percent sum up to 100
+// and will veto the diff altogether and abort the plan when above condition is not met
+// This is a workaround as CustomizeDiff function in not meant to be used for resource validation
+// but there is no easier solution to do it with the current state of terraform sdk
+func ensureTotalPercentageSum(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	if dcs, ok := diff.GetOk("data_centers"); ok {
+		dataCenters := dcs.(*schema.Set).List()
+		var total float64
+		for _, dataCenter := range dataCenters {
+			dc := dataCenter.(map[string]interface{})
+			percent := dc["percent"].(float64)
+			total += percent
+		}
+		if 100.0 != total {
+			t := strconv.FormatFloat(total, 'f', -1, 64)
+			return fmt.Errorf("the total data center percentage must be 100%%: total=%s%%", t)
+		}
+	}
+	return nil
 }
 
 // EnforceVersionChange enforces that change to any field will most likely result in creating a new version
