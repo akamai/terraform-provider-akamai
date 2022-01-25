@@ -19,6 +19,14 @@ func (m *mockedgeworkers) ListItems(ctx context.Context, req edgeworkers.ListIte
 	return args.Get(0).(*edgeworkers.ListItemsResponse), args.Error(1)
 }
 
+func (m *mockedgeworkers) GetSummaryReport(ctx context.Context, req edgeworkers.GetSummaryReportRequest) (*edgeworkers.GetSummaryReportResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*edgeworkers.GetSummaryReportResponse), args.Error(1)
+}
+
 func (m *mockedgeworkers) GetItem(ctx context.Context, req edgeworkers.GetItemRequest) (*edgeworkers.Item, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
