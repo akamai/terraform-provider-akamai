@@ -3,6 +3,7 @@ package cloudlets
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -139,7 +140,7 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 				},
 			},
 			"liveness_settings": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
@@ -597,11 +598,14 @@ func getDataCenters(d *schema.ResourceData) []cloudlets.DataCenter {
 }
 
 func getLivenessSettings(d *schema.ResourceData) *cloudlets.LivenessSettings {
-	lsSet := d.Get("liveness_settings").(*schema.Set)
-	if lsSet.Len() == 0 {
+	lsSet, err := tools.GetListValue("liveness_settings", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return nil
 	}
-	lsMap := lsSet.List()[0].(map[string]interface{})
+	if len(lsSet) == 0 {
+		return nil
+	}
+	lsMap := lsSet[0].(map[string]interface{})
 	additionalHeaders := lsMap["additional_headers"].(map[string]interface{})
 	additionalHeadersStr := make(map[string]string, len(additionalHeaders))
 	for k, v := range additionalHeaders {
