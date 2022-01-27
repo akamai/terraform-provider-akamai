@@ -3,7 +3,6 @@ package cloudlets
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -597,10 +596,7 @@ func getDataCenters(d *schema.ResourceData) []cloudlets.DataCenter {
 
 func getLivenessSettings(d *schema.ResourceData) *cloudlets.LivenessSettings {
 	lsSet, err := tools.GetListValue("liveness_settings", d)
-	if err != nil && errors.Is(err, tools.ErrNotFound) {
-		return nil
-	}
-	if len(lsSet) == 0 {
+	if err != nil {
 		return nil
 	}
 	lsMap := lsSet[0].(map[string]interface{})
