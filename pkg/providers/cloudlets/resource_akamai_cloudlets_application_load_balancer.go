@@ -315,11 +315,9 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	createLBConfigReq := cloudlets.CreateOriginRequest{
+	createLBConfigResp, err := client.CreateOrigin(ctx, cloudlets.CreateOriginRequest{
 		OriginID: originID,
-	}
-
-	createLBConfigResp, err := client.CreateOrigin(ctx, createLBConfigReq)
+	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -599,7 +597,7 @@ func getDataCenters(d *schema.ResourceData) []cloudlets.DataCenter {
 
 func getLivenessSettings(d *schema.ResourceData) *cloudlets.LivenessSettings {
 	lsSet, err := tools.GetListValue("liveness_settings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && errors.Is(err, tools.ErrNotFound) {
 		return nil
 	}
 	if len(lsSet) == 0 {
