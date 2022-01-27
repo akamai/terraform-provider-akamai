@@ -595,11 +595,11 @@ func getDataCenters(d *schema.ResourceData) []cloudlets.DataCenter {
 }
 
 func getLivenessSettings(d *schema.ResourceData) *cloudlets.LivenessSettings {
-	lsSet, err := tools.GetListValue("liveness_settings", d)
+	lsList, err := tools.GetListValue("liveness_settings", d)
 	if err != nil {
 		return nil
 	}
-	lsMap := lsSet[0].(map[string]interface{})
+	lsMap := lsList[0].(map[string]interface{})
 	additionalHeaders := lsMap["additional_headers"].(map[string]interface{})
 	additionalHeadersStr := make(map[string]string, len(additionalHeaders))
 	for k, v := range additionalHeaders {
