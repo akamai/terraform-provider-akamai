@@ -34,11 +34,11 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						Continent:       "NA",
 						Country:         "US",
 						Hostname:        "test-hostname",
-						Latitude:        102.78108,
+						Latitude:        tools.Float64Ptr(102.78108),
 						LivenessHosts:   livenessHosts,
-						Longitude:       -116.07064,
+						Longitude:       tools.Float64Ptr(-116.07064),
 						OriginID:        "test_origin",
-						Percent:         10,
+						Percent:         tools.Float64Ptr(100),
 						StateOrProvince: tools.StringPtr("MA"),
 					},
 				},
@@ -181,7 +181,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "data_centers.0.continent", "NA"),
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "data_centers.0.latitude", "102.78108"),
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "data_centers.0.longitude", "-116.07064"),
-				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "data_centers.0.percent", "10"),
+				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "data_centers.0.percent", "100"),
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "data_centers.0.hostname", "test-hostname"),
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "data_centers.0.state_or_province", "MA"),
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "data_centers.0.city", "Boston"),
@@ -414,11 +414,11 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 					Continent:       "NA",
 					Country:         "US",
 					Hostname:        "test-hostname",
-					Latitude:        102.78108,
+					Latitude:        tools.Float64Ptr(102.78108),
 					LivenessHosts:   []string{"tf.test"},
-					Longitude:       -116.07064,
+					Longitude:       tools.Float64Ptr(-116.07064),
 					OriginID:        "test_origin",
-					Percent:         10,
+					Percent:         tools.Float64Ptr(100),
 					StateOrProvince: tools.StringPtr("MA"),
 				},
 			},
@@ -695,6 +695,24 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
 						ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
 							"Liveness tests for this host can be configured in DNS traffic management"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("error creating origin with sum of percentages other than 100", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/percentage_validation"
+		client := new(mockcloudlets)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						ExpectError: regexp.MustCompile("the total data center percentage must be 100%: total=10.012%"),
 					},
 				},
 			})

@@ -4,11 +4,15 @@
       "type": "anything",
       "default": "test"
     },
-    "testJSON": {
+    "testJSONMap": {
       "type": "jsonBlock",
       "default": {
         "abc": "abc"
       }
+    },
+    "testJSONArray": {
+      "type": "jsonBlock",
+      "default": ["a", "b", "c"]
     },
     "testNumber": {
       "type": "num",

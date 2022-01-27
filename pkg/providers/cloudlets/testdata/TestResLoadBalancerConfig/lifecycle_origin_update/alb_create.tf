@@ -13,7 +13,7 @@ resource "akamai_cloudlets_application_load_balancer" "alb" {
     continent                         = "NA"
     latitude                          = 102.78108
     longitude                         = -116.07064
-    percent                           = 10
+    percent                           = 100
     liveness_hosts = [
     "tf.test"]
     hostname          = "test-hostname"

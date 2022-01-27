@@ -12,9 +12,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func getMatchRulesHashID(matchRules *cloudlets.MatchRules) (string, error) {
+type (
+	// objectMatchValueHandler is type alias function for casting ObjectMatchValue into a specified type
+	objectMatchValueHandler func(map[string]interface{}, string) (interface{}, error)
+)
+
+func getMatchRulesHashID(matchRules cloudlets.MatchRules) (string, error) {
 	id := "id"
-	for _, rule := range *matchRules {
+	for _, rule := range matchRules {
 		switch r := rule.(type) {
 		case cloudlets.MatchRuleER:
 			id = id + ":" + r.Name
@@ -51,6 +56,14 @@ func getInt64Value(matchRuleMap map[string]interface{}, name string) int64 {
 	return 0
 }
 
+func getFloat64PtrValue(matchRuleMap map[string]interface{}, name string) *float64 {
+	if value, ok := matchRuleMap[name]; ok {
+		v := value.(float64)
+		return &v
+	}
+	return nil
+}
+
 func getBoolValue(matchRuleMap map[string]interface{}, name string) bool {
 	if value, ok := matchRuleMap[name]; ok {
 		return value.(bool)
@@ -74,7 +87,7 @@ func getOMVSimpleType(omv map[string]interface{}) interface{} {
 		Type:  cloudlets.Simple,
 		Value: getListOfStringsValue(omv, "value"),
 	}
-	return simpleType
+	return &simpleType
 }
 
 func getOMVObjectType(omv map[string]interface{}) (interface{}, error) {
@@ -89,7 +102,7 @@ func getOMVObjectType(omv map[string]interface{}) (interface{}, error) {
 		NameHasWildcard:   getBoolValue(omv, "name_has_wildcard"),
 		Options:           opts,
 	}
-	return objectType, nil
+	return &objectType, nil
 }
 
 func getOMVRangeType(omv map[string]interface{}) (interface{}, error) {
@@ -107,7 +120,7 @@ func getOMVRangeType(omv map[string]interface{}) (interface{}, error) {
 		Type:  cloudlets.Range,
 		Value: valuesAsInt,
 	}
-	return rangeType, nil
+	return &rangeType, nil
 }
 
 func parseOMVOptions(omvOptions map[string]interface{}) (*cloudlets.Options, error) {
@@ -131,4 +144,57 @@ func parseOMVOptions(omvOptions map[string]interface{}) (*cloudlets.Options, err
 		ValueEscaped:       getBoolValue(optionFields, "value_escaped"),
 	}
 	return &option, nil
+}
+
+func setMatchRuleSchemaType(matchRules []interface{}, t cloudlets.MatchRuleType) error {
+	for _, mr := range matchRules {
+		matchRuleMap, ok := mr.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("match rule is of invalid type: %T", mr)
+		}
+		matchRuleMap["type"] = t
+	}
+	return nil
+}
+
+func parseObjectMatchValue(criteriaMap map[string]interface{}, handler objectMatchValueHandler) (interface{}, error) {
+	v, ok := criteriaMap["object_match_value"]
+	if !ok {
+		return nil, nil
+	}
+
+	rawObjects := v.(*schema.Set).List()
+	if len(rawObjects) != 0 {
+		omv, ok := rawObjects[0].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("%w: 'object_match_value' should be an object", tools.ErrInvalidType)
+		}
+		if omvType, ok := omv["type"]; ok {
+			return handler(omv, omvType.(string))
+		}
+	}
+	return nil, nil
+}
+
+func getObjectMatchValueObjectOrSimpleOrRange(omv map[string]interface{}, t string) (interface{}, error) {
+	if cloudlets.ObjectMatchValueObjectType(t) == cloudlets.Object {
+		return getOMVObjectType(omv)
+	}
+	if cloudlets.ObjectMatchValueSimpleType(t) == cloudlets.Simple {
+		return getOMVSimpleType(omv), nil
+	}
+	if cloudlets.ObjectMatchValueRangeType(t) == cloudlets.Range {
+		return getOMVRangeType(omv)
+	}
+	return nil, fmt.Errorf("'object_match_value' type '%s' is invalid. Must be one of: 'simple', 'range' or 'object'", t)
+}
+
+func getObjectMatchValueObjectOrSimple(omv map[string]interface{}, t string) (interface{}, error) {
+	if cloudlets.ObjectMatchValueObjectType(t) == cloudlets.Object {
+		return getOMVObjectType(omv)
+	}
+	if cloudlets.ObjectMatchValueSimpleType(t) == cloudlets.Simple {
+		return getOMVSimpleType(omv), nil
+	}
+	return nil, fmt.Errorf("'object_match_value' type '%s' is invalid. Must be one of: 'simple' or 'object'", t)
 }

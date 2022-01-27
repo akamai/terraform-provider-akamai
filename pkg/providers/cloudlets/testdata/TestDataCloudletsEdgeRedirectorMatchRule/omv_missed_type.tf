@@ -14,7 +14,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     matches {
       case_sensitive = true
       match_type     = "cookie"
-      match_value    = "cookie=cookievalue"
       match_operator = "equals"
       negate         = false
       object_match_value {

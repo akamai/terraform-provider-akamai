@@ -20,8 +20,8 @@ This example returns the JSON-encoded rules for the Application Load Balancer Cl
 data "akamai_cloudlets_application_load_balancer_match_rule" "example" {
     match_rules {
         name = "rule"
-        start = 10
-        end = 10000
+        start = 1644865045
+        end = 1645037845
         match_url = "example.com"
         matches {
             case_sensitive = false

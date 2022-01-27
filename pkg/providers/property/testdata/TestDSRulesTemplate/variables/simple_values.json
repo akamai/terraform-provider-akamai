@@ -1,6 +1,7 @@
 {
   "testString": "test 2",
-  "testJSON": {
+  "testJSONMap": {
     "abc": "bca"
-  }
+  },
+  "testJSONArray": ["d", "e", "f"]
 }

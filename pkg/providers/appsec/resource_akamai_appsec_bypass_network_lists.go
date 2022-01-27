@@ -158,10 +158,10 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 		NetworkLists: networkListIDList,
 	}
 
-	_, erru := client.UpdateBypassNetworkLists(ctx, updateBypassNetworkLists)
-	if erru != nil {
-		logger.Errorf("calling 'UpdateBypassNetworkLists': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateBypassNetworkLists(ctx, updateBypassNetworkLists)
+	if err != nil {
+		logger.Errorf("calling 'UpdateBypassNetworkLists': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceBypassNetworkListsRead(ctx, d, m)
@@ -194,10 +194,10 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 		NetworkLists: networkListIDList,
 	}
 
-	_, erru := client.RemoveBypassNetworkLists(ctx, removeBypassNetworkLists)
-	if erru != nil {
-		logger.Errorf("calling 'RemoveBypassNetworkLists': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.RemoveBypassNetworkLists(ctx, removeBypassNetworkLists)
+	if err != nil {
+		logger.Errorf("calling 'RemoveBypassNetworkLists': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

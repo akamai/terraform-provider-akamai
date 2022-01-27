@@ -88,17 +88,17 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceRatePolicyRead")
 	logger.Debugf("in resourceRatePolicyRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	ratePolicyID, err := strconv.Atoi(idParts[1])
+	ratePolicyID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -138,16 +138,16 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceRatePolicyUpdate")
 	logger.Debugf("in resourceRatePolicy`Update")
 
-	idParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ratePolicyID, err := strconv.Atoi(idParts[1])
+	ratePolicyID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -178,17 +178,17 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceRatePolicyDelete")
 	logger.Debugf("in resourceRatePolicyDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
-	ratePolicyID, err := strconv.Atoi(idParts[1])
+	ratePolicyID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}

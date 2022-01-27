@@ -36,4 +36,9 @@ EOT
     value = "{\"enabled\":true}"
     type  = "jsonBlock"
   }
+  variables {
+    name  = "domain"
+    value = "[\"a\",\"b\",\"c\"]"
+    type  = "jsonBlock"
+  }
 }

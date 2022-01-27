@@ -55,14 +55,14 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 	extractString := strings.Join(getNetworkListSubscription.Recipients, " ")
 	recSHA := tools.GetSHAString(extractString)
 
-	uniqueids := d.Get("network_list").([]interface{})
-	uids := make([]string, 0, len(uniqueids))
+	uniqueIDs := d.Get("network_list").([]interface{})
+	IDs := make([]string, 0, len(uniqueIDs))
 
-	for _, h := range uniqueids {
-		uids = append(uids, h.(string))
+	for _, h := range uniqueIDs {
+		IDs = append(IDs, h.(string))
 	}
 
-	getNetworkListSubscription.UniqueIds = uids
+	getNetworkListSubscription.UniqueIds = IDs
 
 	extractStringUID := strings.Join(getNetworkListSubscription.UniqueIds, " ")
 	recSHAUID := tools.GetSHAString(extractStringUID)
@@ -92,14 +92,14 @@ func resourceNetworkListSubscriptionDelete(ctx context.Context, d *schema.Resour
 	}
 	removeNetworkListSubscription.Recipients = nru
 
-	uniqueids := d.Get("network_list").([]interface{})
-	uids := make([]string, 0, len(uniqueids))
+	uniqueIDs := d.Get("network_list").([]interface{})
+	IDs := make([]string, 0, len(uniqueIDs))
 
-	for _, h := range uniqueids {
-		uids = append(uids, h.(string))
+	for _, h := range uniqueIDs {
+		IDs = append(IDs, h.(string))
 	}
 
-	removeNetworkListSubscription.UniqueIds = uids
+	removeNetworkListSubscription.UniqueIds = IDs
 	_, errd := client.RemoveNetworkListSubscription(ctx, removeNetworkListSubscription)
 	if errd != nil {
 		logger.Errorf("calling 'updateNetworkListSubscription': %s", errd.Error())
@@ -126,14 +126,14 @@ func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.Resour
 	extractString := strings.Join(updateNetworkListSubscription.Recipients, " ")
 	recSHA := tools.GetSHAString(extractString)
 
-	uniqueids := d.Get("network_list").([]interface{})
-	uids := make([]string, 0, len(uniqueids))
+	uniqueIDs := d.Get("network_list").([]interface{})
+	IDs := make([]string, 0, len(uniqueIDs))
 
-	for _, h := range uniqueids {
-		uids = append(uids, h.(string))
+	for _, h := range uniqueIDs {
+		IDs = append(IDs, h.(string))
 	}
 
-	updateNetworkListSubscription.UniqueIds = uids
+	updateNetworkListSubscription.UniqueIds = IDs
 
 	extractStringUID := strings.Join(updateNetworkListSubscription.UniqueIds, " ")
 	recSHAUID := tools.GetSHAString(extractStringUID)

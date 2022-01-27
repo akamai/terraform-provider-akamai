@@ -121,17 +121,17 @@ func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	logger := meta.Log("APPSEC", "resourceEvalGroupRead")
 	logger.Debugf("in resourceEvalGroupRead")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
-	group := idParts[2]
+	policyID := iDParts[1]
+	group := iDParts[2]
 
 	getAttackGroup := appsec.GetAttackGroupRequest{
 		ConfigID: configID,
@@ -177,17 +177,17 @@ func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceEvalGroupUpdate")
 	logger.Debugf("in resourceEvalGroupUpdate")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "evalGroup", m)
-	policyID := idParts[1]
-	group := idParts[2]
+	policyID := iDParts[1]
+	group := iDParts[2]
 
 	action, err := tools.GetStringValue("attack_group_action", d)
 	if err != nil {
@@ -228,17 +228,17 @@ func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceEvalgroupDelete")
 	logger.Debugf("in resourceEvalGroupDelete")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
+	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "evalGroup", m)
-	policyID := idParts[1]
-	group := idParts[2]
+	policyID := iDParts[1]
+	group := iDParts[2]
 
 	removeAttackGroup := appsec.UpdateAttackGroupRequest{
 		ConfigID: configID,

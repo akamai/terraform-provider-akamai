@@ -9,7 +9,7 @@ description: |-
 # akamai_contracts
 
 
-Use the `akamai_contracts` data source to list contracts associated with the [EdgeGrid API client token](https://developer.akamai.com/getting-started/edgegrid) you're using. 
+Use the `akamai_contracts` data source to list contracts associated with the [EdgeGrid API client token](https://techdocs.akamai.com/developer/docs/authenticate-with-edgegrid) you're using. 
 
 ## Example usage
 

@@ -298,17 +298,19 @@ func TestGetValuesFromMap(t *testing.T) {
 			definitionsFile: "simple_definitions.json",
 			valuesFile:      "simple_values.json",
 			expected: map[string]interface{}{
-				"testString": `"test 2"`,
-				"testJSON":   `{"abc":"bca"}`,
-				"testNumber": "null",
+				"testString":    `"test 2"`,
+				"testJSONMap":   `{"abc":"bca"}`,
+				"testJSONArray": `["d","e","f"]`,
+				"testNumber":    "null",
 			},
 		},
 		"values not passed, take defaults": {
 			definitionsFile: "simple_definitions.json",
 			expected: map[string]interface{}{
-				"testString": `"test"`,
-				"testJSON":   `{"abc":"abc"}`,
-				"testNumber": "null",
+				"testString":    `"test"`,
+				"testJSONMap":   `{"abc":"abc"}`,
+				"testJSONArray": `["a","b","c"]`,
+				"testNumber":    "null",
 			},
 		},
 		"definitions file not found": {
@@ -360,14 +362,16 @@ func TestConvertToTypedMap(t *testing.T) {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "testString", "type": "string", "value": "test"},
 				map[string]interface{}{"name": "testNum", "type": "number", "value": "1.23"},
-				map[string]interface{}{"name": "testJSON", "type": "jsonBlock", "value": `{"abc": "cba", "number":1}`},
+				map[string]interface{}{"name": "testJSONMap", "type": "jsonBlock", "value": `{"abc": "cba", "number":1}`},
+				map[string]interface{}{"name": "testJSONArray", "type": "jsonBlock", "value": `["a", "b", "c"]`},
 				map[string]interface{}{"name": "testBool", "type": "bool", "value": "true"},
 			},
 			expected: map[string]interface{}{
-				"testString": `"test"`,
-				"testNum":    1.23,
-				"testJSON":   `{"abc": "cba", "number":1}`,
-				"testBool":   true,
+				"testString":    `"test"`,
+				"testNum":       1.23,
+				"testJSONMap":   `{"abc": "cba", "number":1}`,
+				"testJSONArray": `["a", "b", "c"]`,
+				"testBool":      true,
 			},
 		},
 		"invalid values slice": {

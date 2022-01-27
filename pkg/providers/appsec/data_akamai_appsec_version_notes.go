@@ -50,10 +50,10 @@ func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getVersionNotes.Version = getLatestConfigVersion(ctx, configID, m)
 
-	versionnotes, errr := client.GetVersionNotes(ctx, getVersionNotes)
-	if errr != nil {
-		logger.Errorf("calling 'getVersionNotes': %s", errr.Error())
-		return diag.FromErr(errr)
+	versionnotes, err := client.GetVersionNotes(ctx, getVersionNotes)
+	if err != nil {
+		logger.Errorf("calling 'getVersionNotes': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	ots := OutputTemplates{}

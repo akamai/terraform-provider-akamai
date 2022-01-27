@@ -92,23 +92,23 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceCustomRuleRead")
 	logger.Debugf("in resourceCustomRuleRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:custom_rule_id")
+	iDParts, err := splitID(d.Id(), 2, "configID:customRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	customruleid, err := strconv.Atoi(idParts[1])
+	customRuleID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	getCustomRule := appsec.GetCustomRuleRequest{
 		ConfigID: configID,
-		ID:       customruleid,
+		ID:       customRuleID,
 	}
 
 	customrule, err := client.GetCustomRule(ctx, getCustomRule)
@@ -142,17 +142,17 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomRuleUpdate")
 	logger.Debugf("in resourceCustomRuleUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:custom_rule_id")
+	iDParts, err := splitID(d.Id(), 2, "configID:customRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	customruleid, err := strconv.Atoi(idParts[1])
+	customRuleID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -163,14 +163,14 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	updateCustomRule := appsec.UpdateCustomRuleRequest{
 		ConfigID:       configID,
-		ID:             customruleid,
+		ID:             customRuleID,
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, erru := client.UpdateCustomRule(ctx, updateCustomRule)
-	if erru != nil {
-		logger.Errorf("calling 'updateCustomRule': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateCustomRule(ctx, updateCustomRule)
+	if err != nil {
+		logger.Errorf("calling 'updateCustomRule': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceCustomRuleRead(ctx, d, m)
@@ -182,24 +182,24 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomRuleDelete")
 	logger.Debugf("in resourceCustomRuleDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:custom_rule_id")
+	iDParts, err := splitID(d.Id(), 2, "configID:customRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	customruleid, err := strconv.Atoi(idParts[1])
+	customRuleID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	getCustomRules := appsec.GetCustomRulesRequest{
 		ConfigID: configID,
-		ID:       customruleid,
+		ID:       customRuleID,
 	}
 
 	customrules, err := client.GetCustomRules(ctx, getCustomRules)
@@ -213,17 +213,17 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 
 		removeCustomRule := appsec.RemoveCustomRuleRequest{
 			ConfigID: configID,
-			ID:       customruleid,
+			ID:       customRuleID,
 		}
 
-		_, errd := client.RemoveCustomRule(ctx, removeCustomRule)
-		if errd != nil {
-			logger.Errorf("calling 'removeCustomRule': %s", errd.Error())
-			return diag.FromErr(errd)
+		_, err = client.RemoveCustomRule(ctx, removeCustomRule)
+		if err != nil {
+			logger.Errorf("calling 'removeCustomRule': %s", err.Error())
+			return diag.FromErr(err)
 		}
 		d.SetId("")
 	} else {
-		return diag.Errorf("custom rule %d cannot be deleted, it is either active or in use", customruleid)
+		return diag.Errorf("custom rule %d cannot be deleted, it is either active or in use", customRuleID)
 	}
 	return nil
 }

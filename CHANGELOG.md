@@ -1,5 +1,25 @@
 # RELEASE NOTES
 
+## 1.10.0 (Jan 27, 2022)
+
+#### FEATURES/ENHANCEMENTS
+
+* CLOUDLETS
+  * Support for VP cloudlet type (Visitor Prioritization)
+  * Support for CD cloudlet type (Continuous Deployment / Phased Release)
+  * Support for FR cloudlet type (Forward Rewrite)
+  * Support for AP cloudlet type (API Prioritization)
+
+* APPSEC
+  * Remove WAP-only datasource and resources
+  * Add support for Evasive Path Match feature 
+
+* NETWORK LISTS
+  * Include contract_id & group_id in akamai_networklist_network_lists datasource
+
+* PAPI
+  * Add support for array type variables in akamai_property_rules_template ([#257](https://github.com/akamai/terraform-provider-akamai/issues/257))
+
 ## 1.9.1 (Dec 16, 2021)
 
 #### BUG FIXES:

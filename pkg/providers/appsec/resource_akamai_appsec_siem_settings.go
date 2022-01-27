@@ -82,9 +82,9 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	spids := make([]string, 0, len(securityPolicyIDs.List()))
+	spIDs := make([]string, 0, len(securityPolicyIDs.List()))
 	for _, h := range securityPolicyIDs.List() {
-		spids = append(spids, h.(string))
+		spIDs = append(spIDs, h.(string))
 
 	}
 	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
@@ -101,15 +101,15 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 		Version:                 version,
 		EnableSiem:              enableSiem,
 		EnableForAllPolicies:    enableForAllPolicies,
-		FirewallPolicyIds:       spids,
+		FirewallPolicyIds:       spIDs,
 		EnabledBotmanSiemEvents: enableBotmanSiem,
 		SiemDefinitionID:        siemID,
 	}
 
-	_, erru := client.UpdateSiemSettings(ctx, createSiemSettings)
-	if erru != nil {
-		logger.Errorf("calling 'createSiemSettings': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateSiemSettings(ctx, createSiemSettings)
+	if err != nil {
+		logger.Errorf("calling 'createSiemSettings': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d", createSiemSettings.ConfigID))
@@ -185,9 +185,9 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	spids := make([]string, 0, len(securityPolicyIDs.List()))
+	spIDs := make([]string, 0, len(securityPolicyIDs.List()))
 	for _, h := range securityPolicyIDs.List() {
-		spids = append(spids, h.(string))
+		spIDs = append(spIDs, h.(string))
 
 	}
 	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
@@ -204,15 +204,15 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 		Version:                 version,
 		EnableSiem:              enableSiem,
 		EnableForAllPolicies:    enableForAllPolicies,
-		FirewallPolicyIds:       spids,
+		FirewallPolicyIds:       spIDs,
 		EnabledBotmanSiemEvents: enableBotmanSiem,
 		SiemDefinitionID:        siemID,
 	}
 
-	_, erru := client.UpdateSiemSettings(ctx, updateSiemSettings)
-	if erru != nil {
-		logger.Errorf("calling 'updateSiemSettings': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateSiemSettings(ctx, updateSiemSettings)
+	if err != nil {
+		logger.Errorf("calling 'updateSiemSettings': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceSiemSettingsRead(ctx, d, m)
@@ -236,10 +236,10 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 		EnableSiem: false,
 	}
 
-	_, erru := client.RemoveSiemSettings(ctx, removeSiemSettings)
-	if erru != nil {
-		logger.Errorf("calling 'updateSiemSettings': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.RemoveSiemSettings(ctx, removeSiemSettings)
+	if err != nil {
+		logger.Errorf("calling 'updateSiemSettings': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

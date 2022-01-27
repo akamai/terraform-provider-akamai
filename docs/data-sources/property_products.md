@@ -13,7 +13,7 @@ Use the `akamai_property_products` data source to list the products included on 
 
 ## Example usage
 
-This example returns products associated with the [EdgeGrid client token](https://developer.akamai.com/getting-started/edgegrid) for a given contract:
+This example returns products associated with the [EdgeGrid client token](https://techdocs.akamai.com/developer/docs/authenticate-with-edgegrid) for a given contract:
 
 ```hcl
 datasource "akamai_property_products" "my-example" {

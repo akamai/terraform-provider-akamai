@@ -88,10 +88,10 @@ func resourcePenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m int
 		Action:               penaltyboxaction,
 	}
 
-	_, erru := client.UpdatePenaltyBox(ctx, createPenaltyBox)
-	if erru != nil {
-		logger.Errorf("calling 'createPenaltyBox': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdatePenaltyBox(ctx, createPenaltyBox)
+	if err != nil {
+		logger.Errorf("calling 'createPenaltyBox': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", createPenaltyBox.ConfigID, createPenaltyBox.PolicyID))
@@ -105,16 +105,16 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxRead")
 	logger.Debugf("in resourcePenaltyBoxRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getPenaltyBox := appsec.GetPenaltyBoxRequest{
 		ConfigID: configID,
@@ -150,16 +150,16 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxUpdate")
 	logger.Debugf("in resourcePenaltyBoxUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -177,10 +177,10 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 		Action:               penaltyboxaction,
 	}
 
-	_, erru := client.UpdatePenaltyBox(ctx, updatePenaltyBox)
-	if erru != nil {
-		logger.Errorf("calling 'updatePenaltyBox': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdatePenaltyBox(ctx, updatePenaltyBox)
+	if err != nil {
+		logger.Errorf("calling 'updatePenaltyBox': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourcePenaltyBoxRead(ctx, d, m)
@@ -192,16 +192,16 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxDelete")
 	logger.Debugf("in resourcePenaltyBoxDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	removePenaltyBox := appsec.UpdatePenaltyBoxRequest{
 		ConfigID:             configID,
@@ -211,10 +211,10 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 		Action:               "none",
 	}
 
-	_, errd := client.UpdatePenaltyBox(ctx, removePenaltyBox)
-	if errd != nil {
-		logger.Errorf("calling 'removePenaltyBox': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.UpdatePenaltyBox(ctx, removePenaltyBox)
+	if err != nil {
+		logger.Errorf("calling 'removePenaltyBox': %s", err.Error())
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 

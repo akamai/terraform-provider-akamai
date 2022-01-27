@@ -91,16 +91,16 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceReputationProfileRead")
 	logger.Debug("in resourceReputationProfileRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:reputationprofileid")
+	iDParts, err := splitID(d.Id(), 2, "configID:reputationProfileID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	reputationProfileID, err := strconv.Atoi(idParts[1])
+	reputationProfileID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -140,16 +140,16 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceReputationProfileUpdate")
 	logger.Debug("in resourceReputationProfileUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:reputationprofileid")
+	iDParts, err := splitID(d.Id(), 2, "configID:reputationProfileID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	reputationProfileID, err := strconv.Atoi(idParts[1])
+	reputationProfileID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -183,17 +183,17 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceReputationProfileDelete")
 	logger.Debug("in resourceReputationProfileDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:reputationprofileid")
+	iDParts, err := splitID(d.Id(), 2, "configID:reputationProfileID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
-	reputationProfileID, err := strconv.Atoi(idParts[1])
+	reputationProfileID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -204,10 +204,10 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 		ReputationProfileId: reputationProfileID,
 	}
 
-	_, errd := client.RemoveReputationProfile(ctx, deleteReputationProfile)
-	if errd != nil {
-		logger.Errorf("calling 'removeReputationProfile': %s", errd.Error())
-		return diag.FromErr(errd)
+	_, err = client.RemoveReputationProfile(ctx, deleteReputationProfile)
+	if err != nil {
+		logger.Errorf("calling 'removeReputationProfile': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

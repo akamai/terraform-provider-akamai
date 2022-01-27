@@ -16,7 +16,6 @@
     "matches": [
       {
         "matchType": "clientip",
-        "matchValue": "127.0.0.1",
         "matchOperator": "equals",
         "caseSensitive": false,
         "negate": false,

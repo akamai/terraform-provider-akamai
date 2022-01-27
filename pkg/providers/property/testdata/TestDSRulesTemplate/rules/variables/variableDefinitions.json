@@ -17,6 +17,10 @@
       "default": {
         "enabled": false
       }
+    },
+    "domain": {
+      "type": "json",
+      "default": []
     }
   }
 }

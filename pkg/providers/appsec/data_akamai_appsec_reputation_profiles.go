@@ -53,11 +53,11 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 
 	getReputationProfiles.ConfigVersion = getLatestConfigVersion(ctx, configID, m)
 
-	reputationprofileid, err := tools.GetIntValue("reputation_profile_id", d)
+	reputationProfileID, err := tools.GetIntValue("reputation_profile_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getReputationProfiles.ReputationProfileId = reputationprofileid
+	getReputationProfiles.ReputationProfileId = reputationProfileID
 
 	reputationprofiles, err := client.GetReputationProfiles(ctx, getReputationProfiles)
 	if err != nil {

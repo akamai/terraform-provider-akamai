@@ -71,11 +71,11 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	getEvalRules.PolicyID = policyID
 
-	ruleid, err := tools.GetIntValue("rule_id", d)
+	ruleID, err := tools.GetIntValue("rule_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getEvalRules.RuleID = ruleid
+	getEvalRules.RuleID = ruleID
 
 	evalrules, err := client.GetEvalRules(ctx, getEvalRules)
 	if err != nil {

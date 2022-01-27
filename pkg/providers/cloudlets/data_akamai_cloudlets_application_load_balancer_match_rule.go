@@ -3,12 +3,12 @@ package cloudlets
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
@@ -22,9 +22,10 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The name of the rule",
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "The name of the rule",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 						},
 						"type": {
 							Type:        schema.TypeString,
@@ -32,14 +33,16 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 							Description: "The type of Cloudlet the rule is for",
 						},
 						"start": {
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Description: "The start time for this match (in seconds since the epoch)",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Description:      "The start time for this match (in seconds since the epoch)",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 						"end": {
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Description: "The end time for this match (in seconds since the epoch)",
+							Type:             schema.TypeInt,
+							Optional:         true,
+							Description:      "The end time for this match (in seconds since the epoch)",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 						"id": {
 							Type:        schema.TypeInt,
@@ -56,16 +59,20 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The type of match used",
+										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"header", "hostname", "path", "extension", "query",
+											"cookie", "deviceCharacteristics", "clientip", "continent", "countrycode", "regioncode", "protocol", "method", "proxy", "range"}),
 									},
 									"match_value": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Depends on the matchType",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "Depends on the matchType",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 									},
 									"match_operator": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Valid entries for this property: contains, exists, and equals",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "Valid entries for this property: contains, exists, and equals",
+										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"contains", "exists", "equals", ""}),
 									},
 									"case_sensitive": {
 										Type:        schema.TypeBool,
@@ -78,9 +85,10 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 										Description: "If true, negates the match",
 									},
 									"check_ips": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
+										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"CONNECTING_IP", "XFF_HEADERS", "CONNECTING_IP XFF_HEADERS", ""}),
 									},
 									"object_match_value": {
 										Type:        schema.TypeSet,
@@ -93,12 +101,14 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 													Optional: true,
 													Description: "If using a match type that supports name attributes, enter the value in the incoming request to match on. " +
 														"The following match types support this property: cookie, header, parameter, and query",
+													ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 												},
 												"type": {
 													Type:     schema.TypeString,
 													Required: true,
 													Description: "The array type, which can be one of the following: object, range, or simple. " +
 														"Use the simple option when adding only an array of string-based values",
+													ValidateDiagFunc: tools.ValidateStringInSlice([]string{"simple", "object", "range"}),
 												},
 												"name_case_sensitive": {
 													Type:        schema.TypeBool,
@@ -154,9 +164,10 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 							},
 						},
 						"match_url": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "If using a URL match, this property is the URL that the Cloudlet uses to match the incoming request",
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "If using a URL match, this property is the URL that the Cloudlet uses to match the incoming request",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 						},
 						"matches_always": {
 							Type:        schema.TypeBool,
@@ -171,12 +182,18 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"origin_id": {
-										Type:        schema.TypeString,
-										Required:    true,
-										Description: "The ID of the Conditional Origin requests are forwarded to",
+										Type:             schema.TypeString,
+										Required:         true,
+										Description:      "The ID of the Conditional Origin requests are forwarded to",
+										ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
 									},
 								},
 							},
+						},
+						"disabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "If set to true, disables a rule so it is not evaluated against incoming requests.",
 						},
 					},
 				},
@@ -196,7 +213,7 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 		return diag.FromErr(err)
 	}
 
-	err = setALBMatchRuleSchemaType(matchRules)
+	err = setMatchRuleSchemaType(matchRules, cloudlets.MatchRuleTypeALB)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -210,10 +227,11 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 			Name:          getStringValue(rawRule, "name"),
 			Type:          cloudlets.MatchRuleTypeALB,
 			MatchURL:      getStringValue(rawRule, "match_url"),
-			Start:         getIntValue(rawRule, "start"),
-			End:           getIntValue(rawRule, "end"),
+			Start:         getInt64Value(rawRule, "start"),
+			End:           getInt64Value(rawRule, "end"),
 			ID:            getInt64Value(rawRule, "id"),
 			MatchesAlways: getBoolValue(rawRule, "matches_always"),
+			Disabled:      getBoolValue(rawRule, "disabled"),
 		}
 
 		rule.Matches, err = parseRuleMatches(rawRule, "matches")
@@ -229,12 +247,16 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 		for _, element := range settings.List() {
 			entries := element.(map[string]interface{})
 			// Schema guarantees that "origin_id" will be present
-			rule.ForwardSettings = cloudlets.ForwardSettings{
+			rule.ForwardSettings = cloudlets.ForwardSettingsALB{
 				OriginID: entries["origin_id"].(string),
 			}
 		}
 
 		rules[i] = rule
+	}
+
+	if err := rules.Validate(); err != nil {
+		return diag.FromErr(err)
 	}
 
 	rulesJSON, err := json.MarshalIndent(rules, "", "  ")
@@ -246,25 +268,13 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 
-	hashID, err := getMatchRulesHashID(&rules)
+	hashID, err := getMatchRulesHashID(rules)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(hashID)
 
-	return nil
-}
-
-// setALBMatchRuleSchemaType takes ALB matchrules schema set and sets type field for every rule in set
-func setALBMatchRuleSchemaType(matchRules []interface{}) error {
-	for _, mr := range matchRules {
-		matchRuleMap, ok := mr.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("match rule is of invalid type: %T", mr)
-		}
-		matchRuleMap["type"] = cloudlets.MatchRuleTypeALB
-	}
 	return nil
 }
 
@@ -302,39 +312,10 @@ func parseMatchCriteriaALB(match interface{}) (*cloudlets.MatchCriteriaALB, erro
 			matchCriteriaALB.CheckIPs = checkIPs
 		}
 	}
-	omv, err := parseALBObjectMatchValue(m)
+	omv, err := parseObjectMatchValue(m, getObjectMatchValueObjectOrSimpleOrRange)
 	if err != nil {
 		return nil, err
 	}
 	matchCriteriaALB.ObjectMatchValue = omv
 	return &matchCriteriaALB, err
-}
-
-func parseALBObjectMatchValue(aMap map[string]interface{}) (interface{}, error) {
-	v, ok := aMap["object_match_value"]
-	if !ok {
-		return nil, nil
-	}
-	rawObjects := v.(*schema.Set).List()
-	if len(rawObjects) < 1 {
-		return nil, nil
-	}
-
-	omv, ok := rawObjects[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("%w: 'object_match_value' should be an object", tools.ErrInvalidType)
-	}
-	if omvType, ok := omv["type"]; ok {
-		if cloudlets.ObjectMatchValueObjectType(omvType.(string)) == cloudlets.Object {
-			return getOMVObjectType(omv)
-		}
-		if cloudlets.ObjectMatchValueSimpleType(omvType.(string)) == cloudlets.Simple {
-			return getOMVSimpleType(omv), nil
-		}
-		if cloudlets.ObjectMatchValueRangeType(omvType.(string)) == cloudlets.Range {
-			return getOMVRangeType(omv)
-		}
-		return nil, fmt.Errorf("'object_match_value' type '%s' is invalid. Must be one of: 'simple', 'range' or 'object'", omvType)
-	}
-	return nil, nil
 }

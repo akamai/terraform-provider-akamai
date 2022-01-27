@@ -111,10 +111,10 @@ func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface
 		Mode:     evalmode,
 	}
 
-	_, erru := client.UpdateEval(ctx, createEval)
-	if erru != nil {
-		logger.Errorf("calling 'createEval': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateEval(ctx, createEval)
+	if err != nil {
+		logger.Errorf("calling 'createEval': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", createEval.ConfigID, createEval.PolicyID))
@@ -128,16 +128,16 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	logger := meta.Log("APPSEC", "resourceEvalRead")
 	logger.Debugf(" in resourceEvalRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	getEval := appsec.GetEvalRequest{
 		ConfigID: configID,
@@ -179,16 +179,16 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceEvalUpdate")
 	logger.Debugf(" in resourceEvalUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "ruleevaluation", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 	evaloperation, err := tools.GetStringValue("eval_operation", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -206,10 +206,10 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		Mode:     evalmode,
 	}
 
-	_, erru := client.UpdateEval(ctx, updateEval)
-	if erru != nil {
-		logger.Errorf("calling 'updateEval': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateEval(ctx, updateEval)
+	if err != nil {
+		logger.Errorf("calling 'updateEval': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceEvalRead(ctx, d, m)
@@ -221,16 +221,16 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceEvalDelete")
 	logger.Debugf(" in resourceEvalDelete")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "ruleevaluation", m)
-	policyID := idParts[1]
+	policyID := iDParts[1]
 
 	removeEval := appsec.RemoveEvalRequest{
 		ConfigID: configID,
@@ -239,10 +239,10 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 		Eval:     "STOP",
 	}
 
-	_, erru := client.RemoveEval(ctx, removeEval)
-	if erru != nil {
-		logger.Errorf("calling 'removeEval': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.RemoveEval(ctx, removeEval)
+	if err != nil {
+		logger.Errorf("calling 'removeEval': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

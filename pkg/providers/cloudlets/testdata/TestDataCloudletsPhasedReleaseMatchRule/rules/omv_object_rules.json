@@ -1,0 +1,40 @@
+[
+  {
+    "name": "rule2",
+    "type": "cdMatchRule",
+    "forwardSettings": {
+      "originId": "1234",
+      "percent": 30
+    }
+  },
+  {
+    "name": "rule1",
+    "type": "cdMatchRule",
+    "start": 10,
+    "end": 10000,
+    "matches": [
+      {
+        "matchType": "header",
+        "caseSensitive": true,
+        "negate": false,
+        "objectMatchValue": {
+          "name": "Accept",
+          "type": "object",
+          "nameCaseSensitive": true,
+          "nameHasWildcard": false,
+          "options": {
+            "value": [
+              "asfas"
+            ],
+            "valueCaseSensitive": true
+          }
+        }
+      }
+    ],
+    "matchURL": "example.com",
+    "forwardSettings": {
+      "originId": "33",
+      "percent": 20
+    }
+  }
+]

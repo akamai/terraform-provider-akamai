@@ -53,8 +53,8 @@ func resourceCloudletsPolicy() *schema.Resource {
 			"cloudlet_code": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALB", "ER"}, true)),
-				Description:      "Code for the type of Cloudlet (ALB or ER)",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALB", "AP", "CD", "ER", "FR", "VP"}, true)),
+				Description:      "Code for the type of Cloudlet (ALB, AP, CD, ER, FR or VP)",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -473,7 +473,7 @@ func diffSuppressGroupID(_, old, new string, _ *schema.ResourceData) bool {
 }
 
 func diffSuppressMatchRuleFormat(_, old, new string, _ *schema.ResourceData) bool {
-	return old == new || new == "" && cloudlets.MatchRuleFormat(old) == cloudlets.MatchRuleFormatDefault
+	return old == new || new == "" && cloudlets.MatchRuleFormat(old) == cloudlets.MatchRuleFormat10
 }
 
 func diffSuppressMatchRules(_, old, new string, _ *schema.ResourceData) bool {

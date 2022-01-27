@@ -1,7 +1,8 @@
 {
   "name": "RUM",
   "children": [
-    @+#template "snippets/sub/another-template.json" .#+@
+    @+#template "snippets/sub/another-template.json" .#+@,
+    @+#template "snippets/sub/list-template.json" .#+@
   ],
   "behaviors": [
     {

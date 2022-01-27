@@ -44,6 +44,7 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     status_code               = 301
     use_incoming_query_string = true
     use_relative_url          = "none"
+    disabled                  = true
   }
   match_rules {
     end                       = 0
@@ -54,6 +55,7 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     status_code               = 301
     use_incoming_query_string = false
     use_relative_url          = "copy_scheme_hostname"
+    disabled                  = false
   }
 
 

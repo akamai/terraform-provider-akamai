@@ -69,10 +69,10 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 		Notes:    notes,
 	}
 
-	_, erru := client.UpdateVersionNotes(ctx, createVersionNotes)
-	if erru != nil {
-		logger.Errorf("calling 'createVersionNotes': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateVersionNotes(ctx, createVersionNotes)
+	if err != nil {
+		logger.Errorf("calling 'createVersionNotes': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d", createVersionNotes.ConfigID))
@@ -141,10 +141,10 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 		Notes:    notes,
 	}
 
-	_, erru := client.UpdateVersionNotes(ctx, updateVersionNotes)
-	if erru != nil {
-		logger.Errorf("calling 'updateVersionNotes': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateVersionNotes(ctx, updateVersionNotes)
+	if err != nil {
+		logger.Errorf("calling 'updateVersionNotes': %s", err.Error())
+		return diag.FromErr(err)
 	}
 	return resourceVersionNotesRead(ctx, d, m)
 }

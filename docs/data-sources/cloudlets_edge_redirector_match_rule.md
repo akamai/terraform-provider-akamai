@@ -20,8 +20,8 @@ This example returns the JSON-encoded rules for the Edge Redirector Cloudlet:
 data "akamai_cloudlets_edge_redirector_match_rule" "example" {
     match_rules {
         name = "rule"
-        start = 10
-        end = 10000
+        start = 1644865045
+        end = 1645037845
         match_url = "example.com"
         redirect_url = "https://www.example.com"
         status_code = 301
@@ -73,6 +73,7 @@ This data source supports these arguments:
 * `redirect_url` - (Required) The URL Edge Redirector redirects the request to. If you're using `use_relative_url`, you can enter a path for the value.
 * `match_url` - (Optional) If you're using a URL match, this specifies the URL that the Cloudlet uses to match the incoming request.
 * `use_incoming_query_string` - (Optional) Whether the Cloudlet should include the query string from the request in the rewritten or forwarded URL.
+* `disabled` - (Optional) Whether to disable a rule so it is not evaluated against incoming requests. 
 
 ## Attributes reference
 

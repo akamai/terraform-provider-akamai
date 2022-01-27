@@ -24,7 +24,7 @@ need them to set up the Property Provisioning module.
 
 To set up the Property Provisioning module, you need to:
 
-* [Retrieve the product ID](#retrieve-the-product-id). This is the ID for the product you are using, like Ion or Adaptive Media Delivery.
+* [Retrieve the product ID](#retrieve-the-product-id). This is the ID for the product you are using, like Ion or Adaptive Media Delivery. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix#common-product-ids) for more information.
 * [Add or create an edge hostname](#add-an-edge-hostname).
 * [Set up rules for your property](#set-up-property-rules). A separate `rules.json` file contains the base rules for the property.
 * [Import or create a property](#import-or-create-a-property).
