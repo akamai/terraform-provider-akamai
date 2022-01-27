@@ -71,7 +71,23 @@ func TestIncorrectDataCloudletsLoadBalancerMatchRule(t *testing.T) {
 		},
 		"match criteria ALB - invalid type value for ObjectMatchValue": {
 			configPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_invalid_type.tf",
-			withError:  "is invalid. Must be one of: 'simple', 'range' or 'object'",
+			withError:  `expected type to be one of \['simple', 'object', 'range'\], got invalid_type`,
+		},
+		"match criteria ALB - invalid match_operator value for ObjectMatchValue": {
+			configPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/matches_invalid_operator.tf",
+			withError:  `expected match_operator to be one of \['contains', 'exists', 'equals', ''\], got invalid`,
+		},
+		"match criteria ALB - invalid check_ips value for ObjectMatchValue": {
+			configPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/matches_invalid_checkips.tf",
+			withError:  `expected check_ips to be one of \['CONNECTING_IP', 'XFF_HEADERS', 'CONNECTING_IP XFF_HEADERS', ''\], got invalid`,
+		},
+		"match criteria ALB - match_value and object_match_value together": {
+			configPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/match_value_and_omv_together.tf",
+			withError:  `(?s)must be blank when ObjectMatchValue is set.*must be blank when MatchValue is set`,
+		},
+		"match criteria ALB - no match_value and object_match_value": {
+			configPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/no_match_value_and_omv.tf",
+			withError:  `(?s)cannot be blank when ObjectMatchValue is blank.*cannot be blank when MatchValue is blank`,
 		},
 	}
 	for name, test := range tests {

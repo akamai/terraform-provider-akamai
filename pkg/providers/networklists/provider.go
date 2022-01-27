@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/networklists"
-	network "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -80,7 +79,7 @@ func WithClient(c networklists.NTWRKLISTS) Option {
 }
 
 // Client returns the PAPI interface
-func (p *provider) Client(meta akamai.OperationMeta) network.NTWRKLISTS {
+func (p *provider) Client(meta akamai.OperationMeta) networklists.NTWRKLISTS {
 	if p.client != nil {
 		return p.client
 	}

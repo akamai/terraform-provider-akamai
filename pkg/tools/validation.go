@@ -79,3 +79,23 @@ func ValidateEmail(val interface{}, _ cty.Path) diag.Diagnostics {
 	}
 	return diag.Errorf("value is not a string: %s", val)
 }
+
+// ValidateStringInSlice returns schema.SchemaValidateDiagFunc which tests if the value
+// is a string and if it matches given slice of valid strings
+func ValidateStringInSlice(valid []string) schema.SchemaValidateDiagFunc {
+	return func(i interface{}, path cty.Path) diag.Diagnostics {
+		name := path[len(path)-1].(cty.GetAttrStep).Name
+		v, ok := i.(string)
+		if !ok {
+			return diag.Errorf("expected type of %s to be string", name)
+		}
+
+		for _, s := range valid {
+			if v == s {
+				return nil
+			}
+		}
+
+		return diag.Errorf("expected %s to be one of ['%s'], got %s", name, strings.Join(valid, "', '"), v)
+	}
+}

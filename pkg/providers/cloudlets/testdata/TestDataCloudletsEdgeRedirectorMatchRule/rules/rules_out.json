@@ -39,7 +39,8 @@
     "redirectURL": "sss.com",
     "matchURL": "ddd.aaa",
     "useIncomingQueryString": true,
-    "useIncomingSchemeAndHost": false
+    "useIncomingSchemeAndHost": false,
+    "disabled": true
   },
   {
     "name": "r1",

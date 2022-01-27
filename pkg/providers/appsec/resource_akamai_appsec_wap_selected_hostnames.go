@@ -127,16 +127,16 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesRead")
 	logger.Debugf("resourceWAPSelectedHostnamesRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	securityPolicyID := idParts[1]
+	securityPolicyID := iDParts[1]
 
 	getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{
 		ConfigID:         configID,
@@ -237,20 +237,13 @@ func resourceWAPSelectedHostnamesDelete(ctx context.Context, d *schema.ResourceD
 }
 
 func verifyHostNotInBothLists(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-	var protectedHostsSet, evaluatedHostsSet schema.Set
-	_, ok := d.GetOkExists("protected_hosts")
-	if ok {
-		protectedHosts := d.Get("protected_hosts")
-		protectedHostsSet = *(protectedHosts.(*schema.Set))
-	} else {
-		protectedHostsSet = schema.Set{F: schema.HashString}
+	protectedHostsSet, err := tools.GetSetValue("protected_hosts", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
 	}
-	_, ok = d.GetOkExists("evaluated_hosts")
-	if ok {
-		evaluatedHosts := d.Get("evaluated_hosts")
-		evaluatedHostsSet = *(evaluatedHosts.(*schema.Set))
-	} else {
-		evaluatedHostsSet = schema.Set{F: schema.HashString}
+	evaluatedHostsSet, err := tools.GetSetValue("evaluated_hosts", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return err
 	}
 
 	if protectedHostsSet.Len() == 0 && evaluatedHostsSet.Len() == 0 {

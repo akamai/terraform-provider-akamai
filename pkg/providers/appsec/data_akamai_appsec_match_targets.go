@@ -67,11 +67,11 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getMatchTargets.ConfigVersion = getLatestConfigVersion(ctx, configID, m)
 
-	matchtargetid, err := tools.GetIntValue("match_target_id", d)
+	matchTargetID, err := tools.GetIntValue("match_target_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getMatchTargets.TargetID = matchtargetid
+	getMatchTargets.TargetID = matchTargetID
 
 	matchtargets, err := client.GetMatchTargets(ctx, getMatchTargets)
 	if err != nil {

@@ -98,10 +98,10 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 		EnableRateControls: enableRateControls,
 	}
 
-	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, createAdvancedSettingsPrefetch)
-	if erru != nil {
-		logger.Errorf("calling 'createAdvancedSettingsPrefetch': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateAdvancedSettingsPrefetch(ctx, createAdvancedSettingsPrefetch)
+	if err != nil {
+		logger.Errorf("calling 'createAdvancedSettingsPrefetch': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d", createAdvancedSettingsPrefetch.ConfigID))
@@ -193,10 +193,10 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 		EnableRateControls: enableRateControls,
 	}
 
-	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, updateAdvancedSettingsPrefetch)
-	if erru != nil {
-		logger.Errorf("calling 'updateAdvancedSettingsPrefetch': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateAdvancedSettingsPrefetch(ctx, updateAdvancedSettingsPrefetch)
+	if err != nil {
+		logger.Errorf("calling 'updateAdvancedSettingsPrefetch': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceAdvancedSettingsPrefetchRead(ctx, d, m)
@@ -221,10 +221,10 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 		EnableRateControls: false,
 	}
 
-	_, erru := client.UpdateAdvancedSettingsPrefetch(ctx, removeAdvancedSettingsPrefetch)
-	if erru != nil {
-		logger.Errorf("calling 'removeAdvancedSettingsPrefetch': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateAdvancedSettingsPrefetch(ctx, removeAdvancedSettingsPrefetch)
+	if err != nil {
+		logger.Errorf("calling 'removeAdvancedSettingsPrefetch': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

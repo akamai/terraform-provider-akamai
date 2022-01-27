@@ -13,7 +13,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     use_relative_url          = "copy_scheme_hostname"
     matches {
       match_type     = "hostname"
-      match_value    = "example.ex"
       match_operator = "equals"
       object_match_value {
         type  = "simple"
@@ -23,7 +22,6 @@ data "akamai_cloudlets_edge_redirector_match_rule" "test" {
     matches {
       case_sensitive = true
       match_type     = "cookie"
-      match_value    = "cookie=cookievalue"
       match_operator = "equals"
       negate         = false
       object_match_value {

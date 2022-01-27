@@ -229,7 +229,7 @@ func dataAkamaiPropertyRulesRead(_ context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	if file != "" && !jsonFileRegexp.MatchString(file) {
-		return diag.FromErr(fmt.Errorf("Snippets file under 'property-snippets' folder should have .json files. Invalid file %s ", file))
+		return diag.Errorf("snippets file under 'property-snippets' folder should have .json files. Invalid file %s ", file)
 	}
 
 	// Create a new SHA1 hash based on templateDataStr
@@ -369,9 +369,16 @@ func convertToTypedMap(vars []interface{}) (map[string]interface{}, error) {
 		case "string":
 			result[varNameStr] = fmt.Sprintf(`"%s"`, valueStr)
 		case "jsonBlock":
-			var target map[string]interface{}
-			if err := json.Unmarshal([]byte(valueStr), &target); err != nil {
-				return nil, fmt.Errorf("%w: 'jsonBlock` argument is not a valid json object: %s: %s", ErrUnmarshal, varNameStr, valueStr)
+			var targetMap map[string]interface{}
+			if err := json.Unmarshal([]byte(valueStr), &targetMap); err != nil {
+				e := &json.UnmarshalTypeError{}
+				if !errors.As(err, &e) {
+					return nil, fmt.Errorf("%w: 'jsonBlock` argument is not a valid json object: %s: %s", ErrUnmarshal, varNameStr, valueStr)
+				}
+				var targetSlice []interface{}
+				if err := json.Unmarshal([]byte(valueStr), &targetSlice); err != nil {
+					return nil, fmt.Errorf("%w: 'jsonBlock` argument is not a valid json object: %s: %s", ErrUnmarshal, varNameStr, valueStr)
+				}
 			}
 			result[varNameStr] = valueStr
 		case "number":
@@ -447,7 +454,7 @@ func formatValue(val interface{}) (interface{}, error) {
 	switch v := val.(type) {
 	case string:
 		return fmt.Sprintf(`"%s"`, v), nil
-	case map[string]interface{}:
+	case map[string]interface{}, []interface{}:
 		jsonBlock, err := json.Marshal(v)
 		if err != nil {
 			return nil, err

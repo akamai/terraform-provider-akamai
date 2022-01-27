@@ -70,10 +70,10 @@ func resourceConfigurationRenameCreate(ctx context.Context, d *schema.ResourceDa
 		Description: description,
 	}
 
-	_, erru := client.UpdateConfiguration(ctx, updateConfiguration)
-	if erru != nil {
-		logger.Errorf("calling 'updateConfiguration': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateConfiguration(ctx, updateConfiguration)
+	if err != nil {
+		logger.Errorf("calling 'updateConfiguration': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.Itoa(updateConfiguration.ConfigID))
@@ -140,10 +140,10 @@ func resourceConfigurationRenameUpdate(ctx context.Context, d *schema.ResourceDa
 		Description: description,
 	}
 
-	_, erru := client.UpdateConfiguration(ctx, updateConfiguration)
-	if erru != nil {
-		logger.Errorf("calling 'updateConfiguration': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateConfiguration(ctx, updateConfiguration)
+	if err != nil {
+		logger.Errorf("calling 'updateConfiguration': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceConfigurationRenameRead(ctx, d, m)

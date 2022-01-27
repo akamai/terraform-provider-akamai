@@ -29,7 +29,7 @@ For secure hostnames you must include the certificate enrollment ID in your [`ak
 
 ## Common Product IDs
 
-Leveraging Product IDs in your setup requires you to retrieve the ID for the specific Akamai product you are using. The following is a list of commonly used product IDs for different products:
+For some data sources and resources, you need to retrieve the ID for the specific Akamai product you are using. The following is a list of commonly used IDs for different products:
 
 | Product | Code |
 |---|---|

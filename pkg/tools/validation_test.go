@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -133,6 +134,36 @@ func TestEmailValidation(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			diags := ValidateEmail(test.givenVal, nil)
 			assert.Equal(t, test.expectedError, diags.HasError())
+		})
+	}
+}
+
+func TestValidateStringInSlice(t *testing.T) {
+	valid := []string{"valid1", "valid2", "valid3"}
+	validator := ValidateStringInSlice(valid)
+
+	tests := map[string]struct {
+		input        interface{}
+		expectedDiag diag.Diagnostics
+	}{
+		"string found": {
+			input:        "valid3",
+			expectedDiag: nil,
+		},
+		"string not found": {
+			input:        "test",
+			expectedDiag: diag.Errorf("expected testAttr to be one of ['%s'], got test", strings.Join(valid, "', '")),
+		},
+		"error - provided value is not string": {
+			input:        1,
+			expectedDiag: diag.Errorf("expected type of testAttr to be string"),
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			diags := validator(test.input, cty.Path{cty.GetAttrStep{Name: "testAttr"}})
+			assert.Equal(t, test.expectedDiag, diags)
 		})
 	}
 }

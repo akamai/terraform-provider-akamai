@@ -29,34 +29,39 @@ func resourceNetworkList() *schema.Resource {
 			VerifyContractGroupUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name to be assigned to the network list",
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The type of the network list; must be either 'IP' or 'GEO'",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					IP,
 					Geo,
 				}, false)),
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "A description of the network list",
 			},
 			"list": {
-				Type:     schema.TypeSet,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
+				Type:        schema.TypeSet,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Description: "A list of IP addresses or locations to be included in the list, added to an existing list, or removed from an existing list",
 			},
 			"mode": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "A string specifying the interpretation of the `list` parameter. Must be 'APPEND', 'REPLACE', or 'REMOVE'",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					Append,
 					Replace,
@@ -66,12 +71,12 @@ func resourceNetworkList() *schema.Resource {
 			"uniqueid": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "uniqueId",
+				Description: "unique ID",
 			},
 			"network_list_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "network_list_id",
+				Description: "network list ID",
 			},
 			"sync_point": {
 				Type:        schema.TypeInt,
@@ -81,12 +86,12 @@ func resourceNetworkList() *schema.Resource {
 			"contract_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Contract ID",
+				Description: "contract ID",
 			},
 			"group_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Group ID",
+				Description: "group ID",
 			},
 		},
 	}
@@ -117,20 +122,20 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	createNetworkList.Description = description
 
-	contractid, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tools.GetStringValue("contract_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createNetworkList.ContractID = contractid
+	createNetworkList.ContractID = contractID
 
-	groupid, err := tools.GetIntValue("group_id", d)
+	groupID, err := tools.GetIntValue("group_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createNetworkList.GroupID = groupid
+	createNetworkList.GroupID = groupID
 
-	if len(contractid) > 0 || groupid > 0 {
-		if len(contractid) == 0 || groupid == 0 {
+	if len(contractID) > 0 || groupID > 0 {
+		if len(contractID) == 0 || groupID == 0 {
 			return diag.Errorf("If either a contract_id or group_id is provided, both must be provided")
 		}
 	}
@@ -151,10 +156,10 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	netlist := d.Get("list").(*schema.Set)
-	nru := make([]string, 0, len(netlist.List()))
+	networkListElements := make([]string, 0, len(netlist.List()))
 
 	for _, h := range netlist.List() {
-		nru = append(nru, strings.ToLower(h.(string)))
+		networkListElements = append(networkListElements, strings.ToLower(h.(string)))
 	}
 
 	finallist := make([]string, 0, len(netlist.List()))
@@ -180,14 +185,12 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 			oneShot = true
 		}
 
-		if oneShot == false {
-			finallist = nru
+		if !oneShot {
+			finallist = networkListElements
 		}
 
-	case Replace:
-		finallist = nru
 	default:
-		finallist = nru
+		finallist = networkListElements
 	}
 
 	createNetworkList.List = finallist
@@ -218,11 +221,11 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("contract_id", contractid); err != nil {
+	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("group_id", groupid); err != nil {
+	if err := d.Set("group_id", groupID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
@@ -257,20 +260,20 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	updateNetworkList.Description = description
 
-	contractid, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tools.GetStringValue("contract_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateNetworkList.ContractID = contractid
+	updateNetworkList.ContractID = contractID
 
-	groupid, err := tools.GetIntValue("group_id", d)
+	groupID, err := tools.GetIntValue("group_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateNetworkList.GroupID = groupid
+	updateNetworkList.GroupID = groupID
 
-	if len(contractid) > 0 || groupid > 0 {
-		if len(contractid) == 0 || groupid == 0 {
+	if len(contractID) > 0 || groupID > 0 {
+		if len(contractID) == 0 || groupID == 0 {
 			return diag.Errorf("If either a contract_id or group_id is provided, both must be provided")
 		}
 	}
@@ -303,7 +306,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		for _, hl := range netlist.List() {
 
 			for idx, h := range networkLists.List {
-				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+				if strings.EqualFold(h, hl.(string)) {
 					networkLists.List = RemoveIndex(networkLists.List, idx)
 				}
 			}
@@ -338,11 +341,11 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("contract_id", contractid); err != nil {
+	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("group_id", groupid); err != nil {
+	if err := d.Set("group_id", groupID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
@@ -401,7 +404,7 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		for _, hl := range netlist.List() {
 			for _, h := range networklist.List {
 
-				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+				if strings.EqualFold(h, hl.(string)) {
 					finalldata = append(finalldata, strings.ToLower(h))
 				}
 			}
@@ -417,7 +420,7 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		for _, h := range networklist.List {
 
 			for _, hl := range netlist.List() {
-				if strings.ToLower(h) == strings.ToLower(hl.(string)) {
+				if strings.EqualFold(h, hl.(string)) {
 					finalldata = append(finalldata, strings.ToLower(h))
 				}
 			}

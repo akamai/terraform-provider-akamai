@@ -186,7 +186,7 @@ To actually create our Domain, Datacenter and Property, we need to instruct Terr
 $ terraform apply
 ```
 
-Once this completes your Domain, Datacenter and Property will have been created. You can verify this in [Akamai Control Center](https://control.akamai.com) or via the [Akamai CLI](https://developer.akamai.com/cli).
+Once this completes your Domain, Datacenter and Property will have been created. You can verify this in [Akamai Control Center](https://control.akamai.com) or via the [Akamai CLI](https://github.com/akamai/cli).
 
 ## Import Existing GTM Resource
 

@@ -101,9 +101,9 @@ func dataSourceAPIEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	var idList []int
 
-	for _, ids := range apiendpoints.APIEndpoints {
+	for _, iDs := range apiendpoints.APIEndpoints {
 
-		idList = append(idList, ids.ID)
+		idList = append(idList, iDs.ID)
 	}
 
 	if err := d.Set("id_list", idList); err != nil {

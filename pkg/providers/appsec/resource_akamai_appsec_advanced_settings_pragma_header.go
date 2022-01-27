@@ -75,10 +75,10 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, erru := client.UpdateAdvancedSettingsPragma(ctx, createAdvancedSettingsPragma)
-	if erru != nil {
-		logger.Errorf("calling 'createAdvancedSettingsPragma': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err = client.UpdateAdvancedSettingsPragma(ctx, createAdvancedSettingsPragma)
+	if err != nil {
+		logger.Errorf("calling 'createAdvancedSettingsPragma': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if len(createAdvancedSettingsPragma.PolicyID) > 0 {
@@ -98,16 +98,16 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getLatestConfigVersion(ctx, configID, m)
-		policyID := idParts[1]
+		policyID := iDParts[1]
 
 		getAdvancedSettingsPragma.ConfigID = configID
 		getAdvancedSettingsPragma.Version = version
@@ -161,16 +161,16 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 	}
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
-		policyID := idParts[1]
+		policyID := iDParts[1]
 
 		removeAdvancedSettingsPragma.ConfigID = configID
 		removeAdvancedSettingsPragma.Version = version
@@ -187,10 +187,10 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 		removeAdvancedSettingsPragma.Version = version
 	}
 
-	_, erru := client.UpdateAdvancedSettingsPragma(ctx, removeAdvancedSettingsPragma)
-	if erru != nil {
-		logger.Errorf("calling 'removeAdvancedSettingsLogging': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err := client.UpdateAdvancedSettingsPragma(ctx, removeAdvancedSettingsPragma)
+	if err != nil {
+		logger.Errorf("calling 'removeAdvancedSettingsLogging': %s", err.Error())
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 	return nil
@@ -204,17 +204,17 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 
 	updateAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		idParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(idParts[0])
+		configID, err := strconv.Atoi(iDParts[0])
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		version := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
 
-		policyID := idParts[1]
+		policyID := iDParts[1]
 
 		updateAdvancedSettingsPragma.ConfigID = configID
 		updateAdvancedSettingsPragma.Version = version
@@ -236,10 +236,10 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateAdvancedSettingsPragma.JsonPayloadRaw = rawJSON
-	_, erru := client.UpdateAdvancedSettingsPragma(ctx, updateAdvancedSettingsPragma)
-	if erru != nil {
-		logger.Errorf("calling 'updateAdvancedSettingsPragma': %s", erru.Error())
-		return diag.FromErr(erru)
+	_, err := client.UpdateAdvancedSettingsPragma(ctx, updateAdvancedSettingsPragma)
+	if err != nil {
+		logger.Errorf("calling 'updateAdvancedSettingsPragma': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceAdvancedSettingsPragmaHeaderRead(ctx, d, m)

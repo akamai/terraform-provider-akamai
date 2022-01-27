@@ -3,5 +3,10 @@
   "options": {
     "enabled": true
   },
-  "enabled": true
+  "enabled": true,
+  "domain": [
+    "a",
+    "b",
+    "c"
+  ]
 }

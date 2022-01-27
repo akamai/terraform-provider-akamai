@@ -67,11 +67,11 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	}
 	getReputationProfileActions.PolicyID = policyID
 
-	reputationprofileid, err := tools.GetIntValue("reputation_profile_id", d)
+	reputationProfileID, err := tools.GetIntValue("reputation_profile_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getReputationProfileActions.ReputationProfileID = reputationprofileid
+	getReputationProfileActions.ReputationProfileID = reputationProfileID
 
 	reputationprofileactions, err := client.GetReputationProfileActions(ctx, getReputationProfileActions)
 	if err != nil {

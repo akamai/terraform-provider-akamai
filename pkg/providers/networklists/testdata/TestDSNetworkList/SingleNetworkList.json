@@ -1,0 +1,49 @@
+{
+	"accessControlGroup": "IPA Hotwire - 3-4168BG",
+	"contractId": "3-4168BG",
+	"description": "A GEO Description",
+	"elementCount": 5,
+	"groupId": 17240,
+	"links": {
+		"activateInProduction": {
+			"href": "/network-list/v2/network-lists/86093_AGEOLIST/environments/PRODUCTION/activate",
+			"method": "POST"
+		},
+		"activateInStaging": {
+			"href": "/network-list/v2/network-lists/86093_AGEOLIST/environments/STAGING/activate",
+			"method": "POST"
+		},
+		"appendItems": {
+			"href": "/network-list/v2/network-lists/86093_AGEOLIST/append",
+			"method": "POST"
+		},
+		"retrieve": {
+			"href": "/network-list/v2/network-lists/86093_AGEOLIST"
+		},
+		"statusInProduction": {
+			"href": "/network-list/v2/network-lists/86093_AGEOLIST/environments/PRODUCTION/status"
+		},
+		"statusInStaging": {
+			"href": "/network-list/v2/network-lists/86093_AGEOLIST/environments/STAGING/status"
+		},
+		"update": {
+			"href": "/network-list/v2/network-lists/86093_AGEOLIST",
+			"method": "PUT"
+		}
+	},
+	"list": [
+		"in",
+		"gb",
+		"cn",
+		"fr",
+		"ca"
+	],
+	"name": "A Geo List",
+	"networkListType": "networkListResponse",
+	"readOnly": false,
+	"shared": false,
+	"syncPoint": 1,
+	"type": "GEO",
+	"uniqueId": "86093_AGEOLIST"
+}
+

@@ -1,0 +1,21 @@
+[
+  {
+    "name": "rule 2",
+    "type": "vpMatchRule",
+    "matches": [
+      {
+        "matchType": "hostname",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false,
+        "objectMatchValue": {
+          "type": "simple",
+          "value": [
+            "abc"
+          ]
+        }
+      }
+    ],
+    "passThroughPercent": 50.5
+  }
+]

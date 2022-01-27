@@ -60,7 +60,7 @@ The following arguments are supported:
 * `name` - (Required) A descriptive label for the CP code. If you're creating a new CP code, the name can't include commas, underscores, quotes, or any of these special characters: ^ # %.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
-* `product_id` - (Required) A product's unique ID, including the `prd_` prefix.
+* `product_id` - (Required) A product's unique ID, including the `prd_` prefix. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix#common-product-ids) for more information.
 
 ### Deprecated arguments
 

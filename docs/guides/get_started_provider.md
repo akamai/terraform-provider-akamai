@@ -136,6 +136,8 @@ At this point in the setup, you should refer to the guides for the Akamai module
 |------------|------------|
 | **Application Security** (beta) | [Application Security Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_appsec) |
 | **Certificate Provisioning** | [Certificate Provisioning Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_cps) |
+| **Cloudlets** | [Cloudlets Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_cloudlets) |
+| **DataStream** | [DataStream Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_datastream) |
 | **DNS Zone Administration** | [DNS Zone Administration Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone) |
 | **Global Traffic Management Domain Administration** | [Global Traffic Management Domain Administration Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain) |
 | **Identity and Access Management** | [Identity and Access Management Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam) |

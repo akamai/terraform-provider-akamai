@@ -1,0 +1,8 @@
+[
+  {
+    "name": "rule1",
+    "type": "frMatchRule",
+    "forwardSettings": {},
+    "disabled": true
+  }
+]

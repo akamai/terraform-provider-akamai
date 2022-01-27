@@ -24,4 +24,9 @@ data "akamai_property_rules_template" "test" {
     value = "{\"enabled\":true}"
     type  = "jsonBlock"
   }
+  variables {
+    name  = "domain"
+    value = "[\"a\",\"b\",\"c\"]"
+    type  = "jsonBlock"
+  }
 }

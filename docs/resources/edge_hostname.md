@@ -50,7 +50,7 @@ This resource supports these arguments:
 * `name` - (Required) The name of the edge hostname.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
-* `product_id` - (Required) A product's unique ID, including the `prd_` prefix.
+* `product_id` - (Required) A product's unique ID, including the `prd_` prefix. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix#common-product-ids) for more information.
 * `edge_hostname` - (Required) One or more edge hostnames. The number of edge hostnames must be less than or equal to the number of public hostnames.
 * `certificate` - (Optional) Required only when creating an Enhanced TLS edge hostname. This argument sets the certificate enrollment ID. Edge hostnames for Enhanced TLS end in `edgekey.net`. You can retrieve this ID from the [Certificate Provisioning Service CLI](https://github.com/akamai/cli-cps) .
 * `ip_behavior` - (Required) Which version of the IP protocol to use: `IPV4` for version 4 only, `IPV6_PERFORMANCE` for version 6 only, or `IPV6_COMPLIANCE` for both 4 and 6.

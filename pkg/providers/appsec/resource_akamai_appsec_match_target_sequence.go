@@ -79,17 +79,17 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
 	logger.Debugf("in resourceMatchTargetSequenceRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:matchtargettype")
+	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetType")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getLatestConfigVersion(ctx, configID, m)
-	matchTargetType := idParts[1]
+	matchTargetType := iDParts[1]
 
 	getMatchTargetSequence := appsec.GetMatchTargetSequenceRequest{
 		ConfigID:      configID,
@@ -124,17 +124,17 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceUpdate")
 	logger.Debugf("in resourceMatchTargetSequenceUpdate")
 
-	idParts, err := splitID(d.Id(), 2, "configID:matchtargettype")
+	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetType")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.Atoi(iDParts[0])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	version := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
-	matchTargetType := idParts[1]
+	matchTargetType := iDParts[1]
 
 	jsonPayload := d.Get("match_target_sequence")
 
