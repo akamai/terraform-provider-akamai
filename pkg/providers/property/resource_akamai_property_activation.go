@@ -638,7 +638,21 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	if propertyActivation == nil {
+	var versionStatus papi.VersionStatus
+	propertyVersion, err := client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
+		PropertyID:      propertyID,
+		PropertyVersion: version,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if network == papi.ActivationNetworkProduction {
+		versionStatus = propertyVersion.Version.ProductionStatus
+	} else {
+		versionStatus = propertyVersion.Version.StagingStatus
+	}
+
+	if propertyActivation == nil || versionStatus == papi.VersionStatusDeactivated {
 		notifySet, err := tools.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
