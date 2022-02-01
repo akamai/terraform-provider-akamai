@@ -260,7 +260,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				maxInitDuration = time.Duration(2) * time.Millisecond
 				// create
 				m.On("InitializeEdgeKV", mock.Anything).Return(inProgress, nil).Once()
-				m.On("GetEdgeKVInitializationStatus", mock.Anything).Return(inProgress, nil).Times(2)
+				m.On("GetEdgeKVInitializationStatus", mock.Anything).Return(inProgress, nil)
 			},
 			steps: []resource.TestStep{
 				{
