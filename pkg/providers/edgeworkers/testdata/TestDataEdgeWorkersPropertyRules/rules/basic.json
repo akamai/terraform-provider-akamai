@@ -1,0 +1,7 @@
+{
+  "name": "edgeWorker",
+  "options": {
+    "enabled": true,
+    "edgeWorkerId": "123"
+  }
+}
