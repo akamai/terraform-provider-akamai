@@ -194,6 +194,9 @@ func resourceEdgeKVRead(ctx context.Context, rd *schema.ResourceData, m interfac
 	logger.Debug("Reading EdgeKV namespace configuration")
 
 	id := strings.Split(rd.Id(), ":")
+	if len(id) < 2 {
+		return diag.Errorf("invalid EdgeKV identifier: %s", rd.Id())
+	}
 	name := id[0]
 	network := id[1]
 

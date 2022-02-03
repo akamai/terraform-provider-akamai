@@ -412,6 +412,29 @@ func TestResourceEdgeKV(t *testing.T) {
 				},
 			},
 		},
+		"test import - invalid ID": {
+			init: func(m *mockedgeworkers) {
+				// create
+				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
+					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				// read
+				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+				// read
+				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+				},
+				{
+					ImportState:       true,
+					ImportStateId:     "DevExpTest",
+					ResourceName:      "akamai_edgekv.test",
+					ImportStateVerify: true,
+					ExpectError:       regexp.MustCompile("invalid EdgeKV identifier: DevExpTest"),
+				},
+			},
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
