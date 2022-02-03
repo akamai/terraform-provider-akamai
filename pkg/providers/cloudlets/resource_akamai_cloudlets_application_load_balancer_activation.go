@@ -43,7 +43,6 @@ func resourceCloudletsApplicationLoadBalancerActivationSchema() map[string]*sche
 			Required:         true,
 			ValidateDiagFunc: validateNetwork,
 			StateFunc:        stateALBActivationNetwork,
-			ForceNew:         true,
 			Description:      "The network you want to activate the application load balancer version on (options are Staging and Production)",
 		},
 		"version": {
@@ -82,20 +81,20 @@ func resourceApplicationLoadBalancerActivationUpdate(ctx context.Context, rd *sc
 	meta := akamai.Meta(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationUpdate")
 
-	if !rd.HasChanges("version") {
+	if !rd.HasChanges("version", "network") {
 		logger.Debugf("nothing has changed, nothing to update")
 		return resourceApplicationLoadBalancerActivationRead(ctx, rd, m)
 	}
-
-	logger.Debugf("version number has changed: proceed to create and activate a new application load balancer activation version")
+	logger.Debugf("version number or network has changed: proceeding to update application load balancer activation version")
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
 
-	_, err := resourceApplicationLoadBalancerActivationChange(ctx, rd, logger, client)
+	activation, err := resourceApplicationLoadBalancerActivationChange(ctx, rd, logger, client)
 	if err != nil {
 		return diag.Errorf("%v update: %s", ErrApplicationLoadBalancerActivation, err.Error())
 	}
+	rd.SetId(fmt.Sprintf("%s:%s", activation.OriginID, activation.Network))
 	return resourceApplicationLoadBalancerActivationRead(ctx, rd, m)
 }
 
