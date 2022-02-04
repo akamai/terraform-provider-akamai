@@ -48,7 +48,6 @@ func resourceCloudletsPolicyActivationSchema() map[string]*schema.Schema {
 		"network": {
 			Type:             schema.TypeString,
 			Required:         true,
-			ForceNew:         true,
 			ValidateDiagFunc: tools.ValidateNetwork,
 			StateFunc:        statePolicyActivationNetwork,
 			Description:      "The network you want to activate the policy version on (options are Staging and Production)",
@@ -62,6 +61,7 @@ func resourceCloudletsPolicyActivationSchema() map[string]*schema.Schema {
 			Type:        schema.TypeSet,
 			Required:    true,
 			Elem:        &schema.Schema{Type: schema.TypeString},
+			MinItems:    1,
 			Description: "Set of property IDs to link to this Cloudlets policy",
 		},
 	}
@@ -148,14 +148,6 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	meta := akamai.Meta(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationUpdate")
 
-	// 1. check if version has changed.
-	if !rd.HasChanges("version", "associated_properties") {
-		logger.Debugf("nothing to update")
-		return nil
-	}
-
-	logger.Debugf("proceeding to create and activate a new policy activation version")
-
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
 
@@ -193,12 +185,6 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	}
 
 	associatedProps, err := tools.GetSetValue("associated_properties", rd)
-	if errors.Is(err, tools.ErrNotFound) || len(associatedProps.List()) == 0 {
-		if diagnostics := tools.RestoreOldValues(rd, []string{"version", "associated_properties"}); diagnostics != nil {
-			return diagnostics
-		}
-		return diag.Errorf("Field associated_properties should not be empty. If you want to remove all policy associated properties, please run `terraform destroy` instead.")
-	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -226,9 +212,10 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	activeProps := getActiveProperties(activations)
 
 	// 4. all "additional_properties" are active for the given version, policyID and network, proceed to read stage
-	if reflect.DeepEqual(activeProps, newPolicyProperties) && !rd.HasChanges("version") {
+	if reflect.DeepEqual(activeProps, newPolicyProperties) && !rd.HasChanges("version") && activations[0].PolicyInfo.Version == version {
 		// in such case, return
 		logger.Debugf("This policy (ID=%d, version=%d) is already active.", policyID, version)
+		rd.SetId(formatPolicyActivationID(int64(policyID), activationNetwork))
 		return resourcePolicyActivationRead(ctx, rd, m)
 	}
 
@@ -264,6 +251,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("%v update: %s", ErrPolicyActivation, err.Error())
 	}
+	rd.SetId(formatPolicyActivationID(int64(policyID), activationNetwork))
 
 	return resourcePolicyActivationRead(ctx, rd, m)
 }

@@ -194,15 +194,6 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 				},
 			},
 		},
-		"create policy activation: empty associated_properties -> error": {
-			init: func(m *mockcloudlets) {},
-			steps: []resource.TestStep{
-				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_no_properties.tf"),
-					ExpectError: regexp.MustCompile("value not found: associated_properties"),
-				},
-			},
-		},
 		"create and read activation, version == 1, active -> read": {
 			init: func(m *mockcloudlets) {
 				staging, properties, policyID, v1, active := cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}, int64(1234), int64(1), cloudlets.PolicyActivationStatusActive
@@ -320,38 +311,6 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 				},
 			},
 		},
-		"Create and read activation. Update: associated_properties empty -> validation error": {
-			init: func(m *mockcloudlets) {
-				policyID, v1, v2, properties, active, staging := int64(1234), int64(1), int64(2), []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationStatusActive, cloudlets.PolicyActivationNetworkStaging
-				// 1 - for policy_activation_version1.tf
-				expectFullActivation(m, policyID, v1, properties, staging, 1)
-				// 2 - for policy_activation_no_properties.tf
-				// read
-				expectListPolicyActivations(m, policyID, v1, staging, properties, active, "", 1, nil).Once()
-				expectGetPolicyVersion(m, policyID, v2, []cloudlets.PolicyActivation{}, nil).Once()
-				// delete
-				expectDeletePhase(m, policyID, properties, nil, staging, nil, nil)
-			},
-			steps: []resource.TestStep{
-				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
-						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "network", "staging"),
-					),
-				},
-				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_no_properties.tf"),
-					ExpectError: regexp.MustCompile("Field associated_properties should not be empty. If you want to remove all policy associated properties, please run `terraform destroy` instead."),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "associated_properties", "('prp_0','prp_1')"),
-						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "network", "staging"),
-					),
-				},
-			},
-		},
 		"create and read activation, update - cannot find the property version": {
 			init: func(m *mockcloudlets) {
 				policyID, v1, v2, properties, active, staging := int64(1234), int64(1), int64(2), []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationStatusActive, cloudlets.PolicyActivationNetworkStaging
@@ -450,6 +409,48 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "2"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "network", "staging"),
+					),
+				},
+			},
+		},
+		"Create and read activation. Update: change version from staging to prod, activate": {
+			init: func(m *mockcloudlets) {
+				properties, policyID, v1, active := []string{"prp_0", "prp_1"}, int64(1234), int64(1), cloudlets.PolicyActivationStatusActive
+				// 1 - for policy_activation_version1.tf
+				expectFullActivation(m, policyID, 1, properties, cloudlets.PolicyActivationNetworkStaging, 1)
+				// 2 - for policy_activation_update_version2.tf
+				// refresh read
+				expectListPolicyActivations(m, policyID, v1, cloudlets.PolicyActivationNetworkStaging, properties, active, "", 1, nil).Once()
+				// update
+				expectGetPolicyVersion(m, policyID, v1, []cloudlets.PolicyActivation{}, nil).Once()
+				expectListPolicyActivations(m, policyID, v1, cloudlets.PolicyActivationNetworkStaging, properties, active, "", 1, nil)
+				expectGetPolicyProperties(m, policyID, properties, nil).Once()
+				expectActivatePolicyVersion(m, policyID, v1, cloudlets.PolicyActivationNetworkProduction, properties, nil)
+				expectListPolicyActivations(m, policyID, v1, cloudlets.PolicyActivationNetworkProduction, []string{}, active, "", 1, nil).Once()
+				// poll until active -> waitForPolicyActivation()
+				expectListPolicyActivations(m, policyID, v1, cloudlets.PolicyActivationNetworkProduction, properties, active, "", 1, nil).Once()
+				// read
+				expectListPolicyActivations(m, policyID, v1, cloudlets.PolicyActivationNetworkProduction, properties, active, "", 1, nil).Once()
+				// read
+				expectListPolicyActivations(m, policyID, v1, cloudlets.PolicyActivationNetworkProduction, properties, active, "", 1, nil).Once()
+				// delete
+				expectDeletePhase(m, policyID, properties, nil, cloudlets.PolicyActivationNetworkProduction, nil, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
+						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "network", "staging"),
+					),
+				},
+				{
+					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1_prod.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
+						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "network", "prod"),
 					),
 				},
 			},
@@ -640,8 +641,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 	}
 
 	// redefining times to accelerate tests
-	ActivationPollMinimum = time.Second * 1
-	ActivationPollInterval = time.Second * 1
+	ActivationPollMinimum, ActivationPollInterval = time.Millisecond, time.Millisecond
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
