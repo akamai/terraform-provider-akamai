@@ -57,7 +57,10 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	notes, err := tools.GetStringValue("version_notes", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -90,7 +93,10 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	getVersionNotes := appsec.GetVersionNotesRequest{
 		ConfigID: configID,
@@ -129,7 +135,10 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	notes, err := tools.GetStringValue("version_notes", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)

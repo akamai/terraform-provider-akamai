@@ -63,7 +63,10 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -112,7 +115,10 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := s[1]
 
 	apiID := 0
@@ -123,35 +129,33 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 		}
 	}
 
-	getAPIRequestConstraints := appsec.GetApiRequestConstraintsRequest{
+	response, err := client.GetApiRequestConstraints(ctx, appsec.GetApiRequestConstraintsRequest{
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
 		ApiID:    apiID,
-	}
-
-	response, err := client.GetApiRequestConstraints(ctx, getAPIRequestConstraints)
+	})
 	if err != nil {
 		logger.Errorf("calling 'getAPIRequestConstraints': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("config_id", getAPIRequestConstraints.ConfigID); err != nil {
+	if err := d.Set("config_id", configID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("security_policy_id", getAPIRequestConstraints.PolicyID); err != nil {
+	if err := d.Set("security_policy_id", policyID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("api_endpoint_id", getAPIRequestConstraints.ApiID); err != nil {
+	if err := d.Set("api_endpoint_id", apiID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if getAPIRequestConstraints.ApiID != 0 {
+	if apiID != 0 {
 		if len(response.APIEndpoints) > 0 {
 			for _, val := range response.APIEndpoints {
-				if val.ID == getAPIRequestConstraints.ApiID {
+				if val.ID == apiID {
 					if err := d.Set("action", val.Action); err != nil {
 						return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 					}
@@ -174,7 +178,10 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := s[1]
 
 	apiID := 0
@@ -189,15 +196,13 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	updateAPIRequestConstraints := appsec.UpdateApiRequestConstraintsRequest{
+	_, err = client.UpdateApiRequestConstraints(ctx, appsec.UpdateApiRequestConstraintsRequest{
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
 		ApiID:    apiID,
 		Action:   action,
-	}
-
-	_, err = client.UpdateApiRequestConstraints(ctx, updateAPIRequestConstraints)
+	})
 	if err != nil {
 		logger.Errorf("calling 'updateAPIRequestConstraints': %s", err.Error())
 		return diag.FromErr(err)
@@ -218,7 +223,10 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := s[1]
 
 	apiID := 0
@@ -237,36 +245,15 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 	}
 
 	if removeAPIRequestConstraints.ApiID == 0 {
-
-		getPolicyProtections := appsec.GetPolicyProtectionsRequest{
-			ConfigID: configID,
-			Version:  version,
-			PolicyID: policyID,
-		}
-
-		policyprotections, err := client.GetPolicyProtections(ctx, getPolicyProtections)
+		_, err := client.UpdateAPIConstraintsProtection(ctx, appsec.UpdateAPIConstraintsProtectionRequest{
+			ConfigID:            configID,
+			Version:             version,
+			PolicyID:            policyID,
+			ApplyAPIConstraints: false,
+		})
 		if err != nil {
-			logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
+			logger.Errorf("calling 'UpdateAPIConstraintsProtection': %s", err.Error())
 			return diag.FromErr(err)
-		}
-		if policyprotections.ApplyAPIConstraints {
-			updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-				ConfigID:                      configID,
-				Version:                       version,
-				PolicyID:                      policyID,
-				ApplyAPIConstraints:           false,
-				ApplyApplicationLayerControls: policyprotections.ApplyApplicationLayerControls,
-				ApplyBotmanControls:           policyprotections.ApplyBotmanControls,
-				ApplyNetworkLayerControls:     policyprotections.ApplyNetworkLayerControls,
-				ApplyRateControls:             policyprotections.ApplyRateControls,
-				ApplyReputationControls:       policyprotections.ApplyReputationControls,
-				ApplySlowPostControls:         policyprotections.ApplySlowPostControls,
-			}
-			_, err := client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
-			if err != nil {
-				logger.Errorf("calling 'removePolicyProtections': %s", err.Error())
-				return diag.FromErr(err)
-			}
 		}
 	} else {
 		removeAPIRequestConstraints.Action = "none"

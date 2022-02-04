@@ -61,7 +61,10 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -108,7 +111,10 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
@@ -156,7 +162,10 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
@@ -198,7 +207,10 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {

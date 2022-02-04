@@ -1,7 +1,7 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
-
 
 data "akamai_appsec_security_policy" "test" {
   security_policy_name = "akamaitools"
@@ -15,3 +15,4 @@ output "securitypolicy" {
 output "securitypolicies" {
   value = data.akamai_appsec_security_policy.test.security_policy_id_list
 }
+

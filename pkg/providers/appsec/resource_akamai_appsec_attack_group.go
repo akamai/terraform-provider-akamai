@@ -70,7 +70,10 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "atackGroup", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "atackGroup", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -127,7 +130,10 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	group := iDParts[2]
 
@@ -183,7 +189,10 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "attackGroup", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "attackGroup", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	group := iDParts[2]
 
@@ -234,7 +243,10 @@ func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "attackGroup", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "attackGroup", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	group := iDParts[2]
 

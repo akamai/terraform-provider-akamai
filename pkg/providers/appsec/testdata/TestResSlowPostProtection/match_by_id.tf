@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_slowpost_protection" "test" {
@@ -7,5 +8,4 @@ resource "akamai_appsec_slowpost_protection" "test" {
   security_policy_id = "AAAA_81230"
   enabled            = false
 }
-
 

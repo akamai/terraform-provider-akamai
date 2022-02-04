@@ -65,7 +65,10 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -118,7 +121,10 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	securityPolicyID := iDParts[1]
 	ratePolicyID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
@@ -175,7 +181,10 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	securityPolicyID := iDParts[1]
 	ratePolicyID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
@@ -222,7 +231,10 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	securityPolicyID := iDParts[1]
 	ratePolicyID, err := strconv.Atoi(iDParts[2])
 	if err != nil {

@@ -54,7 +54,9 @@ func dataSourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 	getThreatIntel.ConfigID = configID
 
-	getThreatIntel.Version = getLatestConfigVersion(ctx, configID, m)
+	if getThreatIntel.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {

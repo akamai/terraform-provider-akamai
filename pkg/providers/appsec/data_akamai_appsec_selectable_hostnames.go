@@ -73,7 +73,9 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	}
 	getSelectableHostnames.ConfigID = configID
 
-	getSelectableHostnames.Version = getLatestConfigVersion(ctx, configID, m)
+	if getSelectableHostnames.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	contractID, err := tools.GetStringValue("contractid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

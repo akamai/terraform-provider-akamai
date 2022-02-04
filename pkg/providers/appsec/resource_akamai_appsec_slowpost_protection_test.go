@@ -17,13 +17,19 @@ func TestAccAkamaiSlowPostProtection_res_basic(t *testing.T) {
 		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
 		json.Unmarshal([]byte(tempJSON), &config)
 
-		allProtectionsFalse := appsec.PolicyProtectionsResponse{}
+		updateResponseAllProtectionsFalse := appsec.UpdateSlowPostProtectionResponse{}
 		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResSlowPostProtection/PolicyProtections.json"))
-		json.Unmarshal([]byte(tempJSON), &allProtectionsFalse)
+		json.Unmarshal([]byte(tempJSON), &updateResponseAllProtectionsFalse)
 
-		oneProtectionTrue := appsec.PolicyProtectionsResponse{}
+		getResponseAllProtectionsFalse := appsec.GetSlowPostProtectionResponse{}
+		json.Unmarshal([]byte(tempJSON), &getResponseAllProtectionsFalse)
+
+		updateResponseOneProtectionTrue := appsec.UpdateSlowPostProtectionResponse{}
 		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResSlowPostProtection/UpdatedPolicyProtections.json"))
-		json.Unmarshal([]byte(tempJSON), &oneProtectionTrue)
+		json.Unmarshal([]byte(tempJSON), &updateResponseOneProtectionTrue)
+
+		getResponseOneProtectionTrue := appsec.GetSlowPostProtectionResponse{}
+		json.Unmarshal([]byte(tempJSON), &getResponseOneProtectionTrue)
 
 		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
 		// is mocked individually because calls with the same parameters may have different return values.
@@ -34,34 +40,27 @@ func TestAccAkamaiSlowPostProtection_res_basic(t *testing.T) {
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		// Create, including Read before returning
-		client.On("GetPolicyProtections",
+		// Create, with terminal Read
+		client.On("UpdateSlowPostProtection",
 			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
-		client.On("UpdatePolicyProtections",
+			appsec.UpdateSlowPostProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&updateResponseAllProtectionsFalse, nil).Once()
+		client.On("GetSlowPostProtection",
 			mock.Anything,
-			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
-		client.On("GetPolicyProtections",
-			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
+			appsec.GetSlowPostProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&getResponseAllProtectionsFalse, nil).Once()
 
-		// Post-create TestCheckResourceAttr checks
-		client.On("GetPolicyProtections",
+		// Reads performed via "id" and "enabled" checks
+		client.On("GetSlowPostProtection",
 			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
-		client.On("GetPolicyProtections",
-			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
+			appsec.GetSlowPostProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&getResponseAllProtectionsFalse, nil).Once()
 
-		client.On("UpdatePolicyProtections",
+		// Delete, performed automatically to clean up
+		client.On("UpdateSlowPostProtection",
 			mock.Anything,
-			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
+			appsec.UpdateSlowPostProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&updateResponseAllProtectionsFalse, nil).Once()
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

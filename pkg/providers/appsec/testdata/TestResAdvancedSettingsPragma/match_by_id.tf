@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_advanced_settings_pragma_header" "test" {
@@ -8,6 +9,4 @@ resource "akamai_appsec_advanced_settings_pragma_header" "test" {
 {"action":"REMOVE"}
 EOF
 }
-
-
 

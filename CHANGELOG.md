@@ -1,5 +1,13 @@
 # RELEASE NOTES
 
+## 2.0.1 (Feb 2, 2022)
+
+#### FEATURES/ENHANCEMENTS
+
+* APPSEC
+  * Cache OpenAPI calls for config & WAFMode information
+  * Allow separate resources for individual protection settings
+
 ## 1.10.0 (Jan 27, 2022)
 
 #### FEATURES/ENHANCEMENTS

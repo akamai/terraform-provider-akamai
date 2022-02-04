@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 data "akamai_appsec_slow_post" "test" {
@@ -10,3 +11,4 @@ data "akamai_appsec_slow_post" "test" {
 output "configsedge_post_output_text" {
   value = data.akamai_appsec_slow_post.test.output_text
 }
+

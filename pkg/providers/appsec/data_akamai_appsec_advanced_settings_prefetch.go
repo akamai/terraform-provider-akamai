@@ -48,7 +48,9 @@ func dataSourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resou
 	}
 	getAdvancedSettingsPrefetch.ConfigID = configID
 
-	getAdvancedSettingsPrefetch.Version = getLatestConfigVersion(ctx, configID, m)
+	if getAdvancedSettingsPrefetch.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	advancedsettingsprefetch, err := client.GetAdvancedSettingsPrefetch(ctx, getAdvancedSettingsPrefetch)
 	if err != nil {

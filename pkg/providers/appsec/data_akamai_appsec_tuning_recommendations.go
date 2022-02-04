@@ -64,10 +64,15 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 
 	var jsonBody []byte
 
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	if group != "" {
 		getAttackGroupRecommendationsRequest := appsec.GetAttackGroupRecommendationsRequest{
 			ConfigID: configID,
-			Version:  getLatestConfigVersion(ctx, configID, m),
+			Version:  version,
 			PolicyID: policyID,
 			Group:    group,
 		}
@@ -85,7 +90,7 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 	} else {
 		getTuningRecommendationsRequest := appsec.GetTuningRecommendationsRequest{
 			ConfigID: configID,
-			Version:  getLatestConfigVersion(ctx, configID, m),
+			Version:  version,
 			PolicyID: policyID,
 		}
 

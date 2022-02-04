@@ -53,7 +53,10 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	jsonPayload := d.Get("match_target_sequence")
 
 	createMatchTargetSequence := appsec.UpdateMatchTargetSequenceRequest{}
@@ -88,7 +91,10 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	matchTargetType := iDParts[1]
 
 	getMatchTargetSequence := appsec.GetMatchTargetSequenceRequest{
@@ -133,7 +139,10 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	matchTargetType := iDParts[1]
 
 	jsonPayload := d.Get("match_target_sequence")

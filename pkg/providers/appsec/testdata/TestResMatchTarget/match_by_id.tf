@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_match_target" "test" {
@@ -48,3 +49,4 @@ resource "akamai_appsec_match_target" "test" {
 EOF
 
 }
+

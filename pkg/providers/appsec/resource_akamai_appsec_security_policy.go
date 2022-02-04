@@ -75,7 +75,10 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyname, err := tools.GetStringValue("security_policy_name", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -152,7 +155,10 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
 	getSecurityPolicy := appsec.GetSecurityPolicyRequest{
@@ -202,7 +208,10 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	securityPolicyID := iDParts[1]
 
 	// Prevent an update call with the same policy name since API will reject it.
@@ -246,11 +255,20 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	securityPolicyID := iDParts[1]
 
-	latestVersion := getLatestConfigVersion(ctx, configID, m)
-	stagingVersion, productionVersion := getActiveConfigVersions(ctx, configID, m)
+	latestVersion, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	stagingVersion, productionVersion, err := getActiveConfigVersions(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	if latestVersion == stagingVersion || latestVersion == productionVersion {
 		logger.Debugf("latest version %d is active, DeleteContext is a no-op", latestVersion)
 	} else {

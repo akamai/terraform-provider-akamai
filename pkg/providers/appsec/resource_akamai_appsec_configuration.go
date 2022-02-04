@@ -172,9 +172,13 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 	d.Set("description", configuration.Description)
 	d.Set("config_id", configuration.ID)
 
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	getSelectedHostnamesRequest := appsec.GetSelectedHostnamesRequest{
 		ConfigID: configID,
-		Version:  getLatestConfigVersion(ctx, configID, m),
+		Version:  version,
 	}
 
 	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnamesRequest)
@@ -237,9 +241,13 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 			hostnames = append(hostnames, hostname)
 		}
 
+		version, err := getModifiableConfigVersion(ctx, configID, "configuration", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		updateSelectedHostnames := appsec.UpdateSelectedHostnamesRequest{
 			ConfigID:     configID,
-			Version:      getModifiableConfigVersion(ctx, configID, "configuration", m),
+			Version:      version,
 			HostnameList: hostnames,
 		}
 

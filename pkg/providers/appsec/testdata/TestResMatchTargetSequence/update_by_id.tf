@@ -1,8 +1,7 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
-
-
 
 resource "akamai_appsec_match_target_sequence" "test" {
   config_id             = 43253
@@ -23,3 +22,4 @@ resource "akamai_appsec_match_target_sequence" "test" {
 EOF
 
 }
+

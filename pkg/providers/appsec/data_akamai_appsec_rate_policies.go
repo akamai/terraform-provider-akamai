@@ -51,7 +51,9 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getRatePolicies.ConfigID = configID
 
-	getRatePolicies.ConfigVersion = getLatestConfigVersion(ctx, configID, m)
+	if getRatePolicies.ConfigVersion, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	ratePolicyID, err := tools.GetIntValue("rate_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

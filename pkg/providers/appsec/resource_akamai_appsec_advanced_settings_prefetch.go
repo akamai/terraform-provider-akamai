@@ -66,7 +66,10 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	enableAppLayer, err := tools.GetBoolValue("enable_app_layer", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -119,7 +122,10 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	getAdvancedSettingsPrefetch := appsec.GetAdvancedSettingsPrefetchRequest{
 		ConfigID: configID,
@@ -161,7 +167,10 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	enableAppLayer, err := tools.GetBoolValue("enable_app_layer", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -212,8 +221,10 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
-
+	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	removeAdvancedSettingsPrefetch := appsec.UpdateAdvancedSettingsPrefetchRequest{
 		ConfigID:           configID,
 		Version:            version,

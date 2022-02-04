@@ -1,8 +1,7 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
-
-
 
 resource "akamai_appsec_rate_policy_action" "test" {
   config_id          = 43253
@@ -12,5 +11,4 @@ resource "akamai_appsec_rate_policy_action" "test" {
   ipv4_action        = "alert"
   ipv6_action        = "alert"
 }
-
 

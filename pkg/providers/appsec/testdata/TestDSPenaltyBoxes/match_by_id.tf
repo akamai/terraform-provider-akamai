@@ -1,6 +1,8 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
+
 data "akamai_appsec_penalty_boxes" "test" {
   config_id          = 43253
   version            = 7

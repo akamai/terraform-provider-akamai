@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 data "akamai_appsec_reputation_profile_actions" "test" {
@@ -7,3 +8,4 @@ data "akamai_appsec_reputation_profile_actions" "test" {
   security_policy_id    = "AAAA_81230"
   reputation_profile_id = 321456
 }
+

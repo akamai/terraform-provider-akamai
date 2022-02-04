@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_eval_rule" "test" {
@@ -26,5 +27,4 @@ resource "akamai_appsec_eval_rule" "test" {
     }
 EOF
 }
-
 

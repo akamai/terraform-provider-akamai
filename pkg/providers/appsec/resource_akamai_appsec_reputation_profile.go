@@ -60,7 +60,10 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	jsonpostpayload, err := tools.GetStringValue("reputation_profile", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -105,12 +108,16 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	reputationProfileRequest := appsec.GetReputationProfileRequest{
-		ConfigID:            configID,
-		ConfigVersion:       getLatestConfigVersion(ctx, configID, m),
-		ReputationProfileId: reputationProfileID,
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
+	reputationProfileRequest := appsec.GetReputationProfileRequest{
+		ConfigID:            configID,
+		ConfigVersion:       version,
+		ReputationProfileId: reputationProfileID,
+	}
 	reputationProfileResponse, err := client.GetReputationProfile(ctx, reputationProfileRequest)
 	if err != nil {
 		logger.Errorf("calling 'getReputationProfile': %s", err.Error())
@@ -157,7 +164,10 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	jsonPayloadRaw := []byte(jsonpostpayload)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
@@ -192,7 +202,10 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfile", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	reputationProfileID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)

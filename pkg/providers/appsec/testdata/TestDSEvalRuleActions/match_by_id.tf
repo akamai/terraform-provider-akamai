@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 data "akamai_appsec_eval_rule_actions" "test" {
@@ -10,3 +11,4 @@ data "akamai_appsec_eval_rule_actions" "test" {
 output "configsedge_post_output_text" {
   value = data.akamai_appsec_eval_rule_actions.test.output_text
 }
+

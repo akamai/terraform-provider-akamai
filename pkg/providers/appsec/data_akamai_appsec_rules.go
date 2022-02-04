@@ -63,7 +63,9 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	getRules.ConfigID = configID
 
-	getRules.Version = getLatestConfigVersion(ctx, configID, m)
+	if getRules.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -92,14 +94,14 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 		PolicyID: policyID,
 	}
 
-	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
+	wafMode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
 		logger.Errorf("calling 'getWAFMode': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
 	templateName := "RulesWithConditionExceptionDS"
-	if wafmode.Mode == AseAuto || wafmode.Mode == AseManual {
+	if wafMode.Mode == AseAuto || wafMode.Mode == AseManual {
 		templateName = "ASERulesWithConditionExceptionDS"
 	}
 

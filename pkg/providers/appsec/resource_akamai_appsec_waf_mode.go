@@ -84,7 +84,10 @@ func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "wafMode", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wafMode", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -126,7 +129,10 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
 	getWAFMode := appsec.GetWAFModeRequest{
@@ -135,7 +141,7 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 		PolicyID: policyID,
 	}
 
-	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
+	wafMode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
 		logger.Errorf("calling 'getWAFMode': %s", err.Error())
 		return diag.FromErr(err)
@@ -147,24 +153,24 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	if err := d.Set("security_policy_id", getWAFMode.PolicyID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("mode", wafmode.Mode); err != nil {
+	if err := d.Set("mode", wafMode.Mode); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("current_ruleset", wafmode.Current); err != nil {
+	if err := d.Set("current_ruleset", wafMode.Current); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("eval_status", wafmode.Eval); err != nil {
+	if err := d.Set("eval_status", wafMode.Eval); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("eval_ruleset", wafmode.Evaluating); err != nil {
+	if err := d.Set("eval_ruleset", wafMode.Evaluating); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("eval_expiration_date", wafmode.Expires); err != nil {
+	if err := d.Set("eval_expiration_date", wafMode.Expires); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "wafModesDS", wafmode)
+	outputtext, err := RenderTemplates(ots, "wafModesDS", wafMode)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
@@ -188,7 +194,10 @@ func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "wafMode", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wafMode", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

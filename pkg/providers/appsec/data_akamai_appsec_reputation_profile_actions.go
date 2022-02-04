@@ -59,7 +59,9 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	}
 	getReputationProfileActions.ConfigID = configID
 
-	getReputationProfileActions.Version = getLatestConfigVersion(ctx, configID, m)
+	if getReputationProfileActions.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

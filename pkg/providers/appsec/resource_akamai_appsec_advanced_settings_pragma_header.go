@@ -58,8 +58,10 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
-
+	version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -106,7 +108,10 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		policyID := iDParts[1]
 
 		getAdvancedSettingsPragma.ConfigID = configID
@@ -117,7 +122,10 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		getAdvancedSettingsPragma.ConfigID = configID
 		getAdvancedSettingsPragma.Version = version
@@ -169,7 +177,10 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		policyID := iDParts[1]
 
 		removeAdvancedSettingsPragma.ConfigID = configID
@@ -181,7 +192,10 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		removeAdvancedSettingsPragma.ConfigID = configID
 		removeAdvancedSettingsPragma.Version = version
@@ -212,7 +226,10 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		policyID := iDParts[1]
 
@@ -224,8 +241,10 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
-
+		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		updateAdvancedSettingsPragma.ConfigID = configID
 		updateAdvancedSettingsPragma.Version = version
 	}

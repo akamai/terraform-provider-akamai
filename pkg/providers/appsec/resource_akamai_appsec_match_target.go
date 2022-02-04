@@ -59,7 +59,10 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	createMatchTarget := appsec.CreateMatchTargetRequest{}
 	jsonpostpayload := d.Get("match_target")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
@@ -95,7 +98,10 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	targetID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
@@ -145,7 +151,10 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	targetID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
@@ -185,7 +194,10 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	targetID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)

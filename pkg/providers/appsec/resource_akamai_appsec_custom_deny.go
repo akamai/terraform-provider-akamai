@@ -63,7 +63,10 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	jsonpostpayload := d.Get("custom_deny")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
@@ -107,9 +110,14 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	customDenyID := iDParts[1]
 
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	getCustomDeny := appsec.GetCustomDenyRequest{
 		ConfigID: configID,
-		Version:  getLatestConfigVersion(ctx, configID, m),
+		Version:  version,
 		ID:       customDenyID,
 	}
 
@@ -162,9 +170,13 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
+	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	updateCustomDeny := appsec.UpdateCustomDenyRequest{
 		ConfigID:       configID,
-		Version:        getModifiableConfigVersion(ctx, configID, "customDeny", m),
+		Version:        version,
 		ID:             customDenyID,
 		JsonPayloadRaw: rawJSON,
 	}
@@ -195,9 +207,13 @@ func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 	customDenyID := iDParts[1]
 
+	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	removeCustomDeny := appsec.RemoveCustomDenyRequest{
 		ConfigID: configID,
-		Version:  getModifiableConfigVersion(ctx, configID, "customDeny", m),
+		Version:  version,
 		ID:       customDenyID,
 	}
 

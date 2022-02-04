@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_penalty_box" "test" {
@@ -8,3 +9,4 @@ resource "akamai_appsec_penalty_box" "test" {
   penalty_box_action     = "none"
   penalty_box_protection = false
 }
+
