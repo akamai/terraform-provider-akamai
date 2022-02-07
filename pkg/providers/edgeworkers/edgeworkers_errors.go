@@ -17,10 +17,10 @@ var (
 	ErrEdgeworkerActivationTimeout = errors.New("edgeworker activation timeout")
 	// ErrEdgeworkerDeactivationTimeout is returned when edgeworker deactivation fails due to a timeout
 	ErrEdgeworkerDeactivationTimeout = errors.New("edgeworker deactivation timeout")
-	// ErrEdgeworkerActivationCanceled is returned on activation poll cancel
-	ErrEdgeworkerActivationCanceled = errors.New("operation cancelled while waiting for edgeworker activation status")
-	// ErrEdgeworkerActivationContextTerminated is returned on deactivation poll cancel
-	ErrEdgeworkerDeactivationCanceled = errors.New("operation cancelled while waiting for edgeworker deactivation status")
+	// ErrEdgeworkerActivationCancelled is returned on activation poll cancel
+	ErrEdgeworkerActivationCancelled = errors.New("operation cancelled while waiting for edgeworker activation status")
+	// ErrEdgeworkerDeactivationCancelled is returned on deactivation poll cancel
+	ErrEdgeworkerDeactivationCancelled = errors.New("operation cancelled while waiting for edgeworker deactivation status")
 	// ErrEdgeworkerActivationContextTerminated is returned on activation context termination
 	ErrEdgeworkerActivationContextTerminated = errors.New("edgeworker activation context terminated")
 	// ErrEdgeworkerDeactivationContextTerminated is returned on deactivation context termination

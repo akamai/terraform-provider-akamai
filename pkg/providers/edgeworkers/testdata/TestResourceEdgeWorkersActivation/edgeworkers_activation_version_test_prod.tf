@@ -2,8 +2,8 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-resource "akamai_edgeworker_activation" "test" {
+resource "akamai_edgeworkers_activation" "test" {
   edgeworker_id = 1234
-  network       = "STAGING"
+  network       = "PRODUCTION"
   version       = "test"
 }
