@@ -29,6 +29,9 @@ func resourceEdgeWorker() *schema.Resource {
 		UpdateContext: resourceEdgeWorkerUpdate,
 		ReadContext:   resourceEdgeWorkerRead,
 		DeleteContext: resourceEdgeWorkerDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceEdgeWorkerImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"edgeworker_id": {
 				Type:        schema.TypeInt,
@@ -384,4 +387,53 @@ func convertWarningsToListOfStrings(res *edgeworkers.ValidateBundleResponse) ([]
 		}
 	}
 	return warnings, nil
+}
+
+func resourceEdgeWorkerImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerImport")
+
+	logger.Debug("Importing EdgeWorker version")
+	client := inst.Client(meta)
+
+	edgeWorkerID, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return nil, fmt.Errorf("invalid edgeworker ID format: %s", err)
+	}
+
+	versions, err := client.ListEdgeWorkerVersions(ctx, edgeworkers.ListEdgeWorkerVersionsRequest{
+		EdgeWorkerID: edgeWorkerID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(versions.EdgeWorkerVersions) > 0 {
+		version, err := getLatestEdgeWorkerIDBundleVersion(versions)
+		if err != nil {
+			return nil, fmt.Errorf("unable to determine the latest edgeworker bundle version")
+		}
+		bundleContent, err := client.GetEdgeWorkerVersionContent(ctx, edgeworkers.GetEdgeWorkerVersionContentRequest{
+			EdgeWorkerID: edgeWorkerID,
+			Version:      version,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		validateBundleResponse, err := client.ValidateBundle(ctx, edgeworkers.ValidateBundleRequest{
+			Bundle: *bundleContent,
+		})
+		if err != nil {
+			return nil, err
+		}
+		warnings, err := convertWarningsToListOfStrings(validateBundleResponse)
+		if err != nil {
+			return nil, fmt.Errorf("cannot marshal json %s", err)
+		}
+		if err = d.Set("warnings", warnings); err != nil {
+			return nil, fmt.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+
+	return []*schema.ResourceData{d}, nil
 }

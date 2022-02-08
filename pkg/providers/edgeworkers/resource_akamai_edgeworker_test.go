@@ -286,6 +286,47 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
 		}
 
+		expectImportEdgeWorkerWithOneVersion = func(t *testing.T, client *mockedgeworkers, localBundlePath, version string, timeForCreation string, edgeWorkerID int) {
+			edgeWorkerVersion := edgeworkers.EdgeWorkerVersion{
+				EdgeWorkerID: edgeWorkerID,
+				Version:      version,
+				CreatedTime:  timeForCreation,
+			}
+			edgeWorkerListVersionsReq := edgeworkers.ListEdgeWorkerVersionsRequest{
+				EdgeWorkerID: edgeWorkerID,
+			}
+			edgeWorkerVersionResp := edgeworkers.ListEdgeWorkerVersionsResponse{
+				EdgeWorkerVersions: []edgeworkers.EdgeWorkerVersion{
+					edgeWorkerVersion,
+				},
+			}
+			edgeWorkerVersionContentGetReq := edgeworkers.GetEdgeWorkerVersionContentRequest{
+				EdgeWorkerID: edgeWorkerID,
+				Version:      version,
+			}
+
+			bytesArray, err := convertLocalBundleFileIntoBytes(localBundlePath)
+			require.NoError(t, err)
+
+			validateBundleReq := edgeworkers.ValidateBundleRequest{
+				Bundle: edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)},
+			}
+			validateBundleRes := &edgeworkers.ValidateBundleResponse{
+				Warnings: []edgeworkers.ValidationIssue{
+					{
+						Type:    "warning_type",
+						Message: "warning_message",
+					},
+				},
+			}
+
+			client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerListVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
+			edgeWorkerVersionContentGetRes := edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)}
+			client.On("GetEdgeWorkerVersionContent", mock.Anything, edgeWorkerVersionContentGetReq).Return(&edgeWorkerVersionContentGetRes, nil).Once()
+			client.On("ValidateBundle", mock.Anything, validateBundleReq).Return(validateBundleRes, nil).Once()
+
+		}
+
 		checkAttributes = func(attrs edgeWorkerAttributes) resource.TestCheckFunc {
 			checks := []resource.TestCheckFunc{
 				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "edgeworker_id", "123"),
@@ -468,6 +509,38 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 							localBundleHash: bundleHashForCreate,
 							version:         "1.0",
 						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("import", func(t *testing.T) {
+		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
+		client := new(mockedgeworkers)
+		createdTime := time.Now().Format(time.RFC3339)
+
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, createdTime, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(t, client, "example", bundlePathForCreate, edgeWorkerVersion.Version, createdTime, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
+
+		expectImportEdgeWorkerWithOneVersion(t, client, bundlePathForCreate, edgeWorkerVersion.Version, createdTime, edgeWorkerVersion.EdgeWorkerID)
+
+		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorker.EdgeWorkerID, createdTime)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+					},
+					{
+						ImportState:             true,
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"local_bundle"},
+						ImportStateId:           "123",
+						ResourceName:            "akamai_edgeworker.edgeworker",
 					},
 				},
 			})
