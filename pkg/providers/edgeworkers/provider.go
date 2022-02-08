@@ -51,6 +51,7 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_edgekv":                 resourceEdgeKV(),
 			"akamai_edgeworkers_activation": resourceEdgeworkersActivation(),
+			"akamai_edgeworker":             resourceEdgeWorker(),
 		},
 	}
 	return provider

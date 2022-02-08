@@ -142,7 +142,7 @@ func (m *mockedgeworkers) CloneEdgeWorkerID(ctx context.Context, req edgeworkers
 
 func (m *mockedgeworkers) DeleteEdgeWorkerID(ctx context.Context, req edgeworkers.DeleteEdgeWorkerIDRequest) error {
 	args := m.Called(ctx, req)
-	return args.Error(1)
+	return args.Error(0)
 }
 
 func (m *mockedgeworkers) GetEdgeWorkerVersion(ctx context.Context, req edgeworkers.GetEdgeWorkerVersionRequest) (*edgeworkers.EdgeWorkerVersion, error) {
@@ -179,7 +179,7 @@ func (m *mockedgeworkers) CreateEdgeWorkerVersion(ctx context.Context, req edgew
 
 func (m *mockedgeworkers) DeleteEdgeWorkerVersion(ctx context.Context, req edgeworkers.DeleteEdgeWorkerVersionRequest) error {
 	args := m.Called(ctx, req)
-	return args.Error(1)
+	return args.Error(0)
 }
 
 func (m *mockedgeworkers) GetPermissionGroup(ctx context.Context, req edgeworkers.GetPermissionGroupRequest) (*edgeworkers.PermissionGroup, error) {
