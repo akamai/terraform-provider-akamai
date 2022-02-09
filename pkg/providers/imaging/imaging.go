@@ -1,7 +1,7 @@
-//go:build all || ivm
-// +build all ivm
+//go:build all || imaging
+// +build all imaging
 
-package ivm
+package imaging
 
 import "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/registry"
 

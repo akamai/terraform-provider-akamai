@@ -1,4 +1,4 @@
-package ivm
+package imaging
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/ivm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,7 +43,7 @@ func TestProvider(t *testing.T) {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client ivm.IVM, f func()) {
+func useClient(client imaging.Imaging, f func()) {
 	clientLock.Lock()
 	orig := inst.client
 	inst.client = client

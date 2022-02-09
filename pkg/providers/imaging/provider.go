@@ -1,24 +1,23 @@
-package ivm
+package imaging
 
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/ivm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 )
 
 type (
 	provider struct {
 		*schema.Provider
 
-		client ivm.IVM
+		client imaging.Imaging
 	}
 
-	// Option is an ivm provider option
+	// Option is an imaging provider option
 	Option func(p *provider)
 )
 
@@ -52,22 +51,22 @@ func Provider() *schema.Provider {
 }
 
 // WithClient sets the client interface function, used for mocking and testing
-func WithClient(i ivm.IVM) Option {
+func WithClient(i imaging.Imaging) Option {
 	return func(p *provider) {
 		p.client = i
 	}
 }
 
-// Client returns the IVM interface
-func (p *provider) Client(meta akamai.OperationMeta) ivm.IVM {
+// Client returns the Imaging interface
+func (p *provider) Client(meta akamai.OperationMeta) imaging.Imaging {
 	if p.client != nil {
 		return p.client
 	}
-	return ivm.Client(meta.Session())
+	return imaging.Client(meta.Session())
 }
 
 func (p *provider) Name() string {
-	return "ivm"
+	return "imaging"
 }
 
 // ProviderVersion update version string anytime provider adds new features
