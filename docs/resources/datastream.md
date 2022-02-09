@@ -72,7 +72,7 @@ The resource supports these arguments:
   * `upload_file_prefix` - (Optional) The prefix of the log file that you want to send to a destination. It’s a string of at most 200 characters. If unspecified, defaults to `ak`.
   * `upload_file_suffix` - (Optional) The suffix of the log file that you want to send to a destination. It’s a static string of at most 10 characters. If unspecified, defaults to `ds`.
 * `contract_id` - (Required) Identifies the contract that has access to the product.
-* `dataset_fields_ids` - (Required)	Identifiers of the data set fields within the template that you want to receive in logs. The order of the identifiers define how the value for these fields appears in the log lines.
+* `dataset_fields_ids` - (Required)	Identifiers of the data set fields within the template that you want to receive in logs. The order of the identifiers define how the value for these fields appears in the log lines. See [Data set parameters](https://techdocs.akamai.com/datastream2/reference/data-set-parameters-1).
 * `email_ids` - (Optional) A list of email addresses you want to notify about activations and deactivations of the stream.
 * `group_id` - (Required) Identifies the group that has access to the product and this stream configuration.
 * `property_ids` - (Required) Identifies the properties that you want to monitor in the stream. Note that a stream can only log data for active properties.
