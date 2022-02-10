@@ -95,7 +95,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Description: "The date and time when the stream was created",
 	},
 	"dataset_fields_ids": {
-		Type:     schema.TypeList,
+		Type:     schema.TypeSet,
 		Required: true,
 		Elem: &schema.Schema{
 			Type: schema.TypeInt,
@@ -637,11 +637,11 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	contractID = strings.TrimPrefix(contractID, "ctr_")
 
-	datasetFieldsIDsList, err := tools.GetListValue("dataset_fields_ids", d)
+	datasetFieldsIDsList, err := tools.GetSetValue("dataset_fields_ids", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	datasetFieldsIDs := InterfaceSliceToIntSlice(datasetFieldsIDsList)
+	datasetFieldsIDs := InterfaceSliceToIntSlice(datasetFieldsIDsList.List())
 
 	emailIDsList, err := tools.GetListValue("email_ids", d)
 	if err != nil {
@@ -931,11 +931,11 @@ func updateStream(ctx context.Context, client datastream.DS, logger log.Interfac
 			return err
 		}
 
-		datasetFieldsIDsList, err := tools.GetListValue("dataset_fields_ids", d)
+		datasetFieldsIDsList, err := tools.GetSetValue("dataset_fields_ids", d)
 		if err != nil {
 			return err
 		}
-		datasetFieldsIDs := InterfaceSliceToIntSlice(datasetFieldsIDsList)
+		datasetFieldsIDs := InterfaceSliceToIntSlice(datasetFieldsIDsList.List())
 
 		emailIDsList, err := tools.GetListValue("email_ids", d)
 		if err != nil {
