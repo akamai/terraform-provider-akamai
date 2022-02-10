@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_api_request_constraints" "test" {
@@ -8,5 +9,4 @@ resource "akamai_appsec_api_request_constraints" "test" {
   api_endpoint_id    = 1
   action             = "alert"
 }
-
 

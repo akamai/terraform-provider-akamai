@@ -54,7 +54,9 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 	}
 	getSelectedHostnames.ConfigID = configID
 
-	getSelectedHostnames.Version = getLatestConfigVersion(ctx, configID, m)
+	if getSelectedHostnames.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	selectedhostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnames)
 	if err != nil {

@@ -61,7 +61,10 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -108,7 +111,10 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		policyID := iDParts[1]
 
 		getAdvancedSettingsLogging.ConfigID = configID
@@ -119,7 +125,10 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		getAdvancedSettingsLogging.ConfigID = configID
 		getAdvancedSettingsLogging.Version = version
@@ -164,7 +173,10 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		policyID := iDParts[1]
 
 		updateAdvancedSettingsLogging.ConfigID = configID
@@ -175,7 +187,10 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		updateAdvancedSettingsLogging.ConfigID = configID
 		updateAdvancedSettingsLogging.Version = version
@@ -211,7 +226,10 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		policyID := iDParts[1]
 
 		removeAdvancedSettingsLogging.ConfigID = configID
@@ -223,7 +241,10 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		removeAdvancedSettingsLogging.ConfigID = configID
 		removeAdvancedSettingsLogging.Version = version

@@ -2,7 +2,6 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-
 resource "akamai_networklist_network_list" "test" {
   name        = "Voyager Call Center Whitelist"
   type        = "IP"

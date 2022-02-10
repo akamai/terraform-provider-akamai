@@ -139,7 +139,7 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 				},
 			},
 			"liveness_settings": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
@@ -314,11 +314,9 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	createLBConfigReq := cloudlets.CreateOriginRequest{
+	createLBConfigResp, err := client.CreateOrigin(ctx, cloudlets.CreateOriginRequest{
 		OriginID: originID,
-	}
-
-	createLBConfigResp, err := client.CreateOrigin(ctx, createLBConfigReq)
+	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -585,11 +583,11 @@ func getDataCenters(d *schema.ResourceData) []cloudlets.DataCenter {
 			Continent:                     dcMap["continent"].(string),
 			Country:                       dcMap["country"].(string),
 			Hostname:                      dcMap["hostname"].(string),
-			Latitude:                      dcMap["latitude"].(float64),
+			Latitude:                      getFloat64PtrValue(dcMap, "latitude"),
 			LivenessHosts:                 livenessHostsStr,
-			Longitude:                     dcMap["longitude"].(float64),
+			Longitude:                     getFloat64PtrValue(dcMap, "longitude"),
 			OriginID:                      dcMap["origin_id"].(string),
-			Percent:                       dcMap["percent"].(float64),
+			Percent:                       getFloat64PtrValue(dcMap, "percent"),
 			StateOrProvince:               stateOrProvince,
 		}
 	}
@@ -597,11 +595,11 @@ func getDataCenters(d *schema.ResourceData) []cloudlets.DataCenter {
 }
 
 func getLivenessSettings(d *schema.ResourceData) *cloudlets.LivenessSettings {
-	lsSet := d.Get("liveness_settings").(*schema.Set)
-	if lsSet.Len() == 0 {
+	lsList, err := tools.GetListValue("liveness_settings", d)
+	if err != nil {
 		return nil
 	}
-	lsMap := lsSet.List()[0].(map[string]interface{})
+	lsMap := lsList[0].(map[string]interface{})
 	additionalHeaders := lsMap["additional_headers"].(map[string]interface{})
 	additionalHeadersStr := make(map[string]string, len(additionalHeaders))
 	for k, v := range additionalHeaders {

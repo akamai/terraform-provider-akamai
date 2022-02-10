@@ -51,7 +51,9 @@ func dataSourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 	getRuleUpgrade.ConfigID = configID
 
-	getRuleUpgrade.Version = getLatestConfigVersion(ctx, configID, m)
+	if getRuleUpgrade.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

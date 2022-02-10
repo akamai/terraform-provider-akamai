@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 data "akamai_appsec_rate_policy_actions" "test" {

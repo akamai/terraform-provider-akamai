@@ -1,8 +1,29 @@
 # RELEASE NOTES
 
+## 1.10.1 (Feb 10, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* APPSEC
+  * Cache OpenAPI calls for config & WAFMode information
+  * Allow separate resources for individual protection settings
+
+* CLOUDLETS
+  * ALB cloudlet activation: allow modification of the `network` field without destroying the existing activation
+  * Policy activation: allow modification of the `network` field without destroying the existing activation
+
+#### BUG FIXES:
+
+* CLOUDLETS
+  * Changed schema for `akamai_cloudlets_application_load_balancer` resource, to fix struct validation error during update phase
+  * Fixed client side validation to allow a datacenter percentage of 0% in `akamai_cloudlets_application_load_balancer` resource
+
+* PAPI
+  * Fix error in `akamai_property_activation` resource, which was blocking rolling back to any previous property activation ([#272](https://github.com/akamai/terraform-provider-akamai/issues/272))
+
 ## 1.10.0 (Jan 27, 2022)
 
-#### FEATURES/ENHANCEMENTS
+#### FEATURES/ENHANCEMENTS:
 
 * CLOUDLETS
   * Support for VP cloudlet type (Visitor Prioritization)
@@ -28,7 +49,7 @@
 
 ## 1.9.0 (Dec 6, 2021)
 
-#### FEATURES/ENHANCEMENTS
+#### FEATURES/ENHANCEMENTS:
 * [IMPORTANT] Added Cloudlets API support
   * Added resources allowing management of policy and policy activations:
     * `akamai_cloudlets_policy` - create, read, update, delete and import policy

@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_eval_group" "test" {
@@ -11,5 +12,4 @@ resource "akamai_appsec_eval_group" "test" {
 {"conditions":[],"exception":{"headerCookieOrParamValues":["abc"],"specificHeaderCookieOrParamPrefix": {"prefix": "a*","selector": "REQUEST_COOKIES"}}}
 EOF
 }
-
 

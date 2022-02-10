@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
@@ -14,6 +15,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+)
+
+var (
+	// getWAFModeMutex enforces single-thread access to the GetWAFMode call
+	getWAFModeMutex sync.Mutex
 )
 
 // appsec v1
@@ -71,7 +77,10 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "rule", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "rule", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -89,19 +98,13 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	jsonPayloadRaw := []byte(conditionexception)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	getWAFMode := appsec.GetWAFModeRequest{}
-
-	getWAFMode.ConfigID = configID
-	getWAFMode.Version = version
-	getWAFMode.PolicyID = policyID
-
-	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
+	wafMode, err := getWAFMode(ctx, m, configID, version, policyID)
 	if err != nil {
 		logger.Errorf("calling 'getWAFMode': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if wafmode.Mode == AseAuto { // action is read only, only condition exception is writable
+	if wafMode == AseAuto { // action is read only, only condition exception is writable
 		ruleConditionException := appsec.RuleConditionException{}
 		if conditionexception != "" {
 			err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
@@ -158,6 +161,56 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	return resourceRuleRead(ctx, d, m)
 }
 
+func getWAFMode(ctx context.Context, m interface{}, configID int, version int, policyID string) (string, error) {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "getWAFMode")
+
+	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getWAFMode", configID, version, policyID)
+	getWAFModeResponse := &appsec.GetWAFModeResponse{}
+	if err := meta.CacheGet(inst, cacheKey, getWAFModeResponse); err == nil {
+		logger.Debugf("returning wafMode %s for config/version/policy %d/%d/%s",
+			getWAFModeResponse.Mode, configID, version, policyID)
+		return getWAFModeResponse.Mode, nil
+	}
+
+	logger.Debugf("requesting getWAFMode mutex lock")
+	getWAFModeMutex.Lock()
+	defer func() {
+		logger.Debugf("releasing getWAFMode mutex lock")
+		getWAFModeMutex.Unlock()
+	}()
+
+	err := meta.CacheGet(inst, cacheKey, getWAFModeResponse)
+	if err == nil {
+		logger.Debugf("returning wafMode %s for config/version/policy %d/%d/%s",
+			getWAFModeResponse.Mode, configID, version, policyID)
+		return getWAFModeResponse.Mode, nil
+	}
+	// Any error response other than 'not found' or 'cache disabled' is a problem.
+	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+		logger.Errorf("error reading from cache: %s", err.Error())
+		return "", err
+	}
+
+	getWAFModeRequest := appsec.GetWAFModeRequest{
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: policyID,
+	}
+	wafMode, err := client.GetWAFMode(ctx, getWAFModeRequest)
+	if err != nil {
+		logger.Errorf("calling 'GetWAFMode': %s", err.Error())
+		return "", err
+	}
+	if err := meta.CacheSet(inst, cacheKey, wafMode); err != nil {
+		if !errors.Is(err, akamai.ErrCacheDisabled) {
+			logger.Errorf("error caching WAFMode: %s", err.Error())
+		}
+	}
+	return wafMode.Mode, nil
+}
+
 func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
@@ -172,7 +225,10 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
@@ -234,7 +290,10 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 	policyID := iDParts[1]
-	version := getModifiableConfigVersion(ctx, configID, "rule", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "rule", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
@@ -246,19 +305,13 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	jsonPayloadRaw := []byte(conditionexception)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	getWAFMode := appsec.GetWAFModeRequest{}
-
-	getWAFMode.ConfigID = configID
-	getWAFMode.Version = version
-	getWAFMode.PolicyID = policyID
-
-	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
+	wafMode, err := getWAFMode(ctx, m, configID, version, policyID)
 	if err != nil {
 		logger.Errorf("calling 'getWAFMode': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if wafmode.Mode == AseAuto { // action is read only, only exception is writable
+	if wafMode == AseAuto { // action is read only, only exception is writable
 		ruleConditionException := appsec.RuleConditionException{}
 		if conditionexception != "" {
 			err = json.Unmarshal([]byte(rawJSON), &ruleConditionException)
@@ -327,26 +380,23 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "rule", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "rule", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	ruleID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	getWAFMode := appsec.GetWAFModeRequest{}
-
-	getWAFMode.ConfigID = configID
-	getWAFMode.Version = version
-	getWAFMode.PolicyID = policyID
-
-	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
+	wafMode, err := getWAFMode(ctx, m, configID, version, policyID)
 	if err != nil {
 		logger.Errorf("calling 'getWAFMode': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	if wafmode.Mode == AseAuto {
+	if wafMode == AseAuto {
 		updateRule := appsec.UpdateConditionExceptionRequest{
 			ConfigID: configID,
 			Version:  version,

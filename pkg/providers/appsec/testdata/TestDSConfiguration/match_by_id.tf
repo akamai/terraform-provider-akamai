@@ -1,7 +1,7 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
-
 
 data "akamai_appsec_configuration" "test" {
   name = "Akamai Tools"
@@ -18,5 +18,4 @@ output "configsedgelatestversion" {
 output "configsedgeconfiglist" {
   value = data.akamai_appsec_configuration.test.output_text
 }
-
 

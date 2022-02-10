@@ -29,6 +29,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// update
 				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", activationsResponseDeactivated, nil).Once()
+				ExpectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
 				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 2, "STAGING",
 					[]string{"user@example.com"}, "property activation note for updating", "atv_update", nil).Once()
 				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, nil).Once()
@@ -167,6 +168,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// update
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", activationsResponseActivated, nil).Once()
+				ExpectGetPropertyVersion(m, "prp_test", "", "", 1, papi.VersionStatusActive, "").Once()
 				// delete
 				expectGetActivations(m, "prp_test", activationsResponseDeactivated, nil).Once()
 			},
@@ -190,6 +192,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// update
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", activationsResponseActivated, nil).Once()
+				ExpectGetPropertyVersion(m, "prp_test", "", "", 1, papi.VersionStatusActive, "").Once()
 				// delete
 				expectGetActivations(m, "prp_test", activationsResponseDeactivated, nil).Once()
 			},

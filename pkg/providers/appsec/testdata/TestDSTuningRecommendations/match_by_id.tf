@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 data "akamai_appsec_tuning_recommendations" "recommendations" {
@@ -12,5 +13,4 @@ data "akamai_appsec_tuning_recommendations" "group_recommendations" {
   security_policy_id = "AAAA_81230"
   attack_group       = "XSS"
 }
-
 

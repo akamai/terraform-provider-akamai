@@ -60,7 +60,10 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	jsonpostpayload := d.Get("rate_policy")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
@@ -97,7 +100,10 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	ratePolicyID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
@@ -156,9 +162,13 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	updateRatePolicy := appsec.UpdateRatePolicyRequest{
 		ConfigID:       configID,
-		ConfigVersion:  getModifiableConfigVersion(ctx, configID, "ratePolicy", m),
+		ConfigVersion:  version,
 		RatePolicyID:   ratePolicyID,
 		JsonPayloadRaw: rawJSON,
 	}
@@ -187,7 +197,10 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	ratePolicyID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)

@@ -2,6 +2,8 @@ package appsec
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -12,7 +14,8 @@ import (
 // configuration, and for identifying a modifiable (editable) version.
 
 var (
-	configCloneMutex sync.Mutex
+	configCloneMutex   sync.Mutex
+	latestVersionMutex sync.Mutex
 )
 
 // getModifiableConfigVersion returns the number of the latest editable version
@@ -21,101 +24,147 @@ var (
 // new version's number is returned. API calls are made using the supplied context
 // and the API client obtained from m. Log messages are written to m's logger. A
 // mutex prevents calls made by multiple resources from creating unnecessary clones.
-func getModifiableConfigVersion(ctx context.Context, configID int, resource string, m interface{}) int {
+func getModifiableConfigVersion(ctx context.Context, configID int, resource string, m interface{}) (int, error) {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "getModifiableConfigVersion")
 
+	// If the version info is in the cache, return it immediately.
+	cacheKey := fmt.Sprintf("%s:%d", "getModifiableConfigVersion", configID)
+	configuration := &appsec.GetConfigurationResponse{}
+	if err := meta.CacheGet(inst, cacheKey, configuration); err == nil {
+		logger.Debugf("Resource %s returning modifiable version %d from cache", resource, configuration.LatestVersion)
+		return configuration.LatestVersion, nil
+	}
+
 	logger.Debugf("Resource %s requesting mutex lock", resource)
 	configCloneMutex.Lock()
 	defer func() {
-		logger.Debugf("Resource %s unlocking mutex", resource)
+		logger.Debugf("Resource %s releasing mutex lock", resource)
 		configCloneMutex.Unlock()
 	}()
 
+	// If the version info is in the cache, return it immediately.
+	err := meta.CacheGet(inst, cacheKey, configuration)
+	if err == nil {
+		logger.Debugf("Resource %s returning modifiable version %d from cache", resource, configuration.LatestVersion)
+		return configuration.LatestVersion, nil
+	}
+	// Any error response other than 'not found' or 'cache disabled' is a problem.
+	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+		logger.Errorf("error reading from cache: %s", err.Error())
+		return 0, err
+	}
+
+	// Check whether the latest version is active in staging or production
 	logger.Debugf("Resource %s calling GetConfigurations", resource)
-	getConfigurationRequest := appsec.GetConfigurationRequest{
+	configuration, err = client.GetConfiguration(ctx, appsec.GetConfigurationRequest{
 		ConfigID: configID,
-	}
-
-	configuration, err := client.GetConfiguration(ctx, getConfigurationRequest)
+	})
 	if err != nil {
-		logger.Errorf("calling 'getConfiguration': %s", err.Error())
-		return 0 // diag.FromErr(err)
+		logger.Errorf("error calling 'getConfiguration': %s", err.Error())
+		return 0, err
 	}
-
-	var latestVersion, stagingVersion, productionVersion int
-
-	latestVersion = configuration.LatestVersion
-	stagingVersion = configuration.StagingVersion
-	productionVersion = configuration.ProductionVersion
-
+	latestVersion := configuration.LatestVersion
+	stagingVersion := configuration.StagingVersion
+	productionVersion := configuration.ProductionVersion
 	if latestVersion != stagingVersion && latestVersion != productionVersion {
-		logger.Debugf("Resource %s returning latestVersion %d - staging version %d, production version %d",
+		if err := meta.CacheSet(inst, cacheKey, configuration); err != nil {
+			if !errors.Is(err, akamai.ErrCacheDisabled) {
+				logger.Errorf("unable to set latestVersion %d into cache")
+			}
+		}
+		logger.Debugf("Resource %s caching and returning latestVersion %d (staging version %d, production version %d)",
 			resource, latestVersion, stagingVersion, productionVersion)
-		return latestVersion
+		return latestVersion, nil
 	}
 
-	createConfigurationVersionClone := appsec.CreateConfigurationVersionCloneRequest{
+	// Latest version is active, so need to clone a new version
+	logger.Debugf("Resource %s cloning configuration version %d", resource, latestVersion)
+	ccr, err := client.CreateConfigurationVersionClone(ctx, appsec.CreateConfigurationVersionCloneRequest{
 		ConfigID:          configID,
 		CreateFromVersion: latestVersion,
-	}
-
-	logger.Debugf("Resource %s cloning configuration version %d", resource, latestVersion)
-	ccr, err := client.CreateConfigurationVersionClone(ctx, createConfigurationVersionClone)
+	})
 	if err != nil {
-		logger.Errorf("calling 'createConfigurationVersionClone': %s", err.Error())
-		return 0 // diag.FromErr(err)
+		logger.Errorf("error calling 'createConfigurationVersionClone': %s", err.Error())
+		return 0, err
 	}
 
-	logger.Debugf("Resource %s returning new latestVersion %d as modifiable version", resource, ccr.Version)
-	return ccr.Version
+	configuration.LatestVersion = ccr.Version
+	if err := meta.CacheSet(inst, cacheKey, configuration); err != nil && !errors.Is(err, akamai.ErrCacheDisabled) {
+		logger.Errorf("unable to set latestVersion %d into cache: %s", err.Error())
+	}
+
+	logger.Debugf("Resource %s caching and returning new cloned version %d as modifiable version", ccr.Version)
+	return ccr.Version, nil
 }
 
 // getLatestConfigVersion returns the latest version number of the given security
 // configuration. API calls are made using the supplied context and the API client
 // obtained from m. Log messages are written to m's logger.
-func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) int {
+func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (int, error) {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "getLatestConfigVersion")
 
-	logger.Debugf("getLatestConfigVersion calling GetConfigurations")
-	getConfigurationRequest := appsec.GetConfigurationRequest{
-		ConfigID: configID,
+	// Return the cached value if we have one
+	cacheKey := fmt.Sprintf("%s:%d", "getLatestConfigVersion", configID)
+	configuration := &appsec.GetConfigurationResponse{}
+	if err := meta.CacheGet(inst, cacheKey, configuration); err == nil {
+		logger.Debugf("Found config %w, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
+		return configuration.LatestVersion, nil
 	}
 
-	configuration, err := client.GetConfiguration(ctx, getConfigurationRequest)
+	// Wait for any prior call that might be populating the cache for us; if we obtain the lock, fetch the value ourselves
+	latestVersionMutex.Lock()
+	defer func() {
+		logger.Debugf("Unlocking latest version mutex")
+		latestVersionMutex.Unlock()
+	}()
+
+	err := meta.CacheGet(inst, cacheKey, configuration)
+	if err == nil {
+		logger.Debugf("Found config %w, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
+		return configuration.LatestVersion, nil
+	}
+	// Any error response other than 'not found' or 'cache disabled' is a problem.
+	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+		logger.Errorf("error reading from cache: %s", err.Error())
+		return 0, err
+	}
+
+	configuration, err = client.GetConfiguration(ctx, appsec.GetConfigurationRequest{ConfigID: configID})
 	if err != nil {
-		logger.Errorf("Did not find config with ID %d, returning 0", configID)
-		logger.Errorf("calling 'getConfiguration': %s", err.Error())
-		return 0
+		logger.Errorf("error calling GetConfiguration: %s", err.Error())
+		return 0, err
+	}
+	if err := meta.CacheSet(inst, cacheKey, configuration); err != nil && !errors.Is(err, akamai.ErrCacheDisabled) {
+		logger.Errorf("error caching latestVersion into cache: %s", err.Error())
 	}
 
-	logger.Debugf("Found config %w, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
-	return configuration.LatestVersion
+	logger.Debugf("Caching and returning %d as latest version of config %s", configuration.LatestVersion, configuration.ID)
+	return configuration.LatestVersion, nil
 }
 
 // getActiveConfigVersions returns the version numbers of the given security configuration
 // active in staging and production respectively. API calls are made using the supplied
 // context and the API client obtained from m. Log messages are written to m's logger.
-func getActiveConfigVersions(ctx context.Context, configID int, m interface{}) (int, int) {
+func getActiveConfigVersions(ctx context.Context, configID int, m interface{}) (int, int, error) {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "getActiveConfigVersions")
 
 	logger.Debugf("getActiveConfigVersions calling GetConfigurations")
-	getConfigurationRequest := appsec.GetConfigurationRequest{
+	configuration, err := client.GetConfiguration(ctx, appsec.GetConfigurationRequest{
 		ConfigID: configID,
-	}
-
-	configuration, err := client.GetConfiguration(ctx, getConfigurationRequest)
+	})
 	if err != nil {
-		logger.Errorf("calling 'getConfiguration': %s", err.Error())
-		return 0, 0
+		logger.Errorf("error calling getConfiguration: %s", err.Error())
+		return 0, 0, err
 	}
 
-	logger.Debugf("Found config %w, returning %d, %d as its staging & production versions",
+	logger.Debugf("Found config %w, returning %d, %d as staging & production versions",
 		configuration.ID, configuration.StagingVersion, configuration.ProductionVersion)
-	return configuration.StagingVersion, configuration.ProductionVersion
+
+	return configuration.StagingVersion, configuration.ProductionVersion, nil
 }

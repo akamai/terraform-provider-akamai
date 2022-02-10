@@ -69,7 +69,10 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	enableSiem, err := tools.GetBoolValue("enable_siem", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -127,7 +130,10 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	getSiemSettings := appsec.GetSiemSettingsRequest{
 		ConfigID: configID,
@@ -172,7 +178,10 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	enableSiem, err := tools.GetBoolValue("enable_siem", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -228,7 +237,10 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	removeSiemSettings := appsec.RemoveSiemSettingsRequest{
 		ConfigID:   configID,

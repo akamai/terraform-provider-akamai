@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 data "akamai_appsec_selectable_hostnames" "test" {
@@ -9,3 +10,4 @@ data "akamai_appsec_selectable_hostnames" "test" {
 output "selectablehostnames" {
   value = data.akamai_appsec_selectable_hostnames.test.hostnames
 }
+

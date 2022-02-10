@@ -61,7 +61,10 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -108,7 +111,11 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	policyID := iDParts[1]
 	reputationProfileID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
@@ -158,7 +165,10 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	reputationProfileID, err := strconv.Atoi(iDParts[2])
 	if err != nil {
@@ -200,7 +210,10 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	reputationProfileID, err := strconv.Atoi(iDParts[2])
 	if err != nil {

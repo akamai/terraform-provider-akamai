@@ -17,13 +17,20 @@ func TestAccAkamaiRateProtection_res_basic(t *testing.T) {
 		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
 		json.Unmarshal([]byte(tempJSON), &config)
 
-		allProtectionsFalse := appsec.PolicyProtectionsResponse{}
+		updateResponseAllProtectionsFalse := appsec.UpdateRateProtectionResponse{}
 		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResRateProtection/PolicyProtections.json"))
-		json.Unmarshal([]byte(tempJSON), &allProtectionsFalse)
+		json.Unmarshal([]byte(tempJSON), &updateResponseAllProtectionsFalse)
 
-		oneProtectionTrue := appsec.PolicyProtectionsResponse{}
+		getResponseAllProtectionsFalse := appsec.GetRateProtectionResponse{}
+		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResRateProtection/PolicyProtections.json"))
+		json.Unmarshal([]byte(tempJSON), &getResponseAllProtectionsFalse)
+
+		updateResponseOneProtectionTrue := appsec.UpdateRateProtectionResponse{}
 		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResRateProtection/UpdatedPolicyProtections.json"))
-		json.Unmarshal([]byte(tempJSON), &oneProtectionTrue)
+		json.Unmarshal([]byte(tempJSON), &updateResponseOneProtectionTrue)
+
+		getResponseOneProtectionTrue := appsec.GetRateProtectionResponse{}
+		json.Unmarshal([]byte(tempJSON), &getResponseOneProtectionTrue)
 
 		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
 		// is mocked individually because calls with the same parameters may have different return values.
@@ -35,59 +42,47 @@ func TestAccAkamaiRateProtection_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		// Create, with terminal Read
-		client.On("GetPolicyProtections",
+		client.On("UpdateRateProtection",
 			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
-		client.On("UpdatePolicyProtections",
+			appsec.UpdateRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&updateResponseAllProtectionsFalse, nil).Once()
+		client.On("GetRateProtection",
 			mock.Anything,
-			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
-		client.On("GetPolicyProtections",
-			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
+			appsec.GetRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&getResponseAllProtectionsFalse, nil).Once()
 
 		// Reads performed via "id" and "enabled" checks
-		client.On("GetPolicyProtections",
+		client.On("GetRateProtection",
 			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
-		client.On("GetPolicyProtections",
+			appsec.GetRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&getResponseAllProtectionsFalse, nil).Once()
+		client.On("GetRateProtection",
 			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
+			appsec.GetRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&getResponseAllProtectionsFalse, nil).Once()
 
 		// Update, with terminal Read
-		client.On("GetPolicyProtections",
+		client.On("UpdateRateProtection",
 			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
-		client.On("UpdatePolicyProtections",
-			mock.Anything,
-			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230",
+			appsec.UpdateRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230",
 				ApplyRateControls: true},
-		).Return(&oneProtectionTrue, nil).Once()
-		client.On("GetPolicyProtections",
+		).Return(&updateResponseOneProtectionTrue, nil).Once()
+		client.On("GetRateProtection",
 			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&oneProtectionTrue, nil).Once()
+			appsec.GetRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&getResponseOneProtectionTrue, nil).Once()
 
 		// Read, performed as part of "id" check.
-		client.On("GetPolicyProtections",
+		client.On("GetRateProtection",
 			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&oneProtectionTrue, nil).Once()
+			appsec.GetRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&getResponseOneProtectionTrue, nil).Once()
 
 		// Delete, performed automatically to clean up
-		client.On("GetPolicyProtections",
+		client.On("UpdateRateProtection",
 			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&oneProtectionTrue, nil).Once()
-		client.On("UpdatePolicyProtections",
-			mock.Anything,
-			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
+			appsec.UpdateRateProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&updateResponseAllProtectionsFalse, nil).Once()
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

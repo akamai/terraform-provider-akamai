@@ -74,7 +74,10 @@ func resourceRuleUpgradeCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "krsRuleUgrade", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "krsRuleUgrade", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -118,7 +121,10 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
 	getWAFMode := appsec.GetWAFModeRequest{
@@ -127,7 +133,7 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 		PolicyID: policyID,
 	}
 
-	wafmode, err := client.GetWAFMode(ctx, getWAFMode)
+	wafMode, err := client.GetWAFMode(ctx, getWAFMode)
 	if err != nil {
 		logger.Errorf("calling 'getWAFMode': %s", err.Error())
 		return diag.FromErr(err)
@@ -139,13 +145,13 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err := d.Set("security_policy_id", getWAFMode.PolicyID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("mode", wafmode.Mode); err != nil {
+	if err := d.Set("mode", wafMode.Mode); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("current_ruleset", wafmode.Current); err != nil {
+	if err := d.Set("current_ruleset", wafMode.Current); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-	if err := d.Set("eval_status", wafmode.Eval); err != nil {
+	if err := d.Set("eval_status", wafMode.Eval); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
@@ -166,7 +172,10 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
 	upgrademode, err := tools.GetStringValue("upgrade_mode", d)

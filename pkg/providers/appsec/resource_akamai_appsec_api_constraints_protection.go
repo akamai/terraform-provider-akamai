@@ -61,7 +61,10 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -71,36 +74,18 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configID,
-		Version:  version,
-		PolicyID: policyID,
+	request := appsec.UpdateAPIConstraintsProtectionRequest{
+		ConfigID:            configID,
+		Version:             version,
+		PolicyID:            policyID,
+		ApplyAPIConstraints: enabled,
 	}
-
-	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	logger.Debugf("provider passing this: %+v", request)
+	_, err = client.UpdateAPIConstraintsProtection(ctx, request)
 	if err != nil {
-		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		logger.Errorf("calling UpdateAPIConstraints: %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configID,
-		Version:                       version,
-		PolicyID:                      policyID,
-		ApplyAPIConstraints:           enabled,
-		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
-		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
-		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
-		ApplyRateControls:             policyProtections.ApplyRateControls,
-		ApplyReputationControls:       policyProtections.ApplyReputationControls,
-		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
-	}
-	policyProtections, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
-	if err != nil {
-		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
-		return diag.FromErr(err)
-	}
-	logger.Debugf("API constraints protection created (set to %v)", policyProtections.ApplyAPIConstraints)
 
 	d.SetId(fmt.Sprintf("%d:%s", configID, policyID))
 	return resourceAPIConstraintsProtectionRead(ctx, d, m)
@@ -120,21 +105,23 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
-	policyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
+	request := appsec.GetAPIConstraintsProtectionRequest{
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
 	}
-
-	policyProtections, err := client.GetPolicyProtections(ctx, policyProtectionsRequest)
+	response, err := client.GetAPIConstraintsProtection(ctx, request)
 	if err != nil {
-		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		logger.Errorf("calling GetAPIConstraintsProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
-	enabled := policyProtections.ApplyAPIConstraints
+	enabled := response.ApplyAPIConstraints
 
 	if err := d.Set("config_id", configID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
@@ -148,7 +135,7 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "rateProtectionDS", policyProtections)
+	outputtext, err := RenderTemplates(ots, "rateProtectionDS", response)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
@@ -172,43 +159,27 @@ func resourceAPIConstraintsProtectionUpdate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	enabled, err := tools.GetBoolValue("enabled", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configID,
-		Version:  version,
-		PolicyID: policyID,
+	request := appsec.UpdateAPIConstraintsProtectionRequest{
+		ConfigID:            configID,
+		Version:             version,
+		PolicyID:            policyID,
+		ApplyAPIConstraints: enabled,
 	}
-
-	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	_, err = client.UpdateAPIConstraintsProtection(ctx, request)
 	if err != nil {
-		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		logger.Errorf("calling UpdateAPIConstraintsProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configID,
-		Version:                       version,
-		PolicyID:                      policyID,
-		ApplyAPIConstraints:           enabled,
-		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
-		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
-		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
-		ApplyRateControls:             policyProtections.ApplyRateControls,
-		ApplyReputationControls:       policyProtections.ApplyReputationControls,
-		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
-	}
-	policyProtections, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
-	if err != nil {
-		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
-		return diag.FromErr(err)
-	}
-	logger.Debugf("API constraints protection updated (set to %v)", policyProtections.ApplyAPIConstraints)
 
 	return resourceAPIConstraintsProtectionRead(ctx, d, m)
 }
@@ -227,38 +198,23 @@ func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
-	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configID,
-		Version:  version,
-		PolicyID: policyID,
+	request := appsec.UpdateAPIConstraintsProtectionRequest{
+		ConfigID:            configID,
+		Version:             version,
+		PolicyID:            policyID,
+		ApplyAPIConstraints: false,
 	}
-	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	_, err = client.UpdateAPIConstraintsProtection(ctx, request)
 	if err != nil {
-		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
+		logger.Errorf("calling UpdateAPIConstraintsProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configID,
-		Version:                       version,
-		PolicyID:                      policyID,
-		ApplyAPIConstraints:           false,
-		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
-		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
-		ApplyNetworkLayerControls:     policyProtections.ApplyNetworkLayerControls,
-		ApplyRateControls:             policyProtections.ApplyRateControls,
-		ApplyReputationControls:       policyProtections.ApplyReputationControls,
-		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
-	}
-	policyProtections, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
-	if err != nil {
-		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
-		return diag.FromErr(err)
-	}
-	logger.Debugf("API constraints protection deleted (set to %v)", policyProtections.ApplyAPIConstraints)
 
 	d.SetId("")
 	return nil

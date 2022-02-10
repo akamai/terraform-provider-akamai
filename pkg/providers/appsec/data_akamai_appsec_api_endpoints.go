@@ -62,7 +62,9 @@ func dataSourceAPIEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getAPIEndpoints.ConfigID = configID
 
-	getAPIEndpoints.Version = getLatestConfigVersion(ctx, configID, m)
+	if getAPIEndpoints.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

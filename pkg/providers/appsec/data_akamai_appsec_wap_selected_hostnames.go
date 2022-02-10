@@ -75,7 +75,10 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)

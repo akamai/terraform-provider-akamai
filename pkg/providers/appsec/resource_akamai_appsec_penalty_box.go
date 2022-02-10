@@ -66,7 +66,10 @@ func resourcePenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -113,7 +116,10 @@ func resourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
 	getPenaltyBox := appsec.GetPenaltyBoxRequest{
@@ -158,7 +164,10 @@ func resourcePenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -200,7 +209,10 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
 	removePenaltyBox := appsec.UpdatePenaltyBoxRequest{

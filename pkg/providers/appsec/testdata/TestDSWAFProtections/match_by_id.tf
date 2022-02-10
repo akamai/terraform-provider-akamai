@@ -1,7 +1,7 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
-
 
 data "akamai_appsec_waf_protection" "test" {
   config_id          = 43253

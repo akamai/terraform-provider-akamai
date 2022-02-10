@@ -70,9 +70,13 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 		networkListIDList = append(networkListIDList, networkListID.(string))
 	}
 
+	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	updateBypassNetworkLists := appsec.UpdateBypassNetworkListsRequest{
 		ConfigID:     configID,
-		Version:      getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m),
+		Version:      version,
 		PolicyID:     policyID,
 		NetworkLists: networkListIDList,
 	}
@@ -101,9 +105,13 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	getBypassNetworkLists := appsec.GetBypassNetworkListsRequest{
 		ConfigID: configID,
-		Version:  getLatestConfigVersion(ctx, configID, m),
+		Version:  version,
 		PolicyID: policyID,
 	}
 
@@ -151,9 +159,13 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 		networkListIDList = append(networkListIDList, networkListID.(string))
 	}
 
+	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	updateBypassNetworkLists := appsec.UpdateBypassNetworkListsRequest{
 		ConfigID:     configID,
-		Version:      getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m),
+		Version:      version,
 		PolicyID:     policyID,
 		NetworkLists: networkListIDList,
 	}
@@ -187,9 +199,13 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 	// Send an empty list to remove the entire current list.
 	networkListIDList := make([]string, 0)
 
+	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	removeBypassNetworkLists := appsec.RemoveBypassNetworkListsRequest{
 		ConfigID:     configID,
-		Version:      getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m),
+		Version:      version,
 		PolicyID:     policyID,
 		NetworkLists: networkListIDList,
 	}

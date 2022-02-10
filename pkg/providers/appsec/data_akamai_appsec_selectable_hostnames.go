@@ -65,27 +65,35 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceSelectableHostnamesRead")
 
-	getSelectableHostnames := appsec.GetSelectableHostnamesRequest{}
-
 	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSelectableHostnames.ConfigID = configID
-
-	getSelectableHostnames.Version = getLatestConfigVersion(ctx, configID, m)
-
 	contractID, err := tools.GetStringValue("contractid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSelectableHostnames.ContractID = contractID
-
 	group, err := tools.GetIntValue("groupid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getSelectableHostnames.GroupID = group
+	validParams := configID != 0 || (contractID != "" && group != 0)
+	if !validParams {
+		return diag.Errorf("either config_id or both contractid and groupdid must be supplied")
+	}
+
+	var version int
+	if configID != 0 {
+		if version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	getSelectableHostnames := appsec.GetSelectableHostnamesRequest{
+		ConfigID:   configID,
+		Version:    version,
+		ContractID: contractID,
+		GroupID:    group,
+	}
 
 	selectablehostnames, err := client.GetSelectableHostnames(ctx, getSelectableHostnames)
 	if err != nil {

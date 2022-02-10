@@ -48,7 +48,9 @@ func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getVersionNotes.ConfigID = configID
 
-	getVersionNotes.Version = getLatestConfigVersion(ctx, configID, m)
+	if getVersionNotes.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	versionnotes, err := client.GetVersionNotes(ctx, getVersionNotes)
 	if err != nil {

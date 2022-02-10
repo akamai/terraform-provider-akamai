@@ -1,12 +1,10 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
-
-
 resource "akamai_appsec_custom_rule" "test" {
-  config_id = 43253
-  //rules =  file("${path.module}/custom_rules.json")
+  config_id   = 43253
   custom_rule = <<-EOF
 {
     "name": "Rule Test New",
@@ -52,3 +50,4 @@ resource "akamai_appsec_custom_rule" "test" {
 }
 EOF
 }
+

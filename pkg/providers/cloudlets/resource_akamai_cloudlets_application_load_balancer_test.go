@@ -34,11 +34,11 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						Continent:       "NA",
 						Country:         "US",
 						Hostname:        "test-hostname",
-						Latitude:        102.78108,
+						Latitude:        tools.Float64Ptr(102.78108),
 						LivenessHosts:   livenessHosts,
-						Longitude:       -116.07064,
+						Longitude:       tools.Float64Ptr(-116.07064),
 						OriginID:        "test_origin",
-						Percent:         100,
+						Percent:         tools.Float64Ptr(100),
 						StateOrProvince: tools.StringPtr("MA"),
 					},
 				},
@@ -99,7 +99,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		expectCreateLoadBalancerVersion = func(t *testing.T, client *mockcloudlets, originID string, loadBalancerVersion *cloudlets.LoadBalancerVersion, newBalancingType, description string) *cloudlets.LoadBalancerVersion {
 			client.On("ListLoadBalancerActivations", mock.Anything, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID}).Return([]cloudlets.LoadBalancerActivation{
-				cloudlets.LoadBalancerActivation{
+				{
 					OriginID: originID,
 					Network:  cloudlets.LoadBalancerActivationNetworkProduction,
 					Version:  loadBalancerVersion.Version,
@@ -355,6 +355,53 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+	t.Run("update version + empty liveness_settings", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_no_liveness_settings"
+		client := new(mockcloudlets)
+
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+
+		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
+
+		// no liveness_settings for update
+		var lbVersionUpdate cloudlets.LoadBalancerVersion
+		err := copier.CopyWithOption(&lbVersionUpdate, lbVersion, copier.Option{DeepCopy: true})
+		require.NoError(t, err)
+
+		lbVersionUpdate.LivenessSettings = nil
+		lbVersionUpdate.Description = "test description updated"
+
+		lbVersionUpdate = *expectUpdateLoadBalancerVersion(t, client, origin.OriginID, &lbVersionUpdate, "PERFORMANCE", "")
+
+		expectReadLoadBalancer(t, client, origin, &lbVersionUpdate, 2)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Check: checkAttributes(loadBalancerAttributes{
+							originID:      "test_origin",
+							version:       "1",
+							description:   "test description",
+							balancingType: "WEIGHTED",
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Check: checkAttributes(loadBalancerAttributes{
+							originID:      "test_origin",
+							version:       "1",
+							description:   "test description updated",
+							balancingType: "PERFORMANCE",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 
 	t.Run("error creating origin", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
@@ -414,11 +461,11 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 					Continent:       "NA",
 					Country:         "US",
 					Hostname:        "test-hostname",
-					Latitude:        102.78108,
+					Latitude:        tools.Float64Ptr(102.78108),
 					LivenessHosts:   []string{"tf.test"},
-					Longitude:       -116.07064,
+					Longitude:       tools.Float64Ptr(-116.07064),
 					OriginID:        "test_origin",
-					Percent:         100,
+					Percent:         tools.Float64Ptr(100),
 					StateOrProvince: tools.StringPtr("MA"),
 				},
 			},

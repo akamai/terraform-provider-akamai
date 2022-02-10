@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_reputation_profile" "test" {
@@ -42,3 +43,4 @@ resource "akamai_appsec_reputation_profile" "test" {
 }
 EOF
 }
+

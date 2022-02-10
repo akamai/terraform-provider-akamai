@@ -61,7 +61,10 @@ func resourceThreatIntelCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "threatIntel", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "threatIntel", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -103,7 +106,10 @@ func resourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
 	getThreatIntel := appsec.GetThreatIntelRequest{
@@ -145,7 +151,10 @@ func resourceThreatIntelUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "threatIntel", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "threatIntel", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
 	threatintel, err := tools.GetStringValue("threat_intel", d)

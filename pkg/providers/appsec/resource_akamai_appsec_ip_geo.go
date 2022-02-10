@@ -75,7 +75,10 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -128,7 +131,10 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 
 	getIPGeo := appsec.GetIPGeoRequest{
@@ -186,7 +192,10 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID := iDParts[1]
 	mode, err := tools.GetStringValue("mode", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -235,35 +244,20 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
-	policyID := iDParts[1]
-
-	getPolicyProtectionsRequest := appsec.GetPolicyProtectionsRequest{
-		ConfigID: configID,
-		Version:  version,
-		PolicyID: policyID,
-	}
-	policyProtections, err := client.GetPolicyProtections(ctx, getPolicyProtectionsRequest)
+	version, err := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
 	if err != nil {
-		logger.Errorf("calling GetPolicyProtections: %s", err.Error())
 		return diag.FromErr(err)
 	}
+	policyID := iDParts[1]
 
-	updatePolicyProtectionsRequest := appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      configID,
-		Version:                       version,
-		PolicyID:                      policyID,
-		ApplyAPIConstraints:           policyProtections.ApplyAPIConstraints,
-		ApplyApplicationLayerControls: policyProtections.ApplyApplicationLayerControls,
-		ApplyBotmanControls:           policyProtections.ApplyBotmanControls,
-		ApplyNetworkLayerControls:     false,
-		ApplyRateControls:             policyProtections.ApplyRateControls,
-		ApplyReputationControls:       policyProtections.ApplyReputationControls,
-		ApplySlowPostControls:         policyProtections.ApplySlowPostControls,
-	}
-	_, err = client.UpdatePolicyProtections(ctx, updatePolicyProtectionsRequest)
+	_, err = client.UpdateIPGeoProtection(ctx, appsec.UpdateIPGeoProtectionRequest{
+		ConfigID:                  configID,
+		Version:                   version,
+		PolicyID:                  policyID,
+		ApplyNetworkLayerControls: false,
+	})
 	if err != nil {
-		logger.Errorf("calling UpdatePolicyProtections: %s", err.Error())
+		logger.Errorf("calling UpdateIPGeoProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
 

@@ -13,42 +13,17 @@ func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
 	t.Run("match by IPGeo ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		allProtectionsFalse := appsec.PolicyProtectionsResponse{}
-		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"))
-		json.Unmarshal([]byte(tempJSON), &allProtectionsFalse)
-
-		cu := appsec.UpdateIPGeoResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
-
-		cr := appsec.GetIPGeoResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
-
-		client.On("GetPolicyProtections",
-			mock.Anything,
-			appsec.GetPolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
-
-		client.On("UpdatePolicyProtections",
-			mock.Anything,
-			appsec.UpdatePolicyProtectionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&allProtectionsFalse, nil).Once()
-
-		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
-
+		getConfigurationResponse := appsec.GetConfigurationResponse{}
+		getConfigurationJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
+		json.Unmarshal([]byte(getConfigurationJSON), &getConfigurationResponse)
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&config, nil)
+		).Return(&getConfigurationResponse, nil)
 
-		client.On("GetIPGeo",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cr, nil)
-
+		updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
+		updateIPGeoResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"))
+		json.Unmarshal([]byte(updateIPGeoResponseJSON), &updateIPGeoResponse)
 		client.On("UpdateIPGeo",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.UpdateIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Block: "blockSpecificIPGeo", GeoControls: struct {
@@ -69,7 +44,28 @@ func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
 			}{NetworkList: []string{"69601_ADYENPRODWHITELIST", "68762_ADYEN"}}, BlockedIPNetworkLists: struct {
 				NetworkList []string "json:\"networkList\""
 			}{NetworkList: []string{"49185_ADTWAFBYPASSLIST", "49181_ADTIPBLACKLIST"}}}},
-		).Return(&cu, nil)
+		).Return(&updateIPGeoResponse, nil)
+
+		getIPGeoResponse := appsec.GetIPGeoResponse{}
+		getIPGeoResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"))
+		json.Unmarshal([]byte(getIPGeoResponseJSON), &getIPGeoResponse)
+		client.On("GetIPGeo",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&getIPGeoResponse, nil)
+
+		client.On("GetIPGeo",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&getIPGeoResponse, nil)
+
+		updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
+		updateIPGeoProtectionResponseAllProtectionsFalseJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"))
+		json.Unmarshal([]byte(updateIPGeoProtectionResponseAllProtectionsFalseJSON), &updateIPGeoProtectionResponseAllProtectionsFalse)
+		client.On("UpdateIPGeoProtection",
+			mock.Anything,
+			appsec.UpdateIPGeoProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&updateIPGeoProtectionResponseAllProtectionsFalse, nil).Once()
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

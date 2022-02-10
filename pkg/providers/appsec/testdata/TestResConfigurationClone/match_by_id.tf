@@ -1,7 +1,7 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
-
 
 resource "akamai_appsec_configuration_clone" "test" {
   create_from_config_id = 43253

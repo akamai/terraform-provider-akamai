@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_attack_group_action" "test" {
@@ -8,5 +9,4 @@ resource "akamai_appsec_attack_group_action" "test" {
   attack_group        = "SQL"
   attack_group_action = "none"
 }
-
 

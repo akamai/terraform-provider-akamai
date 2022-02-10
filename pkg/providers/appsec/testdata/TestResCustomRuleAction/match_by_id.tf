@@ -1,7 +1,7 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
-
 
 resource "akamai_appsec_custom_rule_action" "test" {
   config_id          = 43253
@@ -9,6 +9,4 @@ resource "akamai_appsec_custom_rule_action" "test" {
   custom_rule_id     = 60036362
   custom_rule_action = "none"
 }
-
-
 

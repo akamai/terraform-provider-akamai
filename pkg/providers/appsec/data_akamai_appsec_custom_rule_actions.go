@@ -50,7 +50,9 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	}
 	getCustomRuleActions.ConfigID = configID
 
-	getCustomRuleActions.Version = getLatestConfigVersion(ctx, configID, m)
+	if getCustomRuleActions.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		return diag.FromErr(err)
+	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

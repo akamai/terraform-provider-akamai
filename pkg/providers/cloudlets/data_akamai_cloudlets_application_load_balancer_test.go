@@ -38,15 +38,15 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 							Country:                       "US",
 							City:                          "Cambridge",
 							Hostname:                      "example.com",
-							Latitude:                      102.78108,
+							Latitude:                      tools.Float64Ptr(102.78108),
 							StateOrProvince:               tools.StringPtr("MA"),
 							LivenessHosts: []string{
 								"clorigin3.www.example.com",
 							},
-							Longitude: -116.07064,
+							Longitude: tools.Float64Ptr(-116.07064),
 
 							OriginID: "alb_test_krk_dc1",
-							Percent:  100.0,
+							Percent:  tools.Float64Ptr(100.0),
 						},
 					},
 					Deleted:          false,

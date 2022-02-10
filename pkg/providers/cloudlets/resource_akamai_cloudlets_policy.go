@@ -119,7 +119,13 @@ func EnforceMatchRulesChange(_ context.Context, diff *schema.ResourceDiff, _ int
 	if diffMatchRules(old.(string), new.(string)) {
 		return nil
 	}
-	return diff.SetNewComputed("warnings")
+	if err := diff.SetNewComputed("warnings"); err != nil {
+		return err
+	}
+	if err := diff.SetNewComputed("version"); err != nil {
+		return err
+	}
+	return nil
 }
 
 func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

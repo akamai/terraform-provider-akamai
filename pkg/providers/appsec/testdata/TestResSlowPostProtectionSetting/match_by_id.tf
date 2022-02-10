@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_slow_post" "test" {
@@ -10,3 +11,4 @@ resource "akamai_appsec_slow_post" "test" {
   slow_rate_threshold_period = 30
   duration_threshold_timeout = 20
 }
+

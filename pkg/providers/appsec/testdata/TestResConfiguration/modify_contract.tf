@@ -1,5 +1,6 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc        = "~/.edgerc"
+  cache_enabled = false
 }
 
 resource "akamai_appsec_configuration" "test" {
@@ -7,7 +8,6 @@ resource "akamai_appsec_configuration" "test" {
   description = "Akamai Tools"
   contract_id = "C-1FRYVV3_MODIFIED"
   group_id    = 64867
-  host_names = ["rinaldi.sandbox.akamaideveloper.com",
-  "sujala.sandbox.akamaideveloper.com"]
+  host_names  = ["rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"]
 }
 

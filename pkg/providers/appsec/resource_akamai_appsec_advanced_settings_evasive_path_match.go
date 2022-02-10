@@ -60,7 +60,10 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -108,7 +111,10 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		policyID := iDParts[1]
 
 		getAdvancedSettingsEvasivePathMatch.ConfigID = configID
@@ -119,7 +125,10 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		getAdvancedSettingsEvasivePathMatch.ConfigID = configID
 		getAdvancedSettingsEvasivePathMatch.Version = version
@@ -160,7 +169,10 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		policyID := iDParts[1]
 
 		updateAdvancedSettingsEvasivePathMatch.ConfigID = configID
@@ -171,7 +183,10 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		updateAdvancedSettingsEvasivePathMatch.ConfigID = configID
 		updateAdvancedSettingsEvasivePathMatch.Version = version
@@ -207,7 +222,10 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		policyID := iDParts[1]
 
 		removeAdvancedSettingsEvasivePathMatch.ConfigID = configID
@@ -218,7 +236,10 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		removeAdvancedSettingsEvasivePathMatch.ConfigID = configID
 		removeAdvancedSettingsEvasivePathMatch.Version = version
