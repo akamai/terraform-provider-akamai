@@ -7,19 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/go-cty/cty"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
-
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgeworkers"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
