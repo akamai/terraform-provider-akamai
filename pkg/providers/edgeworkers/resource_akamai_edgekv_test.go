@@ -150,6 +150,7 @@ func Test_populateEKV(t *testing.T) {
 }
 
 func TestResourceEdgeKV(t *testing.T) {
+	initWindow = time.Millisecond
 	anError := "an error"
 	initialized, inProgress := &edgeworkers.EdgeKVInitializationStatus{
 		AccountStatus:    "INITIALIZED",
@@ -256,7 +257,6 @@ func TestResourceEdgeKV(t *testing.T) {
 		},
 		"namespace not initialized": {
 			init: func(m *mockedgeworkers) {
-				initWindow = time.Millisecond
 				maxInitDuration = time.Duration(2) * time.Millisecond
 				// create
 				m.On("InitializeEdgeKV", mock.Anything).Return(inProgress, nil).Once()
@@ -318,6 +318,37 @@ func TestResourceEdgeKV(t *testing.T) {
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+					),
+				},
+			},
+		},
+		"ignore diff on group_id": {
+			init: func(m *mockedgeworkers) {
+				// create
+				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
+					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				// read
+				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "").Times(4)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+					),
+				},
+				{
+					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/update_diff_group_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),

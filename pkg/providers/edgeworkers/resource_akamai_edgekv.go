@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/go-cty/cty"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 
@@ -54,11 +55,18 @@ func resourceEdgeKV() *schema.Resource {
 				Description: "The network on which the namespace will be activated",
 			},
 			"group_id": {
-				Type:             schema.TypeInt,
-				Required:         true,
-				Description:      "Namespace ACC group ID. It will be used in EdgeKV API v2. Not updatable.",
-				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
-				ForceNew:         true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Namespace ACC group ID. It will be used in EdgeKV API v2. Not updatable.",
+				ValidateDiagFunc: tools.AggregateValidations(
+					validation.ToDiagFunc(validation.IntAtLeast(0)),
+					displayGroupIDWarning(),
+				),
+				// In the current API release, the value of group_id does not matter, so we suppress all but the first diff
+				DiffSuppressFunc: func(_, old, _ string, d *schema.ResourceData) bool {
+					return old != ""
+				},
+				ForceNew: true,
 			},
 			"retention_in_seconds": {
 				Type:     schema.TypeInt,
@@ -341,4 +349,16 @@ func getStringValue(itemMap map[string]interface{}, name string) string {
 		return value.(string)
 	}
 	return ""
+}
+
+func displayGroupIDWarning() schema.SchemaValidateDiagFunc {
+	return func(i interface{}, path cty.Path) diag.Diagnostics {
+		return diag.Diagnostics{
+			diag.Diagnostic{
+				Severity:      diag.Warning,
+				Summary:       `Attribute "group_id" is required in order to support the next EdgeKV API release. Currently the value is not used.`,
+				AttributePath: path,
+			},
+		}
+	}
 }
