@@ -488,8 +488,12 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	adminContact := cpstools.ContactInfoToMap(*enrollment.AdminContact)
 	attrs["common_name"] = enrollment.CSR.CN
 	sans := make([]string, 0)
+	sansFromSchema, err := tools.GetSetValue("sans", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 	for _, san := range enrollment.CSR.SANS {
-		if san == enrollment.CSR.CN {
+		if !sansFromSchema.Contains(enrollment.CSR.CN) && san == enrollment.CSR.CN {
 			continue
 		}
 		sans = append(sans, san)
@@ -727,10 +731,9 @@ func resourceCPSDVEnrollmentDelete(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	allowCancelPendingChanges := true
 	req := cps.RemoveEnrollmentRequest{
 		EnrollmentID:              enrollmentID,
-		AllowCancelPendingChanges: &allowCancelPendingChanges,
+		AllowCancelPendingChanges: tools.BoolPtr(true),
 	}
 	if _, err = client.RemoveEnrollment(ctx, req); err != nil {
 		return diag.FromErr(err)
