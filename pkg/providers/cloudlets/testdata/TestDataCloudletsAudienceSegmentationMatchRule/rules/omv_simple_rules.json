@@ -1,0 +1,23 @@
+[
+  {
+    "name": "simple_object_rule",
+    "type": "asMatchRule",
+    "matches": [
+      {
+        "matchType": "clientip",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false,
+        "objectMatchValue": {
+          "type": "simple",
+          "value": [
+            "acdc"
+          ]
+        }
+      }
+    ],
+    "forwardSettings": {
+      "useIncomingQueryString": true
+    }
+  }
+]
