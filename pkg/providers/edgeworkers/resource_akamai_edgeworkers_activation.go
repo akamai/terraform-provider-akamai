@@ -24,8 +24,10 @@ func resourceEdgeworkersActivation() *schema.Resource {
 		DeleteContext: resourceEdgeworkersActivationDelete,
 		Schema:        resourceEdgeworkersActivationSchema(),
 		Timeouts: &schema.ResourceTimeout{
-			Default: &edgeworkersActivationResourceTimeout,
+			Delete:  &edgeworkersActivationResourceDeleteTimeout,
+			Default: &edgeworkersActivationResourceDefaultTimeout,
 		},
+		CustomizeDiff: checkEdgeworkerExistsOnDiff,
 	}
 }
 
@@ -60,15 +62,16 @@ func resourceEdgeworkersActivationSchema() map[string]*schema.Schema {
 }
 
 var (
-	activationStatusComplete             = "COMPLETE"
-	activationStatusPresubmit            = "PRESUBMIT"
-	activationStatusPending              = "PENDING"
-	activationStatusInProgress           = "IN_PROGRESS"
-	errorCodeVersionIsBeingDeactivated   = "EW1031"
-	errorCodeVersionAlreadyDeactivated   = "EW1032"
-	activationPollMinimum                = time.Minute
-	activationPollInterval               = activationPollMinimum
-	edgeworkersActivationResourceTimeout = time.Minute * 30
+	activationStatusComplete                    = "COMPLETE"
+	activationStatusPresubmit                   = "PRESUBMIT"
+	activationStatusPending                     = "PENDING"
+	activationStatusInProgress                  = "IN_PROGRESS"
+	errorCodeVersionIsBeingDeactivated          = "EW1031"
+	errorCodeVersionAlreadyDeactivated          = "EW1032"
+	activationPollMinimum                       = time.Minute
+	activationPollInterval                      = activationPollMinimum
+	edgeworkersActivationResourceDefaultTimeout = time.Minute * 30
+	edgeworkersActivationResourceDeleteTimeout  = time.Minute * 60
 )
 
 func resourceEdgeworkersActivationCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -104,7 +107,7 @@ func resourceEdgeworkersActivationCreate(ctx context.Context, rd *schema.Resourc
 		return diag.Errorf(`%s: version '%s' is not valid for edgeworker with id=%d`, ErrEdgeworkerActivation, version, edgeworkerID)
 	}
 
-	currentActivation, err := getCurrentActivation(ctx, client, edgeworkerID, network)
+	currentActivation, err := getCurrentActivation(ctx, client, edgeworkerID, network, true)
 	if err != nil {
 		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
 	}
@@ -152,7 +155,7 @@ func resourceEdgeworkersActivationRead(ctx context.Context, rd *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	activation, err := getCurrentActivation(ctx, client, edgeworkerID, network)
+	activation, err := getCurrentActivation(ctx, client, edgeworkerID, network, false)
 	if err != nil {
 		return diag.Errorf("%s read: %s", ErrEdgeworkerActivation, err)
 	}
@@ -202,6 +205,16 @@ func resourceEdgeworkersActivationUpdate(ctx context.Context, rd *schema.Resourc
 	}
 	if !versionExists(version, versionsResp.EdgeWorkerVersions) {
 		return diag.Errorf(`%s update: version '%s' is not valid for edgeworker with id=%d`, ErrEdgeworkerActivation, version, edgeworkerID)
+	}
+
+	currentActivation, err := getCurrentActivation(ctx, client, edgeworkerID, network, true)
+	if err != nil {
+		return diag.Errorf("%s update: %s", ErrEdgeworkerActivation, err.Error())
+	}
+
+	if currentActivation != nil && currentActivation.Version == version {
+		rd.SetId(fmt.Sprintf("%d:%s", edgeworkerID, network))
+		return resourceEdgeworkersActivationRead(ctx, rd, m)
 	}
 
 	activation, err := client.ActivateVersion(ctx, edgeworkers.ActivateVersionRequest{
@@ -257,20 +270,31 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 	if err != nil {
 		var e *edgeworkers.Error
 		ok := errors.As(err, &e)
-		if ok && e.ErrorCode == errorCodeVersionAlreadyDeactivated {
+		if !ok {
+			return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
+		}
+
+		switch e.ErrorCode {
+		case errorCodeVersionAlreadyDeactivated:
+			logger.Info(fmt.Sprintf("Version '%s' has already been deactivated on network '%s' for edgeworker with id=%d. Removing from state", version, network, edgeworkerID))
+			rd.SetId("")
 			return nil
-		}
-		if !ok || e.ErrorCode != errorCodeVersionIsBeingDeactivated {
+		case errorCodeVersionIsBeingDeactivated:
+			deactivations, err := getDeactivationsByVersionAndNetwork(ctx, client, edgeworkerID, version, network)
+			if err != nil {
+				return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
+			}
+			deactivation = &deactivations[0]
+		default:
 			return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
 		}
-		deactivations, err := getDeactivationsByVersionAndNetwork(ctx, client, edgeworkerID, version, network)
-		if err != nil {
-			return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
-		}
-		deactivation = &deactivations[0]
 	}
 
 	if _, err := waitForEdgeworkerDeactivation(ctx, client, edgeworkerID, deactivation.DeactivationID); err != nil {
+		if errors.Is(err, ErrEdgeworkerDeactivationTimeout) {
+			rd.SetId("")
+			return append(tools.DiagWarningf("%s: %s", ErrEdgeworkerDeactivation, err), tools.DiagWarningf("Resource has been removed from the state, but deactivation is still ongoing on the server")...)
+		}
 		return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
 	}
 
@@ -278,7 +302,7 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 	return nil
 }
 
-func getCurrentActivation(ctx context.Context, client edgeworkers.Edgeworkers, edgeworkerID int, network string) (*edgeworkers.Activation, error) {
+func getCurrentActivation(ctx context.Context, client edgeworkers.Edgeworkers, edgeworkerID int, network string, waitForDeactivation bool) (*edgeworkers.Activation, error) {
 	activationsResp, err := client.ListActivations(ctx, edgeworkers.ListActivationsRequest{
 		EdgeWorkerID: edgeworkerID,
 	})
@@ -293,7 +317,7 @@ func getCurrentActivation(ctx context.Context, client edgeworkers.Edgeworkers, e
 	latestActivation := &activations[0]
 
 	if latestActivation.Status != activationStatusComplete {
-		if latestActivation.Status != activationStatusPending && latestActivation.Status != activationStatusPresubmit && latestActivation.Status != activationStatusInProgress {
+		if latestActivation.Status != activationStatusPresubmit && latestActivation.Status != activationStatusPending && latestActivation.Status != activationStatusInProgress {
 			// don't return error as it is a valid state for activation
 			return nil, nil
 		}
@@ -304,7 +328,7 @@ func getCurrentActivation(ctx context.Context, client edgeworkers.Edgeworkers, e
 		return latestActivation, nil
 	}
 
-	latestDeactivation, err := getLatestCompletedDeactivation(ctx, client, edgeworkerID, latestActivation.Version, network)
+	latestDeactivation, err := getLatestCompletedDeactivation(ctx, client, edgeworkerID, latestActivation.Version, network, waitForDeactivation)
 	if err != nil {
 		return nil, err
 	}
@@ -341,7 +365,7 @@ func getDeactivationsByVersionAndNetwork(ctx context.Context, client edgeworkers
 	return sortDeactivationsByDate(filterDeactivationsByNetwork(deactivationsResp.Deactivations, network)), nil
 }
 
-func getLatestCompletedDeactivation(ctx context.Context, client edgeworkers.Edgeworkers, edgeworkerID int, version, network string) (*edgeworkers.Deactivation, error) {
+func getLatestCompletedDeactivation(ctx context.Context, client edgeworkers.Edgeworkers, edgeworkerID int, version, network string, wait bool) (*edgeworkers.Deactivation, error) {
 	deactivations, err := getDeactivationsByVersionAndNetwork(ctx, client, edgeworkerID, version, network)
 	if err != nil {
 		return nil, err
@@ -352,7 +376,7 @@ func getLatestCompletedDeactivation(ctx context.Context, client edgeworkers.Edge
 
 	for i := range deactivations {
 		d := &deactivations[i]
-		if d.Status == activationStatusPending || d.Status == activationStatusPresubmit || d.Status == activationStatusInProgress {
+		if wait && (d.Status == activationStatusPresubmit || d.Status == activationStatusPending || d.Status == activationStatusInProgress) {
 			d, err = waitForEdgeworkerDeactivation(ctx, client, edgeworkerID, d.DeactivationID)
 			if err != nil {
 				return nil, err
@@ -490,4 +514,38 @@ func sortDeactivationsByDate(deactivations []edgeworkers.Deactivation) []edgewor
 		return t1.After(t2)
 	})
 	return deactivations
+}
+
+// checkEdgeworkerExistsOnDiff is used as CustomizeDiff function
+// it checks if edgeworker with provided edgeworker_id exists on ForceNew
+// to avoid deactivating and then failing to activate
+func checkEdgeworkerExistsOnDiff(ctx context.Context, rd *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Edgeworkers", "checkEdgeworkerExistsOnDiff")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
+
+	logger.Debug("Reading edgeworker activations")
+
+	if !rd.HasChange("edgeworker_id") {
+		return nil
+	}
+
+	resp, err := client.ListEdgeWorkersID(ctx, edgeworkers.ListEdgeWorkersIDRequest{})
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrEdgeworkerActivation, err)
+	}
+
+	edgeworkerID, err := tools.GetIntValue("edgeworker_id", rd)
+	if err != nil {
+		return err
+	}
+
+	for _, e := range resp.EdgeWorkers {
+		if e.EdgeWorkerID == edgeworkerID {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("%w: edgeworker with id=%d was not found", ErrEdgeworkerActivation, edgeworkerID)
 }
