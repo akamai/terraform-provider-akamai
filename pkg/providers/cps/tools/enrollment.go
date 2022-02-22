@@ -143,9 +143,11 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 	for _, val := range sansList.List() {
 		dnsNames = append(dnsNames, val.(string))
 	}
-	networkConfig.DNSNameSettings = &cps.DNSNameSettings{
-		CloneDNSNames: networkConfigMap["clone_dns_names"].(bool),
-		DNSNames:      dnsNames,
+	if sniOnly {
+		networkConfig.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: networkConfigMap["clone_dns_names"].(bool),
+			DNSNames:      dnsNames,
+		}
 	}
 	networkConfig.OCSPStapling = cps.OCSPStapling(networkConfigMap["ocsp_stapling"].(string))
 	disallowedTLSVersionsSet := networkConfigMap["disallowed_tls_versions"].(*schema.Set)
