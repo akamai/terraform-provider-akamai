@@ -45,7 +45,9 @@ func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema:         map[string]*schema.Schema{},
 		DataSourcesMap: map[string]*schema.Resource{},
-		ResourcesMap:   map[string]*schema.Resource{},
+		ResourcesMap: map[string]*schema.Resource{
+			"akamai_imaging_policy_image": resourceImagingPolicyImage(),
+		},
 	}
 	return provider
 }

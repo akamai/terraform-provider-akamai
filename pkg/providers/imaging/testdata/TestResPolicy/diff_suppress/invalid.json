@@ -1,0 +1,19 @@
+{
+  "breakpoints": {
+    "widths": 320,
+    640,
+    1024,
+    2048,
+    5000
+  ]
+  },
+  "output": {
+    "perceptualQuality": "mediumHigh"
+  },
+  "transformations": [
+    {
+      "colors": 2,
+      "transformation": "MaxColors"
+    }
+  ]
+}
