@@ -231,7 +231,7 @@ func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Diagnostics{
 			diag.Diagnostic{
 				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("'.auto' policy cannot be removed alone, only via removal of related policy set"),
+				Summary:  fmt.Sprintf("Image and Video Manager API does not support '.auto' policy deletion, it can be removed when removing related policy set - resource will only be removed from state."),
 			},
 		}
 	}
