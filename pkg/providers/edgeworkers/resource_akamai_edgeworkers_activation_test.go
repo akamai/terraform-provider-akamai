@@ -1005,7 +1005,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				},
 				{
 					Config:      loadFixtureString(fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
-					ExpectError: regexp.MustCompile(`edgeworker activation update: oops`),
+					ExpectError: regexp.MustCompile(`edgeworker activation: oops`),
 				},
 			},
 		},

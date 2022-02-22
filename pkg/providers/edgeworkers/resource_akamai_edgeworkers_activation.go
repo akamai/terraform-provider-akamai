@@ -82,59 +82,7 @@ func resourceEdgeworkersActivationCreate(ctx context.Context, rd *schema.Resourc
 
 	logger.Debug("Activating edgeworker")
 
-	edgeworkerID, err := tools.GetIntValue("edgeworker_id", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	version, err := tools.GetStringValue("version", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	network, err := tools.GetStringValue("network", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	versionsResp, err := client.ListEdgeWorkerVersions(ctx, edgeworkers.ListEdgeWorkerVersionsRequest{
-		EdgeWorkerID: edgeworkerID,
-	})
-	if err != nil {
-		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
-	}
-	if !versionExists(version, versionsResp.EdgeWorkerVersions) {
-		return diag.Errorf(`%s: version '%s' is not valid for edgeworker with id=%d`, ErrEdgeworkerActivation, version, edgeworkerID)
-	}
-
-	currentActivation, err := getCurrentActivation(ctx, client, edgeworkerID, network, true)
-	if err != nil {
-		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
-	}
-
-	if currentActivation != nil && currentActivation.Version == version {
-		rd.SetId(fmt.Sprintf("%d:%s", edgeworkerID, network))
-		return resourceEdgeworkersActivationRead(ctx, rd, m)
-	}
-
-	activation, err := client.ActivateVersion(ctx, edgeworkers.ActivateVersionRequest{
-		EdgeWorkerID: edgeworkerID,
-		ActivateVersion: edgeworkers.ActivateVersion{
-			Network: edgeworkers.ActivationNetwork(network),
-			Version: version,
-		},
-	})
-
-	if err != nil {
-		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
-	}
-
-	if _, err := waitForEdgeworkerActivation(ctx, client, edgeworkerID, activation.ActivationID); err != nil {
-		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
-	}
-
-	rd.SetId(fmt.Sprintf("%d:%s", edgeworkerID, network))
-	return resourceEdgeworkersActivationRead(ctx, rd, m)
+	return upsertActivation(ctx, rd, m, client)
 }
 
 func resourceEdgeworkersActivationRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -182,59 +130,7 @@ func resourceEdgeworkersActivationUpdate(ctx context.Context, rd *schema.Resourc
 
 	logger.Debug("Updating edgeworker activation")
 
-	edgeworkerID, err := tools.GetIntValue("edgeworker_id", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	version, err := tools.GetStringValue("version", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	network, err := tools.GetStringValue("network", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	versionsResp, err := client.ListEdgeWorkerVersions(ctx, edgeworkers.ListEdgeWorkerVersionsRequest{
-		EdgeWorkerID: edgeworkerID,
-	})
-	if err != nil {
-		return diag.Errorf("%s update: %s", ErrEdgeworkerActivation, err.Error())
-	}
-	if !versionExists(version, versionsResp.EdgeWorkerVersions) {
-		return diag.Errorf(`%s update: version '%s' is not valid for edgeworker with id=%d`, ErrEdgeworkerActivation, version, edgeworkerID)
-	}
-
-	currentActivation, err := getCurrentActivation(ctx, client, edgeworkerID, network, true)
-	if err != nil {
-		return diag.Errorf("%s update: %s", ErrEdgeworkerActivation, err.Error())
-	}
-
-	if currentActivation != nil && currentActivation.Version == version {
-		rd.SetId(fmt.Sprintf("%d:%s", edgeworkerID, network))
-		return resourceEdgeworkersActivationRead(ctx, rd, m)
-	}
-
-	activation, err := client.ActivateVersion(ctx, edgeworkers.ActivateVersionRequest{
-		EdgeWorkerID: edgeworkerID,
-		ActivateVersion: edgeworkers.ActivateVersion{
-			Network: edgeworkers.ActivationNetwork(network),
-			Version: version,
-		},
-	})
-	if err != nil {
-		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
-	}
-
-	if _, err := waitForEdgeworkerActivation(ctx, client, edgeworkerID, activation.ActivationID); err != nil {
-		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
-	}
-
-	rd.SetId(fmt.Sprintf("%d:%s", edgeworkerID, network))
-
-	return resourceEdgeworkersActivationRead(ctx, rd, m)
+	return upsertActivation(ctx, rd, m, client)
 }
 
 func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -302,6 +198,62 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 	return nil
 }
 
+func upsertActivation(ctx context.Context, rd *schema.ResourceData, m interface{}, client edgeworkers.Edgeworkers) diag.Diagnostics {
+	edgeworkerID, err := tools.GetIntValue("edgeworker_id", rd)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	version, err := tools.GetStringValue("version", rd)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	network, err := tools.GetStringValue("network", rd)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	versionsResp, err := client.ListEdgeWorkerVersions(ctx, edgeworkers.ListEdgeWorkerVersionsRequest{
+		EdgeWorkerID: edgeworkerID,
+	})
+	if err != nil {
+		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
+	}
+	if !versionExists(version, versionsResp.EdgeWorkerVersions) {
+		return diag.Errorf(`%s: version '%s' is not valid for edgeworker with id=%d`, ErrEdgeworkerActivation, version, edgeworkerID)
+	}
+
+	currentActivation, err := getCurrentActivation(ctx, client, edgeworkerID, network, true)
+	if err != nil {
+		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
+	}
+
+	if currentActivation != nil && currentActivation.Version == version {
+		rd.SetId(fmt.Sprintf("%d:%s", edgeworkerID, network))
+		return resourceEdgeworkersActivationRead(ctx, rd, m)
+	}
+
+	activation, err := client.ActivateVersion(ctx, edgeworkers.ActivateVersionRequest{
+		EdgeWorkerID: edgeworkerID,
+		ActivateVersion: edgeworkers.ActivateVersion{
+			Network: edgeworkers.ActivationNetwork(network),
+			Version: version,
+		},
+	})
+
+	if err != nil {
+		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
+	}
+
+	if _, err := waitForEdgeworkerActivation(ctx, client, edgeworkerID, activation.ActivationID); err != nil {
+		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
+	}
+
+	rd.SetId(fmt.Sprintf("%d:%s", edgeworkerID, network))
+	return resourceEdgeworkersActivationRead(ctx, rd, m)
+}
+
 func getCurrentActivation(ctx context.Context, client edgeworkers.Edgeworkers, edgeworkerID int, network string, waitForDeactivation bool) (*edgeworkers.Activation, error) {
 	activationsResp, err := client.ListActivations(ctx, edgeworkers.ListActivationsRequest{
 		EdgeWorkerID: edgeworkerID,
@@ -316,16 +268,17 @@ func getCurrentActivation(ctx context.Context, client edgeworkers.Edgeworkers, e
 	}
 	latestActivation := &activations[0]
 
-	if latestActivation.Status != activationStatusComplete {
-		if latestActivation.Status != activationStatusPresubmit && latestActivation.Status != activationStatusPending && latestActivation.Status != activationStatusInProgress {
-			// don't return error as it is a valid state for activation
-			return nil, nil
-		}
+	switch latestActivation.Status {
+	case activationStatusComplete:
+		// do nothing
+	case activationStatusPresubmit, activationStatusPending, activationStatusInProgress:
 		latestActivation, err = waitForEdgeworkerActivation(ctx, client, edgeworkerID, latestActivation.ActivationID)
 		if err != nil {
 			return nil, err
 		}
 		return latestActivation, nil
+	default:
+		return nil, nil
 	}
 
 	latestDeactivation, err := getLatestCompletedDeactivation(ctx, client, edgeworkerID, latestActivation.Version, network, waitForDeactivation)
