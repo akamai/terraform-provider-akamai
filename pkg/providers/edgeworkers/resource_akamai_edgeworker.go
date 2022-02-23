@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -26,8 +25,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const defaultBundle = "https://raw.githubusercontent.com/akamai/edgeworkers-examples/master/edgecompute/examples/getting-started/hello-world%20(EW)/helloworld.tgz"
-const defaultBundleHash = "38cbdfcef3c8024064bdda3b71e27d7b6c8d746da49ee131b1c85c6ea17e14cc"
+var (
+	defaultBundleURL          = "https://raw.githubusercontent.com/akamai/edgeworkers-examples/master/edgecompute/examples/getting-started/hello-world%20(EW)/helloworld.tgz"
+	defaultBundleDownloadPath = "bundle/helloworld.tgz"
+)
 
 func resourceEdgeWorker() *schema.Resource {
 	return &schema.Resource{
@@ -67,7 +68,7 @@ func resourceEdgeWorker() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Default:     defaultBundle,
+				DefaultFunc: schema.EnvDefaultFunc("EW_DEFAULT_BUNDLE_PATH", defaultBundleDownloadPath),
 				Description: "The path to the EdgeWorkers tgz code bundle",
 			},
 			"local_bundle_hash": {
@@ -371,13 +372,11 @@ func getSHAFromBundle(bundleContent *edgeworkers.Bundle) (string, error) {
 
 func convertLocalBundleFileIntoBytes(localBundlePath string) ([]byte, error) {
 	var filePath string
-	if localBundlePath == defaultBundle {
-		_, helloWorldFileName := path.Split(defaultBundle)
-		helloWorldFilePath := filepath.Join("./", helloWorldFileName)
-		if err := tools.DownloadFile(&tools.FileDownloader{}, helloWorldFilePath, defaultBundle); err != nil {
-			return nil, fmt.Errorf("cannot download '%s' from %s: %s", helloWorldFileName, defaultBundle, err.Error())
+	if localBundlePath == defaultBundleURL {
+		if err := downloadFile(defaultBundleDownloadPath, defaultBundleURL); err != nil {
+			return nil, fmt.Errorf("cannot download '%s' from %s: %s", defaultBundleDownloadPath, defaultBundleURL, err.Error())
 		}
-		filePath = helloWorldFilePath
+		filePath = defaultBundleDownloadPath
 	} else {
 		filePath = localBundlePath
 	}
@@ -474,8 +473,8 @@ func bundleHashCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interf
 	}
 
 	var f io.ReadCloser
-	if localBundleFileName == defaultBundle {
-		resp, err := http.Get(defaultBundle)
+	if localBundleFileName == defaultBundleURL {
+		resp, err := http.Get(defaultBundleURL)
 		if err != nil {
 			return fmt.Errorf("cannot dowload default bundle: %s", err)
 		}
@@ -510,4 +509,30 @@ func bundleHashCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interf
 	}
 
 	return nil
+}
+
+// downloadFile downloads a file from the given URL and saves it under the given path
+func downloadFile(path, url string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(filepath.Dir(path), 0755)
+	if err != nil {
+		return err
+	}
+	out, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, resp.Body); err != nil {
+		return err
+	}
+	if err = resp.Body.Close(); err != nil {
+		return err
+	}
+	defer func() {
+		err = out.Close()
+	}()
+	return err
 }

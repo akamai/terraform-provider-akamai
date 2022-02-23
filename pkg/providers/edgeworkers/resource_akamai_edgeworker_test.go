@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strconv"
 	"testing"
@@ -22,6 +25,7 @@ var (
 	bundleHashForCreate = "38cbdfcef3c8024064bdda3b71e27d7b6c8d746da49ee131b1c85c6ea17e14cc"
 	bundlePathForUpdate = "testdata/TestResEdgeWorkersEdgeWorker/bundles/bundleForUpdate.tgz"
 	bundleHashForUpdate = "cc34f28adb32ac91f94ec36eee107e5400cd565f99161af5621ddae85eaf9804"
+	defaultBundleHash   = "38cbdfcef3c8024064bdda3b71e27d7b6c8d746da49ee131b1c85c6ea17e14cc"
 )
 
 func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
@@ -29,6 +33,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		name, localBundle, localBundleHash, version string
 		groupID, resourceTierID                     int
 	}
+
 	var (
 		expectReadEdgeWorkerWithOneVersion = func(t *testing.T, client *mockedgeworkers, name, localBundlePath, version, timeForCreation string, groupID, resourceTierID, edgeWorkerID, numberOfTimes int) {
 			edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
@@ -378,14 +383,28 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	mockBundleServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bundle, err := ioutil.ReadFile("./testdata/TestResEdgeWorkersEdgeWorker/bundles/defaultBundle.tgz")
+		require.NoError(t, err)
+		_, err = w.Write(bundle)
+		require.NoError(t, err)
+	}))
+	defaultBundleDownloadPath = "./testdata/TestResEdgeWorkersEdgeWorker/bundles/target/helloworld.tgz"
+	defaultBundleURL = mockBundleServer.URL
+	require.NoError(t, os.Setenv("EW_DEFAULT_BUNDLE_PATH", defaultBundleDownloadPath))
+
 	t.Run("create a new edgeworker with no local bundle", func(t *testing.T) {
+		defer func() {
+			err := os.RemoveAll("./testdata/TestResEdgeWorkersEdgeWorker/bundles/target")
+			require.NoError(t, err)
+		}()
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
 		client := new(mockedgeworkers)
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", defaultBundle, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, defaultBundle, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", defaultBundleURL, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, defaultBundleURL, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
 
 		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation)
 
@@ -399,7 +418,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 							name:            "example",
 							groupID:         12345,
 							resourceTierID:  54321,
-							localBundle:     defaultBundle,
+							localBundle:     defaultBundleDownloadPath,
 							localBundleHash: defaultBundleHash,
 							version:         "1.0",
 						}),
