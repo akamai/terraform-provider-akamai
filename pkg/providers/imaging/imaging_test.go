@@ -35,6 +35,14 @@ func (m *mockimaging) DeletePolicy(ctx context.Context, req imaging.DeletePolicy
 	return args.Get(0).(*imaging.PolicyResponse), args.Error(1)
 }
 
+func (m *mockimaging) RollbackPolicy(ctx context.Context, req imaging.RollbackPolicyRequest) (*imaging.PolicyResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*imaging.PolicyResponse), args.Error(1)
+}
+
 func (m *mockimaging) GetPolicyHistory(ctx context.Context, req imaging.GetPolicyHistoryRequest) (*imaging.GetPolicyHistoryResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {

@@ -12,12 +12,16 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceImagingPolicyImage() *schema.Resource {
 	return &schema.Resource{
+		CustomizeDiff: customdiff.All(
+			enforcePolicyVersionChange,
+		),
 		CreateContext: resourcePolicyImageCreate,
 		ReadContext:   resourcePolicyImageRead,
 		UpdateContext: resourcePolicyImageUpdate,
@@ -273,11 +277,11 @@ func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func diffSuppressPolicy(_, old, new string, _ *schema.ResourceData) bool {
-	return diffPolicy(old, new)
+	return equalPolicy(old, new)
 }
 
-func diffPolicy(old, new string) bool {
-	logger := akamai.Log("Imaging", "diffPolicy")
+func equalPolicy(old, new string) bool {
+	logger := akamai.Log("Imaging", "equalPolicy")
 	if old == new {
 		return true
 	}
@@ -295,4 +299,20 @@ func diffPolicy(old, new string) bool {
 	}
 
 	return reflect.DeepEqual(oldPolicy, newPolicy)
+}
+
+// enforcePolicyVersionChange enforces that change to any field will most likely result in creating a new version
+func enforcePolicyVersionChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	o, n := diff.GetChange("json")
+
+	oldValue := o.(string)
+	newValue := n.(string)
+
+	if diff.HasChange("contract_id") ||
+		diff.HasChange("policy_id") ||
+		diff.HasChange("policyset_id") ||
+		!equalPolicy(oldValue, newValue) {
+		return diff.SetNewComputed("version")
+	}
+	return nil
 }
