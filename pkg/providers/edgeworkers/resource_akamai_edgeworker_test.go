@@ -2,7 +2,10 @@ package edgeworkers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -375,6 +378,38 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create a new edgeworker with no local bundle", func(t *testing.T) {
+		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
+		client := new(mockedgeworkers)
+
+		timeForCreation := time.Now().Format(time.RFC3339)
+
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", defaultBundle, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, defaultBundle, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+
+		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_no_bundle.tf", testDir)),
+						Check: checkAttributes(edgeWorkerAttributes{
+							name:            "example",
+							groupID:         12345,
+							resourceTierID:  54321,
+							localBundle:     defaultBundle,
+							localBundleHash: defaultBundleHash,
+							version:         "1.0",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
 	t.Run("update edgeworker local_bundle lifecycle", func(t *testing.T) {
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
 		client := new(mockedgeworkers)
@@ -412,6 +447,78 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 							groupID:         12345,
 							resourceTierID:  54321,
 							localBundle:     bundlePathForUpdate,
+							localBundleHash: bundleHashForUpdate,
+							version:         "2.0",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update edgeworker local_bundle content lifecycle", func(t *testing.T) {
+		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
+		client := new(mockedgeworkers)
+
+		tempBundlePath := "testdata/TestResEdgeWorkersEdgeWorker/bundles/_temp_bundle.tgz"
+
+		timeForCreation := time.Now().Format(time.RFC3339)
+		timeForUpdate := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
+
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
+
+		updatedEdgeWorker, updatedEdgeWorkerVersion := expectUpdateEdgeWorkerVersion(t, client, "example", bundlePathForUpdate, timeForUpdate, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID)
+		expectReadEdgeWorkerWithTwoVersions(t, client, updatedEdgeWorker.Name, bundlePathForUpdate, updatedEdgeWorkerVersion.Version, timeForCreation, timeForUpdate, int(updatedEdgeWorker.GroupID), updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, 2)
+
+		expectDeleteEdgeWorkerWithTwoVersions(t, client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation, timeForUpdate)
+
+		prepareTempBundleLink := func(t *testing.T, existingPath, tempPath string) func() {
+			return func() {
+				err := os.Remove(tempPath)
+				if err != nil && !errors.Is(err, fs.ErrNotExist) {
+					t.Fatalf("unable to remove temp bundle file (%s): %s", tempPath, err)
+				}
+				err = os.Link(existingPath, tempPath)
+				if err != nil {
+					t.Fatalf("unable to link temp bundle file: %s", err)
+				}
+			}
+		}
+
+		defer func() {
+			// cleanup
+			err := os.Remove(tempBundlePath)
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				t.Fatalf("unable to remove temp bundle file (%s): %s", tempBundlePath, err)
+			}
+		}()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						PreConfig: prepareTempBundleLink(t, bundlePathForCreate, tempBundlePath),
+						Config:    loadFixtureString(fmt.Sprintf("%s/edgeworker_temp_bundle.tf", testDir)),
+						Check: checkAttributes(edgeWorkerAttributes{
+							name:            "example",
+							groupID:         12345,
+							resourceTierID:  54321,
+							localBundle:     tempBundlePath,
+							localBundleHash: bundleHashForCreate,
+							version:         "1.0",
+						}),
+					},
+					{
+						PreConfig: prepareTempBundleLink(t, bundlePathForUpdate, tempBundlePath),
+						Config:    loadFixtureString(fmt.Sprintf("%s/edgeworker_temp_bundle.tf", testDir)),
+						Check: checkAttributes(edgeWorkerAttributes{
+							name:            "example",
+							groupID:         12345,
+							resourceTierID:  54321,
+							localBundle:     tempBundlePath,
 							localBundleHash: bundleHashForUpdate,
 							version:         "2.0",
 						}),

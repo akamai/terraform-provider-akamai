@@ -6,8 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -18,10 +22,12 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const defaultBundle = "https://raw.githubusercontent.com/akamai/edgeworkers-examples/master/edgecompute/examples/getting-started/hello-world%20(EW)/helloworld.tgz"
+const defaultBundleHash = "38cbdfcef3c8024064bdda3b71e27d7b6c8d746da49ee131b1c85c6ea17e14cc"
 
 func resourceEdgeWorker() *schema.Resource {
 	return &schema.Resource{
@@ -32,6 +38,9 @@ func resourceEdgeWorker() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceEdgeWorkerImport,
 		},
+		CustomizeDiff: customdiff.All(
+			bundleHashCustomDiff,
+		),
 		Schema: map[string]*schema.Schema{
 			"edgeworker_id": {
 				Type:        schema.TypeInt,
@@ -436,4 +445,69 @@ func resourceEdgeWorkerImport(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func bundleHashCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("EdgeWorkers", "bundleHashCustomDiff")
+
+	allSetComputed := func(fields ...string) error {
+		for _, f := range fields {
+			if err := diff.SetNewComputed(f); err != nil {
+				return fmt.Errorf("cannot set new computed for '%s': %s", f, err)
+			}
+		}
+		return nil
+	}
+
+	localBundleHash, err := tools.GetStringValue("local_bundle_hash", diff)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return fmt.Errorf("cannot get 'local_bundle_hash' value: %s", err)
+	}
+	if err != nil && errors.Is(err, tools.ErrNotFound) { // hash may be empty when resource was not created yet
+		return allSetComputed("local_bundle_hash", "version", "warnings")
+	}
+
+	localBundleFileName, err := tools.GetStringValue("local_bundle", diff)
+	if err != nil {
+		return fmt.Errorf("cannot get 'local_bundle' value: %s", err)
+	}
+
+	var f io.ReadCloser
+	if localBundleFileName == defaultBundle {
+		resp, err := http.Get(defaultBundle)
+		if err != nil {
+			return fmt.Errorf("cannot dowload default bundle: %s", err)
+		}
+		f = resp.Body
+		defer func() {
+			err := f.Close()
+			if err != nil {
+				logger.Debugf("error closing body in defer: %s", err)
+			}
+		}()
+
+	} else {
+		f, err = os.Open(localBundleFileName)
+		if err != nil {
+			return fmt.Errorf("cannot open bundle file (%s): %s", localBundleFileName, err)
+		}
+		defer func() {
+			err := f.Close()
+			if err != nil {
+				logger.Debugf("error closing file in defer: %s", err)
+			}
+		}()
+	}
+
+	hash, err := getSHAFromBundle(&edgeworkers.Bundle{Reader: f})
+	if err != nil {
+		return fmt.Errorf("error calculating bundle hash: %s", err)
+	}
+
+	if hash != localBundleHash {
+		return allSetComputed("local_bundle_hash", "version", "warnings")
+	}
+
+	return nil
 }
