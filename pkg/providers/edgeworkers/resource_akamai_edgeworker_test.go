@@ -391,7 +391,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 	}))
 	defaultBundleDownloadPath = "./testdata/TestResEdgeWorkersEdgeWorker/bundles/target/helloworld.tgz"
 	defaultBundleURL = mockBundleServer.URL
-	require.NoError(t, os.Setenv("EW_DEFAULT_BUNDLE_PATH", defaultBundleDownloadPath))
+	require.NoError(t, os.Setenv("EW_DEFAULT_BUNDLE_URL", defaultBundleURL))
 
 	t.Run("create a new edgeworker with no local bundle", func(t *testing.T) {
 		defer func() {
@@ -418,7 +418,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 							name:            "example",
 							groupID:         12345,
 							resourceTierID:  54321,
-							localBundle:     defaultBundleDownloadPath,
+							localBundle:     defaultBundleURL,
 							localBundleHash: defaultBundleHash,
 							version:         "1.0",
 						}),

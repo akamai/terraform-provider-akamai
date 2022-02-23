@@ -27,7 +27,7 @@ import (
 
 var (
 	defaultBundleURL          = "https://raw.githubusercontent.com/akamai/edgeworkers-examples/master/edgecompute/examples/getting-started/hello-world%20(EW)/helloworld.tgz"
-	defaultBundleDownloadPath = "bundle/helloworld.tgz"
+	defaultBundleDownloadPath = "./bundle/helloworld.tgz"
 )
 
 func resourceEdgeWorker() *schema.Resource {
@@ -68,7 +68,7 @@ func resourceEdgeWorker() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				DefaultFunc: schema.EnvDefaultFunc("EW_DEFAULT_BUNDLE_PATH", defaultBundleDownloadPath),
+				DefaultFunc: schema.EnvDefaultFunc("EW_DEFAULT_BUNDLE_URL", defaultBundleURL),
 				Description: "The path to the EdgeWorkers tgz code bundle",
 			},
 			"local_bundle_hash": {
