@@ -30,6 +30,7 @@ func resourceImagingPolicyImage() *schema.Resource {
 			"activate_on_production": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  false,
 				Description: "With this flag set to false, the user can perform modifications on staging without affecting the version already saved to production. " +
 					"With this flag set to true, the policy will be saved on the production network. " +
 					"It is possible to change it back to false only when there are any changes to the policy qualifying it for the new version.",

@@ -111,18 +111,15 @@ func TestResourcePolicy(t *testing.T) {
 			if attrs.policyPath != "" {
 				policyJSON = loadFixtureString(attrs.policyPath)
 			}
-			fs := []resource.TestCheckFunc{
+			return resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "id", fmt.Sprintf("%s:%s", attrs.policySetID, attrs.policyID)),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "policy_id", attrs.policyID),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "policyset_id", attrs.policySetID),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "contract_id", "1YY1"),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "version", attrs.version),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "json", policyJSON),
-			}
-			if attrs.activateOnProduction != "" {
-				fs = append(fs, resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "activate_on_production", attrs.activateOnProduction))
-			}
-			return resource.ComposeAggregateTestCheckFunc(fs...)
+				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "activate_on_production", attrs.activateOnProduction),
+			)
 		}
 	)
 
@@ -144,10 +141,11 @@ func TestResourcePolicy(t *testing.T) {
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
-							version:     "1",
-							policyID:    "test_policy",
-							policySetID: "123",
-							policyPath:  fmt.Sprintf("%s/policy/policy_create.json", testDir),
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "123",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
 					},
 				},
@@ -175,10 +173,11 @@ func TestResourcePolicy(t *testing.T) {
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
-							version:     "1",
-							policyID:    "test_policy",
-							policySetID: "123",
-							policyPath:  fmt.Sprintf("%s/policy/policy_create.json", testDir),
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "123",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
 					},
 					{
@@ -273,19 +272,21 @@ func TestResourcePolicy(t *testing.T) {
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
-							version:     "1",
-							policyID:    "test_policy",
-							policySetID: "123",
-							policyPath:  fmt.Sprintf("%s/policy/policy_create.json", testDir),
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "123",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
 					},
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
-							version:     "1",
-							policyID:    "test_policy",
-							policySetID: "456",
-							policyPath:  fmt.Sprintf("%s/policy/policy_update.json", testDir),
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "456",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
 						}),
 					},
 				},
@@ -319,28 +320,31 @@ func TestResourcePolicy(t *testing.T) {
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
-							version:     "1",
-							policyID:    "test_policy",
-							policySetID: "123",
-							policyPath:  fmt.Sprintf("%s/policy/policy_create.json", testDir),
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "123",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
 					},
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
-							version:     "1",
-							policyID:    "test_policy",
-							policySetID: "123",
-							policyPath:  fmt.Sprintf("%s/policy/policy_update.json", testDir),
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "123",
+							activateOnProduction: "true",
+							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
 						}),
 					},
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_update_staging.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
-							version:     "2",
-							policyID:    "test_policy",
-							policySetID: "123",
-							policyPath:  fmt.Sprintf("%s/policy/policy_update_staging.json", testDir),
+							version:              "2",
+							policyID:             "test_policy",
+							policySetID:          "123",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_update_staging.json", testDir),
 						}),
 					},
 				},
@@ -367,19 +371,21 @@ func TestResourcePolicy(t *testing.T) {
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
-							version:     "1",
-							policyID:    ".auto",
-							policySetID: "123",
-							policyPath:  fmt.Sprintf("%s/policy/policy_create.json", testDir),
+							version:              "1",
+							policyID:             ".auto",
+							policySetID:          "123",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
 					},
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
-							version:     "1",
-							policyID:    ".auto",
-							policySetID: "123",
-							policyPath:  fmt.Sprintf("%s/policy/policy_update.json", testDir),
+							version:              "1",
+							policyID:             ".auto",
+							policySetID:          "123",
+							activateOnProduction: "true",
+							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
 						}),
 					},
 				},
