@@ -1,5 +1,14 @@
 # RELEASE NOTES
 
+## 1.10.2 (Feb **, 2022)
+
+#### BUG FIXES:
+
+* APPSEC
+  * Prevent 409 Conflict error caused by simultaneous network activation requests
+  * Allow updating network list activation without destroying and recreating
+  * Update unit tests to remove "NonEmptyPlanExpected" attribute
+
 ## 1.10.1 (Feb 10, 2022)
 
 #### FEATURES/ENHANCEMENTS:

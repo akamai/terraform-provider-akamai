@@ -33,7 +33,7 @@
         }
     },
     "name": "Voyager Call Center Whitelist",
-	"description": "Notes about this network list",
+	"description": "New notes about this network list",
     "networkListType": "extendedNetworkListResponse",
     "productionActivationStatus": "ACTIVE",
     "readOnly": false,

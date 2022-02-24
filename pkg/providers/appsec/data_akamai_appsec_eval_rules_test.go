@@ -14,12 +14,10 @@ func TestAccAkamaiEvalRules_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetEvalRulesResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSEvalRules/EvalRules.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSEvalRules/EvalRules.json")), &cv)
 
 		configs := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &configs)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configs)
 
 		client.On("GetEvalRules",
 			mock.Anything, // ctx is irrelevant for this test

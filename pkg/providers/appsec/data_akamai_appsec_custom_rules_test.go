@@ -14,8 +14,7 @@ func TestAccAkamaiCustomRules_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetCustomRulesResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSCustomRules/CustomRules.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSCustomRules/CustomRules.json")), &cv)
 
 		client.On("GetCustomRules",
 			mock.Anything, // ctx is irrelevant for this test

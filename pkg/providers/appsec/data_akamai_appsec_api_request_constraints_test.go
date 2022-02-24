@@ -14,8 +14,7 @@ func TestAccAkamaiApiRequestConstraints_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -23,8 +22,7 @@ func TestAccAkamaiApiRequestConstraints_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		cv := appsec.GetApiRequestConstraintsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSApiRequestConstraints/ApiRequestConstraints.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSApiRequestConstraints/ApiRequestConstraints.json")), &cv)
 
 		client.On("GetApiRequestConstraints",
 			mock.Anything, // ctx is irrelevant for this test

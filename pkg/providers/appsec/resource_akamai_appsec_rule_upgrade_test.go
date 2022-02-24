@@ -14,16 +14,13 @@ func TestAccAkamaiRuleUpgrade_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateRuleUpgradeResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResRuleUpgrade/RuleUpgrade.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRuleUpgrade/RuleUpgrade.json")), &cu)
 
 		wafModeRead := appsec.GetWAFModeResponse{}
-		expectWafMode := compactJSON(loadFixtureBytes("testdata/TestResRuleUpgrade/WAFMode.json"))
-		json.Unmarshal([]byte(expectWafMode), &wafModeRead)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRuleUpgrade/WAFMode.json")), &wafModeRead)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

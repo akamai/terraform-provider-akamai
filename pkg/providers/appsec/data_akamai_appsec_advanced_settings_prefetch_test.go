@@ -14,8 +14,7 @@ func TestAccAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetAdvancedSettingsPrefetchResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json")), &cv)
 
 		client.On("GetAdvancedSettingsPrefetch",
 			mock.Anything, // ctx is irrelevant for this test
@@ -23,8 +22,7 @@ func TestAccAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
 		).Return(&cv, nil)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

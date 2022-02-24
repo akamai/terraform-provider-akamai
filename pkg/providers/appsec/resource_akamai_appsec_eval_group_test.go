@@ -15,21 +15,17 @@ func TestAccAkamaiEvalGroup_res_basic(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		updResp := appsec.UpdateAttackGroupResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJSU), &updResp)
+		conditionExceptionJSON := loadFixtureString("testdata/TestResEvalGroup/ConditionException.json")
+		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
 
-		getResp := appsec.GetAttackGroupResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJS), &getResp)
+		updateResponse := appsec.UpdateAttackGroupResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json")), &updateResponse)
 
-		delResp := appsec.UpdateAttackGroupResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJSD), &delResp)
+		getResponse := appsec.GetAttackGroupResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json")), &getResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -37,20 +33,19 @@ func TestAccAkamaiEvalGroup_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetEvalGroup",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
-		).Return(&getResp, nil)
-
-		data := `{"conditions":[],"exception":{"headerCookieOrParamValues":["abc"],"specificHeaderCookieOrParamPrefix": {"prefix": "a*","selector": "REQUEST_COOKIES"}}}` + "\n"
-		client.On("UpdateEvalGroup",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "alert", JsonPayloadRaw: []byte(data)},
-		).Return(&updResp, nil)
+		).Return(&getResponse, nil)
 
 		client.On("UpdateEvalGroup",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
+			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "alert", JsonPayloadRaw: conditionExceptionRawMessage},
+		).Return(&updateResponse, nil)
+
+		client.On("UpdateEvalGroup",
+			mock.Anything,
 			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "none"},
-		).Return(&delResp, nil)
+		).Return(&updateResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -62,7 +57,6 @@ func TestAccAkamaiEvalGroup_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_eval_group.test", "id", "43253:AAAA_81230:SQL"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})
@@ -77,20 +71,27 @@ func TestAccAkamaiEvalGroup_res_error_updating_eval_group(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
 		client := &mockappsec{}
 
+		conditionExceptionJSON := loadFixtureString("testdata/TestResEvalGroup/ConditionException.json")
+		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
+
+		updateResponse := appsec.UpdateAttackGroupResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json")), &updateResponse)
+
+		getResponse := appsec.GetAttackGroupResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json")), &getResponse)
+
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		data := `{"conditions":[],"exception":{"headerCookieOrParamValues":["abc"],"specificHeaderCookieOrParamPrefix": {"prefix": "a*","selector": "REQUEST_COOKIES"}}}` + "\n"
 		client.On("UpdateEvalGroup",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "alert", JsonPayloadRaw: []byte(data)},
-		).Return(nil, fmt.Errorf("UpdateEvalGroup request failed"))
+			mock.Anything,
+			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "alert", JsonPayloadRaw: conditionExceptionRawMessage},
+		).Return(nil, fmt.Errorf("UpdateEvalGroup failed"))
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -102,8 +103,7 @@ func TestAccAkamaiEvalGroup_res_error_updating_eval_group(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_eval_group.test", "id", "43253:AAAA_81230:SQL"),
 						),
-						ExpectError:        regexp.MustCompile(`UpdateEvalGroup request failed`),
-						ExpectNonEmptyPlan: true,
+						ExpectError: regexp.MustCompile(`UpdateEvalGroup failed`),
 					},
 				},
 			})

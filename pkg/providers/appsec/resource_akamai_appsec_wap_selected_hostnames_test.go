@@ -16,20 +16,16 @@ func TestAccAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateWAPSelectedHostnamesResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json")), &cu)
 
 		cr := appsec.GetWAPSelectedHostnamesResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json")), &cr)
 
 		hns := appsec.GetWAPSelectedHostnamesResponse{}
-		expectJSHN := compactJSON(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"))
-		json.Unmarshal([]byte(expectJSHN), &hns)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json")), &hns)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -37,12 +33,12 @@ func TestAccAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetWAPSelectedHostnames",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
 		).Return(&cr, nil)
 
 		client.On("UpdateWAPSelectedHostnames",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230",
 				ProtectedHosts: []string{
 					"rinaldi.sandbox.akamaideveloper.com",
@@ -63,7 +59,6 @@ func TestAccAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})
@@ -79,20 +74,16 @@ func TestAccAkamaiWAPSelectedHostnames_res_error_retrieving_hostnames(t *testing
 		client := &mockappsec{}
 
 		cu := appsec.UpdateWAPSelectedHostnamesResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json")), &cu)
 
 		cr := appsec.GetWAPSelectedHostnamesResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json")), &cr)
 
 		hns := appsec.GetWAPSelectedHostnamesResponse{}
-		expectJSHN := compactJSON(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"))
-		json.Unmarshal([]byte(expectJSHN), &hns)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json")), &hns)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -100,12 +91,12 @@ func TestAccAkamaiWAPSelectedHostnames_res_error_retrieving_hostnames(t *testing
 		).Return(&config, nil)
 
 		client.On("GetWAPSelectedHostnames",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
 		).Return(nil, fmt.Errorf("GetWAPSelectedHostnames failed"))
 
 		client.On("UpdateWAPSelectedHostnames",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230",
 				ProtectedHosts: []string{
 					"rinaldi.sandbox.akamaideveloper.com",
@@ -126,8 +117,7 @@ func TestAccAkamaiWAPSelectedHostnames_res_error_retrieving_hostnames(t *testing
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
 						),
-						ExpectError:        regexp.MustCompile(`GetWAPSelectedHostnames failed`),
-						ExpectNonEmptyPlan: true,
+						ExpectError: regexp.MustCompile(`GetWAPSelectedHostnames failed`),
 					},
 				},
 			})

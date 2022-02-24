@@ -31,7 +31,8 @@
             "avi",
             "bin",
             "bmp",
-            "cab"
+            "cab",
+			"pcx"
         ]
     },
     "hostnames": ["www.ludin.org"],
@@ -63,7 +64,7 @@
         }
     ],
     "requestType": "ClientRequest",
-    "sameActionOnIpv6": true,
+    "sameActionOnIpv6": false,
     "type": "WAF",
     "useXForwardForHeaders": true
 }

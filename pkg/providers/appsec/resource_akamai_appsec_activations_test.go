@@ -14,16 +14,13 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.RemoveActivationsResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json")), &cu)
 
 		ga := appsec.GetActivationsResponse{}
-		expectJSR := compactJSON(loadFixtureBytes("testdata/TestResActivations/Activations.json"))
-		json.Unmarshal([]byte(expectJSR), &ga)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResActivations/Activations.json")), &ga)
 
 		cr := appsec.CreateActivationsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResActivations/Activations.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResActivations/Activations.json")), &cr)
 
 		client.On("GetActivations",
 			mock.Anything, // ctx is irrelevant for this test

@@ -14,8 +14,7 @@ func TestAccAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetApiHostnameCoverageResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSApiHostnameCoverage/ApiHostnameCoverage.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSApiHostnameCoverage/ApiHostnameCoverage.json")), &cv)
 
 		client.On("GetApiHostnameCoverage",
 			mock.Anything, // ctx is irrelevant for this test

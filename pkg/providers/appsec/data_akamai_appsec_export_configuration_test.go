@@ -14,8 +14,7 @@ func TestAccAkamaiExportConfiguration_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetExportConfigurationResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSExportConfiguration/ExportConfiguration.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSExportConfiguration/ExportConfiguration.json")), &cv)
 
 		client.On("GetExportConfiguration",
 			mock.Anything, // ctx is irrelevant for this test

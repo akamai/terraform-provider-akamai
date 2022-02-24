@@ -13,32 +13,26 @@ func TestAccAkamaiCustomRuleAction_res_basic(t *testing.T) {
 	t.Run("match by CustomRuleAction ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateCustomRuleActionResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleActionUpdated.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
-
-		cr := appsec.GetCustomRuleActionResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleAction.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
-
-		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
-
+		getConfigResponse := appsec.GetConfigurationResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &getConfigResponse)
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&config, nil)
+		).Return(&getConfigResponse, nil)
 
-		client.On("GetCustomRuleAction",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362},
-		).Return(&cr, nil)
-
+		updateResponse := appsec.UpdateCustomRuleActionResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleActionUpdated.json")), &updateResponse)
 		client.On("UpdateCustomRuleAction",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362, Action: "none"},
-		).Return(&cu, nil)
+		).Return(&updateResponse, nil)
+
+		getResponse := appsec.GetCustomRuleActionResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleAction.json")), &getResponse)
+		client.On("GetCustomRuleAction",
+			mock.Anything,
+			appsec.GetCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362},
+		).Return(&getResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -50,7 +44,6 @@ func TestAccAkamaiCustomRuleAction_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_rule_action.test", "id", "43253:AAAA_81230:60036362"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

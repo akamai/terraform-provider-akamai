@@ -40,7 +40,7 @@ func ValidateActions(v interface{}, path cty.Path) diag.Diagnostics {
 // any such modifications indicate an incorrect understanding of the Update operation.
 func VerifyIDUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
-	logger := meta.Log("APPSEC", "configIdCustomDiff")
+	logger := meta.Log("APPSEC", "VerifyIDUnchanged")
 
 	if d.HasChange("config_id") {
 		old, new := d.GetChange("config_id")

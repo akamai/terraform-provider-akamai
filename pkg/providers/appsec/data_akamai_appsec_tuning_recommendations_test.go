@@ -16,8 +16,7 @@ func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,12 +24,10 @@ func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		).Return(&config, nil)
 
 		getRecs := appsec.GetTuningRecommendationsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"))
-		json.Unmarshal([]byte(expectJS), &getRecs)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json")), &getRecs)
 
 		getGroupRecs := appsec.GetAttackGroupRecommendationsResponse{}
-		expectJS = compactJSON(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"))
-		json.Unmarshal([]byte(expectJS), &getGroupRecs)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json")), &getGroupRecs)
 
 		client.On("GetTuningRecommendations",
 			mock.Anything, // ctx is irrelevant for this test
@@ -67,8 +64,7 @@ func TestAccAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadation
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -76,12 +72,10 @@ func TestAccAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadation
 		).Return(&config, nil)
 
 		getRecs := appsec.GetTuningRecommendationsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"))
-		json.Unmarshal([]byte(expectJS), &getRecs)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json")), &getRecs)
 
 		getGroupRecs := appsec.GetAttackGroupRecommendationsResponse{}
-		expectJS = compactJSON(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"))
-		json.Unmarshal([]byte(expectJS), &getGroupRecs)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json")), &getGroupRecs)
 
 		client.On("GetTuningRecommendations",
 			mock.Anything, // ctx is irrelevant for this test

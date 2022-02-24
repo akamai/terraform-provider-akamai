@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -80,11 +81,12 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, err = client.UpdateAdvancedSettingsLogging(ctx, createAdvancedSettingsLogging)
+	updateResponse, err := client.UpdateAdvancedSettingsLogging(ctx, createAdvancedSettingsLogging)
 	if err != nil {
 		logger.Errorf("calling 'createAdvancedSettingsLogging': %s", err.Error())
 		return diag.FromErr(err)
 	}
+	log.Printf("updateResponse: %v", updateResponse)
 
 	if len(createAdvancedSettingsLogging.PolicyID) > 0 {
 		d.SetId(fmt.Sprintf("%d:%s", createAdvancedSettingsLogging.ConfigID, createAdvancedSettingsLogging.PolicyID))
@@ -201,11 +203,12 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateAdvancedSettingsLogging.JsonPayloadRaw = rawJSON
-	_, err := client.UpdateAdvancedSettingsLogging(ctx, updateAdvancedSettingsLogging)
+	updateResponse, err := client.UpdateAdvancedSettingsLogging(ctx, updateAdvancedSettingsLogging)
 	if err != nil {
 		logger.Errorf("calling 'updateAdvancedSettingsLogging': %s", err.Error())
 		return diag.FromErr(err)
 	}
+	log.Printf("updateResponse: %v", updateResponse)
 
 	return resourceAdvancedSettingsLoggingRead(ctx, d, m)
 }
@@ -251,11 +254,12 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		removeAdvancedSettingsLogging.AllowSampling = false
 	}
 
-	_, err := client.RemoveAdvancedSettingsLogging(ctx, removeAdvancedSettingsLogging)
+	removeResponse, err := client.RemoveAdvancedSettingsLogging(ctx, removeAdvancedSettingsLogging)
 	if err != nil {
 		logger.Errorf("calling 'removeAdvancedSettingsLogging': %s", err.Error())
 		return diag.FromErr(err)
 	}
+	log.Printf("removeResponse: %v", removeResponse)
 	d.SetId("")
 	return nil
 }

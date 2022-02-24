@@ -14,8 +14,7 @@ func TestAccAkamaiSiemDefinitions_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetSiemDefinitionsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSSiemDefinitions/SiemDefinitions.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSSiemDefinitions/SiemDefinitions.json")), &cv)
 
 		client.On("GetSiemDefinitions",
 			mock.Anything, // ctx is irrelevant for this test

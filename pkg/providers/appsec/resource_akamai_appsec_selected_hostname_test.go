@@ -14,20 +14,16 @@ func TestAccAkamaiSelectedHostname_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateSelectedHostnamesResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json")), &cu)
 
 		cr := appsec.GetSelectedHostnamesResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json")), &cr)
 
 		hns := appsec.GetSelectedHostnamesResponse{}
-		expectJSHN := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
-		json.Unmarshal([]byte(expectJSHN), &hns)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json")), &hns)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

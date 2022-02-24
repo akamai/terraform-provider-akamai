@@ -14,8 +14,7 @@ func TestAccAkamaiContractsGroups_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetContractsGroupsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSContractsGroups/ContractsGroups.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSContractsGroups/ContractsGroups.json")), &cv)
 
 		client.On("GetContractsGroups",
 			mock.Anything, // ctx is irrelevant for this test

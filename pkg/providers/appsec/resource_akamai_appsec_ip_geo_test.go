@@ -14,16 +14,14 @@ func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		getConfigurationJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(getConfigurationJSON), &getConfigurationResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &getConfigurationResponse)
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&getConfigurationResponse, nil)
 
 		updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
-		updateIPGeoResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"))
-		json.Unmarshal([]byte(updateIPGeoResponseJSON), &updateIPGeoResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json")), &updateIPGeoResponse)
 		client.On("UpdateIPGeo",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.UpdateIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Block: "blockSpecificIPGeo", GeoControls: struct {
@@ -47,8 +45,7 @@ func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
 		).Return(&updateIPGeoResponse, nil)
 
 		getIPGeoResponse := appsec.GetIPGeoResponse{}
-		getIPGeoResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"))
-		json.Unmarshal([]byte(getIPGeoResponseJSON), &getIPGeoResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json")), &getIPGeoResponse)
 		client.On("GetIPGeo",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
@@ -60,8 +57,7 @@ func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
 		).Return(&getIPGeoResponse, nil)
 
 		updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
-		updateIPGeoProtectionResponseAllProtectionsFalseJSON := compactJSON(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"))
-		json.Unmarshal([]byte(updateIPGeoProtectionResponseAllProtectionsFalseJSON), &updateIPGeoProtectionResponseAllProtectionsFalse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json")), &updateIPGeoProtectionResponseAllProtectionsFalse)
 		client.On("UpdateIPGeoProtection",
 			mock.Anything,
 			appsec.UpdateIPGeoProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},

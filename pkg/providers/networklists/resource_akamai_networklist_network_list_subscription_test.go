@@ -14,16 +14,13 @@ func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 		client := &mocknetworklists{}
 
 		cu := networklists.UpdateNetworkListSubscriptionResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json")), &cu)
 
 		cr := networklists.GetNetworkListSubscriptionResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json")), &cr)
 
 		cd := networklists.RemoveNetworkListSubscriptionResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"))
-		json.Unmarshal([]byte(expectJSD), &cd)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json")), &cd)
 
 		client.On("GetNetworkListSubscription",
 			mock.Anything, // ctx is irrelevant for this test

@@ -13,41 +13,37 @@ func TestAccAkamaiAdvancedSettingsEvasivePathMatch_res_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsLogging ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateAdvancedSettingsEvasivePathMatchResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		configResponse := appsec.GetConfigurationResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configResponse)
 
-		cr := appsec.GetAdvancedSettingsEvasivePathMatchResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		getResponse := appsec.GetAdvancedSettingsEvasivePathMatchResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json")), &getResponse)
 
-		crd := appsec.RemoveAdvancedSettingsEvasivePathMatchResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"))
-		json.Unmarshal([]byte(expectJSD), &crd)
+		updateResponse := appsec.UpdateAdvancedSettingsEvasivePathMatchResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json")), &updateResponse)
 
-		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		removeResponse := appsec.RemoveAdvancedSettingsEvasivePathMatchResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json")), &removeResponse)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&config, nil)
-
-		client.On("GetAdvancedSettingsEvasivePathMatch",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetAdvancedSettingsEvasivePathMatchRequest{ConfigID: 43253, Version: 7},
-		).Return(&cr, nil)
+		).Return(&configResponse, nil)
 
 		client.On("UpdateAdvancedSettingsEvasivePathMatch",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.UpdateAdvancedSettingsEvasivePathMatchRequest{ConfigID: 43253, Version: 7, PolicyID: "", EnablePathMatch: true},
-		).Return(&cu, nil)
+		).Return(&updateResponse, nil)
+
+		client.On("GetAdvancedSettingsEvasivePathMatch",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.GetAdvancedSettingsEvasivePathMatchRequest{ConfigID: 43253, Version: 7},
+		).Return(&getResponse, nil)
 
 		client.On("RemoveAdvancedSettingsEvasivePathMatch",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.RemoveAdvancedSettingsEvasivePathMatchRequest{ConfigID: 43253, Version: 7, PolicyID: ""},
-		).Return(&crd, nil)
+		).Return(&removeResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -59,7 +55,6 @@ func TestAccAkamaiAdvancedSettingsEvasivePathMatch_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_evasive_path_match.test", "id", "43253"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

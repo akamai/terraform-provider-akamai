@@ -14,12 +14,10 @@ func TestAccAkamaiRuleUpgrade_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetRuleUpgradeResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSRuleUpgrade/RuleUpgrade.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSRuleUpgrade/RuleUpgrade.json")), &cv)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

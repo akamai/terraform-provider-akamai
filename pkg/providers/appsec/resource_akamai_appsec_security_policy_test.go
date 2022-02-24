@@ -14,20 +14,16 @@ func TestAccAkamaiSecurityPolicy_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cr := appsec.GetSecurityPolicyResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicy/SecurityPolicy.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSecurityPolicy/SecurityPolicy.json")), &cr)
 
 		crp := appsec.CreateSecurityPolicyResponse{}
-		expectJSC := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicy/SecurityPolicyCreate.json"))
-		json.Unmarshal([]byte(expectJSC), &crp)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSecurityPolicy/SecurityPolicyCreate.json")), &crp)
 
 		rp := appsec.RemoveSecurityPolicyResponse{}
-		expectJSR := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicy/SecurityPolicy.json"))
-		json.Unmarshal([]byte(expectJSR), &rp)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSecurityPolicy/SecurityPolicy.json")), &rp)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -35,17 +31,17 @@ func TestAccAkamaiSecurityPolicy_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetSecurityPolicy",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049"},
 		).Return(&cr, nil)
 
 		client.On("CreateSecurityPolicy",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.CreateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyName: "Cloned Test for Launchpad 15", PolicyPrefix: "LN", DefaultSettings: true},
+			mock.Anything,
+			appsec.CreateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyName: "PLE Cloned Test for Launchpad 15", PolicyPrefix: "PLE", DefaultSettings: true},
 		).Return(&crp, nil)
 
 		client.On("RemoveSecurityPolicy",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049"},
 		).Return(&rp, nil)
 
@@ -59,7 +55,6 @@ func TestAccAkamaiSecurityPolicy_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_security_policy.test", "id", "43253:PLE_114049"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

@@ -1,14 +1,13 @@
 {
     "id": 661699,
-    "name": "Fat Rule 1",
+    "name": "Rule Test New Updated",
     "description": "Can I create all conditions?",
     "version": 1,
     "ruleActivated": false,
     "tag": [
         "test"
     ],
-    "conditions": [
-        {
+    "conditions": [{
             "type": "requestMethodMatch",
             "positiveMatch": true,
             "value": [
@@ -41,150 +40,6 @@
                 "He",
                 "H"
             ]
-        },
-        {
-            "type": "filenameMatch",
-            "positiveMatch": true,
-            "valueWildcard": false,
-            "valueCase": false,
-            "value": [
-                "He",
-                "H",
-                "Li"
-            ]
-        },
-        {
-            "type": "requestProtocolVersionMatch",
-            "positiveMatch": true,
-            "value": [
-                "HTTP/0.9"
-            ]
-        },
-        {
-            "type": "requestHeaderMatch",
-            "positiveMatch": true,
-            "valueCase": true,
-            "valueWildcard": true,
-            "nameWildcard": true,
-            "name": [
-                "H",
-                "He"
-            ],
-            "value": [
-                "Li",
-                "He",
-                "H"
-            ]
-        },
-        {
-            "type": "requestHeaderMatch",
-            "positiveMatch": true,
-            "valueCase": true,
-            "valueWildcard": true,
-            "nameWildcard": true,
-            "name": [
-                "He"
-            ],
-            "value": [
-                "C",
-                "Be",
-                "B"
-            ]
-        },
-        {
-            "type": "headerOrderMatch",
-            "positiveMatch": true,
-            "value": "H:He"
-        },
-        {
-            "type": "cookieMatch",
-            "positiveMatch": true,
-            "name": "H",
-            "nameWildcard": true,
-            "nameCase": true,
-            "valueCase": true,
-            "valueWildcard": true,
-            "value": [
-                "H",
-                "He",
-                "Li"
-            ]
-        },
-        {
-            "type": "cookieMatch",
-            "positiveMatch": true,
-            "name": "Be",
-            "nameWildcard": true,
-            "nameCase": true,
-            "valueCase": true,
-            "valueWildcard": true,
-            "value": [
-                "O",
-                "N",
-                "C"
-            ]
-        },
-        {
-            "type": "uriQueryMatch",
-            "positiveMatch": true,
-            "name": "C",
-            "nameCase": true,
-            "nameWildcard": true,
-            "valueWildcard": true,
-            "valueCase": true,
-            "value": [
-                "Carbon",
-                "C"
-            ]
-        },
-        {
-            "type": "uriQueryMatch",
-            "positiveMatch": true,
-            "name": "N",
-            "nameCase": false,
-            "nameWildcard": false,
-            "valueWildcard": false,
-            "valueCase": false,
-            "value": [
-                "Nitrogen",
-                "N"
-            ]
-        },
-        {
-            "type": "argsPostMatch",
-            "positiveMatch": true,
-            "name": "H",
-            "value": [
-                "H",
-                "Hydrogen"
-            ]
-        },
-        {
-            "type": "argsPostMatch",
-            "positiveMatch": true,
-            "name": "He",
-            "value": [
-                "He",
-                "Helium"
-            ]
-        },
-        {
-            "type": "argsPostNamesMatch",
-            "positiveMatch": true,
-            "value": [
-                "Carbon",
-                "Oxygen",
-                "Nitrogen",
-                "Chlorine"
-            ]
-        },
-        {
-            "type": "clientCertPresentMatch",
-            "positiveMatch": true
-        },
-        {
-            "type": "clientCertValidMatch",
-            "positiveMatch": true
         }
     ]
 }

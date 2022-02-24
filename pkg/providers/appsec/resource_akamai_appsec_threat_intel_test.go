@@ -14,16 +14,13 @@ func TestAccAkamaiThreatIntel_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updThrInt := appsec.UpdateThreatIntelResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json"))
-		json.Unmarshal([]byte(expectJSU), &updThrInt)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json")), &updThrInt)
 
 		getThrInt := appsec.GetThreatIntelResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json"))
-		json.Unmarshal([]byte(expectJS), &getThrInt)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json")), &getThrInt)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

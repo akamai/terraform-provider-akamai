@@ -16,24 +16,19 @@ func TestAccAkamaiConfiguration_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
-		createConfigResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"))
-		json.Unmarshal([]byte(createConfigResponseJSON), &createConfigResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json")), &createConfigResponse)
 
 		readConfigResponse := appsec.GetConfigurationResponse{}
-		readConfigResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"))
-		json.Unmarshal([]byte(readConfigResponseJSON), &readConfigResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json")), &readConfigResponse)
 
 		deleteConfigResponse := appsec.RemoveConfigurationResponse{}
-		deleteConfigResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"))
-		json.Unmarshal([]byte(deleteConfigResponseJSON), &deleteConfigResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json")), &deleteConfigResponse)
 
 		getConfigurationVersionsResponse := appsec.GetConfigurationVersionsResponse{}
-		getConfigurationVersionJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"))
-		json.Unmarshal([]byte(getConfigurationVersionJSON), &getConfigurationVersionsResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json")), &getConfigurationVersionsResponse)
 
 		hns := appsec.GetSelectedHostnamesResponse{}
-		expectJSHN := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
-		json.Unmarshal([]byte(expectJSHN), &hns)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json")), &hns)
 
 		client.On("GetSelectedHostnames",
 			mock.Anything, // ctx is irrelevant for this test
@@ -84,24 +79,19 @@ func TestAccAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 		client := &mockappsec{}
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
-		createConfigResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"))
-		json.Unmarshal([]byte(createConfigResponseJSON), &createConfigResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json")), &createConfigResponse)
 
 		readConfigResponse := appsec.GetConfigurationResponse{}
-		readConfigResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"))
-		json.Unmarshal([]byte(readConfigResponseJSON), &readConfigResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json")), &readConfigResponse)
 
 		deleteConfigResponse := appsec.RemoveConfigurationResponse{}
-		deleteConfigResponseJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"))
-		json.Unmarshal([]byte(deleteConfigResponseJSON), &deleteConfigResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json")), &deleteConfigResponse)
 
 		getConfigurationVersionsResponse := appsec.GetConfigurationVersionsResponse{}
-		getConfigurationVersionJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"))
-		json.Unmarshal([]byte(getConfigurationVersionJSON), &getConfigurationVersionsResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json")), &getConfigurationVersionsResponse)
 
 		hns := appsec.GetSelectedHostnamesResponse{}
-		expectJSHN := compactJSON(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"))
-		json.Unmarshal([]byte(expectJSHN), &hns)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json")), &hns)
 
 		client.On("GetSelectedHostnames",
 			mock.Anything,

@@ -19,16 +19,13 @@ func TestAccAkamaiAttackGroup_res_basic(t *testing.T) {
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
 
 		updateResponse := appsec.UpdateAttackGroupResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJSU), &updateResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json")), &updateResponse)
 
 		getResponse := appsec.GetAttackGroupResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJS), &getResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json")), &getResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -78,16 +75,13 @@ func TestAccAkamaiAttackGroup_res_error_updating_attack_group(t *testing.T) {
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
 
 		updateResponse := appsec.UpdateAttackGroupResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJSU), &updateResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json")), &updateResponse)
 
 		getResponse := appsec.GetAttackGroupResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"))
-		json.Unmarshal([]byte(expectJS), &getResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json")), &getResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

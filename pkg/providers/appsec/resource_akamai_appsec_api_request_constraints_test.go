@@ -14,20 +14,16 @@ func TestAccAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateApiRequestConstraintsResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json")), &cu)
 
 		cr := appsec.GetApiRequestConstraintsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json")), &cr)
 
 		crd := appsec.RemoveApiRequestConstraintsResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"))
-		json.Unmarshal([]byte(expectJSD), &crd)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json")), &crd)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

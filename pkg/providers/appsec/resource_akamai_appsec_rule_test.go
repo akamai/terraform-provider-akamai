@@ -14,24 +14,19 @@ func TestAccAkamaiRule_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updResp := appsec.UpdateRuleResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResRule/Rule.json"))
-		json.Unmarshal([]byte(expectJSU), &updResp)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/Rule.json")), &updResp)
 
 		getResp := appsec.GetRuleResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResRule/Rule.json"))
-		json.Unmarshal([]byte(expectJS), &getResp)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/Rule.json")), &getResp)
 
 		delResp := appsec.UpdateRuleResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResRule/Rule.json"))
-		json.Unmarshal([]byte(expectJSD), &delResp)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/Rule.json")), &delResp)
 
 		wm := appsec.GetWAFModeResponse{}
-		expectWM := compactJSON(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json"))
-		json.Unmarshal([]byte(expectWM), &wm)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json")), &wm)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -88,24 +83,19 @@ func TestAccAkamaiRule_res_AseAuto(t *testing.T) {
 		client := &mockappsec{}
 
 		updResp := appsec.UpdateConditionExceptionResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"))
-		json.Unmarshal([]byte(expectJSU), &updResp)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json")), &updResp)
 
 		getResp := appsec.GetRuleResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"))
-		json.Unmarshal([]byte(expectJS), &getResp)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json")), &getResp)
 
 		delResp := appsec.UpdateConditionExceptionResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"))
-		json.Unmarshal([]byte(expectJSD), &delResp)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json")), &delResp)
 
 		wm := appsec.GetWAFModeResponse{}
-		expectWM := compactJSON(loadFixtureBytes("testdata/TestResWAFMode/WAFModeAseAuto.json"))
-		json.Unmarshal([]byte(expectWM), &wm)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAFMode/WAFModeAseAuto.json")), &wm)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

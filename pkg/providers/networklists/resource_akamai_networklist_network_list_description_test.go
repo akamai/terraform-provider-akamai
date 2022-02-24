@@ -14,12 +14,10 @@ func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 		client := &mocknetworklists{}
 
 		cu := networklists.UpdateNetworkListDescriptionResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json")), &cu)
 
 		cr := networklists.GetNetworkListDescriptionResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json")), &cr)
 
 		client.On("GetNetworkListDescription",
 			mock.Anything, // ctx is irrelevant for this test
