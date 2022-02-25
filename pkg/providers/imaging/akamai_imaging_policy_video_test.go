@@ -427,11 +427,11 @@ func TestResourcePolicyVideo(t *testing.T) {
 
 		client := new(mockimaging)
 		var withError = imaging.Error{
-			Type:      "https://problems.luna.akamaiapis.net/image-policy-manager/IVM_1004",
+			Type:      "/imaging/error-types/IVM_9000",
 			Title:     "Bad Request",
-			Instance:  "52a21f40-9861-4d35-95d0-a603c85cb2ad",
+			Instance:  "/imaging/error-instances/52a21f40-9861-4d35-95d0-a603c85cb2ad",
 			Status:    400,
-			Detail:    "Policy fails to be properly created by AkaImaging: Unrecognized transformation type: MaxColors2",
+			Detail:    "Unable to parse element 'output' in JSON.",
 			ProblemID: "52a21f40-9861-4d35-95d0-a603c85cb2ad",
 		}
 		expectUpsertPolicyWithError(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput, &withError)
@@ -442,7 +442,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
-						ExpectError: regexp.MustCompile("\"detail\": \"Policy fails to be properly created by AkaImaging: Unrecognized transformation type: MaxColors2\","),
+						ExpectError: regexp.MustCompile("\"detail\": \"Unable to parse element 'output' in JSON.\","),
 					},
 				},
 			})
