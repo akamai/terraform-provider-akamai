@@ -394,7 +394,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("policy with unexpected transformation", func(t *testing.T) {
-		testDir := "testdata/TestResPolicyVideo/transformation_policy"
+		testDir := "testdata/TestResPolicyVideo/invalid_field_transformation_policy"
 
 		client := new(mockimaging)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
