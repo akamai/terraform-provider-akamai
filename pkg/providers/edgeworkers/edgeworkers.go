@@ -1,3 +1,4 @@
+//go:build all || edgeworkers
 // +build all edgeworkers
 
 package edgeworkers

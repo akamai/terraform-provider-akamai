@@ -1,3 +1,4 @@
+//go:build all || iam
 // +build all iam
 
 package iam

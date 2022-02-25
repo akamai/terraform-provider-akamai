@@ -21,8 +21,8 @@ install:
 - make dummy-edgerc
 
 script:
-- make check
 - make test
 - make build
+- make check
 - make terraform-fmt
 - make terraform-lint

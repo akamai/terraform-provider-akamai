@@ -1,3 +1,4 @@
+//go:build all || cps
 // +build all cps
 
 package cps

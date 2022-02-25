@@ -1,3 +1,4 @@
+//go:build all || appsec
 // +build all appsec
 
 package appsec

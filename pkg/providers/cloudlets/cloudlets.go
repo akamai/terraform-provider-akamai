@@ -1,3 +1,4 @@
+//go:build all || cloudlets
 // +build all cloudlets
 
 package cloudlets

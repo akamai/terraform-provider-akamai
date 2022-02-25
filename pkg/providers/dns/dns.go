@@ -1,3 +1,4 @@
+//go:build all || dns
 // +build all dns
 
 package dns

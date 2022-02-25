@@ -96,7 +96,7 @@ func TestDiagWarningf(t *testing.T) {
 			expected: diag.Diagnostics{
 				diag.Diagnostic{
 					Severity: diag.Warning,
-					Summary: "test-1-true-[1 2 3 4]",
+					Summary:  "test-1-true-[1 2 3 4]",
 				},
 			},
 		},
@@ -105,7 +105,7 @@ func TestDiagWarningf(t *testing.T) {
 			expected: diag.Diagnostics{
 				diag.Diagnostic{
 					Severity: diag.Warning,
-					Summary: "this is a whole summary",
+					Summary:  "this is a whole summary",
 				},
 			},
 		},

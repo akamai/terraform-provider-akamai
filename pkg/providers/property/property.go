@@ -1,3 +1,4 @@
+//go:build all || property
 // +build all property
 
 package property

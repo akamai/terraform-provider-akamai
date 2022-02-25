@@ -14,9 +14,10 @@ ARG SSH_KNOWN_HOSTS
 WORKDIR $GOPATH/src/github.com/akamai
 
 RUN apk add --update git bash sudo openssh go gcc musl-dev openssl-dev ca-certificates unzip curl && \
-    go get -u github.com/jstemmer/go-junit-report && \
-    go get -u github.com/axw/gocov/... && \
     go get -u github.com/AlekSi/gocov-xml && \
+    go get -u github.com/axw/gocov/... && \
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.43.0 && \
+    go get -u github.com/jstemmer/go-junit-report && \
     mkdir -p /root/.ssh && \
     curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
 

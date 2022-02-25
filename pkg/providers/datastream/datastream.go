@@ -1,3 +1,4 @@
+//go:build all || datastream
 // +build all datastream
 
 package datastream

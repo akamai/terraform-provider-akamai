@@ -30,7 +30,7 @@ func dataSourceEdgeworkersPropertyRules() *schema.Resource {
 	}
 }
 
-func dataEdgeworkersPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataEdgeworkersPropertyRulesRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	log := meta.Log("Edgeworkers", "dataEdgeworkersPropertyRulesRead")
 	log.Debug("Generating EdgeWorker rules JSON")

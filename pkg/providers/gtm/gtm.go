@@ -1,3 +1,4 @@
+//go:build all || gtm
 // +build all gtm
 
 package gtm
