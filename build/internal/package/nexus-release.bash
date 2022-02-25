@@ -35,8 +35,6 @@ find_branch() {
   CURRENT_BRANCH=$GIT_BRANCH
   if [[ "$CURRENT_BRANCH" == "develop" ]]; then
     EDGEGRID_BRANCH="v2"
-  elif [[ $CURRENT_BRANCH =~ .*/sp-.* ]]; then
-    EDGEGRID_BRANCH=${CURRENT_BRANCH//origin\//}
   else
     # find parent branch from which this branch was created, iterate over the list of branches from the history of commits
     branches=($(git log --pretty=format:'%D' | sed 's@HEAD -> @@' | grep . | sed 's@origin/@@g' | sed -e $'s@, @\\\n@g' | grep -v HEAD ))
