@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets/tools"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
