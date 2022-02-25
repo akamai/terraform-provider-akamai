@@ -20,7 +20,7 @@ import (
 func resourceImagingPolicyVideo() *schema.Resource {
 	return &schema.Resource{
 		CustomizeDiff: customdiff.All(
-			enforcePolicyVersionChange,
+			enforcePolicyVideoVersionChange,
 		),
 		CreateContext: resourcePolicyVideoCreate,
 		ReadContext:   resourcePolicyVideoRead,
@@ -300,4 +300,20 @@ func equalVideoPolicy(old, new string) bool {
 	}
 
 	return reflect.DeepEqual(oldPolicy, newPolicy)
+}
+
+// enforcePolicyVideoVersionChange enforces that change to any field will most likely result in creating a new version
+func enforcePolicyVideoVersionChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	o, n := diff.GetChange("json")
+
+	oldValue := o.(string)
+	newValue := n.(string)
+
+	if diff.HasChange("contract_id") ||
+		diff.HasChange("policy_id") ||
+		diff.HasChange("policyset_id") ||
+		!equalVideoPolicy(oldValue, newValue) {
+		return diff.SetNewComputed("version")
+	}
+	return nil
 }

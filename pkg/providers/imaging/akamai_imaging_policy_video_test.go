@@ -393,6 +393,35 @@ func TestResourcePolicyVideo(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+	t.Run("policy with unexpected transformation", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyVideo/transformation_policy"
+
+		client := new(mockimaging)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 2)
+
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "123",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 	t.Run("error when creating policy", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyVideo/regular_policy"
 
