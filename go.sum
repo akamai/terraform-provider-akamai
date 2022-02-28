@@ -49,8 +49,8 @@ github.com/acomagu/bufpipe v1.0.3/go.mod h1:mxdxdup/WdsKVreO5GpW4+M/1CE2sMG4jeGJ
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXvaqE=
 github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
-github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.9.1 h1:JRcJpWWMzhDd9j7CEswm5NpIa7Po+YDA+i+HB8B92ts=
-github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.9.1/go.mod h1:NUp3zcqw6k6AXwf9yr8ksTXpppJTbm35kXeqwdNreRc=
+github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.10.0 h1:8b4UMZFeyYkq7UEWFchHN6qVz+qukx32CAVFAl8EkUg=
+github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.10.0/go.mod h1:NUp3zcqw6k6AXwf9yr8ksTXpppJTbm35kXeqwdNreRc=
 github.com/allegro/bigcache/v2 v2.2.5 h1:mRc8r6GQjuJsmSKQNPsR5jQVXc8IJ1xsW5YXUYMLfqI=
 github.com/allegro/bigcache/v2 v2.2.5/go.mod h1:FppZsIO+IZk7gCuj5FiIDHGygD9xvWQcqg1uIPMb6tY=
 github.com/andybalholm/crlf v0.0.0-20171020200849-670099aa064f/go.mod h1:k8feO4+kXDxro6ErPXBRTJ/ro2mf0SsFG8s7doP9kJE=
