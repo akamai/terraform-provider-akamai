@@ -493,7 +493,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	for _, san := range enrollment.CSR.SANS {
-		if !sansFromSchema.Contains(enrollment.CSR.CN) && san == enrollment.CSR.CN {
+		if (sansFromSchema.Len() == 0 || !sansFromSchema.Contains(enrollment.CSR.CN)) && san == enrollment.CSR.CN {
 			continue
 		}
 		sans = append(sans, san)
