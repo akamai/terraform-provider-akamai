@@ -2,7 +2,7 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-resource "akamai_imaging_policy_set" "imv_set" {
+resource "akamai_imaging_policy_set" "test_image_set" {
   name        = "test_policy_set"
   region      = "EMEA"
   type        = "IMAGE"

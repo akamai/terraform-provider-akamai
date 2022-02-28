@@ -2,6 +2,8 @@ package imaging
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
@@ -18,6 +20,9 @@ func resourceImagingPolicySet() *schema.Resource {
 		ReadContext:   resourceImagingPolicySetRead,
 		UpdateContext: resourceImagingPolicySetUpdate,
 		DeleteContext: resourceImagingPolicySetDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceImagingPolicySetImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -44,6 +49,34 @@ func resourceImagingPolicySet() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceImagingPolicySetImport(ctx context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Imaging", "resourceImagingPolicySetImport")
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+
+	logger.Debugf("Import Policy Set")
+
+	parts := strings.Split(rd.Id(), ":")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("colon-separated list of policy set ID and contract ID has to be supplied in import: %s", rd.Id())
+	}
+
+	policySetID := parts[0]
+	contractID := parts[1]
+
+	if err := rd.Set("contract_id", contractID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+
+	rd.SetId(policySetID)
+
+	return []*schema.ResourceData{rd}, nil
 }
 
 func resourceImagingPolicySetCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -175,7 +208,7 @@ func resourceImagingPolicySetDelete(ctx context.Context, rd *schema.ResourceData
 	)
 	client := inst.Client(meta)
 
-	logger.Debugf("Deleting policy set with ID==%s and its bundle version", rd.Id())
+	logger.Debugf("Deleting policy set with ID==%s", rd.Id())
 
 	contractID, err := tools.GetStringValue("contract_id", rd)
 	if err != nil {

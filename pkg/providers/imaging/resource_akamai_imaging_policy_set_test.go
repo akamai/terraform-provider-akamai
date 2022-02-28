@@ -69,6 +69,9 @@ func TestResourceImagingPolicySet(t *testing.T) {
 	)
 
 	testDir := "testdata/TestResPolicySet"
+	contractID, policySetID, policySetName, mediaType := "1-TEST", "testID", "test_policy_set", string(imaging.TypeImage)
+	US, EMEA := "US", "EMEA"
+	importStateID := fmt.Sprintf("%s:%s", policySetID, contractID)
 
 	tests := map[string]struct {
 		init  func(*mockimaging)
@@ -76,11 +79,10 @@ func TestResourceImagingPolicySet(t *testing.T) {
 	}{
 		"ok create": {
 			init: func(m *mockimaging) {
-				contractID, policySetID, policySetName, region, mediaType := "1-TEST", "testID", "test_policy_set", "EMEA", string(imaging.TypeImage)
-				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(region), Type: mediaType}
+				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, region, mediaType, createdPolicySet, nil)
+				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
 
 				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 2)
 
@@ -95,38 +97,36 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/lifecycle/create.tf", testDir)),
+					Config: loadFixtureString("%s/lifecycle/create.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "id", "testID"),
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "name", "test_policy_set"),
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "region", string(imaging.RegionEMEA)),
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "type", string(imaging.TypeImage)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "region", string(imaging.RegionEMEA)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "type", string(imaging.TypeImage)),
 					),
 				},
 			},
 		},
 		"nok create": {
 			init: func(m *mockimaging) {
-				contractID, policySetID, policySetName, region, mediaType := "1-TEST", "testID", "test_policy_set", "EMEA", string(imaging.TypeImage)
-				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(region), Type: mediaType}
+				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, region, mediaType, createdPolicySet, anError)
+				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, anError)
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/lifecycle/create.tf", testDir)),
+					Config:      loadFixtureString("%s/lifecycle/create.tf", testDir),
 					ExpectError: regexp.MustCompile(anError.Error()),
 				},
 			},
 		},
 		"nok get policy set post create": {
 			init: func(m *mockimaging) {
-				contractID, policySetID, policySetName, region, mediaType := "1-TEST", "testID", "test_policy_set", "EMEA", string(imaging.TypeImage)
-				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(region), Type: mediaType}
+				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, region, mediaType, createdPolicySet, nil)
+				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
 
 				// create -> read
 				expectPolicySetRead(t, m, contractID, policySetID, nil, anError, 1)
@@ -142,14 +142,13 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/lifecycle/create.tf", testDir)),
+					Config:      loadFixtureString("%s/lifecycle/create.tf", testDir),
 					ExpectError: regexp.MustCompile(anError.Error()),
 				},
 			},
 		},
 		"ok create update": {
 			init: func(m *mockimaging) {
-				contractID, policySetID, policySetName, EMEA, mediaType, US := "1-TEST", "testID", "test_policy_set", string(imaging.RegionEMEA), string(imaging.TypeImage), string(imaging.RegionUS)
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 				updatedPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(US), Type: mediaType}
 
@@ -176,22 +175,83 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/lifecycle/create.tf", testDir)),
+					Config: loadFixtureString("%s/lifecycle/create.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "id", "testID"),
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "name", "test_policy_set"),
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "region", string(imaging.RegionEMEA)),
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "type", string(imaging.TypeImage)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "region", string(imaging.RegionEMEA)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "type", string(imaging.TypeImage)),
 					),
 				},
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/lifecycle/update_region_us.tf", testDir)),
+					Config: loadFixtureString("%s/lifecycle/update_region_us.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "id", "testID"),
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "name", "test_policy_set"),
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "region", string(imaging.RegionUS)),
-						resource.TestCheckResourceAttr("akamai_imaging_policy_set.imv_set", "type", string(imaging.TypeImage)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "region", string(imaging.RegionUS)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "type", string(imaging.TypeImage)),
 					),
+				},
+			},
+		},
+		"test import": {
+			init: func(m *mockimaging) {
+				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
+
+				// create
+				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+
+				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 3)
+
+				// delete
+				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+					ItemKind: "POLICY",
+					Items: []imaging.PolicyOutput{
+						&imaging.PolicyOutputImage{ID: ".auto"},
+					},
+					TotalItems: 1,
+				}, nil, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/lifecycle/create.tf", testDir),
+				},
+				{
+					ImportState:       true,
+					ImportStateId:     importStateID,
+					ResourceName:      "akamai_imaging_policy_set.test_image_set",
+					ImportStateVerify: true,
+				},
+			},
+		},
+		"test import - invalid ID": {
+			init: func(m *mockimaging) {
+				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
+
+				// create
+				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+
+				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 2)
+
+				// delete
+				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+					ItemKind: "POLICY",
+					Items: []imaging.PolicyOutput{
+						&imaging.PolicyOutputImage{ID: ".auto"},
+					},
+					TotalItems: 1,
+				}, nil, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/lifecycle/create.tf", testDir),
+				},
+				{
+					ImportState:       true,
+					ImportStateId:     "DevExpTest",
+					ResourceName:      "akamai_imaging_policy_set.test_image_set",
+					ImportStateVerify: true,
+					ExpectError:       regexp.MustCompile("colon-separated list of policy set ID and contract ID has to be supplied in import: DevExpTest"),
 				},
 			},
 		},
