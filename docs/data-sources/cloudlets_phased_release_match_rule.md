@@ -19,19 +19,19 @@ This example returns the JSON-encoded rules for the Phased Release Cloudlet:
 ```hcl
 data "akamai_cloudlets_phased_release_match_rule" "example" {
     match_rules {
-        name = "rule"
+        name  = "rule"
         start = 1644865045
-        end = 1645037845
+        end   = 1645037845
         forward_settings {
             origin_id = "1234"
-            percent = 100
+            percent   = 100
         }
         matches {
             case_sensitive = false
-            check_ips = "CONNECTING_IP XFF_HEADERS"
+            check_ips      = "CONNECTING_IP XFF_HEADERS"
             match_operator = "equals"
-            match_type = "header"
-            negate = false
+            match_type     = "header"
+            negate         = false
             object_match_value {
                 type = "object"
                 name = "Content-Type"

@@ -1,37 +1,40 @@
 ---
 layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_forward_rewrite_match_rule"
+page_title: "Akamai: akamai_cloudlets_audience_segmentation_match_rule"
 subcategory: "Cloudlets"
 description: |-
- Forward Rewrite match rule
+ Audience Segmentation match rule
 ---
 
-# akamai_cloudlets_forward_rewrite_match_rule
+# akamai_cloudlets_audience_segmentation_match_rule
 
 Every policy version specifies the match rules that govern how the Cloudlet is used. Matches specify conditions that need to be met in the incoming request.
 
-Use the `akamai_cloudlets_forward_rewrite_match_rule` data source to build a match rule JSON object for the Forward Rewrite Cloudlet.
+Use the `akamai_cloudlets_audience_segmentation_match_rule` data source to build a match rule JSON object for the Audience Segmentation Cloudlet.
 
 ## Basic usage
 
-This example returns the JSON-encoded rules for the Forward Rewrite Cloudlet:
+This example returns the JSON-encoded rules for the Audience Segmentation Cloudlet:
 
 ```hcl
-data "akamai_cloudlets_forward_rewrite_match_rule" "example" {
+data "akamai_cloudlets_audience_segmentation_match_rule" "example" {
   match_rules {
     name = "rule"
     matches {
-      case_sensitive = false
-      check_ips      = "CONNECTING_IP XFF_HEADERS"
-      match_operator = "equals"
-      match_type     = "clientip"
-      match_value    = "192.0.2.0"
-      negate         = false
+      match_type     = "header"
+      match_operator = "contains"
+      object_match_value {
+        type = "object"
+        name = "cookie"
+        options {
+          value = ["abcd"]
+        }
+      }
     }
     forward_settings {
-      path_and_qs               = "/path"
+      path_and_qs               = "/test"
       use_incoming_query_string = true
-      origin_id                 = "1234"
+      origin_id                 = "123"
     }
   }
 }
@@ -43,11 +46,11 @@ This data source supports these arguments:
 
 * `match_rules` - (Optional) A list of Cloudlet-specific match rules for a policy.
   * `name` - (Optional) The name of the rule.
-  * `type` - (Optional) The type of Cloudlet the rule is for. For example, the string for Forward Rewrite is `frMatchRule`.
+  * `type` - (Optional) The type of Cloudlet the rule is for. For example, the string for Audience Segmentation is `asMatchRule`.
   * `start` - (Optional) The start time for this match. Specify the value in UTC in seconds since the epoch.
   * `end` - (Optional) The end time for this match. Specify the value in UTC in seconds since the epoch.
   * `matches` - (Optional) A list of conditions to apply to a Cloudlet, including:
-      * `match_type` - (Optional) The type of match used, either `header`, `hostname`, `path`, `extension`, `query`, `regex`, `cookie`, `deviceCharacteristics`, `clientip`, `continent`, `countrycode`, `regioncode`, `protocol`, `method`, or `proxy`.
+      * `match_type` - (Optional) The type of match used, either header`, `hostname`, `path`, `extension`, `query`, `regex`, `cookie`, `deviceCharacteristics`, `clientip`, `continent`, `countrycode`, `regioncode`, `protocol`, `method`, or `proxy`.
       * `match_value` - (Optional) This depends on the `match_type`. If the `match_type` is `hostname`, then `match_value` is the fully qualified domain name, like `www.akamai.com`.
       * `match_operator` - (Optional) Compares a string expression with a pattern, either `contains`, `exists`, or `equals`.
       * `case_sensitive` - (Optional) Whether the match is case sensitive.

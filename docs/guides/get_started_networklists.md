@@ -86,7 +86,7 @@ resource "akamai_networklist_network_list" "network_list" {
  name        = "Documentation Network"
  type        = "IP"
  description = "This is a test network used by the documentation team."
- list        = ["192.168.1.1","192.168.1.2","192.168.1.3"]
+ list        = ["198.51.100.253","198.51.100.254","198.51.100.255"]
  mode        = "APPEND"
 }
 
@@ -107,7 +107,7 @@ resource "akamai_networklist_network_list" "network_list" {
  name        = "Documentation Network"
  type        = "IP"
  description = "This is a test network used by the documentation team."
- list        = ["192.168.1.1","192.168.1.2","192.168.1.3"]
+ list        = ["198.51.100.253","198.51.100.254","198.51.100.255"]
  mode        = "REPLACE"
 }
 ```
@@ -296,11 +296,11 @@ for the resource's parameters:
 
 ```hcl
 resource "akamai_networklist_network_list" "network_list" {
-  name = "Test-white-list"
-  type = "IP"
+  name        = "Test-white-list"
+  type        = "IP"
   description = "network list description"
-  list = ["13.230.0.0/15","195.7.50.194","50.23.59.233"]
-  mode = "APPEND"
+  list        = ["198.51.100.0/24","203.0.113.255","233.252.0.0"]
+  mode        = "APPEND"
 }
 ```
 
