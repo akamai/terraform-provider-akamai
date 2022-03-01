@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
@@ -65,6 +66,9 @@ func resourceImagingPolicyImage() *schema.Resource {
 				DiffSuppressFunc: diffSuppressPolicy,
 				Description:      "A JSON encoded policy",
 			},
+		},
+		Importer: &schema.ResourceImporter{
+			StateContext: resourcePolicyImageImport,
 		},
 	}
 }
@@ -148,6 +152,7 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 		session.WithContextLog(logger),
 	)
 	client := inst.Client(meta)
+
 	logger.Debug("Reading policy")
 	policyID, err := tools.GetStringValue("policy_id", d)
 	if err != nil {
@@ -162,45 +167,62 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	policyRequest := imaging.GetPolicyRequest{
-		PolicyID:    policyID,
-		Network:     imaging.PolicyNetworkStaging,
-		ContractID:  contractID,
-		PolicySetID: policysetID,
-	}
-	var policyOutput imaging.PolicyOutput
-	policyOutput, err = client.GetPolicy(ctx, policyRequest)
+	policy, err := getPolicy(ctx, client, policyID, contractID, policysetID, imaging.PolicyNetworkStaging)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	policyJSON, err := getPolicyJSON(policy)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	attrs := make(map[string]interface{})
+	attrs["version"] = policy.Version
+	attrs["json"] = policyJSON
+	if err := tools.SetAttrs(d, attrs); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
+}
+
+func getPolicy(ctx context.Context, client imaging.Imaging, policyID, contractID, policySetID string, network imaging.PolicyNetwork) (*imaging.PolicyOutputImage, error) {
+	policyRequest := imaging.GetPolicyRequest{
+		PolicyID:    policyID,
+		Network:     network,
+		ContractID:  contractID,
+		PolicySetID: policySetID,
+	}
+	policyOutput, err := client.GetPolicy(ctx, policyRequest)
+	if err != nil {
+		return nil, err
 	}
 	policy, ok := policyOutput.(*imaging.PolicyOutputImage)
 	if !ok {
-		return diag.Errorf("policy is not of type image")
+		return nil, fmt.Errorf("policy is not of type image")
 	}
-	attrs := make(map[string]interface{})
-	attrs["version"] = policy.Version
-	var policyJSON []byte
-	policyJSON, err = json.MarshalIndent(policy, "", "  ")
+
+	return policy, nil
+}
+
+func getPolicyJSON(policy *imaging.PolicyOutputImage) (string, error) {
+	policyJSON, err := json.MarshalIndent(policy, "", "  ")
 	if err != nil {
-		return diag.FromErr(err)
+		return "", err
 	}
 
 	// we store JSON as PolicyInput, so we need to convert it from PolicyOutput via JSON representation
 	var policyInput imaging.PolicyInputImage
-	if err = json.Unmarshal(policyJSON, &policyInput); err != nil {
-		return diag.FromErr(err)
+	if err := json.Unmarshal(policyJSON, &policyInput); err != nil {
+		return "", err
 	}
 
 	policyJSON, err = json.MarshalIndent(policyInput, "", "  ")
 	if err != nil {
-		return diag.FromErr(err)
+		return "", err
 	}
 
-	attrs["json"] = string(policyJSON)
-	if err := tools.SetAttrs(d, attrs); err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return string(policyJSON), nil
 }
 
 func resourcePolicyImageUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -236,7 +258,7 @@ func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Diagnostics{
 			diag.Diagnostic{
 				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("Image and Video Manager API does not support '.auto' policy deletion, it can be removed when removing related policy set - resource will only be removed from state."),
+				Summary:  "Image and Video Manager API does not support '.auto' policy deletion, it can be removed when removing related policy set - resource will only be removed from state.",
 			},
 		}
 	}
@@ -275,6 +297,53 @@ func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	d.SetId("")
 	return nil
+}
+
+func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Imaging", "resourcePolicyImageImport")
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+	client := inst.Client(meta)
+
+	parts := strings.Split(d.Id(), ":")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("colon-separated list of policy ID, policy set ID and contract ID has to be supplied in import: %s", d.Id())
+	}
+	policyID, policySetID, contractID := parts[0], parts[1], parts[2]
+
+	policyStaging, err := getPolicy(ctx, client, policyID, contractID, policySetID, imaging.PolicyNetworkStaging)
+	if err != nil {
+		return nil, err
+	}
+	policyStagingJSON, err := getPolicyJSON(policyStaging)
+	if err != nil {
+		return nil, err
+	}
+
+	policyProduction, err := getPolicy(ctx, client, policyID, contractID, policySetID, imaging.PolicyNetworkProduction)
+	if err != nil {
+		return nil, err
+	}
+	policyProductionJSON, err := getPolicyJSON(policyProduction)
+	if err != nil {
+		return nil, err
+	}
+
+	attrs := make(map[string]interface{})
+	attrs["policy_id"] = policyID
+	attrs["contract_id"] = contractID
+	attrs["policyset_id"] = policySetID
+	attrs["activate_on_production"] = equalPolicy(policyStagingJSON, policyProductionJSON)
+	if err := tools.SetAttrs(d, attrs); err != nil {
+		return nil, err
+	}
+
+	d.SetId(fmt.Sprintf("%s:%s", policySetID, policyID))
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func diffSuppressPolicy(_, old, new string, _ *schema.ResourceData) bool {
