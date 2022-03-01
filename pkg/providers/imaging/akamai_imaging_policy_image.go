@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"reflect"
 	"strings"
 
@@ -323,20 +324,26 @@ func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m in
 		return nil, err
 	}
 
+	var activateOnProduction bool
 	policyProduction, err := getPolicy(ctx, client, policyID, contractID, policySetID, imaging.PolicyNetworkProduction)
 	if err != nil {
-		return nil, err
-	}
-	policyProductionJSON, err := getPolicyJSON(policyProduction)
-	if err != nil {
-		return nil, err
+		var e *imaging.Error
+		if ok := errors.As(err, &e); !ok || e.Status != http.StatusNotFound {
+			return nil, err
+		}
+	} else {
+		policyProductionJSON, err := getPolicyJSON(policyProduction)
+		if err != nil {
+			return nil, err
+		}
+		activateOnProduction = equalPolicy(policyStagingJSON, policyProductionJSON)
 	}
 
 	attrs := make(map[string]interface{})
 	attrs["policy_id"] = policyID
 	attrs["contract_id"] = contractID
 	attrs["policyset_id"] = policySetID
-	attrs["activate_on_production"] = equalPolicy(policyStagingJSON, policyProductionJSON)
+	attrs["activate_on_production"] = activateOnProduction
 	if err := tools.SetAttrs(d, attrs); err != nil {
 		return nil, err
 	}

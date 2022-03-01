@@ -2,6 +2,7 @@ package imaging
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 
@@ -436,6 +437,41 @@ func TestResourcePolicy(t *testing.T) {
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 3)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123", &policyOutputV2, 1)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 1)
+
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+					},
+					{
+						ImportState:       true,
+						ImportStateId:     "test_policy:123:1YY1",
+						ResourceName:      "akamai_imaging_policy_image.policy",
+						ImportStateVerify: true,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("import policy with activate_on_production=false and no policy on production", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/regular_policy"
+
+		client := new(mockimaging)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 3)
+		client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
+			PolicyID:    "test_policy",
+			Network:     imaging.PolicyNetworkProduction,
+			ContractID:  "1YY1",
+			PolicySetID: "123",
+		}).Return(nil, fmt.Errorf("%s: %w", imaging.ErrGetPolicy, &imaging.Error{Status: http.StatusNotFound})).Once()
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 1)
 
 		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
