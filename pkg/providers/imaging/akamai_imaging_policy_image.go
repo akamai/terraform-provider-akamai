@@ -22,7 +22,7 @@ import (
 func resourceImagingPolicyImage() *schema.Resource {
 	return &schema.Resource{
 		CustomizeDiff: customdiff.All(
-			enforcePolicyVersionChange,
+			enforcePolicyImageVersionChange,
 		),
 		CreateContext: resourcePolicyImageCreate,
 		ReadContext:   resourcePolicyImageRead,
@@ -64,7 +64,7 @@ func resourceImagingPolicyImage() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
-				DiffSuppressFunc: diffSuppressPolicy,
+				DiffSuppressFunc: diffSuppressPolicyImage,
 				Description:      "A JSON encoded policy",
 			},
 		},
@@ -168,11 +168,11 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	policy, err := getPolicy(ctx, client, policyID, contractID, policysetID, imaging.PolicyNetworkStaging)
+	policy, err := getPolicyImage(ctx, client, policyID, contractID, policysetID, imaging.PolicyNetworkStaging)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyJSON, err := getPolicyJSON(policy)
+	policyJSON, err := getPolicyImageJSON(policy)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -187,7 +187,7 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func getPolicy(ctx context.Context, client imaging.Imaging, policyID, contractID, policySetID string, network imaging.PolicyNetwork) (*imaging.PolicyOutputImage, error) {
+func getPolicyImage(ctx context.Context, client imaging.Imaging, policyID, contractID, policySetID string, network imaging.PolicyNetwork) (*imaging.PolicyOutputImage, error) {
 	policyRequest := imaging.GetPolicyRequest{
 		PolicyID:    policyID,
 		Network:     network,
@@ -206,7 +206,7 @@ func getPolicy(ctx context.Context, client imaging.Imaging, policyID, contractID
 	return policy, nil
 }
 
-func getPolicyJSON(policy *imaging.PolicyOutputImage) (string, error) {
+func getPolicyImageJSON(policy *imaging.PolicyOutputImage) (string, error) {
 	policyJSON, err := json.MarshalIndent(policy, "", "  ")
 	if err != nil {
 		return "", err
@@ -315,28 +315,28 @@ func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m in
 	}
 	policyID, policySetID, contractID := parts[0], parts[1], parts[2]
 
-	policyStaging, err := getPolicy(ctx, client, policyID, contractID, policySetID, imaging.PolicyNetworkStaging)
+	policyStaging, err := getPolicyImage(ctx, client, policyID, contractID, policySetID, imaging.PolicyNetworkStaging)
 	if err != nil {
 		return nil, err
 	}
-	policyStagingJSON, err := getPolicyJSON(policyStaging)
+	policyStagingJSON, err := getPolicyImageJSON(policyStaging)
 	if err != nil {
 		return nil, err
 	}
 
 	var activateOnProduction bool
-	policyProduction, err := getPolicy(ctx, client, policyID, contractID, policySetID, imaging.PolicyNetworkProduction)
+	policyProduction, err := getPolicyImage(ctx, client, policyID, contractID, policySetID, imaging.PolicyNetworkProduction)
 	if err != nil {
 		var e *imaging.Error
 		if ok := errors.As(err, &e); !ok || e.Status != http.StatusNotFound {
 			return nil, err
 		}
 	} else {
-		policyProductionJSON, err := getPolicyJSON(policyProduction)
+		policyProductionJSON, err := getPolicyImageJSON(policyProduction)
 		if err != nil {
 			return nil, err
 		}
-		activateOnProduction = equalPolicy(policyStagingJSON, policyProductionJSON)
+		activateOnProduction = equalPolicyImage(policyStagingJSON, policyProductionJSON)
 	}
 
 	attrs := make(map[string]interface{})
@@ -353,12 +353,12 @@ func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m in
 	return []*schema.ResourceData{d}, nil
 }
 
-func diffSuppressPolicy(_, old, new string, _ *schema.ResourceData) bool {
-	return equalPolicy(old, new)
+func diffSuppressPolicyImage(_, old, new string, _ *schema.ResourceData) bool {
+	return equalPolicyImage(old, new)
 }
 
-func equalPolicy(old, new string) bool {
-	logger := akamai.Log("Imaging", "equalPolicy")
+func equalPolicyImage(old, new string) bool {
+	logger := akamai.Log("Imaging", "equalPolicyImage")
 	if old == new {
 		return true
 	}
@@ -378,8 +378,8 @@ func equalPolicy(old, new string) bool {
 	return reflect.DeepEqual(oldPolicy, newPolicy)
 }
 
-// enforcePolicyVersionChange enforces that change to any field will most likely result in creating a new version
-func enforcePolicyVersionChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+// enforcePolicyImageVersionChange enforces that change to any field will most likely result in creating a new version
+func enforcePolicyImageVersionChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 	o, n := diff.GetChange("json")
 
 	oldValue := o.(string)
@@ -388,7 +388,7 @@ func enforcePolicyVersionChange(_ context.Context, diff *schema.ResourceDiff, _ 
 	if diff.HasChange("contract_id") ||
 		diff.HasChange("policy_id") ||
 		diff.HasChange("policyset_id") ||
-		!equalPolicy(oldValue, newValue) {
+		!equalPolicyImage(oldValue, newValue) {
 		return diff.SetNewComputed("version")
 	}
 	return nil

@@ -4,8 +4,8 @@ provider "akamai" {
 
 resource "akamai_imaging_policy_video" "policy" {
   policy_id    = "test_policy"
-  contract_id  = "1YY1"
-  policyset_id = "456"
+  contract_id  = "test_contract"
+  policyset_id = "test_policy_set_update"
   json         = <<-EOF
 {
     "breakpoints": {

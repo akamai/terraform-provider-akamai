@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
@@ -62,9 +64,12 @@ func resourceImagingPolicyVideo() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
-				DiffSuppressFunc: diffSuppressVideoPolicy,
+				DiffSuppressFunc: diffSuppressPolicyVideo,
 				Description:      "A JSON encoded policy",
 			},
+		},
+		Importer: &schema.ResourceImporter{
+			StateContext: resourcePolicyVideoImport,
 		},
 	}
 }
@@ -148,6 +153,7 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 		session.WithContextLog(logger),
 	)
 	client := inst.Client(meta)
+
 	logger.Debug("Reading policy")
 	policyID, err := tools.GetStringValue("policy_id", d)
 	if err != nil {
@@ -162,45 +168,62 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	policyRequest := imaging.GetPolicyRequest{
-		PolicyID:    policyID,
-		Network:     imaging.PolicyNetworkStaging,
-		ContractID:  contractID,
-		PolicySetID: policysetID,
-	}
-	var policyOutput imaging.PolicyOutput
-	policyOutput, err = client.GetPolicy(ctx, policyRequest)
+	policy, err := getPolicyVideo(ctx, client, policyID, contractID, policysetID, imaging.PolicyNetworkStaging)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	policyJSON, err := getPolicyVideoJSON(policy)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	attrs := make(map[string]interface{})
+	attrs["version"] = policy.Version
+	attrs["json"] = policyJSON
+	if err := tools.SetAttrs(d, attrs); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
+}
+
+func getPolicyVideo(ctx context.Context, client imaging.Imaging, policyID, contractID, policySetID string, network imaging.PolicyNetwork) (*imaging.PolicyOutputVideo, error) {
+	policyRequest := imaging.GetPolicyRequest{
+		PolicyID:    policyID,
+		Network:     network,
+		ContractID:  contractID,
+		PolicySetID: policySetID,
+	}
+	policyOutput, err := client.GetPolicy(ctx, policyRequest)
+	if err != nil {
+		return nil, err
 	}
 	policy, ok := policyOutput.(*imaging.PolicyOutputVideo)
 	if !ok {
-		return diag.Errorf("policy is not of type video")
+		return nil, fmt.Errorf("policy is not of type video")
 	}
-	attrs := make(map[string]interface{})
-	attrs["version"] = policy.Version
-	var policyJSON []byte
-	policyJSON, err = json.MarshalIndent(policy, "", "  ")
+
+	return policy, nil
+}
+
+func getPolicyVideoJSON(policy *imaging.PolicyOutputVideo) (string, error) {
+	policyJSON, err := json.MarshalIndent(policy, "", "  ")
 	if err != nil {
-		return diag.FromErr(err)
+		return "", err
 	}
 
 	// we store JSON as PolicyInput, so we need to convert it from PolicyOutput via JSON representation
 	var policyInput imaging.PolicyInputVideo
-	if err = json.Unmarshal(policyJSON, &policyInput); err != nil {
-		return diag.FromErr(err)
+	if err := json.Unmarshal(policyJSON, &policyInput); err != nil {
+		return "", err
 	}
 
 	policyJSON, err = json.MarshalIndent(policyInput, "", "  ")
 	if err != nil {
-		return diag.FromErr(err)
+		return "", err
 	}
 
-	attrs["json"] = string(policyJSON)
-	if err := tools.SetAttrs(d, attrs); err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return string(policyJSON), nil
 }
 
 func resourcePolicyVideoUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -236,7 +259,8 @@ func resourcePolicyVideoDelete(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Diagnostics{
 			diag.Diagnostic{
 				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("Image and Video Manager API does not support '.auto' policy deletion, it can be removed when removing related policy set - resource will only be removed from state."),
+				Summary: "Image and Video Manager API does not support '.auto' policy deletion, it can be removed when " +
+					"removing related policy set - resource will only be removed from state.",
 			},
 		}
 	}
@@ -277,12 +301,65 @@ func resourcePolicyVideoDelete(ctx context.Context, d *schema.ResourceData, m in
 	return nil
 }
 
-func diffSuppressVideoPolicy(_, old, new string, _ *schema.ResourceData) bool {
-	return equalVideoPolicy(old, new)
+func resourcePolicyVideoImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Imaging", "resourcePolicyVideoImport")
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+	client := inst.Client(meta)
+
+	parts := strings.Split(d.Id(), ":")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("colon-separated list of policy ID, policy set ID and contract ID has to be supplied in import: %s", d.Id())
+	}
+	policyID, policySetID, contractID := parts[0], parts[1], parts[2]
+
+	policyStaging, err := getPolicyVideo(ctx, client, policyID, contractID, policySetID, imaging.PolicyNetworkStaging)
+	if err != nil {
+		return nil, err
+	}
+	policyStagingJSON, err := getPolicyVideoJSON(policyStaging)
+	if err != nil {
+		return nil, err
+	}
+
+	var activateOnProduction bool
+	policyProduction, err := getPolicyVideo(ctx, client, policyID, contractID, policySetID, imaging.PolicyNetworkProduction)
+	if err != nil {
+		var e *imaging.Error
+		if ok := errors.As(err, &e); !ok || e.Status != http.StatusNotFound {
+			return nil, err
+		}
+	} else {
+		policyProductionJSON, err := getPolicyVideoJSON(policyProduction)
+		if err != nil {
+			return nil, err
+		}
+		activateOnProduction = equalPolicyVideo(policyStagingJSON, policyProductionJSON)
+	}
+
+	attrs := make(map[string]interface{})
+	attrs["policy_id"] = policyID
+	attrs["contract_id"] = contractID
+	attrs["policyset_id"] = policySetID
+	attrs["activate_on_production"] = activateOnProduction
+	if err := tools.SetAttrs(d, attrs); err != nil {
+		return nil, err
+	}
+
+	d.SetId(fmt.Sprintf("%s:%s", policySetID, policyID))
+
+	return []*schema.ResourceData{d}, nil
 }
 
-func equalVideoPolicy(old, new string) bool {
-	logger := akamai.Log("Imaging", "equalVideoPolicy")
+func diffSuppressPolicyVideo(_, old, new string, _ *schema.ResourceData) bool {
+	return equalPolicyVideo(old, new)
+}
+
+func equalPolicyVideo(old, new string) bool {
+	logger := akamai.Log("Imaging", "equalPolicyVideo")
 	if old == new {
 		return true
 	}
@@ -312,7 +389,7 @@ func enforcePolicyVideoVersionChange(_ context.Context, diff *schema.ResourceDif
 	if diff.HasChange("contract_id") ||
 		diff.HasChange("policy_id") ||
 		diff.HasChange("policyset_id") ||
-		!equalVideoPolicy(oldValue, newValue) {
+		!equalPolicyVideo(oldValue, newValue) {
 		return diff.SetNewComputed("version")
 	}
 	return nil

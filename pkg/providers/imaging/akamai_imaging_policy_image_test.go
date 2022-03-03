@@ -116,7 +116,7 @@ func TestResourcePolicy(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "id", fmt.Sprintf("%s:%s", attrs.policySetID, attrs.policyID)),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "policy_id", attrs.policyID),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "policyset_id", attrs.policySetID),
-				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "contract_id", "1YY1"),
+				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "contract_id", "test_contract"),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "version", attrs.version),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "json", policyJSON),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "activate_on_production", attrs.activateOnProduction),
@@ -128,12 +128,12 @@ func TestResourcePolicy(t *testing.T) {
 		testDir := "testdata/TestResPolicy/regular_policy"
 
 		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 2)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
 
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
 		// it is faster to attempt to delete on production than checking if there is policy on production first
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -144,7 +144,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "false",
 							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
@@ -158,14 +158,14 @@ func TestResourcePolicy(t *testing.T) {
 		testDir := "testdata/TestResPolicy/regular_policy"
 
 		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 5)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 5)
 
 		// `activate_on_production` should not trigger Upsert for staging if the policy has not changed
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123", &policyInput)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyInput)
 
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -176,7 +176,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "false",
 							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
@@ -186,7 +186,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "true",
 							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
 						}),
@@ -200,23 +200,23 @@ func TestResourcePolicy(t *testing.T) {
 		testDir := "testdata/TestResPolicy/regular_policy_activate_same_time"
 
 		client := new(mockimaging)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 2)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
 
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123", &policyInput)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyInput)
 
 		// update
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 1)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
 
 		policyInputV2 := getPolicyInputV2(policyInput)
 		policyOutputV2 := getPolicyOutputV2(policyOutput)
 
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutputV2, 2)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInputV2)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123", &policyInputV2)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputV2, 2)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputV2)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyInputV2)
 
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -227,7 +227,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "true",
 							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
@@ -237,7 +237,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "2",
 							policyID:             "test_policy",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "true",
 							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
 						}),
@@ -251,20 +251,20 @@ func TestResourcePolicy(t *testing.T) {
 		testDir := "testdata/TestResPolicy/change_policyset_id"
 
 		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 3)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 3)
 
 		// remove original policy
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
 
 		// update
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "456", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "456", &policyOutput, 2)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set_update", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set_update", &policyOutput, 2)
 
 		// remove new policy
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "456")
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "456")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set_update")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set_update")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -275,7 +275,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "false",
 							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
@@ -285,7 +285,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
-							policySetID:          "456",
+							policySetID:          "test_policy_set_update",
 							activateOnProduction: "false",
 							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
 						}),
@@ -299,20 +299,20 @@ func TestResourcePolicy(t *testing.T) {
 		testDir := "testdata/TestResPolicy/regular_policy_update_staging"
 
 		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 6)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 6)
 
 		// `activate_on_production` should not trigger Upsert for staging if the policy has not changed
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123", &policyInput)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyInput)
 
 		policyInputV2 := getPolicyInputV2(policyInput)
 		policyOutputV2 := getPolicyOutputV2(policyOutput)
 
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutputV2, 2)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInputV2)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputV2, 2)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputV2)
 
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -323,7 +323,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "false",
 							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
@@ -333,7 +333,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "true",
 							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
 						}),
@@ -343,7 +343,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "2",
 							policyID:             "test_policy",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "false",
 							policyPath:           fmt.Sprintf("%s/policy/policy_update_staging.json", testDir),
 						}),
@@ -357,11 +357,11 @@ func TestResourcePolicy(t *testing.T) {
 		testDir := "testdata/TestResPolicy/auto_policy"
 
 		client := new(mockimaging)
-		expectUpsertPolicy(t, client, ".auto", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectReadPolicy(t, client, ".auto", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 5)
+		expectUpsertPolicy(t, client, ".auto", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, ".auto", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 5)
 
 		// `activate_on_production` should not trigger Upsert for staging if the policy has not changed
-		expectUpsertPolicy(t, client, ".auto", imaging.PolicyNetworkProduction, "1YY1", "123", &policyInput)
+		expectUpsertPolicy(t, client, ".auto", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyInput)
 
 		// .auto policy cannot be removed alone, only via removal of policy set
 
@@ -374,7 +374,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             ".auto",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "false",
 							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
 						}),
@@ -384,7 +384,7 @@ func TestResourcePolicy(t *testing.T) {
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             ".auto",
-							policySetID:          "123",
+							policySetID:          "test_policy_set",
 							activateOnProduction: "true",
 							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
 						}),
@@ -398,15 +398,15 @@ func TestResourcePolicy(t *testing.T) {
 		testDir := "testdata/TestResPolicy/regular_policy"
 
 		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 5)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 5)
 
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123", &policyOutput, 1)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 2)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyOutput, 1)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
 
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -420,7 +420,7 @@ func TestResourcePolicy(t *testing.T) {
 					},
 					{
 						ImportState:       true,
-						ImportStateId:     "test_policy:123:1YY1",
+						ImportStateId:     "test_policy:test_policy_set:test_contract",
 						ResourceName:      "akamai_imaging_policy_image.policy",
 						ImportStateVerify: true,
 					},
@@ -434,13 +434,13 @@ func TestResourcePolicy(t *testing.T) {
 		policyOutputV2 := getPolicyOutputV2(policyOutput)
 
 		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 3)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123", &policyOutputV2, 1)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 1)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 3)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyOutputV2, 1)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
 
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -451,7 +451,7 @@ func TestResourcePolicy(t *testing.T) {
 					},
 					{
 						ImportState:       true,
-						ImportStateId:     "test_policy:123:1YY1",
+						ImportStateId:     "test_policy:test_policy_set:test_contract",
 						ResourceName:      "akamai_imaging_policy_image.policy",
 						ImportStateVerify: true,
 					},
@@ -464,18 +464,18 @@ func TestResourcePolicy(t *testing.T) {
 		testDir := "testdata/TestResPolicy/regular_policy"
 
 		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 3)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 3)
 		client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
 			PolicyID:    "test_policy",
 			Network:     imaging.PolicyNetworkProduction,
-			ContractID:  "1YY1",
-			PolicySetID: "123",
+			ContractID:  "test_contract",
+			PolicySetID: "test_policy_set",
 		}).Return(nil, fmt.Errorf("%s: %w", imaging.ErrGetPolicy, &imaging.Error{Status: http.StatusNotFound})).Once()
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 1)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
 
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -486,7 +486,7 @@ func TestResourcePolicy(t *testing.T) {
 					},
 					{
 						ImportState:       true,
-						ImportStateId:     "test_policy:123:1YY1",
+						ImportStateId:     "test_policy:test_policy_set:test_contract",
 						ResourceName:      "akamai_imaging_policy_image.policy",
 						ImportStateVerify: true,
 					},
@@ -541,7 +541,7 @@ func TestResourcePolicy(t *testing.T) {
 			Detail:    "Policy fails to be properly created by AkaImaging: Unrecognized transformation type: MaxColors2",
 			ProblemID: "52a21f40-9861-4d35-95d0-a603c85cb2ad",
 		}
-		expectUpsertPolicyWithError(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput, &withError)
+		expectUpsertPolicyWithError(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput, &withError)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -560,11 +560,11 @@ func TestResourcePolicy(t *testing.T) {
 		testDir := "testdata/TestResPolicy/regular_policy"
 
 		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123", &policyOutput, 2)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
 
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "1YY1", "123")
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "1YY1", "123")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -575,10 +575,10 @@ func TestResourcePolicy(t *testing.T) {
 					},
 					{
 						ImportState:       true,
-						ImportStateId:     "test_policy,123",
+						ImportStateId:     "test_policy,test_policy_set",
 						ResourceName:      "akamai_imaging_policy_image.policy",
 						ImportStateVerify: true,
-						ExpectError:       regexp.MustCompile("colon-separated list of policy ID, policy set ID and contract ID has to be supplied in import: test_policy,123"),
+						ExpectError:       regexp.MustCompile("colon-separated list of policy ID, policy set ID and contract ID has to be supplied in import: test_policy,test_policy_set"),
 					},
 				},
 			})
@@ -646,7 +646,7 @@ func TestDiffSuppressPolicy(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			oldJSON := loadFixtureString(fmt.Sprintf("%s/%s", basePath, test.oldPath))
 			newJSON := loadFixtureString(fmt.Sprintf("%s/%s", basePath, test.newPath))
-			res := diffSuppressPolicy("", oldJSON, newJSON, nil)
+			res := diffSuppressPolicyImage("", oldJSON, newJSON, nil)
 			assert.Equal(t, test.expected, res)
 		})
 	}

@@ -4,8 +4,8 @@ provider "akamai" {
 
 resource "akamai_imaging_policy_image" "policy" {
   policy_id              = ".auto"
-  contract_id            = "1YY1"
-  policyset_id           = "123"
+  contract_id            = "test_contract"
+  policyset_id           = "test_policy_set"
   activate_on_production = true
   json                   = <<-EOF
 {
