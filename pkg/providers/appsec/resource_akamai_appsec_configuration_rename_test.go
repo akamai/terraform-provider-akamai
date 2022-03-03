@@ -14,12 +14,10 @@ func TestAccAkamaiConfigurationRename_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateConfigurationResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResConfigurationRename/ConfigurationUpdate.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfigurationRename/ConfigurationUpdate.json")), &cu)
 
 		cr := appsec.GetConfigurationResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResConfigurationRename/Configuration.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfigurationRename/Configuration.json")), &cr)
 
 		client.On("GetConfiguration",
 			mock.Anything, // ctx is irrelevant for this test

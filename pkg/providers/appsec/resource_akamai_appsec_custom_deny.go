@@ -85,7 +85,7 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 	for _, p := range createCustomDenyResponse.Parameters {
 		name := p.Name
 		val := p.Value
-		log.Printf("%s = %s", string(name), string(val))
+		log.Print(fmt.Sprintf("%s = %s", string(name), string(val)))
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", configID, createCustomDenyResponse.ID))

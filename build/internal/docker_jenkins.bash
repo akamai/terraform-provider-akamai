@@ -13,7 +13,7 @@ RELOAD_DOCKER_IMAGE="${4:-false}"
 
 # Recalculate DOCKER_IMAGE_SIZE if any changes to dockerfile.
 TIMEOUT="20m"
-DOCKER_IMAGE_SIZE="642345946"
+DOCKER_IMAGE_SIZE="667116277"
 
 SSH_PRV_KEY="$(cat ~/.ssh/id_rsa)"
 SSH_PUB_KEY="$(cat ~/.ssh/id_rsa.pub)"
@@ -115,6 +115,15 @@ echo "Creating docker build"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; go install -tags all;
                                    mkdir -p /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/${PROVIDER_VERSION}/linux_amd64;
                                    cp /root/go/bin/terraform-provider-akamai /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/${PROVIDER_VERSION}/linux_amd64/terraform-provider-akamai_v${PROVIDER_VERSION}'
+
+echo "Running golangci-lint"
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; golangci-lint run'
+
+echo "Running gofmt check"
+if ! docker exec akatf-container sh -c 'cd terraform-provider-akamai; test -z $(gofmt -l .)'; then
+  echo "gofmt check failed"
+  exit 1
+fi
 
 echo "Running terraform fmt"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; terraform fmt -recursive -check'

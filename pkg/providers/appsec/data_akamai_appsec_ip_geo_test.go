@@ -14,12 +14,10 @@ func TestAccAkamaiIPGeo_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetIPGeoResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSIPGeo/IPGeo.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSIPGeo/IPGeo.json")), &cv)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

@@ -14,23 +14,20 @@ func TestAccAkamaiRateProtection_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		tempJSON := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(tempJSON), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		updateResponseAllProtectionsFalse := appsec.UpdateRateProtectionResponse{}
-		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResRateProtection/PolicyProtections.json"))
-		json.Unmarshal([]byte(tempJSON), &updateResponseAllProtectionsFalse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRateProtection/PolicyProtections.json")), &updateResponseAllProtectionsFalse)
 
 		getResponseAllProtectionsFalse := appsec.GetRateProtectionResponse{}
-		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResRateProtection/PolicyProtections.json"))
-		json.Unmarshal([]byte(tempJSON), &getResponseAllProtectionsFalse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRateProtection/PolicyProtections.json")), &getResponseAllProtectionsFalse)
 
+		updateResponseOneProtectionTrueJSON := loadFixtureBytes("testdata/TestResRateProtection/UpdatedPolicyProtections.json")
 		updateResponseOneProtectionTrue := appsec.UpdateRateProtectionResponse{}
-		tempJSON = compactJSON(loadFixtureBytes("testdata/TestResRateProtection/UpdatedPolicyProtections.json"))
-		json.Unmarshal([]byte(tempJSON), &updateResponseOneProtectionTrue)
+		json.Unmarshal([]byte(updateResponseOneProtectionTrueJSON), &updateResponseOneProtectionTrue)
 
 		getResponseOneProtectionTrue := appsec.GetRateProtectionResponse{}
-		json.Unmarshal([]byte(tempJSON), &getResponseOneProtectionTrue)
+		json.Unmarshal([]byte(updateResponseOneProtectionTrueJSON), &getResponseOneProtectionTrue)
 
 		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
 		// is mocked individually because calls with the same parameters may have different return values.

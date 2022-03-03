@@ -14,8 +14,7 @@ func TestAccAkamaiConfigurationVersion_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetConfigurationVersionsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSConfigurationVersion/ConfigurationVersion.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSConfigurationVersion/ConfigurationVersion.json")), &cv)
 
 		client.On("GetConfigurationVersions",
 			mock.Anything, // ctx is irrelevant for this test

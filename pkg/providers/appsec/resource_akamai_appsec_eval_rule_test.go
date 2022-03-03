@@ -14,20 +14,16 @@ func TestAccAkamaiEvalRule_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateEvalRuleResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResEvalRule/EvalRuleUpdated.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalRule/EvalRuleUpdated.json")), &cu)
 
 		cr := appsec.GetEvalRuleResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json")), &cr)
 
 		cd := appsec.UpdateEvalRuleResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"))
-		json.Unmarshal([]byte(expectJSD), &cd)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json")), &cd)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

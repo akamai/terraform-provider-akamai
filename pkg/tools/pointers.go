@@ -19,3 +19,8 @@ func Float64Ptr(f float64) *float64 {
 func StringPtr(s string) *string {
 	return &s
 }
+
+// BoolPtr returns a pointer to a bool passed as an argument
+func BoolPtr(b bool) *bool {
+	return &b
+}

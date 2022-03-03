@@ -1,0 +1,10 @@
+[
+  {
+    "name": "basic_rule",
+    "type": "asMatchRule",
+    "forwardSettings": {
+      "originId": "1"
+    },
+    "disabled": true
+  }
+]

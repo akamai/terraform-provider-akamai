@@ -24,6 +24,7 @@ Use the [`akamai_property`](../resources/property.md) resource to create or impo
 For these Cloudlets, you can set up a separate origin to forward incoming requests to:
 
 * Application Load Balancer
+* Audience Segmentation
 * Forward Rewrite
 * Phased Release
 
@@ -120,12 +121,13 @@ Run `terraform apply`. Terraform shows an overview of changes, so you can still 
 To implement an activated Cloudlet on the edge, you need to add the Cloudlet's behavior for your Cloudlet to the JSON rule tree file in each property associated with your policy. See the [Property Provisioning Module Guide](../guides/get_started_property.md) for detailed instructions.
 
 If you wish to customize the settings, see the behavior for your Cloudlet in the PAPI Catalog Reference: 
-* [`apiPrioritization`](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#apiprioritization) 
-* [`applicationLoadBalancer`](https://https://developer.akamai.com/api/core_features/property_manager/vlatest.html#applicationloadbalancer).
-* [`edgeRedirector`](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#edgeredirector) 
-* [`forwardRewrite`](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#forwardrewrite) 
-* [`phasedRelease`](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#phasedrelease) 
-* [`visitorPrioritization`](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#visitorprioritization) 
+* [`apiPrioritization`](https://techdocs.akamai.com/property-mgr/reference/latest-apiprioritization) 
+* [`applicationLoadBalancer`](https://techdocs.akamai.com/property-mgr/reference/latest-applicationloadbalancer)
+* [`audienceSegmentation`](https://techdocs.akamai.com/property-mgr/reference/latest-audiencesegmentation)
+* [`edgeRedirector`](https://techdocs.akamai.com/property-mgr/reference/latest-edgeredirector) 
+* [`forwardRewrite`](https://techdocs.akamai.com/property-mgr/reference/latest-forwardrewrite) 
+* [`phasedRelease`](https://techdocs.akamai.com/property-mgr/reference/latest-phasedrelease) 
+* [`visitorPrioritization`](https://techdocs.akamai.com/property-mgr/reference/latest-visitorprioritization) 
 
 ## Activate the property version
 

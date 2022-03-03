@@ -14,8 +14,7 @@ func TestAccAkamaiFailoverHostnames_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cv := appsec.GetFailoverHostnamesResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSFailoverHostnames/FailoverHostnames.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSFailoverHostnames/FailoverHostnames.json")), &cv)
 
 		client.On("GetFailoverHostnames",
 			mock.Anything, // ctx is irrelevant for this test

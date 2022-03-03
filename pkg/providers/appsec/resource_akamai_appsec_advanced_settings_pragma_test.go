@@ -14,20 +14,16 @@ func TestAccAkamaiAdvancedSettingsPragma_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateAdvancedSettingsPragmaResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json")), &cu)
 
 		cd := appsec.UpdateAdvancedSettingsPragmaResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json"))
-		json.Unmarshal([]byte(expectJSD), &cd)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json")), &cd)
 
 		cr := appsec.GetAdvancedSettingsPragmaResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json")), &cr)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

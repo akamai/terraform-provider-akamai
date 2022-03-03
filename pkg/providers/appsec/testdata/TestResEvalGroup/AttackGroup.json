@@ -1,1 +1,13 @@
-{"action":"alert","conditionException":{"exception":{"headerCookieOrParamValues":["abc"],"specificHeaderCookieOrParamPrefix":{"prefix": "a*", "selector": "REQUEST_COOKIES"}}}}
+    {
+        "action": "alert",
+        "conditions": [],
+        "exception": {
+            "headerCookieOrParamValues": [
+                "abc"
+            ],
+            "specificHeaderCookieOrParamPrefix": {
+                "prefix": "a*",
+                "selector": "REQUEST_COOKIES"
+            }
+        }
+    }

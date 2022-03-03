@@ -14,20 +14,16 @@ func TestAccAkamaiReputationProfile_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateReputationProfileResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileUpdated.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileUpdated.json")), &cu)
 
 		cr := appsec.GetReputationProfileResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfiles.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfiles.json")), &cr)
 
 		crp := appsec.CreateReputationProfileResponse{}
-		expectJSC := compactJSON(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json"))
-		json.Unmarshal([]byte(expectJSC), &crp)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json")), &crp)
 
 		crd := appsec.RemoveReputationProfileResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json"))
-		json.Unmarshal([]byte(expectJSD), &crd)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json")), &crd)
 
 		client.On("GetReputationProfile",
 			mock.Anything, // ctx is irrelevant for this test

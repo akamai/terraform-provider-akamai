@@ -14,16 +14,13 @@ func TestAccAkamaiPenaltyBox_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdatePenaltyBoxResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResPenaltyBox/PenaltyBox.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResPenaltyBox/PenaltyBox.json")), &cu)
 
 		cr := appsec.GetPenaltyBoxResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResPenaltyBox/PenaltyBox.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResPenaltyBox/PenaltyBox.json")), &cr)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

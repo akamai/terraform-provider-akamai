@@ -13,45 +13,48 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 	t.Run("match by NetworkList ID", func(t *testing.T) {
 		client := &mocknetworklists{}
 
-		crnl := networklists.CreateNetworkListResponse{}
-		expectJSCNL := compactJSON(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json"))
-		json.Unmarshal([]byte(expectJSCNL), &crnl)
-
-		cu := networklists.UpdateNetworkListResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResNetworkList/NetworkLists.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
-
-		cr := networklists.GetNetworkListResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		createResponse := networklists.CreateNetworkListResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json")), &createResponse)
 
 		crl := networklists.GetNetworkListsResponse{}
-		expectJSL := compactJSON(loadFixtureBytes("testdata/TestResNetworkList/NetworkLists.json"))
-		json.Unmarshal([]byte(expectJSL), &crl)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkList/NetworkLists.json")), &crl)
+
+		getResponse := networklists.GetNetworkListResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json")), &getResponse)
+
+		updateResponse := networklists.UpdateNetworkListResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkList/NetworkListUpdated.json")), &updateResponse)
+
+		getResponseAfterUpdate := networklists.GetNetworkListResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkList/NetworkListUpdated.json")), &getResponseAfterUpdate)
 
 		cd := networklists.RemoveNetworkListResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResNetworkList/empty.json"))
-		json.Unmarshal([]byte(expectJSD), &cd)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkList/empty.json")), &cd)
 
 		client.On("CreateNetworkList",
 			mock.Anything, // ctx is irrelevant for this test
 			networklists.CreateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "Notes about this network list", List: []string{"10.1.8.23", "10.3.5.67"}, ContractID: "C-1FRYVV3", GroupID: 64867},
-		).Return(&crnl, nil)
-
-		client.On("GetNetworkList",
-			mock.Anything, // ctx is irrelevant for this test
-			networklists.GetNetworkListRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
-		).Return(&cr, nil)
+		).Return(&createResponse, nil)
 
 		client.On("GetNetworkLists",
 			mock.Anything, // ctx is irrelevant for this test
 			networklists.GetNetworkListsRequest{Name: "Voyager Call Center Whitelist", Type: "IP"},
 		).Return(&crl, nil)
 
+		client.On("GetNetworkList",
+			mock.Anything, // ctx is irrelevant for this test
+			networklists.GetNetworkListRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
+		).Return(&getResponse, nil).Times(3)
+
 		client.On("UpdateNetworkList",
 			mock.Anything, // ctx is irrelevant for this test
-			networklists.UpdateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "Notes about this network list", SyncPoint: 0, List: []string{"10.1.8.23", "10.3.5.67"}, UniqueID: "2275_VOYAGERCALLCENTERWHITELI", ContractID: "C-1FRYVV3", GroupID: 64867},
-		).Return(&cu, nil)
+			networklists.UpdateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "New notes about this network list", SyncPoint: 0, List: []string{"10.1.8.23", "10.3.5.67"}, UniqueID: "2275_VOYAGERCALLCENTERWHITELI", ContractID: "C-1FRYVV3", GroupID: 64867},
+		).Return(&updateResponse, nil)
+
+		client.On("GetNetworkList",
+			mock.Anything, // ctx is irrelevant for this test
+			networklists.GetNetworkListRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
+		).Return(&getResponseAfterUpdate, nil).Times(3)
 
 		client.On("RemoveNetworkList",
 			mock.Anything, // ctx is irrelevant for this test
@@ -68,14 +71,12 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_networklist_network_list.test", "name", "Voyager Call Center Whitelist"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 					{
 						Config: loadFixtureString("testdata/TestResNetworkList/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_networklist_network_list.test", "name", "Voyager Call Center Whitelist"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

@@ -1,6 +1,7 @@
 {
-    "enableForAllPolicies": true,
+    "enableForAllPolicies": false,
     "enableSiem": true,
-    "enabledBotmanSiemEvents": false,
-    "siemDefinitionId": 1
+    "enabledBotmanSiemEvents": true,
+    "siemDefinitionId": 1,
+    "firewallPolicyIds": ["12345"]
 }

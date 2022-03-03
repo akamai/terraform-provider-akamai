@@ -16,8 +16,7 @@ func TestAccAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,8 +24,7 @@ func TestAccAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		cv := appsec.GetWAPSelectedHostnamesResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json")), &cv)
 
 		client.On("GetWAPSelectedHostnames",
 			mock.Anything,
@@ -58,8 +56,7 @@ func TestAccAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testin
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -67,13 +64,12 @@ func TestAccAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testin
 		).Return(&config, nil)
 
 		cv := appsec.GetWAPSelectedHostnamesResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json")), &cv)
 
 		client.On("GetWAPSelectedHostnames",
 			mock.Anything,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
-		).Return(nil, fmt.Errorf("GetSelectedHostnames failed"))
+		).Return(nil, fmt.Errorf("GetWAPSelectedHostnames failed"))
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -85,7 +81,7 @@ func TestAccAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testin
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
 						),
-						ExpectError: regexp.MustCompile(`GetSelectedHostnames failed`),
+						ExpectError: regexp.MustCompile(`GetWAPSelectedHostnames failed`),
 					},
 				},
 			})
@@ -101,8 +97,7 @@ func TestAccAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -110,12 +105,10 @@ func TestAccAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		expectedGetSelectedHostnamesResponseJSON := compactJSON(loadFixtureBytes("testdata/TestDSSelectedHostnames/SelectedHostnames.json"))
-		json.Unmarshal([]byte(expectedGetSelectedHostnamesResponseJSON), &getSelectedHostnamesResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSSelectedHostnames/SelectedHostnames.json")), &getSelectedHostnamesResponse)
 
 		getMatchTargetsResponse := appsec.GetMatchTargetsResponse{}
-		expectedGetMatchTargetsResponseJSON := compactJSON(loadFixtureBytes("testdata/TestDSMatchTargets/MatchTargets.json"))
-		json.Unmarshal([]byte(expectedGetMatchTargetsResponseJSON), &getMatchTargetsResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSMatchTargets/MatchTargets.json")), &getMatchTargetsResponse)
 
 		client.On("GetSelectedHostnames",
 			mock.Anything, // ctx is irrelevant for this test

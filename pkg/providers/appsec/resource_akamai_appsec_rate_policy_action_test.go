@@ -14,12 +14,10 @@ func TestAccAkamaiRatePolicyAction_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateRatePolicyActionResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyUpdateResponse.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyUpdateResponse.json")), &cu)
 
 		cr := appsec.GetRatePolicyActionsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyActions.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyActions.json")), &cr)
 
 		client.On("GetRatePolicyActions",
 			mock.Anything, // ctx is irrelevant for this test
@@ -41,7 +39,6 @@ func TestAccAkamaiRatePolicyAction_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "id", "135355"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 
 					{
@@ -49,7 +46,6 @@ func TestAccAkamaiRatePolicyAction_res_basic(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "id", "135355"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

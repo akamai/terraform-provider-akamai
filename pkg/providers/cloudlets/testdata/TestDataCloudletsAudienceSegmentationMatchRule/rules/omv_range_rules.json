@@ -1,0 +1,23 @@
+[
+  {
+    "name": "range_object_rule",
+    "type": "asMatchRule",
+    "matches": [
+      {
+        "matchType": "clientip",
+        "caseSensitive": false,
+        "negate": false,
+        "objectMatchValue": {
+          "type": "range",
+          "value": [
+            0,
+            100
+          ]
+        }
+      }
+    ],
+    "forwardSettings": {
+      "originId": "0"
+    }
+  }
+]

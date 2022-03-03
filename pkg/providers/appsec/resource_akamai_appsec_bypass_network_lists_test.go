@@ -14,8 +14,7 @@ func TestAccAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -23,16 +22,13 @@ func TestAccAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		cu := appsec.UpdateBypassNetworkListsResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json")), &cu)
 
 		cr := appsec.GetBypassNetworkListsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json")), &cr)
 
 		crd := appsec.RemoveBypassNetworkListsResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"))
-		json.Unmarshal([]byte(expectJSD), &crd)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json")), &crd)
 
 		client.On("GetBypassNetworkLists",
 			mock.Anything, // ctx is irrelevant for this test

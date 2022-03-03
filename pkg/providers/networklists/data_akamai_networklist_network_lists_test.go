@@ -14,8 +14,7 @@ func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
 		client := &mocknetworklists{}
 
 		networkListsResponse := network.GetNetworkListsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSNetworkList/NetworkList.json"))
-		json.Unmarshal([]byte(expectJS), &networkListsResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSNetworkList/NetworkList.json")), &networkListsResponse)
 
 		client.On("GetNetworkLists",
 			mock.Anything, // ctx is irrelevant for this test
@@ -46,8 +45,7 @@ func TestAccAkamaiNetworkList_data_by_uniqueID(t *testing.T) {
 		client := &mocknetworklists{}
 
 		networkListResponse := network.GetNetworkListResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSNetworkList/SingleNetworkList.json"))
-		json.Unmarshal([]byte(expectJS), &networkListResponse)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSNetworkList/SingleNetworkList.json")), &networkListResponse)
 
 		client.On("GetNetworkList",
 			mock.Anything, // ctx is irrelevant for this test

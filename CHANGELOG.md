@@ -1,5 +1,33 @@
 # RELEASE NOTES
 
+## 1.11.0 (Mar 3, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* [IMPORTANT] Added EdgeWorkers and EdgeKV API support
+  * Added resources allowing management of:
+    * EdgeWorker and EdgeWorker activations:
+      * `akamai_edgeworker` - create, read, update, delete and import EdgeWorker
+      * `akamai_edgeworkers_activation` - create, read, update and delete EdgeWorker activations
+    * EdgeKV:
+      * `akamai_edgekv` - create, read, update, delete and import an EdgeKV namespace
+  * Added data sources for EdgeWorkers:
+    * `akamai_edgeworkers_resource_tier` - lists information about resource tiers
+    * `akamai_edgeworkers_property_rules` - generates property rule and behavior to associate an EdgeWorker to a property
+
+* CLOUDLETS
+  * Support for AS cloudlet type (Audience Segmentation)
+
+#### BUG FIXES:
+
+* APPSEC
+  * Prevent 409 Conflict error caused by simultaneous network activation requests
+  * Allow updating network list activation without destroying and recreating
+  * Update unit tests to remove "NonEmptyPlanExpected" attribute
+
+* CPS
+  * Apply on resource `akamai_cps_dv_enrollment` is not idempotent if SANs contain common_name
+
 ## 1.10.1 (Feb 10, 2022)
 
 #### FEATURES/ENHANCEMENTS:

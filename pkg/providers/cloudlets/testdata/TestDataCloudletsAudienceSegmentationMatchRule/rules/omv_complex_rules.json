@@ -1,0 +1,90 @@
+[
+  {
+    "name": "complex_simple_rule",
+    "type": "asMatchRule",
+    "start": 1,
+    "end": 2,
+    "matches": [
+      {
+        "matchType": "method",
+        "matchOperator": "contains",
+        "caseSensitive": true,
+        "negate": false,
+        "objectMatchValue": {
+          "type": "simple",
+          "value": [
+            "GET",
+            "POST"
+          ]
+        }
+      }
+    ],
+    "matchURL": "example1.com",
+    "forwardSettings": {
+      "pathAndQS": "path_1",
+      "useIncomingQueryString": true,
+      "originId": "origin_1"
+    }
+  },
+  {
+    "name": "complex_object_rule",
+    "type": "asMatchRule",
+    "start": 2,
+    "end": 3,
+    "matches": [
+      {
+        "matchType": "cookie",
+        "matchOperator": "exists",
+        "caseSensitive": true,
+        "negate": true,
+        "checkIPs": "CONNECTING_IP XFF_HEADERS",
+        "objectMatchValue": {
+          "name": "object name",
+          "type": "object",
+          "nameCaseSensitive": true,
+          "nameHasWildcard": false,
+          "options": {
+            "value": [
+              "cookie1=value1",
+              "cookie2=value2"
+            ],
+            "valueCaseSensitive": true
+          }
+        }
+      }
+    ],
+    "matchURL": "example2.com",
+    "forwardSettings": {
+      "pathAndQS": "path_2",
+      "originId": "origin_2"
+    }
+  },
+  {
+    "name": "complex_range_rule",
+    "type": "asMatchRule",
+    "start": 3,
+    "end": 4,
+    "matches": [
+      {
+        "matchType": "range",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false,
+        "checkIPs": "CONNECTING_IP",
+        "objectMatchValue": {
+          "type": "range",
+          "value": [
+            1,
+            50
+          ]
+        }
+      }
+    ],
+    "matchURL": "example3.com",
+    "forwardSettings": {
+      "pathAndQS": "path_3",
+      "useIncomingQueryString": true,
+      "originId": "origin_3"
+    }
+  }
+]

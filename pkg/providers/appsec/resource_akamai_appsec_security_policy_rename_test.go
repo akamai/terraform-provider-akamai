@@ -14,16 +14,13 @@ func TestAccAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateSecurityPolicyResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicyUpdate.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicyUpdate.json")), &cu)
 
 		cr := appsec.GetSecurityPolicyResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicy.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicy.json")), &cr)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

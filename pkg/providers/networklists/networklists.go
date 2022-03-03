@@ -1,3 +1,4 @@
+//go:build all || networklists
 // +build all networklists
 
 package networklists

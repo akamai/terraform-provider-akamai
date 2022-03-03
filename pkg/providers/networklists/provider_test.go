@@ -1,8 +1,6 @@
 package networklists
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -81,14 +79,4 @@ func loadFixtureBytes(path string) []byte {
 // loadFixtureString returns the entire contents of the given file as a string
 func loadFixtureString(path string) string {
 	return string(loadFixtureBytes(path))
-}
-
-// compactJSON converts a JSON-encoded byte slice to a compact form (so our JSON fixtures can be readable)
-func compactJSON(encoded []byte) string {
-	buf := bytes.Buffer{}
-	if err := json.Compact(&buf, encoded); err != nil {
-		panic(fmt.Sprintf("%s: %s", err, string(encoded)))
-	}
-
-	return buf.String()
 }

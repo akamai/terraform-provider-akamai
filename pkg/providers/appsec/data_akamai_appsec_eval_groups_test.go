@@ -16,8 +16,7 @@ func TestAccAkamaiEvalGroups_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		configs := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &configs)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configs)
 
 		client.On("GetEvalGroups",
 			mock.Anything, // ctx is irrelevant for this test
@@ -54,8 +53,7 @@ func TestAccAkamaiEvalGroups_data_error_retrieving_eval_groups(t *testing.T) {
 		client := &mockappsec{}
 
 		configs := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &configs)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configs)
 
 		client.On("GetEvalGroups",
 			mock.Anything, // ctx is irrelevant for this test

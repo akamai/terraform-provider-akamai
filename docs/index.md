@@ -12,7 +12,7 @@ You can use the Akamai Provider today for many Akamai products.
 
 !> Version 1.0.0 of the Akamai Terraform Provider is a major release that's currently available for the Provisioning module. Before upgrading, you need to make changes to some of your Provisioning resources and data sources. See [Upgrade to Version 1.0.0](guides/1.0_migration.md) for details.
 
-Last updated: February 2022.
+Last updated: March 2022.
 
 ## Migrate to the newest version
 
@@ -31,6 +31,7 @@ Here are the most common workflows for the Akamai Provider:
   * [Cloudlets](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_cloudlets)
   * [DataStream](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_datastream)
   * [DNS Zone Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone)
+  * [EdgeWorkers](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_edgeworkers)
   * [Global Traffic Management Domain Administration](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain)
   * [Identity and Access Management](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam.md)
   * [Network Lists](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_networklists)
@@ -78,6 +79,7 @@ Here's a list of the guides for the Akamai Provider in the general order you mig
 * [Certificate Provisioning Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_cps)
 * [Cloudlets Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_cloudlets)
 * [DataStream Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_datastream)
+* [EdgeWorkers Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_edgeworkers)
 * [DNS Zone Administration Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_dns_zone)
 * [Global Traffic Management Domain Administration Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_gtm_domain)
 * [Identity and Access Management Module Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_iam.md)

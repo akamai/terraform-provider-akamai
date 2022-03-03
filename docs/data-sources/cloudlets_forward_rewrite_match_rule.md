@@ -18,22 +18,22 @@ This example returns the JSON-encoded rules for the Forward Rewrite Cloudlet:
 
 ```hcl
 data "akamai_cloudlets_forward_rewrite_match_rule" "example" {
-    match_rules {
-        name = "rule"
-        matches {
-            case_sensitive = false
-            check_ips = "CONNECTING_IP XFF_HEADERS"
-            match_operator = "equals"
-            match_type = "clientip"
-            match_value = "233.252.0.0"
-            negate = false
-        }
-        forward_settings {
-            path_and_qs = "/path"
-            use_incoming_query_string = true
-            origin_id = "1234"
-        }
-    }    
+  match_rules {
+    name = "rule"
+    matches {
+      case_sensitive = false
+      check_ips      = "CONNECTING_IP XFF_HEADERS"
+      match_operator = "equals"
+      match_type     = "clientip"
+      match_value    = "192.0.2.0"
+      negate         = false
+    }
+    forward_settings {
+      path_and_qs               = "/path"
+      use_incoming_query_string = true
+      origin_id                 = "1234"
+    }
+  }
 }
 ```
 
@@ -68,8 +68,8 @@ This data source supports these arguments:
 * `forward_settings` -  (Required) The data used to construct a new request URL if all match conditions are met. If all conditions are met, the edge server returns an HTTP response from the rewritten URL.
      * `origin_id` - (Optional) The ID of the new origin requests are forwarded to. This type of origin is known as a Conditional Origin. See [Property requirements for Cloudlets that forward requests](#property-requirements-for-cloudlets-that-forward-requests) to learn more.
      * `use_incoming_query_string` - (Optional) Whether the Cloudlet should include the query string from the request in the rewritten or forwarded URL.
-     * `path_and_qs` - (Optional) When match conditions are met, this value defines the path, resource, or query string added to the rewritten URL. 
-* `disabled` - (Optional) Whether to disable a rule so it is not evaluated against incoming requests. 
+     * `path_and_qs` - (Optional) When match conditions are met, this value defines the path, resource, or query string added to the rewritten URL.
+* `disabled` - (Optional) Whether to disable a rule so it is not evaluated against incoming requests.
 
 ## Attributes reference
 

@@ -16,8 +16,7 @@ func TestAccAkamaiThreatIntel_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,8 +24,7 @@ func TestAccAkamaiThreatIntel_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getThrInt := appsec.GetThreatIntelResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"))
-		json.Unmarshal([]byte(expectJS), &getThrInt)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json")), &getThrInt)
 
 		client.On("GetThreatIntel",
 			mock.Anything, // ctx is irrelevant for this test
@@ -58,8 +56,7 @@ func TestAccAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -67,8 +64,7 @@ func TestAccAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 		).Return(&config, nil)
 
 		getThrInt := appsec.GetThreatIntelResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"))
-		json.Unmarshal([]byte(expectJS), &getThrInt)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json")), &getThrInt)
 
 		client.On("GetThreatIntel",
 			mock.Anything, // ctx is irrelevant for this test

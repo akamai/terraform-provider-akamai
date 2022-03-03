@@ -151,7 +151,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	networklists, err := client.GetNetworkLists(ctx, getNetworkLists)
 	if err != nil {
-		logger.Errorf("calling 'getNetworkList': %s", err.Error())
+		logger.Errorf("calling 'getNetworkLists': %s", err.Error())
 		return diag.FromErr(err)
 	}
 

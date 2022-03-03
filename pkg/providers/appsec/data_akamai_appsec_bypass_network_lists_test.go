@@ -14,8 +14,7 @@ func TestAccAkamaiBypassNetworkLists_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -23,8 +22,7 @@ func TestAccAkamaiBypassNetworkLists_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		cv := appsec.GetBypassNetworkListsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestDSBypassNetworkLists/BypassNetworkLists.json"))
-		json.Unmarshal([]byte(expectJS), &cv)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSBypassNetworkLists/BypassNetworkLists.json")), &cv)
 
 		client.On("GetBypassNetworkLists",
 			mock.Anything, // ctx is irrelevant for this test

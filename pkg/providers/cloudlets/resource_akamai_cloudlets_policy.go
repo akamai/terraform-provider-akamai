@@ -53,8 +53,8 @@ func resourceCloudletsPolicy() *schema.Resource {
 			"cloudlet_code": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALB", "AP", "CD", "ER", "FR", "VP"}, true)),
-				Description:      "Code for the type of Cloudlet (ALB, AP, CD, ER, FR or VP)",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALB", "AP", "AS", "CD", "ER", "FR", "VP"}, true)),
+				Description:      "Code for the type of Cloudlet (ALB, AP, AS, CD, ER, FR or VP)",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -122,10 +122,7 @@ func EnforceMatchRulesChange(_ context.Context, diff *schema.ResourceDiff, _ int
 	if err := diff.SetNewComputed("warnings"); err != nil {
 		return err
 	}
-	if err := diff.SetNewComputed("version"); err != nil {
-		return err
-	}
-	return nil
+	return diff.SetNewComputed("version")
 }
 
 func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

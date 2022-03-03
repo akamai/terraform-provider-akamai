@@ -14,20 +14,16 @@ func TestAccAkamaiReputationAnalysis_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateReputationAnalysisResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisUpdated.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisUpdated.json")), &cu)
 
 		cr := appsec.GetReputationAnalysisResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysis.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysis.json")), &cr)
 
 		cd := appsec.RemoveReputationAnalysisResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisDelete.json"))
-		json.Unmarshal([]byte(expectJSD), &cd)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisDelete.json")), &cd)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

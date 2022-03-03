@@ -14,24 +14,22 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateMatchTargetResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json")), &cu)
 
 		cr := appsec.GetMatchTargetResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResMatchTarget/MatchTarget.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTarget.json")), &cr)
+
+		cru := appsec.GetMatchTargetResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json")), &cru)
 
 		crmt := appsec.CreateMatchTargetResponse{}
-		expectJSMT := compactJSON(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json"))
-		json.Unmarshal([]byte(expectJSMT), &crmt)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json")), &crmt)
 
 		rmmt := appsec.RemoveMatchTargetResponse{}
-		expectJSRMT := compactJSON(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json"))
-		json.Unmarshal([]byte(expectJSRMT), &rmmt)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json")), &rmmt)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -41,7 +39,12 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 		client.On("GetMatchTarget",
 			mock.Anything, // ctx is irrelevant for this test
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
-		).Return(&cr, nil)
+		).Return(&cr, nil).Times(3)
+
+		client.On("GetMatchTarget",
+			mock.Anything, // ctx is irrelevant for this test
+			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
+		).Return(&cru, nil)
 
 		createMatchTargetJSON := loadFixtureBytes("testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.On("CreateMatchTarget",
@@ -76,7 +79,6 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "id", "43253:3008967"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})

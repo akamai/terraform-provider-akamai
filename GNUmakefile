@@ -22,7 +22,7 @@ install: build
 	cp $(build_dir)/$(bin_name) $(install_path)/$(bin_name)_v$(version)
 
 .PHONY: build
-build: fmtcheck
+build:
 	mkdir -p $(build_dir)
 	go build -tags all -o $(build_dir)/$(bin_name)
 
@@ -30,11 +30,11 @@ build: fmtcheck
 check: errcheck fmtcheck lint vet
 
 .PHONY: test
-test: fmtcheck
+test:
 	go test $(TEST) -v $(TESTARGS) -timeout 20m 2>&1 
 
 .PHONY: testacc
-testacc: fmtcheck
+testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 300m
 
 .PHONY: vet

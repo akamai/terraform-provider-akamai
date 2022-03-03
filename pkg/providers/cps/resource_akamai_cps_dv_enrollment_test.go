@@ -259,7 +259,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
-		}, nil)
+		}, nil).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -287,6 +287,391 @@ func TestResourceDVEnrollment(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "3"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "3"),
 							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.san2.test.akamai.com,_acme-challenge.test.akamai.com"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create enrollment, empty sans", func(t *testing.T) {
+		PollForChangeStatusInterval = 1 * time.Millisecond
+		client := &mockcps{}
+		enrollment := cps.Enrollment{
+			AdminContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r1d1@akamai.com",
+				FirstName:        "R1",
+				LastName:         "D1",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			CertificateChainType: "default",
+			CertificateType:      "san",
+			ChangeManagement:     false,
+			CSR: &cps.CSR{
+				C:  "US",
+				CN: "test.akamai.com",
+				L:  "Cambridge",
+				O:  "Akamai",
+				OU: "WebEx",
+				ST: "MA",
+			},
+			EnableMultiStackedCertificates: false,
+			NetworkConfiguration: &cps.NetworkConfiguration{
+				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
+				DNSNameSettings: &cps.DNSNameSettings{
+					CloneDNSNames: false,
+				},
+				Geography:        "core",
+				MustHaveCiphers:  "ak-akamai-default",
+				OCSPStapling:     "on",
+				PreferredCiphers: "ak-akamai-default",
+				QuicEnabled:      false,
+				SecureNetwork:    "enhanced-tls",
+				SNIOnly:          true,
+			},
+			Org: &cps.Org{
+				AddressLineOne: "150 Broadway",
+				City:           "Cambridge",
+				Country:        "US",
+				Name:           "Akamai",
+				Phone:          "321321321",
+				PostalCode:     "12345",
+				Region:         "MA",
+			},
+			RA:                 "lets-encrypt",
+			SignatureAlgorithm: "SHA-256",
+			TechContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r2d2@akamai.com",
+				FirstName:        "R2",
+				LastName:         "D2",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			ValidationType: "dv",
+		}
+
+		client.On("CreateEnrollment",
+			mock.Anything,
+			cps.CreateEnrollmentRequest{
+				Enrollment: enrollment,
+				ContractID: "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		var enrollmentGet cps.Enrollment
+		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
+		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Once()
+
+		// first verification loop, invalid status
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "pre-verification-safety-checks",
+			},
+		}, nil).Once()
+
+		// second verification loop, valid status, empty allowed input array
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Once()
+
+		// final verification loop, everything in place
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Once()
+
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Times(2)
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Times(2)
+
+		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.DVArray{DV: []cps.DV{
+			{
+				Challenges: []cps.Challenges{
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
+				},
+				Domain:           "test.akamai.com",
+				ValidationStatus: "IN_PROGRESS",
+			},
+		}}, nil).Times(2)
+
+		allowCancel := true
+
+		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
+							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.test.akamai.com"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("lifecycle test with common name not empty, present in sans", func(t *testing.T) {
+		PollForChangeStatusInterval = 1 * time.Millisecond
+		client := &mockcps{}
+		commonName := "test.akamai.com"
+		enrollment := cps.Enrollment{
+			AdminContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r1d1@akamai.com",
+				FirstName:        "R1",
+				LastName:         "D1",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			CertificateChainType: "default",
+			CertificateType:      "san",
+			ChangeManagement:     false,
+			CSR: &cps.CSR{
+				C:    "US",
+				CN:   commonName,
+				L:    "Cambridge",
+				O:    "Akamai",
+				OU:   "WebEx",
+				SANS: []string{commonName, "san.test.akamai.com"},
+				ST:   "MA",
+			},
+			EnableMultiStackedCertificates: false,
+			NetworkConfiguration: &cps.NetworkConfiguration{
+				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
+				DNSNameSettings: &cps.DNSNameSettings{
+					CloneDNSNames: false,
+					DNSNames:      []string{commonName, "san.test.akamai.com"},
+				},
+				Geography:        "core",
+				MustHaveCiphers:  "ak-akamai-default",
+				OCSPStapling:     "on",
+				PreferredCiphers: "ak-akamai-default",
+				QuicEnabled:      false,
+				SecureNetwork:    "enhanced-tls",
+				SNIOnly:          true,
+			},
+			Org: &cps.Org{
+				AddressLineOne: "150 Broadway",
+				City:           "Cambridge",
+				Country:        "US",
+				Name:           "Akamai",
+				Phone:          "321321321",
+				PostalCode:     "12345",
+				Region:         "MA",
+			},
+			RA:                 "lets-encrypt",
+			SignatureAlgorithm: "SHA-256",
+			TechContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r2d2@akamai.com",
+				FirstName:        "R2",
+				LastName:         "D2",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			ValidationType: "dv",
+		}
+
+		client.On("CreateEnrollment",
+			mock.Anything,
+			cps.CreateEnrollmentRequest{
+				Enrollment: enrollment,
+				ContractID: "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Once()
+
+		// first verification loop, invalid status
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "pre-verification-safety-checks",
+			},
+		}, nil).Once()
+
+		// second verification loop, valid status, empty allowed input array
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Once()
+
+		// final verification loop, everything in place
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Once()
+
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(4)
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "coodinate-domain-validation",
+			},
+		}, nil).Times(4)
+
+		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.DVArray{DV: []cps.DV{
+			{
+				Challenges: []cps.Challenges{
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
+				},
+				Domain:           "test.akamai.com",
+				ValidationStatus: "IN_PROGRESS",
+			},
+			{
+				Challenges: []cps.Challenges{
+					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
+					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
+				},
+				Domain:           "san.test.akamai.com",
+				ValidationStatus: "IN_PROGRESS",
+			},
+		}}, nil).Times(4)
+
+		allowCancel := true
+		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
+							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
+							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
 						),
 					},
 				},
@@ -412,7 +797,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
-		}, nil)
+		}, nil).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -620,7 +1005,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
-		}, nil)
+		}, nil).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -794,7 +1179,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
-		}, nil)
+		}, nil).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -916,7 +1301,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
-		}, nil)
+		}, nil).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -1146,7 +1531,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		AllowCancelPendingChanges: &allowCancel,
 	}).Return(&cps.RemoveEnrollmentResponse{
 		Enrollment: "1",
-	}, nil)
+	}, nil).Once()
 	useClient(client, func() {
 		resource.UnitTest(t, resource.TestCase{
 			Providers: testAccProviders,

@@ -14,20 +14,16 @@ func TestAccAkamaiSiemSettings_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateSiemSettingsResponse{}
-		expectJSU := compactJSON(loadFixtureBytes("testdata/TestResSiemSettings/SiemSettings.json"))
-		json.Unmarshal([]byte(expectJSU), &cu)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSiemSettings/SiemSettings.json")), &cu)
 
 		cr := appsec.GetSiemSettingsResponse{}
-		expectJS := compactJSON(loadFixtureBytes("testdata/TestResSiemSettings/SiemSettings.json"))
-		json.Unmarshal([]byte(expectJS), &cr)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSiemSettings/SiemSettings.json")), &cr)
 
 		crd := appsec.RemoveSiemSettingsResponse{}
-		expectJSD := compactJSON(loadFixtureBytes("testdata/TestResSiemSettings/SiemSettings.json"))
-		json.Unmarshal([]byte(expectJSD), &crd)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSiemSettings/SiemSettings.json")), &crd)
 
 		config := appsec.GetConfigurationResponse{}
-		expectConfigs := compactJSON(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"))
-		json.Unmarshal([]byte(expectConfigs), &config)
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -35,18 +31,18 @@ func TestAccAkamaiSiemSettings_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetSiemSettings",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSiemSettingsRequest{ConfigID: 43253, Version: 7},
 		).Return(&cr, nil)
 
 		client.On("UpdateSiemSettings",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: true, SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"}},
 		).Return(&cu, nil)
 
 		client.On("RemoveSiemSettings",
-			mock.Anything, // ctx is irrelevant for this test
-			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, EnabledBotmanSiemEvents: false, SiemDefinitionID: 0, FirewallPolicyIds: []string(nil)},
+			mock.Anything,
+			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, EnabledBotmanSiemEvents: false, FirewallPolicyIds: []string(nil)},
 		).Return(&crd, nil)
 
 		useClient(client, func() {
@@ -59,7 +55,6 @@ func TestAccAkamaiSiemSettings_res_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_siem_settings.test", "id", "43253"),
 						),
-						ExpectNonEmptyPlan: true,
 					},
 				},
 			})
