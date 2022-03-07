@@ -265,6 +265,7 @@ func TestGetNetworkConfig(t *testing.T) {
 	tests := map[string]struct {
 		givenNetworkConfig *schema.Set
 		givenSANS          *schema.Set
+		givenSniOnly       bool
 		expected           *cps.NetworkConfiguration
 		withError          bool
 	}{
@@ -283,7 +284,8 @@ func TestGetNetworkConfig(t *testing.T) {
 				"preferred_ciphers":       "ak-akamai-default",
 				"quic_enabled":            true,
 			}}),
-			givenSANS: schema.NewSet(schema.HashString, []interface{}{"a.com", "b.com"}),
+			givenSANS:    schema.NewSet(schema.HashString, []interface{}{"a.com", "b.com"}),
+			givenSniOnly: true,
 			expected: &cps.NetworkConfiguration{
 				ClientMutualAuthentication: &cps.ClientMutualAuthentication{
 					AuthenticationOptions: &cps.AuthenticationOptions{
@@ -306,11 +308,12 @@ func TestGetNetworkConfig(t *testing.T) {
 				SNIOnly:          true,
 			},
 		},
-		"only required values": {
+		"only required values with sni_only=true": {
 			givenNetworkConfig: schema.NewSet(schema.HashResource(resource), []interface{}{map[string]interface{}{
 				"geography": "core",
 			}}),
-			givenSANS: nil,
+			givenSANS:    nil,
+			givenSniOnly: true,
 			expected: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
@@ -319,6 +322,18 @@ func TestGetNetworkConfig(t *testing.T) {
 				Geography:     "core",
 				SecureNetwork: "enhanced_tls",
 				SNIOnly:       true,
+			},
+		},
+		"only required values with sni_only=false": {
+			givenNetworkConfig: schema.NewSet(schema.HashResource(resource), []interface{}{map[string]interface{}{
+				"geography": "core",
+			}}),
+			givenSANS: nil,
+			expected: &cps.NetworkConfiguration{
+				DNSNameSettings: nil,
+				Geography:       "core",
+				SecureNetwork:   "enhanced_tls",
+				SNIOnly:         false,
 			},
 		},
 	}
@@ -330,7 +345,7 @@ func TestGetNetworkConfig(t *testing.T) {
 			require.NoError(t, err)
 			err = rd.Set("secure_network", "enhanced_tls")
 			require.NoError(t, err)
-			err = rd.Set("sni_only", true)
+			err = rd.Set("sni_only", test.givenSniOnly)
 			require.NoError(t, err)
 			err = rd.Set("sans", test.givenSANS)
 			require.NoError(t, err)
