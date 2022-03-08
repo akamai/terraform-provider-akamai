@@ -691,3 +691,184 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 		client.AssertExpectations(t)
 	}
 }
+
+func TestDatasetIDsDiff(t *testing.T) {
+	streamID := int64(12321)
+
+	tests := map[string]struct {
+		preConfig             string
+		fileDatasetIdsOrder   []int
+		serverDatasetIdsOrder []int
+		format                datastream.FormatType
+		expectNonEmptyPlan    bool
+	}{
+		"order mixed in json config": {
+			preConfig:             "testdata/TestResourceStream/dataset_ids_diff/json_config.tf",
+			fileDatasetIdsOrder:   []int{1001, 1002},
+			serverDatasetIdsOrder: []int{1002, 1001},
+			format:                datastream.FormatTypeJson,
+			expectNonEmptyPlan:    false,
+		},
+		"id change in json config": {
+			preConfig:             "testdata/TestResourceStream/dataset_ids_diff/json_config.tf",
+			fileDatasetIdsOrder:   []int{1001, 1002},
+			serverDatasetIdsOrder: []int{1002, 1003},
+			format:                datastream.FormatTypeJson,
+			expectNonEmptyPlan:    true,
+		},
+		"duplicates in server side json config": {
+			preConfig:             "testdata/TestResourceStream/dataset_ids_diff/json_config.tf",
+			fileDatasetIdsOrder:   []int{1001, 1002},
+			serverDatasetIdsOrder: []int{1002, 1002},
+			format:                datastream.FormatTypeJson,
+			expectNonEmptyPlan:    true,
+		},
+		"duplicates in incoming json config": {
+			preConfig:             "testdata/TestResourceStream/dataset_ids_diff/json_config_duplicates.tf",
+			fileDatasetIdsOrder:   []int{1002, 1002},
+			serverDatasetIdsOrder: []int{1001, 1002},
+			format:                datastream.FormatTypeJson,
+			expectNonEmptyPlan:    true,
+		},
+		"order mixed in structured config": {
+			preConfig:             "testdata/TestResourceStream/dataset_ids_diff/structured_config.tf",
+			fileDatasetIdsOrder:   []int{1001, 1002},
+			serverDatasetIdsOrder: []int{1002, 1001},
+			format:                datastream.FormatTypeStructured,
+			expectNonEmptyPlan:    true,
+		},
+		"id change in structured config": {
+			preConfig:             "testdata/TestResourceStream/dataset_ids_diff/structured_config.tf",
+			fileDatasetIdsOrder:   []int{1001, 1002},
+			serverDatasetIdsOrder: []int{1002, 1003},
+			format:                datastream.FormatTypeStructured,
+			expectNonEmptyPlan:    true,
+		},
+	}
+
+	for name, test := range tests {
+
+		streamConfiguration := datastream.StreamConfiguration{
+			ActivateNow: false,
+			Config: datastream.Config{
+				Format: test.format,
+				Frequency: datastream.Frequency{
+					TimeInSec: datastream.TimeInSec30,
+				},
+				UploadFilePrefix: DefaultUploadFilePrefix,
+				UploadFileSuffix: DefaultUploadFileSuffix,
+			},
+			Connectors: []datastream.AbstractConnector{
+				&datastream.SplunkConnector{
+					CompressLogs:        false,
+					ConnectorName:       "splunk_test_connector_name",
+					EventCollectorToken: "splunk_event_collector_token",
+					URL:                 "splunk_url",
+				},
+			},
+			ContractID:      "test_contract",
+			DatasetFieldIDs: test.fileDatasetIdsOrder,
+			GroupID:         tools.IntPtr(1337),
+			PropertyIDs:     []int{1},
+			StreamName:      "test_stream",
+			StreamType:      datastream.StreamTypeRawLogs,
+			TemplateName:    datastream.TemplateNameEdgeLogs,
+		}
+
+		if test.format == datastream.FormatTypeStructured {
+			streamConfiguration.Config.Delimiter = datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace)
+		}
+
+		createStreamRequest := datastream.CreateStreamRequest{
+			StreamConfiguration: streamConfiguration,
+		}
+
+		createStreamResponse := &datastream.StreamUpdate{
+			StreamVersionKey: datastream.StreamVersionKey{
+				StreamID:        streamID,
+				StreamVersionID: 1,
+			},
+		}
+
+		getStreamRequest := datastream.GetStreamRequest{
+			StreamID: streamID,
+		}
+
+		getStreamResponse := &datastream.DetailedStreamVersion{
+			ActivationStatus: datastream.ActivationStatusInactive,
+			Config:           streamConfiguration.Config,
+			Connectors: []datastream.ConnectorDetails{
+				{
+					ConnectorType: datastream.ConnectorTypeSplunk,
+					CompressLogs:  false,
+					ConnectorName: "splunk_test_connector_name",
+					URL:           "splunk_url",
+				},
+			},
+			ContractID: streamConfiguration.ContractID,
+			Datasets: []datastream.DataSets{
+				{
+					DatasetFields: []datastream.DatasetFields{
+						{
+							DatasetFieldID: test.serverDatasetIdsOrder[0],
+							Order:          0,
+						},
+						{
+							DatasetFieldID: test.serverDatasetIdsOrder[1],
+							Order:          1,
+						},
+					},
+				},
+			},
+			GroupID: *streamConfiguration.GroupID,
+			Properties: []datastream.Property{
+				{
+					PropertyID:   1,
+					PropertyName: "property_1",
+				},
+			},
+			StreamID:        streamID,
+			StreamName:      streamConfiguration.StreamName,
+			StreamType:      streamConfiguration.StreamType,
+			StreamVersionID: 2,
+			TemplateName:    streamConfiguration.TemplateName,
+		}
+
+		deleteStreamRequest := datastream.DeleteStreamRequest{
+			StreamID: streamID,
+		}
+
+		t.Run(name, func(t *testing.T) {
+			client := &mockdatastream{}
+
+			client.On("CreateStream", mock.Anything, createStreamRequest).
+				Return(createStreamResponse, nil)
+
+			client.On("GetStream", mock.Anything, getStreamRequest).
+				Return(getStreamResponse, nil).Times(3)
+
+			client.On("DeleteStream", mock.Anything, deleteStreamRequest).
+				Return(&datastream.DeleteStreamResponse{Message: "Success"}, nil)
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config:             loadFixtureString(test.preConfig),
+							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
+							Check: resource.ComposeTestCheckFunc(
+								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields_ids.#", "2"),
+								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields_ids.0", strconv.Itoa(test.serverDatasetIdsOrder[0])),
+								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields_ids.1", strconv.Itoa(test.serverDatasetIdsOrder[1])),
+							),
+						},
+					},
+				})
+
+				client.AssertExpectations(t)
+			})
+		})
+
+	}
+}
