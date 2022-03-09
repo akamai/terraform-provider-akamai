@@ -95,8 +95,9 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Description: "The date and time when the stream was created",
 	},
 	"dataset_fields_ids": {
-		Type:     schema.TypeList,
-		Required: true,
+		Type:             schema.TypeList,
+		Required:         true,
+		DiffSuppressFunc: isOrderDifferent,
 		Elem: &schema.Schema{
 			Type: schema.TypeInt,
 		},
@@ -1161,6 +1162,79 @@ func urlSuppressor(key string) schema.SchemaDiffSuppressFunc {
 
 		return strings.TrimSuffix(oItem.(string), "/") == strings.TrimSuffix(nItem.(string), "/")
 	}
+}
+
+func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) bool {
+	key := "dataset_fields_ids"
+
+	logger := akamai.Log("DataStream", "SupressDiffFunc.isOrderDifferent")
+
+	defaultDiff := func() bool {
+		return oldIDValue == newIDValue
+	}
+
+	configSet, err := tools.GetSetValue("config", d)
+	if err != nil {
+		logger.Warn("unable to get config for datastream")
+		return defaultDiff()
+	}
+
+	config, err := GetConfig(configSet)
+	if err != nil {
+		logger.Warn("unable to convert config to correct structure")
+		return defaultDiff()
+	}
+
+	if !d.HasChange(key) || config.Format == datastream.FormatTypeStructured {
+		return defaultDiff()
+	}
+
+	var emptyValueMarker struct{}
+
+	oldDataset, newDataset := d.GetChange(key)
+
+	oldDatasetList, ok := oldDataset.([]interface{})
+	if !ok {
+		logger.Warnf("%s in state is incorrect", key)
+		return defaultDiff()
+	}
+
+	newDatasetList, ok := newDataset.([]interface{})
+	if !ok {
+		logger.Warnf("new %s is incorrect", key)
+		return defaultDiff()
+	}
+
+	if len(oldDatasetList) != len(newDatasetList) {
+		return defaultDiff()
+	}
+
+	oldMap := make(map[int]struct{})
+
+	for _, oldV := range oldDatasetList {
+		oldValue, ok := oldV.(int)
+		if !ok {
+			logger.Warnf("incorrect type in state's %s", key)
+			return defaultDiff()
+		}
+		oldMap[oldValue] = emptyValueMarker
+	}
+
+	for _, newV := range newDatasetList {
+		newValue, ok := newV.(int)
+		if !ok {
+			logger.Warnf("incorrect type in upcoming %s", key)
+			return defaultDiff()
+		}
+
+		if _, ok := oldMap[newValue]; ok {
+			delete(oldMap, newValue)
+		} else {
+			return false
+		}
+	}
+
+	return len(oldMap) == 0
 }
 
 func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
