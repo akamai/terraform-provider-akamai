@@ -95,6 +95,7 @@ docker exec akatf-container sh -c 'cd edgegrid-v1; git checkout ${EDGEGRID_BRANC
                                    cd ../terraform-provider-akamai; git checkout ${PROVIDER_BRANCH_NAME};
                                    go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang=../edgegrid-v1;
                                    go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2=../edgegrid-v2;
+                                   go mod edit -go=1.16;
                                    go mod tidy'
 
 echo "Running tests with xUnit output"
