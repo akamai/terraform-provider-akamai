@@ -178,7 +178,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		OmitRules: true,
 	})
 	if err != nil {
-		if diagnostics := tools.RestoreOldValues(rd, []string{"version", "associated_properties"}); diagnostics != nil {
+		if diagnostics := diag.FromErr(tools.RestoreOldValues(rd, []string{"version", "associated_properties"})); diagnostics != nil {
 			return diagnostics
 		}
 		return diag.Errorf("%s: cannot find the given policy version (%d): %s", ErrPolicyActivation.Error(), version, err.Error())
@@ -234,7 +234,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		},
 	})
 	if err != nil {
-		if diagnostics := tools.RestoreOldValues(rd, []string{"version", "associated_properties"}); diagnostics != nil {
+		if diagnostics := diag.FromErr(tools.RestoreOldValues(rd, []string{"version", "associated_properties"})); diagnostics != nil {
 			return diagnostics
 		}
 		return diag.Errorf("%v update: %s", ErrPolicyActivation, err.Error())

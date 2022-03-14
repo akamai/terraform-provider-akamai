@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -254,12 +252,12 @@ func StateNetwork(i interface{}) string {
 }
 
 // RestoreOldValues reverts the value in schema of the given keys
-func RestoreOldValues(rd *schema.ResourceData, keys []string) diag.Diagnostics {
+func RestoreOldValues(rd *schema.ResourceData, keys []string) error {
 	for _, key := range keys {
 		if rd.HasChange(key) {
 			oldVersion, _ := rd.GetChange(key)
 			if err := rd.Set(key, oldVersion); err != nil {
-				return diag.FromErr(err)
+				return err
 			}
 		}
 	}
