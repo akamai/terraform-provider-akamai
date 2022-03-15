@@ -12,9 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func dataSourceCloudletsAudienceSegmentationMatchRule() *schema.Resource {
+func dataSourceCloudletsRequestControlMatchRule() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceCloudletsAudienceSegmentationMatchRuleRead,
+		ReadContext: dataSourceCloudletsRequestControlMatchRuleRead,
 		Schema: map[string]*schema.Schema{
 			"match_rules": {
 				Type:        schema.TypeList,
@@ -55,8 +55,9 @@ func dataSourceCloudletsAudienceSegmentationMatchRule() *schema.Resource {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The type of match used",
-										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"header", "hostname", "path", "extension", "query", "range",
-											"regex", "cookie", "deviceCharacteristics", "clientip", "continent", "countrycode", "regioncode", "protocol", "method", "proxy"}),
+										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"header", "hostname", "path", "extension", "query", "cookie",
+											"deviceCharacteristics", "clientip", "continent", "countrycode", "regioncode", "protocol", "method", "proxy",
+										}),
 									},
 									"match_value": {
 										Type:             schema.TypeString,
@@ -102,9 +103,9 @@ func dataSourceCloudletsAudienceSegmentationMatchRule() *schema.Resource {
 												"type": {
 													Type:     schema.TypeString,
 													Required: true,
-													Description: "The array type, which can be one of the following: object or simple or range. " +
+													Description: "The array type, which can be one of the following: object or simple. " +
 														"Use the simple option when adding only an array of string-based values",
-													ValidateDiagFunc: tools.ValidateStringInSlice([]string{"simple", "object", "range"}),
+													ValidateDiagFunc: tools.ValidateStringInSlice([]string{"simple", "object"}),
 												},
 												"name_case_sensitive": {
 													Type:        schema.TypeBool,
@@ -151,7 +152,7 @@ func dataSourceCloudletsAudienceSegmentationMatchRule() *schema.Resource {
 													Type:        schema.TypeList,
 													Elem:        &schema.Schema{Type: schema.TypeString},
 													Optional:    true,
-													Description: "The value attributes in the incoming request to match on (use only with simple or range type)",
+													Description: "The value attributes in the incoming request to match on (use only with simple type)",
 												},
 											},
 										},
@@ -159,41 +160,18 @@ func dataSourceCloudletsAudienceSegmentationMatchRule() *schema.Resource {
 								},
 							},
 						},
-						"match_url": {
-							Type:             schema.TypeString,
-							Optional:         true,
-							Description:      "If using a URL match, this property is the URL that the Cloudlet uses to match the incoming request",
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
-						},
-						"forward_settings": {
-							Type:     schema.TypeSet,
+						"allow_deny": {
+							Type:     schema.TypeString,
 							Required: true,
-							MaxItems: 1,
-							Description: "This property defines data used to construct a new request URL if all conditions are met. " +
-								"If all of the conditions you set are true, then the Edge Server returns an HTTP response from the rewritten URL",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"origin_id": {
-										Type:             schema.TypeString,
-										Optional:         true,
-										Description:      "The ID of the Conditional Origin requests are forwarded to",
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(0, 8192)),
-									},
-									"use_incoming_query_string": {
-										Type:     schema.TypeBool,
-										Optional: true,
-										Description: "If set to true, the Cloudlet includes the query string from the request " +
-											"in the rewritten or forwarded URL.",
-									},
-									"path_and_qs": {
-										Type:     schema.TypeString,
-										Optional: true,
-										Description: "If a value is provided and match conditions are met, this property defines " +
-											"the path/resource/query string to rewrite URL for the incoming request.",
-										ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 8192)),
-									},
-								},
-							},
+							Description: "If set to allow, the request is sent to origin when all conditions are true. " +
+								"If deny, the request is denied when all conditions are true. " +
+								"If denybranded, the request is denied and rerouted according to the configuration of the Request Control behavior",
+							ValidateDiagFunc: tools.ValidateStringInSlice([]string{"allow", "deny", "denybranded"}),
+						},
+						"matches_always": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Is used in some cloudlets to support default rules (rule that is always matched)",
 						},
 						"disabled": {
 							Type:        schema.TypeBool,
@@ -212,17 +190,17 @@ func dataSourceCloudletsAudienceSegmentationMatchRule() *schema.Resource {
 	}
 }
 
-func dataSourceCloudletsAudienceSegmentationMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func dataSourceCloudletsRequestControlMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	matchRulesList, err := tools.GetListValue("match_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err = setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeAS); err != nil {
+	if err := setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeRC); err != nil {
 		return diag.FromErr(err)
 	}
 
-	matchRules, err := getMatchRulesAS(matchRulesList)
+	matchRules, err := getMatchRulesRC(matchRulesList)
 	if err != nil {
 		return diag.Errorf("'match_rules' - %s", err)
 	}
@@ -243,13 +221,11 @@ func dataSourceCloudletsAudienceSegmentationMatchRuleRead(_ context.Context, d *
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	d.SetId(hashID)
-
 	return nil
 }
 
-func getMatchRulesAS(matchRules []interface{}) (cloudlets.MatchRules, error) {
+func getMatchRulesRC(matchRules []interface{}) (cloudlets.MatchRules, error) {
 	result := make(cloudlets.MatchRules, 0, len(matchRules))
 	for _, mr := range matchRules {
 		matchRuleMap, ok := mr.(map[string]interface{})
@@ -257,59 +233,46 @@ func getMatchRulesAS(matchRules []interface{}) (cloudlets.MatchRules, error) {
 			return nil, fmt.Errorf("match rule is of invalid type: %T", mr)
 		}
 
-		matches, err := getMatchCriteriaAS(matchRuleMap["matches"].([]interface{}))
+		matches, err := getMatchCriteriaRC(matchRuleMap["matches"].([]interface{}))
 		if err != nil {
 			return nil, err
 		}
 
-		matchRule := cloudlets.MatchRuleAS{
-			Name:     getStringValue(matchRuleMap, "name"),
-			Type:     cloudlets.MatchRuleTypeAS,
-			Start:    getInt64Value(matchRuleMap, "start"),
-			End:      getInt64Value(matchRuleMap, "end"),
-			Matches:  matches,
-			MatchURL: getStringValue(matchRuleMap, "match_url"),
-			Disabled: getBoolValue(matchRuleMap, "disabled"),
+		matchRule := cloudlets.MatchRuleRC{
+			Name:          getStringValue(matchRuleMap, "name"),
+			Type:          cloudlets.MatchRuleTypeRC,
+			Start:         getInt64Value(matchRuleMap, "start"),
+			End:           getInt64Value(matchRuleMap, "end"),
+			Matches:       matches,
+			MatchesAlways: getBoolValue(matchRuleMap, "matches_always"),
+			AllowDeny:     cloudlets.AllowDeny(getStringValue(matchRuleMap, "allow_deny")),
+			Disabled:      getBoolValue(matchRuleMap, "disabled"),
 		}
-		// Schema guarantees that "forward_settings" will be present and of type *schema.Set
-		settings, ok := matchRuleMap["forward_settings"].(*schema.Set)
-		if !ok {
-			return nil, fmt.Errorf("%v: 'forward_settings' should be an *schema.Set", tools.ErrInvalidType)
-		}
-		for _, element := range settings.List() {
-			entries := element.(map[string]interface{})
-			matchRule.ForwardSettings = cloudlets.ForwardSettingsAS{
-				OriginID:               entries["origin_id"].(string),
-				PathAndQS:              entries["path_and_qs"].(string),
-				UseIncomingQueryString: entries["use_incoming_query_string"].(bool),
-			}
-		}
-
 		result = append(result, matchRule)
 	}
 	return result, nil
 }
 
-func getMatchCriteriaAS(matches []interface{}) ([]cloudlets.MatchCriteriaAS, error) {
-	result := make([]cloudlets.MatchCriteriaAS, 0, len(matches))
-	for _, criterion := range matches {
-		criterionMap, ok := criterion.(map[string]interface{})
+func getMatchCriteriaRC(matches []interface{}) ([]cloudlets.MatchCriteriaRC, error) {
+	result := make([]cloudlets.MatchCriteriaRC, 0, len(matches))
+	for _, criteria := range matches {
+		criteriaMap, ok := criteria.(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("matches is of invalid type")
 		}
 
-		omv, err := parseObjectMatchValue(criterionMap, getObjectMatchValueObjectOrSimpleOrRange)
+		omv, err := parseObjectMatchValue(criteriaMap, getObjectMatchValueObjectOrSimple)
 		if err != nil {
 			return nil, err
 		}
 
-		matchCriterion := cloudlets.MatchCriteriaAS{
-			MatchType:        getStringValue(criterionMap, "match_type"),
-			MatchValue:       getStringValue(criterionMap, "match_value"),
-			MatchOperator:    cloudlets.MatchOperator(getStringValue(criterionMap, "match_operator")),
-			CaseSensitive:    getBoolValue(criterionMap, "case_sensitive"),
-			Negate:           getBoolValue(criterionMap, "negate"),
-			CheckIPs:         cloudlets.CheckIPs(getStringValue(criterionMap, "check_ips")),
+		matchCriterion := cloudlets.MatchCriteriaRC{
+			MatchType:        getStringValue(criteriaMap, "match_type"),
+			MatchValue:       getStringValue(criteriaMap, "match_value"),
+			MatchOperator:    cloudlets.MatchOperator(getStringValue(criteriaMap, "match_operator")),
+			CaseSensitive:    getBoolValue(criteriaMap, "case_sensitive"),
+			Negate:           getBoolValue(criteriaMap, "negate"),
+			CheckIPs:         cloudlets.CheckIPs(getStringValue(criteriaMap, "check_ips")),
 			ObjectMatchValue: omv,
 		}
 

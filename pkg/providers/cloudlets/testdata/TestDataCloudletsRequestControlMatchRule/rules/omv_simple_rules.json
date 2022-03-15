@@ -1,0 +1,21 @@
+[
+  {
+    "name": "simple_object_rule",
+    "type": "igMatchRule",
+    "matches": [
+      {
+        "matchType": "clientip",
+        "matchOperator": "equals",
+        "caseSensitive": false,
+        "negate": false,
+        "objectMatchValue": {
+          "type": "simple",
+          "value": [
+            "acdc"
+          ]
+        }
+      }
+    ],
+    "allowDeny": "allow"
+  }
+]
