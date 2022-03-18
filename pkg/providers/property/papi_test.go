@@ -12,6 +12,35 @@ type mockpapi struct {
 	mock.Mock
 }
 
+type (
+	// GetGroupsFn is any function having the same signature as papi.GetGroups
+	GetGroupsFn func(context.Context) (*papi.GetGroupsResponse, error)
+
+	// GetCPCodesFn is any function having the same signature as papi.GetCPCodes
+	GetCPCodesFn func(context.Context, papi.GetCPCodesRequest) (*papi.GetCPCodesResponse, error)
+
+	// CreateCPCodeFn is any function having the same signature as papi.CreateCPCode
+	CreateCPCodeFn func(context.Context, papi.CreateCPCodeRequest) (*papi.CreateCPCodeResponse, error)
+
+	// UpdateCPCodeFn is any function having the same signature as papi.UpdateCPCode
+	UpdateCPCodeFn func(context.Context, papi.UpdateCPCodeRequest) (*papi.CPCodeDetailResponse, error)
+
+	// GetPropertyFunc is any function having the same signature as papi.GetProperty
+	GetPropertyFunc func(context.Context, papi.GetPropertyRequest) (*papi.GetPropertyResponse, error)
+
+	// GetPropertyVersionsFn is any function having the same signature as papi.GetPropertyVersions
+	GetPropertyVersionsFn func(context.Context, papi.GetPropertyVersionsRequest) (*papi.GetPropertyVersionsResponse, error)
+
+	// GetPropertyVersionHostnamesFn is any function having the same signature as papi.GetPropertyVersionHostnames
+	GetPropertyVersionHostnamesFn func(context.Context, papi.GetPropertyVersionHostnamesRequest) (*papi.GetPropertyVersionHostnamesResponse, error)
+
+	// GetRuleTreeFn is any function having the same signature as papi.GetRuleTree
+	GetRuleTreeFn = func(context.Context, papi.GetRuleTreeRequest) (*papi.GetRuleTreeResponse, error)
+
+	// UpdateRuleTreeFnv is any function having the same signature as papi.UpdateRuleTree
+	UpdateRuleTreeFn func(context.Context, papi.UpdateRulesRequest) (*papi.UpdateRulesResponse, error)
+)
+
 func (p *mockpapi) GetGroups(ctx context.Context) (*papi.GetGroupsResponse, error) {
 	args := p.Called(ctx)
 
@@ -20,21 +49,6 @@ func (p *mockpapi) GetGroups(ctx context.Context) (*papi.GetGroupsResponse, erro
 	}
 
 	return args.Get(0).(*papi.GetGroupsResponse), args.Error(1)
-}
-
-// Any function having the same signature as papi.GetGroups
-type GetGroupsFunc func(context.Context) (*papi.GetGroupsResponse, error)
-
-// Expect a call to the mock's papi.GetGroups() where the return value is computed by the given function
-func (p *mockpapi) OnGetGroups(ctx interface{}, impl GetGroupsFunc) *mock.Call {
-	call := p.On("GetGroups", ctx)
-	call.Run(func(CallArgs mock.Arguments) {
-		callCtx := CallArgs.Get(0).(context.Context)
-
-		call.Return(impl(callCtx))
-	})
-
-	return call
 }
 
 func (p *mockpapi) GetContracts(ctx context.Context) (*papi.GetContractsResponse, error) {
@@ -97,30 +111,6 @@ func (p *mockpapi) GetCPCodes(ctx context.Context, r papi.GetCPCodesRequest) (*p
 	return args.Get(0).(*papi.GetCPCodesResponse), args.Error(1)
 }
 
-// Any function having the same signature as papi.GetCPCodes
-type GetCPCodesFn func(context.Context, papi.GetCPCodesRequest) (*papi.GetCPCodesResponse, error)
-
-// Expect a call to the mock's papi.GetCPCodes() where the return value is computed by the given function. The args
-// param are used to match calls on the mock as normal. If no args are given, then the expectation matches any calls
-// to mock.GetCPCodes()
-func (p *mockpapi) OnGetCPCodes(impl GetCPCodesFn, args ...interface{}) *mock.Call {
-	var call *mock.Call
-
-	runFn := func(callArgs mock.Arguments) {
-		ctx := callArgs.Get(0).(context.Context)
-		req := callArgs.Get(1).(papi.GetCPCodesRequest)
-
-		call.Return(impl(ctx, req))
-	}
-
-	if len(args) == 0 {
-		args = mock.Arguments{AnyCTX, mock.Anything}
-	}
-
-	call = p.On("GetCPCodes", args...).Run(runFn)
-	return call
-}
-
 func (p *mockpapi) GetCPCode(ctx context.Context, r papi.GetCPCodeRequest) (*papi.GetCPCodesResponse, error) {
 	args := p.Called(ctx, r)
 
@@ -141,28 +131,20 @@ func (p *mockpapi) CreateCPCode(ctx context.Context, r papi.CreateCPCodeRequest)
 	return args.Get(0).(*papi.CreateCPCodeResponse), args.Error(1)
 }
 
-// Any function having the same signature as papi.CreateCPCode
-type CreateCPCodeFn func(context.Context, papi.CreateCPCodeRequest) (*papi.CreateCPCodeResponse, error)
-
-// Expect a call to the mock's papi.CreateCPCode() where the return value is computed by the given function. The args
-// param are used to match calls on the mock as normal. If no args are given, then the expectation matches any calls
-// to mock.GetCPCodes()
-func (p *mockpapi) OnCreateCPCode(impl CreateCPCodeFn, args ...interface{}) *mock.Call {
-	var call *mock.Call
-
-	runFn := func(args mock.Arguments) {
-		ctx := args.Get(0).(context.Context)
-		req := args.Get(1).(papi.CreateCPCodeRequest)
-
-		call.Return(impl(ctx, req))
+func (p *mockpapi) UpdateCPCode(ctx context.Context, r papi.UpdateCPCodeRequest) (*papi.CPCodeDetailResponse, error) {
+	args := p.Called(ctx, r)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
+	return args.Get(0).(*papi.CPCodeDetailResponse), args.Error(1)
+}
 
-	if len(args) == 0 {
-		args = mock.Arguments{AnyCTX, mock.Anything}
+func (p *mockpapi) GetCPCodeDetail(ctx context.Context, r int) (*papi.CPCodeDetailResponse, error) {
+	args := p.Called(ctx, r)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
-
-	call = p.On("CreateCPCode", args...).Run(runFn)
-	return call
+	return args.Get(0).(*papi.CPCodeDetailResponse), args.Error(1)
 }
 
 func (p *mockpapi) GetProperties(ctx context.Context, r papi.GetPropertiesRequest) (*papi.GetPropertiesResponse, error) {
@@ -195,22 +177,6 @@ func (p *mockpapi) GetProperty(ctx context.Context, r papi.GetPropertyRequest) (
 	return args.Get(0).(*papi.GetPropertyResponse), args.Error(1)
 }
 
-// Any function having the same signature as papi.GetProperty
-type GetPropertyFunc func(context.Context, papi.GetPropertyRequest) (*papi.GetPropertyResponse, error)
-
-// Expect a call to the mock's papi.GetProperty() where the return value is computed by the given function
-func (p *mockpapi) OnGetProperty(ctx, req interface{}, impl GetPropertyFunc) *mock.Call {
-	call := p.On("GetProperty", ctx, req)
-	call.Run(func(CallArgs mock.Arguments) {
-		callCtx := CallArgs.Get(0).(context.Context)
-		callReq := CallArgs.Get(1).(papi.GetPropertyRequest)
-
-		call.Return(impl(callCtx, callReq))
-	})
-
-	return call
-}
-
 func (p *mockpapi) RemoveProperty(ctx context.Context, r papi.RemovePropertyRequest) (*papi.RemovePropertyResponse, error) {
 	args := p.Called(ctx, r)
 
@@ -229,22 +195,6 @@ func (p *mockpapi) GetPropertyVersions(ctx context.Context, r papi.GetPropertyVe
 	}
 
 	return args.Get(0).(*papi.GetPropertyVersionsResponse), args.Error(1)
-}
-
-type GetPropertyVersionsFunc func(context.Context, papi.GetPropertyVersionsRequest) (*papi.GetPropertyVersionsResponse, error)
-
-// Expect a call to the mock's papi.GetPropertyVersions() where the return value is computed by the given
-// function
-func (p *mockpapi) OnGetPropertyVersions(ctx, req interface{}, impl GetPropertyVersionsFunc) *mock.Call {
-	call := p.On("GetPropertyVersions", ctx, req)
-	call.Run(func(CallArgs mock.Arguments) {
-		callCtx := CallArgs.Get(0).(context.Context)
-		callReq := CallArgs.Get(1).(papi.GetPropertyVersionsRequest)
-
-		call.Return(impl(callCtx, callReq))
-	})
-
-	return call
 }
 
 func (p *mockpapi) GetPropertyVersion(ctx context.Context, r papi.GetPropertyVersionRequest) (*papi.GetPropertyVersionsResponse, error) {
@@ -357,56 +307,6 @@ func (p *mockpapi) GetPropertyVersionHostnames(ctx context.Context, r papi.GetPr
 	return args.Get(0).(*papi.GetPropertyVersionHostnamesResponse), args.Error(1)
 }
 
-// Any function having the same signature as papi.GetPropertyVersionHostnames
-type GetPropertyVersionHostnamesFunc func(context.Context, papi.GetPropertyVersionHostnamesRequest) (*papi.GetPropertyVersionHostnamesResponse, error)
-
-// Expect a call to the mock's papi.GetPropertyVersionHostnames() where the return value is computed by the given
-// function
-func (p *mockpapi) OnGetPropertyVersionHostnames(ctx, req interface{}, impl GetPropertyVersionHostnamesFunc) *mock.Call {
-	call := p.On("GetPropertyVersionHostnames", ctx, req)
-	call.Run(func(CallArgs mock.Arguments) {
-		callCtx := CallArgs.Get(0).(context.Context)
-		callReq := CallArgs.Get(1).(papi.GetPropertyVersionHostnamesRequest)
-
-		call.Return(impl(callCtx, callReq))
-	})
-
-	return call
-}
-
-// Any function having the same signature as papi.GetRuleTree
-type GetRuleTreeFunc = func(context.Context, papi.GetRuleTreeRequest) (*papi.GetRuleTreeResponse, error)
-
-// Expect a call to the mock's papi.GetPropertyVersionHostnames() where the return value is computed by the given
-// function
-func (p *mockpapi) OnGetRuleTree(ctx, req interface{}, impl GetRuleTreeFunc) *mock.Call {
-	call := p.On("GetRuleTree", ctx, req)
-	call.Run(func(CallArgs mock.Arguments) {
-		callCtx := CallArgs.Get(0).(context.Context)
-		callReq := CallArgs.Get(1).(papi.GetRuleTreeRequest)
-
-		call.Return(impl(callCtx, callReq))
-	})
-
-	return call
-}
-
-// Expect a call to the mock's papi.UpdateRuleTree() where the return value is computed by the given
-// function
-type UpdateRuleTreeFunc = func(context.Context, papi.UpdateRulesRequest) (*papi.UpdateRulesResponse, error)
-
-func (p *mockpapi) OnUpdateRuleTree(ctx, req interface{}, impl UpdateRuleTreeFunc) *mock.Call {
-	call := p.On("UpdateRuleTree", ctx, req)
-	call.Run(func(CallArgs mock.Arguments) {
-		callCtx := CallArgs.Get(0).(context.Context)
-		callReq := CallArgs.Get(1).(papi.UpdateRulesRequest)
-
-		call.Return(impl(callCtx, callReq))
-	})
-
-	return call
-}
-
 func (p *mockpapi) UpdatePropertyVersionHostnames(ctx context.Context, r papi.UpdatePropertyVersionHostnamesRequest) (*papi.UpdatePropertyVersionHostnamesResponse, error) {
 	args := p.Called(ctx, r)
 
@@ -461,4 +361,146 @@ func (p *mockpapi) GetRuleFormats(ctx context.Context) (*papi.GetRuleFormatsResp
 	}
 
 	return args.Get(0).(*papi.GetRuleFormatsResponse), args.Error(1)
+}
+
+// Expect a call to the mock's papi.GetGroups() where the return value is computed by the given function
+func (p *mockpapi) OnGetGroups(ctx interface{}, impl GetGroupsFn) *mock.Call {
+	call := p.On("GetGroups", ctx)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+
+		call.Return(impl(callCtx))
+	})
+
+	return call
+}
+
+// Expect a call to the mock's papi.GetCPCodes() where the return value is computed by the given function. The args
+// param are used to match calls on the mock as normal. If no args are given, then the expectation matches any calls
+// to mock.GetCPCodes()
+func (p *mockpapi) OnGetCPCodes(impl GetCPCodesFn, args ...interface{}) *mock.Call {
+	var call *mock.Call
+
+	runFn := func(callArgs mock.Arguments) {
+		ctx := callArgs.Get(0).(context.Context)
+		req := callArgs.Get(1).(papi.GetCPCodesRequest)
+
+		call.Return(impl(ctx, req))
+	}
+
+	if len(args) == 0 {
+		args = mock.Arguments{AnyCTX, mock.Anything}
+	}
+
+	call = p.On("GetCPCodes", args...).Run(runFn)
+	return call
+}
+
+// Expect a call to the mock's papi.CreateCPCode() where the return value is computed by the given function. The args
+// param are used to match calls on the mock as normal. If no args are given, then the expectation matches any calls
+// to mock.GetCPCodes()
+func (p *mockpapi) OnCreateCPCode(impl CreateCPCodeFn, args ...interface{}) *mock.Call {
+	var call *mock.Call
+
+	runFn := func(args mock.Arguments) {
+		ctx := args.Get(0).(context.Context)
+		req := args.Get(1).(papi.CreateCPCodeRequest)
+
+		call.Return(impl(ctx, req))
+	}
+
+	if len(args) == 0 {
+		args = mock.Arguments{AnyCTX, mock.Anything}
+	}
+
+	call = p.On("CreateCPCode", args...).Run(runFn)
+	return call
+}
+
+// Expect a call to the mock's papi.UpdateCPCode() where the return value is computed by the given function. The args
+// param are used to match calls on the mock as normal. If no args are given, then the expectation matches any calls
+// to mock.UpdateCPCode()
+func (p *mockpapi) OnUpdateCPCode(impl UpdateCPCodeFn, args ...interface{}) *mock.Call {
+	var call *mock.Call
+
+	runFn := func(callArgs mock.Arguments) {
+		ctx := callArgs.Get(0).(context.Context)
+		req := callArgs.Get(1).(papi.UpdateCPCodeRequest)
+
+		call.Return(impl(ctx, req))
+	}
+
+	if len(args) == 0 {
+		args = mock.Arguments{AnyCTX, mock.Anything}
+	}
+
+	call = p.On("UpdateCPCode", args...).Run(runFn)
+	return call
+}
+
+// Expect a call to the mock's papi.GetProperty() where the return value is computed by the given function
+func (p *mockpapi) OnGetProperty(ctx, req interface{}, impl GetPropertyFunc) *mock.Call {
+	call := p.On("GetProperty", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.GetPropertyRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
+}
+
+// Expect a call to the mock's papi.GetPropertyVersions() where the return value is computed by the given
+// function
+func (p *mockpapi) OnGetPropertyVersions(ctx, req interface{}, impl GetPropertyVersionsFn) *mock.Call {
+	call := p.On("GetPropertyVersions", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.GetPropertyVersionsRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
+}
+
+// Expect a call to the mock's papi.GetPropertyVersionHostnames() where the return value is computed by the given
+// function
+func (p *mockpapi) OnGetPropertyVersionHostnames(ctx, req interface{}, impl GetPropertyVersionHostnamesFn) *mock.Call {
+	call := p.On("GetPropertyVersionHostnames", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.GetPropertyVersionHostnamesRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
+}
+
+// Expect a call to the mock's papi.GetPropertyVersionHostnames() where the return value is computed by the given
+// function
+func (p *mockpapi) OnGetRuleTree(ctx, req interface{}, impl GetRuleTreeFn) *mock.Call {
+	call := p.On("GetRuleTree", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.GetRuleTreeRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
+}
+
+func (p *mockpapi) OnUpdateRuleTree(ctx, req interface{}, impl UpdateRuleTreeFn) *mock.Call {
+	call := p.On("UpdateRuleTree", ctx, req)
+	call.Run(func(CallArgs mock.Arguments) {
+		callCtx := CallArgs.Get(0).(context.Context)
+		callReq := CallArgs.Get(1).(papi.UpdateRulesRequest)
+
+		call.Return(impl(callCtx, callReq))
+	})
+
+	return call
 }
