@@ -3,6 +3,9 @@
 # This script executes a "dry run" simulating what the goreleaser GitHub action does for every release
 # It is executed on last commit from develop branch.
 
+# Script will end immediately when some command exits with a non-zero exit code.
+set -e
+
 SSH_PRV_KEY="$(cat ~/.ssh/id_rsa)"
 SSH_PUB_KEY="$(cat ~/.ssh/id_rsa.pub)"
 SSH_KNOWN_HOSTS="$(cat ~/.ssh/known_hosts)"
@@ -17,8 +20,7 @@ docker container run --name releaser_container -d -it \
   -e SSH_PUB_KEY="${SSH_PUB_KEY}" \
   -e SSH_PRV_KEY="${SSH_PRV_KEY}" \
   -e SSH_KNOWN_HOSTS="${SSH_KNOWN_HOSTS}" \
-  -e EDGERC="${EDGERC}" \
-  --add-host git.source.akamai.com:100.78.0.6 "releaser"
+  -e EDGERC="${EDGERC}" "releaser"
 
 echo "cloning repositories and executing goreleaser:"
 docker exec releaser_container bash -c 'echo "$SSH_KNOWN_HOSTS" > /root/.ssh/known_hosts;
