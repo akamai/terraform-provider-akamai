@@ -40,7 +40,7 @@ docker exec releaser_container bash -c 'echo "$SSH_KNOWN_HOSTS" > /root/.ssh/kno
           goreleaser build --single-target --skip-validate --config ./.goreleaser.yml --output /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/10.0.0/linux_amd64/terraform-provider-akamai_v10.0.0'
 
 echo "smoke test:"
-docker exec -w '/workspace/terraform-provider-akamai/examples/akamai_cp_code' releaser_container bash -c '
+docker exec releaser_container bash -c 'cd /workspace/terraform-provider-akamai/examples/akamai_cp_code;
           terraform init;
           terraform plan'
 
