@@ -11,6 +11,10 @@ SSH_PUB_KEY="$(cat ~/.ssh/id_rsa.pub)"
 SSH_KNOWN_HOSTS="$(cat ~/.ssh/known_hosts)"
 EDGERC="$(cat ~/.edgerc)"
 
+echo "cleaning up any previous docker images and containers"
+docker container rm -f releaser_container
+docker image rm -f releaser
+
 echo "building image:"
 cd build/internal/releaser
 docker build -f Dockerfile -t "releaser" .
@@ -44,6 +48,6 @@ docker exec releaser_container bash -c 'cd /workspace/terraform-provider-akamai/
           terraform init;
           terraform plan'
 
-echo "cleaning up:"
+echo "cleaning up"
 docker container rm -f releaser_container
-docker image rm releaser
+docker image rm -f releaser
