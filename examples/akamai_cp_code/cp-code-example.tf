@@ -7,11 +7,14 @@ terraform {
   }
 }
 
-provider "akamai" {}
+provider "akamai" {
+  edgerc         = "~/.edgerc"
+  config_section = "default"
+}
 
 resource "akamai_cp_code" "example" {
-  contract = "ctr_XXX"
-  group    = "grp_XXX"
-  name     = "example-XXX"
-  product  = "prd_XXX"
+  contract_id = "ctr_XXX"
+  group_id    = "grp_XXX"
+  name        = "example-XXX"
+  product_id  = "prd_XXX"
 }
