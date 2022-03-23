@@ -8,9 +8,9 @@ ENV PATH=$PATH:/usr/local/go/bin:/root/go/bin
 ARG SSH_PRV_KEY
 ARG SSH_PUB_KEY
 ARG SSH_KNOWN_HOSTS
-ARG EDGERC
 
 COPY AkamaiCorpRoot-G1.pem /usr/local/share/ca-certificates/AkamaiCorpRoot-G1.pem
+COPY .edgerc /root/.edgerc
 
 RUN apt update && apt install -y curl git gcc ca-certificates openssh-client gnupg \
     && echo "deb [arch=amd64] https://apt.releases.hashicorp.com focal main" >> /etc/apt/sources.list \
