@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -79,8 +80,17 @@ func resourceCPCode() *schema.Resource {
 				StateFunc:     addPrefixToState("prd_"),
 			},
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Update: &cpCodeResourceUpdateTimeout,
+		},
 	}
 }
+
+var (
+	updatePollMinimum           = time.Minute
+	updatePollInterval          = updatePollMinimum
+	cpCodeResourceUpdateTimeout = time.Minute * 30
+)
 
 func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
@@ -102,23 +112,7 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	productID = tools.AddPrefix(productID, "prd_")
 
-	// Schema guarantees group_id/group are strings and one or the other is set
-	var groupID string
-	if got, ok := d.GetOk("group_id"); ok {
-		groupID = got.(string)
-	} else {
-		groupID = d.Get("group").(string)
-	}
-	groupID = tools.AddPrefix(groupID, "grp_")
-
-	// Schema guarantees contract_id/contract are strings and one or the other is set
-	var contractID string
-	if got, ok := d.GetOk("contract_id"); ok {
-		contractID = got.(string)
-	} else {
-		contractID = d.Get("contract").(string)
-	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID, groupID := getContractIDAndGroupID(d)
 
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
 	cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
@@ -144,21 +138,11 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourceCPCodeRead")
+	client := inst.Client(meta)
 	logger.Debugf("Read CP Code")
 
-	var name string
-	if got, ok := d.GetOk("name"); ok {
-		name = got.(string)
-	}
+	contractID, groupID := getContractIDAndGroupID(d)
 
-	// Schema guarantees group_id/group are strings and one or the other is set
-	var groupID string
-	if got, ok := d.GetOk("group_id"); ok {
-		groupID = got.(string)
-	} else {
-		groupID = d.Get("group").(string)
-	}
-	groupID = tools.AddPrefix(groupID, "grp_")
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
@@ -166,14 +150,6 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	// Schema guarantees contract_id/contract are strings and one or the other is set
-	var contractID string
-	if got, ok := d.GetOk("contract_id"); ok {
-		contractID = got.(string)
-	} else {
-		contractID = d.Get("contract").(string)
-	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
 	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
@@ -181,26 +157,16 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	// Attempt to find by ID first
-	cpCode, err := findCPCode(ctx, d.Id(), contractID, groupID, meta)
+	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
+		CPCodeID:   d.Id(),
+		ContractID: contractID,
+		GroupID:    groupID,
+	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// Otherwise attempt to find by name
-	if cpCode == nil {
-		// FIXME: I'm not clear how this could ever happen. A read couldn't happen until after TF created it and it had
-		//        been assigned an ID by PAPI and that ID was previously set in the resource, right?
-		cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		// It really doesn't exist, give up
-		if cpCode == nil {
-			return diag.Errorf("Couldn't find the CP Code")
-		}
-	}
+	cpCode := cpCodeResp.CPCode
 
 	if err := d.Set("name", cpCode.Name); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
@@ -230,6 +196,8 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diags
 	}
 
+	contractID, groupID := getContractIDAndGroupID(d)
+
 	cpCodeID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), "cpc_"))
 	if err != nil {
 		return diag.FromErr(err)
@@ -257,12 +225,21 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
+	// Because we use CPRG API for update, we need to ensure that changes are also present when fetching cpCode with PAPI
+	if err := waitForCPCodeNameUpdate(ctx, client, contractID, groupID, d.Id(), name); err != nil {
+		if errors.Is(err, ErrCPCodeUpdateTimeout) {
+			return append(tools.DiagWarningf("%s", err), tools.DiagWarningf("Resource has been updated, but the change is still ongoing on the server")...)
+		}
+		return diag.FromErr(err)
+	}
+
 	return resourceCPCodeRead(ctx, d, m)
 }
 
 func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourceCPCodeImport")
+	client := inst.Client(meta)
 	logger.Debugf("Import CP Code")
 
 	parts := strings.Split(d.Id(), ",")
@@ -277,10 +254,16 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 	contractID := tools.AddPrefix(parts[1], "ctr_")
 	groupID := tools.AddPrefix(parts[2], "grp_")
 
-	cpCode, err := findCPCode(ctx, cpCodeID, contractID, groupID, meta)
+	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
+		CPCodeID:   cpCodeID,
+		ContractID: contractID,
+		GroupID:    groupID,
+	})
 	if err != nil {
 		return nil, err
 	}
+
+	cpCode := cpCodeResp.CPCode
 
 	if err := d.Set("name", cpCode.Name); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
@@ -340,4 +323,52 @@ func checkImmutableChanged(d *schema.ResourceData) diag.Diagnostics {
 		}
 	}
 	return diags
+}
+
+func getContractIDAndGroupID(d *schema.ResourceData) (contractID, groupID string) {
+	// Schema guarantees contract_id/contract are strings and one or the other is set
+	if got, ok := d.GetOk("contract_id"); ok {
+		contractID = got.(string)
+	} else {
+		contractID = d.Get("contract").(string)
+	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
+
+	// Schema guarantees group_id/group are strings and one or the other is set
+	if got, ok := d.GetOk("group_id"); ok {
+		groupID = got.(string)
+	} else {
+		groupID = d.Get("group").(string)
+	}
+	groupID = tools.AddPrefix(groupID, "grp_")
+
+	return
+}
+
+func waitForCPCodeNameUpdate(ctx context.Context, client papi.PAPI, contractID, groupID, CPCodeID, updatedName string) error {
+	req := papi.GetCPCodeRequest{CPCodeID: CPCodeID, ContractID: contractID, GroupID: groupID}
+	CPCodeResp, err := client.GetCPCode(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	for CPCodeResp.CPCode.Name != updatedName {
+		select {
+		case <-time.After(tools.MaxDuration(updatePollInterval, updatePollMinimum)):
+			CPCodeResp, err = client.GetCPCode(ctx, req)
+			if err != nil {
+				return err
+			}
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return ErrCPCodeUpdateTimeout
+			}
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return fmt.Errorf("operation cancelled while waiting for CPCode update")
+			}
+			return fmt.Errorf("cp code update context terminated: %w", ctx.Err())
+		}
+	}
+
+	return nil
 }
