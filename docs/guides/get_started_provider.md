@@ -16,9 +16,6 @@ for each of the modules you'll be using, and retrieve IDs for your contracts
 and groups. Other tasks, like setting up your `.tf` configuration file, are
 specific to Terraform.
 
--> **Note** Both Terraform and the Akamai Terraform CLI package come
-pre-installed in the Akamai Development Environment. See [Set Up a Development Environment](https://developer.akamai.com/blog/2020/05/26/set-development-environment) for more information.
-
 ## Workflow
 
 To set up the Akamai Provider, you need to:
@@ -50,6 +47,8 @@ answer these questions:
   For details, see [Authenticate the Akamai Provider](../guides/akamai_provider_auth.md).
 
 * **Modules.** Which modules do you plan to use? The API clients you set up depend on the modules you choose. For example, if you want to use the Common data sources and resources, you'll need read access to the Property Manager API.
+
+    -> **Note** If you’re adding any of these modules, you can use the [Akamai CLI for Terraform Provider](https://github.com/akamai/cli-terraform) to import your existing configurations: Cloudlets, Edge DNS, EdgeWorkers, Global Traffic Management, Image and Video Manager, and Property Manager.
 
 * **Akamai configurations.** Are you going to use existing properties and other Akamai configurations with Terraform? Or are you going to start from scratch?
 
