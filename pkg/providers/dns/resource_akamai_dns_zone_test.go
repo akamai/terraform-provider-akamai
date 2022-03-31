@@ -1,12 +1,13 @@
 package dns
 
 import (
-	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"os"
 	"testing"
+
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestResDnsZone(t *testing.T) {

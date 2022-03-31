@@ -13,11 +13,12 @@ RELOAD_DOCKER_IMAGE="${4:-false}"
 
 # Recalculate DOCKER_IMAGE_SIZE if any changes to dockerfile.
 TIMEOUT="20m"
-DOCKER_IMAGE_SIZE="667116277"
+DOCKER_IMAGE_SIZE="673113557"
 
 SSH_PRV_KEY="$(cat ~/.ssh/id_rsa)"
 SSH_PUB_KEY="$(cat ~/.ssh/id_rsa.pub)"
 SSH_KNOWN_HOSTS="$(cat ~/.ssh/known_hosts)"
+SSH_CONFIG="PubkeyAcceptedKeyTypes +ssh-rsa"
 
 COVERAGE_DIR=test/coverage
 COVERAGE_PROFILE="$COVERAGE_DIR"/profile.out
@@ -69,6 +70,7 @@ docker run -d -it --name akatf-container --entrypoint "/usr/bin/tail" \
         -e SSH_PUB_KEY="${SSH_PUB_KEY}" \
         -e SSH_PRV_KEY="${SSH_PRV_KEY}" \
         -e SSH_KNOWN_HOSTS="${SSH_KNOWN_HOSTS}" \
+        -e SSH_CONFIG="${SSH_CONFIG}" \
         -e TIMEOUT="$TIMEOUT" \
         -v "$HOME"/.ssh/id_rsa=/root/id_rsa \
         -v "$HOME"/.ssh/id_rsa.pub=/root/id_rsa.pub \
@@ -80,9 +82,10 @@ docker run -d -it --name akatf-container --entrypoint "/usr/bin/tail" \
 docker exec akatf-container sh -c 'echo "$SSH_KNOWN_HOSTS" > /root/.ssh/known_hosts;
                                    echo "$SSH_PUB_KEY" > /root/.ssh/id_rsa.pub;
                                    echo "$SSH_PRV_KEY" > /root/.ssh/id_rsa;
+                                   echo "$SSH_CONFIG" > /root/.ssh/config;
                                    chmod 700 /root/.ssh;
                                    chmod 600 /root/.ssh/id_rsa;
-                                   chmod 644 /root/.ssh/id_rsa.pub /root/.ssh/known_hosts'
+                                   chmod 644 /root/.ssh/id_rsa.pub /root/.ssh/known_hosts /root/.ssh/config'
 
 echo "Cloning repos"
 docker exec akatf-container sh -c 'git clone ssh://git@git.source.akamai.com:7999/devexp/terraform-provider-akamai.git;
@@ -95,10 +98,10 @@ docker exec akatf-container sh -c 'cd edgegrid-v1; git checkout ${EDGEGRID_BRANC
                                    cd ../terraform-provider-akamai; git checkout ${PROVIDER_BRANCH_NAME};
                                    go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang=../edgegrid-v1;
                                    go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2=../edgegrid-v2;
-                                   go mod tidy'
+                                   go mod tidy -compat=1.17'
 
 echo "Running tests with xUnit output"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; go mod tidy;
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; go mod tidy -compat=1.17;
                                    2>&1 go test -timeout $TIMEOUT -v -coverpkg=./... -coverprofile=../profile.out -covermode=$COVERMODE ./... | tee ../tests.output'
 docker exec akatf-container sh -c 'cat tests.output | go-junit-report' > test/tests.xml
 docker exec akatf-container sh -c 'cat tests.output' > test/tests.output

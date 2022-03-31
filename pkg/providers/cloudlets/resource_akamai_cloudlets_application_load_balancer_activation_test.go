@@ -12,6 +12,7 @@ import (
 )
 
 func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
+	anError := fmt.Errorf("an error")
 	tests := map[string]struct {
 		init  func(*mockcloudlets)
 		steps []resource.TestStep
@@ -111,12 +112,12 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			init: func(m *mockcloudlets) {
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, fmt.Errorf("an error")).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, anError).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
-					ExpectError: regexp.MustCompile("application load balancer activation create: an error"),
+					ExpectError: regexp.MustCompile("application load balancer activation create: application load balancer activation failed. No changes were written to server:\nan error"),
 				},
 			},
 		},
@@ -126,12 +127,12 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
 				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
-				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, fmt.Errorf("an error")).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, anError).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
-					ExpectError: regexp.MustCompile("application load balancer activation create: an error"),
+					ExpectError: regexp.MustCompile("application load balancer activation create: error while waiting until load balancer activation status == 'active':\nan error"),
 				},
 			},
 		},
@@ -161,7 +162,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
-				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, fmt.Errorf("an error")).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, anError).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -351,7 +352,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				expectActivateLoadBalancerVersion(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
 				// create: poll after activation
 				expectListLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
-				expectListLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusActive, fmt.Errorf("an error")).Once()
+				expectListLoadBalancerActivations(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusActive, anError).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -364,7 +365,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				},
 				{
 					Config:      loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
-					ExpectError: regexp.MustCompile("application load balancer activation update: an error"),
+					ExpectError: regexp.MustCompile("application load balancer activation update: error while waiting until load balancer activation status == 'active':\nan error"),
 				},
 			},
 		},
@@ -385,7 +386,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				// read
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
-				expectActivateLoadBalancerVersion(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusPending, fmt.Errorf("an error")).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 2, "STAGING", cloudlets.LoadBalancerActivationStatusPending, anError).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -398,7 +399,12 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				},
 				{
 					Config:      loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
-					ExpectError: regexp.MustCompile("application load balancer activation update: an error"),
+					ExpectError: regexp.MustCompile("application load balancer activation update: application load balancer activation failed. No changes were written to server:\nan error"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
+					),
 				},
 			},
 		},

@@ -244,7 +244,7 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 
 	if rd.HasChanges("initial_data") {
 		err := diag.Errorf("the field \"initial_data\" cannot be updated after resource creation")
-		if diagnostics := tools.RestoreOldValues(rd, []string{"initial_data"}); diagnostics != nil {
+		if diagnostics := diag.FromErr(tools.RestoreOldValues(rd, []string{"initial_data"})); diagnostics != nil {
 			diagnostics = append(diagnostics, err[0])
 			return diagnostics
 		}
@@ -260,7 +260,7 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 
 	// ignore group_id changes
 	// changes on this field are not supported by current EdgeKV API version
-	if diagnostics := tools.RestoreOldValues(rd, []string{"group_id"}); diagnostics != nil {
+	if diagnostics := diag.FromErr(tools.RestoreOldValues(rd, []string{"group_id"})); diagnostics != nil {
 		return diagnostics
 	}
 	groupID, err := tools.GetIntValue("group_id", rd)

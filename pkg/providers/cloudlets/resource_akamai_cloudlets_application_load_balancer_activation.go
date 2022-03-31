@@ -162,13 +162,20 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 		},
 	})
 	if err != nil {
-		return activation, err
+		if err2 := tools.RestoreOldValues(rd, []string{"network", "version"}); err2 != nil {
+			return activation, fmt.Errorf(`%w failed. No changes were written to server:
+%s
+
+Failed to restore previous local schema values. The schema will remain in tainted state:
+%s`, ErrApplicationLoadBalancerActivation, err.Error(), err2.Error())
+		}
+		return activation, fmt.Errorf("%w failed. No changes were written to server:\n%s", ErrApplicationLoadBalancerActivation, err.Error())
 	}
 
 	// wait until application load balancer activation is done
 	activation, err = waitForLoadBalancerActivation(ctx, client, originID, version, activationNetwork)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while waiting until load balancer activation status == 'active':\n%s", err.Error())
 	}
 
 	if err := rd.Set("status", activation.Status); err != nil {

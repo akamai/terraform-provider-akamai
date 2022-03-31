@@ -48,10 +48,10 @@ var (
 
 	// ErrLookingUpCPCode is returned when fetching CP Code from API client by contractID returned an error or no CP Code was found
 	ErrLookingUpCPCode = errors.New("looking up CP Code by name")
-	// ErrCPCodeModify is returned while attempting to modify existing CP code
-	ErrCPCodeModify = errors.New("CP Code with provided name already exists for provided group and contract IDs and it cannot be managed through this API - please contact Customer Support")
 	// ErrCpCodeNotFound is returned when cp code with provided ID does not exist
 	ErrCpCodeNotFound = errors.New("cp code not found")
+	// ErrCPCodeUpdateTimeout is returned when waiting for a cp code update results in timeout
+	ErrCPCodeUpdateTimeout = errors.New("cp code update timeout")
 
 	// PAPI Property errors
 

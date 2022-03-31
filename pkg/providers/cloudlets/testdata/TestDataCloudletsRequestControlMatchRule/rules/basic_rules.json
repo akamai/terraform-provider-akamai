@@ -1,0 +1,9 @@
+[
+  {
+    "name": "basic_rule",
+    "type": "igMatchRule",
+    "matchesAlways": true,
+    "allowDeny": "allow",
+    "disabled": true
+  }
+]

@@ -1,5 +1,33 @@
 # RELEASE NOTES
 
+## 1.12.0 (Mar 31, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* [IMPORTANT] Added Image and Video Manager API support
+  * Added resources allowing management of:
+    * `akamai_imaging_policy_image` - create, read, update, delete and import
+    * `akamai_imaging_policy_set` - create, read, update, delete and import
+    * `akamai_imaging_policy_video` - create, read, update, delete and import
+    
+* CLOUDLETS
+  * Support for RC cloudlet type (Request Control)
+
+* PAPI
+  * Added support for update `akamai_cp_code` resource
+  * Added data source:
+    * `akamai_properties_search` - list properties matching a specific hostname, edge hostname or property name
+
+* Support for Go 1.17
+
+#### BUG FIXES:
+
+* DATASTREAM
+  * Fix ordering sensitivity for JSON based configuration ([#287](https://github.com/akamai/terraform-provider-akamai/issues/287))
+
+* PAPI
+  * Fix CP code name forces replacement by adding update functionality in `akamai_cp_code` resource ([#262](https://github.com/akamai/terraform-provider-akamai/issues/262))
+
 ## 1.11.0 (Mar 3, 2022)
 
 #### FEATURES/ENHANCEMENTS:

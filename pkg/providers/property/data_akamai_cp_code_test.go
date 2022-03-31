@@ -198,6 +198,9 @@ func TestDSCPCode(t *testing.T) {
 			ID: "cpc_test-ft-cp-code", Name: "test-ft-cp-code", CreatedDate: "", ProductIDs: []string{"prd_prod1"},
 		}}}}, nil)
 		client.On("CreateCPCode", AnyCTX, mock.Anything).Return(&papi.CreateCPCodeResponse{}, nil)
+		client.On("GetCPCode", AnyCTX, mock.Anything).Return(&papi.GetCPCodesResponse{CPCode: papi.CPCode{
+			ID: "cpc_test-ft-cp-code", Name: "test-ft-cp-code", CreatedDate: "", ProductIDs: []string{"prd_prod1"},
+		}}, nil).Times(3)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,

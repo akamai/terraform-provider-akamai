@@ -1,0 +1,15 @@
+[
+  {
+    "name": "empty_object_rule",
+    "type": "igMatchRule",
+    "matches": [
+      {
+        "matchType": "clientip",
+        "matchValue": "127.0.0.1",
+        "caseSensitive": false,
+        "negate": false
+      }
+    ],
+    "allowDeny": "allow"
+  }
+]

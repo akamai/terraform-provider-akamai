@@ -1,0 +1,53 @@
+[
+  {
+    "name": "complex_simple_rule",
+    "type": "igMatchRule",
+    "start": 1,
+    "end": 2,
+    "matches": [
+      {
+        "matchType": "method",
+        "matchOperator": "contains",
+        "caseSensitive": true,
+        "negate": false,
+        "objectMatchValue": {
+          "type": "simple",
+          "value": [
+            "GET",
+            "POST"
+          ]
+        }
+      }
+    ],
+    "allowDeny": "allow"
+  },
+  {
+    "name": "complex_object_rule",
+    "type": "igMatchRule",
+    "start": 2,
+    "end": 3,
+    "matches": [
+      {
+        "matchType": "header",
+        "matchOperator": "exists",
+        "caseSensitive": true,
+        "negate": true,
+        "checkIPs": "CONNECTING_IP XFF_HEADERS",
+        "objectMatchValue": {
+          "name": "Accept",
+          "type": "object",
+          "nameCaseSensitive": true,
+          "nameHasWildcard": false,
+          "options": {
+            "value": [
+              "text/html*",
+              "text/css*"
+            ],
+            "valueCaseSensitive": true
+          }
+        }
+      }
+    ],
+    "allowDeny": "allow"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "object_object_rule",
+    "type": "igMatchRule",
+    "matches": [
+      {
+        "matchType": "cookie",
+        "caseSensitive": false,
+        "negate": false,
+        "objectMatchValue": {
+          "name": "object_match_value_name",
+          "type": "object",
+          "nameCaseSensitive": true,
+          "nameHasWildcard": false,
+          "options": {
+            "value": [
+              "object_match_value_value"
+            ],
+            "valueCaseSensitive": true
+          }
+        }
+      }
+    ],
+    "allowDeny": "allow"
+  }
+]

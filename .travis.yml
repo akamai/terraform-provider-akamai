@@ -10,7 +10,7 @@ branches:
 
 language: go
 go:
-- "1.14"
+- "1.17"
 
 env:
   - GO111MODULE=on

@@ -824,9 +824,21 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 	if enrollmentID == "" || contractID == "" {
 		return nil, fmt.Errorf("enrollment and contract IDs must have non empty values")
 	}
-	if _, err := strconv.Atoi(enrollmentID); err != nil {
+	eid, err := strconv.Atoi(enrollmentID)
+	if err != nil {
 		return nil, fmt.Errorf("enrollment ID must be a number: %s", err)
 	}
+
+	client := inst.Client(meta)
+	req := cps.GetEnrollmentRequest{EnrollmentID: eid}
+	enrollment, err := client.GetEnrollment(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch enrollment: %s", err)
+	}
+	if enrollment.ValidationType != "dv" {
+		return nil, fmt.Errorf("unable to import: wrong validation type: expected 'dv', got '%s'", enrollment.ValidationType)
+	}
+
 	if err := d.Set("contract_id", contractID); err != nil {
 		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}

@@ -2,9 +2,10 @@ package config
 
 import (
 	"errors"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"os"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Options initializes and returns terraform.Resource with credentials for given section
