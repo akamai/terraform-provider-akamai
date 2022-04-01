@@ -39,8 +39,9 @@ data "akamai_appsec_configuration" "configuration" {
 
 resource "akamai_appsec_activations" "activation" {
   config_id           = data.akamai_appsec_configuration.configuration.config_id
+  version             = 1
   network             = "STAGING"
-  notes               = "This configuration was activated for testing purposes only."
+  note                = "This configuration was activated for testing purposes only."
   notification_emails = ["user@example.com"]
 }
 ```
@@ -50,26 +51,20 @@ resource "akamai_appsec_activations" "activation" {
 This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration being activated.
-
+- `version` (Required). Version of the security configuration to be activated.
 - `notification_emails` (Required). JSON array containing the email addresses of the people to be notified when activation is complete.
-
 - `network` (Optional). Network on which activation will occur; allowed values are:
-
   * **PRODUCTION**
   * **STAGING**
-
   If not included, activation takes place on the staging network.
-
-- `notes` (Required). Brief description of the activation/deactivation process. Note that, if no attributes have changed since the last time you called the akamai_appsec_activations resource, neither activation nor deactivation takes place: that's because *something* must be different in order to trigger the activation/deactivation process. With that in mind, it's recommended that you always update the `notes` argument. That ensures that the resource will be called and that activation or deactivation will occur.
-
-- `activate` (Optional). Set to **true** to activate the specified security configuration; set to **false** to deactivate the configuration. If not included, the security configuration will be activated.
+- `note` (Optional). Brief description of the activation/deactivation process.
+   If not supplied, a default note will be generated using the current date and time.
 
 ## Output Options
 
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
-- `status`. Status of the operation. Valid values are:
-
+- `status` Status of the operation. Valid values are:
   *	**ACTIVATED**
   *	**DEACTIVATED**
   *	**FAILED**

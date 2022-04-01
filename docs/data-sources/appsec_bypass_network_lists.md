@@ -44,7 +44,8 @@ data "akamai_appsec_configuration" "configuration" {
 }
 
 data "akamai_appsec_bypass_network_lists" "bypass_network_lists" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id = "gms1_134637"
 }
 
 // USE CASE: User wants to display returned data in a table.
@@ -67,6 +68,7 @@ output "bypass_network_lists_id_list" {
 This data source supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the bypass network list.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the bypass network lists.
 
 ## Output Options
 

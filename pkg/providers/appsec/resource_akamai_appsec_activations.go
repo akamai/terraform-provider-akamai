@@ -32,31 +32,50 @@ func resourceActivations() *schema.Resource {
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "The ID of the security configuration to be activated",
+			},
+			"version": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "The version of the security configuration to be activated",
 			},
 			"network": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "STAGING",
-			},
-			"notes": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "STAGING",
+				Description: "The network on which to activate the configuration version",
 			},
 			"activate": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:       schema.TypeBool,
+				Optional:   true,
+				Default:    true,
+				Deprecated: "The setting activate has been deprecated; \"terraform apply\" will always perform activation. (Use \"terraform destroy\" for deactivation.)",
+			},
+			"note": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "A note describing the activation",
+				ConflictsWith: []string{"notes"},
+			},
+			"notes": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "A note describing the activation",
+				Deprecated:    "The setting notes has been deprecated. Use note instead.",
+				ConflictsWith: []string{"note"},
 			},
 			"notification_emails": {
-				Type:     schema.TypeSet,
-				Required: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Required:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "A list of email addresses to be notified with the results of the activation",
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The results of the activation",
 			},
 		},
 	}
@@ -82,7 +101,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := tools.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -90,24 +109,28 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	note, err := tools.GetStringValue("notes", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	activate, err := tools.GetBoolValue("activate", d)
+	var note string
+	note, err = tools.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
+	}
+	if note == "" {
+		note, err = tools.GetStringValue("notes", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+	}
+	if note == "" {
+		note, err = defaultActivationNote(false)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 	notificationEmailsSet, err := tools.GetSetValue("notification_emails", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	notificationEmails := tools.SetToStringSlice(notificationEmailsSet)
-
-	if !activate {
-		d.SetId("none")
-		return nil
-	}
 
 	createActivationRequest := appsec.CreateActivationsRequest{
 		Action:             "ACTIVATE",
@@ -195,7 +218,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := tools.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -203,24 +226,28 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	note, err := tools.GetStringValue("notes", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	activate, err := tools.GetBoolValue("activate", d)
+	var note string
+	note, err = tools.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
+	}
+	if errors.Is(err, tools.ErrNotFound) {
+		note, err = tools.GetStringValue("notes", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+	}
+	if note == "" {
+		note, err = defaultActivationNote(false)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 	notificationEmailsSet, err := tools.GetSetValue("notification_emails", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	notificationEmails := tools.SetToStringSlice(notificationEmailsSet)
-
-	if !activate {
-		d.SetId("none")
-		return nil
-	}
 
 	createActivationRequest := appsec.CreateActivationsRequest{
 		Action:             "ACTIVATE",
@@ -286,7 +313,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := tools.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -294,9 +321,22 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	activate, err := tools.GetBoolValue("activate", d)
+	var note string
+	note, err = tools.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
+	}
+	if note == "" {
+		note, err = tools.GetStringValue("notes", d)
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+	}
+	if note == "" {
+		note, err = defaultActivationNote(true)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 	notificationEmailsSet, err := tools.GetSetValue("notification_emails", d)
 	if err != nil {
@@ -304,15 +344,11 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 	notificationEmails := tools.SetToStringSlice(notificationEmailsSet)
 
-	if !activate {
-		d.SetId("none")
-		return nil
-	}
-
 	removeActivationRequest := appsec.RemoveActivationsRequest{
 		ActivationID:       activationID,
 		Action:             "DEACTIVATE",
 		Network:            network,
+		Note:               note,
 		NotificationEmails: notificationEmails,
 	}
 	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
@@ -371,4 +407,17 @@ func lookupActivation(ctx context.Context, client appsec.APPSEC, query appsec.Ge
 	}
 
 	return activations, nil
+}
+
+func defaultActivationNote(deactivating bool) (string, error) {
+	location, err := time.LoadLocation("UTC")
+	if err != nil {
+		return "", err
+	}
+
+	formattedTime := time.Now().In(location).Format(time.RFC850)
+	if deactivating {
+		return fmt.Sprintf("Deactivation request %s", formattedTime), nil
+	}
+	return fmt.Sprintf("Activation request %s", formattedTime), nil
 }

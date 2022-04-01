@@ -24,7 +24,7 @@ func dataSourceBypassNetworkLists() *schema.Resource {
 			},
 			"security_policy_id": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 			},
 			"bypass_network_list": {
 				Type:     schema.TypeList,
@@ -59,16 +59,16 @@ func dataSourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	getBypassNetworkLists := appsec.GetBypassNetworkListsRequest{
+	getBypassNetworkLists := appsec.GetWAPBypassNetworkListsRequest{
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
 	}
-	bypassnetworklists, err := client.GetBypassNetworkLists(ctx, getBypassNetworkLists)
+	bypassnetworklists, err := client.GetWAPBypassNetworkLists(ctx, getBypassNetworkLists)
 	if err != nil {
 		logger.Errorf("calling 'getBypassNetworkLists': %s", err.Error())
 		return diag.FromErr(err)

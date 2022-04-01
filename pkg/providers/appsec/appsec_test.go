@@ -314,6 +314,36 @@ func (p *mockappsec) RemoveBypassNetworkLists(ctx context.Context, params appsec
 	return args.Get(0).(*appsec.RemoveBypassNetworkListsResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetWAPBypassNetworkLists(ctx context.Context, params appsec.GetWAPBypassNetworkListsRequest) (*appsec.GetWAPBypassNetworkListsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetWAPBypassNetworkListsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateWAPBypassNetworkLists(ctx context.Context, params appsec.UpdateWAPBypassNetworkListsRequest) (*appsec.UpdateWAPBypassNetworkListsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateWAPBypassNetworkListsResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveWAPBypassNetworkLists(ctx context.Context, params appsec.RemoveWAPBypassNetworkListsRequest) (*appsec.RemoveWAPBypassNetworkListsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.RemoveWAPBypassNetworkListsResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetVersionNotes(ctx context.Context, params appsec.GetVersionNotesRequest) (*appsec.GetVersionNotesResponse, error) {
 	args := p.Called(ctx, params)
 

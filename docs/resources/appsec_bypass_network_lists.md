@@ -40,6 +40,7 @@ data "akamai_appsec_configuration" "configuration" {
 }
 resource "akamai_appsec_bypass_network_lists" "bypass_network_lists" {
   config_id           = data.akamai_appsec_configuration.configuration.config_id
+  security_policy_id  = "gms1_134637"
   bypass_network_list = ["DocumentationNetworkList", "TrainingNetworkList"]
 }
 ```
@@ -48,7 +49,8 @@ resource "akamai_appsec_bypass_network_lists" "bypass_network_lists" {
 
 This resource supports the following arguments:
 
-- `config_id` (Required). Unique identifier of the security configuration associated with the network bypass lists being modified.
+- `config_id` (Required). Unique identifier of the security configuration associated with the bypass network lists being modified.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the bypass network lists.
 - `bypass_network_list` (Required). JSON array of network IDs that comprise the bypass list.
 
 ## Output Options
