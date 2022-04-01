@@ -1,5 +1,11 @@
 # RELEASE NOTES
 
+## 1.12.1 (Apr 1, 2022)
+
+#### BUG FIXES:
+
+* Add metadata required by terraform registry
+
 ## 1.12.0 (Mar 31, 2022)
 
 #### FEATURES/ENHANCEMENTS:
