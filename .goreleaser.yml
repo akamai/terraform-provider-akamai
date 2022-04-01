@@ -54,6 +54,6 @@ release:
   # Visit your project's GitHub Releases page to publish this release.
   draft: true
   extra_files:
-    - glob: 'terraform-registry-manifest.json'
+    - glob: 'terraform-provider-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
 #  skip: true
