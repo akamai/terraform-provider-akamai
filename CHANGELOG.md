@@ -1,11 +1,5 @@
 # RELEASE NOTES
 
-## 1.12.1 (Apr 1, 2022)
-
-#### BUG FIXES:
-
-* Add metadata required by terraform registry
-
 ## 1.12.0 (Mar 31, 2022)
 
 #### FEATURES/ENHANCEMENTS:
@@ -33,6 +27,8 @@
 
 * PAPI
   * Fix CP code name forces replacement by adding update functionality in `akamai_cp_code` resource ([#262](https://github.com/akamai/terraform-provider-akamai/issues/262))
+
+* Add metadata required by terraform registry
 
 ## 1.11.0 (Mar 3, 2022)
 
