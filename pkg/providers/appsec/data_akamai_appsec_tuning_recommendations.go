@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -27,6 +28,16 @@ func dataSourceTuningRecommendations() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Unique identifier of the security policy for which to return tuning recommendations.",
+			},
+			"ruleset_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "active",
+				ValidateFunc: validation.StringInSlice([]string{
+					"active",
+					"evaluation",
+				}, false),
+				Description: "Type of the ruleset of the security configuration for which to return tuning recommendations for.",
 			},
 			"attack_group": {
 				Type:        schema.TypeString,
@@ -62,6 +73,11 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
+	rulesetType, err := tools.GetStringValue("ruleset_type", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	var jsonBody []byte
 
 	version, err := getLatestConfigVersion(ctx, configID, m)
@@ -71,10 +87,11 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 
 	if group != "" {
 		getAttackGroupRecommendationsRequest := appsec.GetAttackGroupRecommendationsRequest{
-			ConfigID: configID,
-			Version:  version,
-			PolicyID: policyID,
-			Group:    group,
+			ConfigID:    configID,
+			Version:     version,
+			PolicyID:    policyID,
+			Group:       group,
+			RulesetType: rulesetType,
 		}
 
 		response, err := client.GetAttackGroupRecommendations(ctx, getAttackGroupRecommendationsRequest)
@@ -89,9 +106,10 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 		}
 	} else {
 		getTuningRecommendationsRequest := appsec.GetTuningRecommendationsRequest{
-			ConfigID: configID,
-			Version:  version,
-			PolicyID: policyID,
+			ConfigID:    configID,
+			Version:     version,
+			PolicyID:    policyID,
+			RulesetType: rulesetType,
 		}
 
 		response, err := client.GetTuningRecommendations(ctx, getTuningRecommendationsRequest)

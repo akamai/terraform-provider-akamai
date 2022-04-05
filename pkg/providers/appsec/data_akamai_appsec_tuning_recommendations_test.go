@@ -31,12 +31,12 @@ func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 
 		client.On("GetTuningRecommendations",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RulesetType: "active"},
 		).Return(&getRecs, nil)
 
 		client.On("GetAttackGroupRecommendations",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS"},
+			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(&getGroupRecs, nil)
 
 		useClient(client, func() {
@@ -79,12 +79,12 @@ func TestAccAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadation
 
 		client.On("GetTuningRecommendations",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RulesetType: "active"},
 		).Return(nil, fmt.Errorf("GetTuningRecommendations failed"))
 
 		client.On("GetAttackGroupRecommendations",
 			mock.Anything, // ctx is irrelevant for this test
-			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS"},
+			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(nil, fmt.Errorf("GetAttackGroupRecommendations failed"))
 
 		useClient(client, func() {

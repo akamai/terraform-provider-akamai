@@ -40,6 +40,7 @@ output "policy_recommendations_json" {
 data "akamai_appsec_tuning_recommendations" "attack_group_recommendations" {
   config_id = data.akamai_appsec_configuration.configuration.config_id
   security_policy_id = var.security_policy_id
+  ruleset_type=var.ruleset_type
   attack_group = var.attack_group
 }
 
@@ -52,11 +53,13 @@ output "attack_group_recommendations_json" {
 
 The following arguments are supported:
 
-* `config_id` - (Required). Unique identifier of the security configuration you want to return tuning recommendations for.
+* `config_id` - (Required). Unique identifier of the security configuration you want tuning recommendations for.
 
-* `security_policy_id` - (Required). Unique identifier of the security policy you want to return tuning recommendations for.
+* `security_policy_id` - (Required). Unique identifier of the security policy you want tuning recommendations for.
 
-* `attack_group` - (Optional). Unique name of the attack group you want to return tuning recommendations for. If not included, recommendations are returned for all your attack groups.
+* `ruleset_type` - (Optional). Type of ruleset used by the security configuration you want tuning recommendations for. Supported values are `active` and `evaluation`. Defaults to `active`. 
+
+* `attack_group` - (Optional). Unique name of the attack group you want tuning recommendations for. If not included, recommendations are returned for all attack groups.
 
 ## Attributes Reference
 
