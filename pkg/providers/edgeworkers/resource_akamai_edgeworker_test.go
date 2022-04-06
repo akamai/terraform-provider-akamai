@@ -30,8 +30,8 @@ var (
 
 func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 	type edgeWorkerAttributes struct {
-		name, localBundle, localBundleHash, version string
-		groupID, resourceTierID                     int
+		groupID, name, localBundle, localBundleHash, version string
+		resourceTierID                                       int
 	}
 
 	var (
@@ -342,7 +342,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "warnings.#", "1"),
 				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "warnings.0", "{\"type\":\"warning_type\",\"message\":\"warning_message\"}"),
 				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "name", attrs.name),
-				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "group_id", strconv.Itoa(attrs.groupID)),
+				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "group_id", attrs.groupID),
 				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "resource_tier_id", strconv.Itoa(attrs.resourceTierID)),
 				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "local_bundle", attrs.localBundle),
 				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "local_bundle_hash", attrs.localBundleHash),
@@ -370,7 +370,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
-							groupID:         12345,
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     bundlePathForCreate,
 							localBundleHash: bundleHashForCreate,
@@ -416,7 +416,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_no_bundle.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
-							groupID:         12345,
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     defaultBundleURL,
 							localBundleHash: defaultBundleHash,
@@ -452,7 +452,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
-							groupID:         12345,
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     bundlePathForCreate,
 							localBundleHash: bundleHashForCreate,
@@ -463,7 +463,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_update_local_bundle.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
-							groupID:         12345,
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     bundlePathForUpdate,
 							localBundleHash: bundleHashForUpdate,
@@ -523,7 +523,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config:    loadFixtureString(fmt.Sprintf("%s/edgeworker_temp_bundle.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
-							groupID:         12345,
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     tempBundlePath,
 							localBundleHash: bundleHashForCreate,
@@ -535,7 +535,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config:    loadFixtureString(fmt.Sprintf("%s/edgeworker_temp_bundle.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
-							groupID:         12345,
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     tempBundlePath,
 							localBundleHash: bundleHashForUpdate,
@@ -571,7 +571,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
-							groupID:         12345,
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     bundlePathForCreate,
 							localBundleHash: bundleHashForCreate,
@@ -582,7 +582,50 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_update_group_id.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
-							groupID:         12346,
+							groupID:         "12346",
+							resourceTierID:  54321,
+							localBundle:     bundlePathForCreate,
+							localBundleHash: bundleHashForCreate,
+							version:         "1.0",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("edgeworker no update on group_id prefix change", func(t *testing.T) {
+		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
+		client := new(mockedgeworkers)
+
+		timeForCreation := time.Now().Format(time.RFC3339)
+
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 4)
+
+		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorker.EdgeWorkerID, timeForCreation)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Check: checkAttributes(edgeWorkerAttributes{
+							name:            "example",
+							groupID:         "12345",
+							resourceTierID:  54321,
+							localBundle:     bundlePathForCreate,
+							localBundleHash: bundleHashForCreate,
+							version:         "1.0",
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_update_group_id_prefix.tf", testDir)),
+						Check: checkAttributes(edgeWorkerAttributes{
+							name:            "example",
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     bundlePathForCreate,
 							localBundleHash: bundleHashForCreate,
@@ -618,7 +661,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
-							groupID:         12345,
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     bundlePathForCreate,
 							localBundleHash: bundleHashForCreate,
@@ -629,7 +672,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_update_name.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example update",
-							groupID:         12345,
+							groupID:         "12345",
 							resourceTierID:  54321,
 							localBundle:     bundlePathForCreate,
 							localBundleHash: bundleHashForCreate,
