@@ -19,7 +19,7 @@ func TestDSGroups(t *testing.T) {
 
 	t.Run("groups can nest 50 levels deep", func(t *testing.T) {
 		t.Parallel()
-		prov := provider{}
+		prov := providerOld{}
 
 		assert.Equal(t, 50, GroupsNestingDepth(prov.dsGroups()), "incorrect nesting depth")
 	})
@@ -43,7 +43,7 @@ func TestDSGroups(t *testing.T) {
 			client.On("ListGroups", mock.Anything, req).Return(res, nil)
 		}
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 
@@ -97,7 +97,7 @@ func TestDSGroups(t *testing.T) {
 			client.On("ListGroups", mock.Anything, req).Return(nil, errors.New("failed to list groups"))
 		}
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 

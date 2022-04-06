@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *provider) dsRoles() *schema.Resource {
+func (p *providerOld) dsRoles() *schema.Resource {
 	return &schema.Resource{
 		Description: "Get roles for the current account and contract",
 		ReadContext: p.tfCRUD("ds:Roles:Read", p.dsRolesRead),
@@ -68,7 +68,7 @@ func (p *provider) dsRoles() *schema.Resource {
 	}
 }
 
-func (p *provider) dsRolesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) dsRolesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	logger.Debug("Fetching roles")

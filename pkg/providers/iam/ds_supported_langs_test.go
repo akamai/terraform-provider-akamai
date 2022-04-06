@@ -21,7 +21,7 @@ func TestDSSupportedLangs(t *testing.T) {
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedLanguages", mock.Anything).Return([]string{"first", "second", "third"}, nil)
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 
@@ -49,7 +49,7 @@ func TestDSSupportedLangs(t *testing.T) {
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedLanguages", mock.Anything).Return([]string{}, errors.New("Could not set supported languages in state"))
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 

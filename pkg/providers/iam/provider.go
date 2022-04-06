@@ -1,86 +1,90 @@
 package iam
 
 import (
-	"context"
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type provider struct {
-	client iam.IAM
-	cache  Cache
-	mtx    sync.Mutex
+type (
+	provider struct {
+		*schema.Provider
+
+		client iam.IAM
+	}
+
+	// Option is a iam provider option
+	Option func(p *provider)
+)
+
+var (
+	once sync.Once
+
+	inst *provider
+)
+
+// Subprovider returns a core sub provider
+func Subprovider() akamai.Subprovider {
+	once.Do(func() {
+		inst = &provider{Provider: Provider()}
+	})
+
+	return inst
 }
 
-// Schema returns the subprovider's config schema map
-func (p *provider) Schema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{}
+// Provider returns the Akamai terraform.Resource provider.
+func Provider() *schema.Provider {
+
+	provider := &schema.Provider{
+		Schema:         map[string]*schema.Schema{},
+		DataSourcesMap: map[string]*schema.Resource{},
+		ResourcesMap:   map[string]*schema.Resource{},
+	}
+	return provider
 }
 
-// Resources returns the subprovider's resource schema map
-func (p *provider) Resources() map[string]*schema.Resource {
-	return map[string]*schema.Resource{
-		"akamai_iam_user": p.resUser(),
+// WithClient sets the client interface function, used for mocking and testing
+func WithClient(c iam.IAM) Option {
+	return func(p *provider) {
+		p.client = c
 	}
 }
 
-// DataSources returns the subprovider's data source schema map
-func (p *provider) DataSources() map[string]*schema.Resource {
-	return map[string]*schema.Resource{
-		"akamai_iam_roles":            p.dsRoles(),
-		"akamai_iam_groups":           p.dsGroups(),
-		"akamai_iam_countries":        p.dsCountries(),
-		"akamai_iam_contact_types":    p.dsContactTypes(),
-		"akamai_iam_supported_langs":  p.dsLanguages(),
-		"akamai_iam_timeout_policies": p.dsTimeoutPolicies(),
-		"akamai_iam_states":           p.dsStates(),
+// Client returns the DNS interface
+func (p *provider) Client(meta akamai.OperationMeta) iam.IAM {
+	if p.client != nil {
+		return p.client
 	}
+	return iam.Client(meta.Session())
 }
 
-// Provider returns a new provider schema instance
-func (p *provider) ProviderSchema() *schema.Provider {
-	return &schema.Provider{
-		Schema:         p.Schema(),
-		DataSourcesMap: p.DataSources(),
-		ResourcesMap:   p.Resources(),
-	}
-}
-
-// Configure receives the core provider's config data
-func (p *provider) Configure(_ log.Interface, _ *schema.ResourceData) diag.Diagnostics {
-	return nil
-}
-
-// Name returns the subprovider's name
 func (p *provider) Name() string {
 	return "iam"
 }
 
-// Version returns the subprovider's version
+// ProviderVersion update version string anytime provider adds new features
+const ProviderVersion string = "v0.0.1"
+
 func (p *provider) Version() string {
-	return "v0.0.1"
+	return ProviderVersion
 }
 
-// SetIAM allows injection of an IAM.Client
-func (p *provider) SetIAM(c iam.IAM) {
-	p.client = c
+func (p *provider) Schema() map[string]*schema.Schema {
+	return p.Provider.Schema
 }
 
-// SetSession allows injection of a session.Session
-func (p *provider) SetSession(s session.Session) {
-	p.SetIAM(iam.Client(s))
+func (p *provider) Resources() map[string]*schema.Resource {
+	return p.Provider.ResourcesMap
 }
 
-// SetCache allows injection of a Cache
-func (p *provider) SetCache(c Cache) {
-	p.cache = c
+func (p *provider) DataSources() map[string]*schema.Resource {
+	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) log(ctx context.Context) log.Interface {
-	return log.FromContext(ctx)
+func (p *provider) Configure(_ log.Interface, _ *schema.ResourceData) diag.Diagnostics {
+	return nil
 }

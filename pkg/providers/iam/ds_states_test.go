@@ -24,7 +24,7 @@ func TestDSStates(t *testing.T) {
 		req := iam.ListStatesRequest{Country: "test country"}
 		client.On("ListStates", mock.Anything, req).Return([]string{"first", "second", "third"}, nil)
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 
@@ -54,7 +54,7 @@ func TestDSStates(t *testing.T) {
 		req := iam.ListStatesRequest{Country: "test country"}
 		client.On("ListStates", mock.Anything, req).Return([]string{}, errors.New("Could not get states"))
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 

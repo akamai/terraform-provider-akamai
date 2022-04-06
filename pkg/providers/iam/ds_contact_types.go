@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *provider) dsContactTypes() *schema.Resource {
+func (p *providerOld) dsContactTypes() *schema.Resource {
 	return &schema.Resource{
 		Description: "Retrieve all contact types that Akamai supports",
 		ReadContext: p.tfCRUD("ds:ContactTypes:Read", p.dsContactTypesRead),
@@ -22,7 +22,7 @@ func (p *provider) dsContactTypes() *schema.Resource {
 	}
 }
 
-func (p *provider) dsContactTypesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) dsContactTypesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	logger.Debug("Fetching supported contact types")

@@ -28,7 +28,7 @@ func TestDSTimeoutPolicies(t *testing.T) {
 		}
 		client.On("ListTimeoutPolicies", mock.Anything).Return(res, nil)
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 
@@ -57,7 +57,7 @@ func TestDSTimeoutPolicies(t *testing.T) {
 		client.Test(test.TattleT{T: t})
 		client.On("ListTimeoutPolicies", mock.Anything).Return(nil, errors.New("Could not get supported timeout policies"))
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 

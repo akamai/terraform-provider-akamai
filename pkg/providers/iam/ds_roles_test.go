@@ -35,7 +35,7 @@ func TestDSRoles(t *testing.T) {
 		client.Test(test.TattleT{T: t})
 		client.On("ListRoles", mock.Anything, req).Return(roles, nil)
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 
@@ -71,7 +71,7 @@ func TestDSRoles(t *testing.T) {
 		client.Test(test.TattleT{T: t})
 		client.On("ListRoles", mock.Anything, req).Return(nil, errors.New("failed to get roles"))
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 

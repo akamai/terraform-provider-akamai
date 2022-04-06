@@ -10,7 +10,7 @@ import (
 )
 
 // Resource schema for akamai_iam_groups data source
-func (p *provider) dsGroups() *schema.Resource {
+func (p *providerOld) dsGroups() *schema.Resource {
 	return &schema.Resource{
 		Description: `List all groups in which you have a scope of "admin" for the current account and contract`,
 		ReadContext: p.tfCRUD("ds:Groups:Read", p.dsGroupsRead),
@@ -71,7 +71,7 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 	}
 }
 
-func (p *provider) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	logger.Debug("Fetching groups")

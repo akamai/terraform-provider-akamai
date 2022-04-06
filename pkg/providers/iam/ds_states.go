@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *provider) dsStates() *schema.Resource {
+func (p *providerOld) dsStates() *schema.Resource {
 	return &schema.Resource{
 		Description: "List US states or Canadian provinces",
 		ReadContext: p.tfCRUD("ds:States:Read", p.dsStatesRead),
@@ -28,7 +28,7 @@ func (p *provider) dsStates() *schema.Resource {
 	}
 }
 
-func (p *provider) dsStatesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) dsStatesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	Country := d.Get("country").(string)

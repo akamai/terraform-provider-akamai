@@ -21,7 +21,7 @@ func TestDSContactTypes(t *testing.T) {
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedContactTypes", mock.Anything).Return([]string{"first", "second", "third"}, nil)
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 
@@ -50,7 +50,7 @@ func TestDSContactTypes(t *testing.T) {
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedContactTypes", mock.Anything).Return(nil, errors.New("failed to get supported contact types"))
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 

@@ -28,7 +28,7 @@ func TestResUserLifecycle(t *testing.T) {
 	OneAuthGrantJSONB := `[{"groupId":0,"groupName":"B","isBlocked":false,"roleDescription":"","roleName":""}]`
 
 	type TestState struct {
-		Provider   *provider
+		Provider   *providerOld
 		Client     *IAM
 		User       iam.User
 		UserExists bool
@@ -347,7 +347,7 @@ func TestResUserLifecycle(t *testing.T) {
 			t.Helper()
 			t.Parallel()
 
-			State := TestState{Provider: &provider{}}
+			State := TestState{Provider: &providerOld{}}
 			State.Provider.SetCache(metaCache{})
 
 			resource.UnitTest(t, resource.TestCase{

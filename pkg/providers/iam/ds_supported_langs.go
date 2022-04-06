@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *provider) dsLanguages() *schema.Resource {
+func (p *providerOld) dsLanguages() *schema.Resource {
 	return &schema.Resource{
 		Description: "List all the possible languages Akamai supports",
 		ReadContext: p.tfCRUD("ds:Languages:Read", p.dsLanguagesRead),
@@ -22,7 +22,7 @@ func (p *provider) dsLanguages() *schema.Resource {
 	}
 }
 
-func (p *provider) dsLanguagesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) dsLanguagesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	logger.Debug("Fetching supported supported languages")

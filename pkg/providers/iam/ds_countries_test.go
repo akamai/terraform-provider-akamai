@@ -21,7 +21,7 @@ func TestDSCountries(t *testing.T) {
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedCountries", mock.Anything).Return([]string{"first", "second", "third"}, nil)
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 
@@ -50,7 +50,7 @@ func TestDSCountries(t *testing.T) {
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedCountries", mock.Anything).Return([]string{}, errors.New("Could not get supported countries"))
 
-		p := provider{}
+		p := providerOld{}
 		p.SetCache(metaCache{})
 		p.SetIAM(client)
 

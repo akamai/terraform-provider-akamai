@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *provider) resUser() *schema.Resource {
+func (p *providerOld) resUser() *schema.Resource {
 	validateAuthGrantJS := func(v interface{}, _ cty.Path) diag.Diagnostics {
 		js := []byte(v.(string))
 		if len(js) == 0 {
@@ -244,7 +244,7 @@ func (p *provider) resUser() *schema.Resource {
 	}
 }
 
-func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) resUserCreate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	AuthGrantsJSON := []byte(d.Get("auth_grants_json").(string))
@@ -302,7 +302,7 @@ func (p *provider) resUserCreate(ctx context.Context, d *schema.ResourceData, _ 
 	return p.resUserRead(ctx, d, nil)
 }
 
-func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) resUserRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	req := iam.GetUserRequest{
@@ -364,7 +364,7 @@ func (p *provider) resUserRead(ctx context.Context, d *schema.ResourceData, _ in
 	return nil
 }
 
-func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	if d.HasChange("email") {
@@ -469,7 +469,7 @@ func (p *provider) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ 
 	return nil
 }
 
-func (p *provider) resUserDelete(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) resUserDelete(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	if err := p.client.RemoveUser(ctx, iam.RemoveUserRequest{IdentityID: d.Id()}); err != nil {

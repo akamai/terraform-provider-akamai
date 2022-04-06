@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *provider) dsTimeoutPolicies() *schema.Resource {
+func (p *providerOld) dsTimeoutPolicies() *schema.Resource {
 	return &schema.Resource{
 		Description: "Lists all session timeout policies Akamai supports",
 		ReadContext: p.tfCRUD("ds:TimeoutPolicies:Read", p.dsTimeoutPoliciesRead),
@@ -22,7 +22,7 @@ func (p *provider) dsTimeoutPolicies() *schema.Resource {
 	}
 }
 
-func (p *provider) dsTimeoutPoliciesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) dsTimeoutPoliciesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	logger.Debug("Fetching supported timeout policies")

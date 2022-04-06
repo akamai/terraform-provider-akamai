@@ -8,5 +8,5 @@ import (
 )
 
 func init() {
-	registry.RegisterProvider(&provider{})
+	registry.RegisterProvider(&providerOld{})
 }

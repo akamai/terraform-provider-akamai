@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *provider) dsCountries() *schema.Resource {
+func (p *providerOld) dsCountries() *schema.Resource {
 	return &schema.Resource{
 		Description: "List all the possible countries that Akamai supports",
 		ReadContext: p.tfCRUD("ds:Countries:Read", p.dsCountriesRead),
@@ -22,7 +22,7 @@ func (p *provider) dsCountries() *schema.Resource {
 	}
 }
 
-func (p *provider) dsCountriesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (p *providerOld) dsCountriesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	logger := p.log(ctx)
 
 	logger.Debug("Fetching supported countries")
