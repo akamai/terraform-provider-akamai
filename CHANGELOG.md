@@ -1,5 +1,13 @@
 # RELEASE NOTES
 
+## 1.12.1 (Apr 6, 2022)
+
+#### BUG FIXES:
+
+* Added Image and Video Manager Documentation
+
+* Include `terraform-provider-manifest`
+
 ## 1.12.0 (Mar 31, 2022)
 
 #### FEATURES/ENHANCEMENTS:
