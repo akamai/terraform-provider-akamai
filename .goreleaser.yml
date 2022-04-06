@@ -29,6 +29,10 @@ builds:
   ignore:
     - goos: darwin
       goarch: '386'
+    - goos: darwin
+      goarch: 'arm64'
+    - goos: windows
+      goarch: 'arm64'
 #    - goos: freebsd
 #      goarch: '386'
   binary: '{{ .ProjectName }}_v{{ .Version }}'
@@ -53,5 +57,7 @@ signs:
 release:
   # Visit your project's GitHub Releases page to publish this release.
   draft: true
-#changelog:
+  extra_files:
+    - glob: 'terraform-provider-manifest.json'
+      name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
 #  skip: true

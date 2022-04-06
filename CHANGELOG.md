@@ -28,6 +28,8 @@
 * PAPI
   * Fix CP code name forces replacement by adding update functionality in `akamai_cp_code` resource ([#262](https://github.com/akamai/terraform-provider-akamai/issues/262))
 
+* Add metadata required by terraform registry
+
 ## 1.11.0 (Mar 3, 2022)
 
 #### FEATURES/ENHANCEMENTS:
