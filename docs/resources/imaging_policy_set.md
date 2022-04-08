@@ -8,7 +8,7 @@ description: |-
 
 # akamai_imaging_policy_video (Beta)
 
-Use the `akamai_imaging_policy_set` data source to define a policy set.
+Use the `akamai_imaging_policy_set` resource to define a policy set.
 
 ## Basic usage
 
@@ -25,7 +25,7 @@ resource "akamai_imaging_policy_set" "example_policy_set" {
 
 ## Argument reference
 
-This data source supports these arguments:
+This resource supports these arguments:
 * `contract_id` - (Required) The unique identifier for the Akamai Contract containing the policy set.
 * `name` - (Required) A friendly name for the policy set.
 * `region` - (Required) The geographic region for which the media using this policy set is optimized: `US`, `EMEA`, `ASIA`, `AUSTRALIA`, `JAPAN` or `CHINA`

@@ -41,6 +41,6 @@ It is not possible to modify the id of the policy.
 
 ## Attributes reference
 
-This data source returns this attribute:
+This resource returns this attribute:
 
 * `version` - The version number of the policy.
