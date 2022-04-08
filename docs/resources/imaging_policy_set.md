@@ -18,7 +18,7 @@ This example returns the policy set details:
 resource "akamai_imaging_policy_set" "example_policy_set" {
     contract_id            = "1234"
     name                   = "image_policyset"
-    region                 = US
+    region                 = "US"
     type                   = "IMAGE"
 }
 ```
@@ -28,5 +28,5 @@ resource "akamai_imaging_policy_set" "example_policy_set" {
 This data source supports these arguments:
 * `contract_id` - (Required) The unique identifier for the Akamai Contract containing the policy set.
 * `name` - (Required) A friendly name for the policy set.
-* `region` - (Required) The geographic region for which the media using this policy set is optimized: "US" "EMEA" "ASIA" "AUSTRALIA" "JAPAN" "CHINA"
+* `region` - (Required) The geographic region for which the media using this policy set is optimized: `US`, `EMEA`, `ASIA`, `AUSTRALIA`, `JAPAN` or `CHINA`
 * `type` - (Required) The type of media managed by this policy set: `IMAGE` or `VIDEO`
