@@ -1313,6 +1313,17 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 	logger.Debug("updating property hostnames")
 	res, err := client.UpdatePropertyVersionHostnames(ctx, req)
 	if err != nil {
+		hasDefaultProvisioningType := false
+		for _, h := range Hostnames {
+			if h.CertProvisioningType == "DEFAULT" {
+				hasDefaultProvisioningType = true
+				break
+			}
+		}
+		var e *papi.Error
+		if hasDefaultProvisioningType && errors.As(err, &e) && e.StatusCode == http.StatusTooManyRequests {
+			err = fmt.Errorf("%s: not possible to use cert_provisioning_type = 'DEFAULT' as secure-by-default is not enabled in this account", papi.ErrUpdatePropertyVersionHostnames)
+		}
 		logger.WithError(err).Error("could not create new property version")
 		return err
 	}
