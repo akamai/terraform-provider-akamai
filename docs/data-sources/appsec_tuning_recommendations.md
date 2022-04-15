@@ -29,7 +29,7 @@ data "akamai_appsec_configuration" "configuration" {
 }
 
 data "akamai_appsec_tuning_recommendations" "policy_recommendations" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
   security_policy_id = var.security_policy_id
 }
 
@@ -38,10 +38,10 @@ output "policy_recommendations_json" {
 }
 
 data "akamai_appsec_tuning_recommendations" "attack_group_recommendations" {
-  config_id = data.akamai_appsec_configuration.configuration.config_id
+  config_id          = data.akamai_appsec_configuration.configuration.config_id
   security_policy_id = var.security_policy_id
-  ruleset_type=var.ruleset_type
-  attack_group = var.attack_group
+  ruleset_type       = var.ruleset_type
+  attack_group       = var.attack_group
 }
 
 output "attack_group_recommendations_json" {

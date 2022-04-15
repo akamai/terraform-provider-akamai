@@ -67,7 +67,7 @@ output "bypass_network_lists_id_list" {
 
 This data source supports the following arguments:
 
-- `config_id` (Required). Unique identifier of the security configuration associated with the bypass network list.
+- `config_id` (Required). Unique identifier of the security configuration associated with the bypass network lists.
 - `security_policy_id` (Required). Unique identifier of the security policy associated with the bypass network lists.
 
 ## Output Options

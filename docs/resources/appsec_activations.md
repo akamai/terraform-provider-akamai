@@ -64,7 +64,7 @@ This resource supports the following arguments:
 
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
-- `status` Status of the operation. Valid values are:
+- `status`. Status of the operation. Valid values are:
   *	**ACTIVATED**
   *	**DEACTIVATED**
   *	**FAILED**

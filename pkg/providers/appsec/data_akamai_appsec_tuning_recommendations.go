@@ -32,12 +32,12 @@ func dataSourceTuningRecommendations() *schema.Resource {
 			"ruleset_type": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "active",
+				Default:  string(appsec.RulesetTypeActive),
 				ValidateFunc: validation.StringInSlice([]string{
-					"active",
-					"evaluation",
+					string(appsec.RulesetTypeActive),
+					string(appsec.RulesetTypeEvaluation),
 				}, false),
-				Description: "Type of the ruleset of the security configuration for which to return tuning recommendations for.",
+				Description: "Type of the ruleset of the security configuration for which to return tuning recommendations.",
 			},
 			"attack_group": {
 				Type:        schema.TypeString,
@@ -91,7 +91,7 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 			Version:     version,
 			PolicyID:    policyID,
 			Group:       group,
-			RulesetType: rulesetType,
+			RulesetType: appsec.RulesetType(rulesetType),
 		}
 
 		response, err := client.GetAttackGroupRecommendations(ctx, getAttackGroupRecommendationsRequest)
@@ -109,7 +109,7 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 			ConfigID:    configID,
 			Version:     version,
 			PolicyID:    policyID,
-			RulesetType: rulesetType,
+			RulesetType: appsec.RulesetType(rulesetType),
 		}
 
 		response, err := client.GetTuningRecommendations(ctx, getTuningRecommendationsRequest)

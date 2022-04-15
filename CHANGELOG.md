@@ -2,6 +2,13 @@
 
 ## 1.13 (May X, 2022)
 
+#### FEATURES/ENHANCEMENTS:
+
+* APPSEC
+  * Add tuning recommendations for eval rulesets
+  * Require version number for security configuration activation
+  * Require security policy ID for bypass network list data source & resource
+
 #### BUG FIXES:
 
 * PAPI

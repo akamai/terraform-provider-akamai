@@ -51,19 +51,19 @@ func resourceActivations() *schema.Resource {
 				Type:       schema.TypeBool,
 				Optional:   true,
 				Default:    true,
-				Deprecated: "The setting activate has been deprecated; \"terraform apply\" will always perform activation. (Use \"terraform destroy\" for deactivation.)",
+				Deprecated: `The setting activate has been deprecated; "terraform apply" will always perform activation. (Use "terraform destroy" for deactivation.)`,
 			},
 			"note": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				Description:   "A note describing the activation",
+				Description:   "A note describing the activation. Will use timestamp if omitted.",
 				ConflictsWith: []string{"notes"},
 			},
 			"notes": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Description:   "A note describing the activation",
-				Deprecated:    "The setting notes has been deprecated. Use note instead.",
+				Deprecated:    `The setting notes has been deprecated. Use "note" instead.`,
 				ConflictsWith: []string{"note"},
 			},
 			"notification_emails": {
