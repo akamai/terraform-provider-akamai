@@ -1,5 +1,12 @@
 # RELEASE NOTES
 
+## 1.13 (May X, 2022)
+
+#### BUG FIXES:
+
+* PAPI
+  * resource `akamai_property`: handle secure by default API errors
+
 ## 1.12.1 (Apr 6, 2022)
 
 #### BUG FIXES:
