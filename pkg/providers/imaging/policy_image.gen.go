@@ -110,7 +110,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"append": {
 			Description: "Places a specified `image` beside the source image. The API places the `image` on a major dimension, then aligns it on the minor dimension. Transparent pixels fill any area not covered by either image.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: appendType(depth - 1),
@@ -119,7 +119,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"aspect_crop": {
 			Description: "Lets you change the height or width of an image (either by cropping or expanding the area) to an aspect ratio of your choosing.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: aspectCrop(depth - 1),
@@ -128,7 +128,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"background_color": {
 			Description: "Places a transparent image on a set background color. Color is specified in the typical CSS hexadecimal format.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: backgroundColor(depth - 1),
@@ -137,7 +137,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"blur": {
 			Description: "Applies a Gaussian blur to the image.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: blur(depth - 1),
@@ -146,7 +146,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"chroma_key": {
 			Description: "Changes any color in an image within the specified volume of the HSL colorspace to transparent or semitransparent. This transformation applies a 'green screen' technique commonly used to isolate and remove background colors.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: chromaKey(depth - 1),
@@ -155,7 +155,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"composite": {
 			Description: "Applies another image to the source image, either as an overlay or an underlay. The image that's underneath is visible in areas that are beyond the edges of the top image or that are less than 100% opaque. A common use of an overlay composite is to add a watermark.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: composite(depth - 1),
@@ -164,7 +164,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"compound": {
 			Description: "",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: compound(depth - 1),
@@ -173,7 +173,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"contrast": {
 			Description: "Adjusts both the contrast and brightness of an image.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: contrast(depth - 1),
@@ -182,7 +182,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"crop": {
 			Description: "Crops an image.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: crop(depth - 1),
@@ -191,7 +191,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"face_crop": {
 			Description: "Applies a method to detect faces in the source image and applies the rectangular crop on either the `biggest` face or `all` of the faces detected. Image and Video Manager tries to preserve faces in the image instead of using specified crop coordinates.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: faceCrop(depth - 1),
@@ -200,7 +200,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"feature_crop": {
 			Description: "Identifies prominent features of the source image, then crops around as many of these features as possible relative to the specified `width` and `height` values.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: featureCrop(depth - 1),
@@ -209,7 +209,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"fit_and_fill": {
 			Description: "Resizes an image to fit within a specific size box and then uses a fill of that same image to cover any transparent space at the edges. By default the fill image has a Blur transformation with a sigma value of 8 applied, but the transformation can be customized using the fillTransformation parameter.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: fitAndFill(depth - 1),
@@ -218,7 +218,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"goop": {
 			Description: "Distorts an image by randomly repositioning a set of control points along a specified grid. The transformed image appears _goopy_. Adjust the density of the grid and the degree of randomity. You can use this transformation to create watermarks for use in security.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: goop(depth - 1),
@@ -227,7 +227,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"grayscale": {
 			Description: "Restricts image color to shades of gray only.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: grayscale(depth - 1),
@@ -236,7 +236,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"hsl": {
 			Description: "Adjusts the hue, saturation, and lightness (HSL) of an image. Hue is the number of degrees that colors rotate around the color wheel. Saturation is a multiplier to increase or decrease color saturation. Lightness is a multiplier to increase or decrease the lightness of an image. Other transformations can also affect color, such as `Grayscale` and `MaxColors`. If youre using more than one, consider the order to apply them for the desired results.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: hsl(depth - 1),
@@ -245,7 +245,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"hsv": {
 			Description: "Identical to HSL except it replaces `lightness` with `value`. For example, if you reduce the `lightness` of a light green, almost white, image, the color turns a vibrant green. Reducing the `value` turns the image a darker color, close to grey. This happens because the original image color is very close to white.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: hsv(depth - 1),
@@ -254,7 +254,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"if_dimension": {
 			Description: "",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: ifDimension(depth - 1),
@@ -263,7 +263,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"if_orientation": {
 			Description: "",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: ifOrientation(depth - 1),
@@ -272,7 +272,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"max_colors": {
 			Description: "Set the maximum number of colors in the images palette. Reducing the number of colors in an image can help to reduce file size.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: maxColors(depth - 1),
@@ -281,7 +281,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"mirror": {
 			Description: "Flips an image horizontally, vertically, or both.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: mirror(depth - 1),
@@ -290,7 +290,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"mono_hue": {
 			Description: "Allows you to set all hues in an image to a single specified hue of your choosing. Mono Hue maintains the original color’s lightness and saturation but sets the hue to that of the specified value. This has the effect of making the image shades of the specified hue.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: monoHue(depth - 1),
@@ -299,7 +299,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"opacity": {
 			Description: "Adjusts the level of transparency of an image. Use this transformation to make an image more or less transparent.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: opacity(depth - 1),
@@ -308,7 +308,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"region_of_interest_crop": {
 			Description: "Crops to a region around a specified area of interest relative to the specified `width` and `height` values.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: regionOfInterestCrop(depth - 1),
@@ -317,7 +317,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"relative_crop": {
 			Description: "Shrinks or expands an image relative to the image's specified dimensions. Image and Video Manager fills the expanded areas with transparency. Positive values shrink the side, while negative values expand it.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: relativeCrop(depth - 1),
@@ -326,7 +326,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"remove_color": {
 			Description: "Removes a specified color from an image and replaces it with transparent pixels. This transformation is ideal for removing solid background colors from product images photographed on clean, consistent backgrounds without any shadows.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: removeColor(depth - 1),
@@ -335,7 +335,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"resize": {
 			Description: "Resizes an image to a particular, absolute dimension. If you don't enter a `width` or a `height`, the image is resized with the `fit` aspect preservation mode, which selects a value for the missing dimension that preserves the image's aspect.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: resize(depth - 1),
@@ -344,7 +344,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"rotate": {
 			Description: "Rotate the image around its center by indicating the degrees of rotation.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: rotate(depth - 1),
@@ -353,7 +353,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"scale": {
 			Description: "Changes the image's size to different dimensions relative to its starting size.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: scale(depth - 1),
@@ -362,7 +362,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"shear": {
 			Description: "Slants an image into a parallelogram, as a percent of the starting dimension as represented in decimal format. You need to specify at least one axis property. Transparent pixels fill empty areas around the sheared image as needed, so it's often useful to use a `BackgroundColor` transformation for these areas.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: shear(depth - 1),
@@ -371,7 +371,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"trim": {
 			Description: "Automatically crops uniform backgrounds from the edges of an image.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: trim(depth - 1),
@@ -380,7 +380,7 @@ func transformationType(depth int) map[string]*schema.Schema {
 
 		"unsharp_mask": {
 			Description: "Emphasizes edges and details in source images without distorting the colors. Although this effect is often referred to as _sharpening_ an image, it actually creates a blurred, inverted copy of the image known as an unsharp mask. Image and Video Manager combines the unsharp mask with the source image to create an image perceived as clearer.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: unsharpMask(depth - 1),
@@ -415,7 +415,7 @@ func appendType(depth int) map[string]*schema.Schema {
 			Description: "Specifies where to place the `image` relative to the source image. The available values represent the eight cardinal directions (`North`, `South`, `East`, `West`, `NorthEast`, `NorthWest`, `SouthEast`, `SouthWest`) and a `Center` by default.",
 		},
 		"image": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Required: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -543,7 +543,7 @@ func boxImageType(depth int) map[string]*schema.Schema {
 			Description: "The height of the box in pixels.",
 		},
 		"transformation": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -671,7 +671,7 @@ func circleImageType(depth int) map[string]*schema.Schema {
 			Description: "The diameter of the circle. The diameter will be the width and the height of the image in pixels.",
 		},
 		"transformation": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -694,7 +694,7 @@ func circleImageType(depth int) map[string]*schema.Schema {
 func circleShapeType(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"center": {
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Required:    true,
 			Description: "Defines coordinates for a single point, to help define polygons and rectangles. Each point may be an object with `x`and `y` members, or a two-element array.",
 			MaxItems:    1,
@@ -730,7 +730,7 @@ func composite(depth int) map[string]*schema.Schema {
 			Description: "Compass direction indicating the corner or edge of the base image to place the applied image. Use Horizontal and Vertical Offset to adjust the applied image's gravity position",
 		},
 		"image": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Required: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1116,7 +1116,7 @@ func featureCrop(_ int) map[string]*schema.Schema {
 func fitAndFill(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"fill_transformation": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1281,7 +1281,7 @@ func hsv(_ int) map[string]*schema.Schema {
 func ifDimension(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"default": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1300,7 +1300,7 @@ func ifDimension(depth int) map[string]*schema.Schema {
 			Description: "The dimension to use to select the transformation, either `height`, `width`, or `both`.",
 		},
 		"equal": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1308,7 +1308,7 @@ func ifDimension(depth int) map[string]*schema.Schema {
 			},
 		},
 		"greater_than": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1316,7 +1316,7 @@ func ifDimension(depth int) map[string]*schema.Schema {
 			},
 		},
 		"less_than": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1339,7 +1339,7 @@ func ifDimension(depth int) map[string]*schema.Schema {
 func ifOrientation(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"default": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1347,7 +1347,7 @@ func ifOrientation(depth int) map[string]*schema.Schema {
 			},
 		},
 		"landscape": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1355,7 +1355,7 @@ func ifOrientation(depth int) map[string]*schema.Schema {
 			},
 		},
 		"portrait": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1363,7 +1363,7 @@ func ifOrientation(depth int) map[string]*schema.Schema {
 			},
 		},
 		"square": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1515,7 +1515,7 @@ func pointShapeType(_ int) map[string]*schema.Schema {
 func policyImage(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"breakpoints": {
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Description: "The breakpoint widths (in pixels) to use to create derivative images/videos.",
 			MaxItems:    1,
@@ -1530,7 +1530,7 @@ func policyImage(depth int) map[string]*schema.Schema {
 			Elem:        &schema.Schema{Type: schema.TypeString},
 		},
 		"output": {
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Description: "Dictates the output quality (either `quality` or `perceptualQuality`) and formats that are created for each resized image. If unspecified, image formats are created to support all browsers at the default quality level (`85`), which includes formats such as WEBP, JPEG2000 and JPEG-XR for specific browsers.",
 			MaxItems:    1,
@@ -1591,7 +1591,7 @@ func polygonShapeType(depth int) map[string]*schema.Schema {
 func rectangleShapeType(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"anchor": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Required: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1646,7 +1646,7 @@ func regionOfInterestCrop(depth int) map[string]*schema.Schema {
 			Description: "The height in pixels of the output image relative to the specified `style` value.",
 		},
 		"region_of_interest": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Required: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -1922,7 +1922,7 @@ func textImageType(depth int) map[string]*schema.Schema {
 			Description: "The line of text to render.",
 		},
 		"transformation": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
@@ -2017,7 +2017,7 @@ func unsharpMask(_ int) map[string]*schema.Schema {
 func urlImageType(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"transformation": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeList,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{

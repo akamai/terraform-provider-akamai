@@ -21,6 +21,7 @@ func TestResourcePolicy(t *testing.T) {
 		policyID             string
 		policySetID          string
 		activateOnProduction string
+		schema               bool
 	}
 
 	var (
@@ -57,6 +58,52 @@ func TestResourcePolicy(t *testing.T) {
 						Value: tools.IntPtr(2),
 					},
 					Transformation: imaging.MaxColorsTransformationMaxColors,
+				},
+			},
+			Version: 1,
+			Video:   false,
+		}
+		policyInputOrder = imaging.PolicyInputImage{
+			Breakpoints: &imaging.Breakpoints{
+				Widths: []int{320, 640, 1024, 2048, 5000},
+			},
+			Output: &imaging.OutputImage{
+				PerceptualQuality: &imaging.OutputImagePerceptualQualityVariableInline{
+					Value: imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQualityMediumHigh),
+				},
+			},
+			Transformations: []imaging.TransformationType{
+				&imaging.MaxColors{
+					Colors: &imaging.IntegerVariableInline{
+						Value: tools.IntPtr(2),
+					},
+					Transformation: imaging.MaxColorsTransformationMaxColors,
+				},
+				&imaging.Blur{
+					Sigma:          &imaging.NumberVariableInline{Value: tools.Float64Ptr(3)},
+					Transformation: imaging.BlurTransformationBlur,
+				},
+			},
+		}
+		policyOutputOrder = imaging.PolicyOutputImage{
+			Breakpoints: &imaging.Breakpoints{
+				Widths: []int{320, 640, 1024, 2048, 5000},
+			},
+			Output: &imaging.OutputImage{
+				PerceptualQuality: &imaging.OutputImagePerceptualQualityVariableInline{
+					Value: imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQualityMediumHigh),
+				},
+			},
+			Transformations: []imaging.TransformationType{
+				&imaging.MaxColors{
+					Colors: &imaging.IntegerVariableInline{
+						Value: tools.IntPtr(2),
+					},
+					Transformation: imaging.MaxColorsTransformationMaxColors,
+				},
+				&imaging.Blur{
+					Sigma:          &imaging.NumberVariableInline{Value: tools.Float64Ptr(3)},
+					Transformation: imaging.BlurTransformationBlur,
 				},
 			},
 			Version: 1,
@@ -112,14 +159,24 @@ func TestResourcePolicy(t *testing.T) {
 			if attrs.policyPath != "" {
 				policyJSON = loadFixtureString(attrs.policyPath)
 			}
-			return resource.ComposeAggregateTestCheckFunc(
+			f := resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "id", fmt.Sprintf("%s:%s", attrs.policySetID, attrs.policyID)),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "policy_id", attrs.policyID),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "policyset_id", attrs.policySetID),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "contract_id", "test_contract"),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "version", attrs.version),
-				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "json", policyJSON),
 				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "activate_on_production", attrs.activateOnProduction),
+			)
+			if attrs.schema {
+				return resource.ComposeAggregateTestCheckFunc(
+					f,
+					resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "policy.#", "1"),
+					resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "policy.0.output.0.perceptual_quality", "mediumHigh"),
+				)
+			}
+			return resource.ComposeAggregateTestCheckFunc(
+				f,
+				resource.TestCheckResourceAttr("akamai_imaging_policy_image.policy", "json", policyJSON),
 			)
 		}
 	)
@@ -147,6 +204,154 @@ func TestResourcePolicy(t *testing.T) {
 							policySetID:          "test_policy_set",
 							activateOnProduction: "false",
 							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("regular policy create schema, update json", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/regular_policy_schema"
+
+		client := new(mockimaging)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
+
+		// update
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
+
+		policyInputV2 := getPolicyInputV2(policyInput)
+		policyOutputV2 := getPolicyOutputV2(policyOutput)
+
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputV2, 2)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputV2)
+
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		// it is faster to attempt to delete on production than checking if there is policy on production first
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							schema:               true,
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "2",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	// this test should start failing once the DXE-926
+	t.Run("regular policy create as schema, update as json, but no diff", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/regular_policy_schema_json"
+
+		client := new(mockimaging)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
+
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		// it is faster to attempt to delete on production than checking if there is policy on production first
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
+
+		// update
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
+
+		policyInputV2 := policyInput
+		policyOutputV2 := policyOutput
+
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputV2, 2)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputV2)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							schema:               true,
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("regular policy create schema order change", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/regular_policy_schema_order"
+
+		client := new(mockimaging)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputOrder)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputOrder, 2)
+
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		// it is faster to attempt to delete on production than checking if there is policy on production first
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
+
+		// update
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputOrder, 1)
+
+		policyInputV2 := getPolicyInputOrderV2(policyInputOrder)
+		policyOutputV2 := getPolicyOutputOrderV2(policyOutputOrder)
+
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputV2, 2)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputV2)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							schema:               true,
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "2",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							schema:               true,
 						}),
 					},
 				},
@@ -607,6 +812,41 @@ func getPolicyInputV2(policyInput imaging.PolicyInputImage) imaging.PolicyInputI
 		&imaging.MaxColors{
 			Colors: &imaging.IntegerVariableInline{
 				Value: tools.IntPtr(3),
+			},
+			Transformation: imaging.MaxColorsTransformationMaxColors,
+		},
+	}
+	return policyInputV2
+}
+
+func getPolicyOutputOrderV2(policyOutput imaging.PolicyOutputImage) imaging.PolicyOutputImage {
+	var policyOutputV2 = policyOutput
+	policyOutputV2.Transformations = []imaging.TransformationType{
+		&imaging.Blur{
+			Sigma:          &imaging.NumberVariableInline{Value: tools.Float64Ptr(5)},
+			Transformation: imaging.BlurTransformationBlur,
+		},
+		&imaging.MaxColors{
+			Colors: &imaging.IntegerVariableInline{
+				Value: tools.IntPtr(4),
+			},
+			Transformation: imaging.MaxColorsTransformationMaxColors,
+		},
+	}
+	policyOutputV2.Version = 2
+	return policyOutputV2
+}
+
+func getPolicyInputOrderV2(policyInput imaging.PolicyInputImage) imaging.PolicyInputImage {
+	var policyInputV2 = policyInput
+	policyInputV2.Transformations = []imaging.TransformationType{
+		&imaging.Blur{
+			Sigma:          &imaging.NumberVariableInline{Value: tools.Float64Ptr(5)},
+			Transformation: imaging.BlurTransformationBlur,
+		},
+		&imaging.MaxColors{
+			Colors: &imaging.IntegerVariableInline{
+				Value: tools.IntPtr(4),
 			},
 			Transformation: imaging.MaxColorsTransformationMaxColors,
 		},

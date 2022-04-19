@@ -12,12 +12,22 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/reader"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/writer"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
+
+// MaxPolicyDepth is the maximum supported depth of the nested transformations, before we reach hard limit of the Terraform
+// provider for the gRPC communication for exchanging schema information, which is 64MB
+const MaxPolicyDepth = 7
+
+// PolicyDepth is variable to allow changing it for the unit tests, to achieve faster execution for tests,
+// which do not need all supported levels
+var PolicyDepth = MaxPolicyDepth
 
 func resourceImagingPolicyImage() *schema.Resource {
 	return &schema.Resource{
@@ -62,10 +72,20 @@ func resourceImagingPolicyImage() *schema.Resource {
 			},
 			"json": {
 				Type:             schema.TypeString,
-				Required:         true,
+				Optional:         true,
+				ExactlyOneOf:     []string{"json", "policy"},
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: diffSuppressPolicyImage,
 				Description:      "A JSON encoded policy",
+			},
+			"policy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Policy",
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: policyImage(PolicyDepth),
+				},
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -100,15 +120,19 @@ func upsertPolicy(ctx context.Context, d *schema.ResourceData, m interface{}, cl
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyJSON, err := tools.GetStringValue("json", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	var policy imaging.PolicyInputImage
-	if err = json.Unmarshal([]byte(policyJSON), &policy); err != nil {
-		return diag.FromErr(err)
-	}
 
+	var policy imaging.PolicyInputImage
+	policyJSON, err := tools.GetStringValue("json", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if err == nil {
+		if err = json.Unmarshal([]byte(policyJSON), &policy); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		policy = writer.PolicyImageToEdgeGrid(d.Get("policy").([]interface{})[0].(map[string]interface{}))
+	}
 	// upsert on staging only when there was a change
 	if d.HasChangesExcept("activate_on_production") {
 		upsertPolicyRequest := imaging.UpsertPolicyRequest{
@@ -172,14 +196,19 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyJSON, err := getPolicyImageJSON(policy)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	attrs := make(map[string]interface{})
+	_, ok := d.GetOk("policy")
+	if ok {
+		attrs["policy"] = []interface{}{reader.GetImageSchema(*policy)}
+	} else {
+		policyJSON, err := getPolicyImageJSON(policy)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		attrs["json"] = policyJSON
+	}
 	attrs["version"] = policy.Version
-	attrs["json"] = policyJSON
 	if err := tools.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
