@@ -1095,7 +1095,6 @@ func TestResProperty(t *testing.T) {
 					CertProvisioningType: "DEFAULT",
 				}}, &papi.Error{
 					StatusCode: http.StatusTooManyRequests,
-					Limit:      500,
 					Remaining:  0,
 					LimitKey:   "DEFAULT_CERTS_PER_CONTRACT",
 				},

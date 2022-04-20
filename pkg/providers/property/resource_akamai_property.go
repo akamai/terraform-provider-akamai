@@ -1325,7 +1325,7 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 			if e.StatusCode == http.StatusForbidden && e.Type == "https://problems.luna.akamaiapis.net/papi/v0/property-version-hostname/default-cert-provisioning-unavailable" {
 				err = fmt.Errorf("%s: not possible to use cert_provisioning_type = 'DEFAULT' as secure-by-default is not enabled in this account", papi.ErrUpdatePropertyVersionHostnames)
 			}
-			if e.StatusCode == http.StatusTooManyRequests && e.LimitKey == "DEFAULT_CERTS_PER_CONTRACT" && e.Limit != 0 && e.Remaining == 0 {
+			if e.StatusCode == http.StatusTooManyRequests && e.LimitKey == "DEFAULT_CERTS_PER_CONTRACT" && e.Remaining == 0 {
 				err = fmt.Errorf("%s: not possible to use cert_provisioning_type = 'DEFAULT' as the limit for DEFAULT certificates has been reached", papi.ErrUpdatePropertyVersionHostnames)
 			}
 		}
