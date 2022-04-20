@@ -13,7 +13,7 @@ func imageType(depth int) map[string]*schema.Schema {
 
 		"box_image": {
 			Description: "A rectangular box, with a specified color and applied transformation.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: boxImageType(depth - 1),
@@ -22,7 +22,7 @@ func imageType(depth int) map[string]*schema.Schema {
 
 		"circle_image": {
 			Description: "A rectangular box, with a specified color and applied transformation.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: circleImageType(depth - 1),
@@ -31,7 +31,7 @@ func imageType(depth int) map[string]*schema.Schema {
 
 		"text_image": {
 			Description: "A snippet of text. Defines font family and size, fill color, and outline stroke width and color.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: textImageType(depth - 1),
@@ -40,7 +40,7 @@ func imageType(depth int) map[string]*schema.Schema {
 
 		"url_image": {
 			Description: "An image loaded from a URL.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: urlImageType(depth - 1),
@@ -57,7 +57,7 @@ func shapeType(depth int) map[string]*schema.Schema {
 
 		"circle_shape": {
 			Description: "Defines a circle with a specified `radius` from its `center` point.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: circleShapeType(depth - 1),
@@ -66,7 +66,7 @@ func shapeType(depth int) map[string]*schema.Schema {
 
 		"point_shape": {
 			Description: "",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: pointShapeType(depth - 1),
@@ -75,7 +75,7 @@ func shapeType(depth int) map[string]*schema.Schema {
 
 		"polygon_shape": {
 			Description: "Defines a polygon from a series of connected points.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: polygonShapeType(depth - 1),
@@ -84,7 +84,7 @@ func shapeType(depth int) map[string]*schema.Schema {
 
 		"rectangle_shape": {
 			Description: "Defines a rectangle's `width` and `height` relative to an `anchor` point at the top left corner.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: rectangleShapeType(depth - 1),
@@ -93,7 +93,7 @@ func shapeType(depth int) map[string]*schema.Schema {
 
 		"union_shape": {
 			Description: "Identifies a combined shape based on a set of other shapes. You can use a full JSON object to represent a union or an array of shapes that describe it.",
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: unionShapeType(depth - 1),
@@ -384,6 +384,70 @@ func transformationType(depth int) map[string]*schema.Schema {
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: unsharpMask(depth - 1),
+			},
+		},
+	}
+}
+
+// PolicyImage is a top level schema func
+func PolicyImage(depth int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"breakpoints": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "The breakpoint widths (in pixels) to use to create derivative images/videos.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: breakpoints(depth - 1),
+			},
+		},
+		"hosts": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "Hosts that are allowed for image/video URLs within transformations or variables.",
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
+		"output": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "Dictates the output quality (either `quality` or `perceptualQuality`) and formats that are created for each resized image. If unspecified, image formats are created to support all browsers at the default quality level (`85`), which includes formats such as WEBP, JPEG2000 and JPEG-XR for specific browsers.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: outputImage(depth - 1),
+			},
+		},
+		"rollout_duration": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "The amount of time in seconds that the policy takes to rollout. During the rollout an increasing proportion of images/videos will begin to use the new policy instead of the cached images/videos from the previous version.",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.All(
+				validation.IntAtLeast(3600),
+				validation.IntAtMost(604800),
+			)),
+		},
+		"transformations": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "Set of image transformations to apply to the source image. If unspecified, no operations are performed.",
+			Elem: &schema.Resource{
+				Schema: transformationType(depth - 1),
+			},
+		},
+		"variables": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "Declares variables for use within the policy. Any variable declared here can be invoked throughout transformations as a [Variable](#variable) object, so that you don't have to specify values separately. You can also pass in these variable names and values dynamically as query parameters in the image's request URL.",
+			Elem: &schema.Resource{
+				Schema: variable(depth - 1),
+			},
+		},
+
+		"post_breakpoint_transformations": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "Post-processing Transformations are applied to the image after image and quality settings have been applied.",
+			Elem: &schema.Resource{
+				Schema: transformationType(depth - 1),
 			},
 		},
 	}
@@ -1508,69 +1572,6 @@ func pointShapeType(_ int) map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "The vertical position of the point, measured in pixels.",
-		},
-	}
-}
-
-func policyImage(depth int) map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"breakpoints": {
-			Type:        schema.TypeList,
-			Optional:    true,
-			Description: "The breakpoint widths (in pixels) to use to create derivative images/videos.",
-			MaxItems:    1,
-			Elem: &schema.Resource{
-				Schema: breakpoints(depth - 1),
-			},
-		},
-		"hosts": {
-			Type:        schema.TypeList,
-			Optional:    true,
-			Description: "Hosts that are allowed for image/video URLs within transformations or variables.",
-			Elem:        &schema.Schema{Type: schema.TypeString},
-		},
-		"output": {
-			Type:        schema.TypeList,
-			Optional:    true,
-			Description: "Dictates the output quality (either `quality` or `perceptualQuality`) and formats that are created for each resized image. If unspecified, image formats are created to support all browsers at the default quality level (`85`), which includes formats such as WEBP, JPEG2000 and JPEG-XR for specific browsers.",
-			MaxItems:    1,
-			Elem: &schema.Resource{
-				Schema: outputImage(depth - 1),
-			},
-		},
-		"rollout_duration": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The amount of time in seconds that the policy takes to rollout. During the rollout an increasing proportion of images/videos will begin to use the new policy instead of the cached images/videos from the previous version.",
-			ValidateDiagFunc: validation.ToDiagFunc(validation.All(
-				validation.IntAtLeast(3600),
-				validation.IntAtMost(604800),
-			)),
-		},
-		"transformations": {
-			Type:        schema.TypeList,
-			Optional:    true,
-			Description: "Set of image transformations to apply to the source image. If unspecified, no operations are performed.",
-			Elem: &schema.Resource{
-				Schema: transformationType(depth - 1),
-			},
-		},
-		"variables": {
-			Type:        schema.TypeList,
-			Optional:    true,
-			Description: "Declares variables for use within the policy. Any variable declared here can be invoked throughout transformations as a [Variable](#variable) object, so that you don't have to specify values separately. You can also pass in these variable names and values dynamically as query parameters in the image's request URL.",
-			Elem: &schema.Resource{
-				Schema: variable(depth - 1),
-			},
-		},
-
-		"post_breakpoint_transformations": {
-			Type:        schema.TypeList,
-			Optional:    true,
-			Description: "Post-processing Transformations are applied to the image after image and quality settings have been applied.",
-			Elem: &schema.Resource{
-				Schema: transformationType(depth - 1),
-			},
 		},
 	}
 }

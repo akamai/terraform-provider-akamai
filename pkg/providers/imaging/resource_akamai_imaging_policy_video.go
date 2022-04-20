@@ -12,6 +12,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/reader"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/videowriter"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -62,10 +64,20 @@ func resourceImagingPolicyVideo() *schema.Resource {
 			},
 			"json": {
 				Type:             schema.TypeString,
-				Required:         true,
+				Optional:         true,
+				ExactlyOneOf:     []string{"json", "policy"},
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: diffSuppressPolicyVideo,
 				Description:      "A JSON encoded policy",
+			},
+			"policy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Policy",
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: PolicyVideo(PolicyDepth),
+				},
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -100,15 +112,19 @@ func upsertPolicyVideo(ctx context.Context, d *schema.ResourceData, m interface{
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyJSON, err := tools.GetStringValue("json", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	var policy imaging.PolicyInputVideo
-	if err = json.Unmarshal([]byte(policyJSON), &policy); err != nil {
-		return diag.FromErr(err)
-	}
 
+	var policy imaging.PolicyInputVideo
+	policyJSON, err := tools.GetStringValue("json", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if err == nil {
+		if err = json.Unmarshal([]byte(policyJSON), &policy); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		policy = videowriter.PolicyVideoToEdgeGrid(d.Get("policy").([]interface{})[0].(map[string]interface{}))
+	}
 	// upsert on staging only when there was a change
 	if d.HasChangesExcept("activate_on_production") {
 		upsertPolicyRequest := imaging.UpsertPolicyRequest{
@@ -172,14 +188,19 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyJSON, err := getPolicyVideoJSON(policy)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	attrs := make(map[string]interface{})
+	_, ok := d.GetOk("policy")
+	if ok {
+		attrs["policy"] = []interface{}{reader.PolicyVideoFromEdgeGrid(*policy)}
+	} else {
+		policyJSON, err := getPolicyVideoJSON(policy)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		attrs["json"] = policyJSON
+	}
 	attrs["version"] = policy.Version
-	attrs["json"] = policyJSON
 	if err := tools.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}

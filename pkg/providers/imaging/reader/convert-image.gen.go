@@ -6,8 +6,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
 )
 
-// GetImageSchema converts EdgeGrid structure into map terraform-based structure
-func GetImageSchema(input imaging.PolicyOutputImage) map[string]interface{} {
+// PolicyImageFromEdgeGrid converts EdgeGrid structure into map terraform-based structure
+func PolicyImageFromEdgeGrid(input imaging.PolicyOutputImage) map[string]interface{} {
 	target := make(map[string]interface{})
 	target["breakpoints"] = getBreakpoints(input.Breakpoints)
 	target["hosts"] = input.Hosts

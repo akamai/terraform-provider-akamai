@@ -12,8 +12,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/imagewriter"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/reader"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/writer"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -84,7 +84,7 @@ func resourceImagingPolicyImage() *schema.Resource {
 				Description: "Policy",
 				MaxItems:    1,
 				Elem: &schema.Resource{
-					Schema: policyImage(PolicyDepth),
+					Schema: PolicyImage(PolicyDepth),
 				},
 			},
 		},
@@ -104,10 +104,10 @@ func resourcePolicyImageCreate(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger.Debug("Creating policy")
 
-	return upsertPolicy(ctx, d, m, client)
+	return upsertPolicyImage(ctx, d, m, client)
 }
 
-func upsertPolicy(ctx context.Context, d *schema.ResourceData, m interface{}, client imaging.Imaging) diag.Diagnostics {
+func upsertPolicyImage(ctx context.Context, d *schema.ResourceData, m interface{}, client imaging.Imaging) diag.Diagnostics {
 	policyID, err := tools.GetStringValue("policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -131,7 +131,7 @@ func upsertPolicy(ctx context.Context, d *schema.ResourceData, m interface{}, cl
 			return diag.FromErr(err)
 		}
 	} else {
-		policy = writer.PolicyImageToEdgeGrid(d.Get("policy").([]interface{})[0].(map[string]interface{}))
+		policy = imagewriter.PolicyImageToEdgeGrid(d.Get("policy").([]interface{})[0].(map[string]interface{}))
 	}
 	// upsert on staging only when there was a change
 	if d.HasChangesExcept("activate_on_production") {
@@ -200,7 +200,7 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	attrs := make(map[string]interface{})
 	_, ok := d.GetOk("policy")
 	if ok {
-		attrs["policy"] = []interface{}{reader.GetImageSchema(*policy)}
+		attrs["policy"] = []interface{}{reader.PolicyImageFromEdgeGrid(*policy)}
 	} else {
 		policyJSON, err := getPolicyImageJSON(policy)
 		if err != nil {
@@ -265,7 +265,7 @@ func resourcePolicyImageUpdate(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger.Debug("Updating policy")
 
-	return upsertPolicy(ctx, d, m, client)
+	return upsertPolicyImage(ctx, d, m, client)
 }
 
 func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
