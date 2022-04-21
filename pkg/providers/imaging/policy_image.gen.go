@@ -389,8 +389,169 @@ func transformationType(depth int) map[string]*schema.Schema {
 	}
 }
 
-// PolicyImage is a top level schema func
-func PolicyImage(depth int) map[string]*schema.Schema {
+func transformationTypePost(depth int) map[string]*schema.Schema {
+	if depth <= 0 {
+		return nil
+	}
+	return map[string]*schema.Schema{
+
+		"background_color": {
+			Description: "Places a transparent image on a set background color. Color is specified in the typical CSS hexadecimal format.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: backgroundColor(depth - 1),
+			},
+		},
+
+		"blur": {
+			Description: "Applies a Gaussian blur to the image.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: blur(depth - 1),
+			},
+		},
+
+		"chroma_key": {
+			Description: "Changes any color in an image within the specified volume of the HSL colorspace to transparent or semitransparent. This transformation applies a 'green screen' technique commonly used to isolate and remove background colors.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: chromaKey(depth - 1),
+			},
+		},
+
+		"compound_post": {
+			Description: "",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: compoundPost(depth - 1),
+			},
+		},
+
+		"contrast": {
+			Description: "Adjusts both the contrast and brightness of an image.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: contrast(depth - 1),
+			},
+		},
+
+		"goop": {
+			Description: "Distorts an image by randomly repositioning a set of control points along a specified grid. The transformed image appears _goopy_. Adjust the density of the grid and the degree of randomity. You can use this transformation to create watermarks for use in security.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: goop(depth - 1),
+			},
+		},
+
+		"grayscale": {
+			Description: "Restricts image color to shades of gray only.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: grayscale(depth - 1),
+			},
+		},
+
+		"hsl": {
+			Description: "Adjusts the hue, saturation, and lightness (HSL) of an image. Hue is the number of degrees that colors rotate around the color wheel. Saturation is a multiplier to increase or decrease color saturation. Lightness is a multiplier to increase or decrease the lightness of an image. Other transformations can also affect color, such as `Grayscale` and `MaxColors`. If youre using more than one, consider the order to apply them for the desired results.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: hsl(depth - 1),
+			},
+		},
+
+		"hsv": {
+			Description: "Identical to HSL except it replaces `lightness` with `value`. For example, if you reduce the `lightness` of a light green, almost white, image, the color turns a vibrant green. Reducing the `value` turns the image a darker color, close to grey. This happens because the original image color is very close to white.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: hsv(depth - 1),
+			},
+		},
+
+		"if_dimension_post": {
+			Description: "",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: ifDimensionPost(depth - 1),
+			},
+		},
+
+		"if_orientation_post": {
+			Description: "",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: ifOrientationPost(depth - 1),
+			},
+		},
+
+		"max_colors": {
+			Description: "Set the maximum number of colors in the images palette. Reducing the number of colors in an image can help to reduce file size.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: maxColors(depth - 1),
+			},
+		},
+
+		"mirror": {
+			Description: "Flips an image horizontally, vertically, or both.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: mirror(depth - 1),
+			},
+		},
+
+		"mono_hue": {
+			Description: "Allows you to set all hues in an image to a single specified hue of your choosing. Mono Hue maintains the original color’s lightness and saturation but sets the hue to that of the specified value. This has the effect of making the image shades of the specified hue.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: monoHue(depth - 1),
+			},
+		},
+
+		"opacity": {
+			Description: "Adjusts the level of transparency of an image. Use this transformation to make an image more or less transparent.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: opacity(depth - 1),
+			},
+		},
+
+		"remove_color": {
+			Description: "Removes a specified color from an image and replaces it with transparent pixels. This transformation is ideal for removing solid background colors from product images photographed on clean, consistent backgrounds without any shadows.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: removeColor(depth - 1),
+			},
+		},
+
+		"unsharp_mask": {
+			Description: "Emphasizes edges and details in source images without distorting the colors. Although this effect is often referred to as _sharpening_ an image, it actually creates a blurred, inverted copy of the image known as an unsharp mask. Image and Video Manager combines the unsharp mask with the source image to create an image perceived as clearer.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: unsharpMask(depth - 1),
+			},
+		},
+	}
+}
+
+// PolicyOutputImage is a top level schema func
+func PolicyOutputImage(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"breakpoints": {
 			Type:        schema.TypeList,
@@ -416,6 +577,14 @@ func PolicyImage(depth int) map[string]*schema.Schema {
 				Schema: outputImage(depth - 1),
 			},
 		},
+		"post_breakpoint_transformations": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "Post-processing Transformations are applied to the image after image and quality settings have been applied.",
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
 		"rollout_duration": {
 			Type:        schema.TypeInt,
 			Optional:    true,
@@ -439,15 +608,6 @@ func PolicyImage(depth int) map[string]*schema.Schema {
 			Description: "Declares variables for use within the policy. Any variable declared here can be invoked throughout transformations as a [Variable](#variable) object, so that you don't have to specify values separately. You can also pass in these variable names and values dynamically as query parameters in the image's request URL.",
 			Elem: &schema.Resource{
 				Schema: variable(depth - 1),
-			},
-		},
-
-		"post_breakpoint_transformations": {
-			Type:        schema.TypeList,
-			Optional:    true,
-			Description: "Post-processing Transformations are applied to the image after image and quality settings have been applied.",
-			Elem: &schema.Resource{
-				Schema: transformationType(depth - 1),
 			},
 		},
 	}
@@ -863,6 +1023,18 @@ func compound(depth int) map[string]*schema.Schema {
 			Optional: true,
 			Elem: &schema.Resource{
 				Schema: transformationType(depth - 1),
+			},
+		},
+	}
+}
+
+func compoundPost(depth int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"transformations": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
 			},
 		},
 	}
@@ -1352,17 +1524,6 @@ func ifDimension(depth int) map[string]*schema.Schema {
 				Schema: transformationType(depth - 1),
 			},
 		},
-		"dimension": {
-			Type:             schema.TypeString,
-			Optional:         true,
-			Description:      "The dimension to use to select the transformation, either `height`, `width`, or `both`.",
-			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"width", "height", "both"}, false)),
-		},
-		"dimension_var": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "The dimension to use to select the transformation, either `height`, `width`, or `both`.",
-		},
 		"equal": {
 			Type:     schema.TypeList,
 			Optional: true,
@@ -1385,6 +1546,54 @@ func ifDimension(depth int) map[string]*schema.Schema {
 			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: transformationType(depth - 1),
+			},
+		},
+	}
+}
+
+func ifDimensionPost(depth int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"default": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"dimension": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The dimension to use to select the transformation, either `height`, `width`, or `both`.",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"width", "height", "both"}, false)),
+		},
+		"dimension_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The dimension to use to select the transformation, either `height`, `width`, or `both`.",
+		},
+		"equal": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"greater_than": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"less_than": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
 			},
 		},
 		"value": {
@@ -1432,6 +1641,43 @@ func ifOrientation(depth int) map[string]*schema.Schema {
 			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: transformationType(depth - 1),
+			},
+		},
+	}
+}
+
+func ifOrientationPost(depth int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"default": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"landscape": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"portrait": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"square": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
 			},
 		},
 	}

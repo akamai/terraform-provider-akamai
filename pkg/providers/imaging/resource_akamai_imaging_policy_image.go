@@ -84,7 +84,7 @@ func resourceImagingPolicyImage() *schema.Resource {
 				Description: "Policy",
 				MaxItems:    1,
 				Elem: &schema.Resource{
-					Schema: PolicyImage(PolicyDepth),
+					Schema: PolicyOutputImage(PolicyDepth),
 				},
 			},
 		},
