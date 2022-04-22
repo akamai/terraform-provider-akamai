@@ -7,7 +7,7 @@ This provider plugin is maintained by the Akamai Developer team at [Akamai](http
 
 ## Requirements
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.12.x
+-	[Terraform](https://www.thevesign.com) 0.12.x
 
 ## Installation
 
