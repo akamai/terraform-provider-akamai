@@ -10,9 +10,9 @@ description: |-
 
 **Scopes**: Security configuration; security policy
 
-Returns information about your HTTP header logging controls. By default, information is returned for all the security policies in the configuration; however, you can return data for a single policy by using the `security_policy_id` parameter. The returned information is described in the [ConfigHeaderLog members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#a6d1c316) section of the Application Security API.
+Returns information about your HTTP header logging controls. By default, information is returned for all the security policies in the configuration; however, you can return data for a single policy by using the `security_policy_id` parameter. The returned information is described in the [ConfigHeaderLog members](https://techdocs.akamai.com/application-security/reference/get-advanced-settings-logging) section of the Application Security API.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/advanced-settings/logging](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethttpheaderloggingforaconfiguration)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/advanced-settings/logging](https://techdocs.akamai.com/application-security/reference/get-advanced-settings-logging)
 
 ## Example Usage
 Basic usage:
@@ -70,4 +70,3 @@ The following options can be used to determine the information returned, and how
 
 - `json`. JSON-formatted list of information about the logging settings.
 - `output_text`. Tabular report showing the logging settings.
-

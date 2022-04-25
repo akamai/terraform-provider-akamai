@@ -12,7 +12,7 @@ description: |-
 
 Returns information about any other configuration versions that contain a hostname found in the current configuration version. The returned information is described in the [List hostname overlaps](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoverageoverlapping) section of the Application Security API.
 
-**Related API Endpoint**:[/appsec/v1/configs/{configId}/versions/{versionNumber}/hostname-coverage/overlapping?hostname={host}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethostnamecoverageoverlapping)
+**Related API Endpoint**:[/appsec/v1/configs/{configId}/versions/{versionNumber}/hostname-coverage/overlapping](https://techdocs.akamai.com/application-security/reference/get-hostname-coverage-overlapping)
 
 ## Example Usage
 
@@ -54,4 +54,3 @@ The following options can be used to determine the information returned, and how
 
 - `json`. JSON-formatted list of the overlap information.
 - `output_text`. Tabular report of the overlap information.
-

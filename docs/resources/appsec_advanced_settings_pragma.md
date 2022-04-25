@@ -14,7 +14,7 @@ Specifies the headers you can exclude from inspection when you are working with 
 
 This operation can be applied at the security configuration level (in which case it applies to all the security policies in the configuration), or can be customized for an individual security policy.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/advanced-settings/pragma-header](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putpragmaheaderpolicy)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/advanced-settings/pragma-header](https://techdocs.akamai.com/application-security/reference/put-policies-pragma-header)
 
 ## Example Usage
 
@@ -56,11 +56,10 @@ This resource supports the following arguments:
 
 - `pragma_header` (Required). Path to a JSON file containing information about the conditions to exclude from the default remove action. By default, the Pragma header debugging information is stripped from an operation's response except in cases where you set `excludeCondition`. You can view a sample JSON file in the [Modify pragma settings for a security setting](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putpragmaheaderconfiguration) section of the Application Security API documentation.
 
-  To remove existing settings, submit your request with an empty payload ( **{}** ) at the top-level of an object. For example, use the following JSON snippet in the request body to remove the **REQUEST_HEADER_VALUE_MATCH** from the excluded conditions
+  To remove existing settings, submit your request with an empty payload ( **{}** ) at the top-level of an object. For example, use the following JSON snippet in the request body to remove the **REQUEST_HEADER_VALUE_MATCH** from the excluded conditions:
 
   `"type": "{}"`
 
   Note that, if you submit an empty payload for each member, you'll clear all of your condition settings.
 
   If you want to modify pragma header settings at the security configuration scope (as opposed to the security policy scope), it's recommended that you first contact your Akamai representative.
-

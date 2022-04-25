@@ -12,7 +12,7 @@ description: |-
 
 Associates an action with a custom rule. Custom rules are rules that you define yourself and are not part of the Kona Rule Set.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/custom-rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putactionruleid)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/custom-rules](https://techdocs.akamai.com/application-security/reference/get-configs-custom-rules)
 
 ## Example Usage
 
@@ -52,11 +52,10 @@ output "custom_rule_id" {
 This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the custom rule action being modified.
-- `security_policy_id` (Required). Unique identifier of the security policy associated with the custom rule action being modified d.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the custom rule action being modified.
 - `custom_rule_id` (Required). Unique identifier of the custom rule whose action is being modified.
 - `custom_rule_action` (Required). Action to be taken when the custom rule is invoked. Allowed values are:
   - **alert**. Record the event.
   - **deny**. Block the request.
   - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
   - **none**. Take no action.
-

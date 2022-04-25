@@ -10,9 +10,9 @@ description: |-
 
 **Scopes**: Security configuration; match target
 
-Returns information about your match targets. Match targets determine which security policy should apply to an API, hostname or path.
+Returns information about your match targets. Match targets determine which security policy should apply to an API, hostname, or path.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets{?policyId,includeChildObjectName}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getmatchtargets)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets{?policyId,includeChildObjectName}](https://techdocs.akamai.com/application-security/reference/get-match-targets)
 
 ## Example Usage
 
@@ -67,4 +67,3 @@ The following options can be used to determine the information returned, and how
 
 - `output_text`. Tabular report showing the ID and security policy ID of your match targets.
 - `json`. JSON-formatted list of the match target information.
-

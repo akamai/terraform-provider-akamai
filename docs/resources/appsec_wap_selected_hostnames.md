@@ -13,8 +13,7 @@ description: |-
 Modifies the list of hostnames to be protected or evaluated under a security configuration and security policy.
 Either the evaluated hostnames or the protected hostnames may be omitted from or may be specified as an empty array (i.e., no hosts are to be protected or evaluated) in your Terraform configuration file.
 However, at least one non-empty list must be included in the Terraform configuration file.
-
-This resource is available only for Web Application Protector (WAP) accounts. Note that WAP selected hostnames is currently in beta. Please contact your Akamai representative for more information .
+This resource is available only for Web Application Protector (WAP) accounts. Note that WAP selected hostnames is currently in beta. Please contact your Akamai representative for more information.
 
 ## Example Usage
 

@@ -13,7 +13,7 @@ description: |-
 
 Returns information about the network lists used in the IP/Geo Firewall settings; also returns the firewall `mode`, which indicates whether devices on the geographic or IP address lists are allowed through the firewall or are blocked by the firewall.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/ip-geo-firewall](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getipgeofirewall)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/ip-geo-firewall](https://techdocs.akamai.com/application-security/reference/get-policy-ip-geo-firewall)
 
 ## Example Usage
 
@@ -78,4 +78,3 @@ The following options can be used to determine the information returned, and how
 - `ip_network_lists`. Network lists blocked or allowed based on IP address.
 - `exception_ip_network_lists`. Network lists allowed through the firewall regardless of the values assigned to the `mode`, `geo_network_lists`, and `ip_network_lists` parameters.
 - `output_text`. Tabular report of the IP/Geo firewall settings.
-

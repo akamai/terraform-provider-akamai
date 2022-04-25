@@ -12,7 +12,7 @@ description: |-
 
 Modifies a custom deny action. Custom denies enable you to craft your own error message or redirect pages for use when HTTP requests are denied.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/custom-deny](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putcustomdenyaction)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/custom-deny](https://techdocs.akamai.com/application-security/reference/get-custom-deny-actions)
 
 ## Example Usage
 
@@ -58,4 +58,3 @@ This resource supports the following arguments:
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
 - `custom_deny_id`. ID of the new custom deny action.
-

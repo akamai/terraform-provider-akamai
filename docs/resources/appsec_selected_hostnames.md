@@ -12,7 +12,7 @@ description: |-
 
 Modifies the list of hostnames protected under by a security configuration.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/selected-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putselectedhostnames)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/selected-hostnames](https://techdocs.akamai.com/application-security/reference/put-selected-hostnames-per-config)
 
 ## Example Usage
 
@@ -52,4 +52,3 @@ This resource supports the following arguments:
   - **APPEND**. Hosts listed in the `hostnames` array are added to the current list of selected hostnames.
   - **REPLACE**. Hosts listed in the `hostnames`  array overwrite the current list of selected hostnames: the “old” hostnames are replaced by the specified set of hostnames.
   - **REMOVE**, Hosts listed in the `hostnames` array are removed from the current list of select hostnames.
-

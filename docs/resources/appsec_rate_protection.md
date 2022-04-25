@@ -12,7 +12,7 @@ description: |-
 
 Enables or disables rate protection for a security policy.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/protections](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putprotections)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/protections](https://techdocs.akamai.com/application-security/reference/put-policy-protections)
 
 ## Example Usage
 
@@ -57,4 +57,3 @@ This resource supports the following arguments:
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
 - `output_text`. Tabular report showing the current protection settings.
-

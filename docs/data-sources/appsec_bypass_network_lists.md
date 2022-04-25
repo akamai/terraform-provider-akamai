@@ -18,7 +18,7 @@ Returns information about the network lists assigned to the bypass network list;
 
 Note that this data source is only applicable to WAP (Web Application Protector) configurations.
 
-**Related API Endpoint**:[/appsec/v1/configs/{configId}/versions/{versionNumber}/bypass-network-lists](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getbypassnetworklistsforawapconfigversion)
+**Related API Endpoint**:[/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/bypass-network-lists](https://techdocs.akamai.com/application-security/reference/get-bypass-network-lists-per-policy)
 
 ## Example Usage
 
@@ -77,4 +77,3 @@ The following options can be used to determine the information returned, and how
 - `bypass_network_list`. List of network IDs.
 - `json`. JSON-formatted list of information about the bypass networks.
 - `output_text`. Tabular report showing the bypass network list information.
-

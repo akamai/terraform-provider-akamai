@@ -14,7 +14,7 @@ Specifies the networks that appear on the bypass network list. Networks on this 
 
 Note that this resource is only applicable to WAP (Web Application Protector) configurations.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/bypass-network-lists](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putbypassnetworklistsforawapconfigversion)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/bypass-network-lists](https://techdocs.akamai.com/application-security/reference/put-bypass-network-lists)
 
 ## Example Usage
 
@@ -58,4 +58,3 @@ This resource supports the following arguments:
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
 - `output_text`. Tabular report showing the updated list of bypass network IDs.
-

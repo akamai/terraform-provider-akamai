@@ -12,7 +12,7 @@ description: |-
 
 Returns the action and the condition-exception information for your Kona Rule Set (KRS) rules.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getrules)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules](https://techdocs.akamai.com/application-security/reference/get-policy-rules)
 
 ## Example Usage
 
@@ -75,4 +75,3 @@ The following options can be used to determine the information returned, and how
 - `condition_exception`. Conditions and exceptions associated with the rule.
 - `json`. JSON-formatted list of the action and the condition-exception information for the rule. This option is only available if the `rule_id` argument is included in yur Terraform configuration file.
 - `output_text`. Tabular report showing the rule action as well as Boolean values indicating whether conditions and exceptions are configured.
-

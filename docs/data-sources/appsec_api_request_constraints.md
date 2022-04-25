@@ -12,7 +12,7 @@ description: |-
 
 Returns information about API endpoint constraints and actions. The returned information is described in the [API Constraints members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getapirequestconstraints) section of the Application Security API.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/api-request-constraints](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getapirequestconstraints)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/api-request-constraints](https://techdocs.akamai.com/application-security/reference/get-api-request-constraints)
 
 ## Example Usage
 
@@ -80,4 +80,3 @@ The following options can be used to determine the information returned, and how
 
 - `json`. JSON-formatted list of information about the APIs, their constraints, and their actions.
 - `output_text`. Tabular report of the APIs, their constraints, and their actions.
-

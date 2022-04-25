@@ -12,7 +12,7 @@ description: |-
 
 Returns action information for your reputation profiles. Actions specify what happens any time a profile is triggered: the issue could be ignored, the request could be denied, or an alert could be generated.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/reputation-profiles](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getreputationprofileactions)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/reputation-profiles](https://techdocs.akamai.com/application-security/reference/get-reputation-profiles-actions)
 
 ## Example Usage
 
@@ -79,4 +79,3 @@ The following options can be used to determine the information returned, and how
   - **none**. Take no action.
 - `json`. JSON-formatted report of the reputation profile action information.
 - `output_text`. Tabular report of the reputation profile action information.
-

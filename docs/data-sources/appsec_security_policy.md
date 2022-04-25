@@ -12,7 +12,7 @@ description: |-
 
 Returns information about your security policies.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsecuritypolicies)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies](https://techdocs.akamai.com/application-security/reference/get-policies)
 
 ## Example Usage
 
@@ -71,4 +71,3 @@ The following options can be used to determine the information returned, and how
 - `security_policy_id_list`. List of all your security policy IDs.
 - `output_text`. Tabular report showing the ID and name of all your security policies.
 - `security_policy_id`. ID of the security policy. Included only if the `security_policy_name` argument is included in your Terraform configuration file.
-

@@ -14,7 +14,7 @@ description: |-
 
 Returns information about all your security configurations, or returns information about a specific security configuration.
 
-**Related API Endpoint**: [/appsec/v1/configs](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getconfigurations)
+**Related API Endpoint**: [/appsec/v1/configs](https://techdocs.akamai.com/application-security/reference/get-configs)
 
 ## Example Usage
 
@@ -61,8 +61,6 @@ output "id" {
 }
 ```
 
-
-
 ## Argument Reference
 
 This data source supports the following arguments:
@@ -78,4 +76,3 @@ The following options can be used to determine the information returned, and how
 - `latest_version`. Most-recent version number of the specified security configuration. Returned only if the `name` argument is included in the Terraform configuration file.
 - `staging_version`. Version number of the specified security configuration currently active in staging. Returned only if the `name` argument is included in the Terraform configuration file.
 - `production_version`. Version number of the specified security configuration currently active in production. Returned only if the `name` argument is included in the Terraform configuration file.
-

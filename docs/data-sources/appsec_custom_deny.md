@@ -13,7 +13,7 @@ description: |-
 
 Returns information about custom deny actions: the returned information is described in the [CustomDeny members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#63df3de3) section of the Application Security API. Custom denies allow you to craft your own error messages or redirect pages to use when HTTP requests are denied.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/custom-rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcustomdeny)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/custom-deny](https://techdocs.akamai.com/application-security/reference/get-custom-deny-actions)
 
 ## Example Usage
 
@@ -81,4 +81,3 @@ The following options can be used to determine the information returned, and how
 
 - `json`. JSON-formatted list of custom deny information.
 - `output_text`. Tabular report of the custom deny information.
-

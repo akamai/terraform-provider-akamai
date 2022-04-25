@@ -10,11 +10,10 @@ description: |-
 
 **Scopes**: Security configuration
 
-Renames an existing security configuration. 
-Note that you can only change the configuration name.
-The ID assigned to a security configuration can not be modified.
+Renames an existing security configuration.
+Note that you can change only the configuration name. You can't modify the ID assigned to a security configuration.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putrenameconfiguration)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}](https://techdocs.akamai.com/application-security/reference/put-config)
 
 ## Example Usage
 
@@ -53,4 +52,3 @@ This resource supports the following arguments:
 - `config_id` (Required). Unique identifier of the security configurating being renamed.
 - `name` (Required). New name for the security configuration.
 - `description` (Required). Brief description of the security configuration.
-

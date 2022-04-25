@@ -12,7 +12,7 @@ description: |-
 
 Creates a match target associated with a security configuration. Match targets determine which security policy should apply to an API, hostname or path.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postmatchtargets)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets](https://techdocs.akamai.com/application-security/reference/post-match-targets)
 
 ## Example Usage
 
@@ -53,4 +53,3 @@ This resource supports the following arguments:
 In addition to the arguments above, the following attribute is exported:
 
 - `match_target_id`. ID of the match target.
-

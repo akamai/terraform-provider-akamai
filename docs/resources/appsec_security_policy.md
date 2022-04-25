@@ -16,7 +16,7 @@ Creates a new security policy. The resource enables you to:
 - Create a new policy preconfigured with the default security policy settings.
 - Clone an existing security policy.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postsecuritypolicies)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies](https://techdocs.akamai.com/application-security/reference/post-policy)
 
 ## Example Usage
 
@@ -68,4 +68,3 @@ This resource supports the following arguments:
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
 - `security_policy_id`. ID of the newly-created security policy.
-

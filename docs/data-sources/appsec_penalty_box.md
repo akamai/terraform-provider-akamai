@@ -13,7 +13,7 @@ description: |-
 
 Returns penalty box settings for the specified security policy. When using automated attack groups, and when the penalty box is enabled, clients that trigger an attack group are placed in the “penalty box.” That means that, for the next 10 minutes, all requests from that client are ignored.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/penalty-box](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getpenaltybox)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/penalty-box](https://techdocs.akamai.com/application-security/reference/get-policy-penalty-box)
 
 ## Example Usage
 
@@ -73,4 +73,3 @@ The following options can be used to determine the information returned, and how
   - **none**. Take no action.
 - `enabled`. If **true**, penalty box protection is enabled. If **false**, penalty box protection is disabled.
 - `output_text`. Tabular report of penalty box protection settings.
-

@@ -65,4 +65,3 @@ The following options can be used to determine the information returned and how 
 - `evaluated_hostnames`. List of hostnames currently being evaluated under the security configuration and security policy.
 - `hostnames_json`. JSON-formatted report of the protected and evaluated hostnames.
 - `output_text`. Tabular reports of the protected and evaluated hostnames.
-
