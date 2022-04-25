@@ -21,6 +21,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		policySetID          string
 		activateOnProduction string
 		schema               bool
+		emptyPolicy          bool
 	}
 
 	var (
@@ -43,6 +44,12 @@ func TestResourcePolicyVideo(t *testing.T) {
 					Value: imaging.OutputVideoPerceptualQualityPtr(imaging.OutputVideoPerceptualQualityMediumHigh),
 				},
 			},
+			Version: 1,
+			Video:   true,
+		}
+
+		policyEmptyInput  = imaging.PolicyInputVideo{}
+		policyEmptyOutput = imaging.PolicyOutputVideo{
 			Version: 1,
 			Video:   true,
 		}
@@ -105,6 +112,12 @@ func TestResourcePolicyVideo(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_imaging_policy_video.policy", "activate_on_production", attrs.activateOnProduction),
 			)
 			if attrs.schema {
+				if attrs.emptyPolicy {
+					return resource.ComposeAggregateTestCheckFunc(
+						f,
+						resource.TestCheckResourceAttr("akamai_imaging_policy_video.policy", "policy.#", "1"),
+					)
+				}
 				return resource.ComposeAggregateTestCheckFunc(
 					f,
 					resource.TestCheckResourceAttr("akamai_imaging_policy_video.policy", "policy.#", "1"),
@@ -171,6 +184,37 @@ func TestResourcePolicyVideo(t *testing.T) {
 							policySetID:          "test_policy_set",
 							activateOnProduction: "false",
 							schema:               true,
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("regular policy create schema empty", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyVideo/regular_policy_schema_empty"
+
+		client := new(mockimaging)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyEmptyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyEmptyOutput, 2)
+
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		// it is faster to attempt to delete on production than checking if there is policy on production first
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							schema:               true,
+							emptyPolicy:          true,
 						}),
 					},
 				},

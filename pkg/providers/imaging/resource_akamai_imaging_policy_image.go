@@ -131,7 +131,10 @@ func upsertPolicyImage(ctx context.Context, d *schema.ResourceData, m interface{
 			return diag.FromErr(err)
 		}
 	} else {
-		policy = imagewriter.PolicyImageToEdgeGrid(d.Get("policy").([]interface{})[0].(map[string]interface{}))
+		p := d.Get("policy").([]interface{})
+		if len(p) > 0 && p[0] != nil {
+			policy = imagewriter.PolicyImageToEdgeGrid(p[0].(map[string]interface{}))
+		}
 	}
 	// upsert on staging only when there was a change
 	if d.HasChangesExcept("activate_on_production") {

@@ -1184,7 +1184,7 @@ func extract(src map[string]interface{}, name string) map[string]interface{} {
 	}
 
 	l := elem.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return nil
 	}
 	return l[0].(map[string]interface{})
