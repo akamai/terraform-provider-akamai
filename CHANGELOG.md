@@ -1,18 +1,22 @@
 # RELEASE NOTES
 
-## 1.13 (May X, 2022)
+## 2.0.0 (Apr 28, 2022)
+
+#### BREAKING CHANGES:
+
+* APPSEC
+  * Require version number for security configuration activation
 
 #### FEATURES/ENHANCEMENTS:
 
 * APPSEC
   * Add tuning recommendations for eval rulesets
-  * Require version number for security configuration activation
   * Require security policy ID for bypass network list data source & resource
 
 #### BUG FIXES:
 
 * PAPI
-  * resource `akamai_property`: handle secure by default API errors
+  * Resource `akamai_property`: handle secure by default API errors
 
 ## 1.12.1 (Apr 6, 2022)
 
