@@ -389,6 +389,9 @@ In this example, the new configuration has been assigned the ID **76982**.
 
 ### <a id="activateconfig"></a>Activate a security configuration
 
+> **Important**. The release of Akamai Terraform provider version 2.0.0 includes changes to the **akamai_appsec_activations** resource. The examples used in this article assume you’re using a version of the provider released prior to 2.0.0. If you’re using provider version 2.0.0 or later see the updated [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for more information.
+
+
 You can use Terraform to activate a configuration on either the staging network or the production network. A Terraform configuration for doing this looks similar to the following:
 
 ```
@@ -435,6 +438,8 @@ Inside this block we include these arguments and argument values:
 | `network`             | Name of the network the configuration is being activated for. Allowed values are:     <br />*  **staging**  <br />*  **production** |
 | `notes`               | Information about the configuration and the reason for its activation. |
 | `notification_emails` | JSON array of email addresses of people to be notified when activation is complete. To send notification emails to multiple people, separate the individual email addresses by using commas:     <br /><br />`notification_emails = ["gstemp@akamai.com", "karim.nafir@mail.com"]` |
+
+> **Note**. If you’re running Akamai Terraform provider version 2.0.0 or later, the arguments available to you have changed. See the [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for details.
 
 From here we can run `terraform plan` to verify our syntax, then run `terraform apply` to activate the security configuration.
 
@@ -623,7 +628,9 @@ By comparison, if we set `mode` to **REPLACE**, the existing set of hostnames ar
 
 [Reactivate a security configuration](#reactivate)
 
-Security configurations must be activated before they can begin analyzing and responding to user requests. Typically, activation is a two-step process: first the configuration is activated on the staging network and then, after testing and fine-tuning, the configuration is activated on the production network. At that point, the configuration is fully deployed, and *is* analyzing and responding to requests.
+> **Important**. The release of Akamai Terraform provider version 2.0.0 includes changes to the **akamai_appsec_activations** resource. The examples used in this article assume you’re using a version of the provider released prior to 2.0.0. If you’re using provider version 2.0.0 or later see the updated [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for more information.
+
+Security configurations must be activated before they can begin analyzing and responding to user requests. Typically, activation is a two-step process: first the configuration is activated on the staging network and then, after testing and fine-tuning, the configuration is activated on the production network. At that point, the configuration is fully deployed, and is analyzing and responding to requests.
 
 When the time comes, you can use Terraform to activate a configuration on either the staging network or the production network. A Terraform configuration for doing this looks similar to the following:
 
@@ -674,6 +681,8 @@ Inside this block we include the following arguments and argument values:
 | `activate`            | If **true** (the default value), the security configuration will be activated; if  **false**, the security configuration will be *deactivated*. Note that this argument is optional—if it's not included the security configuration will be activated. |
 | `notes`               | Information about the configuration and its activation.     |
 | `notification_emails` | JSON array of email addresses of the people to be notified when activation is complete. To send notification emails to multiple people, separate the individual email addresses by using commas:<br /><br />`notification_emails = ["gstemp@akamai.com", "karim.nafir@mail.com"]` |
+
+> **Note**. If you’re running Akamai Terraform provider version 2.0.0 or later, the arguments available to you have changed. See the [akamai_appsec_activationss](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for details.
 
 From here we can run `terraform plan` to verify our syntax, then run `terraform apply` to activate the security configuration. If everything goes as expected, you'll see output similar to the following:
 
