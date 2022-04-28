@@ -59,10 +59,9 @@ The following options can be used to determine the information returned, and how
 
 - `attack_group_action`. Action taken anytime the attack group is triggered. Valid values are:
   - **alert**. Record the event.
-  - **deny**. Block the request
+  - **deny**. Block the request.
   - **deny_custom_{custom_deny_id}**. The action defined by the custom deny is taken.
   - **none**. Take no action.
 - `condition_exception`. Conditions and exceptions associated with the attack group.
 - `json`. JSON-formatted list of the action and the condition-exception information for the specified attack group. This option is only available if the `attack_group` argument is included in the Terraform configuration.
 - `output_text`. Tabular report showing the attack group's action as well as Boolean values indicating whether conditions and exceptions have been configured for the group.
-

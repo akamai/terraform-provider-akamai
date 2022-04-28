@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -34,7 +33,7 @@ func resourceBypassNetworkLists() *schema.Resource {
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "The ID of the security policy governing the bypass network lists",
 			},
 			"bypass_network_list": {
@@ -57,7 +56,7 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	networkListIDSet, err := tools.GetSetValue("bypass_network_list", d)
@@ -74,16 +73,16 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	updateBypassNetworkLists := appsec.UpdateBypassNetworkListsRequest{
+	updateBypassNetworkLists := appsec.UpdateWAPBypassNetworkListsRequest{
 		ConfigID:     configID,
 		Version:      version,
 		PolicyID:     policyID,
 		NetworkLists: networkListIDList,
 	}
 
-	_, err = client.UpdateBypassNetworkLists(ctx, updateBypassNetworkLists)
+	_, err = client.UpdateWAPBypassNetworkLists(ctx, updateBypassNetworkLists)
 	if err != nil {
-		logger.Errorf("calling 'UpdateBypassNetworkLists': %s", err.Error())
+		logger.Errorf("calling 'UpdateWAPBypassNetworkLists': %s", err.Error())
 		return diag.FromErr(err)
 	}
 	d.SetId(fmt.Sprintf("%d", configID))
@@ -102,22 +101,22 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getLatestConfigVersion(ctx, configID, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	getBypassNetworkLists := appsec.GetBypassNetworkListsRequest{
+	getBypassNetworkLists := appsec.GetWAPBypassNetworkListsRequest{
 		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
 	}
 
-	bypassNetworkListsResponse, err := client.GetBypassNetworkLists(ctx, getBypassNetworkLists)
+	bypassNetworkListsResponse, err := client.GetWAPBypassNetworkLists(ctx, getBypassNetworkLists)
 	if err != nil {
-		logger.Errorf("calling 'GetBypassNetworkLists': %s", err.Error())
+		logger.Errorf("calling 'GetWAPBypassNetworkLists': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -146,7 +145,7 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	networkListIDSet, err := tools.GetSetValue("bypass_network_list", d)
@@ -163,16 +162,16 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	updateBypassNetworkLists := appsec.UpdateBypassNetworkListsRequest{
+	updateBypassNetworkLists := appsec.UpdateWAPBypassNetworkListsRequest{
 		ConfigID:     configID,
 		Version:      version,
 		PolicyID:     policyID,
 		NetworkLists: networkListIDList,
 	}
 
-	_, err = client.UpdateBypassNetworkLists(ctx, updateBypassNetworkLists)
+	_, err = client.UpdateWAPBypassNetworkLists(ctx, updateBypassNetworkLists)
 	if err != nil {
-		logger.Errorf("calling 'UpdateBypassNetworkLists': %s", err.Error())
+		logger.Errorf("calling 'UpdateWAPBypassNetworkLists': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -192,7 +191,7 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -203,16 +202,16 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	removeBypassNetworkLists := appsec.RemoveBypassNetworkListsRequest{
+	removeBypassNetworkLists := appsec.RemoveWAPBypassNetworkListsRequest{
 		ConfigID:     configID,
 		Version:      version,
 		PolicyID:     policyID,
 		NetworkLists: networkListIDList,
 	}
 
-	_, err = client.RemoveBypassNetworkLists(ctx, removeBypassNetworkLists)
+	_, err = client.RemoveWAPBypassNetworkLists(ctx, removeBypassNetworkLists)
 	if err != nil {
-		logger.Errorf("calling 'RemoveBypassNetworkLists': %s", err.Error())
+		logger.Errorf("calling 'RemoveWAPBypassNetworkLists': %s", err.Error())
 		return diag.FromErr(err)
 	}
 

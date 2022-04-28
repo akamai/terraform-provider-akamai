@@ -12,7 +12,7 @@ description: |-
 
 Returns information about your SIEM (Security Information and Event Management) versions. The returned information is described in the [Get SIEM versions](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemversions) section of the Application Security API.
 
-**Related API Endpoint**: [/appsec/v1/siem-definitions](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsiemversions)
+**Related API Endpoint**: [/appsec/v1/siem-definitions](https://techdocs.akamai.com/application-security/reference/get-siem-definitions)
 
 ## Example Usage
 
@@ -65,4 +65,3 @@ The following options can be used to determine the information returned, and how
 
 - `json`. JSON-formatted list of the SIEM version information.
 - `output_text`. Tabular report showing the ID and name of each SIEM version.
-

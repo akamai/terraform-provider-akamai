@@ -12,7 +12,7 @@ description: |-
 
 Creates a custom rule associated with a security configuration. Custom rules are rules that you define yourself and are not part of the Kona Rule Set.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/custom-rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postcustomrules)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/custom-rules]https://techdocs.akamai.com/application-security/reference/get-configs-custom-rules)
 
 ## Example Usage
 
@@ -61,4 +61,3 @@ This resource supports the following arguments:
 In addition to the arguments above, the following attribute is exported:
 
 - `custom_rule_id`. ID of the new custom rule.
-

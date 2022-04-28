@@ -54,9 +54,10 @@ func resourceEdgeWorker() *schema.Resource {
 				Description: "The EdgeWorker name",
 			},
 			"group_id": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "Defines the group association for the EdgeWorker",
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "Defines the group association for the EdgeWorker",
+				DiffSuppressFunc: tools.FieldPrefixSuppress("grp_"),
 			},
 			"resource_tier_id": {
 				Type:        schema.TypeInt,
@@ -109,13 +110,17 @@ func resourceEdgeWorkerCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID, err := tools.GetIntValue("group_id", d)
+	groupID, err := tools.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	groupIDNum, err := tools.GetIntID(groupID, "grp_")
+	if err != nil {
+		return diag.Errorf("invalid group_id provided: %s", err)
+	}
 	createEdgeWorkerIDReq := edgeworkers.CreateEdgeWorkerIDRequest{
 		Name:           name,
-		GroupID:        groupID,
+		GroupID:        groupIDNum,
 		ResourceTierID: resourceTierID,
 	}
 
@@ -210,7 +215,7 @@ func resourceEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs := make(map[string]interface{})
 	attrs["edgeworker_id"] = edgeWorkerID
 	attrs["name"] = edgeWorker.Name
-	attrs["group_id"] = edgeWorker.GroupID
+	attrs["group_id"] = strconv.FormatInt(edgeWorker.GroupID, 10)
 	attrs["resource_tier_id"] = edgeWorker.ResourceTierID
 	attrs["local_bundle_hash"] = bundleContentHash
 	attrs["version"] = version
@@ -277,7 +282,11 @@ func resourceEdgeWorkerUpdate(ctx context.Context, d *schema.ResourceData, m int
 			return diag.FromErr(err)
 		}
 	}
-	groupID, err := tools.GetIntValue("group_id", d)
+	groupID, err := tools.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	groupIDNum, err := tools.GetIntID(groupID, "grp_")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -291,7 +300,7 @@ func resourceEdgeWorkerUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	edgeWorkerIDBodyReq := edgeworkers.EdgeWorkerIDBodyRequest{
 		Name:           name,
-		GroupID:        groupID,
+		GroupID:        groupIDNum,
 		ResourceTierID: resourceTierID,
 	}
 	_, err = client.UpdateEdgeWorkerID(ctx, edgeworkers.UpdateEdgeWorkerIDRequest{

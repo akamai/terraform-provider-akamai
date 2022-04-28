@@ -13,7 +13,7 @@ description: |-
 Modifies the way your Kona Rule Set rules are updated.
 Use **KRS** mode to update the rule sets manually or **AAG** to have those rule sets automatically updated.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/mode](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putmode)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/mode](https://techdocs.akamai.com/application-security/reference/put-policy-mode)
 
 ## Example Usage
 
@@ -82,8 +82,7 @@ This resource supports the following arguments:
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
 - `current_ruleset` – Versioning information for the current Kona Rule Set.
-- `eval_ruleset`. Versioning information for the Kona Rule Set being evaluated (if applicable) .
+- `eval_ruleset`. Versioning information for the Kona Rule Set being evaluated (if applicable).
 - `eval_status`. Returns **enabled** if an evaluation is currently in progress; otherwise returns **disabled**.
 - `eval_expiration_date`. Date on which the evaluation period ends (if applicable).
 - `output_text`. Tabular report showing the current rule set, WAF mode and evaluation status.
-

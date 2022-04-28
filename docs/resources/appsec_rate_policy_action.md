@@ -10,11 +10,11 @@ description: |-
 
 **Scopes**: Rate policy
 
-Creates, modifies or deletes the actions associated with a rate policy.
+Creates, modifies, or deletes the actions associated with a rate policy.
 By default, rate policies take no action when triggered.
 Note that you must set separate actions for requests originating from an IPv4 IP address and for requests originating from an IPv6 address.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rate-policies/{ratePolicyId}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putactionsperratepolicy)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rate-policies/{ratePolicyId}](https://techdocs.akamai.com/application-security/reference/put-rate-policy-action)
 
 ## Example Usage
 
@@ -54,10 +54,10 @@ resource "akamai_appsec_rate_policy_action" "appsec_rate_policy_action" {
 
 This resource supports the following arguments:
 
-- `config_id` (Required). Unique identifier of the security configuration associated with the rate policy action  being modified.
+- `config_id` (Required). Unique identifier of the security configuration associated with the rate policy action being modified.
 - `rate_policy_id` (Required). Unique identifier of the rate policy whose action is being modified.
 - `ipv4_action` (Required). Rate policy action for requests coming from an IPv4 IP address. Allowed actions are:
-  - **alert**. Record the event,
+  - **alert**. Record the event.
   - **deny**. Block the request.
   - **deny_custom{custom_deny_id}**. Take the action specified by the custom deny.
   - **none**. Take no action.
@@ -65,4 +65,3 @@ This resource supports the following arguments:
   - **alert**. Record the event.
   - **deny**. Block the request.
   - **deny_custom{custom_deny_id}**. Take the action specified by the custom deny.
-

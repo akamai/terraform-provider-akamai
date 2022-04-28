@@ -12,7 +12,7 @@ description: |-
 
 Modifies the method used for firewall blocking, and manages the network lists used for IP/Geo firewall blocking.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/ip-geo-firewall](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putipgeofirewall)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/ip-geo-firewall](https://techdocs.akamai.com/application-security/reference/put-policy-ip-geo-firewall)
 
 ## Example Usage
 
@@ -87,6 +87,5 @@ This resource supports the following arguments:
 - `security_policy_id` (Required). Unique identifier of the security policy associated with the IP/Geo lists being modified.
 - `mode` (Required). Set to **block** to prevent the specified network lists from being allowed through the firewall: all other entities will be allowed to pass through the firewall. Set to **allow** to allow the specified network lists to pass through the firewall; all other entities will be prevented from passing through the firewall.
 - `geo_network_lists` (Optional). JSON array of geographic network lists that, depending on the value of the `mode` argument, will be blocked or allowed through the firewall.
-- `ip_network_lists` (Optional). JSON array of IP network lists that, depending on the value of the `mode` argument, will be blocked or allowed through the firewall..
+- `ip_network_lists` (Optional). JSON array of IP network lists that, depending on the value of the `mode` argument, will be blocked or allowed through the firewall.
 - `exception_ip_network_lists` (Optional). JSON array of network lists that are always allowed to pass through the firewall, regardless of the value of any other setting.
-

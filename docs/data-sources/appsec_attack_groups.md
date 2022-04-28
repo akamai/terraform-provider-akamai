@@ -13,7 +13,7 @@ description: |-
 
 Returns the action and the condition-exception information for an attack group or set of attack groups. Attack groups are collections of Kona Rule Set rules used to streamline the management of website protections.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/attack-groups](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getattackgroups)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/attack-groups](https://techdocs.akamai.com/application-security/reference/get-policy-attack-groups)
 
 ## Example Usage
 
@@ -64,8 +64,6 @@ This data source supports the following arguments:
 - `security_policy_id` (Required). Unique identifier of the security policy associated with the attack group.
 - `attack_group` (Optional). Unique name of the attack group you want to return information for. If not included, information is returned for all your attack groups.
 
-
-
 ## Output Options
 
 The following options can be used to determine the information returned, and how that returned information is formatted:
@@ -78,4 +76,3 @@ The following options can be used to determine the information returned, and how
 - `condition_exception`. Conditions and exceptions assigned to the attack group.
 - `json`. JSON-formatted list of the action and the condition-exception information for the attack group. This option is available only if the `attack_group` argument is included in the Terraform configuration file.
 - `output_text`. Tabular report showing the attack group's action as well as Boolean values indicating whether conditions and exceptions have been configured for the group.
-

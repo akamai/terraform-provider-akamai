@@ -122,7 +122,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -134,7 +134,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -148,7 +148,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Times(3)
 
@@ -209,7 +209,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -220,7 +220,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Twice()
 		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
@@ -403,7 +403,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -415,7 +415,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -429,7 +429,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Times(2)
 
@@ -586,7 +586,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -598,7 +598,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -612,7 +612,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Times(4)
 
@@ -773,7 +773,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -787,7 +787,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Times(2)
 
@@ -904,7 +904,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -918,7 +918,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Times(3)
 
@@ -954,7 +954,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -965,7 +965,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Twice()
 		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
@@ -1117,10 +1117,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
-			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-ack"}},
+			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "wait-review-pre-verification-safety-checks",
+				Status: statusVerificationWarnings,
 			},
 		}, nil).Twice()
 
@@ -1138,10 +1138,20 @@ func TestResourceDVEnrollment(t *testing.T) {
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: inputTypePreVerificationWarningsAck,
+			},
+		}, nil).Once()
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -1155,7 +1165,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Twice()
 
@@ -1283,10 +1293,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
-			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-ack"}},
+			AllowedInput: []cps.AllowedInput{{Type: inputTypePreVerificationWarningsAck}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "wait-review-pre-verification-safety-checks",
+				Status: statusVerificationWarnings,
 			},
 		}, nil).Twice()
 
@@ -1487,7 +1497,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Once()
 
@@ -1501,7 +1511,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: "coodinate-domain-validation",
+				Status: statusCoordinateDomainValidation,
 			},
 		}, nil).Times(3)
 

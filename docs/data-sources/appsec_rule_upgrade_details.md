@@ -10,9 +10,9 @@ description: |-
 
 **Scopes**: Security policy
 
-Returns information indicating which of your Kona Rule Sets (if any) need to be updated. A value of **false** indicates that no updates are required.
+Returns information indicating which of your Kona Rule Sets, if any, need to be updated. A value of **false** indicates that no updates are required.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules/upgrade-details](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getupgradedetails)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules/upgrade-details](https://techdocs.akamai.com/application-security/reference/get-rules-upgrade-details)
 
 ## Example Usage
 
@@ -61,4 +61,3 @@ The following options can be used to determine the information returned, and how
 
 - `output_text`. Tabular report showing changes (additions and deletions) to the rules for the specified security policy.
 - `json`. JSON-formatted list of the changes (additions and deletions) to the rules for the specified security policy.
-

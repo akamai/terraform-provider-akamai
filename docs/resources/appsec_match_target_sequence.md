@@ -12,7 +12,7 @@ description: |-
 
 Specifies the order in which match targets are applied within a security configuration. As a general rule, you should process broader and more-general match targets first, gradually working your way down to more granular and highly-specific targets.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets/sequence](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putsequence)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets/sequence](https://techdocs.akamai.com/application-security/reference/put-match-targets-sequence)
 
 ## Example Usage
 
@@ -47,4 +47,3 @@ This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the match target sequence being modified.
 - `match_target_sequence` (Required). Path to a JSON file containing the processing sequence for all the match targets defined for the security configuration. You can find a sample match target sequence JSON file in the [Modify match target order](https://developer.akamai.com/api/cloud_security/application_security/v1.html#matchtargetorder) section of the Application Security API documentation.
-

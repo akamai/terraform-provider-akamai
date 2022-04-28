@@ -20,7 +20,7 @@ Note that **ASE_MANUAL **and **ASE_AUTO** modes only apply to organizations runn
 
 Before you upgrade it's recommended that you use the [akamai_appsec_rule_upgrade_details](https://registry.terraform.io/providers/akamai/akamai/latest/docs/data-sources/appsec_rule_upgrade_details) data source to determine which rules and rule sets (if any) have available upgrades. In addition to that, you might want to test the new rules in [evaluation mode](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_eval). In evaluation mode, rules are triggered the same way they are on the production network; however, the only action taken by the rules is to record how they *would* have responded had they been active on the production network. This enables you to see how the rules interact with your production network without actually making changes to that network.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putrules)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/rules](https://techdocs.akamai.com/application-security/reference/put-policy-rules)
 
 ## Example Usage
 
@@ -84,4 +84,3 @@ The following options can be used to determine the information returned and how 
   - **ASE_AUTO**. Adaptive Security Engine rulesets are automatically updated by Akamai.
 
 - `eval_status`. Returns **enabled** if an evaluation is currently in progress; otherwise returns **disabled**.
-

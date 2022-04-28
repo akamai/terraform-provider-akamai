@@ -8,7 +8,11 @@ description: |-
 
 # akamai_appsec_advanced_settings_evasive_path_match
 
+**Scopes**: Security configuration; security policy 
+
 Use the `akamai_appsec_advanced_settings_evasive_path_match` data source to retrieve information about the evasive path match for a configuration. This operation applies at the configuration level, and therefore applies to all policies within a configuration. You may retrieve these settings for a particular policy by specifying the policy using the security_policy_id parameter. The information available is described [here](https://developer.akamai.com/api/cloud_security/application_security/v1.html#gethttpheaderloggingforaconfiguration).
+
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/advanced-settings/evasive-path-match](https://techdocs.akamai.com/application-security/reference/put-evasive-path-match)
 
 ## Example Usage
 
@@ -67,4 +71,3 @@ In addition to the arguments above, the following attributes are exported:
 * `json` - A JSON-formatted list of information about the evasive path match settings.
 
 * `output_text` - A tabular display showing the evasive path match settings.
-

@@ -10,11 +10,10 @@ description: |-
 
 **Scopes**: Security configuration; rate policy
 
-Creates, modifies or deletes rate policies.
-Rate polices help you monitor and moderate the number and  rate of all the requests you receive.
+Creates, modifies, or deletes rate policies. Rate polices help you monitor and moderate the number and rate of all the requests you receive.
 In turn, this helps you prevent your website from being overwhelmed by a dramatic and unexpected surge in traffic.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/rate-policies](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postratepolicies)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/rate-policies](https://techdocs.akamai.com/application-security/reference/post-rate-policies)
 
 ## Example Usage
 
@@ -60,4 +59,3 @@ This resource supports the following arguments:
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
 - `rate_policy_id`. ID of the modified or newly-created rate policy.
-

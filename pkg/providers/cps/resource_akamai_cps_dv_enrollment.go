@@ -25,8 +25,9 @@ var (
 )
 
 const (
-	statusCoordinateDomainValidation = "coodinate-domain-validation"
-	statusVerificationWarnings       = "wait-review-pre-verification-safety-checks"
+	statusCoordinateDomainValidation    = "coodinate-domain-validation"
+	statusVerificationWarnings          = "wait-review-pre-verification-safety-checks"
+	inputTypePreVerificationWarningsAck = "pre-verification-warnings-acknowledgement"
 )
 
 func resourceCPSDVEnrollment() *schema.Resource {
@@ -772,7 +773,9 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 			if err != nil {
 				return err
 			}
-			if status.StatusInfo != nil && status.StatusInfo.Status == statusVerificationWarnings {
+			if status.StatusInfo != nil && status.StatusInfo.Status == statusVerificationWarnings &&
+				len(status.AllowedInput) > 0 && status.AllowedInput[0].Type == inputTypePreVerificationWarningsAck {
+
 				warnings, err := client.GetChangePreVerificationWarnings(ctx, cps.GetChangeRequest{
 					EnrollmentID: enrollmentID,
 					ChangeID:     changeID,

@@ -97,14 +97,18 @@ func ExpectGetPropertyVersionHostnames(client *mockpapi, PropertyID, GroupID, Co
 // Sets up an expected call to papi.UpdatePropertyVersionHostnames() which returns a constant value based on input
 // params. If given, the value pointed to by State will be updated with a copy of the given Hostnames when the call
 // to mockpapi.UpdatePropertyVersionHostnames() is made.
-func ExpectUpdatePropertyVersionHostnames(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, Hostnames []papi.Hostname) *mock.Call {
-	// func ExpectUpdatePropertyVersionHostnames(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, Hostnames []papi.Hostname, State *[]papi.Hostname) *mock.Call {
+func ExpectUpdatePropertyVersionHostnames(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, Hostnames []papi.Hostname, err error) *mock.Call {
 	req := papi.UpdatePropertyVersionHostnamesRequest{
 		PropertyID:      PropertyID,
 		PropertyVersion: PropertyVersion,
 		ContractID:      ContractID,
 		GroupID:         GroupID,
 		Hostnames:       Hostnames,
+	}
+
+	call := client.On("UpdatePropertyVersionHostnames", AnyCTX, req)
+	if err != nil {
+		return call.Return(&papi.UpdatePropertyVersionHostnamesResponse{}, err)
 	}
 
 	res := papi.UpdatePropertyVersionHostnamesResponse{
@@ -115,7 +119,7 @@ func ExpectUpdatePropertyVersionHostnames(client *mockpapi, PropertyID, GroupID,
 		Hostnames:       papi.HostnameResponseItems{Items: Hostnames},
 	}
 
-	return client.On("UpdatePropertyVersionHostnames", AnyCTX, req).Return(&res, nil)
+	return call.Return(&res, nil)
 }
 
 // Sets up an expected call to papi.GetPropertyVersions()

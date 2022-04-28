@@ -7,7 +7,7 @@ description: |-
 
 # Application Security Module Guide
 
-Application Security (appsec) in the Akamai Terraform provider (provider) enables application security configurations including such things as:
+Use Akamai's Application Security (appsec) Terraform provider (provider) to access and modify your Security Configurations for [Kona Site Defender](https://techdocs.akamai.com/kona-site-defender), [Web Application Protector](https://techdocs.akamai.com/web-app-protector), [App & API Protector](https://techdocs.akamai.com/app-api-protector), Advanced Security Module, and [Client Reputation](https://techdocs.akamai.com/kona-site-defender/docs/control-client-rep). The provider enables application security configurations including such things as:
 
 - Custom rules
 - Match targets
@@ -18,8 +18,6 @@ This guide is for developers who:
 - Are interested in implementing or updating an integration of Akamai functionality with Terraform.
 - Already have some familiarity with Akamai products and Akamai application security.
 
-
-
 ------
 
 ### Before You Begin
@@ -28,8 +26,6 @@ This guide assumes that you have a basic understanding of Terraform and how it w
 
 - [Akamai Provider: Get Started](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider)
 - [Akamai Provider: Set Up Authentication](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/akamai_provider_auth)
-
-
 
 ------
 
@@ -44,8 +40,6 @@ This guide assumes that you have a basic understanding of Terraform and how it w
 - [Modify a Kona rule set rule action](#kona)
 - [Import a Terraform resource from one security configuration to another](#import)
 - [Create an automated attack groups (AAG) security configuration](#aag)
-
-
 
 ------
 
@@ -213,7 +207,7 @@ If this looks familiar, that shouldn't come as a surprise: it's the same Terrafo
 
 After the security configuration is complete, and after we know the ID of that configuration, we can create our security policy. But how are we supposed to know the ID of a brand-new security configuration?
 
-As it turns out, determining the ID of a new configuration is surprisingly easy. To begin with, after a configuration has been created, the ID of that configuration is available in an attribute named `config_id`; we know that because that information is included in the [akamai_appsec_configuration resource documentation](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_configuration)n.
+As it turns out, determining the ID of a new configuration is surprisingly easy. To begin with, after a configuration has been created, the ID of that configuration is available in an attribute named `config_id`; we know that because that information is included in the [akamai_appsec_configuration resource documentation](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_configuration).
 
 On top of that, the first line in our resource block looks like this:
 
@@ -284,8 +278,6 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 ```
 
 If you take a closer look at the response, you'll see the ID of the new configuration (**76984**) and the ID of the new security policy (**doc1_137405**).
-
-
 
 ### <a id="clone"></a>Clone a security configuration
 
@@ -397,6 +389,9 @@ In this example, the new configuration has been assigned the ID **76982**.
 
 ### <a id="activateconfig"></a>Activate a security configuration
 
+> **Important**. The release of Akamai Terraform provider version 2.0.0 includes changes to the **akamai_appsec_activations** resource. The examples used in this article assume you’re using a version of the provider released prior to 2.0.0. If you’re using provider version 2.0.0 or later see the updated [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for more information.
+
+
 You can use Terraform to activate a configuration on either the staging network or the production network. A Terraform configuration for doing this looks similar to the following:
 
 ```
@@ -443,6 +438,8 @@ Inside this block we include these arguments and argument values:
 | `network`             | Name of the network the configuration is being activated for. Allowed values are:     <br />*  **staging**  <br />*  **production** |
 | `notes`               | Information about the configuration and the reason for its activation. |
 | `notification_emails` | JSON array of email addresses of people to be notified when activation is complete. To send notification emails to multiple people, separate the individual email addresses by using commas:     <br /><br />`notification_emails = ["gstemp@akamai.com", "karim.nafir@mail.com"]` |
+
+> **Note**. If you’re running Akamai Terraform provider version 2.0.0 or later, the arguments available to you have changed. See the [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for details.
 
 From here we can run `terraform plan` to verify our syntax, then run `terraform apply` to activate the security configuration.
 
@@ -631,7 +628,9 @@ By comparison, if we set `mode` to **REPLACE**, the existing set of hostnames ar
 
 [Reactivate a security configuration](#reactivate)
 
-Security configurations must be activated before they can begin analyzing and responding to user requests. Typically, activation is a two-step process: first the configuration is activated on the staging network and then, after testing and fine-tuning, the configuration is activated on the production network. At that point, the configuration is fully deployed, and *is* analyzing and responding to requests.
+> **Important**. The release of Akamai Terraform provider version 2.0.0 includes changes to the **akamai_appsec_activations** resource. The examples used in this article assume you’re using a version of the provider released prior to 2.0.0. If you’re using provider version 2.0.0 or later see the updated [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for more information.
+
+Security configurations must be activated before they can begin analyzing and responding to user requests. Typically, activation is a two-step process: first the configuration is activated on the staging network and then, after testing and fine-tuning, the configuration is activated on the production network. At that point, the configuration is fully deployed, and is analyzing and responding to requests.
 
 When the time comes, you can use Terraform to activate a configuration on either the staging network or the production network. A Terraform configuration for doing this looks similar to the following:
 
@@ -682,6 +681,8 @@ Inside this block we include the following arguments and argument values:
 | `activate`            | If **true** (the default value), the security configuration will be activated; if  **false**, the security configuration will be *deactivated*. Note that this argument is optional—if it's not included the security configuration will be activated. |
 | `notes`               | Information about the configuration and its activation.     |
 | `notification_emails` | JSON array of email addresses of the people to be notified when activation is complete. To send notification emails to multiple people, separate the individual email addresses by using commas:<br /><br />`notification_emails = ["gstemp@akamai.com", "karim.nafir@mail.com"]` |
+
+> **Note**. If you’re running Akamai Terraform provider version 2.0.0 or later, the arguments available to you have changed. See the [akamai_appsec_activationss](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for details.
 
 From here we can run `terraform plan` to verify our syntax, then run `terraform apply` to activate the security configuration. If everything goes as expected, you'll see output similar to the following:
 

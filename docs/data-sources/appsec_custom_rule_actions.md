@@ -11,9 +11,9 @@ description: |-
 
 **Scopes**: Security policy; custom rule
 
-Retrieve information about the actions defined for your custom rules. Custom rules are rules that you create yourself: these rules aren't part of Akamai's Kona Rule Set.
+Retrieve information about the actions defined for your custom rules. Custom rules are rules that you create yourself — these rules aren't part of Akamai's Kona Rule Set.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/custom-rules/{ruleId}](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcustomruleactions)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/custom-rules](https://techdocs.akamai.com/application-security/reference/get-custom-rules)
 
 ## Example Usage
 
@@ -56,4 +56,3 @@ This data source supports the following arguments:
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
 - `output_text`. Tabular report showing the ID, name, and action of the custom rules.
-

@@ -2,6 +2,7 @@ package property
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"testing"
@@ -56,7 +57,7 @@ func TestResProperty(t *testing.T) {
 				CertProvisioningType: "DEFAULT",
 			}}
 
-			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames).Once().Run(func(mock.Arguments) {
+			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames, nil).Once().Run(func(mock.Arguments) {
 				NewResponseHostnames := []papi.Hostname{{
 					CnameType:            "EDGE_HOSTNAME",
 					CnameFrom:            "from.test.domain",
@@ -94,7 +95,7 @@ func TestResProperty(t *testing.T) {
 				CertProvisioningType: "DEFAULT",
 			}}
 
-			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames).Once().Run(func(mock.Arguments) {
+			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames, nil).Once().Run(func(mock.Arguments) {
 				NewResponseHostnames := []papi.Hostname{{
 					CnameType:            "EDGE_HOSTNAME",
 					CnameFrom:            CnameFrom1,
@@ -1007,7 +1008,7 @@ func TestResProperty(t *testing.T) {
 					CnameFrom:            "terraform.provider.myu877.test.net",
 					CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
 					CertProvisioningType: "DEFAULT",
-				}},
+				}}, nil,
 			).Once()
 
 			ExpectGetProperty(
@@ -1037,7 +1038,7 @@ func TestResProperty(t *testing.T) {
 
 			ExpectUpdatePropertyVersionHostnames(
 				client, "prp_0", "grp_0", "ctr_0", 1,
-				[]papi.Hostname{},
+				[]papi.Hostname{}, nil,
 			).Once()
 
 			ExpectGetPropertyVersionHostnames(
@@ -1060,6 +1061,103 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.test", "hostnames.#", "0"),
 							),
 							ExpectError: regexp.MustCompile("hostnames exist on server and cannot be updated to empty for property with id 'prp_0'. Provide at least one hostname to update existing list of hostnames associated to this property"),
+						},
+					},
+				})
+			})
+		})
+
+		t.Run("validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' with secure-by-default enabled but remaining default certs == 0 it should return error", func(t *testing.T) {
+			client := &mockpapi{}
+			client.Test(T{t})
+
+			ExpectCreateProperty(
+				client, "test_property", "grp_0",
+				"ctr_0", "prd_0", "prp_0",
+			)
+
+			ExpectGetPropertyVersions(client, "prp_0", "test_property", "ctr_0", "grp_0", nil, &papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+				{
+					PropertyVersion:  1,
+					StagingStatus:    papi.VersionStatusInactive,
+					ProductionStatus: papi.VersionStatusInactive,
+				},
+			}})
+
+			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
+
+			ExpectUpdatePropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 1,
+				[]papi.Hostname{{
+					CnameType:            "EDGE_HOSTNAME",
+					CnameFrom:            "terraform.provider.myu877.test.net",
+					CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
+					CertProvisioningType: "DEFAULT",
+				}}, &papi.Error{
+					StatusCode: http.StatusTooManyRequests,
+					Remaining:  0,
+					LimitKey:   "DEFAULT_CERTS_PER_CONTRACT",
+				},
+			).Once()
+
+			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config:      loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+							Check:       resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
+							ExpectError: regexp.MustCompile("updating hostnames: not possible to use cert_provisioning_type = 'DEFAULT' as the limit for DEFAULT certificates has been reached"),
+						},
+					},
+				})
+			})
+		})
+
+		t.Run("validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' not having enabled secure-by-default it should return error", func(t *testing.T) {
+			client := &mockpapi{}
+			client.Test(T{t})
+
+			ExpectCreateProperty(
+				client, "test_property", "grp_0",
+				"ctr_0", "prd_0", "prp_0",
+			)
+
+			ExpectGetPropertyVersions(client, "prp_0", "test_property", "ctr_0", "grp_0", nil, &papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
+				{
+					PropertyVersion:  1,
+					StagingStatus:    papi.VersionStatusInactive,
+					ProductionStatus: papi.VersionStatusInactive,
+				},
+			}})
+
+			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
+
+			ExpectUpdatePropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 1,
+				[]papi.Hostname{{
+					CnameType:            "EDGE_HOSTNAME",
+					CnameFrom:            "terraform.provider.myu877.test.net",
+					CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
+					CertProvisioningType: "DEFAULT",
+				}}, &papi.Error{
+					StatusCode: http.StatusForbidden,
+					Type:       "https://problems.luna.akamaiapis.net/papi/v0/property-version-hostname/default-cert-provisioning-unavailable",
+				},
+			).Once()
+
+			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config:      loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+							Check:       resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
+							ExpectError: regexp.MustCompile("updating hostnames: not possible to use cert_provisioning_type = 'DEFAULT' as secure-by-default is not enabled in this account"),
 						},
 					},
 				})

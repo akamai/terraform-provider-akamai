@@ -12,7 +12,7 @@ description: |-
 
 Returns the list of hostnames that can be (but aren't yet) protected by a security configuration. You can specify the set of hostnames to be retrieved either by supplying the name of a security configuration or by supplying an Akamai group ID and contract ID.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/selectable-hostnames](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getavailablehostnames)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/selectable-hostnames](https://techdocs.akamai.com/application-security/reference/get-selectable-hostnames)
 
 ## Example Usage
 
@@ -95,4 +95,3 @@ The following options can be used to determine the information returned, and how
 - `hostnames`. List of selectable hostnames.
 - `hostnames_json`. JSON-formatted list of selectable hostnames.
 - `output_text`. Tabular report of the selectable hostnames showing the name and config_id of the security configuration under which the host is protected in production.
-

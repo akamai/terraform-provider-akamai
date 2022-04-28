@@ -13,7 +13,7 @@ description: |-
 
 Returns versioning information for a security configuration.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getsummarylistofconfigurationversions)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}](https://techdocs.akamai.com/application-security/reference/get-version-number)
 
 ## Example Usage
 
@@ -96,4 +96,3 @@ The following options can be used to determine the information returned, and how
   Returned only if the `version` argument is included in the Terraform configuration file.
 
 - `output_text`. Tabular report showing the version number, staging status, and production status properties and property values.
-

@@ -54,8 +54,7 @@ This resource supports the following arguments:
 - `attack_group` (Required). Unique identifier of the evaluation attack group being modified.
 - `attack_group_action` (Required). Action to be taken any time the attack group is triggered. Allowed values are:
   - **alert**. Record the event.
-  - **deny**. Block the request
+  - **deny**. Block the request.
   - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
   - **none**. Take no action.
 - `condition_exception` (Optional). Path to a JSON file containing properties and property values for the attack group. For more information, the [Modify the exceptions of an attack group](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putattackgroupconditionexception) section of the Application Security API documentation.
-

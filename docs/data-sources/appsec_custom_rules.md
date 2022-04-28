@@ -13,7 +13,7 @@ description: |-
 
 Returns a list of the custom rules defined for a security configuration; you can also use this resource to return information for an individual custom rule. Custom rules are rules you have created yourself and are not part of the Kona Rule Set.
 
-**Related API Endpoint**:[/appsec/v1/configs/{configId}/custom-rules](https://developer.akamai.com/api/cloud_security/application_security/v1.html#getcustomrules)
+**Related API Endpoint**:[/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/custom-rules](https://techdocs.akamai.com/application-security/reference/get-custom-rules)
 
 ## Example Usage
 
@@ -64,7 +64,7 @@ output "specific_custom_rule_json" {
 
 This data source supports the following arguments:
 
-- `config_id` (Required). Unique identifier of the security configuration associated with the custom rules
+- `config_id` (Required). Unique identifier of the security configuration associated with the custom rules.
 - `custom_rule_id` (Optional). Unique identifier of the custom rule you want to return information for. If not included, information is returned for all your custom rules.
 
 ## Output Options
@@ -73,4 +73,3 @@ The following options can be used to determine the information returned, and how
 
 - `output_text`. Tabular report showing the ID and name of the custom rule information.
 - `json`. JSON-formatted report of the custom rule information.
-

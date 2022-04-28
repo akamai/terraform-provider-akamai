@@ -13,7 +13,7 @@ With this module you can create EdgeWorkers functions to run JavaScript at the e
 
 Before you start, make sure Edgeworkers is in your contract. You can find the list of products within your account in ​Control Center​ under Contracts. Contact your ​Akamai​ support team to enable Edgeworkers if necessary.
 
-Complete the tasks in [Get Started with the Akamai Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have an API client and a valid `akamai.tf` Terraform configuration before adding the Global Traffic Management (GTM) module configuration.
+Complete the tasks in [Get Started with the Akamai Provider](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider). You should have an API client and a valid `akamai.tf` Terraform configuration before adding the EdgeWorkers module configuration.
 
 ## EdgeWorkers workflow
 
@@ -42,7 +42,7 @@ Use the [akamai_edgeworkers_resource_tier](../data-sources/edgeworkers_resource_
 
 Create an EdgeWorker ID that includes a name, a group id, and a resource tier.
 
-Use the [`akamai_edgeworkers`](../resources/edgeworkers.md) resource to set up an EdgeWorker ID you need to create and activate EdgeWorker versions.
+Use the [`akamai_edgeworker`](../resources/edgeworker.md) resource to set up an EdgeWorker ID you need to create and activate EdgeWorker versions.
 
 ## Add data to the EdgeKV namespace
 

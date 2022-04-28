@@ -14,7 +14,7 @@ Issues an evaluation mode command (`Start`, `Stop`, `Restart`, `Update`, or `Com
 Evaluation mode is used for testing and fine-tuning your Kona Rule Set rules and configuration settings.
 In evaluation mode rules are triggered by events, but the only thing those rules do is record the actions they *would* have taken had the event occurred on the production network.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/eval](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postevaluationmode)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/eval](https://techdocs.akamai.com/application-security/reference/post-policy-eval)
 
 ## Example Usage
 
@@ -79,4 +79,3 @@ The following options can be used to determine the information returned, and how
 - `expiration_date`. Date when the evaluation period ends.
 - `current_ruleset`. Versioning information for the Kona Rule Set currently in use on the production network.
 - `eval_status`. If **true**, an evaluation is currently in progress; if **false**, evaluation is either paused or is not running.
-

@@ -10,9 +10,11 @@ description: |-
 
 **Scopes**: Security policy
 
-Modifies the penalty box settings for a security policy. When using automated attack groups, and when the penalty box is enabled, clients that trigger an attack group  are placed in the “penalty box.” That means that, for the next 10 minutes, all requests from that client are ignored.
+Modifies the penalty box settings for a security policy.
+When using automated attack groups, and when the penalty box is enabled, clients that trigger an attack group  are placed in the “penalty box”.
+That means that, for the next 10 minutes, all requests from that client are ignored.
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets/sequence](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putpenaltybox)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets/sequence](https://techdocs.akamai.com/application-security/reference/put-policy-penalty-box)
 
 ## Example Usage
 
@@ -52,8 +54,7 @@ This resource supports the following arguments:
 - `security_policy_id` (Required). Unique identifier of the security policy associated with the penalty box settings being modified.
 - `penalty_box_protection` (Required). Set to **true** to enable penalty box protection; set to **false** to disable penalty box protection.
 - `penalty_box_action` (Required). Action taken any time penalty box protection is triggered. Allowed values are:
-  - **alert**. Record the event,
+  - **alert**. Record the event.
   - **deny**. Block the request.
   - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
   - **none**. Take no action.
-
