@@ -18,7 +18,7 @@ data "akamai_imaging_policy_image" "policy" {
     }
     transformations {
       max_colors {
-        colors = 2
+        colors = 0
       }
     }
   }

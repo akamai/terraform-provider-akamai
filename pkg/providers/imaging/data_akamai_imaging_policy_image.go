@@ -51,7 +51,7 @@ func dataSourceImagingPolicyImageRead(_ context.Context, d *schema.ResourceData,
 		if !ok {
 			return diag.Errorf("'policy' is of invalid type: %T", policyInputMap)
 		}
-		policyInput = imagewriter.PolicyImageToEdgeGrid(policyInputMap)
+		policyInput = imagewriter.PolicyImageToEdgeGrid(d, "policy")
 	}
 
 	jsonBody, err := json.MarshalIndent(policyInput, "", "  ")

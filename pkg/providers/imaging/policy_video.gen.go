@@ -5,8 +5,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-// PolicyVideo is a top level schema func
-func PolicyVideo(depth int) map[string]*schema.Schema {
+// PolicyOutputVideo is a top level schema func
+func PolicyOutputVideo(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"breakpoints": {
 			Type:        schema.TypeList,
@@ -33,13 +33,10 @@ func PolicyVideo(depth int) map[string]*schema.Schema {
 			},
 		},
 		"rollout_duration": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The amount of time in seconds that the policy takes to rollout. During the rollout an increasing proportion of images/videos will begin to use the new policy instead of the cached images/videos from the previous version.",
-			ValidateDiagFunc: validation.ToDiagFunc(validation.All(
-				validation.IntAtLeast(3600),
-				validation.IntAtMost(604800),
-			)),
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The amount of time in seconds that the policy takes to rollout. During the rollout an increasing proportion of images/videos will begin to use the new policy instead of the cached images/videos from the previous version.",
+			ValidateDiagFunc: stringAsIntBetween(3600, 604800),
 		},
 		"variables": {
 			Type:        schema.TypeList,

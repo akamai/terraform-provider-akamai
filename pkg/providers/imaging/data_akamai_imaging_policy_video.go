@@ -22,7 +22,7 @@ func dataImagingPolicyVideo() *schema.Resource {
 				Description: "Video policy",
 				MaxItems:    1,
 				Elem: &schema.Resource{
-					Schema: PolicyVideo(PolicyDepth),
+					Schema: PolicyOutputVideo(PolicyDepth),
 				},
 			},
 			"json": {
@@ -48,7 +48,7 @@ func dataSourceImagingPolicyVideoRead(_ context.Context, d *schema.ResourceData,
 		if !ok {
 			return diag.Errorf("'policy' is of invalid type: %T", policyInputMap)
 		}
-		policyInput = videowriter.PolicyVideoToEdgeGrid(policyInputMap)
+		policyInput = videowriter.PolicyVideoToEdgeGrid(d, "policy")
 	}
 
 	jsonBody, err := json.MarshalIndent(policyInput, "", "  ")

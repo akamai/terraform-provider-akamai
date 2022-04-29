@@ -1,172 +1,237 @@
 package videowriter
 
 import (
-	"reflect"
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // PolicyVideoToEdgeGrid converts terraform originated map structure into EdgeGrid structure
-func PolicyVideoToEdgeGrid(input map[string]interface{}) imaging.PolicyInputVideo {
-	result := imaging.PolicyInputVideo{}
-	result.Breakpoints = getBreakpoints(extract(input, "breakpoints"))
-	result.Hosts = interfaceSliceToStringSlice(input["hosts"].([]interface{}))
-	result.Output = getOutputVideo(extract(input, "output"))
-	result.RolloutDuration = input["rollout_duration"].(int)
-	result.Variables = getVariableList(input["variables"].([]interface{}))
+func PolicyVideoToEdgeGrid(d *schema.ResourceData, key string) imaging.PolicyInputVideo {
+	_, exist := extract(d, key)
+	var result imaging.PolicyInputVideo
+	if exist {
+		result = imaging.PolicyInputVideo{}
+		result.Breakpoints = getBreakpoints(d, getKey(key, 0, "breakpoints"))
+		result.Hosts = interfaceSliceToStringSlice(d, getKey(key, 0, "hosts"))
+		result.Output = getOutputVideo(d, getKey(key, 0, "output"))
+		result.RolloutDuration = intReader(d, getKey(key, 0, "rollout_duration"))
+		result.Variables = getVariableList(d, getKey(key, 0, "variables"))
+	}
+
 	return result
 }
 
-func getBreakpoints(src map[string]interface{}) *imaging.Breakpoints {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Breakpoints{
-		Widths: interfaceSliceToIntSlice(src["widths"].([]interface{})),
-	}
-	return &result
-}
-
-func getEnumOptionsList(src []interface{}) []*imaging.EnumOptions {
-	result := make([]*imaging.EnumOptions, 0)
-	for idx := range src {
-		elem := imaging.EnumOptions{
-			ID:    src[idx].(map[string]interface{})["id"].(string),
-			Value: src[idx].(map[string]interface{})["value"].(string),
+func getBreakpoints(d *schema.ResourceData, key string) *imaging.Breakpoints {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Breakpoints{
+			Widths: interfaceSliceToIntSlice(d, getKey(key, 0, "widths")),
 		}
-		result = append(result, &elem)
-	}
-	if len(result) > 0 {
-		return result
+		return &result
 	}
 	return nil
 }
 
-func getOutputVideo(src map[string]interface{}) *imaging.OutputVideo {
-	if src == nil {
-		return nil
-	}
-	result := imaging.OutputVideo{
-		PerceptualQuality:    outputVideoPerceptualQualityVariableInline(src, "perceptual_quality"),
-		PlaceholderVideoURL:  stringVariableInline(src, "placeholder_video_url"),
-		VideoAdaptiveQuality: outputVideoVideoAdaptiveQualityVariableInline(src, "video_adaptive_quality"),
-	}
-	return &result
-}
-
-func getVariableList(src []interface{}) []imaging.Variable {
-	result := make([]imaging.Variable, 0)
-	for idx := range src {
-		elem := imaging.Variable{
-			DefaultValue: src[idx].(map[string]interface{})["default_value"].(string),
-			EnumOptions:  getEnumOptionsList(src[idx].(map[string]interface{})["enum_options"].([]interface{})),
-			Name:         src[idx].(map[string]interface{})["name"].(string),
-			Postfix:      src[idx].(map[string]interface{})["postfix"].(string),
-			Prefix:       src[idx].(map[string]interface{})["prefix"].(string),
-			Type:         imaging.VariableType(src[idx].(map[string]interface{})["type"].(string)),
+func getEnumOptionsList(d *schema.ResourceData, key string) []*imaging.EnumOptions {
+	collection, exist := extract(d, key)
+	if exist {
+		result := make([]*imaging.EnumOptions, 0)
+		for idx := range collection.([]interface{}) {
+			elem := imaging.EnumOptions{
+				ID:    stringReader(d, getKey(key, idx, "id")),
+				Value: stringReader(d, getKey(key, idx, "value")),
+			}
+			result = append(result, &elem)
 		}
-		result = append(result, elem)
-	}
-	if len(result) > 0 {
-		return result
+		if len(result) > 0 {
+			return result
+		}
+		return nil
 	}
 	return nil
 }
 
-func outputVideoPerceptualQualityVariableInline(src map[string]interface{}, name string) *imaging.OutputVideoPerceptualQualityVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func getOutputVideo(d *schema.ResourceData, key string) *imaging.OutputVideo {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.OutputVideo{
+			PerceptualQuality:    outputVideoPerceptualQualityVariableInline(d, getKey(key, 0, "perceptual_quality")),
+			PlaceholderVideoURL:  stringVariableInline(d, getKey(key, 0, "placeholder_video_url")),
+			VideoAdaptiveQuality: outputVideoVideoAdaptiveQualityVariableInline(d, getKey(key, 0, "video_adaptive_quality")),
+		}
+		return &result
 	}
-
-	v1 := src[name]
-	var v2 *imaging.OutputVideoPerceptualQuality
-	if v1 != "" {
-		v2 = imaging.OutputVideoPerceptualQualityPtr(imaging.OutputVideoPerceptualQuality(v1.(string)))
-	}
-
-	return &imaging.OutputVideoPerceptualQualityVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
-	}
+	return nil
 }
 
-func outputVideoVideoAdaptiveQualityVariableInline(src map[string]interface{}, name string) *imaging.OutputVideoVideoAdaptiveQualityVariableInline {
-	if !variableHasValue(src, name) {
+func getVariableList(d *schema.ResourceData, key string) []imaging.Variable {
+	collection, exist := extract(d, key)
+	if exist {
+		result := make([]imaging.Variable, 0)
+		for idx := range collection.([]interface{}) {
+			elem := imaging.Variable{
+				DefaultValue: stringReader(d, getKey(key, idx, "default_value")),
+				EnumOptions:  getEnumOptionsList(d, getKey(key, idx, "enum_options")),
+				Name:         stringReader(d, getKey(key, idx, "name")),
+				Postfix:      stringReader(d, getKey(key, idx, "postfix")),
+				Prefix:       stringReader(d, getKey(key, idx, "prefix")),
+				Type:         imaging.VariableType(stringReader(d, getKey(key, idx, "type"))),
+			}
+			result = append(result, elem)
+		}
+		if len(result) > 0 {
+			return result
+		}
 		return nil
 	}
-
-	v1 := src[name]
-	var v2 *imaging.OutputVideoVideoAdaptiveQuality
-	if v1 != "" {
-		v2 = imaging.OutputVideoVideoAdaptiveQualityPtr(imaging.OutputVideoVideoAdaptiveQuality(v1.(string)))
-	}
-
-	return &imaging.OutputVideoVideoAdaptiveQualityVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
-	}
+	return nil
 }
 
-func stringVariableInline(src map[string]interface{}, name string) *imaging.StringVariableInline {
-	if variableHasValue(src, name) {
+func outputVideoPerceptualQualityVariableInline(d *schema.ResourceData, key string) *imaging.OutputVideoPerceptualQualityVariableInline {
+	var value *imaging.OutputVideoPerceptualQuality
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.OutputVideoPerceptualQualityPtr(imaging.OutputVideoPerceptualQuality(valueRaw.(string)))
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
+		return &imaging.OutputVideoPerceptualQualityVariableInline{
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	return nil
+}
+
+func outputVideoVideoAdaptiveQualityVariableInline(d *schema.ResourceData, key string) *imaging.OutputVideoVideoAdaptiveQualityVariableInline {
+	var value *imaging.OutputVideoVideoAdaptiveQuality
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.OutputVideoVideoAdaptiveQualityPtr(imaging.OutputVideoVideoAdaptiveQuality(valueRaw.(string)))
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
+		return &imaging.OutputVideoVideoAdaptiveQualityVariableInline{
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	return nil
+}
+
+func stringVariableInline(d *schema.ResourceData, key string) *imaging.StringVariableInline {
+	var value *string
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		valueMapped := valueRaw.(string)
+		value = tools.StringPtr(valueMapped)
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
 		return &imaging.StringVariableInline{
-			Name:  stringValuePtr(src, name+"_var"),
-			Value: stringValuePtr(src, name),
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	return nil
+}
+
+func intReader(d *schema.ResourceData, key string) int {
+	value, exist := extract(d, key)
+	if exist {
+		valInt, _ := strconv.Atoi(value.(string))
+		return valInt
+	}
+	return 0
+}
+
+func stringReader(d *schema.ResourceData, key string) string {
+	value, exist := extract(d, key)
+	if exist {
+		return value.(string)
+	}
+	return ""
+}
+
+func interfaceSliceToIntSlice(d *schema.ResourceData, key string) []int {
+	list, exist := extract(d, key)
+	if exist {
+		l := list.([]interface{})
+		if len(l) > 0 {
+			intList := make([]int, len(l))
+			for i, v := range l {
+				intList[i] = v.(int)
+			}
+			return intList
 		}
 	}
 	return nil
 }
 
-func stringValuePtr(src map[string]interface{}, name string) *string {
-	value := src[name]
-	if value != "" {
-		v := value.(string)
-		return &v
+func interfaceSliceToStringSlice(d *schema.ResourceData, key string) []string {
+	list, exist := extract(d, key)
+	if exist {
+		l := list.([]interface{})
+		if len(l) > 0 {
+			stringList := make([]string, len(l))
+			for i, v := range l {
+				stringList[i] = v.(string)
+			}
+			return stringList
+		}
 	}
 	return nil
 }
 
-func interfaceSliceToIntSlice(list []interface{}) []int {
-	if len(list) == 0 {
-		return nil
-	}
-	intList := make([]int, len(list))
-	for i, v := range list {
-		intList[i] = v.(int)
-	}
-	return intList
+func extract(d *schema.ResourceData, key string) (interface{}, bool) {
+	return d.GetOk(key)
 }
 
-func interfaceSliceToStringSlice(list []interface{}) []string {
-	if len(list) == 0 {
-		return nil
+func decorateKeyForSlice(key string) string {
+	address := strings.Split(key, ".")
+	matches, _ := regexp.MatchString("[0-9]+", address[len(address)-1])
+	if !matches {
+		return key + ".0"
 	}
-	stringList := make([]string, len(list))
-	for i, v := range list {
-		stringList[i] = v.(string)
-	}
-	return stringList
+	return key
 }
 
-func variableHasValue(src map[string]interface{}, name string) bool {
-	v1 := src[name]
-	v2 := src[name+"_var"]
-
-	if !reflect.ValueOf(v1).IsZero() || !reflect.ValueOf(v2).IsZero() {
-		return true
-	}
-	return false
-}
-
-func extract(src map[string]interface{}, name string) map[string]interface{} {
-	elem, ok := src[name]
-	if !ok {
-		return nil
-	}
-
-	l := elem.([]interface{})
-	if len(l) == 0 {
-		return nil
-	}
-	return l[0].(map[string]interface{})
+func getKey(rootKey string, elementIndex int, elementName string) string {
+	return fmt.Sprintf("%s.%d.%s", rootKey, elementIndex, elementName)
 }

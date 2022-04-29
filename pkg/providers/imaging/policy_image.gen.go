@@ -586,13 +586,10 @@ func PolicyOutputImage(depth int) map[string]*schema.Schema {
 			},
 		},
 		"rollout_duration": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The amount of time in seconds that the policy takes to rollout. During the rollout an increasing proportion of images/videos will begin to use the new policy instead of the cached images/videos from the previous version.",
-			ValidateDiagFunc: validation.ToDiagFunc(validation.All(
-				validation.IntAtLeast(3600),
-				validation.IntAtMost(604800),
-			)),
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The amount of time in seconds that the policy takes to rollout. During the rollout an increasing proportion of images/videos will begin to use the new policy instead of the cached images/videos from the previous version. This value has no effect on the staging network.",
+			ValidateDiagFunc: stringAsIntBetween(3600, 604800),
 		},
 		"transformations": {
 			Type:        schema.TypeList,
@@ -647,9 +644,10 @@ func appendType(depth int) map[string]*schema.Schema {
 			},
 		},
 		"preserve_minor_dimension": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Description: "Whether to preserve the source image's minor dimension, `false` by default. The minor dimension is the dimension opposite the dimension that the appending `image` is placed. For example, the dimensions of the source image are 100 &times; 100 pixels. The dimensions of the appending `image` are 50 &times; 150 pixels. The `gravity` is set to `East`. This makes the major dimension horizontal and the source image's minor dimension vertical. To preserve the source image's minor dimension at 100 pixels, the `preserveMinorDimension` is set to `true`. As a result of the append, the major dimension expanded with the appended image to 150 pixels. The source image's minor dimension was maintained at 100 pixels. The total combined dimension of the image is 150 &times; 100 pixels.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Whether to preserve the source image's minor dimension, `false` by default. The minor dimension is the dimension opposite the dimension that the appending `image` is placed. For example, the dimensions of the source image are 100 &times; 100 pixels. The dimensions of the appending `image` are 50 &times; 150 pixels. The `gravity` is set to `East`. This makes the major dimension horizontal and the source image's minor dimension vertical. To preserve the source image's minor dimension at 100 pixels, the `preserveMinorDimension` is set to `true`. As a result of the append, the major dimension expanded with the appended image to 150 pixels. The source image's minor dimension was maintained at 100 pixels. The total combined dimension of the image is 150 &times; 100 pixels.",
+			ValidateDiagFunc: validateIsTypeBool(),
 		},
 		"preserve_minor_dimension_var": {
 			Type:        schema.TypeString,
@@ -662,9 +660,10 @@ func appendType(depth int) map[string]*schema.Schema {
 func aspectCrop(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"allow_expansion": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Description: "Increases the size of the image canvas to achieve the requested aspect ratio instead of cropping the image. Use the Horizontal Offset and Vertical Offset settings to determine where to add the fully transparent pixels on the expanded image canvas.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Increases the size of the image canvas to achieve the requested aspect ratio instead of cropping the image. Use the Horizontal Offset and Vertical Offset settings to determine where to add the fully transparent pixels on the expanded image canvas.",
+			ValidateDiagFunc: validateIsTypeBool(),
 		},
 		"allow_expansion_var": {
 			Type:        schema.TypeString,
@@ -672,9 +671,10 @@ func aspectCrop(_ int) map[string]*schema.Schema {
 			Description: "Increases the size of the image canvas to achieve the requested aspect ratio instead of cropping the image. Use the Horizontal Offset and Vertical Offset settings to determine where to add the fully transparent pixels on the expanded image canvas.",
 		},
 		"height": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The height term of the aspect ratio to crop.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The height term of the aspect ratio to crop.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -682,9 +682,10 @@ func aspectCrop(_ int) map[string]*schema.Schema {
 			Description: "The height term of the aspect ratio to crop.",
 		},
 		"width": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The width term of the aspect ratio to crop.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width term of the aspect ratio to crop.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -692,9 +693,10 @@ func aspectCrop(_ int) map[string]*schema.Schema {
 			Description: "The width term of the aspect ratio to crop.",
 		},
 		"x_position": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Specifies the horizontal portion of the image you want to keep when the aspect ratio cropping is applied. When using Allow Expansion this setting defines the horizontal position of the image on the new expanded image canvas.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Specifies the horizontal portion of the image you want to keep when the aspect ratio cropping is applied. When using Allow Expansion this setting defines the horizontal position of the image on the new expanded image canvas.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"x_position_var": {
 			Type:        schema.TypeString,
@@ -702,9 +704,10 @@ func aspectCrop(_ int) map[string]*schema.Schema {
 			Description: "Specifies the horizontal portion of the image you want to keep when the aspect ratio cropping is applied. When using Allow Expansion this setting defines the horizontal position of the image on the new expanded image canvas.",
 		},
 		"y_position": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Specifies the horizontal portion of the image you want to keep when the aspect ratio cropping is applied. When using Allow Expansion this setting defines the horizontal position of the image on the new expanded image canvas.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Specifies the horizontal portion of the image you want to keep when the aspect ratio cropping is applied. When using Allow Expansion this setting defines the horizontal position of the image on the new expanded image canvas.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"y_position_var": {
 			Type:        schema.TypeString,
@@ -732,9 +735,10 @@ func backgroundColor(_ int) map[string]*schema.Schema {
 func blur(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"sigma": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The number of pixels to scatter the original pixel by to create the blur effect. Resulting images may be larger than the original as pixels at the edge of the image might scatter outside the image's original dimensions.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The number of pixels to scatter the original pixel by to create the blur effect. Resulting images may be larger than the original as pixels at the edge of the image might scatter outside the image's original dimensions.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"sigma_var": {
 			Type:        schema.TypeString,
@@ -757,9 +761,10 @@ func boxImageType(depth int) map[string]*schema.Schema {
 			Description: "The fill color of the box, not the edge of the box. The API supports hexadecimal representation and CSS hexadecimal color values.",
 		},
 		"height": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The height of the box in pixels.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The height of the box in pixels.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -775,9 +780,10 @@ func boxImageType(depth int) map[string]*schema.Schema {
 			},
 		},
 		"width": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The width of the box in pixels.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width of the box in pixels.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -800,14 +806,16 @@ func breakpoints(_ int) map[string]*schema.Schema {
 func chromaKey(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"hue": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The hue to remove. Enter the degree of rotation between 0 and 360 degrees around the color wheel. By default Chroma Key removes a green hue, 120° on the color wheel.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The hue to remove. Enter the degree of rotation between 0 and 360 degrees around the color wheel. By default Chroma Key removes a green hue, 120° on the color wheel.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"hue_feather": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "How much additional hue to make semi-transparent beyond the Hue Tolerance. By default Hue Feather is 0.083 which applies semi-transparency to hues 30° around the Hue Tolerance.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "How much additional hue to make semi-transparent beyond the Hue Tolerance. By default Hue Feather is 0.083 which applies semi-transparency to hues 30° around the Hue Tolerance.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"hue_feather_var": {
 			Type:        schema.TypeString,
@@ -815,9 +823,10 @@ func chromaKey(_ int) map[string]*schema.Schema {
 			Description: "How much additional hue to make semi-transparent beyond the Hue Tolerance. By default Hue Feather is 0.083 which applies semi-transparency to hues 30° around the Hue Tolerance.",
 		},
 		"hue_tolerance": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "How close a color's hue needs to be to the selected hue for it to be changed to fully transparent. If you enter the maximum value of 1.0 the entire image is made transparent. By default Hue Tolerance is approximately 0.083 or 8.3% of the color wheel. This value corresponds to 30° around the specified hue.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "How close a color's hue needs to be to the selected hue for it to be changed to fully transparent. If you enter the maximum value of 1.0 the entire image is made transparent. By default Hue Tolerance is approximately 0.083 or 8.3% of the color wheel. This value corresponds to 30° around the specified hue.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"hue_tolerance_var": {
 			Type:        schema.TypeString,
@@ -830,9 +839,10 @@ func chromaKey(_ int) map[string]*schema.Schema {
 			Description: "The hue to remove. Enter the degree of rotation between 0 and 360 degrees around the color wheel. By default Chroma Key removes a green hue, 120° on the color wheel.",
 		},
 		"lightness_feather": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "How much additional lightness to make semi-transparent beyond the Lightness Tolerance. The default value of 0.1 corresponds to 10% away from the tolerated lightness towards full black or full white.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "How much additional lightness to make semi-transparent beyond the Lightness Tolerance. The default value of 0.1 corresponds to 10% away from the tolerated lightness towards full black or full white.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"lightness_feather_var": {
 			Type:        schema.TypeString,
@@ -840,9 +850,10 @@ func chromaKey(_ int) map[string]*schema.Schema {
 			Description: "How much additional lightness to make semi-transparent beyond the Lightness Tolerance. The default value of 0.1 corresponds to 10% away from the tolerated lightness towards full black or full white.",
 		},
 		"lightness_tolerance": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "How much of the lightest part and darkest part of a color to preserve. For example, you can space this value out from the middle (i.e. 0.5 lightness or full color) to help preserve the splash lighting impact in the image. You can define how close the color needs to be to the full color to remove it from your image. The default value of 0.75 means that a colour must be within 75% of the full color to full white or full black for full removal.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "How much of the lightest part and darkest part of a color to preserve. For example, you can space this value out from the middle (i.e. 0.5 lightness or full color) to help preserve the splash lighting impact in the image. You can define how close the color needs to be to the full color to remove it from your image. The default value of 0.75 means that a colour must be within 75% of the full color to full white or full black for full removal.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"lightness_tolerance_var": {
 			Type:        schema.TypeString,
@@ -850,9 +861,10 @@ func chromaKey(_ int) map[string]*schema.Schema {
 			Description: "How much of the lightest part and darkest part of a color to preserve. For example, you can space this value out from the middle (i.e. 0.5 lightness or full color) to help preserve the splash lighting impact in the image. You can define how close the color needs to be to the full color to remove it from your image. The default value of 0.75 means that a colour must be within 75% of the full color to full white or full black for full removal.",
 		},
 		"saturation_feather": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "How much additional saturation to make semi-transparent beyond the Saturation Tolerance. By default Saturation Feather is 0.1 which applies semi-transparency to hues 10% below the saturationTolerance.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "How much additional saturation to make semi-transparent beyond the Saturation Tolerance. By default Saturation Feather is 0.1 which applies semi-transparency to hues 10% below the saturationTolerance.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"saturation_feather_var": {
 			Type:        schema.TypeString,
@@ -860,9 +872,10 @@ func chromaKey(_ int) map[string]*schema.Schema {
 			Description: "How much additional saturation to make semi-transparent beyond the Saturation Tolerance. By default Saturation Feather is 0.1 which applies semi-transparency to hues 10% below the saturationTolerance.",
 		},
 		"saturation_tolerance": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "How close a color's saturation needs to be to full saturation for it to be changed to fully transparent. For example, you can define how green the color needs to be to remove it from your image. The default value of 0.75 means that a color must be within 75% of full saturation in order to be made fully transparent.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "How close a color's saturation needs to be to full saturation for it to be changed to fully transparent. For example, you can define how green the color needs to be to remove it from your image. The default value of 0.75 means that a color must be within 75% of full saturation in order to be made fully transparent.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"saturation_tolerance_var": {
 			Type:        schema.TypeString,
@@ -885,9 +898,10 @@ func circleImageType(depth int) map[string]*schema.Schema {
 			Description: "The fill color of the circle. The API supports hexadecimal representation and CSS hexadecimal color values.",
 		},
 		"diameter": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The diameter of the circle. The diameter will be the width and the height of the image in pixels.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The diameter of the circle. The diameter will be the width and the height of the image in pixels.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"diameter_var": {
 			Type:        schema.TypeString,
@@ -903,9 +917,10 @@ func circleImageType(depth int) map[string]*schema.Schema {
 			},
 		},
 		"width": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The width of the box in pixels.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width of the box in pixels.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -927,9 +942,10 @@ func circleShapeType(depth int) map[string]*schema.Schema {
 			},
 		},
 		"radius": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The radius of the circle measured in pixels.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The radius of the circle measured in pixels.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"radius_var": {
 			Type:        schema.TypeString,
@@ -973,9 +989,10 @@ func composite(depth int) map[string]*schema.Schema {
 			Description: "Place applied image on top of or underneath the base image. Watermarks are usually applied over. Backgrounds are usually applied under.",
 		},
 		"scale": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "A multiplier to resize the applied image relative to the source image and preserve aspect ratio, 1 by default. Set the `scaleDimension` to calculate the `scale` from the source image's width or height.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "A multiplier to resize the applied image relative to the source image and preserve aspect ratio, 1 by default. Set the `scaleDimension` to calculate the `scale` from the source image's width or height.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"scale_dimension": {
 			Type:             schema.TypeString,
@@ -994,9 +1011,10 @@ func composite(depth int) map[string]*schema.Schema {
 			Description: "A multiplier to resize the applied image relative to the source image and preserve aspect ratio, 1 by default. Set the `scaleDimension` to calculate the `scale` from the source image's width or height.",
 		},
 		"x_position": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The x-axis position of the image to apply.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The x-axis position of the image to apply.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"x_position_var": {
 			Type:        schema.TypeString,
@@ -1004,9 +1022,10 @@ func composite(depth int) map[string]*schema.Schema {
 			Description: "The x-axis position of the image to apply.",
 		},
 		"y_position": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The y-axis position of the image to apply.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The y-axis position of the image to apply.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"y_position_var": {
 			Type:        schema.TypeString,
@@ -1043,9 +1062,10 @@ func compoundPost(depth int) map[string]*schema.Schema {
 func contrast(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"brightness": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Adjusts the brightness of the image. Positive values increase brightness and negative values decrease brightness. A value of  `1` produces a white image. A value of  `-1` produces a black image. The default value is `0`, which leaves the image unchanged. The acceptable value range is `-1.0` to `1.0`. Values outside of the acceptable range clamp to this range.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Adjusts the brightness of the image. Positive values increase brightness and negative values decrease brightness. A value of  `1` produces a white image. A value of  `-1` produces a black image. The default value is `0`, which leaves the image unchanged. The acceptable value range is `-1.0` to `1.0`. Values outside of the acceptable range clamp to this range.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"brightness_var": {
 			Type:        schema.TypeString,
@@ -1053,9 +1073,10 @@ func contrast(_ int) map[string]*schema.Schema {
 			Description: "Adjusts the brightness of the image. Positive values increase brightness and negative values decrease brightness. A value of  `1` produces a white image. A value of  `-1` produces a black image. The default value is `0`, which leaves the image unchanged. The acceptable value range is `-1.0` to `1.0`. Values outside of the acceptable range clamp to this range.",
 		},
 		"contrast": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Adjusts the contrast of the image. Expressed as a range from `-1` to `1`, positive values increase contrast, negative values decrease it, while `0` leaves the image unchanged. Values outside of the `-1` to `1` range clamp to this range.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Adjusts the contrast of the image. Expressed as a range from `-1` to `1`, positive values increase contrast, negative values decrease it, while `0` leaves the image unchanged. Values outside of the `-1` to `1` range clamp to this range.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"contrast_var": {
 			Type:        schema.TypeString,
@@ -1068,9 +1089,10 @@ func contrast(_ int) map[string]*schema.Schema {
 func crop(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"allow_expansion": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Description: "If cropping an area outside of the existing canvas, expands the image canvas.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "If cropping an area outside of the existing canvas, expands the image canvas.",
+			ValidateDiagFunc: validateIsTypeBool(),
 		},
 		"allow_expansion_var": {
 			Type:        schema.TypeString,
@@ -1090,9 +1112,10 @@ func crop(_ int) map[string]*schema.Schema {
 			Description: "Frame of reference for X and Y Positions.",
 		},
 		"height": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The number of pixels to crop along the y-axis.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The number of pixels to crop along the y-axis.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -1100,9 +1123,10 @@ func crop(_ int) map[string]*schema.Schema {
 			Description: "The number of pixels to crop along the y-axis.",
 		},
 		"width": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The number of pixels to crop along the x-axis.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The number of pixels to crop along the x-axis.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -1110,9 +1134,10 @@ func crop(_ int) map[string]*schema.Schema {
 			Description: "The number of pixels to crop along the x-axis.",
 		},
 		"x_position": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The x-axis position of the image to crop from.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The x-axis position of the image to crop from.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"x_position_var": {
 			Type:        schema.TypeString,
@@ -1120,9 +1145,10 @@ func crop(_ int) map[string]*schema.Schema {
 			Description: "The x-axis position of the image to crop from.",
 		},
 		"y_position": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The y-axis position of the image to crop from.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The y-axis position of the image to crop from.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"y_position_var": {
 			Type:        schema.TypeString,
@@ -1161,9 +1187,10 @@ func faceCrop(_ int) map[string]*schema.Schema {
 			Description: "Specifies the type of algorithm used to detect faces in the image, either `cascade` for the cascade classifier algorithm or `dnn` for the deep neural network algorithm, `cascade` by default.",
 		},
 		"confidence": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "With `algorithm` set to `dnn`, specifies the minimum confidence needed to detect faces in the image. Values range from `0` to `1` for increased confidence, and possibly fewer faces detected.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "With `algorithm` set to `dnn`, specifies the minimum confidence needed to detect faces in the image. Values range from `0` to `1` for increased confidence, and possibly fewer faces detected.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"confidence_var": {
 			Type:        schema.TypeString,
@@ -1206,9 +1233,10 @@ func faceCrop(_ int) map[string]*schema.Schema {
 			Description: "Controls placement of the crop. Directions are relative to the face(s) plus padding.",
 		},
 		"height": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The height of the output image in pixels relative to the specified `style` value.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The height of the output image in pixels relative to the specified `style` value.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -1216,9 +1244,10 @@ func faceCrop(_ int) map[string]*schema.Schema {
 			Description: "The height of the output image in pixels relative to the specified `style` value.",
 		},
 		"padding": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The padding ratio based on the dimensions of the biggest face detected, `0.5` by default. Larger values increase padding.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The padding ratio based on the dimensions of the biggest face detected, `0.5` by default. Larger values increase padding.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"padding_var": {
 			Type:        schema.TypeString,
@@ -1237,9 +1266,10 @@ func faceCrop(_ int) map[string]*schema.Schema {
 			Description: "Specifies how to crop or scale a crop area for the faces detected in the source image, `zoom` by default. The output image resizes to the specified `width` and `height` values. A value of `crop` places a raw crop around the faces, relative to the specified `gravity` value.  A value of `fill` scales the crop area to include as much of the image and faces as possible, relative to the specified `width` and `height` values. A value of `zoom` scales the crop area as small as possible to fit the faces, relative to the specified `width` and `height` values. Allows Variable substitution.",
 		},
 		"width": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The width of the output image in pixels relative to the specified `style` value.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width of the output image in pixels relative to the specified `style` value.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -1264,9 +1294,10 @@ func featureCrop(_ int) map[string]*schema.Schema {
 			Description: "Controls placement of the crop if Image and Video Manager does not detect any features in the image. Directions are relative to the edges of the image being transformed.",
 		},
 		"feature_radius": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The size in pixels of the important features to search for. If identified, two features never appear closer together than this value, `8.0` by default.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The size in pixels of the important features to search for. If identified, two features never appear closer together than this value, `8.0` by default.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"feature_radius_var": {
 			Type:        schema.TypeString,
@@ -1286,9 +1317,10 @@ func featureCrop(_ int) map[string]*schema.Schema {
 			Description: "Controls placement of the crop. Directions are relative to the region of interest plus padding.",
 		},
 		"height": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The height in pixels of the output image relative to the specified `style` value.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The height in pixels of the output image relative to the specified `style` value.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -1296,9 +1328,10 @@ func featureCrop(_ int) map[string]*schema.Schema {
 			Description: "The height in pixels of the output image relative to the specified `style` value.",
 		},
 		"max_features": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The maximum number of features to identify as important features, `32` by default. The strongest features are always chosen.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The maximum number of features to identify as important features, `32` by default. The strongest features are always chosen.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"max_features_var": {
 			Type:        schema.TypeString,
@@ -1306,9 +1339,10 @@ func featureCrop(_ int) map[string]*schema.Schema {
 			Description: "The maximum number of features to identify as important features, `32` by default. The strongest features are always chosen.",
 		},
 		"min_feature_quality": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Determines the minimum quality level of the feature identified. To consider a feature important, the feature needs to surpass this value.  Image and Video Manager measures quality on a scale from `0` for the lowest quality to `1` for the highest quality, `.1` by default.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Determines the minimum quality level of the feature identified. To consider a feature important, the feature needs to surpass this value.  Image and Video Manager measures quality on a scale from `0` for the lowest quality to `1` for the highest quality, `.1` by default.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"min_feature_quality_var": {
 			Type:        schema.TypeString,
@@ -1316,9 +1350,10 @@ func featureCrop(_ int) map[string]*schema.Schema {
 			Description: "Determines the minimum quality level of the feature identified. To consider a feature important, the feature needs to surpass this value.  Image and Video Manager measures quality on a scale from `0` for the lowest quality to `1` for the highest quality, `.1` by default.",
 		},
 		"padding": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Adds space around the region of interest. The amount of padding added is directly related to the size of the bounding box of the selected features. Specifically, the region of interest is expanded in all directions by the largest dimension of the bounding box of the selected features multiplied by this value.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Adds space around the region of interest. The amount of padding added is directly related to the size of the bounding box of the selected features. Specifically, the region of interest is expanded in all directions by the largest dimension of the bounding box of the selected features multiplied by this value.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"padding_var": {
 			Type:        schema.TypeString,
@@ -1337,9 +1372,10 @@ func featureCrop(_ int) map[string]*schema.Schema {
 			Description: "Specifies how to crop or scale a crop area for the features identified in the source image, `fill` by default. The output image resizes to the specified `width` and `height` values. A value of `crop` performs a raw crop around the features, relative to the specified `gravity` value.  A value of `fill` scales the crop area to include as much of the image and features as possible, relative to the specified `width` and `height` values. A value of `zoom` scales the crop area as small as possible to fit the features, relative to the specified `width` and `height` values. Allows Variable substitution.",
 		},
 		"width": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The width in pixels of the output image relative to the specified `style` value.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width in pixels of the output image relative to the specified `style` value.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -1360,9 +1396,10 @@ func fitAndFill(depth int) map[string]*schema.Schema {
 			},
 		},
 		"height": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The height value of the resized image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The height value of the resized image.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -1370,9 +1407,10 @@ func fitAndFill(depth int) map[string]*schema.Schema {
 			Description: "The height value of the resized image.",
 		},
 		"width": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The width value of the resized image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width value of the resized image.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -1385,9 +1423,10 @@ func fitAndFill(depth int) map[string]*schema.Schema {
 func goop(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"chaos": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Specifies the greatest distance control points may move from their original position. A value of `1.0` shifts control points over as far as the next one in the original grid. A value of `0.0` leaves the image unchanged. Values under `0.5` work better for subtle distortions, otherwise control points may pass each other and cause a twisting effect.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Specifies the greatest distance control points may move from their original position. A value of `1.0` shifts control points over as far as the next one in the original grid. A value of `0.0` leaves the image unchanged. Values under `0.5` work better for subtle distortions, otherwise control points may pass each other and cause a twisting effect.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"chaos_var": {
 			Type:        schema.TypeString,
@@ -1395,9 +1434,10 @@ func goop(_ int) map[string]*schema.Schema {
 			Description: "Specifies the greatest distance control points may move from their original position. A value of `1.0` shifts control points over as far as the next one in the original grid. A value of `0.0` leaves the image unchanged. Values under `0.5` work better for subtle distortions, otherwise control points may pass each other and cause a twisting effect.",
 		},
 		"density": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "Controls the density of control points used to distort the image. The largest dimension of the input image is divided up to fit this number of control points. A grid of points is extended on the smaller dimension such that each row and column of control points is equidistant from each adjacent row or column. This parameter strongly affects transformation performance. Be careful choosing values above the default if you expect to transform medium to large size images.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Controls the density of control points used to distort the image. The largest dimension of the input image is divided up to fit this number of control points. A grid of points is extended on the smaller dimension such that each row and column of control points is equidistant from each adjacent row or column. This parameter strongly affects transformation performance. Be careful choosing values above the default if you expect to transform medium to large size images.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"density_var": {
 			Type:        schema.TypeString,
@@ -1405,9 +1445,10 @@ func goop(_ int) map[string]*schema.Schema {
 			Description: "Controls the density of control points used to distort the image. The largest dimension of the input image is divided up to fit this number of control points. A grid of points is extended on the smaller dimension such that each row and column of control points is equidistant from each adjacent row or column. This parameter strongly affects transformation performance. Be careful choosing values above the default if you expect to transform medium to large size images.",
 		},
 		"power": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "By default, the distortion algorithm relies on inverse squares to calculate distance but this allows you to change the exponent. You shouldnt need to vary the default value of `2.0`.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "By default, the distortion algorithm relies on inverse squares to calculate distance but this allows you to change the exponent. You shouldnt need to vary the default value of `2.0`.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"power_var": {
 			Type:        schema.TypeString,
@@ -1415,9 +1456,10 @@ func goop(_ int) map[string]*schema.Schema {
 			Description: "By default, the distortion algorithm relies on inverse squares to calculate distance but this allows you to change the exponent. You shouldnt need to vary the default value of `2.0`.",
 		},
 		"seed": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "Specifies your own `seed` value as an alternative to the default, which is subject to variability. This allows for reproducible and deterministic distortions. If all parameters are kept equal and a constant seed is used, `Goop` distorts an input image consistently over many transformations. By default, this value is set to the current Epoch Time measured in milliseconds, which provides inconsistent transformation output.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Specifies your own `seed` value as an alternative to the default, which is subject to variability. This allows for reproducible and deterministic distortions. If all parameters are kept equal and a constant seed is used, `Goop` distorts an input image consistently over many transformations. By default, this value is set to the current Epoch Time measured in milliseconds, which provides inconsistent transformation output.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"seed_var": {
 			Type:        schema.TypeString,
@@ -1447,9 +1489,10 @@ func grayscale(_ int) map[string]*schema.Schema {
 func hsl(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"hue": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The number of degrees to rotate colors around the color wheel, `0` by default.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The number of degrees to rotate colors around the color wheel, `0` by default.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"hue_var": {
 			Type:        schema.TypeString,
@@ -1457,9 +1500,10 @@ func hsl(_ int) map[string]*schema.Schema {
 			Description: "The number of degrees to rotate colors around the color wheel, `0` by default.",
 		},
 		"lightness": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "A multiplier to adjust the lightness of colors in the image. Note that lightness is distinct from brightness. For example, reducing the lightness of a light green might give you a lime green whereas reducing the brightness of a light green might give you a darker shade of the same green. Values less than `1.0` decrease the lightness of colors in the image. Values greater than `1.0` increase the lightness of colors in the image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "A multiplier to adjust the lightness of colors in the image. Note that lightness is distinct from brightness. For example, reducing the lightness of a light green might give you a lime green whereas reducing the brightness of a light green might give you a darker shade of the same green. Values less than `1.0` decrease the lightness of colors in the image. Values greater than `1.0` increase the lightness of colors in the image.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"lightness_var": {
 			Type:        schema.TypeString,
@@ -1467,9 +1511,10 @@ func hsl(_ int) map[string]*schema.Schema {
 			Description: "A multiplier to adjust the lightness of colors in the image. Note that lightness is distinct from brightness. For example, reducing the lightness of a light green might give you a lime green whereas reducing the brightness of a light green might give you a darker shade of the same green. Values less than `1.0` decrease the lightness of colors in the image. Values greater than `1.0` increase the lightness of colors in the image.",
 		},
 		"saturation": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "A multiplier to adjust the saturation of colors in the image. Values less than `1.0` decrease saturation and values greater than `1.0` increase the saturation. A value of `0.0` removes all color from the image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "A multiplier to adjust the saturation of colors in the image. Values less than `1.0` decrease saturation and values greater than `1.0` increase the saturation. A value of `0.0` removes all color from the image.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"saturation_var": {
 			Type:        schema.TypeString,
@@ -1482,9 +1527,10 @@ func hsl(_ int) map[string]*schema.Schema {
 func hsv(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"hue": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The number of degrees to rotate colors around the color wheel, `0.0` by default.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The number of degrees to rotate colors around the color wheel, `0.0` by default.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"hue_var": {
 			Type:        schema.TypeString,
@@ -1492,9 +1538,10 @@ func hsv(_ int) map[string]*schema.Schema {
 			Description: "The number of degrees to rotate colors around the color wheel, `0.0` by default.",
 		},
 		"saturation": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "A multiplier to adjust the saturation of colors in the image. Values less than `1.0` decrease saturation and values greater than `1.0` increase the saturation. A value of `0.0` removes all color from the image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "A multiplier to adjust the saturation of colors in the image. Values less than `1.0` decrease saturation and values greater than `1.0` increase the saturation. A value of `0.0` removes all color from the image.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"saturation_var": {
 			Type:        schema.TypeString,
@@ -1502,9 +1549,10 @@ func hsv(_ int) map[string]*schema.Schema {
 			Description: "A multiplier to adjust the saturation of colors in the image. Values less than `1.0` decrease saturation and values greater than `1.0` increase the saturation. A value of `0.0` removes all color from the image.",
 		},
 		"value": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "A multiplier to adjust the lightness or darkness of the images base color. Values less than 1.0 decrease the base colors in the image, making them appear darker. Values greater than 1.0 increase the base colors in the image, making them appear lighter.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "A multiplier to adjust the lightness or darkness of the images base color. Values less than 1.0 decrease the base colors in the image, making them appear darker. Values greater than 1.0 increase the base colors in the image, making them appear lighter.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"value_var": {
 			Type:        schema.TypeString,
@@ -1560,9 +1608,10 @@ func ifDimension(depth int) map[string]*schema.Schema {
 			},
 		},
 		"value": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The value to compare against the source image dimension. For example, if the image dimension is less than the value the lessThan transformation is applied.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The value to compare against the source image dimension. For example, if the image dimension is less than the value the lessThan transformation is applied.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"value_var": {
 			Type:        schema.TypeString,
@@ -1618,9 +1667,10 @@ func ifDimensionPost(depth int) map[string]*schema.Schema {
 			},
 		},
 		"value": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The value to compare against the source image dimension. For example, if the image dimension is less than the value the lessThan transformation is applied.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The value to compare against the source image dimension. For example, if the image dimension is less than the value the lessThan transformation is applied.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"value_var": {
 			Type:        schema.TypeString,
@@ -1707,9 +1757,10 @@ func ifOrientationPost(depth int) map[string]*schema.Schema {
 func maxColors(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"colors": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The value representing the maximum number of colors to use with the source image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The value representing the maximum number of colors to use with the source image.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"colors_var": {
 			Type:        schema.TypeString,
@@ -1722,9 +1773,10 @@ func maxColors(_ int) map[string]*schema.Schema {
 func mirror(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"horizontal": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Description: "Flips the image horizontally.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Flips the image horizontally.",
+			ValidateDiagFunc: validateIsTypeBool(),
 		},
 		"horizontal_var": {
 			Type:        schema.TypeString,
@@ -1732,9 +1784,10 @@ func mirror(_ int) map[string]*schema.Schema {
 			Description: "Flips the image horizontally.",
 		},
 		"vertical": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Description: "Flips the image vertically.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Flips the image vertically.",
+			ValidateDiagFunc: validateIsTypeBool(),
 		},
 		"vertical_var": {
 			Type:        schema.TypeString,
@@ -1747,9 +1800,10 @@ func mirror(_ int) map[string]*schema.Schema {
 func monoHue(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"hue": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Specify a hue by indicating the degree of rotation between 0 and 360 degrees around the color wheel. By default Mono Hue applies a red hue, 0.0 on the color wheel.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Specify a hue by indicating the degree of rotation between 0 and 360 degrees around the color wheel. By default Mono Hue applies a red hue, 0.0 on the color wheel.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"hue_var": {
 			Type:        schema.TypeString,
@@ -1762,9 +1816,10 @@ func monoHue(_ int) map[string]*schema.Schema {
 func opacity(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"opacity": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Represents alpha values on a scale of `0` to `1`. Values below `1` increase transparency, and `0` is invisible. For images that have some transparency, values above `1` increase the opacity of the transparent portions.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Represents alpha values on a scale of `0` to `1`. Values below `1` increase transparency, and `0` is invisible. For images that have some transparency, values above `1` increase the opacity of the transparent portions.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"opacity_var": {
 			Type:        schema.TypeString,
@@ -1777,13 +1832,10 @@ func opacity(_ int) map[string]*schema.Schema {
 func outputImage(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"adaptive_quality": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "Override the quality of image to serve when Image & Video Manager detects a slow connection. Specifying lower values lets users with slow connections browse your site with reduced load times without impacting the quality of images for users with faster connections.",
-			ValidateDiagFunc: validation.ToDiagFunc(validation.All(
-				validation.IntAtLeast(1),
-				validation.IntAtMost(100),
-			)),
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Override the quality of image to serve when Image & Video Manager detects a slow connection. Specifying lower values lets users with slow connections browse your site with reduced load times without impacting the quality of images for users with faster connections.",
+			ValidateDiagFunc: stringAsIntBetween(1, 100),
 		},
 		"perceptual_quality": {
 			Type:             schema.TypeString,
@@ -1792,13 +1844,10 @@ func outputImage(_ int) map[string]*schema.Schema {
 			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"high", "mediumHigh", "medium", "mediumLow", "low"}, false)),
 		},
 		"perceptual_quality_floor": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "Only applies with perceptualQuality set. Sets a minimum image quality to respect when using perceptual quality. Perceptual quality will not reduce the quality below this value even if it determines the compressed image to be acceptably visually similar.",
-			ValidateDiagFunc: validation.ToDiagFunc(validation.All(
-				validation.IntAtLeast(1),
-				validation.IntAtMost(100),
-			)),
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Only applies with perceptualQuality set. Sets a minimum image quality to respect when using perceptual quality. Perceptual quality will not reduce the quality below this value even if it determines the compressed image to be acceptably visually similar.",
+			ValidateDiagFunc: stringAsIntBetween(1, 100),
 		},
 		"perceptual_quality_var": {
 			Type:        schema.TypeString,
@@ -1806,9 +1855,10 @@ func outputImage(_ int) map[string]*schema.Schema {
 			Description: "Mutually exclusive with quality. The perceptual quality to use when comparing resulting images, which overrides the `quality` setting. Perceptual quality tunes each image format's quality parameter dynamically based on the human-perceived quality of the output image. This can result in better byte savings (as compared to using regular quality) as many images can be encoded at a much lower quality without compromising perception of the image. In addition, certain images may need to be encoded at a slightly higher quality in order to maintain human-perceived quality. Values are tiered `high`, `mediumHigh`, `medium`, `mediumLow`, or `low`.",
 		},
 		"quality": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "Mutually exclusive with perceptualQuality, used by default if neither is specified. The chosen quality of the output images. Using a quality value from 1-100 resembles JPEG quality across output formats.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Mutually exclusive with perceptualQuality, used by default if neither is specified. The chosen quality of the output images. Using a quality value from 1-100 resembles JPEG quality across output formats.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"quality_var": {
 			Type:        schema.TypeString,
@@ -1821,9 +1871,10 @@ func outputImage(_ int) map[string]*schema.Schema {
 func pointShapeType(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"x": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The horizontal position of the point, measured in pixels.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The horizontal position of the point, measured in pixels.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"x_var": {
 			Type:        schema.TypeString,
@@ -1831,9 +1882,10 @@ func pointShapeType(_ int) map[string]*schema.Schema {
 			Description: "The horizontal position of the point, measured in pixels.",
 		},
 		"y": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The vertical position of the point, measured in pixels.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The vertical position of the point, measured in pixels.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"y_var": {
 			Type:        schema.TypeString,
@@ -1867,9 +1919,10 @@ func rectangleShapeType(depth int) map[string]*schema.Schema {
 			},
 		},
 		"height": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Extends the rectangle down from the `anchor` point.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Extends the rectangle down from the `anchor` point.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -1877,9 +1930,10 @@ func rectangleShapeType(depth int) map[string]*schema.Schema {
 			Description: "Extends the rectangle down from the `anchor` point.",
 		},
 		"width": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Extends the rectangle right from the `anchor` point.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Extends the rectangle right from the `anchor` point.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -1904,9 +1958,10 @@ func regionOfInterestCrop(depth int) map[string]*schema.Schema {
 			Description: "The placement of the crop area relative to the specified area of interest.",
 		},
 		"height": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The height in pixels of the output image relative to the specified `style` value.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The height in pixels of the output image relative to the specified `style` value.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -1933,9 +1988,10 @@ func regionOfInterestCrop(depth int) map[string]*schema.Schema {
 			Description: "Specifies how to crop or scale a crop area for the specified area of interest in the source image, `zoom` by default. The output image resizes to the specified `width` and `height` values. A value of `crop` places raw crop around the point of interest, relative to the specified `gravity` value.  A value of `fill` scales the crop area to include as much of the image and point of interest as possible, relative to the specified `width` and `height` values. A value of `zoom` scales the crop area as small as possible to fit the point of interest, relative to the specified `width` and `height` values.",
 		},
 		"width": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The width in pixels of the output image relative to the specified `style` value.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width in pixels of the output image relative to the specified `style` value.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -1948,9 +2004,10 @@ func regionOfInterestCrop(depth int) map[string]*schema.Schema {
 func relativeCrop(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"east": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The number of pixels to shrink or expand the right side of the image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The number of pixels to shrink or expand the right side of the image.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"east_var": {
 			Type:        schema.TypeString,
@@ -1958,9 +2015,10 @@ func relativeCrop(_ int) map[string]*schema.Schema {
 			Description: "The number of pixels to shrink or expand the right side of the image.",
 		},
 		"north": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The number of pixels to shrink or expand the top side of the image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The number of pixels to shrink or expand the top side of the image.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"north_var": {
 			Type:        schema.TypeString,
@@ -1968,9 +2026,10 @@ func relativeCrop(_ int) map[string]*schema.Schema {
 			Description: "The number of pixels to shrink or expand the top side of the image.",
 		},
 		"south": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The number of pixels to shrink or expand the bottom side of the image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The number of pixels to shrink or expand the bottom side of the image.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"south_var": {
 			Type:        schema.TypeString,
@@ -1978,9 +2037,10 @@ func relativeCrop(_ int) map[string]*schema.Schema {
 			Description: "The number of pixels to shrink or expand the bottom side of the image.",
 		},
 		"west": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The number of pixels to shrink or expand the left side of the image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The number of pixels to shrink or expand the left side of the image.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"west_var": {
 			Type:        schema.TypeString,
@@ -2003,9 +2063,10 @@ func removeColor(_ int) map[string]*schema.Schema {
 			Description: "The hexadecimal CSS color value to remove.",
 		},
 		"feather": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The RemoveColor transformation may create a hard edge around an image. To minimize these hard edges and make the removal of the color more gradual in appearance, use the Feather option. This option allows you to extend the color removal beyond the specified Tolerance. The pixels in this extended tolerance become semi-transparent - creating a softer edge.  The first realtime request for an image using the feather option may result in a slow transformation time. Subsequent requests are not impacted as they are served directly out of cache.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The RemoveColor transformation may create a hard edge around an image. To minimize these hard edges and make the removal of the color more gradual in appearance, use the Feather option. This option allows you to extend the color removal beyond the specified Tolerance. The pixels in this extended tolerance become semi-transparent - creating a softer edge.  The first realtime request for an image using the feather option may result in a slow transformation time. Subsequent requests are not impacted as they are served directly out of cache.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"feather_var": {
 			Type:        schema.TypeString,
@@ -2013,9 +2074,10 @@ func removeColor(_ int) map[string]*schema.Schema {
 			Description: "The RemoveColor transformation may create a hard edge around an image. To minimize these hard edges and make the removal of the color more gradual in appearance, use the Feather option. This option allows you to extend the color removal beyond the specified Tolerance. The pixels in this extended tolerance become semi-transparent - creating a softer edge.  The first realtime request for an image using the feather option may result in a slow transformation time. Subsequent requests are not impacted as they are served directly out of cache.",
 		},
 		"tolerance": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The Tolerance option defines how close the color needs to be to the selected color before it's changed to fully transparent. Set the Tolerance to 0.0 to remove only the exact color specified.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The Tolerance option defines how close the color needs to be to the selected color before it's changed to fully transparent. Set the Tolerance to 0.0 to remove only the exact color specified.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"tolerance_var": {
 			Type:        schema.TypeString,
@@ -2039,9 +2101,10 @@ func resize(_ int) map[string]*schema.Schema {
 			Description: "Preserves the aspect ratio. Select `fit` to make the image fit entirely within the selected width and height. When using `fit`, the resulting image has the largest possible size for the specified dimensions. Select `fill` to size the image so it both completely fills the dimensions and has the smallest possible file size. Otherwise `ignore` changes the original aspect ratio to fit within an arbitrarily shaped rectangle.",
 		},
 		"height": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The height to resize the source image to. Must be set if height is not specified.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The height to resize the source image to. Must be set if height is not specified.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -2060,9 +2123,10 @@ func resize(_ int) map[string]*schema.Schema {
 			Description: "Sets constraints for the image resize. Select `normal` to resize in all cases, either increasing or decreasing the dimensions. Select `downsize` to ignore this transformation if the result would be larger than the original. Select `upsize` to ignore this transformation if the result would be smaller.",
 		},
 		"width": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The width to resize the source image to. Must be set if width is not specified.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width to resize the source image to. Must be set if width is not specified.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -2075,9 +2139,10 @@ func resize(_ int) map[string]*schema.Schema {
 func rotate(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"degrees": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The value to rotate the image by. Positive values rotate clockwise, while negative values rotate counter-clockwise.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The value to rotate the image by. Positive values rotate clockwise, while negative values rotate counter-clockwise.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"degrees_var": {
 			Type:        schema.TypeString,
@@ -2090,9 +2155,10 @@ func rotate(_ int) map[string]*schema.Schema {
 func scale(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"height": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Scaling factor for the input height to determine the output height of the image, where values between `0` and `1` decrease size. Image dimensions need to be non-zero positive numbers.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Scaling factor for the input height to determine the output height of the image, where values between `0` and `1` decrease size. Image dimensions need to be non-zero positive numbers.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"height_var": {
 			Type:        schema.TypeString,
@@ -2100,9 +2166,10 @@ func scale(_ int) map[string]*schema.Schema {
 			Description: "Scaling factor for the input height to determine the output height of the image, where values between `0` and `1` decrease size. Image dimensions need to be non-zero positive numbers.",
 		},
 		"width": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Scaling factor for the input width to determine the output width of the image, where `1` leaves the width unchanged. Values greater than `1` increase the image size. Image dimensions need to be non-zero positive numbers.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Scaling factor for the input width to determine the output width of the image, where `1` leaves the width unchanged. Values greater than `1` increase the image size. Image dimensions need to be non-zero positive numbers.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"width_var": {
 			Type:        schema.TypeString,
@@ -2115,9 +2182,10 @@ func scale(_ int) map[string]*schema.Schema {
 func shear(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"x_shear": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The amount to shear along the x-axis, measured in multiples of the image's width. Must be set if yShear is not specified.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The amount to shear along the x-axis, measured in multiples of the image's width. Must be set if yShear is not specified.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"x_shear_var": {
 			Type:        schema.TypeString,
@@ -2125,9 +2193,10 @@ func shear(_ int) map[string]*schema.Schema {
 			Description: "The amount to shear along the x-axis, measured in multiples of the image's width. Must be set if yShear is not specified.",
 		},
 		"y_shear": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The amount to shear along the y-axis, measured in multiples of the image's height. Must be set if xShear is not specified.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The amount to shear along the y-axis, measured in multiples of the image's height. Must be set if xShear is not specified.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"y_shear_var": {
 			Type:        schema.TypeString,
@@ -2150,9 +2219,10 @@ func textImageType(depth int) map[string]*schema.Schema {
 			Description: "The main fill color of the text.",
 		},
 		"size": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The size in pixels to render the text.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The size in pixels to render the text.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"size_var": {
 			Type:        schema.TypeString,
@@ -2165,9 +2235,10 @@ func textImageType(depth int) map[string]*schema.Schema {
 			Description: "The color for the outline of the text.",
 		},
 		"stroke_size": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The thickness in points for the outline of the text.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The thickness in points for the outline of the text.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"stroke_size_var": {
 			Type:        schema.TypeString,
@@ -2213,9 +2284,10 @@ func textImageType(depth int) map[string]*schema.Schema {
 func trim(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"fuzz": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The fuzz tolerance of the trim, a value between `0` and `1` that determines the acceptable amount of background variation before trimming stops.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The fuzz tolerance of the trim, a value between `0` and `1` that determines the acceptable amount of background variation before trimming stops.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"fuzz_var": {
 			Type:        schema.TypeString,
@@ -2223,9 +2295,10 @@ func trim(_ int) map[string]*schema.Schema {
 			Description: "The fuzz tolerance of the trim, a value between `0` and `1` that determines the acceptable amount of background variation before trimming stops.",
 		},
 		"padding": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "The amount of padding in pixels to add to the trimmed image.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The amount of padding in pixels to add to the trimmed image.",
+			ValidateDiagFunc: validateIsTypeInt(),
 		},
 		"padding_var": {
 			Type:        schema.TypeString,
@@ -2250,9 +2323,10 @@ func unionShapeType(depth int) map[string]*schema.Schema {
 func unsharpMask(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"gain": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Set how much emphasis the filter applies to details. Higher values increase apparent sharpness of details.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Set how much emphasis the filter applies to details. Higher values increase apparent sharpness of details.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"gain_var": {
 			Type:        schema.TypeString,
@@ -2260,9 +2334,10 @@ func unsharpMask(_ int) map[string]*schema.Schema {
 			Description: "Set how much emphasis the filter applies to details. Higher values increase apparent sharpness of details.",
 		},
 		"sigma": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "The standard deviation of the Gaussian distribution used in the in unsharp mask, measured in pixels, `1.0` by default. High values emphasize large details and low values emphasize small details.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The standard deviation of the Gaussian distribution used in the in unsharp mask, measured in pixels, `1.0` by default. High values emphasize large details and low values emphasize small details.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"sigma_var": {
 			Type:        schema.TypeString,
@@ -2270,9 +2345,10 @@ func unsharpMask(_ int) map[string]*schema.Schema {
 			Description: "The standard deviation of the Gaussian distribution used in the in unsharp mask, measured in pixels, `1.0` by default. High values emphasize large details and low values emphasize small details.",
 		},
 		"threshold": {
-			Type:        schema.TypeFloat,
-			Optional:    true,
-			Description: "Set the minimum change required to include a detail in the filter. Higher values discard more changes.",
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Set the minimum change required to include a detail in the filter. Higher values discard more changes.",
+			ValidateDiagFunc: validateIsTypeFloat(),
 		},
 		"threshold_var": {
 			Type:        schema.TypeString,

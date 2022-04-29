@@ -2,1337 +2,1617 @@ package imagewriter
 
 import (
 	"fmt"
-	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // PolicyImageToEdgeGrid converts terraform originated map structure into EdgeGrid structure
-func PolicyImageToEdgeGrid(input map[string]interface{}) imaging.PolicyInputImage {
-	result := imaging.PolicyInputImage{}
-	result.Breakpoints = getBreakpoints(extract(input, "breakpoints"))
-	result.Hosts = interfaceSliceToStringSlice(input["hosts"].([]interface{}))
-	result.Output = getOutputImage(extract(input, "output"))
-	result.PostBreakpointTransformations = getPostBreakpointTransformations(input["post_breakpoint_transformations"].([]interface{}))
-	result.RolloutDuration = input["rollout_duration"].(int)
-	result.Transformations = getTransformations(input["transformations"].([]interface{}))
-	result.Variables = getVariableList(input["variables"].([]interface{}))
+func PolicyImageToEdgeGrid(d *schema.ResourceData, key string) imaging.PolicyInputImage {
+	_, exist := extract(d, key)
+	var result imaging.PolicyInputImage
+	if exist {
+		result = imaging.PolicyInputImage{}
+		result.Breakpoints = getBreakpoints(d, getKey(key, 0, "breakpoints"))
+		result.Hosts = interfaceSliceToStringSlice(d, getKey(key, 0, "hosts"))
+		result.Output = getOutputImage(d, getKey(key, 0, "output"))
+		result.PostBreakpointTransformations = getPostBreakpointTransformations(d, getKey(key, 0, "post_breakpoint_transformations"))
+		result.RolloutDuration = intReader(d, getKey(key, 0, "rollout_duration"))
+		result.Transformations = getTransformations(d, getKey(key, 0, "transformations"))
+		result.Variables = getVariableList(d, getKey(key, 0, "variables"))
+	}
+
 	return result
 }
 
-func getAppend(src map[string]interface{}) *imaging.Append {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Append{
-		Gravity:                gravityVariableInline(src, "gravity"),
-		GravityPriority:        appendGravityPriorityVariableInline(src, "gravity_priority"),
-		Image:                  getImageType(extract(src, "image")),
-		PreserveMinorDimension: booleanVariableInline(src, "preserve_minor_dimension"),
-		Transformation:         imaging.AppendTransformationAppend,
-	}
-	return &result
-}
-
-func getAspectCrop(src map[string]interface{}) *imaging.AspectCrop {
-	if src == nil {
-		return nil
-	}
-	result := imaging.AspectCrop{
-		AllowExpansion: booleanVariableInline(src, "allow_expansion"),
-		Height:         numberVariableInline(src, "height"),
-		Width:          numberVariableInline(src, "width"),
-		XPosition:      numberVariableInline(src, "x_position"),
-		YPosition:      numberVariableInline(src, "y_position"),
-		Transformation: imaging.AspectCropTransformationAspectCrop,
-	}
-	return &result
-}
-
-func getBackgroundColor(src map[string]interface{}) *imaging.BackgroundColor {
-	if src == nil {
-		return nil
-	}
-	result := imaging.BackgroundColor{
-		Color:          stringVariableInline(src, "color"),
-		Transformation: imaging.BackgroundColorTransformationBackgroundColor,
-	}
-	return &result
-}
-
-func getBlur(src map[string]interface{}) *imaging.Blur {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Blur{
-		Sigma:          numberVariableInline(src, "sigma"),
-		Transformation: imaging.BlurTransformationBlur,
-	}
-	return &result
-}
-
-func getBoxImageType(src map[string]interface{}) *imaging.BoxImageType {
-	if src == nil {
-		return nil
-	}
-	result := imaging.BoxImageType{
-		Color:          stringVariableInline(src, "color"),
-		Height:         integerVariableInline(src, "height"),
-		Transformation: getTransformationType(extract(src, "transformation")),
-		Width:          integerVariableInline(src, "width"),
-		Type:           imaging.BoxImageTypeTypeBox,
-	}
-	return &result
-}
-
-func getBreakpoints(src map[string]interface{}) *imaging.Breakpoints {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Breakpoints{
-		Widths: interfaceSliceToIntSlice(src["widths"].([]interface{})),
-	}
-	return &result
-}
-
-func getChromaKey(src map[string]interface{}) *imaging.ChromaKey {
-	if src == nil {
-		return nil
-	}
-	result := imaging.ChromaKey{
-		Hue:                 numberVariableInline(src, "hue"),
-		HueFeather:          numberVariableInline(src, "hue_feather"),
-		HueTolerance:        numberVariableInline(src, "hue_tolerance"),
-		LightnessFeather:    numberVariableInline(src, "lightness_feather"),
-		LightnessTolerance:  numberVariableInline(src, "lightness_tolerance"),
-		SaturationFeather:   numberVariableInline(src, "saturation_feather"),
-		SaturationTolerance: numberVariableInline(src, "saturation_tolerance"),
-		Transformation:      imaging.ChromaKeyTransformationChromaKey,
-	}
-	return &result
-}
-
-func getCircleImageType(src map[string]interface{}) *imaging.CircleImageType {
-	if src == nil {
-		return nil
-	}
-	result := imaging.CircleImageType{
-		Color:          stringVariableInline(src, "color"),
-		Diameter:       integerVariableInline(src, "diameter"),
-		Transformation: getTransformationType(extract(src, "transformation")),
-		Width:          integerVariableInline(src, "width"),
-		Type:           imaging.CircleImageTypeTypeCircle,
-	}
-	return &result
-}
-
-func getCircleShapeType(src map[string]interface{}) *imaging.CircleShapeType {
-	if src == nil {
-		return nil
-	}
-	result := imaging.CircleShapeType{
-		Center: getPointShapeType(extract(src, "center")),
-		Radius: numberVariableInline(src, "radius"),
-	}
-	return &result
-}
-
-func getComposite(src map[string]interface{}) *imaging.Composite {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Composite{
-		Gravity:        gravityVariableInline(src, "gravity"),
-		Image:          getImageType(extract(src, "image")),
-		Placement:      compositePlacementVariableInline(src, "placement"),
-		Scale:          numberVariableInline(src, "scale"),
-		ScaleDimension: compositeScaleDimensionVariableInline(src, "scale_dimension"),
-		XPosition:      integerVariableInline(src, "x_position"),
-		YPosition:      integerVariableInline(src, "y_position"),
-		Transformation: imaging.CompositeTransformationComposite,
-	}
-	return &result
-}
-
-func getCompound(src map[string]interface{}) *imaging.Compound {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Compound{
-		Transformations: getTransformations(src["transformations"].([]interface{})),
-		Transformation:  imaging.CompoundTransformationCompound,
-	}
-	return &result
-}
-
-func getCompoundPost(src map[string]interface{}) *imaging.CompoundPost {
-	if src == nil {
-		return nil
-	}
-	result := imaging.CompoundPost{
-		Transformations: getPostBreakpointTransformations(src["transformations"].([]interface{})),
-		Transformation:  imaging.CompoundPostTransformationCompound,
-	}
-	return &result
-}
-
-func getContrast(src map[string]interface{}) *imaging.Contrast {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Contrast{
-		Brightness:     numberVariableInline(src, "brightness"),
-		Contrast:       numberVariableInline(src, "contrast"),
-		Transformation: imaging.ContrastTransformationContrast,
-	}
-	return &result
-}
-
-func getCrop(src map[string]interface{}) *imaging.Crop {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Crop{
-		AllowExpansion: booleanVariableInline(src, "allow_expansion"),
-		Gravity:        gravityVariableInline(src, "gravity"),
-		Height:         integerVariableInline(src, "height"),
-		Width:          integerVariableInline(src, "width"),
-		XPosition:      integerVariableInline(src, "x_position"),
-		YPosition:      integerVariableInline(src, "y_position"),
-		Transformation: imaging.CropTransformationCrop,
-	}
-	return &result
-}
-
-func getEnumOptionsList(src []interface{}) []*imaging.EnumOptions {
-	result := make([]*imaging.EnumOptions, 0)
-	for idx := range src {
-		elem := imaging.EnumOptions{
-			ID:    src[idx].(map[string]interface{})["id"].(string),
-			Value: src[idx].(map[string]interface{})["value"].(string),
+func getAppend(d *schema.ResourceData, key string) *imaging.Append {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Append{
+			Gravity:                gravityVariableInline(d, getKey(key, 0, "gravity")),
+			GravityPriority:        appendGravityPriorityVariableInline(d, getKey(key, 0, "gravity_priority")),
+			Image:                  getImageType(d, getKey(key, 0, "image")),
+			PreserveMinorDimension: booleanVariableInline(d, getKey(key, 0, "preserve_minor_dimension")),
+			Transformation:         imaging.AppendTransformationAppend,
 		}
-		result = append(result, &elem)
-	}
-	if len(result) > 0 {
-		return result
+		return &result
 	}
 	return nil
 }
 
-func getFaceCrop(src map[string]interface{}) *imaging.FaceCrop {
-	if src == nil {
-		return nil
-	}
-	result := imaging.FaceCrop{
-		Algorithm:      faceCropAlgorithmVariableInline(src, "algorithm"),
-		Confidence:     numberVariableInline(src, "confidence"),
-		FailGravity:    gravityVariableInline(src, "fail_gravity"),
-		Focus:          faceCropFocusVariableInline(src, "focus"),
-		Gravity:        gravityVariableInline(src, "gravity"),
-		Height:         integerVariableInline(src, "height"),
-		Padding:        numberVariableInline(src, "padding"),
-		Style:          faceCropStyleVariableInline(src, "style"),
-		Width:          integerVariableInline(src, "width"),
-		Transformation: imaging.FaceCropTransformationFaceCrop,
-	}
-	return &result
-}
-
-func getFeatureCrop(src map[string]interface{}) *imaging.FeatureCrop {
-	if src == nil {
-		return nil
-	}
-	result := imaging.FeatureCrop{
-		FailGravity:       gravityVariableInline(src, "fail_gravity"),
-		FeatureRadius:     numberVariableInline(src, "feature_radius"),
-		Gravity:           gravityVariableInline(src, "gravity"),
-		Height:            integerVariableInline(src, "height"),
-		MaxFeatures:       integerVariableInline(src, "max_features"),
-		MinFeatureQuality: numberVariableInline(src, "min_feature_quality"),
-		Padding:           numberVariableInline(src, "padding"),
-		Style:             featureCropStyleVariableInline(src, "style"),
-		Width:             integerVariableInline(src, "width"),
-		Transformation:    imaging.FeatureCropTransformationFeatureCrop,
-	}
-	return &result
-}
-
-func getFitAndFill(src map[string]interface{}) *imaging.FitAndFill {
-	if src == nil {
-		return nil
-	}
-	result := imaging.FitAndFill{
-		FillTransformation: getTransformationType(extract(src, "fill_transformation")),
-		Height:             integerVariableInline(src, "height"),
-		Width:              integerVariableInline(src, "width"),
-		Transformation:     imaging.FitAndFillTransformationFitAndFill,
-	}
-	return &result
-}
-
-func getGoop(src map[string]interface{}) *imaging.Goop {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Goop{
-		Chaos:          numberVariableInline(src, "chaos"),
-		Density:        integerVariableInline(src, "density"),
-		Power:          numberVariableInline(src, "power"),
-		Seed:           integerVariableInline(src, "seed"),
-		Transformation: imaging.GoopTransformationGoop,
-	}
-	return &result
-}
-
-func getGrayscale(src map[string]interface{}) *imaging.Grayscale {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Grayscale{
-		Type:           grayscaleTypeVariableInline(src, "type"),
-		Transformation: imaging.GrayscaleTransformationGrayscale,
-	}
-	return &result
-}
-
-func getHSL(src map[string]interface{}) *imaging.HSL {
-	if src == nil {
-		return nil
-	}
-	result := imaging.HSL{
-		Hue:            numberVariableInline(src, "hue"),
-		Lightness:      numberVariableInline(src, "lightness"),
-		Saturation:     numberVariableInline(src, "saturation"),
-		Transformation: imaging.HSLTransformationHSL,
-	}
-	return &result
-}
-
-func getHSV(src map[string]interface{}) *imaging.HSV {
-	if src == nil {
-		return nil
-	}
-	result := imaging.HSV{
-		Hue:            numberVariableInline(src, "hue"),
-		Saturation:     numberVariableInline(src, "saturation"),
-		Value:          numberVariableInline(src, "value"),
-		Transformation: imaging.HSVTransformationHSV,
-	}
-	return &result
-}
-
-func getIfDimension(src map[string]interface{}) *imaging.IfDimension {
-	if src == nil {
-		return nil
-	}
-	result := imaging.IfDimension{
-		Default:        getTransformationType(extract(src, "default")),
-		Dimension:      ifDimensionDimensionVariableInline(src, "dimension"),
-		Equal:          getTransformationType(extract(src, "equal")),
-		GreaterThan:    getTransformationType(extract(src, "greater_than")),
-		LessThan:       getTransformationType(extract(src, "less_than")),
-		Value:          integerVariableInline(src, "value"),
-		Transformation: imaging.IfDimensionTransformationIfDimension,
-	}
-	return &result
-}
-
-func getIfDimensionPost(src map[string]interface{}) *imaging.IfDimensionPost {
-	if src == nil {
-		return nil
-	}
-	result := imaging.IfDimensionPost{
-		Default:        getTransformationTypePost(extract(src, "default")),
-		Dimension:      ifDimensionPostDimensionVariableInline(src, "dimension"),
-		Equal:          getTransformationTypePost(extract(src, "equal")),
-		GreaterThan:    getTransformationTypePost(extract(src, "greater_than")),
-		LessThan:       getTransformationTypePost(extract(src, "less_than")),
-		Value:          integerVariableInline(src, "value"),
-		Transformation: imaging.IfDimensionPostTransformationIfDimension,
-	}
-	return &result
-}
-
-func getIfOrientation(src map[string]interface{}) *imaging.IfOrientation {
-	if src == nil {
-		return nil
-	}
-	result := imaging.IfOrientation{
-		Default:        getTransformationType(extract(src, "default")),
-		Landscape:      getTransformationType(extract(src, "landscape")),
-		Portrait:       getTransformationType(extract(src, "portrait")),
-		Square:         getTransformationType(extract(src, "square")),
-		Transformation: imaging.IfOrientationTransformationIfOrientation,
-	}
-	return &result
-}
-
-func getIfOrientationPost(src map[string]interface{}) *imaging.IfOrientationPost {
-	if src == nil {
-		return nil
-	}
-	result := imaging.IfOrientationPost{
-		Default:        getTransformationTypePost(extract(src, "default")),
-		Landscape:      getTransformationTypePost(extract(src, "landscape")),
-		Portrait:       getTransformationTypePost(extract(src, "portrait")),
-		Square:         getTransformationTypePost(extract(src, "square")),
-		Transformation: imaging.IfOrientationPostTransformationIfOrientation,
-	}
-	return &result
-}
-
-func getMaxColors(src map[string]interface{}) *imaging.MaxColors {
-	if src == nil {
-		return nil
-	}
-	result := imaging.MaxColors{
-		Colors:         integerVariableInline(src, "colors"),
-		Transformation: imaging.MaxColorsTransformationMaxColors,
-	}
-	return &result
-}
-
-func getMirror(src map[string]interface{}) *imaging.Mirror {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Mirror{
-		Horizontal:     booleanVariableInline(src, "horizontal"),
-		Vertical:       booleanVariableInline(src, "vertical"),
-		Transformation: imaging.MirrorTransformationMirror,
-	}
-	return &result
-}
-
-func getMonoHue(src map[string]interface{}) *imaging.MonoHue {
-	if src == nil {
-		return nil
-	}
-	result := imaging.MonoHue{
-		Hue:            numberVariableInline(src, "hue"),
-		Transformation: imaging.MonoHueTransformationMonoHue,
-	}
-	return &result
-}
-
-func getOpacity(src map[string]interface{}) *imaging.Opacity {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Opacity{
-		Opacity:        numberVariableInline(src, "opacity"),
-		Transformation: imaging.OpacityTransformationOpacity,
-	}
-	return &result
-}
-
-func getOutputImage(src map[string]interface{}) *imaging.OutputImage {
-	if src == nil {
-		return nil
-	}
-	result := imaging.OutputImage{
-		AdaptiveQuality:        src["adaptive_quality"].(int),
-		PerceptualQuality:      outputImagePerceptualQualityVariableInline(src, "perceptual_quality"),
-		PerceptualQualityFloor: src["perceptual_quality_floor"].(int),
-		Quality:                integerVariableInline(src, "quality"),
-	}
-	return &result
-}
-
-func getPointShapeType(src map[string]interface{}) *imaging.PointShapeType {
-	if src == nil {
-		return nil
-	}
-	result := imaging.PointShapeType{
-		X: numberVariableInline(src, "x"),
-		Y: numberVariableInline(src, "y"),
-	}
-	return &result
-}
-
-func getPointShapeTypeList(src []interface{}) []imaging.PointShapeType {
-	result := make([]imaging.PointShapeType, 0)
-	for idx := range src {
-		elem := imaging.PointShapeType{
-			X: numberVariableInline(src[idx].(map[string]interface{}), "x"),
-			Y: numberVariableInline(src[idx].(map[string]interface{}), "y"),
+func getAspectCrop(d *schema.ResourceData, key string) *imaging.AspectCrop {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.AspectCrop{
+			AllowExpansion: booleanVariableInline(d, getKey(key, 0, "allow_expansion")),
+			Height:         numberVariableInline(d, getKey(key, 0, "height")),
+			Width:          numberVariableInline(d, getKey(key, 0, "width")),
+			XPosition:      numberVariableInline(d, getKey(key, 0, "x_position")),
+			YPosition:      numberVariableInline(d, getKey(key, 0, "y_position")),
+			Transformation: imaging.AspectCropTransformationAspectCrop,
 		}
-		result = append(result, elem)
-	}
-	if len(result) > 0 {
-		return result
+		return &result
 	}
 	return nil
 }
 
-func getPolygonShapeType(src map[string]interface{}) *imaging.PolygonShapeType {
-	if src == nil {
-		return nil
-	}
-	result := imaging.PolygonShapeType{
-		Points: getPointShapeTypeList(src["points"].([]interface{})),
-	}
-	return &result
-}
-
-func getPostBreakpointTransformations(src []interface{}) []imaging.TransformationTypePost {
-	result := make([]imaging.TransformationTypePost, 0)
-	for idx := range src {
-		elem := getTransformationTypePost(src[idx].(map[string]interface{}))
-		result = append(result, elem)
-	}
-	if len(result) > 0 {
-		return result
-	}
-	return nil
-}
-
-func getRectangleShapeType(src map[string]interface{}) *imaging.RectangleShapeType {
-	if src == nil {
-		return nil
-	}
-	result := imaging.RectangleShapeType{
-		Anchor: getPointShapeType(extract(src, "anchor")),
-		Height: numberVariableInline(src, "height"),
-		Width:  numberVariableInline(src, "width"),
-	}
-	return &result
-}
-
-func getRegionOfInterestCrop(src map[string]interface{}) *imaging.RegionOfInterestCrop {
-	if src == nil {
-		return nil
-	}
-	result := imaging.RegionOfInterestCrop{
-		Gravity:          gravityVariableInline(src, "gravity"),
-		Height:           integerVariableInline(src, "height"),
-		RegionOfInterest: getShapeType(extract(src, "region_of_interest")),
-		Style:            regionOfInterestCropStyleVariableInline(src, "style"),
-		Width:            integerVariableInline(src, "width"),
-		Transformation:   imaging.RegionOfInterestCropTransformationRegionOfInterestCrop,
-	}
-	return &result
-}
-
-func getRelativeCrop(src map[string]interface{}) *imaging.RelativeCrop {
-	if src == nil {
-		return nil
-	}
-	result := imaging.RelativeCrop{
-		East:           integerVariableInline(src, "east"),
-		North:          integerVariableInline(src, "north"),
-		South:          integerVariableInline(src, "south"),
-		West:           integerVariableInline(src, "west"),
-		Transformation: imaging.RelativeCropTransformationRelativeCrop,
-	}
-	return &result
-}
-
-func getRemoveColor(src map[string]interface{}) *imaging.RemoveColor {
-	if src == nil {
-		return nil
-	}
-	result := imaging.RemoveColor{
-		Color:          stringVariableInline(src, "color"),
-		Feather:        numberVariableInline(src, "feather"),
-		Tolerance:      numberVariableInline(src, "tolerance"),
-		Transformation: imaging.RemoveColorTransformationRemoveColor,
-	}
-	return &result
-}
-
-func getResize(src map[string]interface{}) *imaging.Resize {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Resize{
-		Aspect:         resizeAspectVariableInline(src, "aspect"),
-		Height:         integerVariableInline(src, "height"),
-		Type:           resizeTypeVariableInline(src, "type"),
-		Width:          integerVariableInline(src, "width"),
-		Transformation: imaging.ResizeTransformationResize,
-	}
-	return &result
-}
-
-func getRotate(src map[string]interface{}) *imaging.Rotate {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Rotate{
-		Degrees:        numberVariableInline(src, "degrees"),
-		Transformation: imaging.RotateTransformationRotate,
-	}
-	return &result
-}
-
-func getScale(src map[string]interface{}) *imaging.Scale {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Scale{
-		Height:         numberVariableInline(src, "height"),
-		Width:          numberVariableInline(src, "width"),
-		Transformation: imaging.ScaleTransformationScale,
-	}
-	return &result
-}
-
-func getShapeTypeList(src []interface{}) []imaging.ShapeType {
-	result := make([]imaging.ShapeType, 0)
-	for idx := range src {
-		elem := getShapeType(src[idx].(map[string]interface{}))
-		result = append(result, elem)
-	}
-	if len(result) > 0 {
-		return result
-	}
-	return nil
-}
-
-func getShear(src map[string]interface{}) *imaging.Shear {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Shear{
-		XShear:         numberVariableInline(src, "x_shear"),
-		YShear:         numberVariableInline(src, "y_shear"),
-		Transformation: imaging.ShearTransformationShear,
-	}
-	return &result
-}
-
-func getTextImageType(src map[string]interface{}) *imaging.TextImageType {
-	if src == nil {
-		return nil
-	}
-	result := imaging.TextImageType{
-		Fill:           stringVariableInline(src, "fill"),
-		Size:           numberVariableInline(src, "size"),
-		Stroke:         stringVariableInline(src, "stroke"),
-		StrokeSize:     numberVariableInline(src, "stroke_size"),
-		Text:           stringVariableInline(src, "text"),
-		Transformation: getTransformationType(extract(src, "transformation")),
-		Typeface:       stringVariableInline(src, "typeface"),
-		Type:           imaging.TextImageTypeTypeText,
-	}
-	return &result
-}
-
-func getTransformations(src []interface{}) []imaging.TransformationType {
-	result := make([]imaging.TransformationType, 0)
-	for idx := range src {
-		elem := getTransformationType(src[idx].(map[string]interface{}))
-		result = append(result, elem)
-	}
-	if len(result) > 0 {
-		return result
-	}
-	return nil
-}
-
-func getTrim(src map[string]interface{}) *imaging.Trim {
-	if src == nil {
-		return nil
-	}
-	result := imaging.Trim{
-		Fuzz:           numberVariableInline(src, "fuzz"),
-		Padding:        integerVariableInline(src, "padding"),
-		Transformation: imaging.TrimTransformationTrim,
-	}
-	return &result
-}
-
-func getURLImageType(src map[string]interface{}) *imaging.URLImageType {
-	if src == nil {
-		return nil
-	}
-	result := imaging.URLImageType{
-		Transformation: getTransformationType(extract(src, "transformation")),
-		URL:            stringVariableInline(src, "url"),
-		Type:           imaging.URLImageTypeTypeURL,
-	}
-	return &result
-}
-
-func getUnionShapeType(src map[string]interface{}) *imaging.UnionShapeType {
-	if src == nil {
-		return nil
-	}
-	result := imaging.UnionShapeType{
-		Shapes: getShapeTypeList(src["shapes"].([]interface{})),
-	}
-	return &result
-}
-
-func getUnsharpMask(src map[string]interface{}) *imaging.UnsharpMask {
-	if src == nil {
-		return nil
-	}
-	result := imaging.UnsharpMask{
-		Gain:           numberVariableInline(src, "gain"),
-		Sigma:          numberVariableInline(src, "sigma"),
-		Threshold:      numberVariableInline(src, "threshold"),
-		Transformation: imaging.UnsharpMaskTransformationUnsharpMask,
-	}
-	return &result
-}
-
-func getVariableList(src []interface{}) []imaging.Variable {
-	result := make([]imaging.Variable, 0)
-	for idx := range src {
-		elem := imaging.Variable{
-			DefaultValue: src[idx].(map[string]interface{})["default_value"].(string),
-			EnumOptions:  getEnumOptionsList(src[idx].(map[string]interface{})["enum_options"].([]interface{})),
-			Name:         src[idx].(map[string]interface{})["name"].(string),
-			Postfix:      src[idx].(map[string]interface{})["postfix"].(string),
-			Prefix:       src[idx].(map[string]interface{})["prefix"].(string),
-			Type:         imaging.VariableType(src[idx].(map[string]interface{})["type"].(string)),
+func getBackgroundColor(d *schema.ResourceData, key string) *imaging.BackgroundColor {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.BackgroundColor{
+			Color:          stringVariableInline(d, getKey(key, 0, "color")),
+			Transformation: imaging.BackgroundColorTransformationBackgroundColor,
 		}
-		result = append(result, elem)
-	}
-	if len(result) > 0 {
-		return result
+		return &result
 	}
 	return nil
 }
 
-func getImageType(src map[string]interface{}) imaging.ImageType {
-	if src == nil {
+func getBlur(d *schema.ResourceData, key string) *imaging.Blur {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Blur{
+			Sigma:          numberVariableInline(d, getKey(key, 0, "sigma")),
+			Transformation: imaging.BlurTransformationBlur,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getBoxImageType(d *schema.ResourceData, key string) *imaging.BoxImageType {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.BoxImageType{
+			Color:          stringVariableInline(d, getKey(key, 0, "color")),
+			Height:         integerVariableInline(d, getKey(key, 0, "height")),
+			Transformation: getTransformationType(d, getKey(key, 0, "transformation")),
+			Width:          integerVariableInline(d, getKey(key, 0, "width")),
+			Type:           imaging.BoxImageTypeTypeBox,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getBreakpoints(d *schema.ResourceData, key string) *imaging.Breakpoints {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Breakpoints{
+			Widths: interfaceSliceToIntSlice(d, getKey(key, 0, "widths")),
+		}
+		return &result
+	}
+	return nil
+}
+
+func getChromaKey(d *schema.ResourceData, key string) *imaging.ChromaKey {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.ChromaKey{
+			Hue:                 numberVariableInline(d, getKey(key, 0, "hue")),
+			HueFeather:          numberVariableInline(d, getKey(key, 0, "hue_feather")),
+			HueTolerance:        numberVariableInline(d, getKey(key, 0, "hue_tolerance")),
+			LightnessFeather:    numberVariableInline(d, getKey(key, 0, "lightness_feather")),
+			LightnessTolerance:  numberVariableInline(d, getKey(key, 0, "lightness_tolerance")),
+			SaturationFeather:   numberVariableInline(d, getKey(key, 0, "saturation_feather")),
+			SaturationTolerance: numberVariableInline(d, getKey(key, 0, "saturation_tolerance")),
+			Transformation:      imaging.ChromaKeyTransformationChromaKey,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getCircleImageType(d *schema.ResourceData, key string) *imaging.CircleImageType {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.CircleImageType{
+			Color:          stringVariableInline(d, getKey(key, 0, "color")),
+			Diameter:       integerVariableInline(d, getKey(key, 0, "diameter")),
+			Transformation: getTransformationType(d, getKey(key, 0, "transformation")),
+			Width:          integerVariableInline(d, getKey(key, 0, "width")),
+			Type:           imaging.CircleImageTypeTypeCircle,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getCircleShapeType(d *schema.ResourceData, key string) *imaging.CircleShapeType {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.CircleShapeType{
+			Center: getPointShapeType(d, getKey(key, 0, "center")),
+			Radius: numberVariableInline(d, getKey(key, 0, "radius")),
+		}
+		return &result
+	}
+	return nil
+}
+
+func getComposite(d *schema.ResourceData, key string) *imaging.Composite {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Composite{
+			Gravity:        gravityVariableInline(d, getKey(key, 0, "gravity")),
+			Image:          getImageType(d, getKey(key, 0, "image")),
+			Placement:      compositePlacementVariableInline(d, getKey(key, 0, "placement")),
+			Scale:          numberVariableInline(d, getKey(key, 0, "scale")),
+			ScaleDimension: compositeScaleDimensionVariableInline(d, getKey(key, 0, "scale_dimension")),
+			XPosition:      integerVariableInline(d, getKey(key, 0, "x_position")),
+			YPosition:      integerVariableInline(d, getKey(key, 0, "y_position")),
+			Transformation: imaging.CompositeTransformationComposite,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getCompound(d *schema.ResourceData, key string) *imaging.Compound {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Compound{
+			Transformations: getTransformations(d, getKey(key, 0, "transformations")),
+			Transformation:  imaging.CompoundTransformationCompound,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getCompoundPost(d *schema.ResourceData, key string) *imaging.CompoundPost {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.CompoundPost{
+			Transformations: getPostBreakpointTransformations(d, getKey(key, 0, "transformations")),
+			Transformation:  imaging.CompoundPostTransformationCompound,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getContrast(d *schema.ResourceData, key string) *imaging.Contrast {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Contrast{
+			Brightness:     numberVariableInline(d, getKey(key, 0, "brightness")),
+			Contrast:       numberVariableInline(d, getKey(key, 0, "contrast")),
+			Transformation: imaging.ContrastTransformationContrast,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getCrop(d *schema.ResourceData, key string) *imaging.Crop {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Crop{
+			AllowExpansion: booleanVariableInline(d, getKey(key, 0, "allow_expansion")),
+			Gravity:        gravityVariableInline(d, getKey(key, 0, "gravity")),
+			Height:         integerVariableInline(d, getKey(key, 0, "height")),
+			Width:          integerVariableInline(d, getKey(key, 0, "width")),
+			XPosition:      integerVariableInline(d, getKey(key, 0, "x_position")),
+			YPosition:      integerVariableInline(d, getKey(key, 0, "y_position")),
+			Transformation: imaging.CropTransformationCrop,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getEnumOptionsList(d *schema.ResourceData, key string) []*imaging.EnumOptions {
+	collection, exist := extract(d, key)
+	if exist {
+		result := make([]*imaging.EnumOptions, 0)
+		for idx := range collection.([]interface{}) {
+			elem := imaging.EnumOptions{
+				ID:    stringReader(d, getKey(key, idx, "id")),
+				Value: stringReader(d, getKey(key, idx, "value")),
+			}
+			result = append(result, &elem)
+		}
+		if len(result) > 0 {
+			return result
+		}
+		return nil
+	}
+	return nil
+}
+
+func getFaceCrop(d *schema.ResourceData, key string) *imaging.FaceCrop {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.FaceCrop{
+			Algorithm:      faceCropAlgorithmVariableInline(d, getKey(key, 0, "algorithm")),
+			Confidence:     numberVariableInline(d, getKey(key, 0, "confidence")),
+			FailGravity:    gravityVariableInline(d, getKey(key, 0, "fail_gravity")),
+			Focus:          faceCropFocusVariableInline(d, getKey(key, 0, "focus")),
+			Gravity:        gravityVariableInline(d, getKey(key, 0, "gravity")),
+			Height:         integerVariableInline(d, getKey(key, 0, "height")),
+			Padding:        numberVariableInline(d, getKey(key, 0, "padding")),
+			Style:          faceCropStyleVariableInline(d, getKey(key, 0, "style")),
+			Width:          integerVariableInline(d, getKey(key, 0, "width")),
+			Transformation: imaging.FaceCropTransformationFaceCrop,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getFeatureCrop(d *schema.ResourceData, key string) *imaging.FeatureCrop {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.FeatureCrop{
+			FailGravity:       gravityVariableInline(d, getKey(key, 0, "fail_gravity")),
+			FeatureRadius:     numberVariableInline(d, getKey(key, 0, "feature_radius")),
+			Gravity:           gravityVariableInline(d, getKey(key, 0, "gravity")),
+			Height:            integerVariableInline(d, getKey(key, 0, "height")),
+			MaxFeatures:       integerVariableInline(d, getKey(key, 0, "max_features")),
+			MinFeatureQuality: numberVariableInline(d, getKey(key, 0, "min_feature_quality")),
+			Padding:           numberVariableInline(d, getKey(key, 0, "padding")),
+			Style:             featureCropStyleVariableInline(d, getKey(key, 0, "style")),
+			Width:             integerVariableInline(d, getKey(key, 0, "width")),
+			Transformation:    imaging.FeatureCropTransformationFeatureCrop,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getFitAndFill(d *schema.ResourceData, key string) *imaging.FitAndFill {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.FitAndFill{
+			FillTransformation: getTransformationType(d, getKey(key, 0, "fill_transformation")),
+			Height:             integerVariableInline(d, getKey(key, 0, "height")),
+			Width:              integerVariableInline(d, getKey(key, 0, "width")),
+			Transformation:     imaging.FitAndFillTransformationFitAndFill,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getGoop(d *schema.ResourceData, key string) *imaging.Goop {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Goop{
+			Chaos:          numberVariableInline(d, getKey(key, 0, "chaos")),
+			Density:        integerVariableInline(d, getKey(key, 0, "density")),
+			Power:          numberVariableInline(d, getKey(key, 0, "power")),
+			Seed:           integerVariableInline(d, getKey(key, 0, "seed")),
+			Transformation: imaging.GoopTransformationGoop,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getGrayscale(d *schema.ResourceData, key string) *imaging.Grayscale {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Grayscale{
+			Type:           grayscaleTypeVariableInline(d, getKey(key, 0, "type")),
+			Transformation: imaging.GrayscaleTransformationGrayscale,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getHSL(d *schema.ResourceData, key string) *imaging.HSL {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.HSL{
+			Hue:            numberVariableInline(d, getKey(key, 0, "hue")),
+			Lightness:      numberVariableInline(d, getKey(key, 0, "lightness")),
+			Saturation:     numberVariableInline(d, getKey(key, 0, "saturation")),
+			Transformation: imaging.HSLTransformationHSL,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getHSV(d *schema.ResourceData, key string) *imaging.HSV {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.HSV{
+			Hue:            numberVariableInline(d, getKey(key, 0, "hue")),
+			Saturation:     numberVariableInline(d, getKey(key, 0, "saturation")),
+			Value:          numberVariableInline(d, getKey(key, 0, "value")),
+			Transformation: imaging.HSVTransformationHSV,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getIfDimension(d *schema.ResourceData, key string) *imaging.IfDimension {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.IfDimension{
+			Default:        getTransformationType(d, getKey(key, 0, "default")),
+			Dimension:      ifDimensionDimensionVariableInline(d, getKey(key, 0, "dimension")),
+			Equal:          getTransformationType(d, getKey(key, 0, "equal")),
+			GreaterThan:    getTransformationType(d, getKey(key, 0, "greater_than")),
+			LessThan:       getTransformationType(d, getKey(key, 0, "less_than")),
+			Value:          integerVariableInline(d, getKey(key, 0, "value")),
+			Transformation: imaging.IfDimensionTransformationIfDimension,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getIfDimensionPost(d *schema.ResourceData, key string) *imaging.IfDimensionPost {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.IfDimensionPost{
+			Default:        getTransformationTypePost(d, getKey(key, 0, "default")),
+			Dimension:      ifDimensionPostDimensionVariableInline(d, getKey(key, 0, "dimension")),
+			Equal:          getTransformationTypePost(d, getKey(key, 0, "equal")),
+			GreaterThan:    getTransformationTypePost(d, getKey(key, 0, "greater_than")),
+			LessThan:       getTransformationTypePost(d, getKey(key, 0, "less_than")),
+			Value:          integerVariableInline(d, getKey(key, 0, "value")),
+			Transformation: imaging.IfDimensionPostTransformationIfDimension,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getIfOrientation(d *schema.ResourceData, key string) *imaging.IfOrientation {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.IfOrientation{
+			Default:        getTransformationType(d, getKey(key, 0, "default")),
+			Landscape:      getTransformationType(d, getKey(key, 0, "landscape")),
+			Portrait:       getTransformationType(d, getKey(key, 0, "portrait")),
+			Square:         getTransformationType(d, getKey(key, 0, "square")),
+			Transformation: imaging.IfOrientationTransformationIfOrientation,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getIfOrientationPost(d *schema.ResourceData, key string) *imaging.IfOrientationPost {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.IfOrientationPost{
+			Default:        getTransformationTypePost(d, getKey(key, 0, "default")),
+			Landscape:      getTransformationTypePost(d, getKey(key, 0, "landscape")),
+			Portrait:       getTransformationTypePost(d, getKey(key, 0, "portrait")),
+			Square:         getTransformationTypePost(d, getKey(key, 0, "square")),
+			Transformation: imaging.IfOrientationPostTransformationIfOrientation,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getMaxColors(d *schema.ResourceData, key string) *imaging.MaxColors {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.MaxColors{
+			Colors:         integerVariableInline(d, getKey(key, 0, "colors")),
+			Transformation: imaging.MaxColorsTransformationMaxColors,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getMirror(d *schema.ResourceData, key string) *imaging.Mirror {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Mirror{
+			Horizontal:     booleanVariableInline(d, getKey(key, 0, "horizontal")),
+			Vertical:       booleanVariableInline(d, getKey(key, 0, "vertical")),
+			Transformation: imaging.MirrorTransformationMirror,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getMonoHue(d *schema.ResourceData, key string) *imaging.MonoHue {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.MonoHue{
+			Hue:            numberVariableInline(d, getKey(key, 0, "hue")),
+			Transformation: imaging.MonoHueTransformationMonoHue,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getOpacity(d *schema.ResourceData, key string) *imaging.Opacity {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Opacity{
+			Opacity:        numberVariableInline(d, getKey(key, 0, "opacity")),
+			Transformation: imaging.OpacityTransformationOpacity,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getOutputImage(d *schema.ResourceData, key string) *imaging.OutputImage {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.OutputImage{
+			AdaptiveQuality:        intReader(d, getKey(key, 0, "adaptive_quality")),
+			PerceptualQuality:      outputImagePerceptualQualityVariableInline(d, getKey(key, 0, "perceptual_quality")),
+			PerceptualQualityFloor: intReader(d, getKey(key, 0, "perceptual_quality_floor")),
+			Quality:                integerVariableInline(d, getKey(key, 0, "quality")),
+		}
+		return &result
+	}
+	return nil
+}
+
+func getPointShapeType(d *schema.ResourceData, key string) *imaging.PointShapeType {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.PointShapeType{
+			X: numberVariableInline(d, getKey(key, 0, "x")),
+			Y: numberVariableInline(d, getKey(key, 0, "y")),
+		}
+		return &result
+	}
+	return nil
+}
+
+func getPointShapeTypeList(d *schema.ResourceData, key string) []imaging.PointShapeType {
+	collection, exist := extract(d, key)
+	if exist {
+		result := make([]imaging.PointShapeType, 0)
+		for idx := range collection.([]interface{}) {
+			elem := imaging.PointShapeType{
+				X: numberVariableInline(d, getKey(key, idx, "x")),
+				Y: numberVariableInline(d, getKey(key, idx, "y")),
+			}
+			result = append(result, elem)
+		}
+		if len(result) > 0 {
+			return result
+		}
+		return nil
+	}
+	return nil
+}
+
+func getPolygonShapeType(d *schema.ResourceData, key string) *imaging.PolygonShapeType {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.PolygonShapeType{
+			Points: getPointShapeTypeList(d, getKey(key, 0, "points")),
+		}
+		return &result
+	}
+	return nil
+}
+
+func getPostBreakpointTransformations(d *schema.ResourceData, key string) []imaging.TransformationTypePost {
+	collection, exist := extract(d, key)
+	if exist {
+		result := make([]imaging.TransformationTypePost, 0)
+		for idx := range collection.([]interface{}) {
+			elem := getTransformationTypePost(d, fmt.Sprintf("%s.%d", key, idx))
+			result = append(result, elem)
+		}
+		if len(result) > 0 {
+			return result
+		}
+		return nil
+	}
+	return nil
+}
+
+func getRectangleShapeType(d *schema.ResourceData, key string) *imaging.RectangleShapeType {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.RectangleShapeType{
+			Anchor: getPointShapeType(d, getKey(key, 0, "anchor")),
+			Height: numberVariableInline(d, getKey(key, 0, "height")),
+			Width:  numberVariableInline(d, getKey(key, 0, "width")),
+		}
+		return &result
+	}
+	return nil
+}
+
+func getRegionOfInterestCrop(d *schema.ResourceData, key string) *imaging.RegionOfInterestCrop {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.RegionOfInterestCrop{
+			Gravity:          gravityVariableInline(d, getKey(key, 0, "gravity")),
+			Height:           integerVariableInline(d, getKey(key, 0, "height")),
+			RegionOfInterest: getShapeType(d, getKey(key, 0, "region_of_interest")),
+			Style:            regionOfInterestCropStyleVariableInline(d, getKey(key, 0, "style")),
+			Width:            integerVariableInline(d, getKey(key, 0, "width")),
+			Transformation:   imaging.RegionOfInterestCropTransformationRegionOfInterestCrop,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getRelativeCrop(d *schema.ResourceData, key string) *imaging.RelativeCrop {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.RelativeCrop{
+			East:           integerVariableInline(d, getKey(key, 0, "east")),
+			North:          integerVariableInline(d, getKey(key, 0, "north")),
+			South:          integerVariableInline(d, getKey(key, 0, "south")),
+			West:           integerVariableInline(d, getKey(key, 0, "west")),
+			Transformation: imaging.RelativeCropTransformationRelativeCrop,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getRemoveColor(d *schema.ResourceData, key string) *imaging.RemoveColor {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.RemoveColor{
+			Color:          stringVariableInline(d, getKey(key, 0, "color")),
+			Feather:        numberVariableInline(d, getKey(key, 0, "feather")),
+			Tolerance:      numberVariableInline(d, getKey(key, 0, "tolerance")),
+			Transformation: imaging.RemoveColorTransformationRemoveColor,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getResize(d *schema.ResourceData, key string) *imaging.Resize {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Resize{
+			Aspect:         resizeAspectVariableInline(d, getKey(key, 0, "aspect")),
+			Height:         integerVariableInline(d, getKey(key, 0, "height")),
+			Type:           resizeTypeVariableInline(d, getKey(key, 0, "type")),
+			Width:          integerVariableInline(d, getKey(key, 0, "width")),
+			Transformation: imaging.ResizeTransformationResize,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getRotate(d *schema.ResourceData, key string) *imaging.Rotate {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Rotate{
+			Degrees:        numberVariableInline(d, getKey(key, 0, "degrees")),
+			Transformation: imaging.RotateTransformationRotate,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getScale(d *schema.ResourceData, key string) *imaging.Scale {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Scale{
+			Height:         numberVariableInline(d, getKey(key, 0, "height")),
+			Width:          numberVariableInline(d, getKey(key, 0, "width")),
+			Transformation: imaging.ScaleTransformationScale,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getShapeTypeList(d *schema.ResourceData, key string) []imaging.ShapeType {
+	collection, exist := extract(d, key)
+	if exist {
+		result := make([]imaging.ShapeType, 0)
+		for idx := range collection.([]interface{}) {
+			elem := getShapeType(d, fmt.Sprintf("%s.%d", key, idx))
+			result = append(result, elem)
+		}
+		if len(result) > 0 {
+			return result
+		}
+		return nil
+	}
+	return nil
+}
+
+func getShear(d *schema.ResourceData, key string) *imaging.Shear {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Shear{
+			XShear:         numberVariableInline(d, getKey(key, 0, "x_shear")),
+			YShear:         numberVariableInline(d, getKey(key, 0, "y_shear")),
+			Transformation: imaging.ShearTransformationShear,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getTextImageType(d *schema.ResourceData, key string) *imaging.TextImageType {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.TextImageType{
+			Fill:           stringVariableInline(d, getKey(key, 0, "fill")),
+			Size:           numberVariableInline(d, getKey(key, 0, "size")),
+			Stroke:         stringVariableInline(d, getKey(key, 0, "stroke")),
+			StrokeSize:     numberVariableInline(d, getKey(key, 0, "stroke_size")),
+			Text:           stringVariableInline(d, getKey(key, 0, "text")),
+			Transformation: getTransformationType(d, getKey(key, 0, "transformation")),
+			Typeface:       stringVariableInline(d, getKey(key, 0, "typeface")),
+			Type:           imaging.TextImageTypeTypeText,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getTransformations(d *schema.ResourceData, key string) []imaging.TransformationType {
+	collection, exist := extract(d, key)
+	if exist {
+		result := make([]imaging.TransformationType, 0)
+		for idx := range collection.([]interface{}) {
+			elem := getTransformationType(d, fmt.Sprintf("%s.%d", key, idx))
+			result = append(result, elem)
+		}
+		if len(result) > 0 {
+			return result
+		}
+		return nil
+	}
+	return nil
+}
+
+func getTrim(d *schema.ResourceData, key string) *imaging.Trim {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.Trim{
+			Fuzz:           numberVariableInline(d, getKey(key, 0, "fuzz")),
+			Padding:        integerVariableInline(d, getKey(key, 0, "padding")),
+			Transformation: imaging.TrimTransformationTrim,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getURLImageType(d *schema.ResourceData, key string) *imaging.URLImageType {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.URLImageType{
+			Transformation: getTransformationType(d, getKey(key, 0, "transformation")),
+			URL:            stringVariableInline(d, getKey(key, 0, "url")),
+			Type:           imaging.URLImageTypeTypeURL,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getUnionShapeType(d *schema.ResourceData, key string) *imaging.UnionShapeType {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.UnionShapeType{
+			Shapes: getShapeTypeList(d, getKey(key, 0, "shapes")),
+		}
+		return &result
+	}
+	return nil
+}
+
+func getUnsharpMask(d *schema.ResourceData, key string) *imaging.UnsharpMask {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.UnsharpMask{
+			Gain:           numberVariableInline(d, getKey(key, 0, "gain")),
+			Sigma:          numberVariableInline(d, getKey(key, 0, "sigma")),
+			Threshold:      numberVariableInline(d, getKey(key, 0, "threshold")),
+			Transformation: imaging.UnsharpMaskTransformationUnsharpMask,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getVariableList(d *schema.ResourceData, key string) []imaging.Variable {
+	collection, exist := extract(d, key)
+	if exist {
+		result := make([]imaging.Variable, 0)
+		for idx := range collection.([]interface{}) {
+			elem := imaging.Variable{
+				DefaultValue: stringReader(d, getKey(key, idx, "default_value")),
+				EnumOptions:  getEnumOptionsList(d, getKey(key, idx, "enum_options")),
+				Name:         stringReader(d, getKey(key, idx, "name")),
+				Postfix:      stringReader(d, getKey(key, idx, "postfix")),
+				Prefix:       stringReader(d, getKey(key, idx, "prefix")),
+				Type:         imaging.VariableType(stringReader(d, getKey(key, idx, "type"))),
+			}
+			result = append(result, elem)
+		}
+		if len(result) > 0 {
+			return result
+		}
+		return nil
+	}
+	return nil
+}
+
+func getImageType(d *schema.ResourceData, key string) imaging.ImageType {
+	_, isAny := extract(d, key)
+
+	if !isAny {
 		return nil
 	}
 
-	var node map[string]interface{}
-	node = extract(src, "box_image")
-	if node != nil {
-		return getBoxImageType(node)
+	key = decorateKeyForSlice(key)
+
+	var exist bool
+	_, exist = extract(d, key+".box_image")
+	if exist {
+		return getBoxImageType(d, key+".box_image")
 	}
-	node = extract(src, "circle_image")
-	if node != nil {
-		return getCircleImageType(node)
+	_, exist = extract(d, key+".circle_image")
+	if exist {
+		return getCircleImageType(d, key+".circle_image")
 	}
-	node = extract(src, "text_image")
-	if node != nil {
-		return getTextImageType(node)
+	_, exist = extract(d, key+".text_image")
+	if exist {
+		return getTextImageType(d, key+".text_image")
 	}
-	node = extract(src, "url_image")
-	if node != nil {
-		return getURLImageType(node)
+	_, exist = extract(d, key+".url_image")
+	if exist {
+		return getURLImageType(d, key+".url_image")
 	}
 	panic(fmt.Sprint("unsupported type"))
 }
 
-func getShapeType(src map[string]interface{}) imaging.ShapeType {
-	if src == nil {
+func getShapeType(d *schema.ResourceData, key string) imaging.ShapeType {
+	_, isAny := extract(d, key)
+
+	if !isAny {
 		return nil
 	}
 
-	var node map[string]interface{}
-	node = extract(src, "circle_shape")
-	if node != nil {
-		return getCircleShapeType(node)
+	key = decorateKeyForSlice(key)
+
+	var exist bool
+	_, exist = extract(d, key+".circle_shape")
+	if exist {
+		return getCircleShapeType(d, key+".circle_shape")
 	}
-	node = extract(src, "point_shape")
-	if node != nil {
-		return getPointShapeType(node)
+	_, exist = extract(d, key+".point_shape")
+	if exist {
+		return getPointShapeType(d, key+".point_shape")
 	}
-	node = extract(src, "polygon_shape")
-	if node != nil {
-		return getPolygonShapeType(node)
+	_, exist = extract(d, key+".polygon_shape")
+	if exist {
+		return getPolygonShapeType(d, key+".polygon_shape")
 	}
-	node = extract(src, "rectangle_shape")
-	if node != nil {
-		return getRectangleShapeType(node)
+	_, exist = extract(d, key+".rectangle_shape")
+	if exist {
+		return getRectangleShapeType(d, key+".rectangle_shape")
 	}
-	node = extract(src, "union_shape")
-	if node != nil {
-		return getUnionShapeType(node)
+	_, exist = extract(d, key+".union_shape")
+	if exist {
+		return getUnionShapeType(d, key+".union_shape")
 	}
 	panic(fmt.Sprint("unsupported type"))
 }
 
-func getTransformationType(src map[string]interface{}) imaging.TransformationType {
-	if src == nil {
+func getTransformationType(d *schema.ResourceData, key string) imaging.TransformationType {
+	_, isAny := extract(d, key)
+
+	if !isAny {
 		return nil
 	}
 
-	var node map[string]interface{}
-	node = extract(src, "append")
-	if node != nil {
-		return getAppend(node)
+	key = decorateKeyForSlice(key)
+
+	var exist bool
+	_, exist = extract(d, key+".append")
+	if exist {
+		return getAppend(d, key+".append")
 	}
-	node = extract(src, "aspect_crop")
-	if node != nil {
-		return getAspectCrop(node)
+	_, exist = extract(d, key+".aspect_crop")
+	if exist {
+		return getAspectCrop(d, key+".aspect_crop")
 	}
-	node = extract(src, "background_color")
-	if node != nil {
-		return getBackgroundColor(node)
+	_, exist = extract(d, key+".background_color")
+	if exist {
+		return getBackgroundColor(d, key+".background_color")
 	}
-	node = extract(src, "blur")
-	if node != nil {
-		return getBlur(node)
+	_, exist = extract(d, key+".blur")
+	if exist {
+		return getBlur(d, key+".blur")
 	}
-	node = extract(src, "chroma_key")
-	if node != nil {
-		return getChromaKey(node)
+	_, exist = extract(d, key+".chroma_key")
+	if exist {
+		return getChromaKey(d, key+".chroma_key")
 	}
-	node = extract(src, "composite")
-	if node != nil {
-		return getComposite(node)
+	_, exist = extract(d, key+".composite")
+	if exist {
+		return getComposite(d, key+".composite")
 	}
-	node = extract(src, "compound")
-	if node != nil {
-		return getCompound(node)
+	_, exist = extract(d, key+".compound")
+	if exist {
+		return getCompound(d, key+".compound")
 	}
-	node = extract(src, "contrast")
-	if node != nil {
-		return getContrast(node)
+	_, exist = extract(d, key+".contrast")
+	if exist {
+		return getContrast(d, key+".contrast")
 	}
-	node = extract(src, "crop")
-	if node != nil {
-		return getCrop(node)
+	_, exist = extract(d, key+".crop")
+	if exist {
+		return getCrop(d, key+".crop")
 	}
-	node = extract(src, "face_crop")
-	if node != nil {
-		return getFaceCrop(node)
+	_, exist = extract(d, key+".face_crop")
+	if exist {
+		return getFaceCrop(d, key+".face_crop")
 	}
-	node = extract(src, "feature_crop")
-	if node != nil {
-		return getFeatureCrop(node)
+	_, exist = extract(d, key+".feature_crop")
+	if exist {
+		return getFeatureCrop(d, key+".feature_crop")
 	}
-	node = extract(src, "fit_and_fill")
-	if node != nil {
-		return getFitAndFill(node)
+	_, exist = extract(d, key+".fit_and_fill")
+	if exist {
+		return getFitAndFill(d, key+".fit_and_fill")
 	}
-	node = extract(src, "goop")
-	if node != nil {
-		return getGoop(node)
+	_, exist = extract(d, key+".goop")
+	if exist {
+		return getGoop(d, key+".goop")
 	}
-	node = extract(src, "grayscale")
-	if node != nil {
-		return getGrayscale(node)
+	_, exist = extract(d, key+".grayscale")
+	if exist {
+		return getGrayscale(d, key+".grayscale")
 	}
-	node = extract(src, "hsl")
-	if node != nil {
-		return getHSL(node)
+	_, exist = extract(d, key+".hsl")
+	if exist {
+		return getHSL(d, key+".hsl")
 	}
-	node = extract(src, "hsv")
-	if node != nil {
-		return getHSV(node)
+	_, exist = extract(d, key+".hsv")
+	if exist {
+		return getHSV(d, key+".hsv")
 	}
-	node = extract(src, "if_dimension")
-	if node != nil {
-		return getIfDimension(node)
+	_, exist = extract(d, key+".if_dimension")
+	if exist {
+		return getIfDimension(d, key+".if_dimension")
 	}
-	node = extract(src, "if_orientation")
-	if node != nil {
-		return getIfOrientation(node)
+	_, exist = extract(d, key+".if_orientation")
+	if exist {
+		return getIfOrientation(d, key+".if_orientation")
 	}
-	node = extract(src, "max_colors")
-	if node != nil {
-		return getMaxColors(node)
+	_, exist = extract(d, key+".max_colors")
+	if exist {
+		return getMaxColors(d, key+".max_colors")
 	}
-	node = extract(src, "mirror")
-	if node != nil {
-		return getMirror(node)
+	_, exist = extract(d, key+".mirror")
+	if exist {
+		return getMirror(d, key+".mirror")
 	}
-	node = extract(src, "mono_hue")
-	if node != nil {
-		return getMonoHue(node)
+	_, exist = extract(d, key+".mono_hue")
+	if exist {
+		return getMonoHue(d, key+".mono_hue")
 	}
-	node = extract(src, "opacity")
-	if node != nil {
-		return getOpacity(node)
+	_, exist = extract(d, key+".opacity")
+	if exist {
+		return getOpacity(d, key+".opacity")
 	}
-	node = extract(src, "region_of_interest_crop")
-	if node != nil {
-		return getRegionOfInterestCrop(node)
+	_, exist = extract(d, key+".region_of_interest_crop")
+	if exist {
+		return getRegionOfInterestCrop(d, key+".region_of_interest_crop")
 	}
-	node = extract(src, "relative_crop")
-	if node != nil {
-		return getRelativeCrop(node)
+	_, exist = extract(d, key+".relative_crop")
+	if exist {
+		return getRelativeCrop(d, key+".relative_crop")
 	}
-	node = extract(src, "remove_color")
-	if node != nil {
-		return getRemoveColor(node)
+	_, exist = extract(d, key+".remove_color")
+	if exist {
+		return getRemoveColor(d, key+".remove_color")
 	}
-	node = extract(src, "resize")
-	if node != nil {
-		return getResize(node)
+	_, exist = extract(d, key+".resize")
+	if exist {
+		return getResize(d, key+".resize")
 	}
-	node = extract(src, "rotate")
-	if node != nil {
-		return getRotate(node)
+	_, exist = extract(d, key+".rotate")
+	if exist {
+		return getRotate(d, key+".rotate")
 	}
-	node = extract(src, "scale")
-	if node != nil {
-		return getScale(node)
+	_, exist = extract(d, key+".scale")
+	if exist {
+		return getScale(d, key+".scale")
 	}
-	node = extract(src, "shear")
-	if node != nil {
-		return getShear(node)
+	_, exist = extract(d, key+".shear")
+	if exist {
+		return getShear(d, key+".shear")
 	}
-	node = extract(src, "trim")
-	if node != nil {
-		return getTrim(node)
+	_, exist = extract(d, key+".trim")
+	if exist {
+		return getTrim(d, key+".trim")
 	}
-	node = extract(src, "unsharp_mask")
-	if node != nil {
-		return getUnsharpMask(node)
+	_, exist = extract(d, key+".unsharp_mask")
+	if exist {
+		return getUnsharpMask(d, key+".unsharp_mask")
 	}
 	panic(fmt.Sprint("unsupported type"))
 }
 
-func getTransformationTypePost(src map[string]interface{}) imaging.TransformationTypePost {
-	if src == nil {
+func getTransformationTypePost(d *schema.ResourceData, key string) imaging.TransformationTypePost {
+	_, isAny := extract(d, key)
+
+	if !isAny {
 		return nil
 	}
 
-	var node map[string]interface{}
-	node = extract(src, "background_color")
-	if node != nil {
-		return getBackgroundColor(node)
+	key = decorateKeyForSlice(key)
+
+	var exist bool
+	_, exist = extract(d, key+".background_color")
+	if exist {
+		return getBackgroundColor(d, key+".background_color")
 	}
-	node = extract(src, "blur")
-	if node != nil {
-		return getBlur(node)
+	_, exist = extract(d, key+".blur")
+	if exist {
+		return getBlur(d, key+".blur")
 	}
-	node = extract(src, "chroma_key")
-	if node != nil {
-		return getChromaKey(node)
+	_, exist = extract(d, key+".chroma_key")
+	if exist {
+		return getChromaKey(d, key+".chroma_key")
 	}
-	node = extract(src, "compound")
-	if node != nil {
-		return getCompoundPost(node)
+	_, exist = extract(d, key+".compound")
+	if exist {
+		return getCompoundPost(d, key+".compound")
 	}
-	node = extract(src, "contrast")
-	if node != nil {
-		return getContrast(node)
+	_, exist = extract(d, key+".contrast")
+	if exist {
+		return getContrast(d, key+".contrast")
 	}
-	node = extract(src, "goop")
-	if node != nil {
-		return getGoop(node)
+	_, exist = extract(d, key+".goop")
+	if exist {
+		return getGoop(d, key+".goop")
 	}
-	node = extract(src, "grayscale")
-	if node != nil {
-		return getGrayscale(node)
+	_, exist = extract(d, key+".grayscale")
+	if exist {
+		return getGrayscale(d, key+".grayscale")
 	}
-	node = extract(src, "hsl")
-	if node != nil {
-		return getHSL(node)
+	_, exist = extract(d, key+".hsl")
+	if exist {
+		return getHSL(d, key+".hsl")
 	}
-	node = extract(src, "hsv")
-	if node != nil {
-		return getHSV(node)
+	_, exist = extract(d, key+".hsv")
+	if exist {
+		return getHSV(d, key+".hsv")
 	}
-	node = extract(src, "if_dimension")
-	if node != nil {
-		return getIfDimensionPost(node)
+	_, exist = extract(d, key+".if_dimension")
+	if exist {
+		return getIfDimensionPost(d, key+".if_dimension")
 	}
-	node = extract(src, "if_orientation")
-	if node != nil {
-		return getIfOrientationPost(node)
+	_, exist = extract(d, key+".if_orientation")
+	if exist {
+		return getIfOrientationPost(d, key+".if_orientation")
 	}
-	node = extract(src, "max_colors")
-	if node != nil {
-		return getMaxColors(node)
+	_, exist = extract(d, key+".max_colors")
+	if exist {
+		return getMaxColors(d, key+".max_colors")
 	}
-	node = extract(src, "mirror")
-	if node != nil {
-		return getMirror(node)
+	_, exist = extract(d, key+".mirror")
+	if exist {
+		return getMirror(d, key+".mirror")
 	}
-	node = extract(src, "mono_hue")
-	if node != nil {
-		return getMonoHue(node)
+	_, exist = extract(d, key+".mono_hue")
+	if exist {
+		return getMonoHue(d, key+".mono_hue")
 	}
-	node = extract(src, "opacity")
-	if node != nil {
-		return getOpacity(node)
+	_, exist = extract(d, key+".opacity")
+	if exist {
+		return getOpacity(d, key+".opacity")
 	}
-	node = extract(src, "remove_color")
-	if node != nil {
-		return getRemoveColor(node)
+	_, exist = extract(d, key+".remove_color")
+	if exist {
+		return getRemoveColor(d, key+".remove_color")
 	}
-	node = extract(src, "unsharp_mask")
-	if node != nil {
-		return getUnsharpMask(node)
+	_, exist = extract(d, key+".unsharp_mask")
+	if exist {
+		return getUnsharpMask(d, key+".unsharp_mask")
 	}
 	panic(fmt.Sprint("unsupported type"))
 }
 
-func appendGravityPriorityVariableInline(src map[string]interface{}, name string) *imaging.AppendGravityPriorityVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func appendGravityPriorityVariableInline(d *schema.ResourceData, key string) *imaging.AppendGravityPriorityVariableInline {
+	var value *imaging.AppendGravityPriority
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.AppendGravityPriorityPtr(imaging.AppendGravityPriority(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.AppendGravityPriority
-	if v1 != "" {
-		v2 = imaging.AppendGravityPriorityPtr(imaging.AppendGravityPriority(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.AppendGravityPriorityVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.AppendGravityPriorityVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func compositePlacementVariableInline(src map[string]interface{}, name string) *imaging.CompositePlacementVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func compositePlacementVariableInline(d *schema.ResourceData, key string) *imaging.CompositePlacementVariableInline {
+	var value *imaging.CompositePlacement
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.CompositePlacementPtr(imaging.CompositePlacement(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.CompositePlacement
-	if v1 != "" {
-		v2 = imaging.CompositePlacementPtr(imaging.CompositePlacement(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.CompositePlacementVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.CompositePlacementVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func compositeScaleDimensionVariableInline(src map[string]interface{}, name string) *imaging.CompositeScaleDimensionVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func compositeScaleDimensionVariableInline(d *schema.ResourceData, key string) *imaging.CompositeScaleDimensionVariableInline {
+	var value *imaging.CompositeScaleDimension
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.CompositeScaleDimensionPtr(imaging.CompositeScaleDimension(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.CompositeScaleDimension
-	if v1 != "" {
-		v2 = imaging.CompositeScaleDimensionPtr(imaging.CompositeScaleDimension(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.CompositeScaleDimensionVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.CompositeScaleDimensionVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func faceCropAlgorithmVariableInline(src map[string]interface{}, name string) *imaging.FaceCropAlgorithmVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func faceCropAlgorithmVariableInline(d *schema.ResourceData, key string) *imaging.FaceCropAlgorithmVariableInline {
+	var value *imaging.FaceCropAlgorithm
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.FaceCropAlgorithmPtr(imaging.FaceCropAlgorithm(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.FaceCropAlgorithm
-	if v1 != "" {
-		v2 = imaging.FaceCropAlgorithmPtr(imaging.FaceCropAlgorithm(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.FaceCropAlgorithmVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.FaceCropAlgorithmVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func faceCropFocusVariableInline(src map[string]interface{}, name string) *imaging.FaceCropFocusVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func faceCropFocusVariableInline(d *schema.ResourceData, key string) *imaging.FaceCropFocusVariableInline {
+	var value *imaging.FaceCropFocus
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.FaceCropFocusPtr(imaging.FaceCropFocus(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.FaceCropFocus
-	if v1 != "" {
-		v2 = imaging.FaceCropFocusPtr(imaging.FaceCropFocus(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.FaceCropFocusVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.FaceCropFocusVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func faceCropStyleVariableInline(src map[string]interface{}, name string) *imaging.FaceCropStyleVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func faceCropStyleVariableInline(d *schema.ResourceData, key string) *imaging.FaceCropStyleVariableInline {
+	var value *imaging.FaceCropStyle
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.FaceCropStylePtr(imaging.FaceCropStyle(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.FaceCropStyle
-	if v1 != "" {
-		v2 = imaging.FaceCropStylePtr(imaging.FaceCropStyle(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.FaceCropStyleVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.FaceCropStyleVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func featureCropStyleVariableInline(src map[string]interface{}, name string) *imaging.FeatureCropStyleVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func featureCropStyleVariableInline(d *schema.ResourceData, key string) *imaging.FeatureCropStyleVariableInline {
+	var value *imaging.FeatureCropStyle
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.FeatureCropStylePtr(imaging.FeatureCropStyle(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.FeatureCropStyle
-	if v1 != "" {
-		v2 = imaging.FeatureCropStylePtr(imaging.FeatureCropStyle(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.FeatureCropStyleVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.FeatureCropStyleVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func gravityVariableInline(src map[string]interface{}, name string) *imaging.GravityVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func gravityVariableInline(d *schema.ResourceData, key string) *imaging.GravityVariableInline {
+	var value *imaging.Gravity
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.GravityPtr(imaging.Gravity(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.Gravity
-	if v1 != "" {
-		v2 = imaging.GravityPtr(imaging.Gravity(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.GravityVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.GravityVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func grayscaleTypeVariableInline(src map[string]interface{}, name string) *imaging.GrayscaleTypeVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func grayscaleTypeVariableInline(d *schema.ResourceData, key string) *imaging.GrayscaleTypeVariableInline {
+	var value *imaging.GrayscaleType
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.GrayscaleTypePtr(imaging.GrayscaleType(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.GrayscaleType
-	if v1 != "" {
-		v2 = imaging.GrayscaleTypePtr(imaging.GrayscaleType(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.GrayscaleTypeVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.GrayscaleTypeVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func ifDimensionDimensionVariableInline(src map[string]interface{}, name string) *imaging.IfDimensionDimensionVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func ifDimensionDimensionVariableInline(d *schema.ResourceData, key string) *imaging.IfDimensionDimensionVariableInline {
+	var value *imaging.IfDimensionDimension
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.IfDimensionDimensionPtr(imaging.IfDimensionDimension(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.IfDimensionDimension
-	if v1 != "" {
-		v2 = imaging.IfDimensionDimensionPtr(imaging.IfDimensionDimension(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.IfDimensionDimensionVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.IfDimensionDimensionVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func ifDimensionPostDimensionVariableInline(src map[string]interface{}, name string) *imaging.IfDimensionPostDimensionVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func ifDimensionPostDimensionVariableInline(d *schema.ResourceData, key string) *imaging.IfDimensionPostDimensionVariableInline {
+	var value *imaging.IfDimensionPostDimension
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.IfDimensionPostDimensionPtr(imaging.IfDimensionPostDimension(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.IfDimensionPostDimension
-	if v1 != "" {
-		v2 = imaging.IfDimensionPostDimensionPtr(imaging.IfDimensionPostDimension(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.IfDimensionPostDimensionVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.IfDimensionPostDimensionVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func outputImagePerceptualQualityVariableInline(src map[string]interface{}, name string) *imaging.OutputImagePerceptualQualityVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func outputImagePerceptualQualityVariableInline(d *schema.ResourceData, key string) *imaging.OutputImagePerceptualQualityVariableInline {
+	var value *imaging.OutputImagePerceptualQuality
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQuality(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.OutputImagePerceptualQuality
-	if v1 != "" {
-		v2 = imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQuality(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.OutputImagePerceptualQualityVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.OutputImagePerceptualQualityVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func regionOfInterestCropStyleVariableInline(src map[string]interface{}, name string) *imaging.RegionOfInterestCropStyleVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func regionOfInterestCropStyleVariableInline(d *schema.ResourceData, key string) *imaging.RegionOfInterestCropStyleVariableInline {
+	var value *imaging.RegionOfInterestCropStyle
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.RegionOfInterestCropStylePtr(imaging.RegionOfInterestCropStyle(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.RegionOfInterestCropStyle
-	if v1 != "" {
-		v2 = imaging.RegionOfInterestCropStylePtr(imaging.RegionOfInterestCropStyle(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.RegionOfInterestCropStyleVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.RegionOfInterestCropStyleVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func resizeAspectVariableInline(src map[string]interface{}, name string) *imaging.ResizeAspectVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func resizeAspectVariableInline(d *schema.ResourceData, key string) *imaging.ResizeAspectVariableInline {
+	var value *imaging.ResizeAspect
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.ResizeAspectPtr(imaging.ResizeAspect(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.ResizeAspect
-	if v1 != "" {
-		v2 = imaging.ResizeAspectPtr(imaging.ResizeAspect(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.ResizeAspectVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.ResizeAspectVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func resizeTypeVariableInline(src map[string]interface{}, name string) *imaging.ResizeTypeVariableInline {
-	if !variableHasValue(src, name) {
-		return nil
+func resizeTypeVariableInline(d *schema.ResourceData, key string) *imaging.ResizeTypeVariableInline {
+	var value *imaging.ResizeType
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.ResizeTypePtr(imaging.ResizeType(valueRaw.(string)))
 	}
 
-	v1 := src[name]
-	var v2 *imaging.ResizeType
-	if v1 != "" {
-		v2 = imaging.ResizeTypePtr(imaging.ResizeType(v1.(string)))
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
 	}
 
-	return &imaging.ResizeTypeVariableInline{
-		Name:  stringValuePtr(src, name+"_var"),
-		Value: v2,
+	if existVal || existVar {
+		return &imaging.ResizeTypeVariableInline{
+			Name:  name,
+			Value: value,
+		}
 	}
+
+	return nil
 }
 
-func booleanVariableInline(src map[string]interface{}, name string) *imaging.BooleanVariableInline {
-	if variableHasValue(src, name) {
+func booleanVariableInline(d *schema.ResourceData, key string) *imaging.BooleanVariableInline {
+	var value *bool
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		valueMapped, _ := strconv.ParseBool(valueRaw.(string))
+		value = tools.BoolPtr(valueMapped)
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
 		return &imaging.BooleanVariableInline{
-			Name:  stringValuePtr(src, name+"_var"),
-			Value: boolValuePtr(src, name),
+			Name:  name,
+			Value: value,
 		}
 	}
+
 	return nil
 }
 
-func numberVariableInline(src map[string]interface{}, name string) *imaging.NumberVariableInline {
-	if variableHasValue(src, name) {
+func numberVariableInline(d *schema.ResourceData, key string) *imaging.NumberVariableInline {
+	var value *float64
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		valueMapped, _ := strconv.ParseFloat(valueRaw.(string), 64)
+		value = tools.Float64Ptr(valueMapped)
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
 		return &imaging.NumberVariableInline{
-			Name:  stringValuePtr(src, name+"_var"),
-			Value: float64ValuePtr(src, name),
+			Name:  name,
+			Value: value,
 		}
 	}
+
 	return nil
 }
 
-func integerVariableInline(src map[string]interface{}, name string) *imaging.IntegerVariableInline {
-	if variableHasValue(src, name) {
+func integerVariableInline(d *schema.ResourceData, key string) *imaging.IntegerVariableInline {
+	var value *int
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		valueMapped, _ := strconv.Atoi(valueRaw.(string))
+		value = tools.IntPtr(valueMapped)
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
 		return &imaging.IntegerVariableInline{
-			Name:  stringValuePtr(src, name+"_var"),
-			Value: intValuePtr(src, name),
+			Name:  name,
+			Value: value,
 		}
 	}
+
 	return nil
 }
 
-func stringVariableInline(src map[string]interface{}, name string) *imaging.StringVariableInline {
-	if variableHasValue(src, name) {
+func stringVariableInline(d *schema.ResourceData, key string) *imaging.StringVariableInline {
+	var value *string
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		valueMapped := valueRaw.(string)
+		value = tools.StringPtr(valueMapped)
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
 		return &imaging.StringVariableInline{
-			Name:  stringValuePtr(src, name+"_var"),
-			Value: stringValuePtr(src, name),
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	return nil
+}
+
+func intReader(d *schema.ResourceData, key string) int {
+	value, exist := extract(d, key)
+	if exist {
+		valInt, _ := strconv.Atoi(value.(string))
+		return valInt
+	}
+	return 0
+}
+
+func stringReader(d *schema.ResourceData, key string) string {
+	value, exist := extract(d, key)
+	if exist {
+		return value.(string)
+	}
+	return ""
+}
+
+func interfaceSliceToIntSlice(d *schema.ResourceData, key string) []int {
+	list, exist := extract(d, key)
+	if exist {
+		l := list.([]interface{})
+		if len(l) > 0 {
+			intList := make([]int, len(l))
+			for i, v := range l {
+				intList[i] = v.(int)
+			}
+			return intList
 		}
 	}
 	return nil
 }
 
-func boolValuePtr(src map[string]interface{}, name string) *bool {
-	value := src[name]
-	if value != "" {
-		v := value.(bool)
-		return &v
+func interfaceSliceToStringSlice(d *schema.ResourceData, key string) []string {
+	list, exist := extract(d, key)
+	if exist {
+		l := list.([]interface{})
+		if len(l) > 0 {
+			stringList := make([]string, len(l))
+			for i, v := range l {
+				stringList[i] = v.(string)
+			}
+			return stringList
+		}
 	}
 	return nil
 }
 
-func float64ValuePtr(src map[string]interface{}, name string) *float64 {
-	value := src[name]
-	if value != "" {
-		v := value.(float64)
-		return &v
-	}
-	return nil
+func extract(d *schema.ResourceData, key string) (interface{}, bool) {
+	return d.GetOk(key)
 }
 
-func intValuePtr(src map[string]interface{}, name string) *int {
-	value := src[name]
-	if value != "" {
-		v := value.(int)
-		return &v
+func decorateKeyForSlice(key string) string {
+	address := strings.Split(key, ".")
+	matches, _ := regexp.MatchString("[0-9]+", address[len(address)-1])
+	if !matches {
+		return key + ".0"
 	}
-	return nil
+	return key
 }
 
-func stringValuePtr(src map[string]interface{}, name string) *string {
-	value := src[name]
-	if value != "" {
-		v := value.(string)
-		return &v
-	}
-	return nil
-}
-
-func interfaceSliceToIntSlice(list []interface{}) []int {
-	if len(list) == 0 {
-		return nil
-	}
-	intList := make([]int, len(list))
-	for i, v := range list {
-		intList[i] = v.(int)
-	}
-	return intList
-}
-
-func interfaceSliceToStringSlice(list []interface{}) []string {
-	if len(list) == 0 {
-		return nil
-	}
-	stringList := make([]string, len(list))
-	for i, v := range list {
-		stringList[i] = v.(string)
-	}
-	return stringList
-}
-
-func variableHasValue(src map[string]interface{}, name string) bool {
-	v1 := src[name]
-	v2 := src[name+"_var"]
-
-	if !reflect.ValueOf(v1).IsZero() || !reflect.ValueOf(v2).IsZero() {
-		return true
-	}
-	return false
-}
-
-func extract(src map[string]interface{}, name string) map[string]interface{} {
-	elem, ok := src[name]
-	if !ok {
-		return nil
-	}
-
-	l := elem.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil
-	}
-	return l[0].(map[string]interface{})
+func getKey(rootKey string, elementIndex int, elementName string) string {
+	return fmt.Sprintf("%s.%d.%s", rootKey, elementIndex, elementName)
 }
