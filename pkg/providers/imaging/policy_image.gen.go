@@ -1185,13 +1185,13 @@ func faceCrop(_ int) map[string]*schema.Schema {
 		"focus": {
 			Type:             schema.TypeString,
 			Optional:         true,
-			Description:      "Distinguishes the faces detected, either `biggest` or `all` to place the crop rectangle around the full set of faces, `all` by default.",
-			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"all", "biggest"}, false)),
+			Description:      "Distinguishes the faces detected, either `biggestFace` or `allFaces` to place the crop rectangle around the full set of faces, `all` by default.",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"allFaces", "biggestFace"}, false)),
 		},
 		"focus_var": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "Distinguishes the faces detected, either `biggest` or `all` to place the crop rectangle around the full set of faces, `all` by default.",
+			Description: "Distinguishes the faces detected, either `biggestFace` or `allFaces` to place the crop rectangle around the full set of faces, `all` by default.",
 		},
 		"gravity": {
 			Type:             schema.TypeString,
@@ -1524,6 +1524,17 @@ func ifDimension(depth int) map[string]*schema.Schema {
 				Schema: transformationType(depth - 1),
 			},
 		},
+		"dimension": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The dimension to use to select the transformation, either `height`, `width`, or `both`.",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"width", "height", "both"}, false)),
+		},
+		"dimension_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The dimension to use to select the transformation, either `height`, `width`, or `both`.",
+		},
 		"equal": {
 			Type:     schema.TypeList,
 			Optional: true,
@@ -1547,6 +1558,16 @@ func ifDimension(depth int) map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: transformationType(depth - 1),
 			},
+		},
+		"value": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "The value to compare against the source image dimension. For example, if the image dimension is less than the value the lessThan transformation is applied.",
+		},
+		"value_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The value to compare against the source image dimension. For example, if the image dimension is less than the value the lessThan transformation is applied.",
 		},
 	}
 }

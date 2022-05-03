@@ -165,6 +165,17 @@ func getCompound(src map[string]interface{}) *imaging.Compound {
 	return &result
 }
 
+func getCompoundPost(src map[string]interface{}) *imaging.CompoundPost {
+	if src == nil {
+		return nil
+	}
+	result := imaging.CompoundPost{
+		Transformations: getPostBreakpointTransformations(src["transformations"].([]interface{})),
+		Transformation:  imaging.CompoundPostTransformationCompound,
+	}
+	return &result
+}
+
 func getContrast(src map[string]interface{}) *imaging.Contrast {
 	if src == nil {
 		return nil
@@ -326,6 +337,22 @@ func getIfDimension(src map[string]interface{}) *imaging.IfDimension {
 	return &result
 }
 
+func getIfDimensionPost(src map[string]interface{}) *imaging.IfDimensionPost {
+	if src == nil {
+		return nil
+	}
+	result := imaging.IfDimensionPost{
+		Default:        getTransformationTypePost(extract(src, "default")),
+		Dimension:      ifDimensionPostDimensionVariableInline(src, "dimension"),
+		Equal:          getTransformationTypePost(extract(src, "equal")),
+		GreaterThan:    getTransformationTypePost(extract(src, "greater_than")),
+		LessThan:       getTransformationTypePost(extract(src, "less_than")),
+		Value:          integerVariableInline(src, "value"),
+		Transformation: imaging.IfDimensionPostTransformationIfDimension,
+	}
+	return &result
+}
+
 func getIfOrientation(src map[string]interface{}) *imaging.IfOrientation {
 	if src == nil {
 		return nil
@@ -336,6 +363,20 @@ func getIfOrientation(src map[string]interface{}) *imaging.IfOrientation {
 		Portrait:       getTransformationType(extract(src, "portrait")),
 		Square:         getTransformationType(extract(src, "square")),
 		Transformation: imaging.IfOrientationTransformationIfOrientation,
+	}
+	return &result
+}
+
+func getIfOrientationPost(src map[string]interface{}) *imaging.IfOrientationPost {
+	if src == nil {
+		return nil
+	}
+	result := imaging.IfOrientationPost{
+		Default:        getTransformationTypePost(extract(src, "default")),
+		Landscape:      getTransformationTypePost(extract(src, "landscape")),
+		Portrait:       getTransformationTypePost(extract(src, "portrait")),
+		Square:         getTransformationTypePost(extract(src, "square")),
+		Transformation: imaging.IfOrientationPostTransformationIfOrientation,
 	}
 	return &result
 }
@@ -432,6 +473,18 @@ func getPolygonShapeType(src map[string]interface{}) *imaging.PolygonShapeType {
 		Points: getPointShapeTypeList(src["points"].([]interface{})),
 	}
 	return &result
+}
+
+func getPostBreakpointTransformations(src []interface{}) []imaging.TransformationTypePost {
+	result := make([]imaging.TransformationTypePost, 0)
+	for idx := range src {
+		elem := getTransformationTypePost(src[idx].(map[string]interface{}))
+		result = append(result, elem)
+	}
+	if len(result) > 0 {
+		return result
+	}
+	return nil
 }
 
 func getRectangleShapeType(src map[string]interface{}) *imaging.RectangleShapeType {
@@ -831,6 +884,83 @@ func getTransformationType(src map[string]interface{}) imaging.TransformationTyp
 	panic(fmt.Sprint("unsupported type"))
 }
 
+func getTransformationTypePost(src map[string]interface{}) imaging.TransformationTypePost {
+	if src == nil {
+		return nil
+	}
+
+	var node map[string]interface{}
+	node = extract(src, "background_color")
+	if node != nil {
+		return getBackgroundColor(node)
+	}
+	node = extract(src, "blur")
+	if node != nil {
+		return getBlur(node)
+	}
+	node = extract(src, "chroma_key")
+	if node != nil {
+		return getChromaKey(node)
+	}
+	node = extract(src, "compound_post")
+	if node != nil {
+		return getCompoundPost(node)
+	}
+	node = extract(src, "contrast")
+	if node != nil {
+		return getContrast(node)
+	}
+	node = extract(src, "goop")
+	if node != nil {
+		return getGoop(node)
+	}
+	node = extract(src, "grayscale")
+	if node != nil {
+		return getGrayscale(node)
+	}
+	node = extract(src, "hsl")
+	if node != nil {
+		return getHSL(node)
+	}
+	node = extract(src, "hsv")
+	if node != nil {
+		return getHSV(node)
+	}
+	node = extract(src, "if_dimension_post")
+	if node != nil {
+		return getIfDimensionPost(node)
+	}
+	node = extract(src, "if_orientation_post")
+	if node != nil {
+		return getIfOrientationPost(node)
+	}
+	node = extract(src, "max_colors")
+	if node != nil {
+		return getMaxColors(node)
+	}
+	node = extract(src, "mirror")
+	if node != nil {
+		return getMirror(node)
+	}
+	node = extract(src, "mono_hue")
+	if node != nil {
+		return getMonoHue(node)
+	}
+	node = extract(src, "opacity")
+	if node != nil {
+		return getOpacity(node)
+	}
+	node = extract(src, "remove_color")
+	if node != nil {
+		return getRemoveColor(node)
+	}
+	node = extract(src, "unsharp_mask")
+	if node != nil {
+		return getUnsharpMask(node)
+	}
+	panic(fmt.Sprint("unsupported type"))
+}
+
 func appendGravityPriorityVariableInline(src map[string]interface{}, name string) *imaging.AppendGravityPriorityVariableInline {
 	if !variableHasValue(src, name) {
 		return nil
@@ -996,6 +1126,23 @@ func ifDimensionDimensionVariableInline(src map[string]interface{}, name string)
 	}
 
 	return &imaging.IfDimensionDimensionVariableInline{
+		Name:  stringValuePtr(src, name+"_var"),
+		Value: v2,
+	}
+}
+
+func ifDimensionPostDimensionVariableInline(src map[string]interface{}, name string) *imaging.IfDimensionPostDimensionVariableInline {
+	if !variableHasValue(src, name) {
+		return nil
+	}
+
+	v1 := src[name]
+	var v2 *imaging.IfDimensionPostDimension
+	if v1 != "" {
+		v2 = imaging.IfDimensionPostDimensionPtr(imaging.IfDimensionPostDimension(v1.(string)))
+	}
+
+	return &imaging.IfDimensionPostDimensionVariableInline{
 		Name:  stringValuePtr(src, name+"_var"),
 		Value: v2,
 	}

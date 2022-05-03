@@ -12,7 +12,7 @@ func PolicyImageFromEdgeGrid(input imaging.PolicyOutputImage) map[string]interfa
 	target["breakpoints"] = getBreakpoints(input.Breakpoints)
 	target["hosts"] = input.Hosts
 	target["output"] = getOutputImage(input.Output)
-	target["post_breakpoint_transformations"] = getTransformations(input.PostBreakpointTransformations)
+	target["post_breakpoint_transformations"] = getPostBreakpointTransformations(input.PostBreakpointTransformations)
 	target["transformations"] = getTransformations(input.Transformations)
 	target["variables"] = getVariableList(input.Variables)
 	return target
@@ -332,6 +332,19 @@ func getCompound(src *imaging.Compound) []map[string]interface{} {
 	var res []map[string]interface{}
 	elem := make(map[string]interface{})
 	elem["transformations"] = getTransformations(src.Transformations)
+	res = append(res, elem)
+
+	return res
+}
+
+func getCompoundPost(src *imaging.CompoundPost) []map[string]interface{} {
+	if src == nil {
+		return nil
+	}
+
+	var res []map[string]interface{}
+	elem := make(map[string]interface{})
+	elem["transformations"] = getPostBreakpointTransformations(src.Transformations)
 	res = append(res, elem)
 
 	return res
@@ -724,6 +737,34 @@ func getIfDimension(src *imaging.IfDimension) []map[string]interface{} {
 	return res
 }
 
+func getIfDimensionPost(src *imaging.IfDimensionPost) []map[string]interface{} {
+	if src == nil {
+		return nil
+	}
+
+	var res []map[string]interface{}
+	elem := make(map[string]interface{})
+	elem["default"] = getTransformationTypePost(src.Default)
+	if src.Dimension != nil {
+		elem["dimension"] = src.Dimension.Value
+	}
+	if src.Dimension != nil {
+		elem["dimension_var"] = src.Dimension.Name
+	}
+	elem["equal"] = getTransformationTypePost(src.Equal)
+	elem["greater_than"] = getTransformationTypePost(src.GreaterThan)
+	elem["less_than"] = getTransformationTypePost(src.LessThan)
+	if src.Value != nil {
+		elem["value"] = src.Value.Value
+	}
+	if src.Value != nil {
+		elem["value_var"] = src.Value.Name
+	}
+	res = append(res, elem)
+
+	return res
+}
+
 func getIfOrientation(src *imaging.IfOrientation) []map[string]interface{} {
 	if src == nil {
 		return nil
@@ -735,6 +776,22 @@ func getIfOrientation(src *imaging.IfOrientation) []map[string]interface{} {
 	elem["landscape"] = getTransformationType(src.Landscape)
 	elem["portrait"] = getTransformationType(src.Portrait)
 	elem["square"] = getTransformationType(src.Square)
+	res = append(res, elem)
+
+	return res
+}
+
+func getIfOrientationPost(src *imaging.IfOrientationPost) []map[string]interface{} {
+	if src == nil {
+		return nil
+	}
+
+	var res []map[string]interface{}
+	elem := make(map[string]interface{})
+	elem["default"] = getTransformationTypePost(src.Default)
+	elem["landscape"] = getTransformationTypePost(src.Landscape)
+	elem["portrait"] = getTransformationTypePost(src.Portrait)
+	elem["square"] = getTransformationTypePost(src.Square)
 	res = append(res, elem)
 
 	return res
@@ -903,6 +960,22 @@ func getPolygonShapeType(src *imaging.PolygonShapeType) []map[string]interface{}
 	elem := make(map[string]interface{})
 	elem["points"] = getPointShapeTypeList(src.Points)
 	res = append(res, elem)
+
+	return res
+}
+
+func getPostBreakpointTransformations(src imaging.PostBreakpointTransformations) []map[string]interface{} {
+	if src == nil {
+		return nil
+	}
+
+	var res []map[string]interface{}
+	for _, item := range src {
+		elem := getTransformationTypePost(item)
+		if len(elem) > 0 {
+			res = append(res, elem[0])
+		}
+	}
 
 	return res
 }
@@ -1452,6 +1525,58 @@ func getTransformationType(src imaging.TransformationType) []map[string]interfac
 		elem["unsharp_mask"] = getUnsharpMask(t)
 	default:
 		panic(fmt.Sprintf("unsupported type - %T does not implement imaging.TransformationType", t))
+	}
+	res = append(res, elem)
+
+	return res
+}
+
+func getTransformationTypePost(src imaging.TransformationTypePost) []map[string]interface{} {
+	if src == nil {
+		return nil
+	}
+
+	var res []map[string]interface{}
+
+	elem := map[string]interface{}{}
+
+	switch t := src.(type) {
+	case *imaging.BackgroundColor:
+		elem["background_color"] = getBackgroundColor(t)
+	case *imaging.Blur:
+		elem["blur"] = getBlur(t)
+	case *imaging.ChromaKey:
+		elem["chroma_key"] = getChromaKey(t)
+	case *imaging.CompoundPost:
+		elem["compound_post"] = getCompoundPost(t)
+	case *imaging.Contrast:
+		elem["contrast"] = getContrast(t)
+	case *imaging.Goop:
+		elem["goop"] = getGoop(t)
+	case *imaging.Grayscale:
+		elem["grayscale"] = getGrayscale(t)
+	case *imaging.HSL:
+		elem["hsl"] = getHSL(t)
+	case *imaging.HSV:
+		elem["hsv"] = getHSV(t)
+	case *imaging.IfDimensionPost:
+		elem["if_dimension_post"] = getIfDimensionPost(t)
+	case *imaging.IfOrientationPost:
+		elem["if_orientation_post"] = getIfOrientationPost(t)
+	case *imaging.MaxColors:
+		elem["max_colors"] = getMaxColors(t)
+	case *imaging.Mirror:
+		elem["mirror"] = getMirror(t)
+	case *imaging.MonoHue:
+		elem["mono_hue"] = getMonoHue(t)
+	case *imaging.Opacity:
+		elem["opacity"] = getOpacity(t)
+	case *imaging.RemoveColor:
+		elem["remove_color"] = getRemoveColor(t)
+	case *imaging.UnsharpMask:
+		elem["unsharp_mask"] = getUnsharpMask(t)
+	default:
+		panic(fmt.Sprintf("unsupported type - %T does not implement imaging.TransformationTypePost", t))
 	}
 	res = append(res, elem)
 
