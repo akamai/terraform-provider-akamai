@@ -12,8 +12,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/imagewriter"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/reader"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -72,20 +70,10 @@ func resourceImagingPolicyImage() *schema.Resource {
 			},
 			"json": {
 				Type:             schema.TypeString,
-				Optional:         true,
-				ExactlyOneOf:     []string{"json", "policy"},
+				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: diffSuppressPolicyImage,
 				Description:      "A JSON encoded policy",
-			},
-			"policy": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: "Policy",
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: PolicyOutputImage(PolicyDepth),
-				},
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -123,18 +111,11 @@ func upsertPolicyImage(ctx context.Context, d *schema.ResourceData, m interface{
 
 	var policy imaging.PolicyInputImage
 	policyJSON, err := tools.GetStringValue("json", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err == nil {
-		if err = json.Unmarshal([]byte(policyJSON), &policy); err != nil {
-			return diag.FromErr(err)
-		}
-	} else {
-		p := d.Get("policy").([]interface{})
-		if len(p) > 0 && p[0] != nil {
-			policy = imagewriter.PolicyImageToEdgeGrid(p[0].(map[string]interface{}))
-		}
+	if err = json.Unmarshal([]byte(policyJSON), &policy); err != nil {
+		return diag.FromErr(err)
 	}
 	// upsert on staging only when there was a change
 	if d.HasChangesExcept("activate_on_production") {
@@ -201,16 +182,11 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	attrs := make(map[string]interface{})
-	_, ok := d.GetOk("policy")
-	if ok {
-		attrs["policy"] = []interface{}{reader.PolicyImageFromEdgeGrid(*policy)}
-	} else {
-		policyJSON, err := getPolicyImageJSON(policy)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		attrs["json"] = policyJSON
+	policyJSON, err := getPolicyImageJSON(policy)
+	if err != nil {
+		return diag.FromErr(err)
 	}
+	attrs["json"] = policyJSON
 	attrs["version"] = policy.Version
 	if err := tools.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)

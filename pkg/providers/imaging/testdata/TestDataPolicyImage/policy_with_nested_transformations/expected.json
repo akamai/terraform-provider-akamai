@@ -1,0 +1,96 @@
+{
+  "breakpoints": {
+    "widths": [
+      280,
+      1080
+    ]
+  },
+  "hosts": [
+    "host1",
+    "host2"
+  ],
+  "output": {
+    "adaptiveQuality": 50,
+    "perceptualQuality": "mediumHigh"
+  },
+  "transformations": [
+    {
+      "gravity": "Center",
+      "height": 8,
+      "regionOfInterest": {
+        "anchor": {
+          "x": 4,
+          "y": 5
+        },
+        "height": 9,
+        "width": 8
+      },
+      "style": "fill",
+      "transformation": "RegionOfInterestCrop",
+      "width": 7
+    },
+    {
+      "gravity": "Center",
+      "gravityPriority": "horizontal",
+      "image": {
+        "fill": "#000000",
+        "size": 72,
+        "stroke": "#FFFFFF",
+        "text": "test",
+        "type": "Text"
+      },
+      "preserveMinorDimension": true,
+      "transformation": "Append"
+    },
+    {
+      "fuzz": 0.08,
+      "transformation": "Trim"
+    },
+    {
+      "default": {
+        "aspect": "fit",
+        "height": 0,
+        "transformation": "Resize",
+        "type": "normal",
+        "width": 0
+      },
+      "dimension": "height",
+      "lessThan": {
+        "allowExpansion": true,
+        "gravity": "Center",
+        "height": 0,
+        "transformation": "Crop",
+        "width": 0
+      },
+      "transformation": "IfDimension",
+      "value": 0
+    }
+  ],
+  "variables": [
+    {
+      "defaultValue": "280",
+      "name": "ResizeDim",
+      "type": "number"
+    },
+    {
+      "defaultValue": "260",
+      "name": "ResizeDimWithBorder",
+      "type": "number"
+    },
+    {
+      "defaultValue": "1000",
+      "name": "MinDim",
+      "type": "number"
+    },
+    {
+      "defaultValue": "1450",
+      "name": "MinDimNew",
+      "type": "number"
+    },
+    {
+      "defaultValue": "1500",
+      "name": "MaxDimOld",
+      "type": "number"
+    }
+  ]
+}

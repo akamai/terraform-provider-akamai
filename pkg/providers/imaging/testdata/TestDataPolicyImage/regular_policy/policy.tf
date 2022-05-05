@@ -2,10 +2,7 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-resource "akamai_imaging_policy_image" "policy" {
-  policy_id    = "test_policy"
-  contract_id  = "test_contract"
-  policyset_id = "test_policy_set"
+data "akamai_imaging_policy_image" "policy" {
   policy {
     breakpoints {
       widths = [
@@ -22,11 +19,6 @@ resource "akamai_imaging_policy_image" "policy" {
     transformations {
       max_colors {
         colors = 2
-      }
-    }
-    transformations {
-      blur {
-        sigma = 3
       }
     }
   }

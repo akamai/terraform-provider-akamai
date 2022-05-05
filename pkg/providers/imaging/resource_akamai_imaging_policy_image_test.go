@@ -13,7 +13,7 @@ import (
 	"github.com/tj/assert"
 )
 
-func TestResourcePolicy(t *testing.T) {
+func TestResourcePolicyImage(t *testing.T) {
 
 	type policyAttributes struct {
 		version              string
@@ -59,53 +59,6 @@ func TestResourcePolicy(t *testing.T) {
 						Value: tools.IntPtr(2),
 					},
 					Transformation: imaging.MaxColorsTransformationMaxColors,
-				},
-			},
-			Version: 1,
-			Video:   false,
-		}
-
-		policyInputOrder = imaging.PolicyInputImage{
-			Breakpoints: &imaging.Breakpoints{
-				Widths: []int{320, 640, 1024, 2048, 5000},
-			},
-			Output: &imaging.OutputImage{
-				PerceptualQuality: &imaging.OutputImagePerceptualQualityVariableInline{
-					Value: imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQualityMediumHigh),
-				},
-			},
-			Transformations: []imaging.TransformationType{
-				&imaging.MaxColors{
-					Colors: &imaging.IntegerVariableInline{
-						Value: tools.IntPtr(2),
-					},
-					Transformation: imaging.MaxColorsTransformationMaxColors,
-				},
-				&imaging.Blur{
-					Sigma:          &imaging.NumberVariableInline{Value: tools.Float64Ptr(3)},
-					Transformation: imaging.BlurTransformationBlur,
-				},
-			},
-		}
-		policyOutputOrder = imaging.PolicyOutputImage{
-			Breakpoints: &imaging.Breakpoints{
-				Widths: []int{320, 640, 1024, 2048, 5000},
-			},
-			Output: &imaging.OutputImage{
-				PerceptualQuality: &imaging.OutputImagePerceptualQualityVariableInline{
-					Value: imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQualityMediumHigh),
-				},
-			},
-			Transformations: []imaging.TransformationType{
-				&imaging.MaxColors{
-					Colors: &imaging.IntegerVariableInline{
-						Value: tools.IntPtr(2),
-					},
-					Transformation: imaging.MaxColorsTransformationMaxColors,
-				},
-				&imaging.Blur{
-					Sigma:          &imaging.NumberVariableInline{Value: tools.Float64Ptr(3)},
-					Transformation: imaging.BlurTransformationBlur,
 				},
 			},
 			Version: 1,
@@ -190,7 +143,7 @@ func TestResourcePolicy(t *testing.T) {
 	)
 
 	t.Run("regular policy create", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy"
+		testDir := "testdata/TestResPolicyImage/regular_policy"
 
 		client := new(mockimaging)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
@@ -219,234 +172,8 @@ func TestResourcePolicy(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
-	t.Run("regular policy create schema empty", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy_schema_empty"
-
-		policyEmptyInput := imaging.PolicyInputImage{}
-		policyEmptyOutput := imaging.PolicyOutputImage{
-			Version: 1,
-			Video:   false,
-		}
-
-		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyEmptyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyEmptyOutput, 2)
-
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
-		// it is faster to attempt to delete on production than checking if there is policy on production first
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							schema:               true,
-							emptyPolicy:          true,
-						}),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-	t.Run("regular policy create schema empty breakpoints and output", func(t *testing.T) {
-		t.Skip("It should be restored once DXE-941 is fixed")
-		testDir := "testdata/TestResPolicy/regular_policy_schema_empty_empty_breakpoints_and_output"
-
-		policyEmptyInput := imaging.PolicyInputImage{
-			Breakpoints: &imaging.Breakpoints{},
-		}
-		policyEmptyOutput := imaging.PolicyOutputImage{
-			Breakpoints: &imaging.Breakpoints{},
-			Version:     1,
-			Video:       false,
-		}
-
-		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyEmptyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyEmptyOutput, 2)
-
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
-		// it is faster to attempt to delete on production than checking if there is policy on production first
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							schema:               true,
-							emptyPolicy:          true,
-						}),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-	t.Run("regular policy create schema, update json", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy_schema"
-
-		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
-
-		// update
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
-
-		policyInputV2 := getPolicyInputV2(policyInput)
-		policyOutputV2 := getPolicyOutputV2(policyOutput)
-
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputV2, 2)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputV2)
-
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
-		// it is faster to attempt to delete on production than checking if there is policy on production first
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							schema:               true,
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "2",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
-						}),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-	// this test should start failing once the DXE-926
-	t.Run("regular policy create as schema, update as json, but no diff", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy_schema_json"
-
-		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
-
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
-		// it is faster to attempt to delete on production than checking if there is policy on production first
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
-
-		// update
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
-
-		policyInputV2 := policyInput
-		policyOutputV2 := policyOutput
-
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputV2, 2)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputV2)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							schema:               true,
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
-						}),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-	t.Run("regular policy create schema order change", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy_schema_order"
-
-		client := new(mockimaging)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputOrder)
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputOrder, 2)
-
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
-		// it is faster to attempt to delete on production than checking if there is policy on production first
-		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
-
-		// update
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputOrder, 1)
-
-		policyInputV2 := getPolicyInputOrderV2(policyInputOrder)
-		policyOutputV2 := getPolicyOutputOrderV2(policyOutputOrder)
-
-		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputV2, 2)
-		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputV2)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							schema:               true,
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "2",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							schema:               true,
-						}),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
 	t.Run("regular policy create and later activate on production", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy"
+		testDir := "testdata/TestResPolicyImage/regular_policy"
 
 		client := new(mockimaging)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
@@ -488,7 +215,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("regular policy create and activate on production, later update both", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy_activate_same_time"
+		testDir := "testdata/TestResPolicyImage/regular_policy_activate_same_time"
 
 		client := new(mockimaging)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
@@ -539,7 +266,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("regular policy create and later change policy set id (force new)", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/change_policyset_id"
+		testDir := "testdata/TestResPolicyImage/change_policyset_id"
 
 		client := new(mockimaging)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
@@ -587,7 +314,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("regular policy create, later activate on production and later modify on staging only", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy_update_staging"
+		testDir := "testdata/TestResPolicyImage/regular_policy_update_staging"
 
 		client := new(mockimaging)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
@@ -645,7 +372,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("auto policy create and later activate on production, cannot delete", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/auto_policy"
+		testDir := "testdata/TestResPolicyImage/auto_policy"
 
 		client := new(mockimaging)
 		expectUpsertPolicy(t, client, ".auto", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
@@ -686,7 +413,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("import policy with activate_on_production=true", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy"
+		testDir := "testdata/TestResPolicyImage/regular_policy"
 
 		client := new(mockimaging)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
@@ -721,7 +448,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("import policy with activate_on_production=false", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy"
+		testDir := "testdata/TestResPolicyImage/regular_policy"
 		policyOutputV2 := getPolicyOutputV2(policyOutput)
 
 		client := new(mockimaging)
@@ -752,7 +479,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("import policy with activate_on_production=false and no policy on production", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy"
+		testDir := "testdata/TestResPolicyImage/regular_policy"
 
 		client := new(mockimaging)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
@@ -787,7 +514,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("policy with invalid policy structure", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/invalid_policy"
+		testDir := "testdata/TestResPolicyImage/invalid_policy"
 
 		client := new(mockimaging)
 		useClient(client, func() {
@@ -804,7 +531,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("policy with inconsistent policy structure", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/inconsistent_policy"
+		testDir := "testdata/TestResPolicyImage/inconsistent_policy"
 
 		client := new(mockimaging)
 		useClient(client, func() {
@@ -821,7 +548,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("error when creating policy", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy"
+		testDir := "testdata/TestResPolicyImage/regular_policy"
 
 		client := new(mockimaging)
 		var withError = imaging.Error{
@@ -848,7 +575,7 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("invalid import id", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/regular_policy"
+		testDir := "testdata/TestResPolicyImage/regular_policy"
 
 		client := new(mockimaging)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
@@ -923,25 +650,8 @@ func getPolicyOutputOrderV2(policyOutput imaging.PolicyOutputImage) imaging.Poli
 	return policyOutputV2
 }
 
-func getPolicyInputOrderV2(policyInput imaging.PolicyInputImage) imaging.PolicyInputImage {
-	var policyInputV2 = policyInput
-	policyInputV2.Transformations = []imaging.TransformationType{
-		&imaging.Blur{
-			Sigma:          &imaging.NumberVariableInline{Value: tools.Float64Ptr(5)},
-			Transformation: imaging.BlurTransformationBlur,
-		},
-		&imaging.MaxColors{
-			Colors: &imaging.IntegerVariableInline{
-				Value: tools.IntPtr(4),
-			},
-			Transformation: imaging.MaxColorsTransformationMaxColors,
-		},
-	}
-	return policyInputV2
-}
-
 func TestDiffSuppressPolicy(t *testing.T) {
-	basePath := "testdata/TestResPolicy/diff_suppress"
+	basePath := "testdata/TestResPolicyImage/diff_suppress"
 	tests := map[string]struct {
 		oldPath, newPath string
 		expected         bool
