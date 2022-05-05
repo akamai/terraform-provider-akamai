@@ -13,7 +13,7 @@ func PolicyImageToEdgeGrid(input map[string]interface{}) imaging.PolicyInputImag
 	result.Breakpoints = getBreakpoints(extract(input, "breakpoints"))
 	result.Hosts = interfaceSliceToStringSlice(input["hosts"].([]interface{}))
 	result.Output = getOutputImage(extract(input, "output"))
-	result.PostBreakpointTransformations = getTransformations(input["post_breakpoint_transformations"].([]interface{}))
+	result.PostBreakpointTransformations = getPostBreakpointTransformations(input["post_breakpoint_transformations"].([]interface{}))
 	result.RolloutDuration = input["rollout_duration"].(int)
 	result.Transformations = getTransformations(input["transformations"].([]interface{}))
 	result.Variables = getVariableList(input["variables"].([]interface{}))
@@ -902,7 +902,7 @@ func getTransformationTypePost(src map[string]interface{}) imaging.Transformatio
 	if node != nil {
 		return getChromaKey(node)
 	}
-	node = extract(src, "compound_post")
+	node = extract(src, "compound")
 	if node != nil {
 		return getCompoundPost(node)
 	}
@@ -926,11 +926,11 @@ func getTransformationTypePost(src map[string]interface{}) imaging.Transformatio
 	if node != nil {
 		return getHSV(node)
 	}
-	node = extract(src, "if_dimension_post")
+	node = extract(src, "if_dimension")
 	if node != nil {
 		return getIfDimensionPost(node)
 	}
-	node = extract(src, "if_orientation_post")
+	node = extract(src, "if_orientation")
 	if node != nil {
 		return getIfOrientationPost(node)
 	}

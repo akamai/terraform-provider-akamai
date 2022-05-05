@@ -422,7 +422,7 @@ func transformationTypePost(depth int) map[string]*schema.Schema {
 			},
 		},
 
-		"compound_post": {
+		"compound": {
 			Description: "",
 			Type:        schema.TypeList,
 			Optional:    true,
@@ -476,7 +476,7 @@ func transformationTypePost(depth int) map[string]*schema.Schema {
 			},
 		},
 
-		"if_dimension_post": {
+		"if_dimension": {
 			Description: "",
 			Type:        schema.TypeList,
 			Optional:    true,
@@ -485,7 +485,7 @@ func transformationTypePost(depth int) map[string]*schema.Schema {
 			},
 		},
 
-		"if_orientation_post": {
+		"if_orientation": {
 			Description: "",
 			Type:        schema.TypeList,
 			Optional:    true,

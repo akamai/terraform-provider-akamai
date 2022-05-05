@@ -1548,7 +1548,7 @@ func getTransformationTypePost(src imaging.TransformationTypePost) []map[string]
 	case *imaging.ChromaKey:
 		elem["chroma_key"] = getChromaKey(t)
 	case *imaging.CompoundPost:
-		elem["compound_post"] = getCompoundPost(t)
+		elem["compound"] = getCompoundPost(t)
 	case *imaging.Contrast:
 		elem["contrast"] = getContrast(t)
 	case *imaging.Goop:
@@ -1560,9 +1560,9 @@ func getTransformationTypePost(src imaging.TransformationTypePost) []map[string]
 	case *imaging.HSV:
 		elem["hsv"] = getHSV(t)
 	case *imaging.IfDimensionPost:
-		elem["if_dimension_post"] = getIfDimensionPost(t)
+		elem["if_dimension"] = getIfDimensionPost(t)
 	case *imaging.IfOrientationPost:
-		elem["if_orientation_post"] = getIfOrientationPost(t)
+		elem["if_orientation"] = getIfOrientationPost(t)
 	case *imaging.MaxColors:
 		elem["max_colors"] = getMaxColors(t)
 	case *imaging.Mirror:
