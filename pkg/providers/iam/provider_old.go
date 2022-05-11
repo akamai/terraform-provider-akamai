@@ -24,9 +24,7 @@ func (p *providerOld) Schema() map[string]*schema.Schema {
 
 // Resources returns the subprovider's resource schema map
 func (p *providerOld) Resources() map[string]*schema.Resource {
-	return map[string]*schema.Resource{
-		"akamai_iam_user": p.resUser(),
-	}
+	return map[string]*schema.Resource{}
 }
 
 // DataSources returns the subprovider's data source schema map

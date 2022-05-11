@@ -349,3 +349,75 @@ func (_m *IAM) UpdateUserNotifications(_a0 context.Context, _a1 iam.UpdateUserNo
 
 	return r0, r1
 }
+
+func (_m *IAM) ListBlockedProperties(ctx context.Context, request iam.ListBlockedPropertiesRequest) ([]int64, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) UpdateBlockedProperties(ctx context.Context, request iam.UpdateBlockedPropertiesRequest) ([]int64, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) CreateGroup(ctx context.Context, request iam.GroupRequest) (*iam.Group, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) GetGroup(ctx context.Context, request iam.GetGroupRequest) (*iam.Group, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) ListAffectedUsers(ctx context.Context, request iam.ListAffectedUsersRequest) ([]iam.GroupUser, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) RemoveGroup(ctx context.Context, request iam.RemoveGroupRequest) error {
+	panic("implement me")
+}
+
+func (_m *IAM) UpdateGroupName(ctx context.Context, request iam.GroupRequest) (*iam.Group, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) CreateRole(ctx context.Context, request iam.CreateRoleRequest) (*iam.Role, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) GetRole(ctx context.Context, request iam.GetRoleRequest) (*iam.Role, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) UpdateRole(ctx context.Context, request iam.UpdateRoleRequest) (*iam.Role, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) DeleteRole(ctx context.Context, request iam.DeleteRoleRequest) error {
+	panic("implement me")
+}
+
+func (_m *IAM) ListGrantableRoles(ctx context.Context) ([]iam.RoleGrantedRole, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) LockUser(ctx context.Context, request iam.LockUserRequest) error {
+	panic("implement me")
+}
+
+func (_m *IAM) UnlockUser(ctx context.Context, request iam.UnlockUserRequest) error {
+	panic("implement me")
+}
+
+func (_m *IAM) ListUsers(ctx context.Context, request iam.ListUsersRequest) ([]iam.UserListItem, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) UpdateTFA(ctx context.Context, request iam.UpdateTFARequest) error {
+	panic("implement me")
+}
+
+func (_m *IAM) ResetUserPassword(ctx context.Context, request iam.ResetUserPasswordRequest) (*iam.ResetUserPasswordResponse, error) {
+	panic("implement me")
+}
+
+func (_m *IAM) SetUserPassword(ctx context.Context, request iam.SetUserPasswordRequest) error {
+	panic("implement me")
+}

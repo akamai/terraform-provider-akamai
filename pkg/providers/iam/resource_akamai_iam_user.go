@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -16,88 +18,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *providerOld) resUser() *schema.Resource {
-	validateAuthGrantJS := func(v interface{}, _ cty.Path) diag.Diagnostics {
-		js := []byte(v.(string))
-		if len(js) == 0 {
-			return nil
-		}
-
-		var AuthGrants []iam.AuthGrant
-		if err := json.Unmarshal(js, &AuthGrants); err != nil {
-			return diag.Errorf("auth_grants_json is not valid: %s", err)
-		}
-
-		if len(AuthGrants) == 0 {
-			return diag.Errorf("auth_grants_json must contain at least one entry")
-		}
-
-		return nil
-	}
-
-	stateAuthGrantsJS := func(v interface{}) string {
-		js := []byte(v.(string))
-		if len(js) == 0 {
-			return ""
-		}
-
-		var AuthGrants []iam.AuthGrant
-		if err := json.Unmarshal(js, &AuthGrants); err != nil {
-			panic(fmt.Sprintf(`"auth_grants": %q is not valid: %s`, v.(string), err))
-		}
-
-		var AuthGrantsJSON []byte
-		AuthGrantsJSON, err := json.Marshal(AuthGrants)
-		if err != nil {
-			panic(fmt.Sprintf(`"auth_grants": %q is not valid: %s`, v.(string), err))
-		}
-
-		return string(AuthGrantsJSON)
-	}
-
-	suppressAuthGrantsJS := func(k, old, new string, d *schema.ResourceData) bool {
-		var Old []iam.AuthGrant
-		if len(old) > 0 {
-			if err := json.Unmarshal([]byte(old), &Old); err != nil {
-				panic(fmt.Sprintf("previous value for %q: %q is not valid: %s", k, old, err))
-			}
-		}
-
-		var New []iam.AuthGrant
-		if len(new) > 0 {
-			if err := json.Unmarshal([]byte(new), &New); err != nil {
-				panic(fmt.Sprintf("new value for %q: %q is not valid: %s", k, new, err))
-			}
-		}
-
-		return cmp.Equal(Old, New, cmpopts.EquateEmpty())
-	}
-
-	statePhone := func(v interface{}) string {
-		return canonicalPhone(v.(string))
-	}
-
-	suppressPhone := func(k, old, new string, d *schema.ResourceData) bool {
-		old = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(old, "")
-		new = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(new, "")
-		return old == new
-	}
-
-	suppressEmail := func(k, old, new string, d *schema.ResourceData) bool {
-		return strings.ToLower(old) == strings.ToLower(new)
-	}
-
-	stateEmail := func(v interface{}) string {
-		return strings.ToLower(v.(string))
-	}
-
+func resourceIAMUser() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Manage a user in your account",
-		CreateContext: p.tfCRUD("res:User:Create", p.resUserCreate),
-		ReadContext:   p.tfCRUD("res:User:Read", p.resUserRead),
-		UpdateContext: p.tfCRUD("res:User:Update", p.resUserUpdate),
-		DeleteContext: p.tfCRUD("res:User:Delete", p.resUserDelete),
-		Importer:      p.tfImporter("res:User:Import", schema.ImportStatePassthroughContext),
+		CreateContext: resourceIAMUserCreate,
+		ReadContext:   resourceIAMUserRead,
+		UpdateContext: resourceIAMUserUpdate,
+		DeleteContext: resourceIAMUserDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 		Schema: map[string]*schema.Schema{
 			// Inputs - Required
 			"first_name": {
@@ -138,7 +68,7 @@ func (p *providerOld) resUser() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				Description:      "A user's per-group role assignments, in JSON form",
-				ValidateDiagFunc: validateAuthGrantJS,
+				ValidateDiagFunc: validateAuthGrantsJS,
 				DiffSuppressFunc: suppressAuthGrantsJS,
 				StateFunc:        stateAuthGrantsJS,
 			},
@@ -236,28 +166,33 @@ func (p *providerOld) resUser() *schema.Resource {
 				Description: "Indicates whether two-factor authentication is configured",
 			},
 			"email_update_pending": {
-				Type:     schema.TypeBool,
-				Computed: true,
-				// Description: "TODO", // 🤷‍♂️ Couldn't find this in docs or service descriptors
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether email update is pending",
 			},
 		},
 	}
 }
 
-func (p *providerOld) resUserCreate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
+func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "resourceIAMUserCreate")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
 
-	AuthGrantsJSON := []byte(d.Get("auth_grants_json").(string))
+	logger.Debug("Creating User")
 
-	var AuthGrants []iam.AuthGrant
-	if len(AuthGrantsJSON) > 0 {
-		if err := json.Unmarshal(AuthGrantsJSON, &AuthGrants); err != nil {
+	authGrantsJSON := []byte(d.Get("auth_grants_json").(string))
+
+	var authGrants []iam.AuthGrant
+	if len(authGrantsJSON) > 0 {
+		if err := json.Unmarshal(authGrantsJSON, &authGrants); err != nil {
 			logger.WithError(err).Errorf("auth_grants is not valid")
 			return diag.Errorf("auth_grants is not valid: %s", err)
 		}
 	}
 
-	BasicUser := iam.UserBasicInfo{
+	basicUser := iam.UserBasicInfo{
 		FirstName:         d.Get("first_name").(string),
 		LastName:          d.Get("last_name").(string),
 		UserName:          d.Get("user_name").(string),
@@ -278,13 +213,13 @@ func (p *providerOld) resUserCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if st, ok := d.GetOk("session_timeout"); ok {
-		SessionTimeout := st.(int)
-		BasicUser.SessionTimeOut = &SessionTimeout
+		sessionTimeout := st.(int)
+		basicUser.SessionTimeOut = &sessionTimeout
 	}
 
-	User, err := p.client.CreateUser(ctx, iam.CreateUserRequest{
-		User:       BasicUser,
-		AuthGrants: AuthGrants,
+	user, err := client.CreateUser(ctx, iam.CreateUserRequest{
+		User:       basicUser,
+		AuthGrants: authGrants,
 		SendEmail:  true,
 		Notifications: iam.UserNotifications{
 			Options: iam.UserNotificationOptions{
@@ -295,35 +230,40 @@ func (p *providerOld) resUserCreate(ctx context.Context, d *schema.ResourceData,
 	})
 	if err != nil {
 		logger.WithError(err).Errorf("failed to create user")
-		return diag.Errorf("failed to create user: %s\n%s", err, resUserErrorAdvice(err))
+		return diag.Errorf("failed to create user: %s\n%s", err, resourceIAMUserErrorAdvice(err))
 	}
 
-	d.SetId(User.IdentityID)
-	return p.resUserRead(ctx, d, nil)
+	d.SetId(user.IdentityID)
+	return resourceIAMUserRead(ctx, d, m)
 }
 
-func (p *providerOld) resUserRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
+func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "resourceIAMUserRead")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
+
+	logger.Debug("Reading User")
 
 	req := iam.GetUserRequest{
 		IdentityID: d.Id(),
 		AuthGrants: true,
 	}
 
-	User, err := p.client.GetUser(ctx, req)
+	user, err := client.GetUser(ctx, req)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to fetch user")
 		return diag.Errorf("failed to fetch user: %s", err)
 	}
 
-	if User.SessionTimeOut == nil {
-		SessionTimeOut := 0
-		User.SessionTimeOut = &SessionTimeOut
+	if user.SessionTimeOut == nil {
+		sessionTimeOut := 0
+		user.SessionTimeOut = &sessionTimeOut
 	}
 
-	var AuthGrantsJSON []byte
-	if len(User.AuthGrants) > 0 {
-		AuthGrantsJSON, err = json.Marshal(User.AuthGrants)
+	var authGrantsJSON []byte
+	if len(user.AuthGrants) > 0 {
+		authGrantsJSON, err = json.Marshal(user.AuthGrants)
 		if err != nil {
 			logger.WithError(err).Error("could not marshal AuthGrants")
 			return diag.Errorf("could not marshal AuthGrants: %s", err)
@@ -331,30 +271,30 @@ func (p *providerOld) resUserRead(ctx context.Context, d *schema.ResourceData, _
 	}
 
 	err = tools.SetAttrs(d, map[string]interface{}{
-		"first_name":             User.FirstName,
-		"last_name":              User.LastName,
-		"user_name":              User.UserName,
-		"email":                  User.Email,
-		"phone":                  canonicalPhone(User.Phone),
-		"time_zone":              User.TimeZone,
-		"job_title":              User.JobTitle,
-		"enable_tfa":             User.TFAEnabled,
-		"secondary_email":        User.SecondaryEmail,
-		"mobile_phone":           canonicalPhone(User.MobilePhone),
-		"address":                User.Address,
-		"city":                   User.City,
-		"state":                  User.State,
-		"zip_code":               User.ZipCode,
-		"country":                User.Country,
-		"contact_type":           User.ContactType,
-		"preferred_language":     User.PreferredLanguage,
-		"is_locked":              User.IsLocked,
-		"last_login":             User.LastLoginDate,
-		"password_expired_after": User.PasswordExpiryDate,
-		"tfa_configured":         User.TFAConfigured,
-		"email_update_pending":   User.EmailUpdatePending,
-		"session_timeout":        *User.SessionTimeOut,
-		"auth_grants_json":       string(AuthGrantsJSON),
+		"first_name":             user.FirstName,
+		"last_name":              user.LastName,
+		"user_name":              user.UserName,
+		"email":                  user.Email,
+		"phone":                  canonicalPhone(user.Phone),
+		"time_zone":              user.TimeZone,
+		"job_title":              user.JobTitle,
+		"enable_tfa":             user.TFAEnabled,
+		"secondary_email":        user.SecondaryEmail,
+		"mobile_phone":           canonicalPhone(user.MobilePhone),
+		"address":                user.Address,
+		"city":                   user.City,
+		"state":                  user.State,
+		"zip_code":               user.ZipCode,
+		"country":                user.Country,
+		"contact_type":           user.ContactType,
+		"preferred_language":     user.PreferredLanguage,
+		"is_locked":              user.IsLocked,
+		"last_login":             user.LastLoginDate,
+		"password_expired_after": user.PasswordExpiryDate,
+		"tfa_configured":         user.TFAConfigured,
+		"email_update_pending":   user.EmailUpdatePending,
+		"session_timeout":        *user.SessionTimeOut,
+		"auth_grants_json":       string(authGrantsJSON),
 	})
 	if err != nil {
 		logger.WithError(err).Error("could not save attributes to state")
@@ -364,8 +304,13 @@ func (p *providerOld) resUserRead(ctx context.Context, d *schema.ResourceData, _
 	return nil
 }
 
-func (p *providerOld) resUserUpdate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
+func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "resourceIAMUserUpdate")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
+
+	logger.Debug("Updating User")
 
 	if d.HasChange("email") {
 		d.Partial(true)
@@ -396,7 +341,7 @@ func (p *providerOld) resUserUpdate(ctx context.Context, d *schema.ResourceData,
 		"session_timeout",
 	)
 	if updateBasicInfo {
-		BasicUser := iam.UserBasicInfo{
+		basicUser := iam.UserBasicInfo{
 			FirstName:         d.Get("first_name").(string),
 			LastName:          d.Get("last_name").(string),
 			UserName:          d.Get("user_name").(string),
@@ -417,18 +362,18 @@ func (p *providerOld) resUserUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 
 		if st, ok := d.GetOk("session_timeout"); ok {
-			SessionTimeout := st.(int)
-			BasicUser.SessionTimeOut = &SessionTimeout
+			sessionTimeout := st.(int)
+			basicUser.SessionTimeOut = &sessionTimeout
 		}
 
 		req := iam.UpdateUserInfoRequest{
 			IdentityID: d.Id(),
-			User:       BasicUser,
+			User:       basicUser,
 		}
-		if _, err := p.client.UpdateUserInfo(ctx, req); err != nil {
+		if _, err := client.UpdateUserInfo(ctx, req); err != nil {
 			d.Partial(true)
 			logger.WithError(err).Errorf("failed to update user")
-			return diag.Errorf("failed to update user: %s\n%s", err, resUserErrorAdvice(err))
+			return diag.Errorf("failed to update user: %s\n%s", err, resourceIAMUserErrorAdvice(err))
 		}
 
 		needRead = true
@@ -436,11 +381,11 @@ func (p *providerOld) resUserUpdate(ctx context.Context, d *schema.ResourceData,
 
 	// AuthGrants
 	if d.HasChange("auth_grants_json") {
-		var AuthGrants []iam.AuthGrant
+		var authGrants []iam.AuthGrant
 
-		AuthGrantsJSON := []byte(d.Get("auth_grants_json").(string))
-		if len(AuthGrantsJSON) > 0 {
-			if err := json.Unmarshal(AuthGrantsJSON, &AuthGrants); err != nil {
+		authGrantsJSON := []byte(d.Get("auth_grants_json").(string))
+		if len(authGrantsJSON) > 0 {
+			if err := json.Unmarshal(authGrantsJSON, &authGrants); err != nil {
 				d.Partial(true)
 				logger.WithError(err).Errorf("auth_grants is not valid")
 				return diag.Errorf("auth_grants is not valid: %s", err)
@@ -449,9 +394,9 @@ func (p *providerOld) resUserUpdate(ctx context.Context, d *schema.ResourceData,
 
 		req := iam.UpdateUserAuthGrantsRequest{
 			IdentityID: d.Id(),
-			AuthGrants: AuthGrants,
+			AuthGrants: authGrants,
 		}
-		if _, err := p.client.UpdateUserAuthGrants(ctx, req); err != nil {
+		if _, err := client.UpdateUserAuthGrants(ctx, req); err != nil {
 			d.Partial(true)
 			logger.WithError(err).Errorf("failed to update user AuthGrants")
 			return diag.Errorf("failed to update user AuthGrants: %s", err)
@@ -462,17 +407,22 @@ func (p *providerOld) resUserUpdate(ctx context.Context, d *schema.ResourceData,
 
 	if needRead {
 		d.Partial(false)
-		return p.resUserRead(ctx, d, nil)
+		return resourceIAMUserRead(ctx, d, m)
 	}
 
 	d.Partial(false)
 	return nil
 }
 
-func (p *providerOld) resUserDelete(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
+func resourceIAMUserDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "resourceIAMUserDelete")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
 
-	if err := p.client.RemoveUser(ctx, iam.RemoveUserRequest{IdentityID: d.Id()}); err != nil {
+	logger.Debug("Deleting User")
+
+	if err := client.RemoveUser(ctx, iam.RemoveUserRequest{IdentityID: d.Id()}); err != nil {
 		logger.WithError(err).Error("could not remove user")
 		return diag.Errorf("could not remove user: %s", err)
 	}
@@ -480,7 +430,7 @@ func (p *providerOld) resUserDelete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resUserErrorAdvice(e error) string {
+func resourceIAMUserErrorAdvice(e error) string {
 	switch {
 	case regexp.MustCompile(`\b(preferredLanguage|[pP]referred [lL]anguage)\b`).FindStringIndex(e.Error()) != nil:
 		return `Tip: Use the "akamai_iam_supported_langs" data source to get possible values for "preferred_language"`
@@ -508,4 +458,78 @@ func canonicalPhone(in string) string {
 	}
 
 	return fmt.Sprintf("(%s) %s-%s", ph[0:3], ph[3:6], ph[6:10])
+}
+
+func validateAuthGrantsJS(v interface{}, _ cty.Path) diag.Diagnostics {
+	js := []byte(v.(string))
+	if len(js) == 0 {
+		return nil
+	}
+
+	var authGrants []iam.AuthGrant
+	if err := json.Unmarshal(js, &authGrants); err != nil {
+		return diag.Errorf("auth_grants_json is not valid: %s", err)
+	}
+
+	if len(authGrants) == 0 {
+		return diag.Errorf("auth_grants_json must contain at least one entry")
+	}
+
+	return nil
+}
+
+func stateAuthGrantsJS(v interface{}) string {
+	js := []byte(v.(string))
+	if len(js) == 0 {
+		return ""
+	}
+
+	var authGrants []iam.AuthGrant
+	if err := json.Unmarshal(js, &authGrants); err != nil {
+		panic(fmt.Sprintf(`"auth_grants": %q is not valid: %s`, v.(string), err))
+	}
+
+	var authGrantsJSON []byte
+	authGrantsJSON, err := json.Marshal(authGrants)
+	if err != nil {
+		panic(fmt.Sprintf(`"auth_grants": %q is not valid: %s`, v.(string), err))
+	}
+
+	return string(authGrantsJSON)
+}
+
+func suppressAuthGrantsJS(k, old, new string, _ *schema.ResourceData) bool {
+	var oldAuthGrants []iam.AuthGrant
+	if len(old) > 0 {
+		if err := json.Unmarshal([]byte(old), &oldAuthGrants); err != nil {
+			panic(fmt.Sprintf("previous value for %q: %q is not valid: %s", k, old, err))
+		}
+	}
+
+	var newAuthGrants []iam.AuthGrant
+	if len(new) > 0 {
+		if err := json.Unmarshal([]byte(new), &newAuthGrants); err != nil {
+			panic(fmt.Sprintf("new value for %q: %q is not valid: %s", k, new, err))
+		}
+	}
+
+	return cmp.Equal(oldAuthGrants, newAuthGrants, cmpopts.EquateEmpty())
+}
+
+func statePhone(v interface{}) string {
+	return canonicalPhone(v.(string))
+}
+
+func suppressPhone(_, old, new string, _ *schema.ResourceData) bool {
+	old = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(old, "")
+	new = regexp.MustCompile(`[^0-9]+`).ReplaceAllLiteralString(new, "")
+	return old == new
+}
+
+func suppressEmail(_, old, new string, _ *schema.ResourceData) bool {
+	return strings.EqualFold(old, new)
+}
+
+func stateEmail(v interface{}) string {
+	return strings.ToLower(v.(string))
 }
