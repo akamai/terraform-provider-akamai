@@ -686,7 +686,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"rules":              string(RulesJSON),
 		"rule_format":        RuleFormat,
 		"rule_errors":        papiErrorsToList(RuleErrors),
-		"read_version":       v,
+		"read_version":       ReadVersionID,
 	}
 	if Property.ProductID != "" {
 		attrs["product_id"] = Property.ProductID
