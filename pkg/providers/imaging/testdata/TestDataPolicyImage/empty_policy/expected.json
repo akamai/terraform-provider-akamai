@@ -1,1 +1,3 @@
-{}
+{
+  "rolloutDuration": 3600
+}

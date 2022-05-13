@@ -21,7 +21,7 @@ func PolicyImageToEdgeGrid(d *schema.ResourceData, key string) imaging.PolicyInp
 		result.Hosts = interfaceSliceToStringSlice(d, getKey(key, 0, "hosts"))
 		result.Output = getOutputImage(d, getKey(key, 0, "output"))
 		result.PostBreakpointTransformations = getPostBreakpointTransformations(d, getKey(key, 0, "post_breakpoint_transformations"))
-		result.RolloutDuration = intReader(d, getKey(key, 0, "rollout_duration"))
+		result.RolloutDuration = intReaderPtr(d, getKey(key, 0, "rollout_duration"))
 		result.Transformations = getTransformations(d, getKey(key, 0, "transformations"))
 		result.Variables = getVariableList(d, getKey(key, 0, "variables"))
 	}
@@ -472,9 +472,9 @@ func getOutputImage(d *schema.ResourceData, key string) *imaging.OutputImage {
 	_, exist := extract(d, key)
 	if exist {
 		result := imaging.OutputImage{
-			AdaptiveQuality:        intReader(d, getKey(key, 0, "adaptive_quality")),
+			AdaptiveQuality:        intReaderPtr(d, getKey(key, 0, "adaptive_quality")),
 			PerceptualQuality:      outputImagePerceptualQualityVariableInline(d, getKey(key, 0, "perceptual_quality")),
-			PerceptualQualityFloor: intReader(d, getKey(key, 0, "perceptual_quality_floor")),
+			PerceptualQualityFloor: intReaderPtr(d, getKey(key, 0, "perceptual_quality_floor")),
 			Quality:                integerVariableInline(d, getKey(key, 0, "quality")),
 		}
 		return &result
@@ -761,8 +761,8 @@ func getVariableList(d *schema.ResourceData, key string) []imaging.Variable {
 				DefaultValue: stringReader(d, getKey(key, idx, "default_value")),
 				EnumOptions:  getEnumOptionsList(d, getKey(key, idx, "enum_options")),
 				Name:         stringReader(d, getKey(key, idx, "name")),
-				Postfix:      stringReader(d, getKey(key, idx, "postfix")),
-				Prefix:       stringReader(d, getKey(key, idx, "prefix")),
+				Postfix:      stringReaderPtr(d, getKey(key, idx, "postfix")),
+				Prefix:       stringReaderPtr(d, getKey(key, idx, "prefix")),
 				Type:         imaging.VariableType(stringReader(d, getKey(key, idx, "type"))),
 			}
 			result = append(result, elem)
@@ -1562,12 +1562,30 @@ func intReader(d *schema.ResourceData, key string) int {
 	return 0
 }
 
+func intReaderPtr(d *schema.ResourceData, key string) *int {
+	value, exist := extract(d, key)
+	if exist {
+		if valInt, err := strconv.Atoi(value.(string)); err == nil {
+			return &valInt
+		}
+	}
+	return nil
+}
+
 func stringReader(d *schema.ResourceData, key string) string {
 	value, exist := extract(d, key)
 	if exist {
 		return value.(string)
 	}
 	return ""
+}
+
+func stringReaderPtr(d *schema.ResourceData, key string) *string {
+	value, exist := extract(d, key)
+	if exist {
+		return tools.StringPtr(value.(string))
+	}
+	return nil
 }
 
 func interfaceSliceToIntSlice(d *schema.ResourceData, key string) []int {

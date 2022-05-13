@@ -62,7 +62,7 @@ func TestResourcePolicyImage(t *testing.T) {
 				},
 			},
 			Version: 1,
-			Video:   false,
+			Video:   tools.BoolPtr(false),
 		}
 
 		expectUpsertPolicy = func(_ *testing.T, client *mockimaging, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string, policy imaging.PolicyInput) {

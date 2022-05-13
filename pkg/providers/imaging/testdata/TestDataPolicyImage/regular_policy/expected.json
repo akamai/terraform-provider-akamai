@@ -11,6 +11,7 @@
   "output": {
     "perceptualQuality": "mediumHigh"
   },
+  "rolloutDuration": 3600,
   "transformations": [
     {
       "colors": 0,
