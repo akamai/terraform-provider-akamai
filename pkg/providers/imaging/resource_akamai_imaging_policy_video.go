@@ -173,12 +173,20 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	policyInput := repackPolicyVideoOutputToInput(policy)
 
-	attrs := make(map[string]interface{})
-	policyJSON, err := getPolicyVideoJSON(policy)
+	rd, err := getRolloutDuration(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	policyInput.RolloutDuration = rd
+
+	policyJSON, err := getPolicyVideoJSON(policyInput)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	attrs := make(map[string]interface{})
 	attrs["json"] = policyJSON
 	attrs["version"] = policy.Version
 	if err := tools.SetAttrs(d, attrs); err != nil {
@@ -186,6 +194,16 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	return nil
+}
+
+func repackPolicyVideoOutputToInput(policy *imaging.PolicyOutputVideo) *imaging.PolicyInputVideo {
+	policyInput := imaging.PolicyInputVideo{
+		Output:      policy.Output,
+		Hosts:       policy.Hosts,
+		Breakpoints: policy.Breakpoints,
+		Variables:   policy.Variables,
+	}
+	return &policyInput
 }
 
 func getPolicyVideo(ctx context.Context, client imaging.Imaging, policyID, contractID, policySetID string, network imaging.PolicyNetwork) (*imaging.PolicyOutputVideo, error) {
@@ -207,23 +225,11 @@ func getPolicyVideo(ctx context.Context, client imaging.Imaging, policyID, contr
 	return policy, nil
 }
 
-func getPolicyVideoJSON(policy *imaging.PolicyOutputVideo) (string, error) {
+func getPolicyVideoJSON(policy *imaging.PolicyInputVideo) (string, error) {
 	policyJSON, err := json.MarshalIndent(policy, "", "  ")
 	if err != nil {
 		return "", err
 	}
-
-	// we store JSON as PolicyInput, so we need to convert it from PolicyOutput via JSON representation
-	var policyInput imaging.PolicyInputVideo
-	if err := json.Unmarshal(policyJSON, &policyInput); err != nil {
-		return "", err
-	}
-
-	policyJSON, err = json.MarshalIndent(policyInput, "", "  ")
-	if err != nil {
-		return "", err
-	}
-
 	return string(policyJSON), nil
 }
 
@@ -321,7 +327,8 @@ func resourcePolicyVideoImport(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return nil, err
 	}
-	policyStagingJSON, err := getPolicyVideoJSON(policyStaging)
+	policyInput := repackPolicyVideoOutputToInput(policyStaging)
+	policyStagingJSON, err := getPolicyVideoJSON(policyInput)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +341,8 @@ func resourcePolicyVideoImport(ctx context.Context, d *schema.ResourceData, m in
 			return nil, err
 		}
 	} else {
-		policyProductionJSON, err := getPolicyVideoJSON(policyProduction)
+		policyInput := repackPolicyVideoOutputToInput(policyProduction)
+		policyProductionJSON, err := getPolicyVideoJSON(policyInput)
 		if err != nil {
 			return nil, err
 		}

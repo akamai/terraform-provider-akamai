@@ -180,12 +180,22 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	attrs := make(map[string]interface{})
-	policyJSON, err := getPolicyImageJSON(policy)
+	policyInput, err := repackPolicyImageOutputToInput(policy)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	policyInput.RolloutDuration, err = getRolloutDuration(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	policyJSON, err := getPolicyImageJSON(policyInput)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	attrs := make(map[string]interface{})
 	attrs["json"] = policyJSON
 	attrs["version"] = policy.Version
 	if err := tools.SetAttrs(d, attrs); err != nil {
@@ -193,6 +203,36 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	return nil
+}
+
+func getRolloutDuration(d *schema.ResourceData) (*int, error) {
+	inputJSON, err := tools.GetStringValue("json", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
+	if err == nil {
+		input := imaging.PolicyInputImage{}
+		err = json.Unmarshal([]byte(inputJSON), &input)
+		if err != nil {
+			return nil, err
+		}
+		return input.RolloutDuration, nil
+	}
+	return nil, nil
+}
+
+func repackPolicyImageOutputToInput(policy *imaging.PolicyOutputImage) (*imaging.PolicyInputImage, error) {
+	policyOutputJSON, err := json.Marshal(policy)
+	if err != nil {
+		return nil, err
+	}
+	policyInput := imaging.PolicyInputImage{}
+
+	err = json.Unmarshal(policyOutputJSON, &policyInput)
+	if err != nil {
+		return nil, err
+	}
+	return &policyInput, nil
 }
 
 func getPolicyImage(ctx context.Context, client imaging.Imaging, policyID, contractID, policySetID string, network imaging.PolicyNetwork) (*imaging.PolicyOutputImage, error) {
@@ -214,23 +254,11 @@ func getPolicyImage(ctx context.Context, client imaging.Imaging, policyID, contr
 	return policy, nil
 }
 
-func getPolicyImageJSON(policy *imaging.PolicyOutputImage) (string, error) {
+func getPolicyImageJSON(policy *imaging.PolicyInputImage) (string, error) {
 	policyJSON, err := json.MarshalIndent(policy, "", "  ")
 	if err != nil {
 		return "", err
 	}
-
-	// we store JSON as PolicyInput, so we need to convert it from PolicyOutput via JSON representation
-	var policyInput imaging.PolicyInputImage
-	if err := json.Unmarshal(policyJSON, &policyInput); err != nil {
-		return "", err
-	}
-
-	policyJSON, err = json.MarshalIndent(policyInput, "", "  ")
-	if err != nil {
-		return "", err
-	}
-
 	return string(policyJSON), nil
 }
 
@@ -327,7 +355,11 @@ func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return nil, err
 	}
-	policyStagingJSON, err := getPolicyImageJSON(policyStaging)
+	policy, err := repackPolicyImageOutputToInput(policyStaging)
+	if err != nil {
+		return nil, err
+	}
+	policyStagingJSON, err := getPolicyImageJSON(policy)
 	if err != nil {
 		return nil, err
 	}
@@ -340,7 +372,11 @@ func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m in
 			return nil, err
 		}
 	} else {
-		policyProductionJSON, err := getPolicyImageJSON(policyProduction)
+		policy, err := repackPolicyImageOutputToInput(policyProduction)
+		if err != nil {
+			return nil, err
+		}
+		policyProductionJSON, err := getPolicyImageJSON(policy)
 		if err != nil {
 			return nil, err
 		}

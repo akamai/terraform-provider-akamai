@@ -412,6 +412,68 @@ func TestResourcePolicyImage(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+	t.Run("update rollout duration and ensure no diff", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyImage/regular_policy_update_rollout_duration"
+
+		policyInputWithRollout := imaging.PolicyInputImage{
+			RolloutDuration: tools.IntPtr(3600),
+			Breakpoints: &imaging.Breakpoints{
+				Widths: []int{320, 640, 1024, 2048, 5000},
+			},
+			Output: &imaging.OutputImage{
+				PerceptualQuality: &imaging.OutputImagePerceptualQualityVariableInline{
+					Value: imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQualityMediumHigh),
+				},
+			},
+			Transformations: []imaging.TransformationType{
+				&imaging.MaxColors{
+					Colors: &imaging.IntegerVariableInline{
+						Value: tools.IntPtr(2),
+					},
+					Transformation: imaging.MaxColorsTransformationMaxColors,
+				},
+			},
+		}
+
+		client := new(mockimaging)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
+
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputWithRollout)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 3)
+
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 	t.Run("import policy with activate_on_production=true", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy"
 
