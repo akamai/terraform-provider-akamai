@@ -73,19 +73,6 @@ func (p *provider) resUser() *schema.Resource {
 		return cmp.Equal(Old, New, cmpopts.EquateEmpty())
 	}
 
-	validatePhone := func(v interface{}, _ cty.Path) diag.Diagnostics {
-		ph := v.(string)
-		if v.(string) == "" {
-			return nil
-		}
-
-		if !regexp.MustCompile(`^\(\d{3}\) \d{3}-\d{4}$`).MatchString(ph) {
-			return diag.Errorf(`Phone number must be in the form: (###) ###-####`)
-		}
-
-		return nil
-	}
-
 	statePhone := func(v interface{}) string {
 		return canonicalPhone(v.(string))
 	}
@@ -139,7 +126,6 @@ func (p *provider) resUser() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				Description:      "The user's main phone number",
-				ValidateDiagFunc: validatePhone,
 				DiffSuppressFunc: suppressPhone,
 				StateFunc:        statePhone,
 			},
@@ -186,7 +172,6 @@ func (p *provider) resUser() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Description:      "The user's mobile phone number",
-				ValidateDiagFunc: validatePhone,
 				DiffSuppressFunc: suppressPhone,
 				StateFunc:        statePhone,
 			},
