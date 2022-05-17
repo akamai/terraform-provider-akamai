@@ -549,7 +549,7 @@ func stubResourceEdgeKVCreatePhase(m *mockedgeworkers, namespaceName, net string
 			},
 		})
 		if err, ok := item["error"]; ok {
-			onUpsert.Return(nil, fmt.Errorf("%s: %w", edgeworkers.ErrUpsertItem, err)).Once()
+			onUpsert.Return(nil, fmt.Errorf("%s: %s", edgeworkers.ErrUpsertItem, err)).Once()
 		} else {
 			onUpsert.Return(tools.StringPtr("OK"), nil).Once()
 		}
