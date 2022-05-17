@@ -173,13 +173,15 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyInput := repackPolicyVideoOutputToInput(policy)
-
-	rd, err := getRolloutDuration(d)
+	policyInput, err := repackPolicyVideoOutputToInput(policy)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyInput.RolloutDuration = rd
+
+	policyInput.RolloutDuration, err = getRolloutDuration(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	policyJSON, err := getPolicyVideoJSON(policyInput)
 	if err != nil {
@@ -196,14 +198,17 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func repackPolicyVideoOutputToInput(policy *imaging.PolicyOutputVideo) *imaging.PolicyInputVideo {
-	policyInput := imaging.PolicyInputVideo{
-		Output:      policy.Output,
-		Hosts:       policy.Hosts,
-		Breakpoints: policy.Breakpoints,
-		Variables:   policy.Variables,
+func repackPolicyVideoOutputToInput(policy *imaging.PolicyOutputVideo) (*imaging.PolicyInputVideo, error) {
+	policyOutputJSON, err := json.Marshal(policy)
+	if err != nil {
+		return nil, err
 	}
-	return &policyInput
+	policyInput := imaging.PolicyInputVideo{}
+	err = json.Unmarshal(policyOutputJSON, &policyInput)
+	if err != nil {
+		return nil, err
+	}
+	return &policyInput, nil
 }
 
 func getPolicyVideo(ctx context.Context, client imaging.Imaging, policyID, contractID, policySetID string, network imaging.PolicyNetwork) (*imaging.PolicyOutputVideo, error) {
@@ -327,7 +332,10 @@ func resourcePolicyVideoImport(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return nil, err
 	}
-	policyInput := repackPolicyVideoOutputToInput(policyStaging)
+	policyInput, err := repackPolicyVideoOutputToInput(policyStaging)
+	if err != nil {
+		return nil, err
+	}
 	policyStagingJSON, err := getPolicyVideoJSON(policyInput)
 	if err != nil {
 		return nil, err
@@ -341,7 +349,10 @@ func resourcePolicyVideoImport(ctx context.Context, d *schema.ResourceData, m in
 			return nil, err
 		}
 	} else {
-		policyInput := repackPolicyVideoOutputToInput(policyProduction)
+		policyInput, err := repackPolicyVideoOutputToInput(policyProduction)
+		if err != nil {
+			return nil, err
+		}
 		policyProductionJSON, err := getPolicyVideoJSON(policyInput)
 		if err != nil {
 			return nil, err

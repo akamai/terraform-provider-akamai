@@ -205,29 +205,12 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func getRolloutDuration(d *schema.ResourceData) (*int, error) {
-	inputJSON, err := tools.GetStringValue("json", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
-	}
-	if err == nil {
-		input := imaging.PolicyInputImage{}
-		err = json.Unmarshal([]byte(inputJSON), &input)
-		if err != nil {
-			return nil, err
-		}
-		return input.RolloutDuration, nil
-	}
-	return nil, nil
-}
-
 func repackPolicyImageOutputToInput(policy *imaging.PolicyOutputImage) (*imaging.PolicyInputImage, error) {
 	policyOutputJSON, err := json.Marshal(policy)
 	if err != nil {
 		return nil, err
 	}
 	policyInput := imaging.PolicyInputImage{}
-
 	err = json.Unmarshal(policyOutputJSON, &policyInput)
 	if err != nil {
 		return nil, err
@@ -436,4 +419,20 @@ func enforcePolicyImageVersionChange(_ context.Context, diff *schema.ResourceDif
 		return diff.SetNewComputed("version")
 	}
 	return nil
+}
+
+func getRolloutDuration(d *schema.ResourceData) (*int, error) {
+	inputJSON, err := tools.GetStringValue("json", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, err
+	}
+	if err == nil {
+		input := imaging.PolicyInputImage{}
+		err = json.Unmarshal([]byte(inputJSON), &input)
+		if err != nil {
+			return nil, err
+		}
+		return input.RolloutDuration, nil
+	}
+	return nil, nil
 }
