@@ -43,25 +43,13 @@ docker container run --name "${CONTAINER}" -d -it \
   -e SSH_PRV_KEY="${SSH_PRV_KEY}" \
   -e SSH_KNOWN_HOSTS="${SSH_KNOWN_HOSTS}"  "${IMAGE}"
 
-echo "cloning repositories and executing goreleaser:"
-docker container exec "${CONTAINER}" bash -c 'echo "$SSH_KNOWN_HOSTS" > /root/.ssh/known_hosts;
-          echo "$SSH_PUB_KEY" > /root/.ssh/id_rsa.pub;
-          echo "$SSH_PRV_KEY" > /root/.ssh/id_rsa;
-          chmod 700 /root/.ssh;
-          chmod 600 /root/.ssh/id_rsa;
-          chmod 644 /root/.ssh/id_rsa.pub;
-          chmod 644 /root/.ssh/known_hosts;
-          cd /workspace;
-          git clone ssh://git@git.source.akamai.com:7999/devexp/akamaiopen-edgegrid-golang.git;
-          git clone ssh://git@git.source.akamai.com:7999/devexp/terraform-provider-akamai.git;
-          cd terraform-provider-akamai;
-          go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2=../akamaiopen-edgegrid-golang/;
-          git tag v10.0.0;
-          goreleaser build --single-target --skip-validate --config ./.goreleaser.yml --output /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/10.0.0/linux_amd64/terraform-provider-akamai_v10.0.0'
+echo "cloning repositories:"
+docker container exec "${CONTAINER}" bash -c clone_repos.bash
+
+echo "executing goreleaser build:"
+docker container exec "${CONTAINER}" bash -c goreleaser_build.bash
 
 echo "smoke test:"
-docker container exec ${CONTAINER} bash -c 'cd /workspace/terraform-provider-akamai/examples/akamai_cp_code;
-          terraform init;
-          terraform plan'
+docker container exec ${CONTAINER} bash -c smoke_tests.bash
 
 clean_up
