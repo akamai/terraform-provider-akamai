@@ -3,14 +3,16 @@ package iam
 import (
 	"context"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *providerOld) dsContactTypes() *schema.Resource {
+func dataSourceIAMContactTypes() *schema.Resource {
 	return &schema.Resource{
 		Description: "Retrieve all contact types that Akamai supports",
-		ReadContext: p.tfCRUD("ds:ContactTypes:Read", p.dsContactTypesRead),
+		ReadContext: dataIAMContactTypesRead,
 		Schema: map[string]*schema.Schema{
 			"contact_types": {
 				Type:        schema.TypeSet,
@@ -22,11 +24,15 @@ func (p *providerOld) dsContactTypes() *schema.Resource {
 	}
 }
 
-func (p *providerOld) dsContactTypesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
+func dataIAMContactTypesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "dataIAMContactTypesRead")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
 
 	logger.Debug("Fetching supported contact types")
-	res, err := p.client.SupportedContactTypes(ctx)
+
+	res, err := client.SupportedContactTypes(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Could not get supported contact types")
 		return diag.FromErr(err)

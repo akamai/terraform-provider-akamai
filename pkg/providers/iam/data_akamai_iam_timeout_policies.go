@@ -3,14 +3,16 @@ package iam
 import (
 	"context"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *providerOld) dsTimeoutPolicies() *schema.Resource {
+func dataSourceIAMTimeoutPolicies() *schema.Resource {
 	return &schema.Resource{
 		Description: "Lists all session timeout policies Akamai supports",
-		ReadContext: p.tfCRUD("ds:TimeoutPolicies:Read", p.dsTimeoutPoliciesRead),
+		ReadContext: dataIAMTimeoutPoliciesRead,
 		Schema: map[string]*schema.Schema{
 			"policies": {
 				Type:        schema.TypeMap,
@@ -22,11 +24,15 @@ func (p *providerOld) dsTimeoutPolicies() *schema.Resource {
 	}
 }
 
-func (p *providerOld) dsTimeoutPoliciesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
+func dataIAMTimeoutPoliciesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "dataIAMTimeoutPoliciesRead")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
 
 	logger.Debug("Fetching supported timeout policies")
-	res, err := p.client.ListTimeoutPolicies(ctx)
+
+	res, err := client.ListTimeoutPolicies(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Could not get supported timeout policies")
 		return diag.FromErr(err)

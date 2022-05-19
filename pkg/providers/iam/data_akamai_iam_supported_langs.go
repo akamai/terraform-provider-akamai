@@ -3,14 +3,16 @@ package iam
 import (
 	"context"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *providerOld) dsLanguages() *schema.Resource {
+func dataSourceIAMLanguages() *schema.Resource {
 	return &schema.Resource{
 		Description: "List all the possible languages Akamai supports",
-		ReadContext: p.tfCRUD("ds:Languages:Read", p.dsLanguagesRead),
+		ReadContext: dataIAMLanguagesRead,
 		Schema: map[string]*schema.Schema{
 			"languages": {
 				Type:        schema.TypeSet,
@@ -22,11 +24,14 @@ func (p *providerOld) dsLanguages() *schema.Resource {
 	}
 }
 
-func (p *providerOld) dsLanguagesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
+func dataIAMLanguagesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "dataIAMLanguagesRead")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
 
 	logger.Debug("Fetching supported supported languages")
-	res, err := p.client.SupportedLanguages(ctx)
+	res, err := client.SupportedLanguages(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Could not get supported supported languages")
 		return diag.FromErr(err)

@@ -38,12 +38,16 @@ func Subprovider() akamai.Subprovider {
 
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
-
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{},
 		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_iam_roles":  dataSourceIAMRoles(),
-			"akamai_iam_groups": dataSourceIAMGroups(),
+			"akamai_iam_contact_types":    dataSourceIAMContactTypes(),
+			"akamai_iam_countries":        dataSourceIAMCountries(),
+			"akamai_iam_groups":           dataSourceIAMGroups(),
+			"akamai_iam_roles":            dataSourceIAMRoles(),
+			"akamai_iam_states":           dataSourceIAMStates(),
+			"akamai_iam_supported_langs":  dataSourceIAMLanguages(),
+			"akamai_iam_timeout_policies": dataSourceIAMTimeoutPolicies(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_iam_user": resourceIAMUser(),

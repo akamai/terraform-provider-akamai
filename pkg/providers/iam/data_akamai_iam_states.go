@@ -4,14 +4,16 @@ import (
 	"context"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *providerOld) dsStates() *schema.Resource {
+func dataSourceIAMStates() *schema.Resource {
 	return &schema.Resource{
 		Description: "List US states or Canadian provinces",
-		ReadContext: p.tfCRUD("ds:States:Read", p.dsStatesRead),
+		ReadContext: dataIAMStatesRead,
 		Schema: map[string]*schema.Schema{
 			"country": {
 				Type:        schema.TypeString,
@@ -28,13 +30,16 @@ func (p *providerOld) dsStates() *schema.Resource {
 	}
 }
 
-func (p *providerOld) dsStatesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
-
-	Country := d.Get("country").(string)
+func dataIAMStatesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "dataIAMStatesRead")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
 
 	logger.Debug("Fetching states")
-	res, err := p.client.ListStates(ctx, iam.ListStatesRequest{Country: Country})
+
+	country := d.Get("country").(string)
+	res, err := client.ListStates(ctx, iam.ListStatesRequest{Country: country})
 	if err != nil {
 		logger.WithError(err).Error("Could not get states")
 		return diag.FromErr(err)
@@ -46,7 +51,7 @@ func (p *providerOld) dsStatesRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := d.Set("states", states); err != nil {
-		logger.WithError(err).Error("Could not set states in resource state")
+		logger.WithError(err).Error("Could not set states in the state")
 		return diag.FromErr(err)
 	}
 
