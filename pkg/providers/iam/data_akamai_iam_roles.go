@@ -5,19 +5,20 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func (p *providerOld) dsRoles() *schema.Resource {
+func dataSourceIAMRoles() *schema.Resource {
 	return &schema.Resource{
 		Description: "Get roles for the current account and contract",
-		ReadContext: p.tfCRUD("ds:Roles:Read", p.dsRolesRead),
+		ReadContext: dataIAMRolesRead,
 		Schema: map[string]*schema.Schema{
 			// outputs
 			"roles": {
-				Type: schema.TypeSet,
-				// Description: "TODO", // These descriptions were taken from the API docs
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -68,11 +69,15 @@ func (p *providerOld) dsRoles() *schema.Resource {
 	}
 }
 
-func (p *providerOld) dsRolesRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
+func dataIAMRolesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "dataIAMRolesRead")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
 
 	logger.Debug("Fetching roles")
-	res, err := p.client.ListRoles(ctx, iam.ListRolesRequest{})
+
+	res, err := client.ListRoles(ctx, iam.ListRolesRequest{})
 	if err != nil {
 		logger.WithError(err).Error("Could not get roles")
 		return diag.FromErr(err)

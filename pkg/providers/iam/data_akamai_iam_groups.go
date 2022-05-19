@@ -2,26 +2,28 @@ package iam
 
 import (
 	"context"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Resource schema for akamai_iam_groups data source
-func (p *providerOld) dsGroups() *schema.Resource {
+func dataSourceIAMGroups() *schema.Resource {
 	return &schema.Resource{
 		Description: `List all groups in which you have a scope of "admin" for the current account and contract`,
-		ReadContext: p.tfCRUD("ds:Groups:Read", p.dsGroupsRead),
+		ReadContext: dataIAMGroupsRead,
 		Schema: map[string]*schema.Schema{
-			"groups": NestedGroupsSchema(50), // Can handle groups with nesting up to 50 levels deep
+			"groups": nestedGroupsSchema(50), // Can handle groups with nesting up to 50 levels deep
 		},
 	}
 }
 
-// NestedGroupsSchema builds a nested groups schema to the given depth
-func NestedGroupsSchema(depth int) *schema.Schema {
+// nestedGroupsSchema builds a nested groups schema to the given depth
+func nestedGroupsSchema(depth int) *schema.Schema {
 	schem := map[string]*schema.Schema{
 		"name": {
 			Type:        schema.TypeString,
@@ -61,7 +63,7 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 	}
 
 	if depth > 1 {
-		schem["sub_groups"] = NestedGroupsSchema(depth - 1)
+		schem["sub_groups"] = nestedGroupsSchema(depth - 1)
 	}
 
 	return &schema.Schema{
@@ -71,11 +73,14 @@ func NestedGroupsSchema(depth int) *schema.Schema {
 	}
 }
 
-func (p *providerOld) dsGroupsRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	logger := p.log(ctx)
+func dataIAMGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("IAM", "dataIAMGroupsRead")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
 
 	logger.Debug("Fetching groups")
-	res, err := p.client.ListGroups(ctx, iam.ListGroupsRequest{})
+	res, err := client.ListGroups(ctx, iam.ListGroupsRequest{})
 	if err != nil {
 		logger.WithError(err).Error("Could not get groups")
 		return diag.FromErr(err)

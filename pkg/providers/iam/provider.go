@@ -40,8 +40,11 @@ func Subprovider() akamai.Subprovider {
 func Provider() *schema.Provider {
 
 	provider := &schema.Provider{
-		Schema:         map[string]*schema.Schema{},
-		DataSourcesMap: map[string]*schema.Resource{},
+		Schema: map[string]*schema.Schema{},
+		DataSourcesMap: map[string]*schema.Resource{
+			"akamai_iam_roles":  dataSourceIAMRoles(),
+			"akamai_iam_groups": dataSourceIAMGroups(),
+		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_iam_user": resourceIAMUser(),
 		},
