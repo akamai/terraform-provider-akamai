@@ -48,6 +48,6 @@ func dataIAMCountriesRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	d.SetId("countries")
+	d.SetId("akamai_iam_countries")
 	return nil
 }

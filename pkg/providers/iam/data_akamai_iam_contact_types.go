@@ -48,6 +48,6 @@ func dataIAMContactTypesRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	d.SetId("contact types")
+	d.SetId("akamai_iam_contact_types")
 	return nil
 }
