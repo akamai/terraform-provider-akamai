@@ -1,5 +1,11 @@
 # RELEASE NOTES
 
+## 2.1.0 (Jun 2, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Support for Darwin ARM64 architecture ([GH#236](https://github.com/akamai/terraform-provider-akamai/issues/236))
+
 ## 2.0.0 (Apr 28, 2022)
 
 #### BREAKING CHANGES:
