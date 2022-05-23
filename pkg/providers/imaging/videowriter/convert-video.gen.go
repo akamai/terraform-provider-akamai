@@ -168,7 +168,6 @@ func stringVariableInline(d *schema.ResourceData, key string) *imaging.StringVar
 			Value: value,
 		}
 	}
-
 	return nil
 }
 
@@ -212,11 +211,11 @@ func interfaceSliceToIntSlice(d *schema.ResourceData, key string) []int {
 	if exist {
 		l := list.([]interface{})
 		if len(l) > 0 {
-			intList := make([]int, len(l))
+			result := make([]int, len(l))
 			for i, v := range l {
-				intList[i] = v.(int)
+				result[i] = v.(int)
 			}
-			return intList
+			return result
 		}
 	}
 	return nil
@@ -227,11 +226,11 @@ func interfaceSliceToStringSlice(d *schema.ResourceData, key string) []string {
 	if exist {
 		l := list.([]interface{})
 		if len(l) > 0 {
-			stringList := make([]string, len(l))
+			result := make([]string, len(l))
 			for i, v := range l {
-				stringList[i] = v.(string)
+				result[i] = v.(string)
 			}
-			return stringList
+			return result
 		}
 	}
 	return nil

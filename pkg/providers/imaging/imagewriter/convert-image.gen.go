@@ -419,6 +419,19 @@ func getIfOrientationPost(d *schema.ResourceData, key string) *imaging.IfOrienta
 	return nil
 }
 
+func getImQuery(d *schema.ResourceData, key string) *imaging.ImQuery {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.ImQuery{
+			AllowedTransformations: interfaceSliceToImagingImQueryAllowedTransformationsSlice(d, getKey(key, 0, "allowed_transformations")),
+			Query:                  queryVariableInline(d, getKey(key, 0, "query")),
+			Transformation:         imaging.ImQueryTransformationImQuery,
+		}
+		return &result
+	}
+	return nil
+}
+
 func getMaxColors(d *schema.ResourceData, key string) *imaging.MaxColors {
 	_, exist := extract(d, key)
 	if exist {
@@ -918,6 +931,10 @@ func getTransformationType(d *schema.ResourceData, key string) imaging.Transform
 	_, exist = extract(d, key+".if_orientation")
 	if exist {
 		return getIfOrientation(d, key+".if_orientation")
+	}
+	_, exist = extract(d, key+".im_query")
+	if exist {
+		return getImQuery(d, key+".im_query")
 	}
 	_, exist = extract(d, key+".max_colors")
 	if exist {
@@ -1468,34 +1485,6 @@ func booleanVariableInline(d *schema.ResourceData, key string) *imaging.BooleanV
 			Value: value,
 		}
 	}
-
-	return nil
-}
-
-func numberVariableInline(d *schema.ResourceData, key string) *imaging.NumberVariableInline {
-	var value *float64
-	var name *string
-
-	valueRaw, existVal := extract(d, key)
-	existVal = existVal && valueRaw.(string) != ""
-	if existVal {
-		valueMapped, _ := strconv.ParseFloat(valueRaw.(string), 64)
-		value = tools.Float64Ptr(valueMapped)
-	}
-
-	nameRaw, existVar := extract(d, key+"_var")
-	existVar = existVar && nameRaw.(string) != ""
-	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
-	}
-
-	if existVal || existVar {
-		return &imaging.NumberVariableInline{
-			Name:  name,
-			Value: value,
-		}
-	}
-
 	return nil
 }
 
@@ -1522,7 +1511,49 @@ func integerVariableInline(d *schema.ResourceData, key string) *imaging.IntegerV
 			Value: value,
 		}
 	}
+	return nil
+}
 
+func numberVariableInline(d *schema.ResourceData, key string) *imaging.NumberVariableInline {
+	var value *float64
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		valueMapped, _ := strconv.ParseFloat(valueRaw.(string), 64)
+		value = tools.Float64Ptr(valueMapped)
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
+		return &imaging.NumberVariableInline{
+			Name:  name,
+			Value: value,
+		}
+	}
+	return nil
+}
+
+func queryVariableInline(d *schema.ResourceData, key string) *imaging.QueryVariableInline {
+	var name *string
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVar {
+		return &imaging.QueryVariableInline{
+			Name: name,
+		}
+	}
 	return nil
 }
 
@@ -1549,7 +1580,6 @@ func stringVariableInline(d *schema.ResourceData, key string) *imaging.StringVar
 			Value: value,
 		}
 	}
-
 	return nil
 }
 
@@ -1588,16 +1618,31 @@ func stringReaderPtr(d *schema.ResourceData, key string) *string {
 	return nil
 }
 
+func interfaceSliceToImagingImQueryAllowedTransformationsSlice(d *schema.ResourceData, key string) []imaging.ImQueryAllowedTransformations {
+	list, exist := extract(d, key)
+	if exist {
+		l := list.([]interface{})
+		if len(l) > 0 {
+			result := make([]imaging.ImQueryAllowedTransformations, len(l))
+			for i, v := range l {
+				result[i] = imaging.ImQueryAllowedTransformations(v.(string))
+			}
+			return result
+		}
+	}
+	return nil
+}
+
 func interfaceSliceToIntSlice(d *schema.ResourceData, key string) []int {
 	list, exist := extract(d, key)
 	if exist {
 		l := list.([]interface{})
 		if len(l) > 0 {
-			intList := make([]int, len(l))
+			result := make([]int, len(l))
 			for i, v := range l {
-				intList[i] = v.(int)
+				result[i] = v.(int)
 			}
-			return intList
+			return result
 		}
 	}
 	return nil
@@ -1608,11 +1653,11 @@ func interfaceSliceToStringSlice(d *schema.ResourceData, key string) []string {
 	if exist {
 		l := list.([]interface{})
 		if len(l) > 0 {
-			stringList := make([]string, len(l))
+			result := make([]string, len(l))
 			for i, v := range l {
-				stringList[i] = v.(string)
+				result[i] = v.(string)
 			}
-			return stringList
+			return result
 		}
 	}
 	return nil

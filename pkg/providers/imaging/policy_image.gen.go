@@ -270,6 +270,15 @@ func transformationType(depth int) map[string]*schema.Schema {
 			},
 		},
 
+		"im_query": {
+			Description: "Apply artistic transformations to images quickly and dynamically by specifying transformations with a query string appendedto the image URL.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: imQuery(depth - 1),
+			},
+		},
+
 		"max_colors": {
 			Description: "Set the maximum number of colors in the images palette. Reducing the number of colors in an image can help to reduce file size.",
 			Type:        schema.TypeList,
@@ -1751,6 +1760,21 @@ func ifOrientationPost(depth int) map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: transformationTypePost(depth - 1),
 			},
+		},
+	}
+}
+
+func imQuery(_ int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"allowed_transformations": {
+			Type:        schema.TypeList,
+			Required:    true,
+			Description: "Specifies the transformations that can be applied using the query string parameter.",
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
+		"query_var": {
+			Type:     schema.TypeString,
+			Required: true,
 		},
 	}
 }

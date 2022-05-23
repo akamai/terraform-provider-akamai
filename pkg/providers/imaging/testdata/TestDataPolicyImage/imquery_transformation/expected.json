@@ -1,0 +1,37 @@
+{
+  "breakpoints": {
+    "widths": [
+      280,
+      1080
+    ]
+  },
+  "hosts": [
+    "host1",
+    "host2"
+  ],
+  "output": {
+    "adaptiveQuality": 50,
+    "perceptualQuality": "mediumHigh"
+  },
+  "rolloutDuration": 3600,
+  "transformations": [
+    {
+      "allowedTransformations": [
+        "Append",
+        "Blur",
+        "Crop"
+      ],
+      "query": {
+        "var": "imq"
+      },
+      "transformation": "ImQuery"
+    }
+  ],
+  "variables": [
+    {
+      "defaultValue": "",
+      "name": "imq",
+      "type": "string"
+    }
+  ]
+}
