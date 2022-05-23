@@ -12,17 +12,17 @@ import (
 )
 
 func TestAccAkamaiCustomRule_res_basic(t *testing.T) {
-	t.Run("match by CustomRule ID", func(t *testing.T) {
+	t.Run("CustomRule_basic", func(t *testing.T) {
 		client := &mockappsec{}
-
-		cu := appsec.UpdateCustomRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json")), &cu)
 
 		cc := appsec.CreateCustomRuleResponse{}
 		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json")), &cc)
 
 		cr := appsec.GetCustomRuleResponse{}
 		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json")), &cr)
+
+		cu := appsec.UpdateCustomRuleResponse{}
+		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json")), &cu)
 
 		crau := appsec.GetCustomRuleResponse{} // custom rule after update
 		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json")), &crau)
@@ -94,7 +94,7 @@ func TestAccAkamaiCustomRule_res_basic(t *testing.T) {
 }
 
 func TestAccAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
-	t.Run("match by CustomRule ID", func(t *testing.T) {
+	t.Run("CustomRule_removing_active_rule", func(t *testing.T) {
 		client := &mockappsec{}
 
 		cu := appsec.UpdateCustomRuleResponse{}
