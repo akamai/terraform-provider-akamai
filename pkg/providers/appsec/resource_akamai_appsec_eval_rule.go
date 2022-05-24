@@ -108,7 +108,7 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	_, err = client.UpdateEvalRule(ctx, createEvalRule)
 	if err != nil {
-		logger.Warnf("calling 'createEvalRule': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s:%d", createEvalRule.ConfigID, createEvalRule.PolicyID, createEvalRule.RuleID))
@@ -149,7 +149,7 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	evalrule, err := client.GetEvalRule(ctx, getEvalRule)
 	if err != nil {
-		logger.Warnf("calling 'getEvalRule': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("config_id", getEvalRule.ConfigID); err != nil {
@@ -228,7 +228,7 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	_, err = client.UpdateEvalRule(ctx, updateEvalRule)
 	if err != nil {
-		logger.Warnf("calling 'updateEvalRule': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	return resourceEvalRuleRead(ctx, d, m)
@@ -268,7 +268,6 @@ func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m inter
 
 	_, err = client.UpdateEvalRule(ctx, removeEvalRule)
 	if err != nil {
-		logger.Errorf("calling 'RemoveEvalRule': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
