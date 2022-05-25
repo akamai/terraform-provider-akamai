@@ -32,7 +32,7 @@ You can migrate an existing Edge DNS zone into your Terraform configuration usin
 
 ### Import using the command line utility
 
-You can use the [Akamai CLI for Akamai Terraform Provider](https://github.com/akamai/cli-terraform) to generate a configuration for and import an existing Edge DNS zone and its recordsets. With the package, you can generate:
+You can use the [Akamai Terraform Provider CLI](https://github.com/akamai/cli-terraform) to import your existing Akamai configurations into Terraform. With the package, you can generate:
 
 * a JSON-formatted list of the zone and recordsets.
 * a Terraform configuration for the zone and select recordsets.

@@ -70,9 +70,8 @@ You can either import an existing configuration or create a new one with Terrafo
 
 ### Import a configuration
 
-If you already have an existing load balancing configuration you'd like to work with, you can use one of these import options:
-* Prepare the HCL configuration and run `terraform import`. See the [`akamai_cloudlets_application_load_balancer`](../resources/cloudlets_application_load_balancer.md) resource.
-* Use the [Terraform CLI](https://github.com/akamai/cli-terraform) to export the existing infrastructure to HCL and run `terraform import`. See the [`akamai_cloudlets_application_load_balancer`](../resources/cloudlets_application_load_balancer.md) resource.
+If you already have an Application Load Balancing configuration, you can use the [Akamai Terraform Provider CLI](https://github.com/akamai/cli-terraform) to import your existing Akamai configurations into Terraform.
+
 
 ### Create a configuration
 
@@ -100,9 +99,7 @@ You can either import an existing policy or create a new one with Terraform:
 
 ### Import a policy
 
-If you already have an existing policy you'd like to work with, you can use one of these import options:
-* Prepare the HCL configuration and run `terraform import`. See the [`akamai_cloudlets_policy` resource](../resources/cloudlets_policy.md).
-* Use the [Terraform CLI](https://github.com/akamai/cli-terraform) to export the existing infrastructure to HCL and run `terraform import`. See the [`akamai_cloudlets_policy` resource](../resources/cloudlets_policy.md).
+You can use the [Akamai Terraform Provider CLI](https://github.com/akamai/cli-terraform) to import your existing Akamai configurations into Terraform.
 
 ### Create a policy
 

@@ -31,20 +31,12 @@ Once you fix any issues, you can run `terraform plan` again and make sure everyt
 
 ## Links to resources
 
-Here are some links to resources that can help get you started with the Akamai Terraform Provider.
+Here are some links to resources to help you get started:
 
-### New to Akamai?
-
-If you're new to Akamai, here are some links to help you get started:
-
-* [Create authentication credentials](https://techdocs.akamai.com/developer/docs/set-up-authentication-credentials)
+* [Create Akamai authentication credentials](https://techdocs.akamai.com/developer/docs/set-up-authentication-credentials)
+* [Akamai's Terraform Tapas video series](https://www.youtube.com/playlist?list=PLDlttLRccCk7a-JNb-xFH6dz4WqG53JQa)
 * [Akamai Community site](https://community.akamai.com/customers/s/)
-
-### New to Terraform?
-
-If you're new to Terraform, here are some links you might find helpful:
-
-* [Get started tutorials](https://learn.hashicorp.com/collections/terraform/cloud-get-started)
+* [Terraform tutorials](https://learn.hashicorp.com/collections/terraform/cloud-get-started)
 * [Terraform module tutorials](https://learn.hashicorp.com/collections/terraform/modules)
 * [Terraform configuration language tutorials](https://learn.hashicorp.com/collections/terraform/configuration-language)
 * [Terraform glossary](https://www.terraform.io/docs/glossary.html)
