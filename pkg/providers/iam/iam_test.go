@@ -225,6 +225,12 @@ func (m *mockiam) UpdateGroupName(ctx context.Context, request iam.GroupRequest)
 	return args.Get(0).(*iam.Group), args.Error(1)
 }
 
+func (m *mockiam) MoveGroup(ctx context.Context, request iam.MoveGroupRequest) error {
+	args := m.Called(ctx, request)
+
+	return args.Error(0)
+}
+
 func (m *mockiam) CreateRole(ctx context.Context, request iam.CreateRoleRequest) (*iam.Role, error) {
 	args := m.Called(ctx, request)
 
