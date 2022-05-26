@@ -111,6 +111,16 @@ func (p *mockappsec) GetActivations(ctx context.Context, params appsec.GetActiva
 	return args.Get(0).(*appsec.GetActivationsResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetActivationHistory(ctx context.Context, params appsec.GetActivationHistoryRequest) (*appsec.GetActivationHistoryResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetActivationHistoryResponse), args.Error(1)
+}
+
 func (p *mockappsec) RemoveActivations(ctx context.Context, params appsec.RemoveActivationsRequest) (*appsec.RemoveActivationsResponse, error) {
 	args := p.Called(ctx, params)
 
