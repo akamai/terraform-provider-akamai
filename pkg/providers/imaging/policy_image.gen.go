@@ -49,6 +49,50 @@ func imageType(depth int) map[string]*schema.Schema {
 	}
 }
 
+func imageTypePost(depth int) map[string]*schema.Schema {
+	if depth <= 0 {
+		return nil
+	}
+	return map[string]*schema.Schema{
+
+		"box_image": {
+			Description: "A rectangular box, with a specified color and applied transformation.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: boxImageTypePost(depth - 1),
+			},
+		},
+
+		"circle_image": {
+			Description: "A rectangular box, with a specified color and applied transformation.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: circleImageTypePost(depth - 1),
+			},
+		},
+
+		"text_image": {
+			Description: "A snippet of text. Defines font family and size, fill color, and outline stroke width and color.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: textImageTypePost(depth - 1),
+			},
+		},
+
+		"url_image": {
+			Description: "An image loaded from a URL.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: urlImageTypePost(depth - 1),
+			},
+		},
+	}
+}
+
 func shapeType(depth int) map[string]*schema.Schema {
 	if depth <= 0 {
 		return nil
@@ -431,6 +475,15 @@ func transformationTypePost(depth int) map[string]*schema.Schema {
 			},
 		},
 
+		"composite": {
+			Description: "Applies another image to the source image, either as an overlay or an underlay. The image that's underneath is visible in areas that are beyond the edges of the top image or that are less than 100% opaque. A common use of an overlay composite is to add a watermark.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: compositePost(depth - 1),
+			},
+		},
+
 		"compound": {
 			Description: "",
 			Type:        schema.TypeList,
@@ -803,6 +856,51 @@ func boxImageType(depth int) map[string]*schema.Schema {
 	}
 }
 
+func boxImageTypePost(depth int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"color": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The fill color of the box, not the edge of the box. The API supports hexadecimal representation and CSS hexadecimal color values.",
+		},
+		"color_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The fill color of the box, not the edge of the box. The API supports hexadecimal representation and CSS hexadecimal color values.",
+		},
+		"height": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The height of the box in pixels.",
+			ValidateDiagFunc: validateIsTypeInt(),
+		},
+		"height_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The height of the box in pixels.",
+		},
+		"transformation": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"width": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width of the box in pixels.",
+			ValidateDiagFunc: validateIsTypeInt(),
+		},
+		"width_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The width of the box in pixels.",
+		},
+	}
+}
+
 func breakpoints(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"widths": {
@@ -940,6 +1038,51 @@ func circleImageType(depth int) map[string]*schema.Schema {
 	}
 }
 
+func circleImageTypePost(depth int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"color": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The fill color of the circle. The API supports hexadecimal representation and CSS hexadecimal color values.",
+		},
+		"color_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The fill color of the circle. The API supports hexadecimal representation and CSS hexadecimal color values.",
+		},
+		"diameter": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The diameter of the circle. The diameter will be the width and the height of the image in pixels.",
+			ValidateDiagFunc: validateIsTypeInt(),
+		},
+		"diameter_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The diameter of the circle. The diameter will be the width and the height of the image in pixels.",
+		},
+		"transformation": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"width": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width of the box in pixels.",
+			ValidateDiagFunc: validateIsTypeInt(),
+		},
+		"width_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The width of the box in pixels.",
+		},
+	}
+}
+
 func circleShapeType(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"center": {
@@ -985,6 +1128,86 @@ func composite(depth int) map[string]*schema.Schema {
 			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: imageType(depth - 1),
+			},
+		},
+		"placement": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Place applied image on top of or underneath the base image. Watermarks are usually applied over. Backgrounds are usually applied under.",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"Over", "Under", "Mask", "Stencil"}, false)),
+		},
+		"placement_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Place applied image on top of or underneath the base image. Watermarks are usually applied over. Backgrounds are usually applied under.",
+		},
+		"scale": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "A multiplier to resize the applied image relative to the source image and preserve aspect ratio, 1 by default. Set the `scaleDimension` to calculate the `scale` from the source image's width or height.",
+			ValidateDiagFunc: validateIsTypeFloat(),
+		},
+		"scale_dimension": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The dimension, either `width` or `height`, of the source image to scale.",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"width", "height"}, false)),
+		},
+		"scale_dimension_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The dimension, either `width` or `height`, of the source image to scale.",
+		},
+		"scale_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "A multiplier to resize the applied image relative to the source image and preserve aspect ratio, 1 by default. Set the `scaleDimension` to calculate the `scale` from the source image's width or height.",
+		},
+		"x_position": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The x-axis position of the image to apply.",
+			ValidateDiagFunc: validateIsTypeInt(),
+		},
+		"x_position_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The x-axis position of the image to apply.",
+		},
+		"y_position": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The y-axis position of the image to apply.",
+			ValidateDiagFunc: validateIsTypeInt(),
+		},
+		"y_position_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The y-axis position of the image to apply.",
+		},
+	}
+}
+
+func compositePost(depth int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"gravity": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Compass direction indicating the corner or edge of the base image to place the applied image. Use Horizontal and Vertical Offset to adjust the applied image's gravity position",
+			Default:          "NorthWest",
+			ValidateDiagFunc: validateGravityPost(),
+		},
+		"gravity_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Compass direction indicating the corner or edge of the base image to place the applied image. Use Horizontal and Vertical Offset to adjust the applied image's gravity position",
+		},
+		"image": {
+			Type:     schema.TypeList,
+			Required: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: imageTypePost(depth - 1),
 			},
 		},
 		"placement": {
@@ -2306,6 +2529,81 @@ func textImageType(depth int) map[string]*schema.Schema {
 	}
 }
 
+func textImageTypePost(depth int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"fill": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The main fill color of the text.",
+		},
+		"fill_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The main fill color of the text.",
+		},
+		"size": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The size in pixels to render the text.",
+			ValidateDiagFunc: validateIsTypeFloat(),
+		},
+		"size_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The size in pixels to render the text.",
+		},
+		"stroke": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The color for the outline of the text.",
+		},
+		"stroke_size": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The thickness in points for the outline of the text.",
+			ValidateDiagFunc: validateIsTypeFloat(),
+		},
+		"stroke_size_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The thickness in points for the outline of the text.",
+		},
+		"stroke_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The color for the outline of the text.",
+		},
+		"text": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The line of text to render.",
+		},
+		"text_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The line of text to render.",
+		},
+		"transformation": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"typeface": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The font family to apply to the text image. This may be a URL to a TrueType or WOFF (v1) typeface, or a string that refers to one of the standard built-in browser fonts.",
+		},
+		"typeface_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The font family to apply to the text image. This may be a URL to a TrueType or WOFF (v1) typeface, or a string that refers to one of the standard built-in browser fonts.",
+		},
+	}
+}
+
 func trim(_ int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"fuzz": {
@@ -2406,6 +2704,29 @@ func urlImageType(depth int) map[string]*schema.Schema {
 	}
 }
 
+func urlImageTypePost(depth int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"transformation": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: transformationTypePost(depth - 1),
+			},
+		},
+		"url": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The URL of the image.",
+		},
+		"url_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The URL of the image.",
+		},
+	}
+}
+
 func variable(depth int) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"default_value": {
@@ -2445,5 +2766,9 @@ func variable(depth int) map[string]*schema.Schema {
 }
 
 func validateGravity() schema.SchemaValidateDiagFunc {
+	return validation.ToDiagFunc(validation.StringInSlice([]string{"North", "NorthEast", "NorthWest", "South", "SouthEast", "SouthWest", "Center", "East", "West"}, false))
+}
+
+func validateGravityPost() schema.SchemaValidateDiagFunc {
 	return validation.ToDiagFunc(validation.StringInSlice([]string{"North", "NorthEast", "NorthWest", "South", "SouthEast", "SouthWest", "Center", "East", "West"}, false))
 }

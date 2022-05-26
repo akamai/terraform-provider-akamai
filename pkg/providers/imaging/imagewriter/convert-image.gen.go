@@ -99,6 +99,21 @@ func getBoxImageType(d *schema.ResourceData, key string) *imaging.BoxImageType {
 	return nil
 }
 
+func getBoxImageTypePost(d *schema.ResourceData, key string) *imaging.BoxImageTypePost {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.BoxImageTypePost{
+			Color:          stringVariableInline(d, getKey(key, 0, "color")),
+			Height:         integerVariableInline(d, getKey(key, 0, "height")),
+			Transformation: getTransformationTypePost(d, getKey(key, 0, "transformation")),
+			Width:          integerVariableInline(d, getKey(key, 0, "width")),
+			Type:           imaging.BoxImageTypePostTypeBox,
+		}
+		return &result
+	}
+	return nil
+}
+
 func getBreakpoints(d *schema.ResourceData, key string) *imaging.Breakpoints {
 	_, exist := extract(d, key)
 	if exist {
@@ -143,6 +158,21 @@ func getCircleImageType(d *schema.ResourceData, key string) *imaging.CircleImage
 	return nil
 }
 
+func getCircleImageTypePost(d *schema.ResourceData, key string) *imaging.CircleImageTypePost {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.CircleImageTypePost{
+			Color:          stringVariableInline(d, getKey(key, 0, "color")),
+			Diameter:       integerVariableInline(d, getKey(key, 0, "diameter")),
+			Transformation: getTransformationTypePost(d, getKey(key, 0, "transformation")),
+			Width:          integerVariableInline(d, getKey(key, 0, "width")),
+			Type:           imaging.CircleImageTypePostTypeCircle,
+		}
+		return &result
+	}
+	return nil
+}
+
 func getCircleShapeType(d *schema.ResourceData, key string) *imaging.CircleShapeType {
 	_, exist := extract(d, key)
 	if exist {
@@ -167,6 +197,24 @@ func getComposite(d *schema.ResourceData, key string) *imaging.Composite {
 			XPosition:      integerVariableInline(d, getKey(key, 0, "x_position")),
 			YPosition:      integerVariableInline(d, getKey(key, 0, "y_position")),
 			Transformation: imaging.CompositeTransformationComposite,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getCompositePost(d *schema.ResourceData, key string) *imaging.CompositePost {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.CompositePost{
+			Gravity:        gravityPostVariableInline(d, getKey(key, 0, "gravity")),
+			Image:          getImageTypePost(d, getKey(key, 0, "image")),
+			Placement:      compositePostPlacementVariableInline(d, getKey(key, 0, "placement")),
+			Scale:          numberVariableInline(d, getKey(key, 0, "scale")),
+			ScaleDimension: compositePostScaleDimensionVariableInline(d, getKey(key, 0, "scale_dimension")),
+			XPosition:      integerVariableInline(d, getKey(key, 0, "x_position")),
+			YPosition:      integerVariableInline(d, getKey(key, 0, "y_position")),
+			Transformation: imaging.CompositePostTransformationComposite,
 		}
 		return &result
 	}
@@ -698,6 +746,24 @@ func getTextImageType(d *schema.ResourceData, key string) *imaging.TextImageType
 	return nil
 }
 
+func getTextImageTypePost(d *schema.ResourceData, key string) *imaging.TextImageTypePost {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.TextImageTypePost{
+			Fill:           stringVariableInline(d, getKey(key, 0, "fill")),
+			Size:           numberVariableInline(d, getKey(key, 0, "size")),
+			Stroke:         stringVariableInline(d, getKey(key, 0, "stroke")),
+			StrokeSize:     numberVariableInline(d, getKey(key, 0, "stroke_size")),
+			Text:           stringVariableInline(d, getKey(key, 0, "text")),
+			Transformation: getTransformationTypePost(d, getKey(key, 0, "transformation")),
+			Typeface:       stringVariableInline(d, getKey(key, 0, "typeface")),
+			Type:           imaging.TextImageTypePostTypeText,
+		}
+		return &result
+	}
+	return nil
+}
+
 func getTransformations(d *schema.ResourceData, key string) []imaging.TransformationType {
 	collection, exist := extract(d, key)
 	if exist {
@@ -734,6 +800,19 @@ func getURLImageType(d *schema.ResourceData, key string) *imaging.URLImageType {
 			Transformation: getTransformationType(d, getKey(key, 0, "transformation")),
 			URL:            stringVariableInline(d, getKey(key, 0, "url")),
 			Type:           imaging.URLImageTypeTypeURL,
+		}
+		return &result
+	}
+	return nil
+}
+
+func getURLImageTypePost(d *schema.ResourceData, key string) *imaging.URLImageTypePost {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.URLImageTypePost{
+			Transformation: getTransformationTypePost(d, getKey(key, 0, "transformation")),
+			URL:            stringVariableInline(d, getKey(key, 0, "url")),
+			Type:           imaging.URLImageTypePostTypeURL,
 		}
 		return &result
 	}
@@ -813,6 +892,35 @@ func getImageType(d *schema.ResourceData, key string) imaging.ImageType {
 	_, exist = extract(d, key+".url_image")
 	if exist {
 		return getURLImageType(d, key+".url_image")
+	}
+	panic(fmt.Sprint("unsupported type"))
+}
+
+func getImageTypePost(d *schema.ResourceData, key string) imaging.ImageTypePost {
+	_, isAny := extract(d, key)
+
+	if !isAny {
+		return nil
+	}
+
+	key = decorateKeyForSlice(key)
+
+	var exist bool
+	_, exist = extract(d, key+".box_image")
+	if exist {
+		return getBoxImageTypePost(d, key+".box_image")
+	}
+	_, exist = extract(d, key+".circle_image")
+	if exist {
+		return getCircleImageTypePost(d, key+".circle_image")
+	}
+	_, exist = extract(d, key+".text_image")
+	if exist {
+		return getTextImageTypePost(d, key+".text_image")
+	}
+	_, exist = extract(d, key+".url_image")
+	if exist {
+		return getURLImageTypePost(d, key+".url_image")
 	}
 	panic(fmt.Sprint("unsupported type"))
 }
@@ -1013,6 +1121,10 @@ func getTransformationTypePost(d *schema.ResourceData, key string) imaging.Trans
 	if exist {
 		return getChromaKey(d, key+".chroma_key")
 	}
+	_, exist = extract(d, key+".composite")
+	if exist {
+		return getCompositePost(d, key+".composite")
+	}
 	_, exist = extract(d, key+".compound")
 	if exist {
 		return getCompoundPost(d, key+".compound")
@@ -1116,6 +1228,58 @@ func compositePlacementVariableInline(d *schema.ResourceData, key string) *imagi
 
 	if existVal || existVar {
 		return &imaging.CompositePlacementVariableInline{
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	return nil
+}
+
+func compositePostPlacementVariableInline(d *schema.ResourceData, key string) *imaging.CompositePostPlacementVariableInline {
+	var value *imaging.CompositePostPlacement
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.CompositePostPlacementPtr(imaging.CompositePostPlacement(valueRaw.(string)))
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
+		return &imaging.CompositePostPlacementVariableInline{
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	return nil
+}
+
+func compositePostScaleDimensionVariableInline(d *schema.ResourceData, key string) *imaging.CompositePostScaleDimensionVariableInline {
+	var value *imaging.CompositePostScaleDimension
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.CompositePostScaleDimensionPtr(imaging.CompositePostScaleDimension(valueRaw.(string)))
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
+		return &imaging.CompositePostScaleDimensionVariableInline{
 			Name:  name,
 			Value: value,
 		}
@@ -1246,6 +1410,32 @@ func featureCropStyleVariableInline(d *schema.ResourceData, key string) *imaging
 
 	if existVal || existVar {
 		return &imaging.FeatureCropStyleVariableInline{
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	return nil
+}
+
+func gravityPostVariableInline(d *schema.ResourceData, key string) *imaging.GravityPostVariableInline {
+	var value *imaging.GravityPost
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.GravityPostPtr(imaging.GravityPost(valueRaw.(string)))
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = tools.StringPtr(nameRaw.(string))
+	}
+
+	if existVal || existVar {
+		return &imaging.GravityPostVariableInline{
 			Name:  name,
 			Value: value,
 		}

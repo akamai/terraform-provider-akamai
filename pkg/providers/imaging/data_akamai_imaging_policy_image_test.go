@@ -27,6 +27,10 @@ func TestDataPolicyImage(t *testing.T) {
 			configPath:       "testdata/TestDataPolicyImage/empty_breakpoints/policy.tf",
 			expectedJSONPath: "testdata/TestDataPolicyImage/empty_breakpoints/expected.json",
 		},
+		"policy with composite_post_policy breakpoints": {
+			configPath:       "testdata/TestDataPolicyImage/composite_post_policy/policy.tf",
+			expectedJSONPath: "testdata/TestDataPolicyImage/composite_post_policy/expected.json",
+		},
 	}
 
 	for name, test := range tests {
