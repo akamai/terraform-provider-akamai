@@ -27,7 +27,7 @@ func resourceIAMUser() *schema.Resource {
 		UpdateContext: resourceIAMUserUpdate,
 		DeleteContext: resourceIAMUserDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceIAMUserImport,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			// Inputs - Required
@@ -175,15 +175,7 @@ func resourceIAMUser() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Flag to block a user account",
-			},
-			"two_factor_authentication": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ValidateDiagFunc: tools.ValidateStringInSlice(
-					[]string{string(iam.TFAActionEnable), string(iam.TFAActionDisable)},
-				),
-				Description: "Enable or disable a user's two factor authentication",
-				Default:     string(iam.TFAActionDisable),
+				Default:     false,
 			},
 		},
 	}
@@ -260,30 +252,8 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
-	// set up two-factor authentication
-	tfa, err := tools.GetStringValue("two_factor_authentication", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
-	err = client.UpdateTFA(ctx, iam.UpdateTFARequest{
-		IdentityID: user.IdentityID,
-		Action:     iam.TFAActionType(tfa),
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	d.SetId(user.IdentityID)
 	return resourceIAMUserRead(ctx, d, m)
-}
-
-func resourceIAMUserImport(_ context.Context, rd *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
-	// set default value
-	if err := rd.Set("two_factor_authentication", string(iam.TFAActionDisable)); err != nil {
-		return nil, err
-	}
-	return []*schema.ResourceData{rd}, nil
 }
 
 func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -324,38 +294,32 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 
-	tfa, err := tools.GetStringValue("two_factor_authentication", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
 	err = tools.SetAttrs(d, map[string]interface{}{
-		"first_name":                user.FirstName,
-		"last_name":                 user.LastName,
-		"user_name":                 user.UserName,
-		"email":                     user.Email,
-		"phone":                     canonicalPhone(user.Phone),
-		"time_zone":                 user.TimeZone,
-		"job_title":                 user.JobTitle,
-		"enable_tfa":                user.TFAEnabled,
-		"secondary_email":           user.SecondaryEmail,
-		"mobile_phone":              canonicalPhone(user.MobilePhone),
-		"address":                   user.Address,
-		"city":                      user.City,
-		"state":                     user.State,
-		"zip_code":                  user.ZipCode,
-		"country":                   user.Country,
-		"contact_type":              user.ContactType,
-		"preferred_language":        user.PreferredLanguage,
-		"is_locked":                 user.IsLocked,
-		"last_login":                user.LastLoginDate,
-		"password_expired_after":    user.PasswordExpiryDate,
-		"tfa_configured":            user.TFAConfigured,
-		"email_update_pending":      user.EmailUpdatePending,
-		"session_timeout":           *user.SessionTimeOut,
-		"auth_grants_json":          string(authGrantsJSON),
-		"lock":                      lock,
-		"two_factor_authentication": tfa,
+		"first_name":             user.FirstName,
+		"last_name":              user.LastName,
+		"user_name":              user.UserName,
+		"email":                  user.Email,
+		"phone":                  canonicalPhone(user.Phone),
+		"time_zone":              user.TimeZone,
+		"job_title":              user.JobTitle,
+		"enable_tfa":             user.TFAEnabled,
+		"secondary_email":        user.SecondaryEmail,
+		"mobile_phone":           canonicalPhone(user.MobilePhone),
+		"address":                user.Address,
+		"city":                   user.City,
+		"state":                  user.State,
+		"zip_code":               user.ZipCode,
+		"country":                user.Country,
+		"contact_type":           user.ContactType,
+		"preferred_language":     user.PreferredLanguage,
+		"is_locked":              user.IsLocked,
+		"last_login":             user.LastLoginDate,
+		"password_expired_after": user.PasswordExpiryDate,
+		"tfa_configured":         user.TFAConfigured,
+		"email_update_pending":   user.EmailUpdatePending,
+		"session_timeout":        *user.SessionTimeOut,
+		"auth_grants_json":       string(authGrantsJSON),
+		"lock":                   lock,
 	})
 	if err != nil {
 		logger.WithError(err).Error("could not save attributes to state")
@@ -478,22 +442,6 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		} else {
 			err = client.UnlockUser(ctx, iam.UnlockUserRequest{IdentityID: d.Id()})
 		}
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	// set up two-factor authentication
-	if d.HasChange("two_factor_authentication") {
-		tfa, err := tools.GetStringValue("two_factor_authentication", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-
-		err = client.UpdateTFA(ctx, iam.UpdateTFARequest{
-			IdentityID: d.Id(),
-			Action:     iam.TFAActionType(tfa),
-		})
 		if err != nil {
 			return diag.FromErr(err)
 		}

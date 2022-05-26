@@ -65,7 +65,7 @@ func TestResourceUser(t *testing.T) {
 	}
 	id := "test_identity_id"
 
-	checkUserAttributes := func(User iam.User, lock bool, tfa iam.TFAActionType) resource.TestCheckFunc {
+	checkUserAttributes := func(User iam.User, lock bool) resource.TestCheckFunc {
 		if User.SessionTimeOut == nil {
 			User.SessionTimeOut = tools.IntPtr(0)
 		}
@@ -105,7 +105,6 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "email_update_pending", fmt.Sprintf("%t", User.EmailUpdatePending)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "session_timeout", fmt.Sprintf("%d", *User.SessionTimeOut)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "auth_grants_json", authGrantsJSON),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "two_factor_authentication", string(tfa)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "lock", fmt.Sprintf("%v", lock)),
 		)
 	}
@@ -164,8 +163,8 @@ func TestResourceUser(t *testing.T) {
 		"basic": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// delete
 				expectResourceIAMUserDeletePhase(m, userCreate, nil).Once()
@@ -173,15 +172,15 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 			},
 		},
 		"basic lock": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, true, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreate, true, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// delete
 				expectResourceIAMUserDeletePhase(m, userCreate, nil).Once()
@@ -189,14 +188,14 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
-					Check:  checkUserAttributes(userCreate, true, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, true),
 				},
 			},
 		},
 		"basic error create": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, fmt.Errorf("error create"), nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreate, false, fmt.Errorf("error create"), nil)
 			},
 			steps: []resource.TestStep{
 				{
@@ -208,11 +207,11 @@ func TestResourceUser(t *testing.T) {
 		"basic no diff no update": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// delete
 				expectResourceIAMUserDeletePhase(m, userCreate, nil).Once()
@@ -220,25 +219,25 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 			},
 		},
 		"update user info": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Once()
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 				// update basic info
 				expectResourceIAMUserInfoUpdatePhase(m, userUpdateInfo.IdentityID, userUpdateInfo.UserBasicInfo, nil).Once()
-				expectResourceIAMUserReadPhase(m, userUpdateInfo, nil, false).Times(2)
+				expectResourceIAMUserReadPhase(m, userUpdateInfo, nil).Times(2)
 
 				// delete
 				expectResourceIAMUserDeletePhase(m, userUpdateInfo, nil).Once()
@@ -246,31 +245,31 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/update_user_info.tf"),
-					Check:  checkUserAttributes(userUpdateInfo, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userUpdateInfo, false),
 				},
 			},
 		},
 		"update user info - lock - unlock": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Once()
+				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 
 				// plan
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Once()
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 				// update lock
 				expectToggleLock(m, userCreate.IdentityID, true, nil).Once()
-				expectResourceIAMUserReadPhase(m, userCreateLocked, nil, false).Once()
+				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Once()
 
 				// plan
-				expectResourceIAMUserReadPhase(m, userCreateLocked, nil, false).Once()
+				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Once()
 				// update lock
 				expectToggleLock(m, userCreate.IdentityID, false, nil).Once()
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// delete
 				expectResourceIAMUserDeletePhase(m, userCreate, nil).Once()
@@ -278,26 +277,26 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
-					Check:  checkUserAttributes(userCreateLocked, true, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreateLocked, true),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 			},
 		},
 		"update user info - error": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Once()
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 				// update basic info
 				expectResourceIAMUserInfoUpdatePhase(m, userUpdateInfo.IdentityID, userUpdateInfo.UserBasicInfo, fmt.Errorf("error updating")).Once()
 
@@ -307,7 +306,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/update_user_info.tf"),
@@ -318,14 +317,14 @@ func TestResourceUser(t *testing.T) {
 		"update user auth grants": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Once()
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 				// update basic info
 				expectResourceIAMUserAuthGrantsUpdatePhase(m, userUpdateGrants.IdentityID, userUpdateGrants.AuthGrants, nil).Once()
-				expectResourceIAMUserReadPhase(m, userUpdateGrants, nil, false).Times(2)
+				expectResourceIAMUserReadPhase(m, userUpdateGrants, nil).Times(2)
 
 				// delete
 				expectResourceIAMUserDeletePhase(m, userUpdateGrants, nil).Once()
@@ -333,22 +332,22 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
-					Check:  checkUserAttributes(userUpdateGrants, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userUpdateGrants, false),
 				},
 			},
 		},
 		"update user auth grants - an error": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Once()
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 				// update basic info
 				expectResourceIAMUserAuthGrantsUpdatePhase(m, userUpdateGrants.IdentityID, userUpdateGrants.AuthGrants, fmt.Errorf("error update user auth grants")).Once()
 
@@ -358,7 +357,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
@@ -369,11 +368,11 @@ func TestResourceUser(t *testing.T) {
 		"basic import": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// import
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(1)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(1)
 
 				// delete
 				expectResourceIAMUserDeletePhase(m, userUpdateGrants, nil).Once()
@@ -381,7 +380,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					ImportState:       true,
@@ -394,11 +393,11 @@ func TestResourceUser(t *testing.T) {
 		"error updating email": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, iam.TFAActionDisable, nil, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
-				expectResourceIAMUserReadPhase(m, userCreate, nil, false).Once()
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 
 				// delete
 				expectResourceIAMUserDeletePhase(m, userUpdateGrants, nil).Once()
@@ -406,7 +405,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false, iam.TFAActionDisable),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/update_email.tf"),
@@ -441,7 +440,7 @@ func TestResourceUser(t *testing.T) {
 }
 
 // create
-func expectResourceIAMUserCreatePhase(m *mockiam, user iam.User, lock bool, tfa iam.TFAActionType, creationError, lockError, tfaError error) {
+func expectResourceIAMUserCreatePhase(m *mockiam, user iam.User, lock bool, creationError, lockError error) {
 	onCreation := m.On("CreateUser", mock.Anything, iam.CreateUserRequest{
 		User:          user.UserBasicInfo,
 		AuthGrants:    user.AuthGrants,
@@ -460,8 +459,6 @@ func expectResourceIAMUserCreatePhase(m *mockiam, user iam.User, lock bool, tfa 
 			return
 		}
 	}
-
-	m.On("UpdateTFA", mock.Anything, iam.UpdateTFARequest{IdentityID: user.IdentityID, Action: tfa}).Return(tfaError).Once()
 }
 
 func expectToggleLock(m *mockiam, identityID string, lock bool, err error) *mock.Call {
@@ -472,8 +469,7 @@ func expectToggleLock(m *mockiam, identityID string, lock bool, err error) *mock
 }
 
 // read
-func expectResourceIAMUserReadPhase(m *mockiam, user iam.User, anError error, tfaEnabled bool) *mock.Call {
-	user.TFAEnabled = tfaEnabled
+func expectResourceIAMUserReadPhase(m *mockiam, user iam.User, anError error) *mock.Call {
 	on := m.On("GetUser", mock.Anything, iam.GetUserRequest{
 		IdentityID: user.IdentityID,
 		AuthGrants: true,
