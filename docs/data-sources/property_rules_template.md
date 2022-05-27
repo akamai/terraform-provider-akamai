@@ -3,75 +3,85 @@ layout: "akamai"
 page_title: "Akamai: akamai_property_rules_template"
 subcategory: "Property Provisioning"
 description: |-
- Property Rules Template
+ Property rules template
 ---
-
+ 
 # akamai_property_rules_template
 
-The `akamai_property_rules_template` data source lets you configure a rule tree in two different ways:
-* through the use of JSON template files. A rule tree is a nested block of property rules in JSON format that include match criteria and behaviors.
-* through the use of template.
+The `akamai_property_rules_template` data source lets you define a rule tree. A rule tree is a nested block of property rules in JSON format that includes match criteria and behaviors. You can break a rule tree out into smaller JSON  template files that cover individual rules.
 
-With this data source you define the location of the JSON template files and provide information about any user-defined variables included within the templates.
+With this data source, you define which JSON template files to use for your property. You can also set values for variables. 
 
-The template format used in this data source matches those used in the [Property Manager CLI](https://learn.akamai.com/en-us/learn_akamai/getting_started_with_akamai_developers/developer_tools/getstartedpmcli.html#addanewsnippet).
+This data source uses the rule template format from the [Property Manager CLI](https://github.com/akamai/cli-property-manager#set-up-property-snippets).
 
-You can pass user-defined variables by supplying either:
+~> You can define variables either by using the Property Manager CLI syntax or by using standard Terraform variables.
 
-* paths to `variableDefinitions.json` and `variables.json` with syntax used in Property Manager CLI, or
-* a set of Terraform variables.
+## How to work with JSON template files 
 
-## Referencing sub-files from a JSON template file
-You can split each template file out into a series of smaller template sub-files. 
-To add them to this data source, you need to include them in the currently loaded file, which corresponds to the value in the `template_file` argument.
-For example, to include `example-file.json` from the `property-snippets` directory, use this syntax including the quotes: `"#include:example-file.json"`.
-Make sure the `property-snippets` folder contains only `.json` files.
-All files are resolved in relation to the directory that contains the starting template file.
+You have a few options when working with rule template files: 
 
-## Referencing sub-files from a template
-You can include content of json files into template.
-To add them to this data source, you need to include them in `template_data` field, which corresponds to the field in the `template` argument.
-For example, to include `example-file.json` from the `property-snippets` directory, use this syntax including the quotes: `"#include:example-file.json"` in corresponding place of template.
+* Use a single JSON file that includes all rules for the property.
+* Create separate JSON template files for each rule and store them in the `property-snippets` directory.
+* Reference individual template files directly in this data source.
 
-## Inserting variables in a template
-You can also add variables to a template by using a string like `“${env.<variableName>}"`. You'll need the quotes here too.
-These variables follow the format used in the [Property Manager CLI](https://github.com/akamai/cli-property-manager#update-the-variabledefinitions-file).  They differ from Terraform variables which should resolve normally.
+### Use a single JSON rule tree file
 
-## Example usage: variables
+If you’re using a single JSON rule tree file for your property, set the `template_file` argument with the absolute path to the file. For example: `template_file = abspath("${path.root}/property-snippets/main.json")` 
 
-This first example shows two variables passed in data source definition:
+You can also set up a single JSON template file that calls individual template files. To reference other template files, use `include` statements in the `children` array . For example:  
 
-```hcl
-data "akamai_property_rules_template" "akarules" {
-  template_file = abspath("${path.root}/property-snippets/main.json")
-  variables {
-    name = "enabled"
-    value = "true"
-    type = "bool"
-  }
-  variables {
-    name = "name"
-    value = "default"
-    type = "string"
-  }
-}
+```json
+    "children": [
+      "#include:Performance.json",
+      "#include:Offload.json"
+    ]
 ```
 
-In this second example, the variables defined refer to files shared with a [Property Manager CLI pipeline](https://github.com/akamai/cli-property-manager#akamai-pipeline-workflow):
+You have to store all files in the directory listed in the `template_file` argument. 
+
+### Create a set of JSON template files
+
+If you have a set of JSON template files you want to call: 
+
+1. Put them all in a directory called `property-snippets`. 
+1. Make sure the `property-snippets` folder only contains `.json` files. 
+1. Add the `template_dir` argument. For example: `template_dir = "property-snippets/"`.
+
+~> This directory name is different from the one required for the Property Manager CLI, which is called `config-snippets`. 
+
+### Reference template files individually
+
+You can also pass in specific rule files with this data source. For this option, add the `template_data` argument and  use Terraform’s `jsonencode` function to add the supporting JSON syntax.  For example: 
 
 ```hcl
-data "akamai_property_rules_template" "akarules" {
-  template_file = abspath("${path.root}/property-snippets/main.json")
-  var_definition_file = abspath("${path.root}/environments/variableDefinitions.json")
-  var_values_file = abspath("${path.root}/environments/dev.example.com/variables.json")
-}
+template_data = jsonencode({
+      "rules": {
+        "name": "default",
+        "children": [
+          "#include:rules.json"
+        ]
+      }
+    })
 ```
+ 
+## How to use property variables with a template
 
-### Example usage: template files
+You can also add variables to a template by using a string like `“${env.<variableName>}"`. These property variables follow the file structure and syntax used when [creating a pipeline in the Property Manager CLI](https://github.com/akamai/cli-property-manager#create-and-set-up-a-new-pipeline). 
 
-Here's an example of what a JSON-based template file with its nested templates might look like:
+You’ll need to create a `variableDefinitions.json` file to define your variables and their default values. 
 
-`property-snippets/main.json`:
+If working with multiple environments, you can also set up variables.json files to override these default values. Since the file name should always be variables.json, you’ll need to create a file for each environment and a separate folder to house it in.
+
+~> Property variables are separate from Terraform variables, which should resolve normally.
+
+## Example usage: JSON template files
+
+Here are some examples of how you can set up your JSON template files for use with this data source.
+
+### Single JSON template that calls other templates
+
+Here's an example of a JSON template file with nested templates:
+
 ```json
 {
   "rules": {
@@ -94,9 +104,11 @@ Here's an example of what a JSON-based template file with its nested templates m
   }
 }
 ```
-Here is a rule example, which can be included into template inside `template_data` field:
 
-`property-snippets/rule.json`:
+### Individual JSON rule template file
+
+Here’s a simple default rule example that you can include inside the `template_data` argument:
+
 ```json
 {
   "name": "default",
@@ -107,31 +119,35 @@ Here is a rule example, which can be included into template inside `template_dat
 }
 ```
 
-You can then define a Terraform configuration in two ways.
+## Example usage: Add templates to the data source
 
-This first example shows how to define Terraform configuration as a file, which pulls in the `main.json` file above and uses it with a property:
+Here are some examples of how you can call your JSON template files with this data source.
+
+### Call a single JSON template file
+
+This example shows how to define a specific JSON template using the `template_file` argument:
 
 ```hcl
 data "akamai_property_rules_template" "example" {
   template_file = abspath("${path.root}/property-snippets/main.json")
   variables {
-      name = "secure"
+      name  = "secure"
       value = "false"
-      type = "bool"
+      type  = "bool"
   }
   variables {
-      name = "caching_ttl"
+      name  = "caching_ttl"
       value = "3d"
-      type = "string"
+      type  = "string"
   }
 }
-
+ 
 resource "akamai_property" "example" {
-    name = "dev.example.com"
+    name        = "dev.example.com"
     contract_id = var.contractid
     group_id    = var.groupid
-    hostnames = {
-      "example.org" = "example.org.edgesuite.net"
+    hostnames   = {
+      "example.org"     = "example.org.edgesuite.net"
       "www.example.org" = "example.org.edgesuite.net"
       "sub.example.org" = "sub.example.org.edgesuite.net"
     }
@@ -140,9 +156,10 @@ resource "akamai_property" "example" {
 }
 ```
 
-This second example shows how to define Terraform configuration as a file, which include the template as a field, and uses it with a property.
-This template includes `rule.json` inside `template_data` field:
+### Call individual template files with this data source
 
+This second example shows how to call a specific JSON template using the `template_data` field:
+ 
 ```hcl
 data "akamai_property_rules_template" "example" {
   template {
@@ -157,7 +174,7 @@ data "akamai_property_rules_template" "example" {
     template_dir = "property-snippets/"
   }
 }
-
+ 
 resource "akamai_property" "example" {
   name = "dev.example.com"
   contract_id = var.contractid
@@ -166,22 +183,59 @@ resource "akamai_property" "example" {
   rules       = data.akamai_property_rules_template.example.json
 }
 ```
+ 
+## Example usage: Variables
+
+You can add variables individually or reference variable definition files.
+ 
+### Define variables in the data source
+
+This example shows two variables defined in the data source:
+ 
+```hcl
+data "akamai_property_rules_template" "akarules" {
+  template_file = abspath("${path.root}/property-snippets/main.json")
+  variables {
+    name  = "enabled"
+    value = "true"
+    type  = "bool"
+  }
+  variables {
+    name  = "name"
+    value = "default"
+    type  = "string"
+  }
+}
+```
+ 
+### Call variable definition files
+
+In this example, you store the variables in separate JSON files that follow the naming and formats used with the [Property Manager CLI pipeline](https://github.com/akamai/cli-property-manager#akamai-pipeline-workflow):
+ 
+
+```hcl
+data "akamai_property_rules_template" "akarules" {
+  template_file       = abspath("${path.root}/property-snippets/main.json")
+  var_definition_file = abspath("${path.root}/environments/variableDefinitions.json")
+  var_values_file     = abspath("${path.root}/environments/dev.example.com/variables.json")
+}
+```
 
 ## Argument reference
 
-* `template_file` - (Optional) The absolute path to your top-level JSON template file. The top-level template combines smaller, nested JSON templates to form your property rule tree.
-* `template` - (Optional) The template you use in your configuration.
-  * `template_data` - (Required) The content of the template as a string.
-  * `template_dir` - (Required) The absolute path to the directory where you put snippets to include into template. It must be ended with `property-snippets` directory name.
-* `variables` - (Optional) A definition of a variable. Variables aren't required and you can use multiple ones if needed. This argument conflicts with the `var_definition_file` and `var_values_file` arguments. A `variables` block includes:
-    * `name` - The name of the variable used in template.
+* `template_file` - (Optional) The absolute path to your top-level JSON template file. The top-level template combines smaller, nested JSON templates to form your property rule tree. This argument conflicts with the `template` argument.  
+* `template` - (Optional) The template you use in your configuration. This argument conflicts with the `template_file` argument.
+  * `template_data` - (Required) The content of the JSON template as a string. 
+  * `template_dir` - (Required) The absolute or relative path to the directory containing the template files. The path must end with `property-snippets`, the required directory name. For example: `template_file = abspath("${path.root}/property-snippets/main.json")`
+* `variables` - (Optional) The definition of one or more variables. This argument conflicts with the `var_definition_file` and `var_values_file` arguments. A `variables` block includes:
+    * `name` - The name of the variable used in the template.
     * `type` - The type of variable: `string`, `number`, `bool`, or `jsonBlock`.
     * `value` - The value of the variable passed as a string.
-* `var_definition_file` - (Optional) The absolute path to the file containing variable definitions and defaults. This file follows the syntax used in the [Property Manager CLI](https://github.com/akamai/cli-property-manager). This argument is required if you set `var_values_file` and conflicts with `variables`.
-* `var_values_file` - (Optional) The absolute path to the file containing variable values. This file follows the syntax used in the Property Manager CLI. This argument is required if you set `var_definition_file` and conflicts with `variables`.
-
+* `var_definition_file` - (Optional) Required when using `var_values_file`. The absolute path to the file containing variable definitions and defaults. This argument conflicts with the `variables` argument. 
+* `var_values_file` - (Optional) Required when using `var_definition_file`. The absolute path to the file containing variable values. This argument conflicts with the `variables` argument.  
+ 
 ## Attributes reference
-
+ 
 This data source returns this attribute:
-
+ 
 * `json` - The fully expanded template with variables and all nested templates resolved.
