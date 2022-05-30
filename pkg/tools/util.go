@@ -7,6 +7,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// SetToIntSlice converts schema.Set to a slice of ints
+func SetToIntSlice(s *schema.Set) []int {
+	list := make([]int, s.Len())
+	for i, v := range s.List() {
+		list[i] = v.(int)
+	}
+	return list
+}
+
 // SetToStringSlice converts schema.Set to a slice of strings
 func SetToStringSlice(s *schema.Set) []string {
 	list := make([]string, s.Len())
