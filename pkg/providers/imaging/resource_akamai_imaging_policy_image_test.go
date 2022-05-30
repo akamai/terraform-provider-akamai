@@ -575,6 +575,53 @@ func TestResourcePolicyImage(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+	t.Run("import policy with activate_on_production=false and no policy on production with rolloutDuration", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyImage/regular_policy_import"
+
+		policyInput := policyInput
+		policyInput.RolloutDuration = tools.IntPtr(3600)
+
+		client := new(mockimaging)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 3)
+		client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
+			PolicyID:    "test_policy",
+			Network:     imaging.PolicyNetworkProduction,
+			ContractID:  "test_contract",
+			PolicySetID: "test_policy_set",
+		}).Return(nil, fmt.Errorf("%s: %w", imaging.ErrGetPolicy, &imaging.Error{Status: http.StatusNotFound})).Once()
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 1)
+
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+					},
+					{
+						ImportState:   true,
+						ImportStateId: "test_policy:test_policy_set:test_contract",
+						ResourceName:  "akamai_imaging_policy_image.policy",
+						// Current implementation is unable to handle correctly `rolloutDuration` during import.
+						// It is recommended to not provide any value for that field before import.
+						// `cli-terraform` will not set this field during export, assuming that it service will required default value.
+						//ImportStateVerify: true,
+					},
+					{
+						Config:   loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						PlanOnly: true,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 	t.Run("policy with invalid policy structure", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/invalid_policy"
 

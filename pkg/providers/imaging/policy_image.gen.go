@@ -651,7 +651,6 @@ func PolicyOutputImage(depth int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "The amount of time in seconds that the policy takes to rollout. During the rollout an increasing proportion of images/videos will begin to use the new policy instead of the cached images/videos from the previous version. This value has no effect on the staging network.",
-			Default:          "3600",
 			ValidateDiagFunc: stringAsIntBetween(3600, 604800),
 		},
 		"transformations": {

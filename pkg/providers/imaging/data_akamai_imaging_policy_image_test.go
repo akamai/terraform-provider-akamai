@@ -35,9 +35,6 @@ func TestDataPolicyImage(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			if name == "policy with empty breakpoints" {
-				t.Skip("It should be restored once DXE-941 is fixed")
-			}
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{

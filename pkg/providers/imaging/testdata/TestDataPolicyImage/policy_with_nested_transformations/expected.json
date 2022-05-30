@@ -13,7 +13,6 @@
     "adaptiveQuality": 50,
     "perceptualQuality": "mediumHigh"
   },
-  "rolloutDuration": 3600,
   "transformations": [
     {
       "gravity": "Center",
