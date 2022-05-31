@@ -43,6 +43,7 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_iam_contact_types":    dataSourceIAMContactTypes(),
 			"akamai_iam_countries":        dataSourceIAMCountries(),
+			"akamai_iam_grantable_roles":  dataSourceIAMGrantableRoles(),
 			"akamai_iam_groups":           dataSourceIAMGroups(),
 			"akamai_iam_roles":            dataSourceIAMRoles(),
 			"akamai_iam_states":           dataSourceIAMStates(),
