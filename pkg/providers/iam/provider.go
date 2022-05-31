@@ -51,8 +51,9 @@ func Provider() *schema.Provider {
 			"akamai_iam_timeout_policies": dataSourceIAMTimeoutPolicies(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_iam_role": resourceIAMRole(),
-			"akamai_iam_user": resourceIAMUser(),
+			"akamai_iam_blocked_user_properties": resourceIAMBlockedUserProperties(),
+			"akamai_iam_role":                    resourceIAMRole(),
+			"akamai_iam_user":                    resourceIAMUser(),
 		},
 	}
 	return provider
