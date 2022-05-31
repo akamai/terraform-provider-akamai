@@ -49,6 +49,7 @@ func Provider() *schema.Provider {
 			"akamai_iam_states":           dataSourceIAMStates(),
 			"akamai_iam_supported_langs":  dataSourceIAMLanguages(),
 			"akamai_iam_timeout_policies": dataSourceIAMTimeoutPolicies(),
+			"akamai_iam_timezones":        dataSourceIAMTimezones(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_iam_blocked_user_properties": resourceIAMBlockedUserProperties(),
