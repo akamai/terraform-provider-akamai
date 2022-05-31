@@ -26,7 +26,7 @@ You have a few options when working with rule template files:
 
 ### Use a single JSON rule tree file
 
-If you’re using a single JSON rule tree file for your property, set the `template_file` argument with the absolute path to the file. For example: `template_file = abspath("${path.root}/property-snippets/main.json")` 
+If you’re using a single JSON rule tree file for your property, set the `template_file` argument with the absolute or relative path to the file. For example: `template_file = abspath("${path.root}/property-snippets/main.json")` 
 
 You can also set up a single JSON template file that calls individual template files. To reference other template files, use `include` statements in the `children` array . For example:  
 
@@ -70,9 +70,9 @@ You can also add variables to a template by using a string like `“${env.<varia
 
 You’ll need to create a `variableDefinitions.json` file to define your variables and their default values. 
 
-If working with multiple environments, you can also set up variables.json files to override these default values. Since the file name should always be variables.json, you’ll need to create a file for each environment and a separate folder to house it in.
+If working with multiple environments, you can also set up variables.json files to override these default values. Since the file name should always be `variables.json`, you’ll need to create a file for each environment and a separate folder to house it in.
 
-~> Property variables are separate from Terraform variables, which should resolve normally.
+~> Property variables are separate from Terraform variables. Terraform variables work as expected in this data source.
 
 ## Example usage: JSON template files
 
@@ -141,7 +141,6 @@ data "akamai_property_rules_template" "example" {
       type  = "string"
   }
 }
- 
 resource "akamai_property" "example" {
     name        = "dev.example.com"
     contract_id = var.contractid
@@ -226,7 +225,7 @@ data "akamai_property_rules_template" "akarules" {
 * `template_file` - (Optional) The absolute path to your top-level JSON template file. The top-level template combines smaller, nested JSON templates to form your property rule tree. This argument conflicts with the `template` argument.  
 * `template` - (Optional) The template you use in your configuration. This argument conflicts with the `template_file` argument.
   * `template_data` - (Required) The content of the JSON template as a string. 
-  * `template_dir` - (Required) The absolute or relative path to the directory containing the template files. The path must end with `property-snippets`, the required directory name. For example: `template_file = abspath("${path.root}/property-snippets/main.json")`
+  * `template_dir` - (Required) The absolute or relative path to the directory containing the template files. The path must end with `property-snippets`, the required directory name. For example: `template_dir = abspath("${path.root}/property-snippets/")`, or `template_dir = "property-snippets/"`
 * `variables` - (Optional) The definition of one or more variables. This argument conflicts with the `var_definition_file` and `var_values_file` arguments. A `variables` block includes:
     * `name` - The name of the variable used in the template.
     * `type` - The type of variable: `string`, `number`, `bool`, or `jsonBlock`.
