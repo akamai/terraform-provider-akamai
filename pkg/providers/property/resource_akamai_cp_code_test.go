@@ -556,10 +556,13 @@ func TestResCPCode(t *testing.T) {
 
 	t.Run("timeout waiting for update", func(t *testing.T) {
 		timeoutVal := cpCodeResourceUpdateTimeout
-		cpCodeResourceUpdateTimeout = time.Millisecond * 2
+		oldInterval := cpCodeResourceUpdateTimeout
+		cpCodeResourceUpdateTimeout = time.Millisecond * 6
+		updatePollInterval = time.Millisecond * 4
 		client := &mockpapi{}
 		defer func() {
 			cpCodeResourceUpdateTimeout = timeoutVal
+			updatePollInterval = oldInterval
 			client.AssertExpectations(t)
 		}()
 
