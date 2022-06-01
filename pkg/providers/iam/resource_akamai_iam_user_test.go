@@ -65,7 +65,7 @@ func TestResourceUser(t *testing.T) {
 	}
 	id := "test_identity_id"
 
-	checkUserAttributes := func(User iam.User, lock bool) resource.TestCheckFunc {
+	checkUserAttributes := func(User iam.User) resource.TestCheckFunc {
 		if User.SessionTimeOut == nil {
 			User.SessionTimeOut = tools.IntPtr(0)
 		}
@@ -105,7 +105,7 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "email_update_pending", fmt.Sprintf("%t", User.EmailUpdatePending)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "session_timeout", fmt.Sprintf("%d", *User.SessionTimeOut)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "auth_grants_json", authGrantsJSON),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "lock", fmt.Sprintf("%v", lock)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "lock", fmt.Sprintf("%t", User.IsLocked)),
 		)
 	}
 
@@ -136,7 +136,7 @@ func TestResourceUser(t *testing.T) {
 	userUpdateInfo := iam.User{
 		UserBasicInfo:      extendedUserInfo,
 		IdentityID:         id,
-		IsLocked:           true,
+		IsLocked:           false,
 		LastLoginDate:      "last login",
 		PasswordExpiryDate: "password expired after",
 		TFAConfigured:      true,
@@ -147,7 +147,7 @@ func TestResourceUser(t *testing.T) {
 	userUpdateGrants := iam.User{
 		UserBasicInfo:      basicUserInfo,
 		IdentityID:         id,
-		IsLocked:           true,
+		IsLocked:           false,
 		LastLoginDate:      "last login",
 		PasswordExpiryDate: "password expired after",
 		TFAConfigured:      true,
@@ -172,23 +172,23 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 			},
 		},
 		"basic lock": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, true, nil, nil)
-				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
+				expectResourceIAMUserCreatePhase(m, userCreateLocked, true, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Times(2)
 
 				// delete
-				expectResourceIAMUserDeletePhase(m, userCreate, nil).Once()
+				expectResourceIAMUserDeletePhase(m, userCreateLocked, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
-					Check:  checkUserAttributes(userCreate, true),
+					Check:  checkUserAttributes(userCreateLocked),
 				},
 			},
 		},
@@ -219,11 +219,11 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 			},
 		},
@@ -245,11 +245,11 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/update_user_info.tf"),
-					Check:  checkUserAttributes(userUpdateInfo, false),
+					Check:  checkUserAttributes(userUpdateInfo),
 				},
 			},
 		},
@@ -262,13 +262,11 @@ func TestResourceUser(t *testing.T) {
 				// plan
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 				// update lock
-				expectToggleLock(m, userCreate.IdentityID, true, nil).Once()
 				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Once()
 
 				// plan
 				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Once()
 				// update lock
-				expectToggleLock(m, userCreate.IdentityID, false, nil).Once()
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// delete
@@ -277,15 +275,15 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
-					Check:  checkUserAttributes(userCreateLocked, true),
+					Check:  checkUserAttributes(userCreateLocked),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 			},
 		},
@@ -306,7 +304,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 				{
 					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/update_user_info.tf"),
@@ -332,11 +330,11 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
-					Check:  checkUserAttributes(userUpdateGrants, false),
+					Check:  checkUserAttributes(userUpdateGrants),
 				},
 			},
 		},
@@ -357,7 +355,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 				{
 					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
@@ -380,7 +378,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 				{
 					ImportState:       true,
@@ -405,7 +403,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate, false),
+					Check:  checkUserAttributes(userCreate),
 				},
 				{
 					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/update_email.tf"),

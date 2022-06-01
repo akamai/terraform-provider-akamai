@@ -289,11 +289,6 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 	}
 
-	lock, err := tools.GetBoolValue("lock", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
 	err = tools.SetAttrs(d, map[string]interface{}{
 		"first_name":             user.FirstName,
 		"last_name":              user.LastName,
@@ -319,7 +314,7 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		"email_update_pending":   user.EmailUpdatePending,
 		"session_timeout":        *user.SessionTimeOut,
 		"auth_grants_json":       string(authGrantsJSON),
-		"lock":                   lock,
+		"lock":                   user.IsLocked,
 	})
 	if err != nil {
 		logger.WithError(err).Error("could not save attributes to state")
