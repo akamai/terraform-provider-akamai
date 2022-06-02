@@ -43,6 +43,12 @@ Nothing happens to the policy set until you link it to a property.
 When you save a policy, it's automatically activated on staging.
 To activate a policy on production, you have to set the `activate_on_production` flag to `true` in either the [akamai_imaging_policy_image](../resources/akamai_imaging_policy_image.md) or [akamai_imaging_policy_video](../resources/akamai_imaging_video.md) resource, and save your change.
 
+### Variables
+
+Many Image and Video Manager arguments let you specify a variable object instead of a string, number, or boolean value.
+
+When using variables, you define the variable name in an argument that ends in `_var`. For example, if you want to have a variable for the gravity setting in a transformation, you’d use the `gravity_var` argument, not the `gravity` one.
+
 ## Prerequisites
 
 Before you start, make sure Image and Video Manager is in your contract, and your contract includes the type of media (images or videos or both) that you intend to work with.
@@ -74,10 +80,12 @@ For more information about prefixes, see the [ID prefixes](https://techdocs.akam
 
 ## Export a policy set and related policies
 
-For the beta of this module, you can use the [Terraform CLI](https://github.com/akamai/cli-terraform) to export an existing policy set and its related policies into JSON files.
+You can use the [Terraform CLI](https://github.com/akamai/cli-terraform) to export an existing policy set and its related policies into JSON files or directly into HCL syntax assuming that there are six or less levels of nested transformations.
 
 You need to run the CLI separately for each policy set you want to add to your Terraform configuration.
-Running the CLI on a policy set also generates the resources for related policies and the JSON files of policies.
+
+ Running the CLI on a policy set also generates the resources for related policies and the JSON files of policies.
+ If exported as schema, running the CLI on the policy set will not generate JSON files, but will generate the necessary data sources.
 
 ~> **Note:** If you use the [Image and Video Manager API](https://techdocs.akamai.com/ivm/reference/api), you can also modify JSON files you have for existing policy sets and policies.
 In Control Center, you can view and download policy JSON files by clicking **View Policy JSON** in the Policy Editor.
