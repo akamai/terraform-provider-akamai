@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: user"
-subcategory: "IAM"
+subcategory: "Identity and Access Management"
 description: |-
   Create user resources.
 ---

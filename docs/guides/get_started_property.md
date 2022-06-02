@@ -105,7 +105,7 @@ rules = file("${path.module}/rules.json")
 Before continuing with the next step, run `terraform plan` and resolve any errors or warnings. See [Command: plan](https://www.terraform.io/docs/commands/plan.html) for more information about this Terraform command.
 
 ## Import or create a property
-You can either import an existing property or create a new one with Terraform:
+You can either import an existing property or create a new one with Terraform.
 
 ### Import a property
 

@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: DV Enrollment"
-subcategory: "CPS"
+subcategory: "Certificate Provisioning System"
 description: |-
   DV Enrollment
 ---

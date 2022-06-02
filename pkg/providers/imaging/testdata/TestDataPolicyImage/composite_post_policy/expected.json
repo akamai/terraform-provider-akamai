@@ -1,0 +1,37 @@
+{
+  "breakpoints": {
+    "widths": [
+      320,
+      640,
+      1024,
+      2048,
+      5000
+    ]
+  },
+  "output": {
+    "perceptualQuality": "mediumHigh"
+  },
+  "postBreakpointTransformations": [
+    {
+      "gravity": "NorthWest",
+      "image": {
+        "fill": "#000000",
+        "size": 72,
+        "stroke": "#FFFFFF",
+        "strokeSize": 0,
+        "text": "test",
+        "type": "Text"
+      },
+      "placement": "Over",
+      "transformation": "Composite",
+      "xPosition": 0,
+      "yPosition": 0
+    }
+  ],
+  "transformations": [
+    {
+      "colors": 0,
+      "transformation": "MaxColors"
+    }
+  ]
+}

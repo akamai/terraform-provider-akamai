@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: akamai_iam_contact_types"
-subcategory: "IAM"
+subcategory: "Identity and Access Management"
 description: |-
  IAM Contact Types
 ---

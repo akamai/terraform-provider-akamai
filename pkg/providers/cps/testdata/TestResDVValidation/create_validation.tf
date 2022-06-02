@@ -1,5 +1,5 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc = "../../test/edgerc"
 }
 
 resource "akamai_cps_dv_validation" "dv_validation" {

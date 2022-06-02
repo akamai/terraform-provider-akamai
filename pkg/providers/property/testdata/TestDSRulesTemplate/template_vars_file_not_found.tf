@@ -1,5 +1,5 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc = "../../test/edgerc"
 }
 
 data "akamai_property_rules_template" "test" {

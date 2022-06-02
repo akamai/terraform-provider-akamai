@@ -1,7 +1,7 @@
 module github.com/akamai/terraform-provider-akamai/v2
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.12.0
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 v2.13.0
 	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/apex/log v1.9.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -38,7 +38,7 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-getter v1.5.3 // indirect
+	github.com/hashicorp/go-getter v1.5.11 // indirect
 	github.com/hashicorp/go-multierror v1.0.0 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.1 // indirect

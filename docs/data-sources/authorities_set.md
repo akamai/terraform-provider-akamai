@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: authorities_set"
-subcategory: "DNS"
+subcategory: "Edge DNS"
 description: |-
  DNS Authorities Set
 ---

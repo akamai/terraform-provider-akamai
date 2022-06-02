@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: DNS Record"
-subcategory: "DNS"
+subcategory: "Edge DNS"
 description: |-
   DNS record
 ---

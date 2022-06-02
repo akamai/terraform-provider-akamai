@@ -40,9 +40,12 @@ supporting API service names:
 | **Certificate Provisioning** | Certificate Provisioning System |
 | **Cloudlets** | Cloudlets Policy Manager |
 | **DataStream** | DataStream  |
-| **DNS Zone Administration Module** | DNS Zone Management |
+| **DNS Zone Administration** | DNS Zone Management |
+| **EdgeWorkers** | EdgeWorkers |
+| **EdgeKV** | EdgeKV |
 | **Global Traffic Management Domain Administration** | Global Traffic Management |
 | **Identity and Access Management** | Identity Management: User Administration |
+| **Image and Video Manager** | Image and Video Manager |
 | **Network Lists** | Network Lists |
 | **Property Provisioning** (Includes Common functions) | Property Manager (PAPI) |
 

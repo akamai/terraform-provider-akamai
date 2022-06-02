@@ -1,5 +1,5 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc = "../../test/edgerc"
 }
 
 resource "akamai_cloudlets_application_load_balancer" "alb" {

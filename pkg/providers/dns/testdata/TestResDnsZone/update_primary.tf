@@ -1,5 +1,5 @@
 provider "akamai" {
-  edgerc = "~/.edgerc"
+  edgerc = "../../test/edgerc"
 }
 
 resource "akamai_dns_zone" "primary_test_zone" {

@@ -11,6 +11,9 @@ ARG SSH_KNOWN_HOSTS
 
 COPY AkamaiCorpRoot-G1.pem /usr/local/share/ca-certificates/AkamaiCorpRoot-G1.pem
 COPY .edgerc /root/.edgerc
+COPY clone_repos.bash /usr/local/bin/clone_repos.bash
+COPY goreleaser_build.bash /usr/local/bin/goreleaser_build.bash
+COPY smoke_tests.bash /usr/local/bin/smoke_tests.bash
 
 RUN apt update && apt install -y curl git gcc ca-certificates openssh-client gnupg \
     && echo "deb [arch=amd64] https://apt.releases.hashicorp.com focal main" >> /etc/apt/sources.list \

@@ -30,7 +30,7 @@ You can migrate an existing GTM domain into your Terraform configuration using e
 
 ### Import using the command line utility
 
-You can use the [Akamai CLI for Akamai Terraform Provider](https://github.com/akamai/cli-terraform) to generate a configuration for and import an existing GTM domain. With the package, you can generate:
+ You can use the [Akamai Terraform Provider CLI](https://github.com/akamai/cli-terraform) to import your existing Akamai configurations into Terraform. With the package, you can generate:
 
 * a JSON-formatted list of all domain objects.
 * a Terraform configuration for the domain and contained objects.

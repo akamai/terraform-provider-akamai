@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: dns zone"
-subcategory: "DNS"
+subcategory: "Edge DNS"
 description: |-
   DNS Zone
 ---

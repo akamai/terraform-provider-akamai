@@ -1,5 +1,27 @@
 # RELEASE NOTES
 
+## 2.1.0 (Jun 2, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Support for Darwin ARM64 architecture ([GH#236](https://github.com/akamai/terraform-provider-akamai/issues/236))
+
+* Image and Video Manager
+  * New data sources:
+    * `akamai_imaging_policy_image` - generate JSON for image policy
+    * `akamai_imaging_policy_video` - generate JSON for video policy
+  * Add `ImQuery` transformation
+  * Add `Composite` transformation to `PostBreakpointTransformations`
+
+#### BUG FIXES:
+
+* PAPI
+  * Update documentation for `akamai_property_rules_template`
+  * Track remote changes in property rules ([#305](https://github.com/akamai/terraform-provider-akamai/issues/305))
+
+* IAM
+  * `akamai_iam_user`: remove phone number validation, to allow international phone number format
+
 ## 2.0.0 (Apr 28, 2022)
 
 #### BREAKING CHANGES:

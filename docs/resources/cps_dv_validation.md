@@ -1,7 +1,7 @@
 ---
 layout: "akamai"
 page_title: "Akamai: Certificate Domain Validation"
-subcategory: "CPS"
+subcategory: "Certificate Provisioning System"
 description: |-
   Domain Validation
 ---

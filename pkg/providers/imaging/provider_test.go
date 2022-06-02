@@ -19,6 +19,7 @@ var testAccProviders map[string]*schema.Provider
 var testProvider *schema.Provider
 
 func TestMain(m *testing.M) {
+	PolicyDepth = 4
 	testProvider = akamai.Provider(Subprovider())()
 	testAccProviders = map[string]*schema.Provider{
 		"akamai": testProvider,
