@@ -515,7 +515,17 @@ func validateAuthGrantsJS(v interface{}, _ cty.Path) diag.Diagnostics {
 	return nil
 }
 
+// UnknownVariableValue is a sentinel value that is used
+// to denote that the value of a variable is unknown at this time.
+// RawConfig uses this information to build up data about
+// unknown keys.
+// https://github.com/hashicorp/terraform-plugin-sdk/blob/v2.17.0/internal/configs/hcl2shim/values.go#L16
+const UnknownVariableValue = "74D93920-ED26-11E3-AC10-0800200C9A66"
+
 func stateAuthGrantsJS(v interface{}) string {
+	if v.(string) == UnknownVariableValue {
+		return UnknownVariableValue
+	}
 	js := []byte(v.(string))
 	if len(js) == 0 {
 		return ""
@@ -536,6 +546,10 @@ func stateAuthGrantsJS(v interface{}) string {
 }
 
 func suppressAuthGrantsJS(k, old, new string, _ *schema.ResourceData) bool {
+	if new == UnknownVariableValue {
+		return false
+	}
+
 	var oldAuthGrants []iam.AuthGrant
 	if len(old) > 0 {
 		if err := json.Unmarshal([]byte(old), &oldAuthGrants); err != nil {

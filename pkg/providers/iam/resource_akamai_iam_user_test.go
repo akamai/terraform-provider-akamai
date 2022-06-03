@@ -388,6 +388,17 @@ func TestResourceUser(t *testing.T) {
 				},
 			},
 		},
+		"auth_grants_json should not panic when supplied interpolated string with unknown value": {
+			init: func(m *mockiam) {
+			},
+			steps: []resource.TestStep{
+				{
+					Config:             loadFixtureString("./testdata/TestResourceUserLifecycle/auth_grants_interpolated.tf"),
+					PlanOnly:           true,
+					ExpectNonEmptyPlan: true,
+				},
+			},
+		},
 		"error updating email": {
 			init: func(m *mockiam) {
 				// create
